@@ -48,7 +48,7 @@
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a></span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * An ORDER BY expression that aggregates a block not already grouped by its other clauses.</span></span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * An aggregate call forbidden by the query block or its DISTINCT ordering.</span></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * @example Reading the rejected ordering position</span></span>
@@ -61,20 +61,24 @@
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * @param int $position The one-based position of the ordering expression</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$position</span>)</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    {</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    }</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * Describes the problem in the words of the server.</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    {</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">return</span> <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;Expression #%d of ORDER BY contains aggregate function and applies to the result of a non-aggregated query&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">position</span>);</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>}</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * @param bool $distinct Whether an unselected aggregate violates DISTINCT ordering</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$position</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$distinct</span> = <span class="tok-id">false</span>)</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    {</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    }</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * Describes the problem in the words of the server.</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">distinct</span>) {</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-kw">return</span> <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;Expression #%d of ORDER BY clause is not in SELECT list, contains aggregate function; this is incompatible with DISTINCT&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">position</span>);</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        }</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">return</span> <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;Expression #%d of ORDER BY contains aggregate function and applies to the result of a non-aggregated query&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">position</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>}</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
