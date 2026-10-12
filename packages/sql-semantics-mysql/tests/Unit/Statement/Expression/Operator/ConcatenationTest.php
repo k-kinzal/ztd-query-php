@@ -35,7 +35,7 @@ final class ConcatenationTest extends TestCase
         $text = $derivation->scalar(new Concatenation(new StringLiteral(['a']), new NumberLiteral('1')), $derivation->environment());
         $bytes = $derivation->scalar(new Concatenation(new StringLiteral(['a']), new RadixLiteral(Radix::Hexadecimal, '41')), $derivation->environment());
 
-        self::assertEquals([new Known(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), new Known(Domain::string(2, Collation::binary(), Field::VarString, Coercibility::Coercible))], [$text->type, $bytes->type]);
+        self::assertEquals([new Known(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), new Known(Domain::string(5, Collation::binary(), Field::VarString, Coercibility::Coercible))], [$text->type, $bytes->type]);
     }
 
     public function testDeriveScalarRejectsTheOperatorWithoutPipesAsConcat(): void

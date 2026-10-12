@@ -63,8 +63,26 @@ final class TextResults
     public function bounded(Invocation $call, int $length, string $operation): ?Domain
     {
         $domain = $call->text($call->domains, $length, $operation);
+        if ($domain !== null && $domain->collation->bytes() && in_array($operation, ['concat', 'concat_ws'], true)) {
+            $domain = (new FormatResults())->sized($this->concatenatedBytes($call, $operation === 'concat_ws'), $domain->collation, $domain->coercibility);
+        }
 
         return $domain !== null && $domain->field === Field::LongBlob && $domain->length > 16777216 ? Domain::string(16777216, $domain->collation, $domain->field, $domain->coercibility) : $domain;
+    }
+
+    /**
+     * Computes a binary concatenation's byte bound before BLOB sizing. Text and
+     * computed temporal inputs contribute their encoded byte bounds; numeric
+     * inputs contribute their textual width. Verified through CONCAT and
+     * CONCAT_WS on MySQL 8.0 with binary, UTF-8 and temporal operands.
+     */
+    public function concatenatedBytes(Invocation $call, bool $separated): int
+    {
+        $lengths = array_map(static fn (Domain $domain): int => $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $domain->kind->temporal() ? $domain->byteLength() : $call->length($domain), $call->domains);
+        $length = array_sum($lengths);
+        $separator = $lengths[0] ?? 0;
+
+        return $separated ? $length - $separator + $separator * max(0, count($lengths) - 2) : $length;
     }
 
     /**

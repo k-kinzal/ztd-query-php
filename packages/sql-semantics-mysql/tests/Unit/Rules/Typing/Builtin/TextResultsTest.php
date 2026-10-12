@@ -35,6 +35,19 @@ final class TextResultsTest extends TestCase
         self::assertSame(1024, $results->bounded($call, 1024, 'concat')?->length);
     }
 
+    public function testConcatenatedBytesCountsEncodedTemporalBoundsAndSeparators(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $date = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Date, Field::Date, 10, collation: $collation, coercibility: Coercibility::Coercible);
+        $binary = Domain::string(1, Collation::binary(), Field::VarString, Coercibility::Coercible);
+        $call = new Invocation([$binary, $date, $date, $date], [], new Settings($collation), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $rules = new TextResults();
+
+        self::assertSame(121, $rules->concatenatedBytes($call, false));
+        self::assertSame(122, $rules->concatenatedBytes($call, true));
+        self::assertSame(122, $rules->bounded($call, 32, 'concat_ws')?->length);
+    }
+
     public function testRulesSumConcatenationsAndCountSeparators(): void
     {
         $rules = (new TextResults())->rules();

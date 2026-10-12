@@ -74,7 +74,10 @@ final class Results
      * Refines the fact of a call with the type its rule resolves, when it resolves one.
      *
      * MySQL 5.6 answers account functions, PASSWORD, CHARSET and COLLATION as NOT NULL, and most string
-     * functions as NULL exactly when an argument can be. COALESCE propagates nullable arguments
+     * functions as NULL exactly when an argument can be. CHARSET and COLLATION
+     * are also reported as NOT NULL without strict mode, independently of their
+     * argument's nullability, as observed on MySQL 8.0, 8.4 and 9.1.
+     * COALESCE propagates nullable arguments
      * in both 5.6 and 5.7 (verified through SQL on live servers and Testcontainers).
      *
      * @param list<Scalar> $arguments The arguments
@@ -84,6 +87,9 @@ final class Results
     {
         $type = $this->type($name, $arguments, array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts), $derivation);
         $nullability = $derivation->context->profile->grammar === GrammarRelease::MySql5651 && in_array(strtoupper($name), ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'PASSWORD', 'CHARSET', 'COLLATION'], true) ? Nullability::NotNull : $fact->nullability;
+        if (in_array(strtoupper($name), ['CHARSET', 'COLLATION'], true) && !Settings::of($derivation->context)->strict) {
+            $nullability = Nullability::NotNull;
+        }
 
         $nullability = $this->propagated($name, $arguments, $facts, $derivation) ?? $nullability;
         if ($derivation->context->profile->grammar === GrammarRelease::MySql5651 && $type?->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongBlob && in_array(strtoupper($name), ['CONCAT', 'CONCAT_WS', 'REPLACE'], true)) {

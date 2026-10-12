@@ -93,7 +93,9 @@ final class Collations
     }
 
     /**
-     * Answers the collation and coercibility one operand brings.
+     * Answers the collation and coercibility one operand brings. Temporal
+     * controls with coercible strength retain it in parent expressions while
+     * converting through the connection character set, as observed on MySQL 8.0.
      *
      * @return array{Collation, Coercibility}
      */
@@ -101,7 +103,13 @@ final class Collations
     {
         $text = $domain->kind === Kind::String || $domain->kind === Kind::Json;
 
-        return [$text ? $domain->collation : $this->connection, $domain->kind === Kind::Null ? Coercibility::Ignorable : ($text ? $domain->coercibility : Coercibility::Numeric)];
+        $level = match (true) {
+            $domain->kind === Kind::Null => Coercibility::Ignorable,
+            $text, $domain->kind->temporal() && $domain->coercibility === Coercibility::Coercible => $domain->coercibility,
+            default => Coercibility::Numeric,
+        };
+
+        return [$text ? $domain->collation : $this->connection, $level];
     }
 
     /**

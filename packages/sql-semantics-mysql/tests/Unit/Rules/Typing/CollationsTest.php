@@ -53,6 +53,19 @@ final class CollationsTest extends TestCase
         self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Ignorable], (new Collations(Collation::known('utf8mb4_0900_ai_ci')))->operand(Domain::null()));
     }
 
+    public function testOperandPreservesTheStrengthOfTemporalControls(): void
+    {
+        $connection = Collation::known('utf8mb4_0900_ai_ci');
+        $rules = new Collations($connection);
+        $date = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Date, Field::Date, 10);
+        $control = $date->withCollation($connection, Coercibility::Coercible);
+        $latin = Domain::string(1, Collation::known('latin1_swedish_ci'), Field::VarString, Coercibility::Coercible);
+
+        self::assertSame([$connection, Coercibility::Coercible], $rules->operand($control));
+        self::assertSame([$connection, Coercibility::Numeric], $rules->operand($date));
+        self::assertSame([$connection, Coercibility::Coercible], $rules->settle([$latin, $control]));
+    }
+
     public function testTieFollowsTheRulesOfEqualCoercibility(): void
     {
         $rules = new Collations(Collation::known('utf8mb4_0900_ai_ci'));
