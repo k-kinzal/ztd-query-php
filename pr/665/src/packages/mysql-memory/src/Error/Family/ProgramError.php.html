@@ -113,23 +113,24 @@
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-kw">case</span> <span class="tok-id">SameEventName</span> = <span class="tok-num">1551</span>;</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    <span class="tok-kw">case</span> <span class="tok-id">EventRecursion</span> = <span class="tok-num">1576</span>;</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    <span class="tok-kw">case</span> <span class="tok-id">EventDroppedInPast</span> = <span class="tok-num">1588</span>;</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-kw">case</span> <span class="tok-id">WrongParametersToStoredFunction</span> = <span class="tok-num">1584</span>;</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-kw">case</span> <span class="tok-id">FunctionNameCollision</span> = <span class="tok-num">1630</span>;</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-kw">case</span> <span class="tok-id">DuplicateSignalItem</span> = <span class="tok-num">1641</span>;</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-kw">case</span> <span class="tok-id">SignalWarning</span> = <span class="tok-num">1642</span>;</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    <span class="tok-kw">case</span> <span class="tok-id">SignalNotFound</span> = <span class="tok-num">1643</span>;</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    <span class="tok-kw">case</span> <span class="tok-id">SignalException</span> = <span class="tok-num">1644</span>;</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    <span class="tok-kw">case</span> <span class="tok-id">ResignalWithoutHandler</span> = <span class="tok-num">1645</span>;</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">case</span> <span class="tok-id">SignalConditionKind</span> = <span class="tok-num">1646</span>;</span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    <span class="tok-kw">case</span> <span class="tok-id">ConditionItemTooLong</span> = <span class="tok-num">1648</span>;</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    <span class="tok-kw">case</span> <span class="tok-id">InvalidConditionNumber</span> = <span class="tok-num">1758</span>;</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    <span class="tok-kw">case</span> <span class="tok-id">StackedWithoutHandler</span> = <span class="tok-num">3004</span>;</span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>    <span class="tok-kw">case</span> <span class="tok-id">ReferencedTriggerMissing</span> = <span class="tok-num">3011</span>;</span>
-<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    <span class="tok-kw">case</span> <span class="tok-id">TriggerExistsOnTable</span> = <span class="tok-num">4099</span>;</span>
-<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    <span class="tok-kw">case</span> <span class="tok-id">TriggerExistsElsewhere</span> = <span class="tok-num">4100</span>;</span>
-<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    <span class="tok-kw">case</span> <span class="tok-id">LanguageComponentUnavailable</span> = <span class="tok-num">6001</span>;</span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>}</span>
-<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-kw">case</span> <span class="tok-id">EventUnchangedInPast</span> = <span class="tok-num">1589</span>;</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-kw">case</span> <span class="tok-id">WrongParametersToStoredFunction</span> = <span class="tok-num">1584</span>;</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-kw">case</span> <span class="tok-id">FunctionNameCollision</span> = <span class="tok-num">1630</span>;</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-kw">case</span> <span class="tok-id">DuplicateSignalItem</span> = <span class="tok-num">1641</span>;</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    <span class="tok-kw">case</span> <span class="tok-id">SignalWarning</span> = <span class="tok-num">1642</span>;</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    <span class="tok-kw">case</span> <span class="tok-id">SignalNotFound</span> = <span class="tok-num">1643</span>;</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    <span class="tok-kw">case</span> <span class="tok-id">SignalException</span> = <span class="tok-num">1644</span>;</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">case</span> <span class="tok-id">ResignalWithoutHandler</span> = <span class="tok-num">1645</span>;</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    <span class="tok-kw">case</span> <span class="tok-id">SignalConditionKind</span> = <span class="tok-num">1646</span>;</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    <span class="tok-kw">case</span> <span class="tok-id">ConditionItemTooLong</span> = <span class="tok-num">1648</span>;</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    <span class="tok-kw">case</span> <span class="tok-id">InvalidConditionNumber</span> = <span class="tok-num">1758</span>;</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>    <span class="tok-kw">case</span> <span class="tok-id">StackedWithoutHandler</span> = <span class="tok-num">3004</span>;</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    <span class="tok-kw">case</span> <span class="tok-id">ReferencedTriggerMissing</span> = <span class="tok-num">3011</span>;</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    <span class="tok-kw">case</span> <span class="tok-id">TriggerExistsOnTable</span> = <span class="tok-num">4099</span>;</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    <span class="tok-kw">case</span> <span class="tok-id">TriggerExistsElsewhere</span> = <span class="tok-num">4100</span>;</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>    <span class="tok-kw">case</span> <span class="tok-id">LanguageComponentUnavailable</span> = <span class="tok-num">6001</span>;</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>}</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
