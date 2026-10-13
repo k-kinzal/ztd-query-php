@@ -6,6 +6,7 @@ namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\StoredTable;
+use MySqlMemory\Error\DiagnosticText;
 use MySqlMemory\Error\Family\ConstraintError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
@@ -76,11 +77,11 @@ final class DropTableCommand implements Command
             $session->transaction->commit();
         }
         if ($missing !== [] && !$statement->ifExists) {
-            throw SchemaError::BadTable->error(implode(',', $missing));
+            throw SchemaError::BadTable->error((new DiagnosticText())->missingTables(implode(',', $missing), $session->settings()->legacy()));
         }
         $this->referenced(array_map(static fn (array $entry): StoredTable => $entry[2], $found), $session, $context);
         foreach ($missing as $name) {
-            $context->note(SchemaError::BadTable, $name);
+            $context->note(SchemaError::BadTable, (new DiagnosticText())->missingTables($name, $session->settings()->legacy()));
         }
         foreach ($found as [$schema, $name, $table]) {
             $dictionary->release($table, $schema, $name);

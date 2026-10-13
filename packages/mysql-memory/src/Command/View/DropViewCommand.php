@@ -6,6 +6,7 @@ namespace MySqlMemory\Command\View;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Program\ProgramSource;
+use MySqlMemory\Error\DiagnosticText;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
@@ -71,14 +72,14 @@ final class DropViewCommand implements Command
             } elseif ($holder === null || !isset($holder->views[$name])) {
                 $missing[] = $schema . '.' . $name;
                 if ($statement->ifExists) {
-                    $context->note(SchemaError::BadTable, $schema . '.' . $name);
+                    $context->note(SchemaError::BadTable, (new DiagnosticText())->missingTables($schema . '.' . $name, $session->settings()->legacy()));
                 }
             } else {
                 $found[] = [$holder, $name];
             }
         }
         if ($missing !== [] && !$statement->ifExists) {
-            throw SchemaError::BadTable->error(implode(',', $missing));
+            throw SchemaError::BadTable->error((new DiagnosticText())->missingTables(implode(',', $missing), $session->settings()->legacy()));
         }
         foreach ($found as [$holder, $name]) {
             unset($holder->views[$name]);

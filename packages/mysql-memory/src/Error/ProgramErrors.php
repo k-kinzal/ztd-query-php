@@ -76,7 +76,7 @@ final class ProgramErrors
      *
      * @param string $database The current database, for a name without one
      */
-    public function relation(WrongRelationKind $problem, string $database): SqlError
+    public function relation(WrongRelationKind $problem, string $database, bool $legacy = false): SqlError
     {
         $schema = $problem->name->schema->value ?? $database;
         $name = $problem->name->name->value;
@@ -84,7 +84,7 @@ final class ProgramErrors
         return match ($problem->refusal) {
             KindRefusal::NotView => SchemaError::WrongObject->error($schema, $name, 'VIEW'),
             KindRefusal::NotBaseTable => SchemaError::WrongObject->error($schema, $name, 'BASE TABLE'),
-            KindRefusal::UnknownTable => SchemaError::BadTable->error($schema . '.' . $name),
+            KindRefusal::UnknownTable => SchemaError::BadTable->error((new DiagnosticText())->missingTables($schema . '.' . $name, $legacy)),
             KindRefusal::NoSuchTable => QueryError::NoSuchTable->error($schema, $name),
         };
     }

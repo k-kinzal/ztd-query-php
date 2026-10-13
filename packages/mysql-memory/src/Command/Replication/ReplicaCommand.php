@@ -6,6 +6,7 @@ namespace MySqlMemory\Command\Replication;
 
 use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Command\Command;
+use MySqlMemory\Error\DiagnosticText;
 use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\DataError;
@@ -91,7 +92,7 @@ final class ReplicaCommand implements Command
         if ($statement instanceof StartReplica) {
             $this->start($statement, $session);
         } elseif ($statement instanceof StopReplica) {
-            $this->channel($statement->channel);
+            $this->channel($statement->channel, $session->settings()->legacy());
             if ($registry->replication->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
                 $registry->replication->applying = false;
             } else {
@@ -124,7 +125,7 @@ final class ReplicaCommand implements Command
             if ($target instanceof ResetBinaryLogs && $session->settings()->release() === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 throw AdministrationError::BinlogClosed->error('RESET MASTER');
             }
-            $this->reset($target, $registry);
+            $this->reset($target, $registry, $session->settings()->legacy());
             if ($target instanceof ResetBinaryLogs && !$flushed && \MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 $registry->status->add('Flush_commands');
                 $flushed = true;
@@ -140,7 +141,7 @@ final class ReplicaCommand implements Command
      */
     public function start(StartReplica $statement, Session $session): void
     {
-        $this->channel($statement->channel);
+        $this->channel($statement->channel, $session->settings()->legacy());
         if ($statement->user !== null || $statement->password !== null) {
             $session->diagnostics->note(AccountError::InsecurePlainText, AccountError::InsecurePlainText->message());
         }
@@ -197,13 +198,13 @@ final class ReplicaCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the channel does not exist or its applier thread runs
      */
-    public function reset(ResetTarget $target, Registry $registry): void
+    public function reset(ResetTarget $target, Registry $registry, bool $legacy = false): void
     {
         if ($target instanceof ResetBinaryLogs) {
             $registry->binaryLog->reset($target->first === null ? 1 : (int) (new Literals())->number($target->first));
         }
         if ($target instanceof ResetReplica) {
-            $this->channel($target->channel);
+            $this->channel($target->channel, $legacy);
             if ($registry->replication->applying) {
                 throw AdministrationError::ReplicaChannelRunning->error('');
             }
@@ -216,14 +217,14 @@ final class ReplicaCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the channel is not the default one
      */
-    public function channel(?Text $channel): void
+    public function channel(?Text $channel, bool $legacy = false): void
     {
         if ($channel === null) {
             return;
         }
         $name = (new Literals())->bytes($channel);
         if (str_contains($name, "\n")) {
-            throw DataError::WrongValue->error('argument contains not-allowed LF', $name);
+            throw DataError::WrongValue->error('argument contains not-allowed LF', (new DiagnosticText())->bytes($name, 128, $legacy));
         }
         if ($name !== '') {
             throw AdministrationError::ReplicaChannelMissing->error(strtolower($name));

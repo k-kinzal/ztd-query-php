@@ -132,7 +132,7 @@ final class ReplicationShowCommand implements Command
         (new ReplicaCommand())->deprecated($statement, $session, $context);
         (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof ShowReplicaStatus) {
-            (new ReplicaCommand())->channel($statement->channel);
+            (new ReplicaCommand())->channel($statement->channel, $session->settings()->legacy());
 
             $columns = $this->statusColumns($version);
 
@@ -227,7 +227,7 @@ final class ReplicationShowCommand implements Command
     public function relaylogEvents(ShowRelaylogEvents $statement, Session $session, Context $context): Reply
     {
         $this->limit($statement->limit);
-        (new ReplicaCommand())->channel($statement->channel);
+        (new ReplicaCommand())->channel($statement->channel, $session->settings()->legacy());
         $replication = $session->instance->registry->replication;
         if (!$replication->initialized) {
             return $this->listing(self::EVENTS, [], $context);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Admin;
 
+use MySqlMemory\Error\DiagnosticText;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\SchemaError;
@@ -57,7 +58,7 @@ final class Refusals
     /**
      * Answers the server error of a problem of a statement whose text is given.
      */
-    public function error(Diagnostic $diagnostic, ?Node $statement, string $text): SqlError
+    public function error(Diagnostic $diagnostic, ?Node $statement, string $text, bool $legacy = false): SqlError
     {
         return match (true) {
             $diagnostic instanceof StorageProblem => match ($diagnostic->rule) {
@@ -68,7 +69,7 @@ final class Refusals
             $diagnostic instanceof SpatialProblem => $this->spatial($diagnostic, $statement),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber => new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number->text, '/') . '/') . "' at line 1"),
             $diagnostic instanceof PriorityOutOfRange => $this->priority($diagnostic, $statement),
-            $diagnostic instanceof RefusedSetting => $this->replication($diagnostic->error, $statement, $text),
+            $diagnostic instanceof RefusedSetting => $this->replication($diagnostic->error, $statement, $text, $legacy),
             $diagnostic instanceof NumberOutOfRange => $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number, '/') . '/') . "' at line 1"),
             default => new SqlError(StatementError::UnknownError, $diagnostic->message()),
         };
@@ -110,10 +111,10 @@ final class Refusals
     /**
      * Answers the error of a replication setting the server refuses while it parses the statement.
      */
-    public function replication(ReplicationError $error, ?Node $statement, string $text): SqlError
+    public function replication(ReplicationError $error, ?Node $statement, string $text, bool $legacy = false): SqlError
     {
         return match ($error) {
-            ReplicationError::LineFeed => DataError::WrongValue->error('argument contains not-allowed LF', $this->lineFeed($statement)),
+            ReplicationError::LineFeed => DataError::WrongValue->error('argument contains not-allowed LF', (new DiagnosticText())->bytes($this->lineFeed($statement), 128, $legacy)),
             ReplicationError::PasswordTooLong => AdministrationError::SourcePasswordTooLong->error(),
             ReplicationError::GroupPasswordTooLong => AdministrationError::GroupPasswordTooLong->error(),
             ReplicationError::GroupUserMissing => AdministrationError::GroupUserMissing->error(),

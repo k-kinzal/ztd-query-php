@@ -98,7 +98,7 @@ final class Errors
             ?? $this->names($diagnostic, $database, $clause, $statement)
             ?? $this->query($diagnostic, $clause)
             ?? $this->call($diagnostic)
-            ?? $this->definition($diagnostic, $database)
+            ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
             ?? $this->manipulation($diagnostic, $statement)
             ?? $this->expression($diagnostic)
             ?? $this->server($diagnostic, $session, $statement)
@@ -228,7 +228,7 @@ final class Errors
     /**
      * Answers the server error of a problem of a table or view definition, or null for another diagnostic.
      */
-    public function definition(Diagnostic $diagnostic, string $database): ?SqlError
+    public function definition(Diagnostic $diagnostic, string $database, bool $legacy = false): ?SqlError
     {
         return match (true) {
             $diagnostic instanceof RepeatedTable => QueryError::NonUniqueTable->error($diagnostic->name->name->value),
@@ -247,7 +247,7 @@ final class Errors
             $diagnostic instanceof UnknownColumn => SchemaError::FieldNotFoundInPartitionFunction->error(),
             $diagnostic instanceof TableExists => SchemaError::TableExists->error($diagnostic->name->name->value),
             $diagnostic instanceof UnknownAlterChoice => ($diagnostic->lock ? SchemaError::UnknownAlterLock : SchemaError::UnknownAlterAlgorithm)->error($diagnostic->name->value),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind => (new \MySqlMemory\Error\ProgramErrors())->relation($diagnostic, $database),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind => (new \MySqlMemory\Error\ProgramErrors())->relation($diagnostic, $database, $legacy),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount => SchemaError::ViewWrongList->error(),
             default => null,
         };
@@ -324,7 +324,7 @@ final class Errors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly => StatementError::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesShadow => ProgramError::VariableShadow->error('names'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesExpression => StatementError::ParseError->error('', 1),
-            \MySqlMemory\Command\Admin\Refusals::handles($diagnostic) => (new \MySqlMemory\Command\Admin\Refusals())->error($diagnostic, $statement, $session->text),
+            \MySqlMemory\Command\Admin\Refusals::handles($diagnostic) => (new \MySqlMemory\Command\Admin\Refusals())->error($diagnostic, $statement, $session->text, $session->settings()->legacy()),
             default => null,
         };
     }
