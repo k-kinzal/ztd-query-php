@@ -48,7 +48,7 @@
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\InvalidConstruction</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts</span>;</span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Dml\Assignment</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Explainable</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
@@ -65,7 +65,8 @@
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;INSERT IGNORE INTO t (a, b) VALUE (1, &#039;x&#039;), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)&quot;);</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> *     [count($insert-&gt;statement-&gt;rows), count($insert-&gt;statement-&gt;onDuplicate), $insert-&gt;toString()] // =&gt; [2, 1, &quot;INSERT IGNORE INTO t (a, b) VALUES (1, &#039;x&#039;), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)&quot;]</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertRows</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">28</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertRows</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertRows</span> <span class="tok-kw">implements</span> <span class="tok-id">Explainable</span></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>{</span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a></span>

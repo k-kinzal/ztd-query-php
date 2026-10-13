@@ -287,8 +287,8 @@
 <span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
 <span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a></span>
 <span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">SqlError</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionCode</span>(<span class="tok-num">1231</span>);</span>
-<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&quot;Variable &#039;div_precision_increment&#039; can&#039;t be set to the value of &#039;NULL&#039;&quot;</span>);</span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionCode</span>(<span class="tok-num">1232</span>);</span>
+<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&quot;Incorrect argument type to variable &#039;div_precision_increment&#039;&quot;</span>);</span>
 <span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a></span>
 <span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SET div_precision_increment = NULL&#039;</span>);</span>
 <span class="src-line" id="L254" data-diff="added"><a class="ln" href="#L254">254</a>    }</span>

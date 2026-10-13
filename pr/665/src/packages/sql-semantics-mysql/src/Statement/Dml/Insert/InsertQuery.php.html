@@ -48,11 +48,11 @@
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\InvalidConstruction</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts</span>;</span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Dml\Assignment</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\QueryExpression</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\QueryStatement</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery</span>;</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Explainable</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\QueryExpression</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\QueryStatement</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery</span>;</span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
@@ -70,7 +70,8 @@
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;INSERT INTO t (a) SELECT b FROM u&#039;);</span></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com"> *     [$insert-&gt;statement-&gt;source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, $insert-&gt;toString()] // =&gt; [true, &#039;INSERT INTO t (a) SELECT b FROM u&#039;]</span></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertQuery</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">29</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertQuery</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertQuery</span> <span class="tok-kw">implements</span> <span class="tok-id">Explainable</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>{</span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a></span>

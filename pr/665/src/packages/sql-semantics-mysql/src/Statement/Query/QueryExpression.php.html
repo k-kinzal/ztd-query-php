@@ -49,8 +49,8 @@
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Query\QueryTails</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Query\SortScopes</span>;</span>
-<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Explainable</span>;</span>
+<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation</span>;</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\QueryFact</span>;</span>
@@ -83,7 +83,8 @@
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com"> * @example Refusing a wrapper that adds nothing</span></span>
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;1&#039;))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">QueryExpression</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span>, <span class="tok-id">Query</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">45</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">QueryExpression</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span>, <span class="tok-id">Query</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">QueryExpression</span> <span class="tok-kw">implements</span> <span class="tok-id">Explainable</span>, <span class="tok-id">Query</span></span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>{</span>
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a></span>
@@ -105,35 +106,36 @@
 <span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$with</span> !== <span class="tok-id">null</span> || <span class="tok-var">$orderBy</span> !== [] || <span class="tok-var">$limit</span> !== <span class="tok-id">null</span>, <span class="tok-str">&#039;A query expression holds a WITH clause, an ordering or a limit.&#039;</span>);</span>
 <span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(!<span class="tok-var">$body</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Select</span> || (<span class="tok-var">$orderBy</span> === [] &amp;&amp; <span class="tok-var">$limit</span> === <span class="tok-id">null</span>) || (<span class="tok-var">$orderBy</span> !== [] &amp;&amp; (<span class="tok-var">$body</span>-&gt;<span class="tok-id">orderBy</span> !== [] || <span class="tok-var">$body</span>-&gt;<span class="tok-id">limit</span> !== <span class="tok-id">null</span>) &amp;&amp; <span class="tok-var">$body</span>-&gt;<span class="tok-id">late</span> === <span class="tok-id">null</span>), <span class="tok-str">&#039;The ordering and the limit of a single query block belong to the block unless an ORDER BY follows a block that orders or limits its rows.&#039;</span>);</span>
 <span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(!<span class="tok-var">$body</span> <span class="tok-kw">instanceof</span> <span class="tok-id">self</span> &amp;&amp; !<span class="tok-var">$body</span> <span class="tok-kw">instanceof</span> <span class="tok-id">QueryStatement</span> &amp;&amp; !<span class="tok-var">$body</span> <span class="tok-kw">instanceof</span> <span class="tok-id">OrderedSetOperation</span>, <span class="tok-str">&#039;A query expression, a query statement or an ordered set operation as a body is written in parentheses.&#039;</span>);</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    }</span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a></span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a><span class="tok-com">     * Derives the query expression as a statement root and records its rows as the output.</span></span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveStatement</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>    {</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    }</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a></span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a><span class="tok-com">     * Derives the query expression as a statement root and records its rows as the output.</span></span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveStatement</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">74</span>        <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">output</span>(<span class="tok-var">$derivation</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$this</span>, <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">environment</span>()));</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">output</span>((<span class="tok-kw">new</span> <span class="tok-id">SetOutput</span>())-&gt;<span class="tok-id">derive</span>(<span class="tok-var">$this</span>, <span class="tok-var">$derivation</span>));</span>
-<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    }</span>
-<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a></span>
-<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a><span class="tok-com">     * Binds the common tables and derives the body, the ordering and the limit.</span></span>
-<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveQuery</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$outer</span>): <span class="tok-id">QueryFact</span></span>
-<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    {</span>
-<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">ExpressionFacts</span>())-&gt;<span class="tok-id">derive</span>(<span class="tok-var">$this</span>, <span class="tok-var">$derivation</span>, <span class="tok-var">$outer</span>);</span>
-<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>    }</span>
-<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a></span>
-<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a><span class="tok-com">     * Writes the clauses in grammar order.</span></span>
-<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>    {</span>
-<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">with</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">body</span>);</span>
-<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a>        (<span class="tok-kw">new</span> <span class="tok-id">QueryTails</span>())-&gt;<span class="tok-id">expression</span>(<span class="tok-var">$this</span>, <span class="tok-var">$out</span>);</span>
-<span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a>    }</span>
-<span class="src-line" id="L94" data-diff="same"><a class="ln" href="#L94">94</a>}</span>
-<span class="src-line" id="L95" data-diff="same"><a class="ln" href="#L95">95</a></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">output</span>((<span class="tok-kw">new</span> <span class="tok-id">SetOutput</span>())-&gt;<span class="tok-id">derive</span>(<span class="tok-var">$this</span>, <span class="tok-var">$derivation</span>));</span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>    }</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a><span class="tok-com">     * Binds the common tables and derives the body, the ordering and the limit.</span></span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveQuery</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$outer</span>): <span class="tok-id">QueryFact</span></span>
+<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>    {</span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">ExpressionFacts</span>())-&gt;<span class="tok-id">derive</span>(<span class="tok-var">$this</span>, <span class="tok-var">$derivation</span>, <span class="tok-var">$outer</span>);</span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>    }</span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a></span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a><span class="tok-com">     * Writes the clauses in grammar order.</span></span>
+<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a>    {</span>
+<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">with</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">body</span>);</span>
+<span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a>        (<span class="tok-kw">new</span> <span class="tok-id">QueryTails</span>())-&gt;<span class="tok-id">expression</span>(<span class="tok-var">$this</span>, <span class="tok-var">$out</span>);</span>
+<span class="src-line" id="L94" data-diff="same"><a class="ln" href="#L94">94</a>    }</span>
+<span class="src-line" id="L95" data-diff="same"><a class="ln" href="#L95">95</a>}</span>
+<span class="src-line" id="L96" data-diff="same"><a class="ln" href="#L96">96</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
