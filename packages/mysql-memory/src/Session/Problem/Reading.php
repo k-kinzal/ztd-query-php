@@ -51,6 +51,9 @@ final class Reading
      */
     public function read(Operation $operation, Session $session): void
     {
+        if (in_array($operation->statement::class, \MySqlMemory\Command\InternalCommand::STATEMENTS, true)) {
+            throw (new \MySqlMemory\Command\InternalCommand())->error($operation);
+        }
         (new \MySqlMemory\Command\Explain\ExplainCommand())->format($operation->statement);
         $this->parsed($operation, $session);
         $this->grouping($operation, $session);
