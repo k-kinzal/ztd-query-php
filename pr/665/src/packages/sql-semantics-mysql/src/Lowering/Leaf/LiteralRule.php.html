@@ -200,9 +200,9 @@
 <span class="src-line" data-diff="removed"><span class="ln">158</span>            <span class="tok-str">&#039;signed_literal: - NUM_literal&#039;</span> =&gt; <span class="tok-kw">new</span> <span class="tok-id">SignedLiteral</span>(<span class="tok-id">true</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">number</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">1</span>))),</span>
 <span class="src-line" id="L158" data-diff="same"><a class="ln" href="#L158">158</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>),</span>
 <span class="src-line" id="L159" data-diff="same"><a class="ln" href="#L159">159</a>        });</span>
-<span class="src-line" id="L160" data-diff="same"><a class="ln" href="#L160">160</a>    }</span>
-<span class="src-line" id="L161" data-diff="same"><a class="ln" href="#L161">161</a></span>
-<span class="src-line" id="L162" data-diff="same"><a class="ln" href="#L162">162</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>    }</span>
+<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a></span>
+<span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a><span class="tok-com">     * Lowers a literal in a position that also accepts a signed number.</span></span>
 <span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a><span class="tok-com">     * @throws ImplementationGap When the production has no rule</span></span>
@@ -219,9 +219,9 @@
 <span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a>            <span class="tok-str">&#039;signed_literal: - NUM_literal&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">leaves</span>-&gt;<span class="tok-id">record</span>(<span class="tok-kw">new</span> <span class="tok-id">SignedLiteral</span>(<span class="tok-id">true</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">number</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">1</span>)))),</span>
 <span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">literal</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>),</span>
 <span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a>        };</span>
-<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a>    }</span>
-<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a></span>
-<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L179" data-diff="same"><a class="ln" href="#L179">179</a>    }</span>
+<span class="src-line" id="L180" data-diff="same"><a class="ln" href="#L180">180</a></span>
+<span class="src-line" id="L181" data-diff="same"><a class="ln" href="#L181">181</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L182" data-diff="same"><a class="ln" href="#L182">182</a><span class="tok-com">     * Lowers an unsigned number literal.</span></span>
 <span class="src-line" id="L183" data-diff="same"><a class="ln" href="#L183">183</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L184" data-diff="same"><a class="ln" href="#L184">184</a><span class="tok-com">     * @throws ImplementationGap When the production has no rule</span></span>
@@ -343,8 +343,7 @@
 <span class="src-line" id="L300" data-diff="same"><a class="ln" href="#L300">300</a>            <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>);</span>
 <span class="src-line" id="L301" data-diff="same"><a class="ln" href="#L301">301</a>        }</span>
 <span class="src-line" id="L302" data-diff="same"><a class="ln" href="#L302">302</a></span>
-<span class="src-line" data-diff="removed"><span class="ln">285</span>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">leaves</span>-&gt;<span class="tok-id">record</span>(<span class="tok-kw">new</span> <span class="tok-id">Parameter</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">token</span>(<span class="tok-num">0</span>)-&gt;<span class="tok-id">text</span>));</span>
-<span class="src-line" id="L303" data-diff="added"><a class="ln" href="#L303">303</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">leaves</span>-&gt;<span class="tok-id">record</span>(<span class="tok-kw">new</span> <span class="tok-id">Parameter</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">token</span>(<span class="tok-num">0</span>)-&gt;<span class="tok-id">text</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">marker</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">token</span>(<span class="tok-num">0</span>)-&gt;<span class="tok-id">offset</span>)));</span>
+<span class="src-line" id="L303" data-diff="same"><a class="ln" href="#L303">303</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">leaves</span>-&gt;<span class="tok-id">record</span>(<span class="tok-kw">new</span> <span class="tok-id">Parameter</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">token</span>(<span class="tok-num">0</span>)-&gt;<span class="tok-id">text</span>));</span>
 <span class="src-line" id="L304" data-diff="same"><a class="ln" href="#L304">304</a>    }</span>
 <span class="src-line" id="L305" data-diff="same"><a class="ln" href="#L305">305</a>}</span>
 <span class="src-line" id="L306" data-diff="same"><a class="ln" href="#L306">306</a></span>

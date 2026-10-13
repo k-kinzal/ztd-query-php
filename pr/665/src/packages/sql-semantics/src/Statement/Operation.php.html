@@ -59,7 +59,8 @@
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * One analyzed statement: its structure, the facts derived against a fixed context, and its SQL.</span></span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * The constructor is the only way to obtain an operation and it is a checking</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * boundary. It audits the structure, derives every fact, renders the SQL, and</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> * boundary. It audits the structure, derives every fact, renders the SQL, and</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * boundary. It audits and renders the structure, derives every fact, and</span></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * confirms that the rendered SQL has the same structure. Nothing is filled in</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * afterwards and nothing can be changed. A different statement is a new</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * operation built from explicit inputs or from newly analyzed SQL; it has no</span></span>
