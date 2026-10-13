@@ -40,6 +40,9 @@ final class ImportTable implements Statement
     public function __construct(array $files)
     {
         $this->files = Check::listOf($files, Text::class, 'IMPORT TABLE names at least one file.', 1);
+        foreach ($this->files as $file) {
+            Check::input($file->radix === null, 'An imported file name is a quoted string.');
+        }
     }
 
     /**

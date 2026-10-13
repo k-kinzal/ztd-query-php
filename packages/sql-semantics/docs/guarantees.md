@@ -36,7 +36,7 @@ Consumers may calculate plans and derived structures from the published data. `C
 
 ## Operand roles when constructing MySQL models
 
-The type accepted by a constructor describes the role of that operand. An ordinary expression implements `Statement\Scalar`, which extends the shared `Statement\Operand` contract for deriving value facts. Position-restricted operands implement `Operand` directly: for example, a MySQL output ordinal belongs in an ORDER BY item, a program variable in a row limit, and a bare `DEFAULT` in a write value. They cannot be supplied where an ordinary expression is required.
+The type accepted by a constructor describes the role of that operand. An ordinary expression implements `Statement\Scalar`, which extends the shared `Statement\Operand` contract for deriving value facts. Position-restricted operands implement `Operand` directly: for example, a MySQL output ordinal belongs in an ORDER BY item, a program variable in a row limit, and a bare `DEFAULT` in a write value. They cannot be supplied where an ordinary expression is required. `MySql\Statement\LiteralExpression` identifies literals that are also ordinary expressions; condition-information assignments accept that role and variable references, rather than arbitrary function calls. VCPU ranges hold bounded integer indices rather than numeric token spellings.
 
 The MySQL model additionally distinguishes these roles:
 

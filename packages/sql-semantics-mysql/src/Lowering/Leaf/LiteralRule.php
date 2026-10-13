@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 
@@ -110,7 +111,7 @@ final class LiteralRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function literal(Node $literal): Scalar&Literal
+    public function literal(Node $literal): LiteralExpression
     {
         $form = $this->lowering->productions->form($literal);
         while (isset(self::FORWARD[$form->signature])) {
@@ -134,7 +135,7 @@ final class LiteralRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function constant(Form $form): Scalar&Literal
+    public function constant(Form $form): LiteralExpression
     {
         $digits = new RadixSpelling();
 

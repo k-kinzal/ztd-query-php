@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers user-defined variables, system variables and their scopes.
@@ -64,7 +63,7 @@ final class VariableRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function variable(Node $variable): Scalar
+    public function variable(Node $variable): UserVariable|SystemVariable|VariableAssignment
     {
         $form = $this->lowering->productions->form($variable);
         if ($form->signature === 'variable: @ variable_aux') {

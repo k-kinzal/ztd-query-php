@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Call\Temporal;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
@@ -30,6 +31,26 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class TimestampCallTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{IntervalUnit}>
+     */
+    public static function providerCompositeUnits(): iterable
+    {
+        foreach (IntervalUnit::cases() as $unit) {
+            if (str_contains($unit->value, '_')) {
+                yield $unit->value => [$unit];
+            }
+        }
+    }
+
+    #[DataProvider('providerCompositeUnits')]
+    public function testRejectsCompositeIntervalUnits(IntervalUnit $unit): void
+    {
+        $this->expectExceptionMessage('TIMESTAMPADD and TIMESTAMPDIFF take a simple interval unit.');
+
+        new TimestampCall(TimestampOperation::Difference, $unit, new NumberLiteral('1'), new NumberLiteral('2'));
+    }
+
     public function testDeriveScalarTypesAnAdditionAsDateArithmetic(): void
     {
         $platform = new Platform();

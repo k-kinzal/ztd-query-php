@@ -57,7 +57,7 @@ final class ResourceGroupRuleTest extends TestCase
 
     public function testNumberKeepsTheText(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g VCPU = 007', (new Semantics(Dialect::MySql))->analyze('alter resource group g vcpu 007')->toString());
+        self::assertSame('SET RESOURCE GROUP g FOR 007', (new Semantics(Dialect::MySql))->analyze('set resource group g for 007')->toString());
     }
 
     public function testClaimedConfirmsTheList(): void

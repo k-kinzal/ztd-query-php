@@ -51,6 +51,7 @@ final class CharCall implements Scalar
      */
     public function __construct(array $arguments, public readonly ?CharsetName $charset = null)
     {
+        Check::input($charset === null || $charset->name !== null, 'CHAR USING names a character set rather than DEFAULT.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'CHAR() takes at least one expression.', 1);
     }
 

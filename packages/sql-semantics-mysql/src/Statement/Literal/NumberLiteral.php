@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
-use SqlSemantics\Platform\MySql\Statement\Literal;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
 use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -41,7 +40,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = 1.50');
  *     [$query->statement->where->right->text, $query->statement->where->right->form] // => ['1.50', \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Decimal]
  */
-final class NumberLiteral implements Scalar, Literal
+final class NumberLiteral implements LiteralExpression
 {
     use Snapshot;
 

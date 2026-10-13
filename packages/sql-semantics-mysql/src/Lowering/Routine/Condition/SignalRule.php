@@ -8,13 +8,17 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 
 /**
  * Lowers SIGNAL and RESIGNAL.
@@ -134,7 +138,7 @@ final class SignalRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function operand(Node $expression): Scalar
+    public function operand(Node $expression): LiteralExpression|ColumnUse|SystemVariable|UserVariable|VariableAssignment
     {
         $form = $this->lowering->form($expression);
 

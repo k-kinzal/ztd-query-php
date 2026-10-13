@@ -228,8 +228,8 @@
         "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\CpuRange": {
-        "first": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
-        "last": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+        "first": "int",
+        "last": "?int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\CreateResourceGroup": {
         "cpus": "array",
@@ -1913,7 +1913,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SignalItem": {
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionItemName",
-        "value": "SqlSemantics\\Statement\\Scalar"
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableAssignment"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SqlState": {
         "state": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"

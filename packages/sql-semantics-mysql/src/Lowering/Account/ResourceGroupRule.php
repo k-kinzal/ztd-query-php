@@ -130,8 +130,8 @@ final class ResourceGroupRule
         $form = $this->lowering->form($range);
 
         return match ($form->signature) {
-            'vcpu_num_or_range: NUM' => new CpuRange($this->number($form, 0)),
-            'vcpu_num_or_range: NUM - NUM' => new CpuRange($this->number($form, 0), $this->number($form, 2)),
+            'vcpu_num_or_range: NUM' => new CpuRange((int) $form->token(0)->text),
+            'vcpu_num_or_range: NUM - NUM' => new CpuRange((int) $form->token(0)->text, (int) $form->token(2)->text),
             default => throw ImplementationGap::production($form),
         };
     }

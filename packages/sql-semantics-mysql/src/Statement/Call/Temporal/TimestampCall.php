@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
@@ -53,6 +54,7 @@ final class TimestampCall implements Scalar
      */
     public function __construct(public readonly TimestampOperation $operation, public readonly IntervalUnit $unit, public readonly Scalar $first, public readonly Scalar $second)
     {
+        Check::input(in_array($unit, [IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true), 'TIMESTAMPADD and TIMESTAMPDIFF take a simple interval unit.');
     }
 
     /**

@@ -24,6 +24,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class CharCallTest extends TestCase
 {
+    public function testRejectsDefaultAsTheUsingCharacterSet(): void
+    {
+        $this->expectExceptionMessage('CHAR USING names a character set rather than DEFAULT.');
+
+        new CharCall([new NumberLiteral('65')], new CharsetName(null));
+    }
+
     public function testDeriveScalarAnswersABinaryStringWithoutUsing(): void
     {
         $platform = new Platform();

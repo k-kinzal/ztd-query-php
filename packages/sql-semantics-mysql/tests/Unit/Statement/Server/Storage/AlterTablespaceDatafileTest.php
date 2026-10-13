@@ -16,6 +16,13 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile
 #[Medium]
 final class AlterTablespaceDatafileTest extends TestCase
 {
+    public function testRejectsABinaryLiteralAsAFileName(): void
+    {
+        $this->expectExceptionMessage('A tablespace file name is a quoted string.');
+
+        new AlterTablespaceDatafile(new \SqlSemantics\Statement\Identifier\Name('ts'), \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction::Add, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('61', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
     public function testRenderWritesTheRequest(): void
     {
         self::assertSame("ALTER TABLESPACE ts DROP DATAFILE 'f' NO_WAIT", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("alter tablespace ts drop datafile 'f' no_wait")->toString());

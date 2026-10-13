@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\MySql\Statement\Literal;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Type\NullOnly;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = NULL');
  *     $query->facts->scalar($query->statement->where->right)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
  */
-final class NullLiteral implements Scalar, Literal
+final class NullLiteral implements LiteralExpression
 {
     use Snapshot;
 
