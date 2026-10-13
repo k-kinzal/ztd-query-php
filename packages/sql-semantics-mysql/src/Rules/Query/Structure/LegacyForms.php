@@ -25,6 +25,9 @@ use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
+use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceAccess;
 use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
@@ -46,6 +49,17 @@ final class LegacyForms
             || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)
             || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)
             || $value instanceof ExplainModifier
+            || ($value instanceof DatabaseCollation && $value->collation->name === null)
+            || ($value instanceof ResetReplica && $value->terminology === Terminology::Legacy)
+            || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges && ($value->tls !== null || array_filter($value->grantees, static fn (\SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification $user): bool => $user->identification !== null) !== [] || array_filter($value->options, static fn (\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption $option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit) !== []))
+            || ($value instanceof \SqlSemantics\Statement\Query && $this->query($value));
+    }
+    /**
+     * Identifies ordering and set operands that only legacy query grammars admit.
+     */
+    public function query(\SqlSemantics\Statement\Query $value): bool
+    {
+        return ($value instanceof QueryExpression && $value->body instanceof Select && $value->orderBy !== [])
             || ($value instanceof SetOperation && ($value->left instanceof Select && $value->left->trailed() || $value->left instanceof QueryExpression));
     }
 }

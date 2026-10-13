@@ -163,4 +163,10 @@ final class RefusalsTest extends TestCase
         $session->query('CREATE TABLE t(a POINT SRID 1e0)');
     }
 
+    public function testSpatialUsesTheLineFeedDiagnosticOperand(): void
+    {
+        $error = (new Refusals())->spatial(new SpatialProblem(SpatialRule::LineFeed, SpatialAttributeKind::Name, "a\nb"), null);
+
+        self::assertSame([1525, 'HY000', "Incorrect argument contains not-allowed LF value: 'a\nb'"], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
+    }
 }

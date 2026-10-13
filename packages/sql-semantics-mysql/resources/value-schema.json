@@ -2356,7 +2356,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialProblem": {
         "attribute": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\SpatialAttributeKind",
-        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialRule"
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialRule",
+        "value": "?string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialRule": {
         "name": "string",

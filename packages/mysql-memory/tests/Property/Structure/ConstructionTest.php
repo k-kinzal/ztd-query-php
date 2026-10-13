@@ -88,4 +88,21 @@ final class ConstructionTest extends TestCase
         self::assertInstanceOf(SetOperation::class, $construction->object(SetOperation::class, 6));
         self::assertLessThanOrEqual(2000, $construction->attempts);
     }
+    /**
+     * Uses the retained non-empty collection types without replacing the selected root.
+     *
+     * @throws JsonException When the value inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testPrivilegeRootFitsTheBudgetWithoutReplacingItsType(): void
+    {
+        $catalogue = new Catalogue();
+        $choices = new Choices('2674a4091ceacb6852ced919ff7dec51:402');
+        $class = $choices->one($catalogue->roots());
+        $construction = new Construction($choices, $catalogue, new Metadata());
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges::class, $class);
+        self::assertInstanceOf($class, $construction->object($class, 6));
+        self::assertLessThanOrEqual(2000, $construction->attempts);
+    }
 }

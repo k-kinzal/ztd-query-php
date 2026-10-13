@@ -31,7 +31,7 @@ final class WithTest extends TestCase
 
     public function testBindReportsATableDefinedTwice(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1), A AS (SELECT 2) SELECT 3');
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1), a AS (SELECT 2) SELECT 3');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);

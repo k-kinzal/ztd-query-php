@@ -37,6 +37,7 @@ final class AlterView implements Statement
      */
     public function __construct(public readonly ViewDefinition $definition)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$definition->ifNotExists, 'ALTER VIEW has no IF NOT EXISTS clause.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

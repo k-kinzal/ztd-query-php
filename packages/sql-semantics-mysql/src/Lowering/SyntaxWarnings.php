@@ -8,6 +8,7 @@ use SqlParser\Lexer\SourceException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlParser\Parser\ReductionParser;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 
@@ -35,21 +36,25 @@ final class SyntaxWarnings
     public function completed(ReductionParser $parser, string $statement, int $end, GrammarRelease $release): array
     {
         $warnings = [];
+        $ranges = new SourceRanges();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, $end, $release): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, $ranges, $end, $release): void {
                 if ($lookahead->offset > $end) {
                     return;
                 }
                 $first = $node->children[0] ?? null;
                 $assignment = $node->children[$node->name === 'variable_aux' ? 1 : 2] ?? null;
                 $construct = match (true) {
+                    $node->name === 'text_literal' && $first instanceof Token && $first->name === 'NCHAR_STRING' => Deprecated::National,
                     $node->name === 'simple_expr' && $first instanceof Token && in_array($first->name, ['BINARY', 'BINARY_SYM'], true) => Deprecated::BinaryOperator,
                     in_array($node->name, ['variable_aux', 'in_expression_user_variable_assignment'], true) && $assignment instanceof Token && $assignment->name === 'SET_VAR' => Deprecated::AssignmentInExpression,
                     default => null,
                 };
                 if ($construct !== null && $construct->warnedIn($release)) {
-                    $tokens = $node->tokens();
-                    $warnings[] = [$tokens[count($tokens) - 1]->end(), $construct];
+                    $range = $ranges->span($node, true);
+                    if ($range !== null) {
+                        $warnings[] = [$range[1], $construct];
+                    }
                 }
             });
         } catch (SourceException) {

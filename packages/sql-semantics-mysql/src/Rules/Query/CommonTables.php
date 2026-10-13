@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
 use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
@@ -50,7 +51,9 @@ use SqlSemantics\Validation\ValueGraph;
  * server resolves the query of an expression only where a table reference
  * names the expression, so the problems of that query are reported at its
  * first use and an expression that is never used reports none; a name
- * defined twice is reported in any case.
+ * defined twice is reported in any case. The duplicate also retains an aborting
+ * parse notice after its query, including inside an unused definition, so later
+ * spelling warnings cannot escape the failure boundary.
  * Terminates: every expression is derived once. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/with.html ("The types of the CTE
  * result columns are inferred from the column types of the nonrecursive
@@ -69,10 +72,6 @@ final class CommonTables
         $seen = [];
         foreach ($with->tables as $table) {
             $key = $derivation->context->relationNames->fold($table->name->value);
-            if (isset($seen[$key])) {
-                $derivation->report(new Misuse(MisuseRule::DuplicateCommonTable, $table->name));
-            }
-            $seen[$key] = true;
             $scope = $this->extended($outer, $bindings);
             $recursive = $with->recursive && $this->refers($table->query, $table->name, $derivation);
             $problem = null;
@@ -95,6 +94,12 @@ final class CommonTables
 
                 return (new DerivedShapes())->shape($query, $table->columns, $derivation, $materialized);
             });
+            if (isset($seen[$key])) {
+                $duplicate = new Misuse(MisuseRule::DuplicateCommonTable, $table->name);
+                $derivation->report($duplicate);
+                $derivation->warn(new ParseFailure($duplicate, true), $table);
+            }
+            $seen[$key] = true;
             $bindings[] = new CommonBinding($table->name, $table, $shape);
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Construction;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Origins;
@@ -47,4 +48,32 @@ final class OriginsTest extends TestCase
         self::assertSame([$name, $warning, 16], [$notice->subject, $notice->warning, $notice->offset]);
     }
 
+    /**
+     * @return iterable<array{list<\SqlParser\Parser\Node>}>
+     */
+    public static function providerSourcePrefixes(): iterable
+    {
+        $nodes = [];
+        $previous = new \SqlParser\Parser\Node('empty', 0, []);
+        for ($index = 0; $index < 1000; $index++) {
+            $previous = new \SqlParser\Parser\Node('prefix', 0, [$previous, new \SqlParser\Lexer\Token(1, 'NUM', '1', $index * 2)]);
+            $nodes[] = $previous;
+        }
+        yield [$nodes];
+    }
+
+    /**
+     * @param list<\SqlParser\Parser\Node> $sources
+     */
+    #[DataProvider('providerSourcePrefixes')]
+    public function testRecordHandlesAllRangesOfDeepSourcePrefixes(array $sources): void
+    {
+        $origins = new Origins();
+        $values = array_map(static fn (\SqlParser\Parser\Node $source): \SqlSemantics\Statement\Node => $origins->record(new IntegerLiteral('1'), $source), $sources);
+        $published = $origins->publish();
+
+        self::assertCount(1000, $published->origins);
+        self::assertSame([0, 1], [$published->of($values[0])?->offset, $published->of($values[0])?->length]);
+        self::assertSame([0, 1999], [$published->of($values[999])?->offset, $published->of($values[999])?->length]);
+    }
 }

@@ -56,9 +56,7 @@ final class CreateSpatialReference implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $checks = new SpatialChecks();
-        $checks->srid($derivation, $this->srid);
-        $checks->attributes($derivation, $this->attributes);
+        (new SpatialChecks())->create($derivation, $this->srid, $this->attributes);
     }
 
     /**

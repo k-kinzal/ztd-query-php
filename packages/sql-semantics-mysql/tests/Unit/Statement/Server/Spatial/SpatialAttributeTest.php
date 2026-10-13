@@ -19,4 +19,10 @@ final class SpatialAttributeTest extends TestCase
     {
         self::assertSame("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n' DEFINITION 'd' ORGANIZATION 'o' IDENTIFIED BY 9 DESCRIPTION 'x'", (new Semantics(Dialect::MySql))->analyze("create spatial reference system 9 name 'n' definition 'd' organization 'o' identified by 9 description 'x'")->toString());
     }
+    public function testValueRejectsRadixStrings(): void
+    {
+        $this->expectExceptionMessage('A spatial reference attribute is quoted text.');
+
+        new SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('ab', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

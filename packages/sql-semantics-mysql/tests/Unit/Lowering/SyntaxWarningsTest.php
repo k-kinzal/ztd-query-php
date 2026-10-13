@@ -23,6 +23,10 @@ final class SyntaxWarningsTest extends TestCase
     public static function providerExpressions(): iterable
     {
         yield 'completed binary' => ['SELECT BINARY 1,?', [Deprecated::BinaryOperator]];
+        yield 'national string' => ["SELECT N'a',?", [Deprecated::National]];
+        yield 'national string segments' => ["SELECT N'a' 'b',?", [Deprecated::National]];
+        yield 'national string in incomplete group' => ["SELECT BINARY (N'a'+?),2", [Deprecated::National]];
+        yield 'national string before binary completion' => ["SELECT BINARY N'a',?", [Deprecated::National, Deprecated::BinaryOperator]];
         yield 'binary at rejected lookahead' => ['SELECT BINARY 1 ?', [Deprecated::BinaryOperator]];
         yield 'missing binary operand' => ['SELECT BINARY ?', []];
         yield 'incomplete binary group' => ['SELECT BINARY (1+?),2', []];

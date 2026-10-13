@@ -36,6 +36,7 @@ final class SpatialAttribute implements Node
      */
     public function __construct(public readonly SpatialAttributeKind $kind, public readonly Text $value, public readonly ?Numeral $identifier = null)
     {
+        Check::input($value->radix === null, 'A spatial reference attribute is quoted text.');
         Check::input(($identifier !== null) === ($kind === SpatialAttributeKind::Organization), 'IDENTIFIED BY belongs to ORGANIZATION.');
     }
 

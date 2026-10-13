@@ -37,12 +37,12 @@ final class RevokePrivileges implements Statement
     use Snapshot;
 
     /**
-     * @var list<Grantable> The revoked privileges in order; ALL stands alone
+     * @var non-empty-list<Grantable> The revoked privileges in order; ALL stands alone
      */
     public readonly array $privileges;
 
     /**
-     * @var list<UserSpecification> The accounts privileges are revoked from
+     * @var non-empty-list<UserSpecification> The accounts privileges are revoked from
      */
     public readonly array $users;
 

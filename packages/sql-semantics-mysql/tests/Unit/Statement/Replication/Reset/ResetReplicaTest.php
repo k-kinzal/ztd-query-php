@@ -18,6 +18,13 @@ use SqlSemantics\Statement\Operation;
 #[Medium]
 final class ResetReplicaTest extends TestCase
 {
+    public function testValueRejectsASynonymInTheOriginalTerminology(): void
+    {
+        $this->expectExceptionMessage('The SLAVE synonym applies to current replication terminology.');
+
+        new ResetReplica(Terminology::Legacy, synonym: true);
+    }
+
     public function testDeriveTargetRejectsTheVocabularyOfAnotherRelease(): void
     {
         $this->expectExceptionMessage('RESET REPLICA is written in the vocabulary of the release.');

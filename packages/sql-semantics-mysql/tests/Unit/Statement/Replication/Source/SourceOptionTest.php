@@ -44,4 +44,22 @@ final class SourceOptionTest extends TestCase
         self::assertInstanceOf(ChangeReplicationSource::class, $change->statement);
         self::assertSame([true, false, true], array_column($change->statement->options, 'synonym'));
     }
+    public function testValueRejectsUnrenamedSynonyms(): void
+    {
+        $this->expectExceptionMessage('A replication option synonym is a MASTER spelling of a current SOURCE option.');
+
+        new SourceOption(Terminology::Current, SourceOptionKind::PrivilegeChecksUser, null, true);
+    }
+    public function testValueRejectsSynonymsInLegacyVocabulary(): void
+    {
+        $this->expectExceptionMessage('A replication option synonym is a MASTER spelling of a current SOURCE option.');
+
+        new SourceOption(Terminology::Legacy, SourceOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('host'), true);
+    }
+    public function testValueRejectsRadixStrings(): void
+    {
+        $this->expectExceptionMessage('A replication option string is quoted text.');
+
+        new SourceOption(Terminology::Current, SourceOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('ab', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

@@ -44,14 +44,11 @@ final class ChangeReplicationSourceTest extends TestCase
         new Operation($semantics->context([]), $change);
     }
 
-    public function testDeriveStatementRejectsAnOptionOfALaterRelease(): void
+    public function testValueRejectsAnOptionOutsideTheVocabulary(): void
     {
-        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
-        $change = new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::GtidOnly, new Numeral('1'))]);
+        $this->expectExceptionMessage('A legacy replication option exists in MySQL 5.6 or 5.7.');
 
-        $this->expectExceptionMessage('GTID_ONLY is not an option of this release.');
-
-        new Operation($semantics->context([]), $change);
+        new SourceOption(Terminology::Legacy, SourceOptionKind::GtidOnly, new Numeral('1'));
     }
 
     public function testRenderWritesTheLegacyVocabulary(): void

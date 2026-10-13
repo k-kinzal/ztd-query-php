@@ -43,6 +43,8 @@ final class ResetReplica implements ResetTarget
      */
     public function __construct(public readonly Terminology $terminology, public readonly bool $all = false, public readonly ?Text $channel = null, public readonly bool $synonym = false)
     {
+        Check::input(!$synonym || $terminology === Terminology::Current, 'The SLAVE synonym applies to current replication terminology.');
+        Check::input($channel === null || $channel->radix === null, 'A replication channel is quoted text.');
     }
 
     /**

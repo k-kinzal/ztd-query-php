@@ -23,8 +23,9 @@ use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
  * DEFINITION 4096, ORGANIZATION 256 and DESCRIPTION 2048, counted as UTF-8
  * characters; the organization's identifier is at most 2^32-1. Each broken
  * rule is one SpatialProblem; the server stops at the first. The problems are
- * reported in the server's order: the identifier, the repeated attributes in
- * written order, then NAME, DEFINITION, ORGANIZATION and DESCRIPTION in turn,
+ * reported in the observed order: integer token validity, then line feeds,
+ * organization integer validity and repeated definitions in written order;
+ * identifier range, then NAME, DEFINITION, ORGANIZATION and DESCRIPTION in turn,
  * each missing, blank, holding a control character, too long, then its
  * identifier out of range (verified on a live 8.4 server). Terminates: five
  * passes over the attributes.
@@ -39,6 +40,21 @@ final class SpatialChecks
      * The character limits of the attributes.
      */
     private const LIMITS = ['NAME' => 80, 'DEFINITION' => 4096, 'ORGANIZATION' => 256, 'DESCRIPTION' => 2048];
+
+    /**
+     * Reports literal and duplicate problems before identifier and attribute constraints.
+     *
+     * @param list<SpatialAttribute> $attributes The attributes in written order
+     */
+    public function create(Derivation $derivation, Numeral $srid, array $attributes): void
+    {
+        if (!(new Magnitudes())->integer($derivation, $srid)) {
+            return;
+        }
+        $this->definitions($derivation, $attributes);
+        $this->srid($derivation, $srid);
+        $this->attributes($derivation, $attributes);
+    }
 
     /**
      * Reports an identifier out of range or zero.
@@ -61,15 +77,31 @@ final class SpatialChecks
      *
      * @param list<SpatialAttribute> $attributes
      */
-    public function attributes(Derivation $derivation, array $attributes): void
+    public function definitions(Derivation $derivation, array $attributes): void
     {
         $seen = [];
         foreach ($attributes as $attribute) {
+            if (str_contains($attribute->value->value, "\n")) {
+                $derivation->report(new SpatialProblem(SpatialRule::LineFeed, $attribute->kind, $attribute->value->value));
+            }
+            if ($attribute->identifier !== null) {
+                (new Magnitudes())->integer($derivation, $attribute->identifier);
+            }
             if (isset($seen[$attribute->kind->value])) {
                 $derivation->report(new SpatialProblem(SpatialRule::RepeatedAttribute, $attribute->kind));
             }
             $seen[$attribute->kind->value] = true;
         }
+    }
+
+    /**
+     * Reports missing and invalid attribute values after their definitions have been checked.
+     *
+     * @param list<SpatialAttribute> $attributes The attributes in written order
+     */
+    public function attributes(Derivation $derivation, array $attributes): void
+    {
+        $seen = array_fill_keys(array_map(static fn (SpatialAttribute $attribute): string => $attribute->kind->value, $attributes), true);
         foreach ([SpatialAttributeKind::Name, SpatialAttributeKind::Definition, SpatialAttributeKind::Organization, SpatialAttributeKind::Description] as $kind) {
             if (!isset($seen[$kind->value]) && ($kind === SpatialAttributeKind::Name || $kind === SpatialAttributeKind::Definition)) {
                 $derivation->report(new SpatialProblem(SpatialRule::MissingAttribute, $kind));
@@ -102,7 +134,7 @@ final class SpatialChecks
             $derivation->report(new SpatialProblem(SpatialRule::TooLong, $attribute->kind));
         }
         $magnitudes = new Magnitudes();
-        if ($attribute->identifier !== null && $magnitudes->integer($derivation, $attribute->identifier) && !$magnitudes->atMost($attribute->identifier, '4294967295')) {
+        if ($attribute->identifier !== null && $magnitudes->integral($attribute->identifier) && !$magnitudes->atMost($attribute->identifier, '4294967295')) {
             $derivation->report(new SpatialProblem(SpatialRule::IdentifierOutOfRange, $attribute->kind));
         }
     }

@@ -24,7 +24,7 @@ final class SpatialChecksTest extends TestCase
         self::assertInstanceOf(SpatialProblem::class, $operation->facts->diagnostics[0]);
     }
 
-    public function testAttributesReportsRepeatedAndMissingAttributes(): void
+    public function testDefinitionsReportsRepeatedAndMissingAttributes(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 5 DEFINITION 'd' DEFINITION 'e'");
 
@@ -50,5 +50,16 @@ final class SpatialChecksTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 5 NAME 'a\tb'");
 
         self::assertSame(['ER_SRS_INVALID_CHARACTER_IN_ATTRIBUTE', 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $create->facts->diagnostics));
+    }
+    public function testCreateKeepsLiteralAndDefinitionOrderBeforeIdentifierRange(): void
+    {
+        $first = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 0 NAME 'a\nb' NAME 'c'")->facts->diagnostics[0];
+        $second = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 0 NAME 'a' NAME 'b' DESCRIPTION 'c\nd'")->facts->diagnostics[0];
+
+        self::assertInstanceOf(SpatialProblem::class, $first);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::LineFeed, $first->rule);
+        self::assertSame("a\nb", $first->value);
+        self::assertInstanceOf(SpatialProblem::class, $second);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::RepeatedAttribute, $second->rule);
     }
 }

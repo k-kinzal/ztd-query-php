@@ -85,6 +85,7 @@ final class Refusals
         $subject = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable ? 'SRID' : $verb . ' SPATIAL REFERENCE SYSTEM';
 
         return match ($problem->rule) {
+            SpatialRule::LineFeed => DataError::WrongValue->error('argument contains not-allowed LF', (new DiagnosticText())->bytes((string) $problem->value, 128)),
             SpatialRule::IdentifierOutOfRange => DataError::DataOutOfRange->error($problem->attribute === SpatialAttributeKind::Organization ? 'IDENTIFIED BY' : 'SRID', $subject),
             SpatialRule::IdentifierZero => SchemaError::SrsZeroUnmodifiable->error(),
             SpatialRule::RepeatedAttribute => SchemaError::SrsRepeatedAttribute->error($attribute),

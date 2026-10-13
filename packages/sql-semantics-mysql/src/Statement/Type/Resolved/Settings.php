@@ -32,12 +32,12 @@ final class Settings implements Session
     use Snapshot;
 
     /**
-     * @var array<string, Collation> The default collation of each schema, by lower-case name
+     * @var array<array-key, Collation> The default collation of each schema, by lower-case name
      */
     public readonly array $schemas;
 
     /**
-     * @var array<string, Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null The stored types by lower-case name; a Domain alone uses the connection collation for numeric assignment metadata; null when unknown
+     * @var array<array-key, Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null The stored types by lower-case name; a Domain alone uses the connection collation for numeric assignment metadata; null when unknown
      */
     public readonly ?array $userVariables;
 
@@ -47,7 +47,7 @@ final class Settings implements Session
     public readonly array $program;
 
     /**
-     * @var array<string, Domain> The type each stored function returns, by lower-case `database.name`
+     * @var array<array-key, Domain> The type each stored function returns, by lower-case `database.name`
      */
     public readonly array $functions;
 
@@ -55,14 +55,14 @@ final class Settings implements Session
      * @param Collation $connection The collation of string literals (collation_connection)
      * @param int $divPrecisionIncrement The digits a division adds to the scale of its dividend (div_precision_increment)
      * @param Collation|null $server The default collation of a schema the settings do not list (collation_server); the connection collation when null
-     * @param array<string, Collation> $schemas The default collation of each schema, by name
+     * @param array<array-key, Collation> $schemas The default collation of each schema, by name
      * @param int $groupConcatMaxLen The longest result of GROUP_CONCAT in bytes (group_concat_max_len)
-     * @param array<string, Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null $userVariables The stored types by name, optionally including assignment collations; null when the session does not say
+     * @param array<array-key, Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null $userVariables The stored types by name, optionally including assignment collations; null when the session does not say
      * @param array<int, Domain> $parameters The type of the value bound to each parameter marker, by the position of the marker among the markers
      * @param bool $unsignedSubtraction Whether subtracting from an unsigned integer gives an unsigned integer, as it does unless sql_mode has NO_UNSIGNED_SUBTRACTION
      * @param Charset|null $client The character set statements are read in (character_set_client); null when the session does not say
      * @param list<ProgramRow> $program The parameters, local variables and trigger rows a statement of a running stored program sees, the innermost last; empty outside a program
-     * @param array<string, Domain> $functions The type each stored function returns, by `database.name`
+     * @param array<array-key, Domain> $functions The type each stored function returns, by `database.name`
      * @param bool $derivedMerge Whether eligible derived queries can merge into their enclosing block
      * @param Locale|null $timeNames The locale of the names of months and days (lc_time_names); en_US when null
      * @param string $blockEncryptionMode The mode of AES_ENCRYPT and AES_DECRYPT (block_encryption_mode), whose stream modes do not pad
@@ -90,17 +90,17 @@ final class Settings implements Session
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
         $routines = [];
         foreach ($functions as $name => $domain) {
-            $routines[strtolower($name)] = $domain;
+            $routines[strtolower((string) $name)] = $domain;
         }
         $this->functions = $routines;
         $lower = [];
         foreach ($schemas as $name => $collation) {
-            $lower[strtolower($name)] = $collation;
+            $lower[strtolower((string) $name)] = $collation;
         }
         $this->schemas = $lower;
         $variables = null;
         foreach ($userVariables ?? [] as $name => $domain) {
-            $variables[strtolower($name)] = $domain;
+            $variables[strtolower((string) $name)] = $domain;
         }
         $this->userVariables = $userVariables === null ? null : ($variables ?? []);
     }

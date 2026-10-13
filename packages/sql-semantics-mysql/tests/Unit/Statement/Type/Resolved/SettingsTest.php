@@ -65,6 +65,17 @@ final class SettingsTest extends TestCase
         self::assertNull((new Settings(Collation::known('latin1_bin')))->userVariables);
     }
 
+    public function testNumericNameKeysSurvivePhpArrayCoercion(): void
+    {
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
+        $collation = Collation::known('latin1_bin');
+        $settings = new Settings($collation, schemas: ['123' => $collation], userVariables: ['123' => $domain], functions: ['123' => $domain]);
+
+        self::assertSame($collation, $settings->schema('123'));
+        self::assertSame($domain, $settings->userVariables[123] ?? null);
+        self::assertSame($domain, $settings->functions[123]);
+    }
+
     public function testVariableFindsTheInnermostVariableOfARunningProgram(): void
     {
         $outer = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \SqlSemantics\Statement\Identifier\Name('x')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);

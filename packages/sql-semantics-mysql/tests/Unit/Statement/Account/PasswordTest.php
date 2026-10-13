@@ -24,4 +24,10 @@ final class PasswordTest extends TestCase
     {
         self::assertSame("SET PASSWORD = 'x'", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("set password = 'x'")->toString());
     }
+    public function testValueRejectsRadixPasswords(): void
+    {
+        $this->expectExceptionMessage('A password is quoted text.');
+
+        new Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('ab', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

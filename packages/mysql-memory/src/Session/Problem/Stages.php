@@ -112,7 +112,7 @@ final class Stages
             || $diagnostic instanceof UnknownSystemVariable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable
             || ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === 'AT LOCAL')
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber
-            || ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem && $diagnostic->attribute === null && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierOutOfRange);
+            || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem;
     }
 
     /**

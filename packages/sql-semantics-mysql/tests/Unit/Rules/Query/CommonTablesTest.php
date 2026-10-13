@@ -79,6 +79,35 @@ final class CommonTablesTest extends TestCase
         self::assertSame([], $unusedSelect->facts->diagnostics);
     }
 
+    public function testBindReportsADuplicateAfterItsQueryEvenInsideAnUnusedDefinition(): void
+    {
+        $select = static fn (string $value): Select => new Select([], [new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('a')), new NumberLiteral($value)))]);
+        $inner = new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [
+            new CommonTableExpression(new Name('c'), [], $select('1')),
+            new CommonTableExpression(new Name('c'), [], $select('2')),
+        ]), $select('3'));
+        $root = new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [new CommonTableExpression(new Name('unused'), [], $inner)]), $select('4'));
+        $operation = new \SqlSemantics\Statement\Operation((new Semantics(Dialect::MySql, 'mysql-8.4.7'))->context(), $root);
+        $warnings = $operation->facts->warnings;
+
+        self::assertSame([], $operation->sources->notices);
+        self::assertCount(5, $warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $warnings[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[2]);
+        self::assertTrue($warnings[2]->aborts);
+        self::assertEquals(new Misuse(MisuseRule::DuplicateCommonTable, new Name('c')), $warnings[2]->problem);
+    }
+
+    public function testBindKeepsCaseDistinctCommonTablesSeparate(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1 AS a), C AS (SELECT 2 AS b) SELECT c.a, C.b FROM c, C', []);
+
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame('a', $operation->field(0)->name?->value);
+        self::assertSame('b', $operation->field(1)->name?->value);
+    }
+
     public function testExtendedAddsTablesWithoutAQueryLevel(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -210,11 +239,11 @@ final class CommonTablesTest extends TestCase
     public function testBindNamesTheProblemsOfTheExpressions(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $twice = $semantics->analyze('WITH c AS (SELECT 1), C AS (SELECT 2) SELECT 1')->facts->diagnostics;
+        $twice = $semantics->analyze('WITH c AS (SELECT 1), c AS (SELECT 2) SELECT 1')->facts->diagnostics;
         $alone = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c) SELECT 1 FROM c')->facts->diagnostics;
         $late = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c UNION SELECT 1) SELECT 1 FROM c')->facts->diagnostics;
 
-        self::assertEquals([new Misuse(MisuseRule::DuplicateCommonTable, new Name('C'))], $twice);
+        self::assertEquals([new Misuse(MisuseRule::DuplicateCommonTable, new Name('c'))], $twice);
         self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutUnion, new Name('c'))], $alone);
         self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutAnchor, new Name('c'))], $late);
     }

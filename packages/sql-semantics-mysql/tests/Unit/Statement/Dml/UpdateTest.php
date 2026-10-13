@@ -24,6 +24,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class UpdateTest extends TestCase
 {
+    public function testValueRejectsAnOutputPositionInWriteOrdering(): void
+    {
+        $this->expectExceptionMessage('UPDATE ordering uses expressions');
+
+        new Update(null, false, false, [new TableReference(new QualifiedName(new Name('t')))], [new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')))]);
+    }
+
     public function testDeriveStatementResolvesAssignmentsAgainstEveryTable(): void
     {
         $semantics = new Semantics(Dialect::MySql);

@@ -95,7 +95,7 @@ final class ReadingTest extends TestCase
         $session->query('WITH c AS (SELECT 1 LIMIT n) SELECT * FROM c');
     }
 
-    public function testRepeatedFindsACommonTableDefinedTwiceInsideAnUnusedOne(): void
+    public function testReadConsumesADuplicateCommonTableInsideAnUnusedOne(): void
     {
         $session = (new Instance())->connect();
 

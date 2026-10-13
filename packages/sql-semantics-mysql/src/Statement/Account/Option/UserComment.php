@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
@@ -31,6 +32,7 @@ final class UserComment implements Node
      */
     public function __construct(public readonly CommentKind $kind, public readonly Text $text)
     {
+        Check::input($text->radix === null, 'An account comment or attribute is quoted text.');
     }
 
     /**

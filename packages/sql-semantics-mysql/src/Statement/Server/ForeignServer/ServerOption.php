@@ -33,6 +33,7 @@ final class ServerOption implements Node
      */
     public function __construct(public readonly ServerOptionKind $kind, public readonly Text|Numeral $value)
     {
+        Check::input(!$value instanceof Text || $value->radix === null, 'A server option string is quoted text.');
         Check::input(($kind === ServerOptionKind::Port) === ($value instanceof Numeral), 'PORT takes a number and the other server options a string.');
     }
 

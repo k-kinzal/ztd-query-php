@@ -56,6 +56,7 @@ final class ViewDefinition implements Node
     ) {
         Check::input($name->catalog === null, 'A view name has at most a database qualifier.');
         $this->columns = $columns === null ? null : Check::listOf($columns, Name::class, 'A written column list names at least one column.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ViewQueries())->check($query);
     }
 
     /**

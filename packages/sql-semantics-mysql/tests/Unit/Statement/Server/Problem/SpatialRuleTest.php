@@ -16,6 +16,7 @@ final class SpatialRuleTest extends TestCase
     public function testCasesHoldTheServerErrors(): void
     {
         self::assertSame('ER_SRS_ATTRIBUTE_STRING_TOO_LONG', SpatialRule::TooLong->value);
-        self::assertCount(8, SpatialRule::cases());
+        self::assertSame('ER_WRONG_VALUE', SpatialRule::LineFeed->value);
+        self::assertCount(9, SpatialRule::cases());
     }
 }

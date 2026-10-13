@@ -19,8 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
-use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
 use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
@@ -59,10 +57,6 @@ final class Reading
         $this->grouping($operation, $session);
         $this->variables($operation, $session);
         $this->legacyWrites($operation, $session);
-        $repeated = $this->repeated($operation->statement);
-        if ($repeated !== null) {
-            throw QueryError::NonUniqueTable->error($repeated->value);
-        }
         $this->targets($operation->statement, $session);
         (new Precision())->check($operation->statement);
         $this->diagnosed($operation, $session);
@@ -308,35 +302,4 @@ final class Reading
         }
     }
 
-    /**
-     * Answers the first common table name a WITH clause defines twice, in the order the server parses the definitions: each after the definitions nested in it.
-     *
-     * The server checks the names while it parses the statement, so a WITH clause inside a common
-     * table expression that is never used reports its duplicate too.
-     */
-    public function repeated(Node $node): ?Name
-    {
-        $seen = [];
-        $properties = get_object_vars($node);
-        $children = [];
-        array_walk_recursive($properties, static function ($value) use (&$children): void {
-            if ($value instanceof Node) {
-                $children[] = $value;
-            }
-        });
-        foreach ($children as $child) {
-            $found = $this->repeated($child);
-            if ($found !== null) {
-                return $found;
-            }
-            if ($node instanceof With && $child instanceof CommonTableExpression) {
-                if (isset($seen[$child->name->value])) {
-                    return $child->name;
-                }
-                $seen[$child->name->value] = true;
-            }
-        }
-
-        return null;
-    }
 }

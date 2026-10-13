@@ -26,6 +26,16 @@ final class Origins
      */
     private array $notices = [];
 
+    private readonly SourceRanges $ranges;
+
+    /**
+     * Shares transient source ranges across occurrence recordings.
+     */
+    public function __construct()
+    {
+        $this->ranges = new SourceRanges();
+    }
+
     /**
      * Records the range from the first through the last source token, excluding empty synthetic tokens, and returns the occurrence.
      *
@@ -35,11 +45,9 @@ final class Origins
      */
     public function record(Node $value, ParseNode $source): Node
     {
-        $tokens = array_values(array_filter($source->tokens(), static fn (\SqlParser\Lexer\Token $token): bool => $token->text !== ''));
-        $first = $tokens[0] ?? null;
-        $last = $tokens[count($tokens) - 1] ?? null;
-        if ($first !== null && $last !== null) {
-            $this->origins[spl_object_id($value)] = new Origin($value, $first->offset, $last->offset + strlen($last->text) - $first->offset);
+        $range = $this->ranges->span($source);
+        if ($range !== null) {
+            $this->origins[spl_object_id($value)] = new Origin($value, $range[0], $range[1] - $range[0]);
         }
 
         return $value;
@@ -50,10 +58,9 @@ final class Origins
      */
     public function notice(Node|\SqlSemantics\Statement\Identifier\Name $subject, \SqlSemantics\Statement\Fact\Warning $warning, ParseNode $source): void
     {
-        $tokens = $source->tokens();
-        $last = $tokens[count($tokens) - 1] ?? null;
-        if ($last !== null) {
-            $this->notices[] = new \SqlSemantics\Statement\Source\SourceNotice($subject, $warning, $last->offset + strlen($last->text));
+        $range = $this->ranges->span($source, true);
+        if ($range !== null) {
+            $this->notices[] = new \SqlSemantics\Statement\Source\SourceNotice($subject, $warning, $range[1]);
         }
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Admin;
 
+use MySqlMemory\Command\Admin\Storage\DatafileChecks;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Server\ServerCatalog;
 use MySqlMemory\Error\Family\AdministrationError;
@@ -334,29 +335,18 @@ final class TablespaceCommand implements Command
      */
     public function file(string $file, string $extension, string $failed, string $name, Registry $registry): void
     {
-        $base = basename($file);
-        $reasons = [];
-        if (str_starts_with($file, '/')) {
-            $reasons[] = 'The DATAFILE location must be in a known directory.';
-        } elseif (str_contains($file, '/')) {
-            $reasons = ['The directory does not exist or is incorrect.', 'The DATAFILE location cannot be under the datadir.'];
-        } elseif (!str_ends_with($base, $extension) || $base === $extension) {
-            $reasons[] = 'The ADD DATAFILE filepath does not have a proper filename.';
-            if (!str_ends_with($base, $extension)) {
-                $reasons[] = "The ADD DATAFILE filepath must end with '" . $extension . "'.";
+        foreach ($registry->tablespaces as $tablespace) {
+            if (rtrim($tablespace->file, ' ') === rtrim($file, ' ')) {
+                throw SchemaError::DuplicateTablespaceFile->error($name);
             }
         }
+        $reasons = (new DatafileChecks())->reasons($file, $extension, $registry);
         if ($reasons !== []) {
             $following = array_map(static fn (string $reason): array => [SchemaError::WrongFileName->value, $reason], array_slice($reasons, 1));
             $following[] = [SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message($failed)];
-            $following[] = [SchemaError::WrongFileName->value, SchemaError::WrongFileName->message($file)];
+            $following[] = [SchemaError::WrongFileName->value, SchemaError::WrongFileName->message(explode("\0", $file, 2)[0])];
 
             throw new SqlError(SchemaError::WrongFileName, $reasons[0], null, $following);
-        }
-        foreach ($registry->tablespaces as $tablespace) {
-            if ($tablespace->file === $file) {
-                throw SchemaError::DuplicateTablespaceFile->error($name);
-            }
         }
     }
 

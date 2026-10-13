@@ -43,12 +43,12 @@ final class GrantPrivileges implements Statement
     use Snapshot;
 
     /**
-     * @var list<Grantable> The granted privileges in order; ALL stands alone
+     * @var non-empty-list<Grantable> The granted privileges in order; ALL stands alone
      */
     public readonly array $privileges;
 
     /**
-     * @var list<UserSpecification> The accounts privileges are granted to
+     * @var non-empty-list<UserSpecification> The accounts privileges are granted to
      */
     public readonly array $grantees;
 

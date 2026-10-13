@@ -22,6 +22,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class DeleteTest extends TestCase
 {
+    public function testValueRejectsAnOutputPositionInWriteOrdering(): void
+    {
+        $this->expectExceptionMessage('DELETE ordering uses expressions');
+
+        new Delete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName(new Name('t'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')))]);
+    }
+
     public function testDeriveStatementSeesTheTableUnderItsAlias(): void
     {
         $semantics = new Semantics(Dialect::MySql);

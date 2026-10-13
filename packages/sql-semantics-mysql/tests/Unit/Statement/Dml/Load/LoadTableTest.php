@@ -67,4 +67,10 @@ final class LoadTableTest extends TestCase
 
         new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t')), new Name('x')));
     }
+    public function testValueRejectsDefaultCharacterSet(): void
+    {
+        $this->expectExceptionMessage('A LOAD character set names a character set, not DEFAULT.');
+
+        new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('file')), null, new WriteTarget(new QualifiedName(new Name('t'))), new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null));
+    }
 }

@@ -37,11 +37,11 @@ final class SourceSettingsTest extends TestCase
 
     public function testOptionRejectsAnOptionOfALaterRelease(): void
     {
-        $this->expectExceptionMessage('NETWORK_NAMESPACE is not an option of this release.');
+        $this->expectExceptionMessage('SOURCE_TLS_VERSION is not an option of this release.');
 
         new Operation(
-            (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]),
-            new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::NetworkNamespace, new Text('n'))]),
+            (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]),
+            new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::TlsVersion, new Text('TLSv1.2'))]),
         );
     }
 

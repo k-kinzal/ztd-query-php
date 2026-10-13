@@ -45,6 +45,9 @@ final class SourceOption implements Node
         public readonly Text|Numeral|NumberLiteral|ServerIds|AccountName|PrimaryKeyCheck|AnonymousGtids|null $value,
         public readonly bool $synonym = false,
     ) {
+        Check::input($terminology !== Terminology::Legacy || (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->option(\SqlSemantics\Contract\GrammarRelease::MySql5744, $kind), 'A legacy replication option exists in MySQL 5.6 or 5.7.');
+        Check::input(!$synonym || ($terminology === Terminology::Current && $kind->renamed()), 'A replication option synonym is a MASTER spelling of a current SOURCE option.');
+        Check::input(!$value instanceof Text || $value->radix === null, 'A replication option string is quoted text.');
         Check::input($kind->accepts($value), 'The value of ' . $kind->value . ' is outside the domain of the option.');
     }
 

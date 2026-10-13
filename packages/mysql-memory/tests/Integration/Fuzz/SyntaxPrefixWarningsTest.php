@@ -25,6 +25,7 @@ final class SyntaxPrefixWarningsTest extends TestCase
     public static function providerReleases(): iterable
     {
         $statements = ['SELECT !?', 'SELECT !1,?', 'SELECT !!?', 'SELECT !!!?', 'SELECT ! !?', 'SELECT !(!?)', 'SELECT 1 || ?', 'SELECT 1 && ?', 'SELECT SQL_NO_CACHE ?', 'SELECT SQL_CALC_FOUND_ROWS ?', 'SELECT SQL_NO_CACHE SQL_CALC_FOUND_ROWS !?', 'SELECT BINARY ?', 'SELECT BINARY 1,?', 'SELECT BINARY 1 ?', 'SELECT BINARY (1+?),2', 'SELECT BINARY 1+?', 'SELECT @a:=1+?', 'SELECT @a:=BINARY 1,?', 'SELECT BINARY BINARY 1,?', 'SELECT BINARY 1 FROM ?', 'SELECT BINARY 1 UNION SELECT ?', 'SELECT @a:=1 FROM ?', 'SELECT ! FROM t', 'SELECT 1 || FROM t', 'SELECT 1 && FROM t', 'SELECT SQL_NO_CACHE FROM t', 'SELECT 1, SQL_NO_CACHE ?', 'SELECT SQL_NO_CACHE SQL_NO_CACHE ?', 'SELECT @a := ?', 'SELECT @a := 1, ?', 'SELECT SQL_NO_CACHE (SELECT SQL_NO_CACHE !?),?', 'SELECT /*! SQL_NO_CACHE */ !?', 'SELECT \'SQL_NO_CACHE !\', ?', 'SELECT SQL_NO_CACHE !1, \'unterminated', 'SELECT !1, 0x', 'SELECT 1, ) !1, ?', 'SELECT SQL_CALC_FOUND_ROWS (SELECT SQL_NO_CACHE BINARY 1),?', 'SELECT @a:=(SELECT BINARY 1),?'];
+        array_push($statements, "SELECT N'a',?", "SELECT N'a' 'b',?", "SELECT BINARY (N'a'+?),2", "SELECT BINARY N'a',?", "SELECT N'a', N'b',?", "SELECT ) N'a',?", "SELECT N'a', 'unterminated");
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             foreach (['', 'PIPES_AS_CONCAT'] as $mode) {
                 yield $release . ' ' . $mode => [$release, $statements, $mode];
