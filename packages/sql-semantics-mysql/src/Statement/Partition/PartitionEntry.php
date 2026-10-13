@@ -36,6 +36,7 @@ final class PartitionEntry implements Statement
      */
     public function __construct(public readonly PartitionClause $partitioning)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

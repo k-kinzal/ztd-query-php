@@ -57,6 +57,7 @@ final class Explain implements Statement
         public readonly ?Name $database = null,
     ) {
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null), 'EXTENDED and PARTITIONS are written alone.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

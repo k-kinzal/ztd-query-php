@@ -31,6 +31,7 @@ final class DropResourceGroup implements Statement
      */
     public function __construct(public readonly Name $name, public readonly bool $force = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

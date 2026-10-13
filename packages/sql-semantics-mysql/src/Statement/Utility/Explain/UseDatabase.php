@@ -34,6 +34,7 @@ final class UseDatabase implements Statement
      */
     public function __construct(public readonly Name $database)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

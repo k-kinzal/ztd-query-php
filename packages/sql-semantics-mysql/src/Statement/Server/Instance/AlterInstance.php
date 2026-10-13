@@ -32,6 +32,7 @@ final class AlterInstance implements Statement
      */
     public function __construct(public readonly InstanceAction $action)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

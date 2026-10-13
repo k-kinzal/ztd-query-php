@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Relation;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Rendering\Output;
@@ -34,6 +35,9 @@ final class NestedRelation implements Relation
      */
     public function __construct(public readonly Relation $relation)
     {
+        Check::input(!$relation instanceof JsonTable && !$relation instanceof OdbcJoin, 'A JSON table or modern ODBC escape is not a single parenthesized table factor.');
+        Check::input(!$relation instanceof DerivedTable || $relation->alias !== null, 'Parentheses around an unaliased derived query belong to the query, not a nested relation.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

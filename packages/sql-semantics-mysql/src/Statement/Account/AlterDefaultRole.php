@@ -35,6 +35,7 @@ final class AlterDefaultRole implements Statement
     public function __construct(public readonly bool $ifExists, public readonly Account $user, public readonly RoleSelection $roles)
     {
         Check::input($roles->set !== RoleSet::Default && ($roles->set !== RoleSet::All || $roles->roles === []), 'DEFAULT ROLE names roles, ALL or NONE.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

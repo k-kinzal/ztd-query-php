@@ -55,6 +55,7 @@ final class JsonTable implements Relation
      */
     public function __construct(public readonly Scalar $document, public readonly StringLiteral $path, array $columns, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As)
     {
+        Check::input($mark !== AliasMark::Equals, 'A JSON table alias is written with or without AS.');
         Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');
         $this->columns = Check::listOf($columns, JsonTableColumn::class, 'JSON_TABLE defines at least one column.', 1);
     }

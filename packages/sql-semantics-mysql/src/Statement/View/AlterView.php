@@ -37,6 +37,7 @@ final class AlterView implements Statement
      */
     public function __construct(public readonly ViewDefinition $definition)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

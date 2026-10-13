@@ -33,6 +33,7 @@ final class XaCommit implements Statement
      */
     public function __construct(public readonly Xid $xid, public readonly bool $onePhase = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -34,6 +34,7 @@ final class GetDiagnostics implements Statement, ProgramStatement
      */
     public function __construct(public readonly ConditionDiagnostics|StatementDiagnostics $information, public readonly ?DiagnosticsArea $area = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

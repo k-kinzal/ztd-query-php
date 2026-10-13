@@ -37,6 +37,7 @@ final class ShowCreateDatabase implements Statement
      */
     public function __construct(public readonly Name $name, public readonly bool $ifNotExists = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

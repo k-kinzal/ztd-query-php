@@ -48,6 +48,7 @@ final class CloneInstance implements Statement
         public readonly ?Text $directory = null,
         public readonly ?bool $requireSsl = null,
     ) {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

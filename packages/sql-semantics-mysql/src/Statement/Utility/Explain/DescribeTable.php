@@ -42,6 +42,7 @@ final class DescribeTable implements Statement
      */
     public function __construct(public readonly InspectedTable $table, public readonly Name|Text|null $column = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

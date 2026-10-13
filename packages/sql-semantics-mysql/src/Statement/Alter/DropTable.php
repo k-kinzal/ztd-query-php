@@ -54,6 +54,7 @@ final class DropTable implements Statement
     {
         Check::input($tables !== [], 'DROP TABLE names at least one table.');
         $this->tables = Check::listOf($tables, TargetTable::class, 'DROP TABLE names a list of tables.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

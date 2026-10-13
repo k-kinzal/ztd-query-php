@@ -41,6 +41,7 @@ final class Kill implements Statement
      */
     public function __construct(public readonly ?KillScope $scope, public readonly Scalar $process)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

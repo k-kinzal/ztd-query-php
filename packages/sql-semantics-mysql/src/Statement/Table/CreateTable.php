@@ -98,6 +98,7 @@ final class CreateTable implements Statement, Relation
             !$enclosed || ($this->elements === [] && $this->options === [] && $partitioning !== null && $query !== null && $query->duplicate === null && (new EnclosedQuery())->accepts($query->query)),
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

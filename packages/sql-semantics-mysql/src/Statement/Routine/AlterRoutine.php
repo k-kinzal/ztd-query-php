@@ -52,6 +52,7 @@ final class AlterRoutine implements Statement
         foreach ($this->characteristics as $characteristic) {
             Check::input(!$characteristic instanceof Determinism, 'ALTER of a routine has no DETERMINISTIC characteristic.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -42,6 +42,7 @@ final class SetDefaultRole implements Statement
     {
         Check::input($roles->set !== RoleSet::Default && ($roles->set !== RoleSet::All || $roles->roles === []), 'SET DEFAULT ROLE names roles, ALL or NONE.');
         $this->users = Check::listOf($users, AccountName::class, 'SET DEFAULT ROLE names at least one account.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

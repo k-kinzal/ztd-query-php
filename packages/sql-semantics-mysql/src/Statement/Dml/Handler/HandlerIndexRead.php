@@ -38,6 +38,7 @@ final class HandlerIndexRead implements Statement
      */
     public function __construct(public readonly OpenHandler $handler, public readonly Name $index, public readonly IndexDirection $direction, public readonly ?Scalar $where = null, public readonly ?Limit $limit = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

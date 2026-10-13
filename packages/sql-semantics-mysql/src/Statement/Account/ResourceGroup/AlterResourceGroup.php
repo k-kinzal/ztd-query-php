@@ -43,6 +43,7 @@ final class AlterResourceGroup implements Statement
     public function __construct(public readonly Name $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false)
     {
         $this->cpus = Check::listOf($cpus, CpuRange::class, 'VCPU lists CPU numbers and ranges.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -43,6 +43,7 @@ final class ImportTable implements Statement
         foreach ($this->files as $file) {
             Check::input($file->radix === null, 'An imported file name is a quoted string.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

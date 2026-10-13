@@ -42,6 +42,7 @@ final class SetResourceGroup implements Statement
     public function __construct(public readonly Name $name, array $threads = [])
     {
         $this->threads = Check::listOf($threads, Numeral::class, 'FOR lists thread ids.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

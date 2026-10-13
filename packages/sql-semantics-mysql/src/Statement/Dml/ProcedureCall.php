@@ -45,6 +45,7 @@ final class ProcedureCall implements Statement
     {
         Check::input($procedure->catalog === null, 'A procedure is qualified by at most a database.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'The arguments of CALL are expressions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

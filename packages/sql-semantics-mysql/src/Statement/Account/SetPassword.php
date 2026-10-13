@@ -41,6 +41,7 @@ final class SetPassword implements Statement
     public function __construct(public readonly ?Account $user, public readonly ?Password $password, public readonly ?Text $replace = null, public readonly bool $retainCurrent = false)
     {
         Check::input($password?->function === null || ($replace === null && !$retainCurrent), 'A password written with a function has no REPLACE and no RETAIN.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

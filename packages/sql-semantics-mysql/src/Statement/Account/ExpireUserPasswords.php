@@ -37,6 +37,7 @@ final class ExpireUserPasswords implements Statement
     public function __construct(array $users)
     {
         $this->users = Check::listOf($users, Account::class, 'ALTER USER names at least one account.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

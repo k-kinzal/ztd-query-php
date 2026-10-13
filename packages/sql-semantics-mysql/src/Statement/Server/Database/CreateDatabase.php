@@ -49,6 +49,7 @@ final class CreateDatabase implements Statement
         foreach ($this->options as $option) {
             Check::input(!$option instanceof DatabaseReadOnly, 'READ ONLY is an option of ALTER DATABASE.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

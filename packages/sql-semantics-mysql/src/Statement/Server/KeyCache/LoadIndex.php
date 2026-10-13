@@ -49,6 +49,7 @@ final class LoadIndex implements Statement
         foreach ($this->tables as $table) {
             Check::input($table->partitions === null || count($this->tables) === 1, 'A table with partitions is the only table of LOAD INDEX INTO CACHE.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

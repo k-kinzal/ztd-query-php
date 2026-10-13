@@ -35,6 +35,7 @@ final class ShowErrors implements Statement
      */
     public function __construct(public readonly ?Limit $limit = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

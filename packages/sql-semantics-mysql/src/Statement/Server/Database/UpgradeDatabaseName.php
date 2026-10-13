@@ -33,6 +33,7 @@ final class UpgradeDatabaseName implements Statement
      */
     public function __construct(public readonly Name $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

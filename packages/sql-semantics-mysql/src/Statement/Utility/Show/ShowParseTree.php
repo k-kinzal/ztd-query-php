@@ -37,6 +37,7 @@ final class ShowParseTree implements Statement
      */
     public function __construct(public readonly Statement $statement)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

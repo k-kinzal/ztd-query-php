@@ -49,6 +49,7 @@ final class ShowGrants implements Statement
     {
         $this->using = Check::listOf($using, Account::class, 'USING names a list of roles.');
         Check::input($user !== null || $this->using === [], 'USING requires FOR.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

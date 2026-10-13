@@ -44,6 +44,7 @@ final class AlterLogfileGroup implements Statement
     public function __construct(public readonly Name $name, public readonly LogFile $file, array $options = [])
     {
         $this->options = (new StorageOptions())->checked($options, StorageOptions::ALTER_LOGFILE_GROUP);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

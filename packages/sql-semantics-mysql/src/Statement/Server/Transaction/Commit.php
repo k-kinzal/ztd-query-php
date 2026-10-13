@@ -41,6 +41,7 @@ final class Commit implements Statement
     public function __construct(public readonly ?bool $chain = null, public readonly ?bool $release = null)
     {
         Check::input($chain !== true || $release !== true, 'AND CHAIN and RELEASE exclude each other.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

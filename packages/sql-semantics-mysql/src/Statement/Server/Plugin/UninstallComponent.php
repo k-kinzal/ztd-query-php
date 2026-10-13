@@ -43,6 +43,7 @@ final class UninstallComponent implements Statement
         foreach ($this->components as $component) {
             Check::input($component->radix === null, 'A component URN is a quoted string.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

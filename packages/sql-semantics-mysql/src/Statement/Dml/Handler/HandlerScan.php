@@ -35,6 +35,7 @@ final class HandlerScan implements Statement
      */
     public function __construct(public readonly OpenHandler $handler, public readonly ScanDirection $direction, public readonly ?Scalar $where = null, public readonly ?Limit $limit = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

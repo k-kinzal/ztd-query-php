@@ -35,6 +35,7 @@ final class ReleaseSavepoint implements Statement
      */
     public function __construct(public readonly Name $savepoint)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

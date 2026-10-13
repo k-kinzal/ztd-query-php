@@ -44,6 +44,7 @@ final class AlterDatabase implements Statement
     public function __construct(public readonly ?Name $name, array $options)
     {
         $this->options = Check::listOf($options, DatabaseOption::class, 'ALTER DATABASE changes at least one option.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

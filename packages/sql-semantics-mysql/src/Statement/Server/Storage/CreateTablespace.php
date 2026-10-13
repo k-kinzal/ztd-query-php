@@ -46,6 +46,7 @@ final class CreateTablespace implements Statement
     public function __construct(public readonly Name $name, public readonly ?Text $datafile = null, public readonly ?Name $logfileGroup = null, array $options = [])
     {
         $this->options = (new StorageOptions())->checked($options, StorageOptions::TABLESPACE);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -39,6 +39,7 @@ final class Help implements Statement
      */
     public function __construct(public readonly Name $topic)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

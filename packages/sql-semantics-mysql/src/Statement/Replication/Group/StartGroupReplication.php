@@ -50,6 +50,7 @@ final class StartGroupReplication implements Statement
     public function __construct(array $options = [])
     {
         $this->options = Check::listOf($options, CredentialOption::class, 'START GROUP_REPLICATION sets a list of options.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

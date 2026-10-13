@@ -35,6 +35,7 @@ final class ParseGeneratedColumn implements Statement
      */
     public function __construct(public readonly Scalar $expression)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

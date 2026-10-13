@@ -39,6 +39,7 @@ final class CreateView implements Statement
      */
     public function __construct(public readonly ViewDefinition $definition, public readonly bool $orReplace = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

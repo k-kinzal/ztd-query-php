@@ -33,6 +33,7 @@ final class PurgeLogsTo implements Statement
      */
     public function __construct(public readonly Text $file)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -37,6 +37,7 @@ final class RenameUser implements Statement
     public function __construct(array $renamings)
     {
         $this->renamings = Check::listOf($renamings, UserRenaming::class, 'RENAME USER names at least one pair.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

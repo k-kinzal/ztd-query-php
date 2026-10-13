@@ -34,6 +34,7 @@ final class DropDatabase implements Statement
      */
     public function __construct(public readonly bool $ifExists, public readonly Name $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

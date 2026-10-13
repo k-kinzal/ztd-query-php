@@ -52,6 +52,7 @@ final class InsertSet implements Explainable
         $this->assignments = Check::listOf($assignments, Assignment::class, 'SET holds at least one assignment.', 1);
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || ($alias === null && $this->onDuplicate === []), 'REPLACE has neither a row alias nor ON DUPLICATE KEY UPDATE.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -37,6 +37,7 @@ final class CreateRole implements Statement
     public function __construct(public readonly bool $ifNotExists, array $roles)
     {
         $this->roles = Check::listOf($roles, AccountName::class, 'CREATE ROLE names at least one role.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

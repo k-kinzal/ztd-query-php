@@ -33,6 +33,7 @@ final class XaStart implements Statement
      */
     public function __construct(public readonly Xid $xid, public readonly ?XaStartOption $option = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

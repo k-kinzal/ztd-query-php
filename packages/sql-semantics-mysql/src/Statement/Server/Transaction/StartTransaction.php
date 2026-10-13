@@ -48,6 +48,7 @@ final class StartTransaction implements Statement
             !in_array(TransactionCharacteristic::ReadOnly, $this->characteristics, true) || !in_array(TransactionCharacteristic::ReadWrite, $this->characteristics, true),
             'READ ONLY and READ WRITE exclude each other.',
         );
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

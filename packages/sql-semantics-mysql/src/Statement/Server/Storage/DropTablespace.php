@@ -43,6 +43,7 @@ final class DropTablespace implements Statement
     public function __construct(public readonly Name $name, array $options = [])
     {
         $this->options = (new StorageOptions())->checked($options, StorageOptions::DROP);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

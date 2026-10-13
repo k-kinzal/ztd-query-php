@@ -46,6 +46,7 @@ final class CreateLoadableFunction implements Statement
         public readonly bool $ifNotExists = false,
     ) {
         Check::input($library->radix === null, 'A library name is written as a quoted string.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

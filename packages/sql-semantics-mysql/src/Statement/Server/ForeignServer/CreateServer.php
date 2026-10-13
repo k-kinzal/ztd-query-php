@@ -47,6 +47,7 @@ final class CreateServer implements Statement
     public function __construct(public readonly Name $name, public readonly Name $wrapper, array $options)
     {
         $this->options = Check::listOf($options, ServerOption::class, 'CREATE SERVER takes at least one option.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

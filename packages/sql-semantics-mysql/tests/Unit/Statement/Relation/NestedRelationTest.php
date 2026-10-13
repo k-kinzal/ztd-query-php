@@ -9,7 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
+use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -45,4 +51,18 @@ final class NestedRelationTest extends TestCase
         self::assertSame('SELECT 1 FROM ((t)), ((t JOIN u)), ((t, u), v)', (new Semantics(Dialect::MySql))->analyze('select 1 from ((t)), ((t join u)), ((t, u), v)')->toString());
         self::assertSame('SELECT 1 FROM (t, u)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from (t, u)')->toString());
     }
+    public function testUnaliasedQueryParenthesesAreRejectedAsRelationParentheses(): void
+    {
+        $this->expectExceptionMessage('Parentheses around an unaliased derived query belong to the query, not a nested relation.');
+
+        new NestedRelation(new DerivedTable(new Select([], [new SelectExpression(new NumberLiteral('1'))])));
+    }
+
+    public function testModernOdbcEscapeIsRejectedAsASingleParenthesizedFactor(): void
+    {
+        $this->expectExceptionMessage('A JSON table or modern ODBC escape is not a single parenthesized table factor.');
+
+        new NestedRelation(new OdbcJoin(new TableReference(new QualifiedName(new Name('t')))));
+    }
+
 }

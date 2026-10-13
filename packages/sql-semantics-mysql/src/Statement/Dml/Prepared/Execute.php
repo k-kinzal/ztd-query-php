@@ -43,6 +43,7 @@ final class Execute implements Statement
     public function __construct(public readonly Name $name, array $variables = [])
     {
         $this->variables = Check::listOf($variables, UserVariable::class, 'EXECUTE ... USING takes user variables.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

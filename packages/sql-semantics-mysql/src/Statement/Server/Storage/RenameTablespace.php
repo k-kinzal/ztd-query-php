@@ -35,6 +35,7 @@ final class RenameTablespace implements Statement
      */
     public function __construct(public readonly Name $name, public readonly Name $target)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

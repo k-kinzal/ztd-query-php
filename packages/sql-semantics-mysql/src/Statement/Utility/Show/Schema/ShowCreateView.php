@@ -38,6 +38,7 @@ final class ShowCreateView implements Statement
      */
     public function __construct(public readonly InspectedTable $view)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

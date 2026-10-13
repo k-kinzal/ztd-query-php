@@ -44,6 +44,7 @@ final class AlterUndoTablespace implements Statement
     public function __construct(public readonly Name $name, public readonly bool $active, array $options = [])
     {
         $this->options = (new StorageOptions())->checked($options, StorageOptions::UNDO_TABLESPACE);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

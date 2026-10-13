@@ -32,6 +32,7 @@ final class XaPrepare implements Statement
      */
     public function __construct(public readonly Xid $xid)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

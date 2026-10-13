@@ -41,6 +41,7 @@ final class ShowFunctionCode implements Statement
      */
     public function __construct(public readonly QualifiedName $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

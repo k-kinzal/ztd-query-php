@@ -85,6 +85,7 @@ final class AlterUser implements Statement
                 'ALTER USER USER() is written alone.',
             );
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

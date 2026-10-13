@@ -48,6 +48,7 @@ final class ChangeReplicationFilter implements Statement
     public function __construct(array $filters, public readonly ?Text $channel = null)
     {
         $this->filters = Check::listOf($filters, ReplicationFilter::class, 'CHANGE REPLICATION FILTER sets a list of filters.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -10,11 +10,19 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Statement\Account\Password;
+use SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel;
+use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -25,6 +33,11 @@ use SqlSemantics\Platform\MySql\Statement\Query\ValueRow;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
+use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
+use SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment;
+use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
+use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 
@@ -57,6 +70,9 @@ final class GenerationsTest extends TestCase
      */
     public static function providerConflicts(): iterable
     {
+        yield 'generated column and modern table' => [static fn (): Node => new ParseGeneratedColumn(new ScalarSubquery(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])))];
+        yield 'weight levels in a modern row' => [static fn (): Node => new ValuesQuery([new ValueRow([new WeightString(new NumberLiteral('1'), levels: [new WeightLevel(new Numeral('1'))])])])];
+        yield 'legacy password and modern assignment' => [static fn (): Node => new SetVariables([new PasswordAssignment(new Password(new Text('pw'), PasswordFunction::Password)), new UserAssignment(new UserVariable(new Name('x')), new JsonValueCall(new StringLiteral(['{}']), new StringLiteral(['$.x'])))])];
         yield 'with and procedure' => [static fn (): Node => new QueryExpression(
             new With(false, [new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))]))]),
             new Select([], [new SelectExpression(new NumberLiteral('2'))], procedure: new ProcedureAnalyse()),

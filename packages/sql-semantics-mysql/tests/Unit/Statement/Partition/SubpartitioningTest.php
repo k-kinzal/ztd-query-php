@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning;
 
 #[CoversClass(Subpartitioning::class)]
@@ -27,4 +28,11 @@ final class SubpartitioningTest extends TestCase
     {
         self::assertSame('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (a) SUBPARTITIONS 2', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (a) SUBPARTITIONS 2')->toString());
     }
+    public function testKeySubpartitioningRequiresAnExplicitColumn(): void
+    {
+        $this->expectExceptionMessage('KEY subpartitioning names at least one column.');
+
+        new Subpartitioning(new KeyMethod(false, null, []), null);
+    }
+
 }

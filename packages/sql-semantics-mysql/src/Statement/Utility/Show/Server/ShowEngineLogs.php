@@ -37,6 +37,7 @@ final class ShowEngineLogs implements Statement
      */
     public function __construct(public readonly ?Name $engine = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

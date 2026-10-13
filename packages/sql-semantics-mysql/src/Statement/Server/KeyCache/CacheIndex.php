@@ -53,6 +53,7 @@ final class CacheIndex implements Statement
         foreach ($this->tables as $table) {
             Check::input($table->partitions === null || count($this->tables) === 1, 'A table with partitions is the only table of CACHE INDEX.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

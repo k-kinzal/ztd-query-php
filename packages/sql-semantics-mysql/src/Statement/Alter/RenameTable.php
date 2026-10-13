@@ -47,6 +47,7 @@ final class RenameTable implements Statement
     {
         Check::input($renamings !== [], 'RENAME TABLE renames at least one table.');
         $this->renamings = Check::listOf($renamings, TableRenaming::class, 'RENAME TABLE holds a list of renames.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

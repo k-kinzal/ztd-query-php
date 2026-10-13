@@ -84,6 +84,7 @@ final class Update implements Explainable
         $this->tables = Check::listOf($tables, Relation::class, 'UPDATE names at least one table reference.', 1);
         $this->assignments = Check::listOf($assignments, Assignment::class, 'UPDATE holds at least one assignment.', 1);
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

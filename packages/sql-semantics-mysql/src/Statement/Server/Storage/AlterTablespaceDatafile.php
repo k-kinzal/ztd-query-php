@@ -49,6 +49,7 @@ final class AlterTablespaceDatafile implements Statement
     {
         Check::input($datafile->radix === null, 'A tablespace file name is a quoted string.');
         $this->options = (new StorageOptions())->checked($options, $action === DatafileAction::Change ? StorageOptions::CHANGE_DATAFILE : StorageOptions::ALTER_TABLESPACE, $action === DatafileAction::Change ? 1 : 0);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -42,6 +42,7 @@ final class AlterServer implements Statement
     public function __construct(public readonly Name $name, array $options)
     {
         $this->options = Check::listOf($options, ServerOption::class, 'ALTER SERVER takes at least one option.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

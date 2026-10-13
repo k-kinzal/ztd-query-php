@@ -49,6 +49,7 @@ final class ShowKeys implements Statement, Relation
      */
     public function __construct(public readonly InspectedTable $table, public readonly bool $extended = false, public readonly ?Name $database = null, public readonly ?ShowWhere $filter = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

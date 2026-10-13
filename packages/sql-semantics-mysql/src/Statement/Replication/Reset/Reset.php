@@ -39,6 +39,7 @@ final class Reset implements Statement
     public function __construct(array $targets)
     {
         $this->targets = Check::listOf($targets, ResetTarget::class, 'RESET names a list of items.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

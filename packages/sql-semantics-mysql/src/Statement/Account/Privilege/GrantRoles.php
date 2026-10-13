@@ -55,6 +55,7 @@ final class GrantRoles implements Statement
         foreach ($this->roles as $role) {
             Check::input(!$role instanceof AllPrivileges && !($role instanceof DynamicPrivilege && $role->columns === []), 'A role list holds roles; a name without columns reads as a role.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

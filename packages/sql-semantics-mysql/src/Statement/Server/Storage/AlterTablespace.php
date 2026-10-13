@@ -43,6 +43,7 @@ final class AlterTablespace implements Statement
     public function __construct(public readonly Name $name, array $options)
     {
         $this->options = (new StorageOptions())->checked($options, StorageOptions::ALTER_TABLESPACE, 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -41,6 +41,7 @@ final class ResetPersist implements Statement
     public function __construct(public readonly bool $ifExists = false, public readonly ?Name $variable = null, public readonly ?Name $component = null)
     {
         Check::input($variable !== null || (!$ifExists && $component === null), 'IF EXISTS and a component need a variable.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

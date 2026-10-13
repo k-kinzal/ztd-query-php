@@ -40,6 +40,7 @@ final class Prepare implements Statement
     public function __construct(public readonly Name $name, public readonly Text|UserVariable $source)
     {
         Check::input(!$source instanceof Text || $source->radix === null, 'A PREPARE source is a quoted string or a user variable.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

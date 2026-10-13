@@ -57,6 +57,7 @@ final class ChangeReplicationSource implements Statement
         foreach ($this->options as $option) {
             Check::input($option->terminology === $terminology, 'An option is written in the vocabulary of its statement.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

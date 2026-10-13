@@ -32,6 +32,7 @@ final class XaRecover implements Statement
      */
     public function __construct(public readonly bool $convertXid = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -56,6 +56,7 @@ final class DropView implements Statement
         foreach ($this->views as $view) {
             Check::input($view->catalog === null, 'A view name has at most a database qualifier.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

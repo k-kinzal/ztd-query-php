@@ -81,6 +81,7 @@ final class CreateUser implements Statement
         foreach ($this->users as $user) {
             Check::input($user->created(), 'CREATE USER names accounts without password management words.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

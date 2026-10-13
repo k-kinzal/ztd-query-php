@@ -60,6 +60,7 @@ final class SetTransaction implements Statement
         }
         Check::input(count($kinds) === count($written), 'SET TRANSACTION writes at most one characteristic of each kind.');
         $this->characteristics = $written;
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -47,6 +47,7 @@ final class ShowCreateTable implements Statement
      */
     public function __construct(public readonly InspectedTable $table)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

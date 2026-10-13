@@ -146,3 +146,5 @@ See the [PostgreSQL package](https://github.com/k-kinzal/ztd-query-php/blob/main
 - A search path must start with `main`; `temp` is always searched first.
 
 See the [SQLite package](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-sqlite/README.md#limitations).
+
+MySQL statement constructors also check composition before returning. The same check applies to composite expressions. Contradictory lexical requirements cannot coexist in a single structure: for example, one NOT expression requiring HIGH_NOT_PRECEDENCE and another requiring its absence. The check also rejects known combinations of features belonging to disjoint grammar generations. These are intrinsic structural constraints, not an execution certificate. Matching the structure to a particular release and session mode remains necessary; the composition rules do not yet enumerate every release constraint.

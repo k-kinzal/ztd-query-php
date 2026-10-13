@@ -55,6 +55,7 @@ final class InstallComponent implements Statement
             Check::input($component->radix === null, 'A component URN is a quoted string.');
         }
         $this->settings = Check::listOf($settings, ComponentSetting::class, 'INSTALL COMPONENT takes a list of variable assignments.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

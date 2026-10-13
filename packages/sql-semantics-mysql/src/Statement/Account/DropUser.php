@@ -38,6 +38,7 @@ final class DropUser implements Statement
     public function __construct(public readonly bool $ifExists, array $users)
     {
         $this->users = Check::listOf($users, Account::class, 'DROP USER names at least one account.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

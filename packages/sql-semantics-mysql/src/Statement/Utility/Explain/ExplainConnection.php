@@ -49,6 +49,7 @@ final class ExplainConnection implements Statement
         public readonly ?UserVariable $into = null,
     ) {
         Check::input($modifier === null || ($format === null && !$analyze && $into === null), 'EXTENDED and PARTITIONS are written alone.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

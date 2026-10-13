@@ -54,6 +54,7 @@ final class RepairTable implements Statement
     {
         $this->tables = (new MaintainedTables())->checked($tables);
         $this->options = Check::listOf($options, RepairOption::class, 'REPAIR TABLE takes a list of repair options.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

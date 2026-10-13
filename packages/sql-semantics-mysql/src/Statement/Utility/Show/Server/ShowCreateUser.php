@@ -38,6 +38,7 @@ final class ShowCreateUser implements Statement
      */
     public function __construct(public readonly Account $user)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

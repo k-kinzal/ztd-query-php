@@ -9,11 +9,14 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(JsonTable::class)]
@@ -47,5 +50,12 @@ final class JsonTableTest extends TestCase
         $this->expectExceptionMessage('JSON_TABLE defines at least one column.');
 
         new JsonTable(new NullLiteral(), new StringLiteral(['$']), []);
+    }
+
+    public function testEqualsIsNotAJsonTableAliasMark(): void
+    {
+        $this->expectExceptionMessage('A JSON table alias is written with or without AS.');
+
+        new JsonTable(new NullLiteral(), new StringLiteral(['$']), [new OrdinalityColumn(new Name('n'))], new Name('j'), AliasMark::Equals);
     }
 }

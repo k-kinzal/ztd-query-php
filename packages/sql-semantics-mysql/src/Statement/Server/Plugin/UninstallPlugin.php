@@ -32,6 +32,7 @@ final class UninstallPlugin implements Statement
      */
     public function __construct(public readonly Name $plugin)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

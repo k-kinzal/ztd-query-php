@@ -44,6 +44,7 @@ final class ShowVariables implements Statement, Relation
     public function __construct(public readonly ?VariableScope $scope = null, public readonly ShowLike|ShowWhere|null $filter = null)
     {
         Check::input(in_array($scope, [null, VariableScope::Global, VariableScope::Session], true), 'SHOW VARIABLES accepts GLOBAL or SESSION scope.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

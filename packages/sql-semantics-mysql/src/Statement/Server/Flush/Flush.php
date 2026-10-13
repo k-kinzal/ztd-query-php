@@ -43,6 +43,7 @@ final class Flush implements Statement
     public function __construct(public readonly bool $noWriteToBinlog, array $items)
     {
         $this->items = Check::listOf($items, FlushItem::class, 'FLUSH flushes at least one item.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

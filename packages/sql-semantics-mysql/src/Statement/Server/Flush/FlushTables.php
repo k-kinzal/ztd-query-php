@@ -49,6 +49,7 @@ final class FlushTables implements Statement
     {
         $this->tables = Check::listOf($tables, MaintainedTable::class, 'FLUSH TABLES takes a list of tables.');
         Check::input($lock !== FlushLock::ForExport || $this->tables !== [], 'FLUSH TABLES ... FOR EXPORT names at least one table.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -32,6 +32,7 @@ final class BinlogEvent implements Statement
      */
     public function __construct(public readonly Text $events)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

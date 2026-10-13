@@ -43,6 +43,7 @@ final class DropProgram implements Statement
     public function __construct(public readonly ProgramKind $kind, public readonly QualifiedName $name, public readonly bool $ifExists = false)
     {
         Check::input($name->catalog === null, 'A program name has at most a database qualifier.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

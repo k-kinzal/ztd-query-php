@@ -49,6 +49,7 @@ final class DropIndex implements Statement
     {
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
         $this->options = (new \SqlSemantics\Platform\MySql\Rules\TableChange\IndexOptions())->checked($options);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

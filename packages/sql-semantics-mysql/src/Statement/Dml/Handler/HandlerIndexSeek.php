@@ -60,6 +60,7 @@ final class HandlerIndexSeek implements Statement
             $accepted[] = $value;
         }
         $this->values = $accepted;
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

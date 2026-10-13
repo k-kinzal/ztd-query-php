@@ -47,6 +47,7 @@ final class SetVariables implements Statement
     public function __construct(array $items)
     {
         $this->items = Check::listOf($items, SetItem::class, 'SET assigns at least one item.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

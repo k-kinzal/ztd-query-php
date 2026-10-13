@@ -68,6 +68,7 @@ final class StartReplica implements Statement
         public readonly ?Text $channel = null,
     ) {
         $this->threads = Check::listOf($threads, ReplicaThread::class, 'START REPLICA names a list of threads.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

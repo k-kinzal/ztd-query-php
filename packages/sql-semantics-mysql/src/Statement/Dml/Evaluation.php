@@ -48,6 +48,7 @@ final class Evaluation implements Statement
     public function __construct(array $items)
     {
         $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'DO evaluates at least one expression.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

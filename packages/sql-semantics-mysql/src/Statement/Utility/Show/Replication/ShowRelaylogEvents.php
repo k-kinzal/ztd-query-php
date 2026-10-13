@@ -42,6 +42,7 @@ final class ShowRelaylogEvents implements Statement
      */
     public function __construct(public readonly ?Text $file = null, public readonly ?Numeral $position = null, public readonly ?Limit $limit = null, public readonly ?Text $channel = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

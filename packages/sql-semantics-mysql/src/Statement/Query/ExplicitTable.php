@@ -44,6 +44,7 @@ final class ExplicitTable implements Explainable, Query, NamedRelation
     public function __construct(public readonly QualifiedName $table)
     {
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

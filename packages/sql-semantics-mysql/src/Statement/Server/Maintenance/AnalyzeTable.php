@@ -46,6 +46,7 @@ final class AnalyzeTable implements Statement
     {
         $this->tables = (new MaintainedTables())->checked($tables);
 
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

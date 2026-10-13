@@ -40,6 +40,7 @@ final class ShowDatabases implements Statement, Relation
      */
     public function __construct(public readonly ShowLike|ShowWhere|null $filter = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

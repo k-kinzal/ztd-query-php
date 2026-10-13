@@ -47,6 +47,7 @@ final class StopReplica implements Statement
     public function __construct(public readonly Terminology $terminology, array $threads = [], public readonly ?Text $channel = null)
     {
         $this->threads = Check::listOf($threads, ReplicaThread::class, 'STOP REPLICA names a list of threads.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

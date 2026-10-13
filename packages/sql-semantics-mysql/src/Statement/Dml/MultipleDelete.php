@@ -82,6 +82,7 @@ final class MultipleDelete implements Explainable
             Check::input($target->catalog === null, 'A table is qualified by at most a database.');
         }
         $this->tables = Check::listOf($tables, Relation::class, 'A multiple-table DELETE names at least one table reference.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

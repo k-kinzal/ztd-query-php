@@ -37,6 +37,7 @@ final class ShowReplicas implements Statement
      */
     public function __construct(public readonly Terminology $terminology)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

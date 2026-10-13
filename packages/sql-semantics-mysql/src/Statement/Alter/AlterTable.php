@@ -81,6 +81,7 @@ final class AlterTable implements Statement, Relation
                 'Only modifiers precede a partition or tablespace operation.',
             );
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

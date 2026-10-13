@@ -35,6 +35,7 @@ final class ShowProcesslist implements Statement
      */
     public function __construct(public readonly bool $full = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

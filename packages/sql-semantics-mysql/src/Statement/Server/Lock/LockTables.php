@@ -44,6 +44,7 @@ final class LockTables implements Statement
     public function __construct(array $locks)
     {
         $this->locks = Check::listOf($locks, TableLock::class, 'LOCK TABLES locks at least one table.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -34,6 +34,7 @@ final class PurgeLogsBefore implements Statement
      */
     public function __construct(public readonly Scalar $moment)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -68,6 +68,7 @@ final class CreateEvent implements Statement
         Check::input($name->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
         $this->body = (new StatementSequence())->member($body);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

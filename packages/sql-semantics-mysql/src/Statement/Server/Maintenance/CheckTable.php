@@ -53,6 +53,7 @@ final class CheckTable implements Statement
     {
         $this->tables = (new MaintainedTables())->checked($tables);
         $this->options = Check::listOf($options, CheckOption::class, 'CHECK TABLE takes a list of check options.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

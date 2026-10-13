@@ -101,6 +101,7 @@ final class LoadTable implements Statement
         }
         $this->columns = $list;
         $this->assignments = Check::listOf($assignments, Assignment::class, 'The SET clause of LOAD holds assignments.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

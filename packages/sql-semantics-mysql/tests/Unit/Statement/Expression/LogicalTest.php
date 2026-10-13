@@ -59,4 +59,20 @@ final class LogicalTest extends TestCase
 
         new Logical(LogicalOperator::Or, new NumberLiteral('1'), new Logical(LogicalOperator::Or, new NumberLiteral('2'), new NumberLiteral('3')));
     }
+
+    public function testSymbolicXorIsRejectedBeforeRendering(): void
+    {
+        $this->expectExceptionMessage('XOR has no symbolic spelling.');
+
+        new Logical(LogicalOperator::Xor, new NumberLiteral('1'), new NumberLiteral('0'), true);
+    }
+
+    public function testDeriveScalarRejectsSymbolicOrInConcatenationMode(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', \SqlSemantics\Platform\MySql\Mode::fromString('PIPES_AS_CONCAT'), ParameterStyle::Native), null, [], true));
+        $this->expectExceptionMessage('The symbolic OR operator || requires PIPES_AS_CONCAT to be disabled.');
+
+        $derivation->scalar(new Logical(LogicalOperator::Or, new NumberLiteral('1'), new NumberLiteral('0'), true), $derivation->environment());
+    }
 }

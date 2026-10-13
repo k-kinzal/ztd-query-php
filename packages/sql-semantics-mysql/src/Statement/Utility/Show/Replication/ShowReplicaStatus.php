@@ -40,6 +40,7 @@ final class ShowReplicaStatus implements Statement
      */
     public function __construct(public readonly Terminology $terminology, public readonly ?Text $channel = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

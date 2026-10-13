@@ -51,6 +51,7 @@ final class Logical implements Scalar
      */
     public function __construct(public readonly LogicalOperator $operator, public readonly Scalar $left, public readonly Scalar $right, public readonly bool $symbolic = false)
     {
+        Check::input(!$symbolic || $operator !== LogicalOperator::Xor, 'XOR has no symbolic spelling.');
         $precedence = new Precedence();
         Check::input($precedence->fits($left, $operator->level(), $operator->level()), 'The left operand of ' . $operator->value . ' needs a grouping to keep its place.');
         Check::input($precedence->opening($right) > $operator->level(), 'The right operand of ' . $operator->value . ' needs a grouping to keep its place.');
@@ -62,6 +63,7 @@ final class Logical implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        Check::input(!$this->symbolic || $this->operator !== LogicalOperator::Or || !$derivation->context->profile->lexical->pipesAsConcat, 'The symbolic OR operator || requires PIPES_AS_CONCAT to be disabled.');
         $operands = new Operands();
         $left = $operands->single($derivation->scalar($this->left, $environment), $derivation);
         if ($this->symbolic) {

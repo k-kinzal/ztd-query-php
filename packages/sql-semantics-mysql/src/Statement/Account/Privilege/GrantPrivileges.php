@@ -85,6 +85,7 @@ final class GrantPrivileges implements Statement
         foreach ($this->grantees as $grantee) {
             Check::input($grantee->granted(), 'A GRANT account is a named account with at most one authentication method.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -33,6 +33,7 @@ final class XaEnd implements Statement
      */
     public function __construct(public readonly Xid $xid, public readonly ?XaEndOption $option = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

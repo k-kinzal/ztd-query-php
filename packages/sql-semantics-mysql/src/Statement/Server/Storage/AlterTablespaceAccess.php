@@ -37,6 +37,7 @@ final class AlterTablespaceAccess implements Statement
      */
     public function __construct(public readonly Name $name, public readonly TablespaceAccess $access)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
