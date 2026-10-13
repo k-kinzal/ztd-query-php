@@ -17,6 +17,21 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class SetPasswordCommandTest extends TestCase
 {
+    public function testAssignmentChecksWithoutChangingTheAccountUntilApplied(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $account = $session->instance->accounts->find(new Identity('root', '%'));
+        self::assertNotNull($account);
+        $original = $account->hash;
+        $item = new \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment(new \SqlSemantics\Platform\MySql\Statement\Account\Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('after'), \SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::Password));
+        $apply = (new SetPasswordCommand())->assignment($item, $session);
+
+        self::assertSame($original, $account->hash);
+        $apply();
+        self::assertSame('after', $account->password);
+        self::assertSame('*' . strtoupper(sha1(sha1('after', true))), $account->hash);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new SetPasswordCommand())->clearsDiagnostics());

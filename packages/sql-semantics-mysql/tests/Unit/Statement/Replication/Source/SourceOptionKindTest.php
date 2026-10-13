@@ -48,4 +48,12 @@ final class SourceOptionKindTest extends TestCase
         self::assertTrue(SourceOptionKind::RelayLogFile->position());
         self::assertFalse(SourceOptionKind::Port->position());
     }
+
+    public function testAcceptsDistinguishesSourceAndRelayLogNumerals(): void
+    {
+        self::assertFalse(SourceOptionKind::LogPosition->accepts(new Numeral('b', true)));
+        self::assertTrue(SourceOptionKind::RelayLogPosition->accepts(new Numeral('b', true)));
+        self::assertTrue(SourceOptionKind::LogPosition->accepts(new Numeral('1.5')));
+        self::assertTrue(SourceOptionKind::LogPosition->accepts(new Numeral('2147483648')));
+    }
 }

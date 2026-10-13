@@ -62,4 +62,11 @@ final class SourceOptionTest extends TestCase
 
         new SourceOption(Terminology::Current, SourceOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('ab', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
     }
+
+    public function testValueRejectsHexadecimalSourceLogPositions(): void
+    {
+        $this->expectExceptionMessage('The value of SOURCE_LOG_POS is outside the domain of the option.');
+
+        new SourceOption(Terminology::Current, SourceOptionKind::LogPosition, new Numeral('b', true));
+    }
 }

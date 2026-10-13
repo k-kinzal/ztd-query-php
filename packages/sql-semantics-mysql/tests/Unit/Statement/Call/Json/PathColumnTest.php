@@ -33,6 +33,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class PathColumnTest extends TestCase
 {
+    public function testValueRejectsDefaultCollation(): void
+    {
+        $this->expectExceptionMessage('A JSON_TABLE column collation names a collation.');
+
+        new PathColumn(new Name('a'), new Integral(IntegralKind::Int), new StringLiteral(['$.a']), collation: new CollationName(null));
+    }
+
     public function testDeriveColumnsAnswersTheDeclaredName(): void
     {
         $platform = new Platform();

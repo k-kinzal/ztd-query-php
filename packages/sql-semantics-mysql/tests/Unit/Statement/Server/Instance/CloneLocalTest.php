@@ -15,6 +15,13 @@ use SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneLocal;
 #[Medium]
 final class CloneLocalTest extends TestCase
 {
+    public function testValueRejectsRadixText(): void
+    {
+        $this->expectExceptionMessage('A clone directory is quoted text.');
+
+        new CloneLocal(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('10', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Bit));
+    }
+
     public function testRenderWritesTheDirectory(): void
     {
         self::assertSame("CLONE LOCAL DATA DIRECTORY '/d'", (new Semantics(Dialect::MySql))->analyze("clone local data directory '/d'")->toString());

@@ -64,6 +64,7 @@ final class PathColumn implements JsonTableColumn
         public readonly ?JsonResponse $onError = null,
         public readonly bool $errorFirst = false,
     ) {
+        Check::input($collation === null || $collation->name !== null, 'A JSON_TABLE column collation names a collation.');
         Check::input(!$errorFirst || ($onEmpty !== null && $onError !== null), 'ON ERROR is written first only when both responses are.');
     }
 

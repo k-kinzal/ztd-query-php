@@ -37,10 +37,13 @@ final class ModernForms
     public function requires(object $value): bool
     {
         return $value instanceof WithClause || $value instanceof WindowSpecification
+            || $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption
+            || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Row, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::System], true)
             || $value === \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword
             || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, CastAtLocal::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
             || match (true) {
                 $value instanceof Select => $this->query($value),
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification => $this->authentication($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot => (new StatementQuery())->requiresModern($value->query),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement => count($value->locking) > 1,
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause => $value->strength === \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share || $value->tables !== [] || $value->action !== null,
@@ -56,5 +59,13 @@ final class ModernForms
     public function query(Select $value): bool
     {
         return $value->qualify !== null || count($value->locking) > 1;
+    }
+
+    /**
+     * Identifies additional factors and password management introduced in modern releases.
+     */
+    public function authentication(\SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification $value): bool
+    {
+        return $value->factors !== [] || $value->initial !== null || $value->replace !== null || $value->retainCurrent || $value->discardOld;
     }
 }

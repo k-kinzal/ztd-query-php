@@ -49,10 +49,11 @@ final class LegacyForms
             || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)
             || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)
             || $value instanceof ExplainModifier
+            || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment
+            || $value === \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash
             || ($value instanceof DatabaseCollation && $value->collation->name === null)
             || ($value instanceof ResetReplica && $value->terminology === Terminology::Legacy)
             || $this->definition($value)
-            || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges && ($value->tls !== null || array_filter($value->grantees, static fn (\SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification $user): bool => $user->identification !== null) !== [] || array_filter($value->options, static fn (\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption $option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit) !== []))
             || ($value instanceof \SqlSemantics\Statement\Query && $this->query($value));
     }
     /**
@@ -65,11 +66,13 @@ final class LegacyForms
     }
 
     /**
-     * Identifies removed options of table and routine declarations.
+     * Identifies removed options of account, table and routine declarations.
      */
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy => $this->grant($value),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset => $value->charset->name === null,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable => $value->temporaryWords > 1,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Parameter,
@@ -78,4 +81,16 @@ final class LegacyForms
             default => false,
         };
     }
+    /**
+     * Identifies authentication and WITH options only legacy GRANT syntax admits.
+     */
+    public function grant(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy $value): bool
+    {
+        if (array_filter($value->grantees, static fn (\SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification $user): bool => $user->identification !== null) !== []) {
+            return true;
+        }
+        return $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges
+            && ($value->tls !== null || count($value->options) > 1 || array_filter($value->options, static fn (\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption $option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit) !== []);
+    }
+
 }

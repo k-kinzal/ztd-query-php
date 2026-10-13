@@ -27,6 +27,7 @@ use SqlSemantics\Contract\GrammarRelease;
 enum Deprecated: string
 {
     case SuperPrivilege = 'The SUPER privilege identifier is deprecated';
+    case ReplicationSpelling = 'A legacy replication keyword is deprecated.';
     case UnquotedFull = 'Using FULL as unquoted identifier is deprecated, please use quotes or rename the identifier.';
     case PipesOr = "'|| as a synonym for OR' is deprecated and will be removed in a future release. Please use OR instead";
     case AmpersandsAnd = "'&&' is deprecated and will be removed in a future release. Please use AND instead";
@@ -85,7 +86,7 @@ enum Deprecated: string
     public function code(): int
     {
         return match ($this) {
-            self::SuperPrivilege => 1287,
+            self::SuperPrivilege, self::ReplicationSpelling => 1287,
             self::InsertDelayed, self::ReplaceDelayed => 3005,
             self::UnquotedFull => 4119,
             self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
@@ -104,6 +105,9 @@ enum Deprecated: string
      */
     public function warnedIn(GrammarRelease $release): bool
     {
+        if ($this === self::ReplicationSpelling) {
+            return in_array($release, [GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830], true);
+        }
         if ($this === self::SpatialFunction || $this === self::UpgradeDatabaseName) {
             return $release === GrammarRelease::MySql5744;
         }

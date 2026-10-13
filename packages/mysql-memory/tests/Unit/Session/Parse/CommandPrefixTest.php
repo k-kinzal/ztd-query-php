@@ -22,6 +22,8 @@ final class CommandPrefixTest extends TestCase
     {
         foreach (['5.6.51', '5.7.44'] as $release) {
             foreach ([
+                'CREATE TEMPORARY TEMPORARY TABLE t (a INT) SECONDARY_ENGINE NULL' => 1046,
+                'CREATE TEMPORARY TEMPORARY TABLE d.t (a INT) SECONDARY_ENGINE NULL' => null,
                 "LOAD DATA INFILE 'f' INTO TABLE t IGNORE 1.5 LINES" => 1046,
                 "LOAD DATA INFILE 'f' INTO TABLE t (" => 1046,
                 "LOAD DATA INFILE 'f' INTO TABLE t PARTITION (p) (" => 1046,
@@ -35,6 +37,7 @@ final class CommandPrefixTest extends TestCase
             }
         }
         yield 'modern load' => ['8.4.7', "LOAD DATA INFILE 'f' INTO TABLE t (", null];
+        yield 'legacy password comma' => ['5.7.44', "SET PASSWORD = 'pw', @@time_zone = SYSTEM", 1064];
         yield 'unrelated command' => ['5.6.51', 'SELECT 1 FROM t (', null];
     }
 
@@ -71,5 +74,15 @@ final class CommandPrefixTest extends TestCase
         $sql = "LOAD DATA INFILE 'f' INTO TABLE t (";
 
         self::assertNull((new CommandPrefix())->before($session->semantics()->parser()->tokenize($sql), $sql, strlen($sql), $session));
+    }
+
+    public function testCompletedRequiresADatabaseForUnqualifiedCreation(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $model = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+
+        self::assertSame(1046, (new CommandPrefix())->completed($model, null, '', $session)?->getCode());
+        $session->use('mysql');
+        self::assertNull((new CommandPrefix())->completed($model, null, '', $session));
     }
 }

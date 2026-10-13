@@ -60,7 +60,7 @@ final class ModernWarnings
     /**
      * Records typed conditions in order, retaining the first error as the reply.
      *
-     * @param list<Deprecated|ParseFailure> $notices The completed semantic notices
+     * @param list<Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure> $notices The completed semantic notices
      */
     public function recorded(array $notices, SqlError $syntax, Session $session): SqlError
     {
@@ -68,6 +68,10 @@ final class ModernWarnings
         $first = null;
         $aborted = false;
         foreach ($notices as $notice) {
+            if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) {
+                $session->diagnostics->warning($notice->code(), $notice->message());
+                continue;
+            }
             if ($notice instanceof Deprecated) {
                 $session->diagnostics->warning($notice->code(), $notice->value);
                 continue;

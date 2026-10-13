@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Account;
 
+use Closure;
 use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Credentials;
 use MySqlMemory\Account\Identity;
@@ -39,6 +40,32 @@ use SqlSemantics\Statement\Operation;
  */
 final class SetPasswordCommand implements Command
 {
+    /**
+     * Checks a legacy SET-list password operand before any assignment takes effect.
+     *
+     * @throws SqlError When the account is absent or the hash is invalid
+     */
+    public function assignment(\SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment $item, Session $session): Closure
+    {
+        $names = new Names($session->settings()->release());
+        $names->check([$item->user]);
+        $identity = $item->user === null ? new Identity($session->user, '%') : $names->identity($item->user, $session);
+        $account = $session->instance->accounts->find($identity);
+        if ($account === null) {
+            throw AccountError::PasswordNoMatch->error();
+        }
+        $checked = clone $account;
+        $this->legacy($checked, new SetPassword($item->user, $item->password));
+
+        return static function () use ($account, $checked, $session): void {
+            $session->transaction->commit();
+            $account->hash = $checked->hash;
+            $account->password = $checked->password;
+            $account->expired = false;
+            (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
+        };
+    }
+
     /**
      * Answers true.
      */

@@ -98,6 +98,9 @@ final class SetCommand implements Command
      */
     public function action(object $item, Planner $planner, Frame $frame, Assigner $assigner, Session $session, ?Written $inherited = null): Closure
     {
+        if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment) {
+            return (new Account\SetPasswordCommand())->assignment($item, $session);
+        }
         if ($item instanceof UserAssignment) {
             $value = $planner->compiler->compile($item->value, new Scope());
             $collation = $planner->compiler->names->allocate($item->variable->name->value, $value->domain(), $item->value);

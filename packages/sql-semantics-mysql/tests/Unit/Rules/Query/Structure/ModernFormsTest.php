@@ -19,6 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ModernFormsTest extends TestCase
 {
+    public function testAuthenticationDistinguishesPasswordManagementFromAnOrdinaryAccount(): void
+    {
+        $forms = new ModernForms();
+        $account = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('u'));
+
+        self::assertFalse($forms->authentication(new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification($account)));
+        self::assertTrue($forms->authentication(new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification($account, discardOld: true)));
+    }
+
     public function testRequiresRecognizesExtendedAndRepeatedLocking(): void
     {
         $forms = new ModernForms();

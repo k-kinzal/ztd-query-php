@@ -33,6 +33,7 @@ final class CloneLocal implements Statement
      */
     public function __construct(public readonly Text $directory)
     {
+        \SqlSemantics\Diagnostic\Check::input($directory->radix === null, 'A clone directory is quoted text.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

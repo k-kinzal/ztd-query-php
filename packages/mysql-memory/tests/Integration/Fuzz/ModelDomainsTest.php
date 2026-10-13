@@ -33,6 +33,24 @@ final class ModelDomainsTest extends TestCase
         foreach (['d.t IGNORE 1.5 LINES', 't. IGNORE 1.5 LINES', 't.*', 't PARTITION (', 't PARTITION (p) (', 't ('] as $suffix) {
             $statements[] = "LOAD DATA INFILE 'f' INTO TABLE " . $suffix;
         }
+        array_push(
+            $statements,
+            "CLONE LOCAL DATA DIRECTORY b'10'",
+            "SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS(a INT COLLATE DEFAULT PATH '$')) AS j",
+            'CREATE TEMPORARY TEMPORARY TABLE t (a INT) SECONDARY_ENGINE NULL',
+            "CREATE USER u IDENTIFIED BY 'pw' AND IDENTIFIED BY PASSWORD 'hash'",
+            'GRANT PROXY ON a TO b IDENTIFIED BY RANDOM PASSWORD',
+            'GRANT SYSTEM_USER ON *.* TO b WITH GRANT OPTION GRANT OPTION',
+            "SET PASSWORD = 'pw', @@time_zone = SYSTEM",
+            'CHANGE MASTER TO MASTER_LOG_POS = 0xb',
+            'CHANGE REPLICATION SOURCE TO SOURCE_LOG_POS = 0xb',
+            "CREATE USER domain_password_user IDENTIFIED BY 'before'",
+            'SET @before=9, @after=9',
+            "SET @before=1, PASSWORD FOR domain_password_user = PASSWORD('after'), @after=2",
+            'SELECT @before, @after',
+            "SET @before=3, PASSWORD FOR domain_password_user = 'bad-hash', @after=4",
+            'SELECT @before, @after',
+        );
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

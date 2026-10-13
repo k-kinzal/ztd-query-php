@@ -38,7 +38,7 @@ final class SyntaxWarnings
     /**
      * Returns completion notices raised before the token at the refusal offset.
      *
-     * @return list<array{int, Deprecated|ParseFailure}> Input boundaries and semantic notices
+     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure}> Input boundaries and semantic notices
      */
     public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile): array
     {
@@ -52,7 +52,7 @@ final class SyntaxWarnings
                 if ($aborted || $lookahead->offset > $end) {
                     return;
                 }
-                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering);
+                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new Replication\SyntaxDeprecations())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering);
                 if ($notice !== null) {
                     $range = $ranges->span($node, true);
                     if ($range !== null) {

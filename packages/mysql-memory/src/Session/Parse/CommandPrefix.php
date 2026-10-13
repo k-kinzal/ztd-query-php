@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 /**
  * Preserves errors the legacy parser raises before reading later command clauses.
  *
- * MySQL 5.6/5.7 require a default database after an unqualified LOAD target and
+ * MySQL 5.6/5.7 require a default database after an unqualified CREATE TABLE or LOAD target and
  * its optional partition list. MySQL 5.6 rejects authentication in REVOKE while
  * reading the account. Completed prefixes are parsed and resolved without
  * executing the commands. Observed on isolated 5.6.51 and 5.7.44 servers.
@@ -33,10 +33,10 @@ final class CommandPrefix
     public function before(array $tokens, string $statement, int $end, Session $session): ?SqlError
     {
         $command = strtoupper($tokens[0]->text ?? '');
-        if (!$session->settings()->legacy() || !in_array($command, ['LOAD', 'REVOKE'], true)) {
+        if (!$session->settings()->legacy() || !in_array($command, ['LOAD', 'CREATE', 'REVOKE', 'SET'], true)) {
             return null;
         }
-        if ($command === 'LOAD' && $session->variables->database !== '') {
+        if (in_array($command, ['LOAD', 'CREATE'], true) && $session->variables->database !== '') {
             return null;
         }
         $semantics = $session->semantics();
@@ -60,10 +60,25 @@ final class CommandPrefix
             } catch (AnalysisException $failure) {
                 return (new Syntax())->error($failure, $statement, $session->settings()->release(), $session->following);
             }
-            $model = $operation->statement;
-            if ($model instanceof LoadTable && $model->table->name->schema === null) {
-                return QueryError::NoDatabase->error();
+            $earlier = $this->completed($operation->statement, $tokens[$index + 1] ?? null, $statement, $session);
+            if ($earlier !== null) {
+                return $earlier;
             }
+        }
+
+        return null;
+    }
+
+    /**
+     * Answers the condition raised after a command prefix has been resolved.
+     */
+    public function completed(\SqlSemantics\Statement\Statement $model, ?Token $next, string $statement, Session $session): ?SqlError
+    {
+        if (($model instanceof LoadTable && $model->table->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $model->name->schema === null)) {
+            return $session->variables->database === '' ? QueryError::NoDatabase->error() : null;
+        }
+        if ($model instanceof \SqlSemantics\Platform\MySql\Statement\Account\SetPassword && $next?->text === ',' && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            return (new Syntax())->near($next->end(), $statement, $session->following, new \SqlParser\Parser\SyntaxException($next, [], ''));
         }
 
         return null;

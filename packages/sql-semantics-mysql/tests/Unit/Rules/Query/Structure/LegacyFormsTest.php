@@ -15,6 +15,17 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
 #[Small]
 final class LegacyFormsTest extends TestCase
 {
+    public function testGrantDistinguishesProxyAuthenticationFromPlainAccounts(): void
+    {
+        $forms = new LegacyForms();
+        $account = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('u'));
+        $plain = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy($account, [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName($account->user))]);
+        $identified = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy($account, [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName($account->user), new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Password, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('pw')))]);
+
+        self::assertFalse($forms->grant($plain));
+        self::assertTrue($forms->grant($identified));
+    }
+
     public function testRequiresDistinguishesRemovedOptionsFromRetainedOptions(): void
     {
         $forms = new LegacyForms();

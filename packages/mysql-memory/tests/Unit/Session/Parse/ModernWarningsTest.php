@@ -18,6 +18,17 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class ModernWarningsTest extends TestCase
 {
+    public function testRecordedPreservesReplicationKeywordWarnings(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $reply = $session->run('CHANGE MASTER TO MASTER_LOG_POS=0xb')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1064, $reply->getCode());
+        self::assertSame([1287, 1287, 1064], array_column($session->diagnostics->conditions, 1));
+        self::assertStringContainsString('MASTER_LOG_POS', $session->diagnostics->conditions[1][2]);
+    }
+
     /**
      * @return iterable<string, array{string, int, list<int>}>
      */
