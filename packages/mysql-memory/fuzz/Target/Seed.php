@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 /**
- * One unmodified sql-faker seed, its generated statement, and the grammar alternatives it exercised.
+ * One unmodified sql-faker seed and the statement generated with its supplied profile.
  */
 final class Seed
 {
     /**
-     * @param list<string> $reached Alternatives selected during derivation
-     * @param list<string> $emitted Alternatives retained in the emitted statement
-     * @param list<string> $parsed Alternatives confirmed in the final SQL's concrete parse tree
+     * Retains the supplied input, generated SQL and the profile needed to execute it.
      */
-    public function __construct(public readonly string $file, public readonly string $input, public readonly string $sql, public readonly array $reached, public readonly array $emitted, public readonly array $parsed = [], public readonly string $mode = '', public readonly bool $structuralRewrites = true)
+    public function __construct(public readonly string $file, public readonly string $input, public readonly string $sql, public readonly string $mode = '', public readonly bool $structuralRewrites = true)
     {
     }
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\Comparison;
-use Fuzz\Target\Seed;
 use Fuzz\Target\SeedCorpus;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -18,18 +17,16 @@ use RuntimeException;
 final class SeedCorpusTest extends TestCase
 {
     #[DataProvider('providerDiagnostics')]
-    public function testProfileInputsPreservesGrammarDiagnostics(string $file, string $target): void
+    public function testProfileInputsPreservesGrammarDiagnostics(string $file, string $sql): void
     {
         $corpus = new SeedCorpus('mysql-8.4.7', diagnostics: true);
         $directory = dirname(__DIR__, 3) . '/vendor/k-kinzal/sql-faker/seeds/mysql/mysql-8.4.7/diagnostics';
         $seed = $corpus->profileInputs($directory . '/' . $file, diagnostics: true)->current();
-        $labels = array_map(static fn (string $id): string => explode(':', $id)[1], $seed->parsed);
 
-        self::assertContains($target, $labels);
+        self::assertSame($sql, $seed->sql);
         self::assertFalse($seed->structuralRewrites);
         self::assertSame('diagnostics/' . $file, $seed->file);
         self::assertSame($seed->sql, $seed->executionSql());
-        self::assertCount(3114, $corpus->denominator());
     }
 
     /**
@@ -37,28 +34,26 @@ final class SeedCorpusTest extends TestCase
      */
     public static function providerDiagnostics(): iterable
     {
-        yield 'return outside a function' => ['ev_sql_stmt_inner-1.txt', 'ev_sql_stmt_inner#1'];
-        yield 'unsigned width' => ['field_length-1.txt', 'field_length#1'];
-        yield 'decimal width' => ['field_length-2.txt', 'field_length#2'];
-        yield 'decimal connection' => ['real_ulong_num-4.txt', 'real_ulong_num#4'];
-        yield 'decimal spatial id' => ['real_ulonglong_num-4.txt', 'real_ulonglong_num#4'];
-        yield 'floating spatial id' => ['dec_num-1.txt', 'dec_num#1'];
-        yield 'names expression' => ['option_value_no_option_type-4.txt', 'option_value_no_option_type#4'];
+        yield 'return outside a function' => ['ev_sql_stmt_inner-1.txt', 'ALTER EVENT _sqlfaker_identifier DO RETURN USER ( )'];
+        yield 'unsigned width' => ['field_length-1.txt', 'CREATE DEFINER = CURRENT_USER FUNCTION _sqlfaker_identifier ( ) RETURNS BIT ( 18446744073709551615 ) AS $$text$$'];
+        yield 'decimal width' => ['field_length-2.txt', 'CREATE DEFINER = CURRENT_USER FUNCTION _sqlfaker_identifier ( ) RETURNS BIT ( 18446744073709551616 ) AS $$text$$'];
+        yield 'decimal connection' => ['real_ulong_num-4.txt', 'DESC ANALYZE FOR CONNECTION 18446744073709551616'];
+        yield 'decimal spatial id' => ['real_ulonglong_num-4.txt', 'CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 18446744073709551616'];
+        yield 'floating spatial id' => ['dec_num-1.txt', 'CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 1e2'];
+        yield 'names expression' => ['option_value_no_option_type-4.txt', 'SET NAMES = USER ( )'];
     }
 
     #[DataProvider('providerModes')]
-    public function testProfileInputsUsesTheSameModeForGenerationParsingAndExecution(string $mode, string $file, string $target): void
+    public function testProfileInputsUsesTheSuppliedModeForGenerationAndExecution(string $mode, string $file, string $sql): void
     {
         $corpus = new SeedCorpus('mysql-8.4.7', $mode);
         $directory = dirname(__DIR__, 3) . '/vendor/k-kinzal/sql-faker/seeds/mysql/mysql-8.4.7/modes/' . $mode;
         $seed = $corpus->profileInputs($directory . '/' . $file, $mode)->current();
-        $labels = array_map(static fn (string $id): string => explode(':', $id)[1], $seed->parsed);
 
-        self::assertContains($target, $labels);
+        self::assertSame($sql, $seed->sql);
         self::assertSame($mode, $seed->mode);
         self::assertStringStartsWith('modes/' . $mode . '/', $seed->file);
         self::assertSame("SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, '$mode'); " . $seed->sql, $seed->executionSql());
-        self::assertCount(3114, $corpus->denominator());
     }
 
     /**
@@ -66,9 +61,9 @@ final class SeedCorpusTest extends TestCase
      */
     public static function providerModes(): iterable
     {
-        yield 'infix NOT' => ['HIGH_NOT_PRECEDENCE', 'not-1.txt', 'not#1'];
-        yield 'unary NOT' => ['HIGH_NOT_PRECEDENCE', 'not2-1.txt', 'not2#1'];
-        yield 'concatenation' => ['PIPES_AS_CONCAT', 'simple_expr-12.txt', 'simple_expr#12'];
+        yield 'infix NOT' => ['HIGH_NOT_PRECEDENCE', 'not-1.txt', 'CREATE DATABASE IF NOT EXISTS _sqlfaker_identifier'];
+        yield 'unary NOT' => ['HIGH_NOT_PRECEDENCE', 'not2-1.txt', 'SELECT * INTO DUMPFILE \'text\' HAVING ( ( ( ( ( ! TRUE ) ) ) ) = ( ( ( USER ( ) ) ) MEMBER ( ( NOT ( USER ( ) ) ) ) ) )'];
+        yield 'concatenation' => ['PIPES_AS_CONCAT', 'simple_expr-12.txt', 'SELECT * INTO DUMPFILE \'text\' HAVING ( ( ( ( ( \'text\' || \'text\' ) ) ) ) = ( ( ( USER ( ) ) ) MEMBER ( ( ( USER ( ) ) || ( USER ( ) ) ) ) ) )'];
     }
 
     public function testProfileInputsRejectsUnknownModesBeforeReadingAnySeed(): void
@@ -77,24 +72,6 @@ final class SeedCorpusTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unsupported corpus SQL mode: UNKNOWN_MODE');
         $corpus->profileInputs('/unused', 'UNKNOWN_MODE')->current();
-    }
-
-    public function testRecordDoesNotVerifyAlternativesRemovedByGenerationRewrites(): void
-    {
-        $corpus = new SeedCorpus('mysql-8.4.7');
-        $inputs = $corpus->inputs(dirname(__DIR__, 3) . '/vendor/k-kinzal/sql-faker/seeds/mysql/mysql-8.4.7');
-        $original = $inputs->current();
-        $reached = array_slice($original->reached, 0, 2);
-        $retained = [$reached[0]];
-        $seed = new Seed($original->file, $original->input, $original->sql, $reached, $reached, $retained);
-        $corpus->record($seed, new Comparison(false));
-        $summary = $corpus->summary();
-
-        self::assertSame(2, $summary['matchedReached']);
-        self::assertSame(2, $summary['matchedEmitted']);
-        self::assertSame(1, $summary['matched']);
-        self::assertContains($reached[1], $summary['unverified']);
-        self::assertNotContains($reached[0], $summary['unverified']);
     }
 
     public function testInputsPreservesTheCanonicalSeedContract(): void
@@ -108,26 +85,21 @@ final class SeedCorpusTest extends TestCase
         self::assertSame("ALTER LOGFILE GROUP `name` ADD UNDOFILE 'text'", $seed->sql);
         self::assertSame($seed->sql, $seed->executionSql());
         self::assertSame('', $seed->mode);
-        self::assertCount(3114, $corpus->denominator());
-        self::assertNotEmpty($seed->reached);
-        self::assertNotEmpty($seed->emitted);
-        self::assertNotEmpty($seed->parsed);
     }
 
-    public function testRecordDoesNotCountVolatileOrDifferentStatementsAsVerifiedCoverage(): void
+    public function testRecordKeepsExecutionOutcomesSeparate(): void
     {
         $corpus = new SeedCorpus('mysql-8.4.7');
-        $inputs = $corpus->inputs(dirname(__DIR__, 3) . '/vendor/k-kinzal/sql-faker/seeds/mysql/mysql-8.4.7');
-        $seed = $inputs->current();
-        self::assertSame('volatile', $corpus->record($seed, new Comparison(true)));
-        self::assertSame('different', $corpus->record($seed, new Comparison(false, 'mismatch')));
-        self::assertSame(0, $corpus->summary()['matched']);
-        self::assertSame('matched', $corpus->record($seed, new Comparison(false)));
-        $summary = $corpus->summary();
+        self::assertSame(0, $corpus->summary()['inputs']);
+        self::assertSame('volatile', $corpus->record(new Comparison(true)));
+        self::assertSame('different', $corpus->record(new Comparison(false, 'mismatch')));
+        self::assertSame('matched', $corpus->record(new Comparison(false)));
 
-        self::assertGreaterThan(0, $summary['matched']);
-        self::assertSame(['matched' => 1, 'different' => 1, 'volatile' => 1], $summary['counts']);
-        self::assertNotEmpty($summary['unreached']);
-        self::assertNotEmpty($summary['unverified']);
+        self::assertSame([
+            'grammar' => 'mysql-8.4.7',
+            'root' => 'simple_statement_or_begin',
+            'counts' => ['matched' => 1, 'different' => 1, 'volatile' => 1],
+            'inputs' => 3,
+        ], $corpus->summary());
     }
 }

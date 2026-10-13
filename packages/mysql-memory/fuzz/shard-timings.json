@@ -78,7 +78,6 @@
     "Tests\\Integration\\Fuzz\\ObserverTest": 0.264559,
     "Tests\\Integration\\Fuzz\\OrderingAggregatesTest": 0.422804,
     "Tests\\Integration\\Fuzz\\OrderingAliasScopeTest": 0.377672,
-    "Tests\\Integration\\Fuzz\\ParsedCoverageTest": 0.555941,
     "Tests\\Integration\\Fuzz\\PartialResultsTest": 0.101951,
     "Tests\\Integration\\Fuzz\\PartitionTest": 0.353146,
     "Tests\\Integration\\Fuzz\\PasswordExpiryTest": 0.275929,

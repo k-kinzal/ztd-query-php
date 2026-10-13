@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       canonical_seeds:
-        description: Replay the complete canonical SQL Faker corpus and require 100 percent matching grammar coverage
+        description: Replay the complete supplied SQL Faker corpus and compare execution results
         required: false
         default: false
         type: boolean
@@ -192,7 +192,7 @@ jobs:
 
   canonical-seeds:
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.canonical_seeds == true)
-    name: Canonical seed coverage
+    name: Canonical seed replay
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -223,7 +223,7 @@ jobs:
           mkdir -p build/fuzz
           composer fuzz:seeds 2>&1 | tee build/fuzz/canonical-seeds.log
 
-      - name: Upload complete observations and coverage
+      - name: Upload seed observations and summary
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

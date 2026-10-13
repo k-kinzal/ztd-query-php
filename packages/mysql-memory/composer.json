@@ -180,7 +180,7 @@
         "format": "Fix the code style with PHP-CS-Fixer.",
         "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
         "fuzz": "Run every differential fuzz target with the bounded smoke budget.",
-        "fuzz:seeds": "Replay the complete sql-faker seed corpus and require matching results and full reached grammar coverage.",
+        "fuzz:seeds": "Replay every supplied sql-faker seed and compare its execution with MySQL.",
         "fuzz:expression": "Compare SELECT statements over grammar-generated expressions with a MySQL server.",
         "fuzz:query": "Compare grammar-generated SELECT and DML statements over a fixture schema with a MySQL server.",
         "fuzz:smoke": "Run each differential fuzz target for up to 100 executions; individual fuzz:* commands run continuously.",

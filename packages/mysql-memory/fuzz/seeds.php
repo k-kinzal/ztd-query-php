@@ -5,9 +5,8 @@
  *
  * Usage: php fuzz/seeds.php [SEED_DIRECTORY] [REPORT_PREFIX]
  * MYSQL_VERSION selects the release. Reports contain every outcome and exact input/SQL bytes.
- * Exit 0 requires all inputs to match and every reachable statement production to occur
- * in the concrete parse tree of matching emitted SQL; generator choices alone are not evidence.
- * Volatility, differences, incomplete coverage and infrastructure failures never pass.
+ * SQL Faker supplies the corpus and owns its grammar coverage. This runner requires every
+ * supplied input to pass comparison; differences and infrastructure failures never pass.
  */
 
 declare(strict_types=1);
@@ -38,8 +37,8 @@ $index = 0;
 foreach ($corpus->inputs($directory) as $seed) {
     $sql = $seed->executionSql();
     $comparison = Lifecycle::handles($sql) ? (new Lifecycle())->compare($sql, $target->version) : $target->compare($sql);
-    $status = $corpus->record($seed, $comparison);
-    $row = ['index' => $index, 'file' => $seed->file, 'inputHex' => bin2hex($seed->input), 'sqlHex' => bin2hex($seed->sql), 'sqlMode' => $seed->mode, 'structuralRewrites' => $seed->structuralRewrites, 'executionSqlHex' => bin2hex($sql), 'status' => $status, 'difference' => $comparison->difference, 'contracts' => $comparison->contracts, 'referenceDifference' => $comparison->referenceDifference, 'reached' => $seed->reached, 'emitted' => $seed->emitted, 'parsed' => $seed->parsed];
+    $status = $corpus->record($comparison);
+    $row = ['index' => $index, 'file' => $seed->file, 'inputHex' => bin2hex($seed->input), 'sqlHex' => bin2hex($seed->sql), 'sqlMode' => $seed->mode, 'structuralRewrites' => $seed->structuralRewrites, 'executionSqlHex' => bin2hex($sql), 'status' => $status, 'difference' => $comparison->difference, 'contracts' => $comparison->contracts, 'referenceDifference' => $comparison->referenceDifference];
     if (fwrite($report, json_encode($row, JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n") === false || !fflush($report)) {
         throw new RuntimeException('Cannot append to report ' . $prefix);
     }
@@ -50,9 +49,8 @@ foreach ($corpus->inputs($directory) as $seed) {
 }
 fclose($report);
 $summary = $corpus->summary();
-if (file_put_contents($prefix . '.coverage.json', json_encode($corpus->coverage->snapshot(), JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n") === false
-    || file_put_contents($prefix . '.summary.json', json_encode($summary, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n") === false) {
-    throw new RuntimeException('Cannot write coverage reports for ' . $prefix);
+if (file_put_contents($prefix . '.summary.json', json_encode($summary, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n") === false) {
+    throw new RuntimeException('Cannot write seed summary for ' . $prefix);
 }
-echo json_encode(array_diff_key($summary, ['unreached' => true, 'unverified' => true]), JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n";
-exit($summary['total'] > 0 && $summary['unreached'] === [] && $summary['unverified'] === [] && $corpus->counts['different'] === 0 && $corpus->counts['volatile'] === 0 ? 0 : 1);
+echo json_encode($summary, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n";
+exit($summary['inputs'] > 0 && $corpus->counts['different'] === 0 && $corpus->counts['volatile'] === 0 ? 0 : 1);

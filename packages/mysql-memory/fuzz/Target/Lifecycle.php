@@ -12,7 +12,7 @@ use PDOException;
 use Testcontainers\Testcontainers;
 
 /**
- * Compares SHUTDOWN and RESTART on disposable servers, without dropping them from coverage.
+ * Compares SHUTDOWN and RESTART on disposable servers, retaining these inputs in the seed corpus.
  *
  * Their completion, connection termination and ability to reconnect are observed. A successful
  * restart must preserve the fixture rows and reset aborted-client statistics. Post-statement SHOW WARNINGS cannot be observed
