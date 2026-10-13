@@ -118,6 +118,20 @@ final class CreateUserCommandTest extends TestCase
         self::assertSame([8, ['Warning', '1366', "Incorrect string value: '\\xC3\\xA9x' for column 'Host' at row 1"]], [count($warnings->rows), $warnings->rows[0]]);
     }
 
+    public function testRolesWarnsDuringLookupEvenWhenTheRoleAlreadyExists(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE ROLE IF NOT EXISTS 'r'@'猫'");
+        $created = $session->query('SHOW WARNINGS')[0];
+        $session->query("CREATE ROLE IF NOT EXISTS 'r'@'猫'");
+        $existing = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $created);
+        self::assertInstanceOf(ResultSet::class, $existing);
+        self::assertCount(9, $created->rows);
+        self::assertSame(['1366', '3163'], array_column($existing->rows, 1));
+    }
+
     public function testAbsentRefusesAnAccountNamedTwice(): void
     {
         $session = (new Instance())->connect();

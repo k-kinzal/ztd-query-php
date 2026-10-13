@@ -916,6 +916,13 @@
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
         "table": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadConflict": {
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadRule"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadRule": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\UnknownDeleteTable": {
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },

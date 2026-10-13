@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 
 /**
  * Exercises the public semantic constructor domain without generating SQL.
@@ -71,5 +72,20 @@ final class ConstructionTest extends TestCase
 
         self::assertEquals($first->object(NumberLiteral::class, 4), $second->object(NumberLiteral::class, 4));
         self::assertSame($first->rejections, $second->rejections);
+    }
+
+    /**
+     * @throws JsonException When the value inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testRecursiveSetRootFitsTheBudgetWithoutReplacingItsType(): void
+    {
+        $catalogue = new Catalogue();
+        $choices = new Choices('all-model-roots:111');
+        $choices->one($catalogue->roots());
+        $construction = new Construction($choices, $catalogue, new Metadata());
+
+        self::assertInstanceOf(SetOperation::class, $construction->object(SetOperation::class, 6));
+        self::assertLessThanOrEqual(2000, $construction->attempts);
     }
 }

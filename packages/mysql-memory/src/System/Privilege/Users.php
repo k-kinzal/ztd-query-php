@@ -33,9 +33,9 @@ final class Users implements SystemRows
     {
         $rows = [];
         $legacy = $reading->release === \SqlSemantics\Contract\GrammarRelease::MySql5651;
-        foreach (Grantees::stored($reading) as $account) {
+        foreach (array_filter(Grantees::stored($reading), static fn (Account $account): bool => $account->stored) as $account) {
             $password = $legacy && in_array($account->plugin, ['mysql_native_password', 'mysql_old_password'], true);
-            $rows[] = ['Host' => $account->identity->host, 'User' => $account->identity->user] + Grantees::flags($account->grants->global, Grantees::global()) + [
+            $rows[] = ['Host' => $account->identity->stored()->host, 'User' => $account->identity->user] + Grantees::flags($account->grants->global, Grantees::global()) + [
                 'ssl_type' => match ($account->tls) {
                     TlsKind::None => '',
                     TlsKind::Ssl => 'ANY',

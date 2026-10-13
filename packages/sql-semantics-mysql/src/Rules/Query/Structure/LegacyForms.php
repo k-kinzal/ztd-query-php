@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceAccess;
 use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
@@ -40,7 +41,7 @@ final class LegacyForms
      */
     public function requires(object $value): bool
     {
-        return in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, ParseGeneratedColumn::class, PartitionEntry::class, AlterTablespaceAccess::class], true)
+        return in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, ParseGeneratedColumn::class, PartitionEntry::class, AlterTablespaceAccess::class, ResetQueryCache::class], true)
             || in_array($value, [SelectOption::Cache, KeywordFunction::Password, KeywordFunction::OldPassword, PasswordFunction::Password, PasswordFunction::OldPassword, AliasMark::Equals], true)
             || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)
             || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)

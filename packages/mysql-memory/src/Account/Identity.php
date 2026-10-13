@@ -51,6 +51,17 @@ final class Identity
     }
 
     /**
+     * Answers the identity written to the ASCII Host column of the grant tables.
+     * Unsupported characters become one question mark each, while the live cache retains the name.
+     */
+    public function stored(): self
+    {
+        $host = preg_replace('/[^\x00-\x7F]/u', '?', $this->host);
+
+        return new self($this->user, $host ?? (string) preg_replace('/[\x80-\xFF]/', '?', $this->host));
+    }
+
+    /**
      * Writes the name quoted as strings, as the messages of the account statements write it.
      */
     public function quoted(): string

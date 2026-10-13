@@ -23,6 +23,12 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind;
 final class Account
 {
     /**
+     * Whether the grant table still contains this cached account.
+     * Dropping its lossy stored host can leave the original cache entry until FLUSH PRIVILEGES.
+     */
+    public bool $stored = true;
+
+    /**
      * @var array{string, string|null}|null The retained authentication string and known password, or null without a secondary password
      */
     public ?array $secondary = null;

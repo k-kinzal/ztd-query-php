@@ -101,6 +101,34 @@ final class Accounts
     }
 
     /**
+     * Finds a grant-table identity independently of the original spelling in the cache.
+     */
+    public function stored(Identity $identity): ?Account
+    {
+        foreach ($this->accounts as $account) {
+            if ($account->stored && $account->identity->stored()->key() === $identity->key()) {
+                return $account;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Reloads account identities from the grant table after FLUSH PRIVILEGES.
+     */
+    public function reload(): void
+    {
+        foreach (array_values($this->accounts) as $account) {
+            if (!$account->stored) {
+                unset($this->accounts[$account->identity->key()]);
+            } elseif ($account->identity->key() !== $account->identity->stored()->key()) {
+                $this->rename($account->identity, $account->identity->stored());
+            }
+        }
+    }
+
+    /**
      * Adds an account.
      */
     public function add(Account $account): void
@@ -113,6 +141,11 @@ final class Accounts
      */
     public function drop(Identity $identity): void
     {
+        foreach ($this->accounts as $account) {
+            if ($account->identity->stored()->key() === $identity->stored()->key()) {
+                $account->stored = false;
+            }
+        }
         $key = $identity->key();
         unset($this->accounts[$key], $this->edges[$key], $this->defaults[$key]);
         foreach ($this->edges as $grantee => $roles) {

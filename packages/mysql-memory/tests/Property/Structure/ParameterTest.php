@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure;
 
+use Fuzz\Structure\Bindings;
 use Fuzz\Structure\Choices;
 use Fuzz\Structure\Execution;
 use MySqlMemory\Result\ResultSet;
@@ -25,6 +26,24 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class ParameterTest extends TestCase
 {
+    /**
+     * Resolves parent result types from explicit NULL bindings instead of unbound placeholders.
+     */
+    public function testNullFixtureResolvesParametersInsideTypedParentExpressions(): void
+    {
+        $query = new Select([], [
+            new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat(\SqlSemantics\Platform\MySql\Statement\Call\Temporal\TemporalFormat::Date, new Parameter(':format'))),
+            new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation(new Parameter(), new Parameter())),
+            new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression(null, [new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new Parameter())])),
+        ]);
+        $bindings = (new Bindings())->nulls($query);
+        $reply = (new Execution())->run($query, parameters: $bindings, mode: 'PIPES_AS_CONCAT');
+
+        self::assertCount(4, $bindings);
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([[null, null, null]], $reply->rows);
+    }
+
     /**
      * @return iterable<string, array{int, int}>
      */

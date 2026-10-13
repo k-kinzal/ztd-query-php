@@ -21,6 +21,17 @@ final class ShowCreateUserCommandTest extends TestCase
         self::assertTrue((new ShowCreateUserCommand())->clearsDiagnostics());
     }
 
+    public function testExecuteWarnsWhenReadingANonAsciiHost(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE ROLE r@'猫'");
+        $session->query("SHOW CREATE USER r@'猫'");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(['1366'], array_column($warnings->rows, 1));
+    }
+
     public function testExecuteWritesTheStatementOfASystemAccount(): void
     {
         $result = (new Instance())->connect()->query("SHOW CREATE USER 'mysql.sys'@localhost")[0];

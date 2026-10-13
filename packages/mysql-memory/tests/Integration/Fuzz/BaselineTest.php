@@ -44,6 +44,7 @@ final class BaselineTest extends TestCase
         yield 'database' => ['CREATE DATABASE baseline_extra'];
         yield 'account' => ['CREATE USER baseline_extra'];
         yield 'role across inputs' => ['CREATE USER baseline_extra; CREATE ROLE _sqlfaker_identifier'];
+        yield 'role host cache' => ["CREATE ROLE IF NOT EXISTS 'baseline_extra'@'猫'"];
         yield 'server' => ["CREATE SERVER baseline_extra FOREIGN DATA WRAPPER mysql OPTIONS (USER 'text')"];
         yield 'named replication channel' => ["CREATE DATABASE baseline_extra; CHANGE REPLICATION SOURCE TO SOURCE_PORT=3306 FOR CHANNEL 'baseline_extra'"];
     }

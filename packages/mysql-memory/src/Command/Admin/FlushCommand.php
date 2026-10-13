@@ -99,6 +99,9 @@ final class FlushCommand implements Command
     public function options(Flush $statement, Session $session): void
     {
         foreach ($statement->items as $item) {
+            if ($item->option === FlushOption::Privileges) {
+                $session->instance->accounts->reload();
+            }
             if ($item->option === FlushOption::Status) {
                 $this->status($session);
             }

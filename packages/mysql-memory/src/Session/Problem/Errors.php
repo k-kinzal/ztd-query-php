@@ -259,6 +259,7 @@ final class Errors
     public function manipulation(Diagnostic $diagnostic, ?Node $statement): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict => new SqlError(StatementError::WrongUsage, $diagnostic->message()),
             $diagnostic instanceof ValueCountMismatch => $diagnostic->row === null ? QueryError::WrongValueCount->error() : QueryError::WrongValueCountOnRow->error($diagnostic->row),
             $diagnostic instanceof DuplicateWrittenColumn => QueryError::FieldSpecifiedTwice->error($diagnostic->column->value),
             $diagnostic instanceof GeneratedColumnWrite => DataError::GeneratedColumnValue->error($diagnostic->column->value, $diagnostic->table->value),

@@ -25,6 +25,48 @@ final class AccountsTest extends TestCase
         self::assertNull(Accounts::installed()->find(new Identity('nobody', '%')));
     }
 
+    public function testStoredFindsTheGrantTableSpellingApartFromTheCache(): void
+    {
+        $accounts = new Accounts();
+        $role = Account::role(new Identity('r', '猫'));
+        $accounts->add($role);
+
+        self::assertNull($accounts->find(new Identity('r', '?')));
+        self::assertSame($role, $accounts->stored(new Identity('r', '?')));
+    }
+
+    public function testReloadDiscardsADeletedStoredAccountAndPreservesOrdinaryRoleGrants(): void
+    {
+        $accounts = new Accounts();
+        $unicode = new Identity('r', '猫');
+        $user = new Identity('u', '%');
+        $role = new Identity('ordinary', '%');
+        $accounts->add(Account::role($unicode));
+        $accounts->add(new Account($user));
+        $accounts->add(Account::role($role));
+        $accounts->grant($role, $user, true);
+        $accounts->drop(new Identity('r', '?'));
+        self::assertNotNull($accounts->find($unicode));
+        self::assertNull($accounts->stored(new Identity('r', '?')));
+
+        $accounts->reload();
+
+        self::assertNull($accounts->find($unicode));
+        self::assertSame([$role->key() => [$role, true]], $accounts->roles($user));
+    }
+
+    public function testReloadUsesTheGrantTableIdentityForAnExistingAccount(): void
+    {
+        $accounts = new Accounts();
+        $identity = new Identity('r', '猫');
+        $accounts->add(Account::role($identity));
+
+        $accounts->reload();
+
+        self::assertNull($accounts->find($identity));
+        self::assertSame('?', $accounts->find(new Identity('r', '?'))?->identity->host);
+    }
+
     public function testAddKeepsTheAccount(): void
     {
         $accounts = new Accounts();

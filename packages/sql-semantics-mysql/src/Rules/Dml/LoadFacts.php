@@ -6,7 +6,12 @@ namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
+use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadRule;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
@@ -33,6 +38,10 @@ final class LoadFacts
      */
     public function derive(LoadTable $load, Derivation $derivation): void
     {
+        $conflict = $this->algorithm($load);
+        if ($conflict !== null) {
+            $derivation->report($conflict);
+        }
         $base = $derivation->environment();
         if ($load->charset?->name !== null) {
             if (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($load->charset->name->value) === null) {
@@ -46,5 +55,24 @@ final class LoadFacts
             $derivation->scalar($column, $column instanceof ColumnUse ? (new WriteScope())->written($environment) : $base);
         }
         (new WriteScope())->assign($load->assignments, $derivation, $environment, $environment, false);
+    }
+
+    /**
+     * Resolves option compatibility independently of engine and file availability.
+     */
+    public function algorithm(LoadTable $load): ?LoadConflict
+    {
+        $bulk = $load->bulk->bulk ?? false;
+        $rule = match (true) {
+            $bulk && $load->format === LoadFormat::Xml => LoadRule::XmlBulk,
+            $bulk && $load->input->local => LoadRule::LocalBulk,
+            $bulk && $load->duplicates === DuplicateHandling::Ignore => LoadRule::IgnoreBulk,
+            !$bulk && $load->input->count !== null => LoadRule::MultipleFilesWithoutBulk,
+            !$bulk && $load->input->source === LoadSource::Url => LoadRule::UrlWithoutBulk,
+            !$bulk && $load->compression !== null => LoadRule::CompressionWithoutBulk,
+            default => null,
+        };
+
+        return $rule === null ? null : new LoadConflict($rule);
     }
 }

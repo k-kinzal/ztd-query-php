@@ -45,7 +45,7 @@ final class Inhabitants
         if (!$type instanceof ReflectionNamedType) {
             throw new RuntimeException('Unsupported native constructor type in ' . $scope);
         }
-        if ($type->allowsNull() && $this->construction->choices->integer(0, 1) === 0) {
+        if ($type->allowsNull() && ((!$type->isBuiltin() && !$this->construction->depth->object($this->construction->metadata->resolve($type->getName(), $scope, true), $depth - 1)) || $this->construction->choices->integer(0, 1) === 0)) {
             return null;
         }
 

@@ -164,7 +164,7 @@ final class Stages
             return $diagnostic instanceof MissingTable;
         }
         if ($statement instanceof LoadTable) {
-            return $diagnostic instanceof MissingTable || $diagnostic instanceof MissingColumn || $diagnostic instanceof UnpartitionedTable || $diagnostic instanceof UnknownPartition;
+            return $diagnostic instanceof MissingTable || $diagnostic instanceof MissingColumn || $diagnostic instanceof UnpartitionedTable || $diagnostic instanceof UnknownPartition || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
         }
         if ((new \MySqlMemory\Command\Show\Inspection())->inspects($statement)) {
             return $diagnostic instanceof MissingTable;

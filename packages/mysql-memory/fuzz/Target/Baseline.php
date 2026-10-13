@@ -69,6 +69,11 @@ final class Baseline
         foreach ($this->cleanup as $statement => $_) {
             $connection->exec($statement);
         }
+        /**
+         * Account rows can have a lossy host encoding while the cache retains the original spelling.
+         * Reload after deletion so both observations start without the stale cache entry.
+         */
+        (new Fixture())->execute($connection, 'FLUSH PRIVILEGES');
         $connection->exec('REVOKE ALL PRIVILEGES, GRANT OPTION FROM ' . $this->identity);
         foreach ($this->grants as $grant) {
             if ($connection->exec($grant) === false) {

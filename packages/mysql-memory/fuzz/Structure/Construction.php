@@ -56,14 +56,16 @@ final class Construction
         if (enum_exists($class)) {
             return $this->choices->one($class::cases());
         }
-        $implementations = array_values(array_filter(interface_exists($class) ? $this->catalogue->implementations($class) : [$class], fn (string $candidate): bool => $this->depth->object($candidate, $depth)));
+        $implementations = interface_exists($class) ? $this->catalogue->implementations($class) : [$class];
+        $depths = array_values(array_filter(range(0, $depth), fn (int $remaining): bool => $this->depth->object($class, $remaining)));
         $deadline = min(2000, $this->attempts + 24 * 2 ** $depth);
         for ($attempt = 0; $attempt < 24 && $this->attempts < 2000; $attempt++) {
             if ($this->attempts >= $deadline) {
                 throw new Exhausted('The subtree construction budget was exhausted at ' . $class);
             }
             $this->attempts++;
-            $concrete = $this->choices->one($implementations);
+            $remaining = interface_exists($class) || !$this->depth->object($class, 0) ? $this->choices->one($depths) : $depth;
+            $concrete = $this->choices->one(array_values(array_filter($implementations, fn (string $candidate): bool => $this->depth->object($candidate, $remaining))));
             if (enum_exists($concrete)) {
                 return $this->choices->one($concrete::cases());
             }
@@ -75,12 +77,12 @@ final class Construction
                 $arguments = [];
                 foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
                     $type = $parameters[$parameter->getName()] ?? null;
-                    $fits = $type === null ? $this->depth->native($parameter->getType(), $concrete, $depth) : $this->depth->type($type, $concrete, $depth);
+                    $fits = $type === null ? $this->depth->native($parameter->getType(), $concrete, $remaining) : $this->depth->type($type, $concrete, $remaining);
                     if ($parameter->isDefaultValueAvailable() && (!$fits || $this->choices->integer(0, 3) !== 0)) {
                         $arguments[] = $parameter->getDefaultValue();
                         continue;
                     }
-                    $arguments[] = $type === null ? $this->types->native($parameter->getType(), $concrete, $depth) : $this->types->generate($type, $concrete, $depth);
+                    $arguments[] = $type === null ? $this->types->native($parameter->getType(), $concrete, $remaining) : $this->types->generate($type, $concrete, $remaining);
                 }
 
                 return $reflection->newInstanceArgs($arguments);

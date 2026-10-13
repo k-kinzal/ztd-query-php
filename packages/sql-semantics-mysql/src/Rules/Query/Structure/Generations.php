@@ -12,6 +12,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
@@ -22,6 +23,9 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample;
 use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
+use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Statement\Node;
 
 /**
@@ -98,7 +102,8 @@ final class Generations
             return 1;
         }
         if ($value instanceof WithClause || $value instanceof WindowSpecification
-            || in_array($value::class, [CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, OdbcJoin::class, TableSample::class], true)
+            || in_array($value::class, [CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, CastAtLocal::class, OdbcJoin::class, TableSample::class], true)
+            || (($value instanceof ResetBinaryLogs || $value instanceof ResetReplica) && $value->terminology === Terminology::Current)
             || ($value instanceof Select && $value->qualify !== null)
             || ($value instanceof DerivedTable && ($value->lateral || $value->columns !== []))
             || $value === SetOperator::Intersect || $value === SetOperator::Except) {

@@ -59,7 +59,7 @@ final class DropUserCommand implements Command
         foreach ($listed as $name) {
             $identity = $names->identity($name, $session);
             $names->ascii($identity, 7, $context->diagnostics);
-            if ($accounts->find($identity) === null || isset($dropped[$identity->key()])) {
+            if (($accounts->find($identity) === null && $accounts->stored($identity) === null) || isset($dropped[$identity->key()])) {
                 $missing[] = $identity;
                 if ($statement->ifExists) {
                     $context->diagnostics->note(AccountError::UserDoesNotExist, $names->existence($identity, false));

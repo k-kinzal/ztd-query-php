@@ -69,6 +69,10 @@ final class GenerationsTest extends TestCase
         yield 'leading column dot' => [new ColumnUse(new Name('a'), new QualifiedName(new Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), 1];
         yield 'leading table dot' => [new TableReference(new QualifiedName(new Name('t')), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), 1];
         yield 'legacy explain modifier' => [\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions, 1];
+        yield 'query cache reset' => [new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache(), 1];
+        yield 'binary logs reset' => [new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current), 2];
+        yield 'replica reset' => [new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current), 2];
+        yield 'cast at local' => [new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal(new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::DateTime)), 2];
     }
 
     #[DataProvider('providerRequirements')]
@@ -84,6 +88,9 @@ final class GenerationsTest extends TestCase
     {
         yield 'generated column and modern table' => [static fn (): Node => new ParseGeneratedColumn(new ScalarSubquery(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])))];
         yield 'weight levels in a modern row' => [static fn (): Node => new ValuesQuery([new ValueRow([new WeightString(new NumberLiteral('1'), levels: [new WeightLevel(new Numeral('1'))])])])];
+        yield 'weight levels with cast at local' => [static fn (): Node => new WeightString(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal(new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::DateTime)), levels: [new WeightLevel(new Numeral('1'))])];
+        yield 'query cache with binary logs reset' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset([new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current), new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache()])];
+        yield 'query cache with replica reset' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset([new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current), new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache()])];
         yield 'legacy password and modern assignment' => [static fn (): Node => new SetVariables([new PasswordAssignment(new Password(new Text('pw'), PasswordFunction::Password)), new UserAssignment(new UserVariable(new Name('x')), new JsonValueCall(new StringLiteral(['{}']), new StringLiteral(['$.x'])))])];
         yield 'with and procedure' => [static fn (): Node => new QueryExpression(
             new With(false, [new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))]))]),

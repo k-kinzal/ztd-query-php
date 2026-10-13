@@ -16,8 +16,8 @@ use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind;
-use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -68,8 +68,11 @@ final class LoadDataCommand implements Command
         if ($legacy) {
             $this->separators($statement);
         }
+        if ($statement->table->name->schema === null && $session->variables->database === '') {
+            throw QueryError::NoDatabase->error();
+        }
         $input = $statement->input;
-        $this->algorithm($statement);
+        $this->algorithm($operation, $session);
         if ($input->local && !$legacy) {
             throw StatementError::LocalInfileDisabled->error();
         }
@@ -100,19 +103,16 @@ final class LoadDataCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When options require the bulk algorithm or bulk loading is requested
      */
-    public function algorithm(LoadTable $statement): void
+    public function algorithm(Operation $operation, Session $session): void
     {
-        $bulk = $statement->bulk !== null && $statement->bulk->bulk;
-        if ($statement->input->count !== null && !$bulk) {
-            throw StatementError::WrongUsage->error('LOAD DATA without BULK Algorithm', 'multiple files');
+        $statement = $operation->statement;
+        assert($statement instanceof LoadTable);
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof LoadConflict) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
+            }
         }
-        if ($statement->input->source === LoadSource::Url && !$bulk) {
-            throw StatementError::WrongUsage->error('LOAD DATA without BULK Algorithm', 'URL source');
-        }
-        if ($statement->compression !== null && !$bulk) {
-            throw StatementError::WrongUsage->error('LOAD DATA without BULK Algorithm', 'COMPRESSION specified!');
-        }
-        if ($bulk) {
+        if ($statement->bulk->bulk ?? false) {
             throw StatementError::NotSupportedYet->error('Bulk Load');
         }
     }

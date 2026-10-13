@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+use Fuzz\Structure\Bindings;
 use Fuzz\Structure\Catalogue;
 use Fuzz\Structure\Choices;
 use Fuzz\Structure\Construction;
@@ -64,7 +65,7 @@ for ($trial = 0; $trial < $count; $trial++) {
             $mode = $profiles->mode($profile);
         }
         $stage = 'structure';
-        (new Execution())->run($node, $version, mode: $mode);
+        (new Execution())->run($node, $version, (new Bindings())->nulls($node), $mode);
         $counts['passed']++;
     } catch (Throwable $failure) {
         $kind = $failure instanceof Exhausted ? 'exhausted' : ($failure instanceof SqlError ? 'sql_error' : $stage);

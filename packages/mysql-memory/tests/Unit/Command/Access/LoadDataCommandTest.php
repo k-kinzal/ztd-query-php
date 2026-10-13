@@ -8,6 +8,7 @@ use MySqlMemory\Command\Access\LoadDataCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
@@ -16,6 +17,28 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 #[Small]
 final class LoadDataCommandTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int, string}>
+     */
+    public static function providerAlgorithms(): iterable
+    {
+        yield 'XML before local' => ["LOAD XML LOCAL INFILE 'f' IGNORE INTO TABLE d.t ALGORITHM = BULK", 1221, 'Incorrect usage of LOAD XML and BULK Algorithm'];
+        yield 'local before ignore' => ["LOAD DATA LOCAL INFILE 'f' IGNORE INTO TABLE d.t ALGORITHM = BULK", 1221, 'Incorrect usage of LOAD DATA with BULK Algorithm and LOCAL client file'];
+        yield 'ignore before engine' => ["LOAD DATA INFILE 'f' IGNORE INTO TABLE d.t ALGORITHM = BULK", 1221, 'Incorrect usage of LOAD DATA with BULK Algorithm and IGNORE clause'];
+        yield 'database before conflicts' => ["LOAD XML LOCAL URL 'f' COUNT 2 IGNORE INTO TABLE t COMPRESSION='x' ALGORITHM = BULK", 1046, 'No database selected'];
+    }
+
+    #[DataProvider('providerAlgorithms')]
+    public function testExecuteOrdersAlgorithmAndSessionErrors(string $sql, int $code, string $message): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        $this->expectExceptionMessage($message);
+
+        $session->query($sql);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new LoadDataCommand())->clearsDiagnostics());

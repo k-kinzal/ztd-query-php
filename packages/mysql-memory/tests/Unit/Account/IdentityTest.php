@@ -24,6 +24,14 @@ final class IdentityTest extends TestCase
         self::assertSame("a\0h", Identity::of('a', 'h')->key());
     }
 
+    public function testStoredReplacesCharactersWithoutChangingTheCachedName(): void
+    {
+        $identity = Identity::of('名前', 'é猫.example');
+
+        self::assertSame('名前@??.example', $identity->stored()->text());
+        self::assertSame('é猫.example', $identity->host);
+    }
+
     public function testQuotedEscapesAsTheMessagesOfAccountStatements(): void
     {
         self::assertSame("'a\\'b'@'%'", Identity::of("a'b", null)->quoted());

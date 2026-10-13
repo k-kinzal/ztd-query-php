@@ -52,6 +52,9 @@ final class ShowCreateUserCommand implements Command
         $names = new Names($session->settings()->release());
         $names->check([$statement->user]);
         $identity = $names->identity($statement->user, $session);
+        if (!$session->settings()->legacy()) {
+            $names->ascii($identity, 1, $context->diagnostics);
+        }
         $accounts = $session->instance->accounts;
         $account = $accounts->find($identity);
         if ($account === null) {

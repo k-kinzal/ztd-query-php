@@ -265,6 +265,7 @@ final class CreateUserCommand implements Command
             if ($role->user === '') {
                 throw AccountError::CannotUser->error('CREATE ROLE', 'anonymous user');
             }
+            (new Names())->ascii($role, 1, $context->diagnostics);
             if ($accounts->find($role) !== null || isset($created[$role->key()])) {
                 $failed[] = $role;
                 continue;
