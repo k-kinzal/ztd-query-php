@@ -37,13 +37,15 @@ final class ModernForms
     public function requires(object $value): bool
     {
         return $value instanceof WithClause || $value instanceof WindowSpecification
-            || in_array($value::class, [CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, CastAtLocal::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
+            || $value === \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword
+            || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, CastAtLocal::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
             || match (true) {
                 $value instanceof Select => $value->qualify !== null || count($value->locking) > 1,
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement => count($value->locking) > 1,
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause => $value->strength === \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share || $value->tables !== [] || $value->action !== null,
                 $value instanceof ResetBinaryLogs, $value instanceof ResetReplica => $value->terminology === Terminology::Current,
                 $value instanceof DerivedTable => $value->lateral || $value->columns !== [],
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,
                 default => in_array($value, [SetOperator::Intersect, SetOperator::Except], true),
             };
     }

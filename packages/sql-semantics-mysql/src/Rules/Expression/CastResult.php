@@ -66,9 +66,10 @@ final class CastResult
     public function type(CastTarget $target): TypeFact
     {
         return match ($target->kind) {
-            CastKind::Binary => new Known(new Binary(BinaryKind::VarBinary, $target->length)),
-            CastKind::Char => new Known(new Character(CharacterKind::VarChar, $target->length, false, $target->charset)),
-            CastKind::NationalChar => new Known(new Character(CharacterKind::VarChar, $target->length, true)),
+            CastKind::Binary => new Known($target->length === null ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : new Binary(BinaryKind::VarBinary, $target->length)),
+            CastKind::Char, CastKind::NationalChar => new Known($target->length === null
+                ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(national: $target->kind === CastKind::NationalChar, charset: $target->charset)
+                : new Character(CharacterKind::VarChar, $target->length, $target->kind === CastKind::NationalChar, $target->charset)),
             CastKind::Signed => new Known(new Integral(IntegralKind::BigInt)),
             CastKind::Unsigned => new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])),
             CastKind::Date => new Known(new Temporal(TemporalKind::Date)),

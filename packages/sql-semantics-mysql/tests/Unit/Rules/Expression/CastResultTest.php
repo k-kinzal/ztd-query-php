@@ -63,4 +63,15 @@ final class CastResultTest extends TestCase
         self::assertSame(Nullability::Nullable, $results->nullability($target, Nullability::Nullable, GrammarRelease::MySql5651));
         self::assertSame(Nullability::Nullable, $results->nullability($target, Nullability::NotNull, GrammarRelease::MySql5744));
     }
+
+    public function testTypeKeepsUnsizedStringFactsSeparateFromDeclarations(): void
+    {
+        $results = new CastResult();
+        $charset = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Ascii);
+
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), $results->type(new CastTarget(CastKind::Binary)));
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(national: true)), $results->type(new CastTarget(CastKind::NationalChar)));
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(charset: $charset)), $results->type(new CastTarget(CastKind::Char, charset: $charset)));
+    }
+
 }

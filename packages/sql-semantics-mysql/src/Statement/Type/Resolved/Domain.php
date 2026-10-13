@@ -227,7 +227,7 @@ final class Domain implements TypeDescriptor
     }
 
     /**
-     * Answers the type name that declares a value of the same class, without the attributes of this type.
+     * Answers a writable declaration of the same class; varying strings retain their required length.
      */
     public function declared(): DeclaredName
     {
@@ -259,10 +259,14 @@ final class Domain implements TypeDescriptor
             return new Elementary(ElementaryKind::Vector);
         }
         if ($this->collation->bytes()) {
-            return new Binary(self::BINARIES[$this->field->value] ?? BinaryKind::VarBinary);
+            $kind = self::BINARIES[$this->field->value] ?? BinaryKind::VarBinary;
+
+            return new Binary($kind, $kind === BinaryKind::VarBinary ? (string) $this->length : null);
         }
 
-        return new Character(self::CHARACTERS[$this->field->value] ?? CharacterKind::VarChar);
+        $kind = self::CHARACTERS[$this->field->value] ?? CharacterKind::VarChar;
+
+        return new Character($kind, $kind === CharacterKind::VarChar ? (string) $this->length : null);
     }
 
 }

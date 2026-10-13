@@ -9,10 +9,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Expression\StringResult;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Known;
@@ -28,8 +26,8 @@ final class StringResultTest extends TestCase
         $bytes = new Known(new Binary(BinaryKind::Blob));
         $number = new Known(new Integral(IntegralKind::Int));
 
-        self::assertEquals(new Known(new Binary(BinaryKind::VarBinary)), $results->concatenation([$number, $bytes]));
-        self::assertEquals(new Known(new Character(CharacterKind::VarChar)), $results->concatenation([$number, new NullOnly()]));
-        self::assertEquals(new Choice([new Character(CharacterKind::VarChar), new Binary(BinaryKind::VarBinary)]), $results->concatenation([$number, new Choice([new Binary(BinaryKind::Blob), new Integral(IntegralKind::Int)])]));
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), $results->concatenation([$number, $bytes]));
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), $results->concatenation([$number, new NullOnly()]));
+        self::assertEquals(new Choice([new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(), new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)]), $results->concatenation([$number, new Choice([new Binary(BinaryKind::Blob), new Integral(IntegralKind::Int)])]));
     }
 }

@@ -26,4 +26,9 @@ final class ShowCreateEventTest extends TestCase
     {
         self::assertSame('SHOW CREATE EVENT db.x', (new Semantics(Dialect::MySql))->analyze('SHOW CREATE EVENT db.x')->toString());
     }
+    public function testValueRejectsACatalogQualifier(): void
+    {
+        $this->expectExceptionMessage('An event name has at most a database qualifier.');
+        new ShowCreateEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('e'), new \SqlSemantics\Statement\Identifier\Name('d'), new \SqlSemantics\Statement\Identifier\Name('catalog')));
+    }
 }

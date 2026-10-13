@@ -113,7 +113,7 @@ final class ShowRows
     public function type(string $code): TypeFact
     {
         if (isset(self::CHARACTERS[$code])) {
-            return new Known(new Character(self::CHARACTERS[$code]));
+            return new Known($code === 'v' ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily() : new Character(self::CHARACTERS[$code]));
         }
         if (isset(self::INTEGERS[$code])) {
             [$kind, $unsigned] = self::INTEGERS[$code];

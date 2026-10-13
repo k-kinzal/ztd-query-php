@@ -41,6 +41,7 @@ final class SubqueryOptions
             } elseif (($value instanceof Query || $value instanceof LeadingUnion) && !isset($seen[$value])) {
                 $seen[$value] = true;
                 Check::input(!$value instanceof Select || !in_array(SelectOption::Cache, $value->options, true), 'SQL_CACHE is not an option of a subquery.');
+                Check::input(!$value instanceof Select || $value->procedure === null, 'An expression subquery cannot invoke PROCEDURE ANALYSE.');
                 if (!$value instanceof Select) {
                     array_push($pending, ...array_values(get_object_vars($value)));
                 }

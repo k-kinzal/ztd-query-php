@@ -40,6 +40,8 @@ final class Character implements DeclaredName
         public readonly bool $national = false,
         public readonly ?CharsetAttribute $charset = null,
     ) {
+        Check::input(!in_array($kind, [CharacterKind::VarChar, CharacterKind::CharVarying], true) || $length !== null, 'A VARCHAR declaration requires a length.');
+        Check::input($length === null || in_array($kind, [CharacterKind::Char, CharacterKind::VarChar, CharacterKind::CharVarying, CharacterKind::Text], true), 'Only CHAR, VARCHAR and TEXT take a length.');
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');
         Check::input(!$national || $kind === CharacterKind::Char || $kind === CharacterKind::VarChar, 'Only CHAR and VARCHAR have a national form.');
         Check::input(!$national || $charset === null || $charset->form === CharsetForm::Binary, 'A national character type takes the BINARY attribute alone.');

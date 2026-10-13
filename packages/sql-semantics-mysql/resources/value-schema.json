@@ -3029,6 +3029,11 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Spatial": {
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\SpatialKind"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\StringFamily": {
+        "binary": "bool",
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\CharsetAttribute",
+        "national": "bool"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Temporal": {
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\TemporalKind",
         "modifiers": "array",

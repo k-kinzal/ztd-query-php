@@ -53,4 +53,23 @@ final class CharacterSetTest extends TestCase
 
         (new Execution())->run($expression, $release);
     }
+
+    /**
+     * Unsized casts remain expression types while their operands determine the result size.
+     */
+    #[DataProvider('providerSeeds')]
+    public function testUnsizedStringCastsExecuteFromConstructedSemanticTypes(string $seed): void
+    {
+        $choices = new Choices('unsized-string:' . $seed);
+        $value = 'value_' . $choices->integer(0, 100000);
+        $kind = $choices->one([\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Binary, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::NationalChar]);
+        $cast = new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral([$value]), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget($kind));
+        $expression = new CharsetConversion($cast, new CharsetName(new Name($choices->one(['latin1', 'utf8mb4', 'binary']))));
+        $release = $choices->one(['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0']);
+        $reply = (new Execution())->run($expression, $release);
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $reply);
+        self::assertSame([[$value]], $reply->rows);
+    }
+
 }

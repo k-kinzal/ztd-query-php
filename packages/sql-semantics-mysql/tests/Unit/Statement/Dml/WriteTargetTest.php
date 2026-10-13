@@ -78,4 +78,9 @@ final class WriteTargetTest extends TestCase
         self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('c'))], $semantics->analyze('WITH c AS (SELECT 1 AS k) DELETE FROM c')->facts->diagnostics);
         self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('z'))], $semantics->analyze('WITH c AS (SELECT 1 AS k) DELETE FROM c AS z')->facts->diagnostics);
     }
+    public function testValueRejectsAnEqualsAliasMarker(): void
+    {
+        $this->expectExceptionMessage('A write target alias uses AS or no marker.');
+        new WriteTarget(new QualifiedName(new Name('t')), new Name('a'), mark: \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::Equals);
+    }
 }

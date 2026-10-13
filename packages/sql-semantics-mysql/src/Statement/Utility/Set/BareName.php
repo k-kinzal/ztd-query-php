@@ -8,8 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\ColumnResolver;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -71,7 +69,7 @@ final class BareName implements Operand
             return $resolver->fact($environment, $this->word, $this->qualifier);
         }
         if ($this->system) {
-            return new ScalarFact(new Known(new Character(CharacterKind::VarChar)), Nullability::NotNull);
+            return new ScalarFact(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), Nullability::NotNull);
         }
 
         return new ScalarFact(new Dependent([new ProgramVariable($this->word)]), Nullability::Dependent);

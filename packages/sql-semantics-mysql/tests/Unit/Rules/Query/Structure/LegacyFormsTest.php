@@ -31,4 +31,17 @@ final class LegacyFormsTest extends TestCase
         self::assertFalse((new LegacyForms())->query($body));
         self::assertTrue((new LegacyForms())->query($ordered));
     }
+
+    public function testDefinitionRecognizesOnlyDefaultRoutineCollation(): void
+    {
+        $forms = new LegacyForms();
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char);
+        $name = new \SqlSemantics\Statement\Identifier\Name('arg');
+        $default = new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter($name, $type, new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null));
+        $named = new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter($name, $type, new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('latin1_bin')));
+
+        self::assertTrue($forms->definition($default));
+        self::assertFalse($forms->definition($named));
+        self::assertFalse($forms->definition($type));
+    }
 }

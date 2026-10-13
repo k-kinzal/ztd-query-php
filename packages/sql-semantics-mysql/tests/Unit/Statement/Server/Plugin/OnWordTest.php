@@ -11,8 +11,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(OnWord::class)]
@@ -29,6 +27,6 @@ final class OnWordTest extends TestCase
         $install = (new Semantics(Dialect::MySql))->analyze("INSTALL COMPONENT 'c' SET c.v = ON");
         self::assertInstanceOf(InstallComponent::class, $install->statement);
 
-        self::assertEquals(new Known(new Character(CharacterKind::VarChar)), $install->facts->scalar($install->statement->settings[0]->value)->type);
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), $install->facts->scalar($install->statement->settings[0]->value)->type);
     }
 }

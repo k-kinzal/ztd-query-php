@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -38,7 +37,7 @@ final class OnWord implements Operand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return new ScalarFact(new Known(new Character(CharacterKind::VarChar)), Nullability::NotNull);
+        return new ScalarFact(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), Nullability::NotNull);
     }
 
     /**

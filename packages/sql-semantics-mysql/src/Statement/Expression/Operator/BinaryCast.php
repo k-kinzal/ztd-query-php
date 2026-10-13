@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -63,7 +62,7 @@ final class BinaryCast implements Scalar
 
         $operand = (new Precision())->domain($fact->type);
 
-        return new ScalarFact(new Known($operand === null ? new Binary(BinaryKind::VarBinary) : (new Texts(Settings::of($derivation->context)))->binary($operand)), $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $fact->nullability : Nullability::Nullable);
+        return new ScalarFact(new Known($operand === null ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : (new Texts(Settings::of($derivation->context)))->binary($operand)), $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $fact->nullability : Nullability::Nullable);
     }
 
     /**

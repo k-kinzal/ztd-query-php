@@ -59,6 +59,12 @@ final class GenerationsTest extends TestCase
      */
     public static function providerRequirements(): iterable
     {
+        yield 'functional index' => [new \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart(new NumberLiteral('1')), 2];
+        yield 'dynamic privilege' => [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege(new Name('SYSTEM_USER')), 2];
+        yield 'external routine body' => [new \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody(new Text('body')), 2];
+        yield 'random password' => [\SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword, 2];
+        yield 'default parameter collation' => [new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('arg'), new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char), new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null)), 1];
+        yield 'repeated temporary keyword' => [new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new QualifiedName(new Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)))], temporaryWords: 2), 1];
         yield 'ordinary literal' => [new NumberLiteral('1'), 0];
         yield 'ordinary union' => [SetOperator::Union, 0];
         yield 'procedure' => [new ProcedureAnalyse(), 1];
@@ -102,7 +108,7 @@ final class GenerationsTest extends TestCase
         )];
         yield 'procedure in common table' => [static fn (): Node => new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse()))];
         yield 'modern query in legacy projection' => [static fn (): Node => new Select([SelectOption::Cache], [new SelectExpression(new ScalarSubquery(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])))])];
-        yield 'legacy query in modern rows' => [static fn (): Node => new ValuesQuery([new ValueRow([new ScalarSubquery(new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse()))])])];
+        yield 'legacy query in modern rows' => [static fn (): Node => new ValuesQuery([new ValueRow([new ScalarSubquery(new Select([], [new SelectExpression(new WeightString(new NumberLiteral('1'), levels: [new WeightLevel(new Numeral('1'))]))]))])])];
         yield 'qualify and procedure' => [static fn (): Node => new Select([], [new SelectExpression(new NumberLiteral('1'))], qualify: new NumberLiteral('1'), procedure: new ProcedureAnalyse())];
         yield 'except and unparenthesized limit' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new Select([], [new SelectExpression(new NumberLiteral('1'))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new NumberLiteral('1'))), SetOperator::Except, null, new Select([], [new SelectExpression(new NumberLiteral('2'))]))];
         yield 'modern value with leading column dot' => [static fn (): Node => new ValuesQuery([new ValueRow([new ColumnUse(new Name('a'), new QualifiedName(new Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)])])];
@@ -110,7 +116,7 @@ final class GenerationsTest extends TestCase
         yield 'modern with and dotted table' => [static fn (): Node => new QueryExpression(new With(false, [new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))]))]), new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new TableReference(new QualifiedName(new Name('t')), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)))];
         yield 'disjoint sibling subqueries in a scalar root' => [static fn (): Node => new Comparison(
             ComparisonOperator::Equal,
-            new ScalarSubquery(new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse())),
+            new ScalarSubquery(new Select([], [new SelectExpression(new WeightString(new NumberLiteral('1'), levels: [new WeightLevel(new Numeral('1'))]))])),
             new ScalarSubquery(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])),
         )];
     }
@@ -245,5 +251,10 @@ final class GenerationsTest extends TestCase
         $this->expectExceptionMessage('A named parameter cannot accompany a spelling that requires native parameters.');
 
         new Select([], [$item, new SelectExpression(new Parameter(':a'))]);
+    }
+    public function testCheckRejectsConflictingRequirementsOnOneRoutine(): void
+    {
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+        new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), new Select([], [new SelectExpression(new NumberLiteral('1'))]), collation: new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null), ifNotExists: true);
     }
 }

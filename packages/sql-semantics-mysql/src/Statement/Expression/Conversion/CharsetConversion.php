@@ -15,8 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
@@ -69,7 +67,7 @@ final class CharsetConversion implements Scalar
         if ($charset === null) {
             $derivation->report(new UnknownCharset($name->value));
         }
-        $type = strtolower($name->value) === 'binary' ? new Binary(BinaryKind::VarBinary) : new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, $name));
+        $type = strtolower($name->value) === 'binary' ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(charset: new CharsetAttribute(CharsetForm::Named, $name));
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null || $charset === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);
 

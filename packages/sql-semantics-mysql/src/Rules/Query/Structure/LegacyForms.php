@@ -51,6 +51,7 @@ final class LegacyForms
             || $value instanceof ExplainModifier
             || ($value instanceof DatabaseCollation && $value->collation->name === null)
             || ($value instanceof ResetReplica && $value->terminology === Terminology::Legacy)
+            || $this->definition($value)
             || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges && ($value->tls !== null || array_filter($value->grantees, static fn (\SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification $user): bool => $user->identification !== null) !== [] || array_filter($value->options, static fn (\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption $option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit) !== []))
             || ($value instanceof \SqlSemantics\Statement\Query && $this->query($value));
     }
@@ -61,5 +62,19 @@ final class LegacyForms
     {
         return ($value instanceof QueryExpression && $value->body instanceof Select && $value->orderBy !== [])
             || ($value instanceof SetOperation && ($value->left instanceof Select && $value->left->trailed() || $value->left instanceof QueryExpression));
+    }
+
+    /**
+     * Identifies removed options of table and routine declarations.
+     */
+    public function definition(object $value): bool
+    {
+        return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable => $value->temporaryWords > 1,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Parameter,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration => $value->collation !== null && $value->collation->name === null,
+            default => false,
+        };
     }
 }

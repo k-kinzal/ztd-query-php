@@ -74,17 +74,14 @@ final class Generations
     }
 
     /**
-     * Answers a legacy requirement (1), a modern requirement (2), or neither (0).
+     * Answers legacy (1) and modern (2) requirement bits, including conflicts within one node.
      */
     public function requirement(object $value): int
     {
         if ($value instanceof LanguageProfile) {
             return in_array($value->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 1 : 2;
         }
-        if ((new LegacyForms())->requires($value)) {
-            return 1;
-        }
-        return (new ModernForms())->requires($value) ? 2 : 0;
+        return ((new LegacyForms())->requires($value) ? 1 : 0) | ((new ModernForms())->requires($value) ? 2 : 0);
     }
 
 }

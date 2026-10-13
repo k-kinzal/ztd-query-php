@@ -50,6 +50,7 @@ final class ShowProfile implements Statement
     public function __construct(array $sections = [], public readonly ?Numeral $query = null, public readonly ?Limit $limit = null)
     {
         $this->sections = Check::listOf($sections, ProfileSection::class, 'The sections of SHOW PROFILE are a list.');
+        Check::input($query === null || $query->isIntegerToken(), 'A SHOW PROFILE query number is a decimal integer token no greater than 2147483647.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

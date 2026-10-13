@@ -17,11 +17,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
@@ -38,7 +36,7 @@ final class NumericResultTest extends TestCase
     public function testBinaryTypesASumOfAnIntegerAndAString(): void
     {
         $integer = new ScalarFact(new Known(new Integral(IntegralKind::Int)), Nullability::NotNull);
-        $text = new ScalarFact(new Known(new Binary(BinaryKind::VarBinary)), Nullability::NotNull);
+        $text = new ScalarFact(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), Nullability::NotNull);
 
         self::assertEquals(new Known(new Floating(FloatingKind::Double)), (new NumericResult())->binary(ArithmeticOperator::Plus, new NumberLiteral('1'), $integer, new StringLiteral(['2']), $text, GrammarRelease::MySql847));
     }
@@ -52,10 +50,10 @@ final class NumericResultTest extends TestCase
 
     public function testBinaryMakesABitOperationOfBinaryStringsABinaryStringFromMySql80(): void
     {
-        $bytes = new ScalarFact(new Known(new Binary(BinaryKind::VarBinary)), Nullability::NotNull);
+        $bytes = new ScalarFact(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), Nullability::NotNull);
         $results = new NumericResult();
 
-        self::assertEquals(new Known(new Binary(BinaryKind::VarBinary)), $results->binary(ArithmeticOperator::BitAnd, new StringLiteral(['a']), $bytes, new StringLiteral(['b']), $bytes, GrammarRelease::MySql847));
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), $results->binary(ArithmeticOperator::BitAnd, new StringLiteral(['a']), $bytes, new StringLiteral(['b']), $bytes, GrammarRelease::MySql847));
         self::assertEquals(new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), $results->binary(ArithmeticOperator::BitAnd, new StringLiteral(['a']), $bytes, new StringLiteral(['b']), $bytes, GrammarRelease::MySql5744));
     }
 
@@ -77,20 +75,20 @@ final class NumericResultTest extends TestCase
 
     public function testBitsIgnoreAHexadecimalLiteral(): void
     {
-        $bytes = new ScalarFact(new Known(new Binary(BinaryKind::VarBinary)), Nullability::NotNull);
+        $bytes = new ScalarFact(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), Nullability::NotNull);
 
         self::assertEquals(new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), (new NumericResult())->bits([[new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, '01'), $bytes]], GrammarRelease::MySql847));
     }
 
     public function testBitsAreBinaryWhenOneBinaryStringMeetsLiterals(): void
     {
-        $bytes = new ScalarFact(new Known(new Binary(BinaryKind::VarBinary)), Nullability::NotNull);
+        $bytes = new ScalarFact(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), Nullability::NotNull);
         $integer = new ScalarFact(new Known(new Integral(IntegralKind::BigInt)), Nullability::NotNull);
         $introduced = new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, '40', new \SqlSemantics\Statement\Identifier\Name('binary'));
         $hexadecimal = new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, '01');
 
         self::assertEquals(
-            [new Known(new Binary(BinaryKind::VarBinary)), new Known(new Binary(BinaryKind::VarBinary)), new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned]))],
+            [new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned]))],
             [
                 (new NumericResult())->bits([[$introduced, $bytes], [$hexadecimal, $bytes]], GrammarRelease::MySql847),
                 (new NumericResult())->bits([[new StringLiteral(['a']), $bytes], [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), $bytes]], GrammarRelease::MySql847),

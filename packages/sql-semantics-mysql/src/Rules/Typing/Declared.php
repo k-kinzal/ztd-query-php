@@ -116,6 +116,7 @@ final class Declared
             $type instanceof Floating => $this->floating($type),
             $type instanceof Character => $this->character($type, $collation),
             $type instanceof Binary => $this->binary($type),
+            $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\StringFamily => Domain::string(0, $type->binary ? Collation::binary() : $this->charset($type->charset, $type->national ? Collation::known('utf8mb3_general_ci') : ($collation ?? $this->collation)), Field::VarString),
             $type instanceof Temporal => $this->temporal($type),
             $type instanceof Enumeration => $this->enumeration($type, $collation),
             $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Spatial => new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary()),

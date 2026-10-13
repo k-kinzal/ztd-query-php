@@ -188,4 +188,14 @@ final class DomainTest extends TestCase
         self::assertSame(5, Domain::column(Field::Long, 5)->metadataLength());
     }
 
+    public function testDeclaredRetainsRequiredVaryingStringLengths(): void
+    {
+        $binary = Domain::string(12, Collation::binary(), Field::VarString)->declared();
+        $text = Domain::string(7, Collation::known('utf8mb4_bin'), Field::VarString)->declared();
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Binary::class, $binary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Character::class, $text);
+        self::assertSame('12', $binary->length);
+        self::assertSame('7', $text->length);
+    }
 }

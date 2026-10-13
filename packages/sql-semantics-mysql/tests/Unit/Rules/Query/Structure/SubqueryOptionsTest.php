@@ -68,4 +68,10 @@ final class SubqueryOptionsTest extends TestCase
         self::assertSame($query, $subquery->query);
     }
 
+    public function testCheckRejectsProcedureAnalyseAcrossAnExpressionSubqueryBoundary(): void
+    {
+        $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse());
+        $this->expectExceptionMessage('An expression subquery cannot invoke PROCEDURE ANALYSE.');
+        (new SubqueryOptions())->check($query);
+    }
 }

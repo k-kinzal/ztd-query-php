@@ -188,4 +188,15 @@ final class DeclaredTest extends TestCase
 
         self::assertSame([1, ["\xE9", 'b']], [$enum->length, $enum->members]);
     }
+
+    public function testDomainRetainsTheCharacterSetOfAnUnsizedExpressionFamily(): void
+    {
+        $declared = new Declared(Collation::known('latin1_swedish_ci'));
+        $ascii = new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(charset: new CharsetAttribute(CharsetForm::Ascii));
+
+        self::assertSame('ascii_general_ci', $declared->domain($ascii)->collation->name);
+        self::assertSame('binary', $declared->domain(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true))->collation->name);
+        self::assertSame('utf8mb3_general_ci', $declared->domain(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(national: true))->collation->name);
+    }
+
 }

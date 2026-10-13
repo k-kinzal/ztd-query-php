@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
@@ -124,13 +123,13 @@ final class NumericResult
             if (($expression instanceof RadixLiteral && $expression->introducer === null) || $expression instanceof NullLiteral) {
                 continue;
             }
-            if (!$fact->type instanceof Known || !($fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes()))) {
+            if (!$fact->type instanceof Known || !($fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\StringFamily && $fact->type->descriptor->binary) || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes()))) {
                 return new Known($this->integer(true));
             }
             $binary = true;
         }
 
-        return new Known($binary ? new Binary(BinaryKind::VarBinary) : $this->integer(true));
+        return new Known($binary ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : $this->integer(true));
     }
 
     /**
@@ -165,7 +164,7 @@ final class NumericResult
             return false;
         }
 
-        return $fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes());
+        return $fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\StringFamily && $fact->type->descriptor->binary) || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes());
     }
 
     /**

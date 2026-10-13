@@ -56,6 +56,13 @@ $semantics->analyze('SELECT missing FROM users', [$users])->facts->diagnostics[0
 
 See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md) for operations, facts, contexts, rendering and guarantees.
 
+Written declaration types implement `Statement\Type\DeclaredName`; VARCHAR and
+VARBINARY declarations require a length. Expression facts can instead hold
+`Statement\Type\StringFamily` when the length is unresolved. This descriptor
+retains the binary/national classification and known character-set attribute,
+but cannot be used as a column, parameter, variable or return declaration.
+A fully resolved expression carries `Statement\Type\Resolved\Domain`.
+
 ### Releases
 
 Each release is read with its own grammar and keywords, and version comments are read as that release reads them:

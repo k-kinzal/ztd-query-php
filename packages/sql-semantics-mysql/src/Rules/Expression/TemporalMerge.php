@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Statement\Type\TypeDescriptor;
@@ -37,7 +35,7 @@ final class TemporalMerge
                 return new Temporal($left->kind);
             }
 
-            return $left->kind === TemporalKind::Year || $right->kind === TemporalKind::Year ? new Character(CharacterKind::VarChar) : new Temporal(TemporalKind::DateTime);
+            return $left->kind === TemporalKind::Year || $right->kind === TemporalKind::Year ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily() : new Temporal(TemporalKind::DateTime);
         }
         $temporal = $left instanceof Temporal ? $left : $right;
         $other = $left instanceof Temporal ? $right : $left;
@@ -45,6 +43,6 @@ final class TemporalMerge
             return $other;
         }
 
-        return new Character(CharacterKind::VarChar);
+        return new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily();
     }
 }
