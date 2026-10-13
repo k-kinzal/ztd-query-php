@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
@@ -17,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -63,9 +65,13 @@ final class CharsetConversion implements Scalar
         $name = $this->charset->name;
         Check::invariant($name !== null, 'CONVERT … USING names a character set.');
         Deprecation::charset($name->value, $derivation);
+        $charset = Charset::named($name->value);
+        if ($charset === null) {
+            $derivation->report(new UnknownCharset($name->value));
+        }
         $type = strtolower($name->value) === 'binary' ? new Binary(BinaryKind::VarBinary) : new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, $name));
         $operand = (new Precision())->domain($fact->type);
-        $domain = $operand === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);
+        $domain = $operand === null || $charset === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);
 
         return new ScalarFact(new Known($domain ?? $type), $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $fact->nullability : Nullability::Nullable);
     }

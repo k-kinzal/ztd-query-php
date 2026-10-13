@@ -39,6 +39,7 @@ final class UpgradeDatabaseTest extends TestCase
             'CREATE VIEW `#mysql50#old-name`.v AS SELECT i FROM `#mysql50#old-name`.t',
             'CREATE TRIGGER `#mysql50#old-name`.tr BEFORE INSERT ON `#mysql50#old-name`.t FOR EACH ROW SET NEW.i = 7',
             'USE `#mysql50#old-name`',
+            'SELECT missing',
             'ALTER DATABASE `#mysql50#old-name` UPGRADE DATA DIRECTORY NAME',
             'SELECT DATABASE()',
             'SELECT * FROM `old-name`.t',

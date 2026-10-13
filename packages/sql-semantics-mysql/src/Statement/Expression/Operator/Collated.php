@@ -39,7 +39,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * server does not know is reported before the operand is derived, whatever
  * the operand is, as the server looks the name up while it parses the
  * statement; its ParseFailure notice follows the warnings of the operand,
- * as the server parses the operand first (verified on a live 8.4 server).
+ * as the server parses the operand first. An empty name is instead resolved
+ * after the operand (verified on live 8.0, 8.4 and 9.1 servers).
  * Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-collate.html.
  * Status: Implemented.
@@ -70,11 +71,13 @@ final class Collated implements Scalar
     {
         $known = Collation::named($this->collation->value) !== null;
         $problem = $known ? null : new UnknownCollation($this->collation->value);
-        if ($problem !== null) {
+        if ($problem !== null && $this->collation->value !== '') {
             $derivation->report($problem);
         }
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
-        if ($problem !== null) {
+        if ($problem !== null && $this->collation->value === '') {
+            $derivation->report($problem);
+        } elseif ($problem !== null) {
             $derivation->warn(new ParseFailure($problem));
         }
         $operand = (new Precision())->domain($fact->type);

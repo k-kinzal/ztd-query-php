@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Command\Definition;
+namespace MySqlMemory\Command\Definition\Database;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\Schema;

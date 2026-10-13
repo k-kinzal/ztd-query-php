@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Command\Definition;
+namespace MySqlMemory\Command\Definition\Database;
 
 use MySqlMemory\Command\Command;
+use MySqlMemory\Command\Definition\RenameTableCommand;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\View;
 use MySqlMemory\Error\Family\QueryError;

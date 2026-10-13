@@ -84,4 +84,13 @@ final class CollatedTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[1]);
     }
 
+    public function testAnEmptyCollationNameIsResolvedAfterTheOperand(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT missing COLLATE ``');
+
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $operation->facts->diagnostics[1]);
+        self::assertSame([], $operation->facts->warnings);
+    }
+
 }

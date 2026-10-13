@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Problem;
 
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
@@ -23,11 +22,10 @@ final class UnknownCollation implements Diagnostic
     use Snapshot;
 
     /**
-     * @param string $name The name as written
+     * @param string $name The name as written, including an empty quoted name
      */
     public function __construct(public readonly string $name)
     {
-        Check::input($name !== '', 'A collation is named.');
     }
 
     /**

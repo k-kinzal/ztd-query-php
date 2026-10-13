@@ -17,4 +17,10 @@ final class UnknownCharsetTest extends TestCase
     {
         self::assertSame("Unknown character set: 'klingon'", (new UnknownCharset('klingon'))->message());
     }
+
+    public function testMessagePreservesAnEmptyQuotedName(): void
+    {
+        self::assertSame("Unknown character set: ''", (new UnknownCharset(''))->message());
+    }
+
 }

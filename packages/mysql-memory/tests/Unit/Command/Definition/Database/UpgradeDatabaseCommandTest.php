@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Command\Definition;
+namespace Tests\Unit\Command\Definition\Database;
 
 use Fuzz\Structure\Execution;
-use MySqlMemory\Command\Definition\UpgradeDatabaseCommand;
+use MySqlMemory\Command\Definition\Database\UpgradeDatabaseCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;

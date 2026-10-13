@@ -238,7 +238,7 @@ final class Execution
         }
         $kept = [
             \MySqlMemory\Command\TransactionCommand::class, \MySqlMemory\Command\Transaction\SetTransactionCommand::class, \MySqlMemory\Command\Transaction\SavepointCommand::class,
-            \MySqlMemory\Command\Transaction\XaCommand::class, \MySqlMemory\Command\DatabaseCommand::class, \MySqlMemory\Command\Definition\AlterDatabaseCommand::class, \MySqlMemory\Command\Account\CreateUserCommand::class,
+            \MySqlMemory\Command\Transaction\XaCommand::class, \MySqlMemory\Command\DatabaseCommand::class, \MySqlMemory\Command\Definition\Database\AlterDatabaseCommand::class, \MySqlMemory\Command\Definition\Database\UpgradeDatabaseCommand::class, \MySqlMemory\Command\Account\CreateUserCommand::class,
             \MySqlMemory\Command\Account\DropUserCommand::class, \MySqlMemory\Command\Account\AlterUserCommand::class, \MySqlMemory\Command\Account\RenameUserCommand::class,
             \MySqlMemory\Command\Account\SetPasswordCommand::class, \MySqlMemory\Command\Account\ShowGrantsCommand::class, \MySqlMemory\Command\Admin\FlushCommand::class,
             \MySqlMemory\Command\Show\Server\HelpCommand::class, \MySqlMemory\Command\Prepared\PreparedCommand::class, \MySqlMemory\Command\Program\CallCommand::class,

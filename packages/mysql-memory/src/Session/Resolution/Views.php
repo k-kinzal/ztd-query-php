@@ -56,8 +56,8 @@ final class Views
         assert($statement instanceof \SqlSemantics\Statement\Statement);
         $operation = new Operation($semantics->context($dictionary->declarations(), true, new SearchPath($view->database), $settings->resolution()), $statement);
         $query = $operation->statement;
+        $view->operation = $operation;
         if ($operation->facts->diagnostics !== [] || !$query instanceof Query) {
-            $view->operation = $operation;
             throw SchemaError::ViewInvalid->error($view->schema, $view->name);
         }
         $names = PlannedViews::outputs($operation, $query);
@@ -69,7 +69,6 @@ final class Views
             }
             $positions[] = $position;
         }
-        $view->operation = $operation;
         $view->query = $query;
         $view->tables = PlannedViews::tables($operation, $query, $view->database);
         $view->positions = $positions;

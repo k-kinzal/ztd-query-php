@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Command\Definition;
+namespace Tests\Unit\Command\Definition\Database;
 
-use MySqlMemory\Command\Definition\AlterDatabaseCommand;
+use MySqlMemory\Command\Definition\Database\AlterDatabaseCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
