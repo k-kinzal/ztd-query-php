@@ -9,8 +9,11 @@ use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversClass(ViewWrites::class)]
 #[Small]
@@ -29,7 +32,10 @@ final class ViewWritesTest extends TestCase
         $writes = ViewWrites::of($view, $session);
 
         self::assertNotNull($writes);
-        self::assertSame(['`d`.`t`', [['a', '`a`', '`t`.`a`'], ['bb', null, '(b + 1)']], 'b > 0', true], [$writes->table, $writes->columns, $writes->where, $writes->keyed]);
+        self::assertSame(['d', 't', true], [$writes->table->schema?->value, $writes->table->name->value, $writes->keyed]);
+        self::assertInstanceOf(Select::class, $view->query);
+        self::assertSame($view->query->where, $writes->where);
+        self::assertSame(['a', null], [$writes->columns[0][1]?->value, $writes->columns[1][1]]);
     }
 
     public function testOfAnswersNullForAViewThatIsNotMerged(): void
@@ -47,39 +53,18 @@ final class ViewWritesTest extends TestCase
 
     public function testColumnFindsAColumnWithoutCase(): void
     {
-        $writes = new ViewWrites('`d`.`t`', '`t`', '', [['x', '`a`', '`t`.`a`']], null);
+        $writes = new ViewWrites(new QualifiedName(new Name('t'), new Name('d')), new Name('t'), null, [['x', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))]], null);
 
-        self::assertSame([['x', '`a`', '`t`.`a`'], null], [$writes->column('X'), $writes->column('y')]);
+        self::assertEquals([['x', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))], null], [$writes->column('X'), $writes->column('y')]);
     }
 
     public function testWrittenRefusesAComputedColumn(): void
     {
-        $writes = new ViewWrites('`d`.`t`', '`t`', '', [['bb', null, '(b + 1)']], null);
+        $writes = new ViewWrites(new QualifiedName(new Name('t'), new Name('d')), new Name('t'), null, [['bb', null, new ColumnUse(new Name('b'))]], null);
 
         $this->expectExceptionCode(1348);
 
         $writes->written('bb');
-    }
-
-    public function testReadsReplacesTheColumnsOfTheView(): void
-    {
-        $session = (new Instance())->connect();
-        $writes = new ViewWrites('`d`.`t`', '`t`', '', [['x', '`a`', '`t`.`a`']], null);
-        $text = 'SELECT x, v.x, o.x, y';
-
-        $edits = $writes->reads($session->semantics()->parser()->parse($text), $text, ['v'], []);
-
-        self::assertSame('SELECT `t`.`a`, `t`.`a`, o.x, y', ViewWrites::apply($text, $edits));
-    }
-
-    public function testApplyReplacesFromTheLast(): void
-    {
-        self::assertSame('aXcY', ViewWrites::apply('abcd', [1 => [1, 2, 'X'], 3 => [3, 4, 'Y']]));
-    }
-
-    public function testUnquotedRemovesTheBackticks(): void
-    {
-        self::assertSame(['a`b', 'c'], [ViewWrites::unquoted('`a``b`'), ViewWrites::unquoted('c')]);
     }
 
     public function testBlockAnswersTheQueryBlockOfAMergeableView(): void
@@ -110,7 +95,13 @@ final class ViewWritesTest extends TestCase
         self::assertNotNull($block);
         self::assertInstanceOf(TableReference::class, $block->from);
 
-        self::assertSame([['x', '`b`', '`q`.`b`'], ['y', null, '(a * 2)']], ViewWrites::columns($view, $block, $block->from, '`q`', $session->semantics()->parser()->parse($view->select)));
+        $columns = ViewWrites::columns($view, $block, $block->from, new Name('q'));
+        self::assertNotNull($columns);
+        self::assertInstanceOf(ColumnUse::class, $columns[0][2]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $block->items[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Grouped::class, $columns[1][2]);
+        self::assertSame(['x', 'b', 'q'], [$columns[0][0], $columns[0][1]?->value, $columns[0][2]->qualifier?->name->value]);
+        self::assertSame($block->items[1]->expression, $columns[1][2]->operand);
     }
 
     public function testKeyedTellsWhetherTheColumnsWriteAUniqueKey(): void
@@ -122,7 +113,7 @@ final class ViewWritesTest extends TestCase
         $base = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($base);
 
-        self::assertSame([true, false], [ViewWrites::keyed($base, [['x', '`A`', '`t`.`a`'], ['b', '`b`', '`t`.`b`']]), ViewWrites::keyed($base, [['a', '`a`', '`t`.`a`'], ['b', null, '(b + 1)']])]);
+        self::assertSame([true, false], [ViewWrites::keyed($base, [['x', new Name('A'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))], ['b', new Name('b'), new ColumnUse(new Name('b'), new QualifiedName(new Name('t')))]]), ViewWrites::keyed($base, [['a', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))], ['b', null, new ColumnUse(new Name('b'))]])]);
     }
 
     public function testKeyedNeedsEveryColumnOfATableWithoutAUniqueKey(): void
@@ -134,6 +125,6 @@ final class ViewWritesTest extends TestCase
         $base = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($base);
 
-        self::assertSame([true, false], [ViewWrites::keyed($base, [['a', '`a`', '`t`.`a`'], ['b', '`b`', '`t`.`b`']]), ViewWrites::keyed($base, [['a', '`a`', '`t`.`a`']])]);
+        self::assertSame([true, false], [ViewWrites::keyed($base, [['a', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))], ['b', new Name('b'), new ColumnUse(new Name('b'), new QualifiedName(new Name('t')))]]), ViewWrites::keyed($base, [['a', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))]])]);
     }
 }

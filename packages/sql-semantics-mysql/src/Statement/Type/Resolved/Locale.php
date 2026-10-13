@@ -23,11 +23,6 @@ final class Locale
     use Snapshot;
 
     /**
-     * @var list<self>|null
-     */
-    private static ?array $all = null;
-
-    /**
      * @param string $name The name, such as en_US
      * @param list<string> $months The names of the months, from January
      * @param list<string> $shortMonths The abbreviated names of the months, from January
@@ -45,13 +40,7 @@ final class Locale
      */
     public static function all(): array
     {
-        if (self::$all === null) {
-            /** @var list<array{string, list<string>, list<string>, list<string>, list<string>}> $rows */
-            $rows = require dirname(__DIR__, 4) . '/resources/locales.php';
-            self::$all = array_map(static fn (array $row): self => new self($row[0], $row[1], $row[2], $row[3], $row[4]), $rows);
-        }
-
-        return self::$all;
+        return Catalog::locales();
     }
 
     /**

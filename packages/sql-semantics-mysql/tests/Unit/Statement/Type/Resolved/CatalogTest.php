@@ -13,6 +13,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Catalog;
 #[Small]
 final class CatalogTest extends TestCase
 {
+    public function testLocalesSharesImmutableLocaleValues(): void
+    {
+        $locales = Catalog::locales();
+        self::assertNotEmpty($locales);
+        self::assertSame($locales, Catalog::locales());
+        self::assertSame($locales, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::all());
+    }
+
     public function testCanonicalSpellsUtf8AsUtf8mb3(): void
     {
         self::assertSame('utf8mb3', Catalog::canonical('UTF8'));

@@ -62,6 +62,17 @@ final class PublicationTest extends TestCase
         (new Publication())->establish($context, new Select([new ResultColumn($literal), new ResultColumn($literal)]));
     }
 
+    public function testEstablishAuditsSessionValuesBeforeDerivingFacts(): void
+    {
+        $session = new class () implements \SqlSemantics\Contract\Session {
+        };
+        $context = (new Semantics(Dialect::Sqlite))->context([], true, null, $session);
+
+        $this->expectExceptionMessage('must be final');
+
+        (new Publication())->establish($context, new Select([new ResultColumn(new IntegerLiteral('1'))]));
+    }
+
     public function testRootIsTheOnlyStatementOrAScript(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

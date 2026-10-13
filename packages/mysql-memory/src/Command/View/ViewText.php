@@ -35,7 +35,7 @@ use SqlSemantics\Statement\Shape\Field;
  * in a subquery of an expression; an
  * operation is enclosed in parentheses; COUNT(*) is count(0), a negative number -(n), and a
  * right join the left join of its operands swapped. A
- * query with a construct the writer does not know is shown as it was written (verified on a
+ * query with a construct the writer does not know falls back to the semantic rendering (verified on a
  * live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-view.html.
  *

@@ -63,7 +63,11 @@ deptrac:
     - name: Session
       collectors:
         - type: classLike
-          value: '^MySqlMemory\\Session\\.*'
+          value: '^MySqlMemory\\Session\\(?!(Resolution|Parse)\\|(?:Session|Execution|Syntax)$).*'
+    - name: SqlInput
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Session\\((Session|Execution|Syntax)$|Parse\\.*)'
     - name: Storage
       collectors:
         - type: classLike
@@ -92,31 +96,42 @@ deptrac:
       collectors:
         - type: classLike
           value: '^SqlParser\\.*'
+    - name: Resolution
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Session\\Resolution\\.*'
+    - name: FrontEnd
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\((Facade|Lowering)\\.*|Contract\\Platforms?$|Platform\\[^\\]+\\(Platform$|Lowering\\.*))'
     - name: Semantics
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\.*'
+          value: '^SqlSemantics\\(?!(Facade|Lowering)\\|Contract\\Platforms?$|Platform\\[^\\]+\\(Platform$|Lowering\\)).*'
   ruleset:
-    Account: [Error, Semantics, Value]
-    Command: [Account, Concurrency, Dictionary, Error, Evaluation, Hint, Iterator, Parser, Plan, Program, Registry, Result, Semantics, Session, Storage, System, Typing, Value, Variable]
-    Concurrency: [Dictionary, Error, Semantics, Session, Storage]
-    Dictionary: [Evaluation, Result, Semantics, Storage, System, Typing]
-    Error: [Semantics]
-    Evaluation: [Account, Dictionary, Error, Iterator, Parser, Plan, Program, Registry, Semantics, Session, Storage, Typing, Value, Variable]
-    Hint: [Dictionary, Error, Evaluation, Parser, Semantics, Session, Typing, Variable]
-    Iterator: [Concurrency, Dictionary, Error, Evaluation, Plan, Semantics, Session, Storage, Value]
-    Plan: [Concurrency, Dictionary, Error, Evaluation, Parser, Result, Semantics, Session, Storage, Typing, Value]
-    Program: [Command, Dictionary, Error, Evaluation, Plan, Result, Semantics, Session, Storage, Typing]
-    Protocol: [Result, Semantics, Typing, Value]
-    Registry: [Dictionary, Semantics, Session, Storage, Typing]
-    Result: [Semantics]
-    Server: [Command, Error, Evaluation, Hint, Instance, Plan, Protocol, Result, Semantics, Session]
-    Session: [Account, Command, Concurrency, Dictionary, Error, Evaluation, Hint, Instance, Parser, Plan, Program, Registry, Result, Semantics, Storage, System, Typing, Value, Variable]
-    Storage: [Concurrency, Dictionary, Error, Evaluation, Semantics, Session, Typing, Value]
-    System: [Account, Command, Dictionary, Error, Evaluation, Instance, Plan, Registry, Result, Semantics, Session, Storage, Typing, Value]
-    Typing: [Error, Result, Semantics, Value]
-    Value: [Semantics, Typing]
-    Variable: [Concurrency, Error, Evaluation, Semantics, Session, Typing, Value]
-    Instance: [Account, Concurrency, Dictionary, Error, Registry, Semantics, Session, System]
+    Account: [Error, Semantics, FrontEnd, Value]
+    Command: [Resolution, Account, Concurrency, Dictionary, Error, Evaluation, Hint, Iterator, Parser, Plan, Program, Registry, Result, Semantics, FrontEnd, Session, SqlInput, Storage, System, Typing, Value, Variable]
+    Concurrency: [Dictionary, Error, Semantics, FrontEnd, Session, SqlInput, Storage]
+    Dictionary: [Evaluation, Result, Semantics, FrontEnd, Storage, System, Typing]
+    Error: [Semantics, FrontEnd]
+    Evaluation: [Account, Dictionary, Error, Iterator, Parser, Plan, Program, Registry, Semantics, FrontEnd, Session, SqlInput, Storage, Typing, Value, Variable]
+    Hint: [Dictionary, Error, Evaluation, Parser, Semantics, FrontEnd, Session, SqlInput, Typing, Variable]
+    Iterator: [Concurrency, Dictionary, Error, Evaluation, Plan, Semantics, FrontEnd, Session, SqlInput, Storage, Value]
+    Plan: [Concurrency, Dictionary, Error, Evaluation, Result, Semantics, Session, Storage, Typing, Value]
+    Program: [Resolution, Command, Dictionary, Error, Evaluation, Plan, Result, Semantics, FrontEnd, Session, SqlInput, Storage, Typing]
+    Protocol: [Result, Semantics, FrontEnd, Typing, Value]
+    Registry: [Dictionary, Semantics, FrontEnd, Session, SqlInput, Storage, Typing]
+    Result: [Semantics, FrontEnd]
+    Server: [Command, Error, Evaluation, Hint, Instance, Plan, Protocol, Result, Semantics, FrontEnd, Session, SqlInput]
+    Session: [Resolution, Account, Command, Concurrency, Dictionary, Error, Evaluation, Hint, Instance, Parser, Plan, Program, Registry, Result, Semantics, FrontEnd, Storage, System, Typing, Value, Variable, SqlInput]
+    Storage: [Concurrency, Dictionary, Error, Evaluation, Semantics, FrontEnd, Session, SqlInput, Typing, Value]
+    System: [Account, Command, Dictionary, Error, Evaluation, Instance, Plan, Registry, Result, Semantics, FrontEnd, Session, SqlInput, Storage, Typing, Value]
+    Typing: [Error, Result, Semantics, FrontEnd, Value]
+    Value: [Semantics, FrontEnd, Typing]
+    Variable: [Concurrency, Error, Evaluation, Semantics, FrontEnd, Session, SqlInput, Typing, Value]
+    Instance: [Account, Concurrency, Dictionary, Error, Registry, Semantics, FrontEnd, Session, SqlInput, System]
     Parser: []
     Semantics: [Parser]
+    FrontEnd: [Parser, Semantics]
+    Resolution: [Dictionary, Error, Evaluation, Plan, Semantics, FrontEnd]
+    SqlInput: [Resolution, Account, Command, Concurrency, Dictionary, Error, Evaluation, Hint, Instance, Parser, Plan, Program, Registry, Result, Semantics, FrontEnd, Storage, System, Typing, Value, Variable, Session]

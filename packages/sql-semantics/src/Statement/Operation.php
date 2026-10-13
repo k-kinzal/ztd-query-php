@@ -47,8 +47,6 @@ final class Operation
      */
     public readonly Facts $facts;
 
-    private readonly string $sql;
-
     /**
      * Derives and checks a new root from a context and an explicit statement structure.
      *
@@ -63,9 +61,8 @@ final class Operation
      */
     public function __construct(public readonly AnalysisContext $context, public readonly Statement $statement, public readonly Source\SourceMap $sources = new Source\SourceMap())
     {
-        [$facts, $sql] = (new Publication())->establish($context, $statement, $sources);
-        $this->facts = $facts;
-        $this->sql = $sql;
+        [$this->facts] = (new Publication())->establish($context, $statement, $sources);
+        (new \SqlSemantics\Validation\ValueGraph(['SqlSemantics\\Statement\\']))->members($this);
     }
 
     /**
@@ -73,7 +70,11 @@ final class Operation
      */
     public function toString(): string
     {
-        return $this->sql;
+        $platform = \SqlSemantics\Contract\Platforms::of($this->context->profile->grammar->database());
+        $output = new \SqlSemantics\Rendering\Output($platform->codec($this->context->profile));
+        $this->statement->render($output);
+
+        return (new \SqlSemantics\Rendering\Lexical())->join($output->pieces()) . $output->trailing();
     }
 
     /**

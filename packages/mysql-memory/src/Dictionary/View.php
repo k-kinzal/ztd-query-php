@@ -36,6 +36,11 @@ final class View
     public array $positions = [];
 
     /**
+     * Whether catalog refresh resolved the view successfully.
+     */
+    public bool $valid = true;
+
+    /**
      * The index-level hints the query of the view keeps, as SHOW CREATE VIEW writes them after its first SELECT, or the empty string.
      */
     public string $hints = '';
@@ -47,7 +52,6 @@ final class View
      * @param string $algorithm UNDEFINED, MERGE or TEMPTABLE
      * @param string $security DEFINER or INVOKER
      * @param string $check The check option: empty for none, CASCADED or LOCAL
-     * @param string $select The text of the query as it was written
      * @param string $database The database that was current when the view was created, where the unqualified names of the query are looked up
      * @param Operation $operation The resolved statement the query belongs to
      * @param Query $query The resolved query
@@ -62,7 +66,6 @@ final class View
         public readonly string $algorithm,
         public readonly string $security,
         public readonly string $check,
-        public readonly string $select,
         public readonly string $database,
         public Operation $operation,
         public Query $query,
@@ -75,6 +78,19 @@ final class View
     }
 
     /**
+     * Renders the retained query structure for metadata that needs SQL text.
+     */
+    public function querySql(): string
+    {
+        $profile = $this->created->profile();
+        $platform = \SqlSemantics\Contract\Platforms::of($profile->grammar->database());
+        $output = new \SqlSemantics\Rendering\Output($platform->codec($profile));
+        $this->definition->render($output);
+
+        return (new \SqlSemantics\Rendering\Lexical())->join($output->pieces()) . $output->trailing();
+    }
+
+    /**
      * Answers the statement SHOW CREATE VIEW writes for the view, around the text of its query.
      *
      * @param string $name The name of the view as the statement writes it: qualified when it is in another database than the current one
@@ -82,6 +98,10 @@ final class View
      */
     public function create(string $name, string $text): string
     {
-        return 'CREATE ALGORITHM=' . $this->algorithm . ' DEFINER=' . Routine::quoted($this->definer[0]) . '@' . Routine::quoted($this->definer[1]) . ' SQL SECURITY ' . $this->security . ' VIEW ' . $name . ' AS ' . $text . ($this->check === '' ? '' : ' WITH ' . $this->check . ' CHECK OPTION');
+        $statement = $this->created->statement;
+        $columns = $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView ? $statement->definition->columns : null;
+        $list = $columns === null ? '' : ' (' . implode(',', array_map(static fn ($column): string => Routine::quoted($column->value), $columns)) . ')';
+
+        return 'CREATE ALGORITHM=' . $this->algorithm . ' DEFINER=' . Routine::quoted($this->definer[0]) . '@' . Routine::quoted($this->definer[1]) . ' SQL SECURITY ' . $this->security . ' VIEW ' . $name . $list . ' AS ' . $text . ($this->check === '' ? '' : ' WITH ' . $this->check . ' CHECK OPTION');
     }
 }

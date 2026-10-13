@@ -40,7 +40,7 @@ final class Views implements SystemRows
                     'TABLE_CATALOG' => 'def',
                     'TABLE_SCHEMA' => $schema->name,
                     'TABLE_NAME' => $name,
-                    'VIEW_DEFINITION' => (new ViewText($view->created->facts, '', $view->database))->query($view->definition, true, $view->hints) ?? $view->select,
+                    'VIEW_DEFINITION' => (new ViewText($view->created->facts, '', $view->database))->query($view->definition, true, $view->hints) ?? $view->querySql(),
                     'CHECK_OPTION' => $view->check === '' ? 'NONE' : $view->check,
                     'IS_UPDATABLE' => ViewWrites::block($view) === null ? 'NO' : 'YES',
                     'DEFINER' => $view->definer[0] . '@' . $view->definer[1],

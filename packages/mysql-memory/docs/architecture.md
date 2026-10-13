@@ -57,9 +57,21 @@ The analysis takes these inputs from the session:
 - **The search path**: the current database, where unqualified names are looked up.
 - **The session settings** (`Session::resolution()`): the connection and server collations, the default collation of each database, `div_precision_increment`, `group_concat_max_len`, the types of the user variables, the types of the values bound to parameter markers, whether `NO_UNSIGNED_SUBTRACTION` is set, the client character set, and `explicit_defaults_for_timestamp`. These decide the types and nullability SQL Semantics derives, as they decide them in the server.
 
-Before the analysis, the views whose tables have changed since they were created are resolved again (`Plan\Views`), so that a view always reads the current definitions of its tables. A construct SQL Semantics has no rule for yet is reported as error 1235.
+Before the analysis, the views whose tables have changed since they were created are resolved again from their retained query structures (`Session\Resolution\Views`), so that a view always reads the current definitions of its tables. A construct SQL Semantics has no rule for yet is reported as error 1235.
 
 The commands then read the facts instead of the raw tree. The planner and the expression compiler (`Evaluation\Compile\Settings`) also read the session's `sql_mode`, current database, release and the same settings.
+
+## The semantics-to-plan boundary
+
+An `Operation` publishes four values: its typed statement, derived facts, immutable analysis context, and source locations. It holds neither the original SQL string nor a SQL Parser tree. Its `toString()` method renders the typed structure on demand. Locations are offsets associated with semantic occurrences; they do not carry input bytes. Literal contents, identifiers, and expression spellings needed for result column names remain semantic data.
+
+SQL Semantics audits every object reachable through these values, including private fields and array elements. Only registered immutable value classes are admitted. Each semantics package ships an explicit retained-field schema; adding a class or changing its fields requires a schema change, and `composer lint` checks the entire inventory independently of which statements tests happen to execute. See [SQL Semantics guarantees](../../sql-semantics/docs/guarantees.md#retained-data-boundary).
+
+The dependency check denies `Plan` access to SQL Parser, the Semantics parsing/lowering entry points, the session's SQL input/execute entry points, and view rebinding. Planning consumes semantic structures and facts, dictionary data and execution settings. Computation from those inputs is allowed: access-path selection, expression compilation and structural reasoning remain the planner's job. These dependency rules govern static class dependencies; they are not a sandbox against dynamic invocation or a proof that every planning rule is correct.
+
+Views exercise this boundary across catalog changes. Before planning, `Session\Resolution\Views` derives fresh facts for a stored query against the current declarations, retaining the lexical interpretation under which the view was created. A write through a view substitutes references by their resolved relation identity, maps assigned columns to base columns, and builds a new operation from typed operands. An identically spelled name in an inner scope remains bound to that scope. When an expression changes, its already resolved output name is retained explicitly. Neither path reparses stored original SQL.
+
+The closed data inventory and dependency checks catch changes to the boundary systematically. Differential tests against MySQL check whether those structures and facts suffice for observable behavior. A new semantic fact may still be necessary when such a test exposes a missing distinction; the boundary checks do not decide the meaning of a field for its author.
 
 ## Commands
 

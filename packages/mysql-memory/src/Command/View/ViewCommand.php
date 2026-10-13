@@ -76,9 +76,7 @@ final class ViewCommand implements Command
         self::refreshReadViews($operation, $definition->query, $session);
         self::checkName($statement, $schema, $database, $name);
         self::refuseTemporaryTables($operation, $definition->query, $session);
-        $source = ProgramSource::of($session);
-        $select = $source->text('query_expression_with_opt_locking_clauses');
-        $resolved = $statement instanceof CreateView ? $operation : self::reanalyze($session, $database, $name, $definition->columns, $select);
+        $resolved = $statement instanceof CreateView ? $operation : self::reanalyze($session, $database, $name, $definition->columns, $definition->query);
         $resolvedStatement = $resolved->statement;
         assert($resolvedStatement instanceof CreateView);
         $declared = $resolved->declarations()[0];
@@ -86,7 +84,7 @@ final class ViewCommand implements Command
         $query = $resolvedStatement->definition->query;
         $algorithm = self::algorithm($definition->algorithm, $query, $context);
         $check = self::checkOption($definition->check);
-        $schema->views[$name] = $view = new View($database, $name, ProgramSource::definer($definition->definer, $session, $context), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $select, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query, $session->variables->database), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')]);
+        $schema->views[$name] = $view = new View($database, $name, ProgramSource::definer($definition->definer, $session, $context), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query, $session->variables->database), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')]);
         $view->hints = (new \MySqlMemory\Hint\Hints())->view($query, $session);
 
         return new Completion(0, 0, $context->diagnostics->raised());
@@ -102,7 +100,7 @@ final class ViewCommand implements Command
             [$holder, $read] = explode('.', $key, 2);
             $inner = $session->instance->dictionary->schema($holder)->views[$read] ?? null;
             if ($inner !== null) {
-                Views::refresh($inner, $session->instance->dictionary, $session->settings());
+                \MySqlMemory\Session\Resolution\Views::refresh($inner, $session->instance->dictionary, $session->settings());
             }
         }
     }
@@ -147,14 +145,17 @@ final class ViewCommand implements Command
 
     /**
      * Resolves the query of ALTER VIEW as CREATE OR REPLACE VIEW of the same name, columns and
-     * query text.
+     * query structure.
      *
      * @param list<Name>|null $columns The column list of the view, or null when none is written
-     * @throws SqlError When the statement does not resolve
      */
-    public static function reanalyze(Session $session, string $database, string $name, ?array $columns, string $select): Operation
+    public static function reanalyze(Session $session, string $database, string $name, ?array $columns, Query $query): Operation
     {
-        return $session->analyze('CREATE OR REPLACE VIEW ' . \MySqlMemory\Dictionary\Routine::quoted($database) . '.' . \MySqlMemory\Dictionary\Routine::quoted($name) . ($columns === null ? '' : '(' . implode(',', array_map(static fn (Name $column): string => \MySqlMemory\Dictionary\Routine::quoted($column->value), $columns)) . ')') . ' AS ' . $select);
+        $semantics = $session->semantics();
+        $context = $semantics->context($session->instance->dictionary->declarations(), true, new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution());
+        $definition = new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new QualifiedName(new Name($name), new Name($database)), $query, $columns);
+
+        return new Operation($context, new CreateView($definition, true));
     }
 
     /**

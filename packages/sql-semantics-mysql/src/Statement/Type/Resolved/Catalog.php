@@ -19,6 +19,26 @@ use SqlSemantics\Statement\Snapshot;
 final class Catalog
 {
     use Snapshot;
+    /**
+     * @var list<Locale>|null
+     */
+    private static ?array $locales = null;
+
+    /**
+     * Answers immutable locale values, keeping their cache outside the published value graph.
+     *
+     * @return list<Locale>
+     */
+    public static function locales(): array
+    {
+        if (self::$locales === null) {
+            /** @var list<array{string, list<string>, list<string>, list<string>, list<string>}> $rows */
+            $rows = require dirname(__DIR__, 4) . '/resources/locales.php';
+            self::$locales = array_map(static fn (array $row): Locale => new Locale($row[0], $row[1], $row[2], $row[3], $row[4]), $rows);
+        }
+
+        return self::$locales;
+    }
 
     private static ?self $instance = null;
 

@@ -321,7 +321,7 @@ final class Session
         $reader = new Parse\Reader();
         $tree = $reader->read($statement, $prepared, $this);
         $database = $this->variables->database;
-        \MySqlMemory\Plan\Views::refreshAll($this->instance->dictionary, $this->settings());
+        \MySqlMemory\Session\Resolution\Views::refreshAll($this->instance->dictionary, $this->settings());
         $typing = (new \MySqlMemory\Hint\Hints())->typing($tree, $statement, $this);
         try {
             $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($reader->bound($tree, $parameters, $prepared, $this))));

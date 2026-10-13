@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Command\View;
 
-use MySqlMemory\Command\Program\ProgramSource;
 use MySqlMemory\Command\View\ViewWriteCommand;
 use MySqlMemory\Command\View\ViewWrites;
 use MySqlMemory\Command\Write\InsertCommand;
@@ -14,6 +13,9 @@ use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversClass(ViewWriteCommand::class)]
 #[Small]
@@ -69,57 +71,6 @@ final class ViewWriteCommandTest extends TestCase
         self::assertSame([['Note', 1355, 'View being updated does not have complete key of underlying table in it']], $session->diagnostics->conditions);
     }
 
-    public function testInsertRefusesAComputedColumn(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT, b INT)');
-        $session->query('CREATE VIEW e AS SELECT a, b + 1 AS bb FROM t');
-        $view = $session->instance->dictionary->schema('d')?->views['e'];
-        self::assertNotNull($view);
-        $writes = ViewWrites::of($view, $session);
-        self::assertNotNull($writes);
-        $session->text = 'INSERT INTO e VALUES (5, 6)';
-
-        $this->expectExceptionCode(1348);
-        $this->expectExceptionMessage("Column 'bb' is not updatable");
-
-        (new ViewWriteCommand(new InsertCommand()))->insert(ProgramSource::of($session), $writes, 'e');
-    }
-
-    public function testInsertWritesTheBaseColumns(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT, b INT)');
-        $session->query('CREATE VIEW w AS SELECT a AS x, b FROM t');
-        $view = $session->instance->dictionary->schema('d')?->views['w'];
-        self::assertNotNull($view);
-        $writes = ViewWrites::of($view, $session);
-        self::assertNotNull($writes);
-        $session->text = 'INSERT INTO w (x) VALUES (1)';
-
-        self::assertSame('INSERT INTO `d`.`t` (`a`) VALUES (1)', (new ViewWriteCommand(new InsertCommand()))->insert(ProgramSource::of($session), $writes, 'w'));
-    }
-
-    public function testChangeAddsTheConditionOfTheView(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT, b INT)');
-        $session->query('CREATE VIEW w AS SELECT a AS x, b FROM t q WHERE q.a > 0');
-        $view = $session->instance->dictionary->schema('d')?->views['w'];
-        self::assertNotNull($view);
-        $writes = ViewWrites::of($view, $session);
-        self::assertNotNull($writes);
-        $session->text = 'UPDATE w SET x = x * 100 WHERE b < 3';
-
-        self::assertSame('UPDATE `d`.`t` AS `q` SET `a` = `q`.`a` * 100 WHERE (`q`.`b` < 3) AND (q.a > 0)', (new ViewWriteCommand(new InsertCommand()))->change(ProgramSource::of($session), $writes, ['w'], $session));
-    }
-
     public function testViewTargetAnswersTheViewAStatementWrites(): void
     {
         $session = (new Instance())->connect();
@@ -140,7 +91,7 @@ final class ViewWriteCommandTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $session->query('CREATE VIEW v AS SELECT a FROM t');
-        $writes = new ViewWrites('`d`.`t`', '`t`', '', [['a', '`a`', '`t`.`a`']], null);
+        $writes = new ViewWrites(new QualifiedName(new Name('t'), new Name('d')), new Name('t'), null, [['a', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))]], null);
 
         $reply = ViewWriteCommand::noted($session->analyze('DELETE FROM v LIMIT 1')->statement, $writes, new Completion(2, 0, 0), $session);
 
@@ -155,40 +106,10 @@ final class ViewWriteCommandTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $session->query('CREATE VIEW v AS SELECT a FROM t');
-        $writes = new ViewWrites('`d`.`t`', '`t`', '', [['a', '`a`', '`t`.`a`']], null);
+        $writes = new ViewWrites(new QualifiedName(new Name('t'), new Name('d')), new Name('t'), null, [['a', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))]], null);
         $reply = new Completion(2, 0, 0);
 
         self::assertSame($reply, ViewWriteCommand::noted($session->analyze('DELETE FROM v')->statement, $writes, $reply, $session));
-    }
-
-    public function testRetargetWritesTheStatementAgainstTheBaseTable(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT, b INT)');
-        $session->query('CREATE VIEW w AS SELECT a AS x, b FROM t q WHERE q.a > 0');
-        $view = $session->instance->dictionary->schema('d')?->views['w'];
-        self::assertNotNull($view);
-        $writes = ViewWrites::of($view, $session);
-        self::assertNotNull($writes);
-        $session->text = 'UPDATE w SET x = b ORDER BY x LIMIT 2';
-
-        self::assertSame('UPDATE `d`.`t` AS `q` SET `a` = `q`.`b` ORDER BY `q`.`a` LIMIT 2', (new ViewWriteCommand(new InsertCommand()))->retarget(ProgramSource::of($session), $writes, ['w']));
-    }
-
-    public function testRestrictedAddsTheConditionToTheConditionOfTheStatementOrAsItsWhereClause(): void
-    {
-        $session = (new Instance())->connect();
-
-        self::assertSame(['UPDATE `d`.`t` SET a = 1 WHERE (a > 0)', 'DELETE FROM `d`.`t` WHERE (b = 1) AND (a > 0)'], [ViewWriteCommand::restricted('UPDATE `d`.`t` SET a = 1', 'a > 0', $session), ViewWriteCommand::restricted('DELETE FROM `d`.`t` WHERE b = 1', 'a > 0', $session)]);
-    }
-
-    public function testRestrictedPlacesTheConditionBeforeTheOrderAndTheLimit(): void
-    {
-        $session = (new Instance())->connect();
-
-        self::assertSame(['DELETE FROM `d`.`t` WHERE (a > 0) LIMIT 1', 'DELETE FROM `d`.`t` AS `x` WHERE (a > 0) ORDER BY a LIMIT 1', 'UPDATE `d`.`t` SET a = 1 WHERE (a > 0) LIMIT 1'], [ViewWriteCommand::restricted('DELETE FROM `d`.`t` LIMIT 1', 'a > 0', $session), ViewWriteCommand::restricted('DELETE FROM `d`.`t` AS `x` ORDER BY a LIMIT 1', 'a > 0', $session), ViewWriteCommand::restricted('UPDATE `d`.`t` SET a = 1 LIMIT 1', 'a > 0', $session)]);
     }
 
     public function testLimitableReadsUpdatableViewsWithLimit(): void

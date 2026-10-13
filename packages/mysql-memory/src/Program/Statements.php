@@ -13,7 +13,6 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
-use MySqlMemory\Plan\Views;
 use MySqlMemory\Result\Batch;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Result\ResultSet;
@@ -61,7 +60,7 @@ final class Statements
     public function operation(Statement $statement): Operation
     {
         $session = $this->session;
-        Views::refreshAll($session->instance->dictionary, $session->settings());
+        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
         $semantics = $session->semantics();
 

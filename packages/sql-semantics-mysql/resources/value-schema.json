@@ -1,0 +1,3391 @@
+{
+    "SqlSemantics\\Platform\\MySql\\Dialect": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Lowering\\Dispatch\\Family": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Rules\\Call\\TypeClass": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Rules\\Expression\\NumericClass": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Rules\\Utility\\Report": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\AlterDefaultRole": {
+        "ifExists": "bool",
+        "roles": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RoleSelection",
+        "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\AlterRegistration": {
+        "challengeResponse": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "factor": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "ifExists": "bool",
+        "step": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RegistrationStep",
+        "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account|SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\SessionUser"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\AlterUser": {
+        "comment": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\UserComment",
+        "ifExists": "bool",
+        "options": "array",
+        "resources": "array",
+        "tls": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsRequirement",
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\CreateRole": {
+        "ifNotExists": "bool",
+        "roles": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\CreateUser": {
+        "comment": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\UserComment",
+        "defaultRoles": "array",
+        "ifNotExists": "bool",
+        "options": "array",
+        "resources": "array",
+        "tls": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsRequirement",
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\DropRole": {
+        "ifExists": "bool",
+        "roles": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\DropUser": {
+        "ifExists": "bool",
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ExpireUserPasswords": {
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\AccountOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\AccountOptionKind",
+        "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\AccountOptionKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\CommentKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\ResourceKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\ResourceLimit": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\ResourceKind",
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsCondition": {
+        "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsAttribute",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsRequirement": {
+        "conditions": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\UserComment": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\CommentKind",
+        "text": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Password": {
+        "function": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\PasswordFunction",
+        "text": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\PasswordFunction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantAs": {
+        "roles": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RoleSelection",
+        "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantOptionRight": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantPrivileges": {
+        "as": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantAs",
+        "grantees": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectKind",
+        "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
+        "options": "array",
+        "privileges": "array",
+        "tls": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsRequirement"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantProxy": {
+        "grantees": "array",
+        "proxied": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "withGrantOption": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantRoles": {
+        "roles": "array",
+        "users": "array",
+        "withAdminOption": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\AllPrivileges": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\DynamicPrivilege": {
+        "columns": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\GrantedRole": {
+        "role": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AccountName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\PrivilegeKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\StaticPrivilege": {
+        "columns": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\PrivilegeKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\AbsentGrantTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\CurrentDatabaseLevel": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\DatabaseLevel": {
+        "database": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\GlobalLevel": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectLevel": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\RevokeAll": {
+        "ifExists": "bool",
+        "ignoreUnknownUser": "bool",
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\RevokePrivileges": {
+        "ifExists": "bool",
+        "ignoreUnknownUser": "bool",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectKind",
+        "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
+        "privileges": "array",
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\RevokeProxy": {
+        "ifExists": "bool",
+        "ignoreUnknownUser": "bool",
+        "proxied": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\RevokeRoles": {
+        "ifExists": "bool",
+        "ignoreUnknownUser": "bool",
+        "roles": "array",
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\InvalidFactorPair": {
+        "identical": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\InvalidUserAttribute": {
+        "text": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\MisplacedPrivilege": {
+        "error": "string",
+        "level": "string",
+        "privilege": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\NumberOutOfRange": {
+        "error": "string",
+        "number": "string",
+        "option": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\PriorityOutOfRange": {
+        "priority": "string",
+        "type": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RejectedPasswordHash": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RepeatedTlsAttribute": {
+        "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsAttribute"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RoleOrPrivilegeMismatch": {
+        "item": "string",
+        "roleExpected": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\UnknownGrantColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\RenameUser": {
+        "renamings": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\AlterResourceGroup": {
+        "cpus": "array",
+        "enabled": "?bool",
+        "force": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\CpuRange": {
+        "first": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "last": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\CreateResourceGroup": {
+        "cpus": "array",
+        "enabled": "?bool",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\DropResourceGroup": {
+        "force": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\SetResourceGroup": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "threads": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority": {
+        "negative": "bool",
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\SetDefaultRole": {
+        "roles": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RoleSelection",
+        "users": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\SetPassword": {
+        "password": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Password",
+        "replace": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "retainCurrent": "bool",
+        "user": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\SetRole": {
+        "roles": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RoleSelection"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Credential": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\FactorAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\FactorChange": {
+        "action": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\FactorAction",
+        "steps": "array",
+        "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\FactorStep": {
+        "factor": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "identification": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Identification"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Identification": {
+        "credential": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Credential",
+        "plugin": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "secret": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RegistrationStep": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RoleSelection": {
+        "roles": "array",
+        "set": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RoleSet"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RoleSet": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\SessionUser": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\UserRenaming": {
+        "from": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "to": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\UserSpecification": {
+        "discardOld": "bool",
+        "factors": "array",
+        "identification": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Identification",
+        "initial": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Identification",
+        "replace": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "retainCurrent": "bool",
+        "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account|SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\SessionUser"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AbsentTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AlterTable": {
+        "commands": "array",
+        "ignore": "bool",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\AddColumn": {
+        "column": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\ColumnDefinition",
+        "position": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ColumnPosition"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\AddColumns": {
+        "elements": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ChangeColumn": {
+        "column": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\ColumnDefinition",
+        "position": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ColumnPosition"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ColumnPosition": {
+        "after": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ColumnVisibility": {
+        "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "visible": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\DefaultSetting": {
+        "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "expression": "bool",
+        "value": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\AddConstraint": {
+        "element": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableElement"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ConstraintEnforcement": {
+        "constraint": "SqlSemantics\\Statement\\Identifier\\Name",
+        "enforced": "bool",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ConvertCharset": {
+        "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\DropElement": {
+        "behavior": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropBehavior",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind",
+        "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\Force": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\IndexVisibility": {
+        "index": "SqlSemantics\\Statement\\Identifier\\Name",
+        "visible": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\RenameElement": {
+        "from": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind",
+        "to": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\RenameTo": {
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\Reorder": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\SetTableOptions": {
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ToggleKeys": {
+        "enable": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropBehavior": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropIndex": {
+        "index": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropTable": {
+        "behavior": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropBehavior",
+        "ifExists": "bool",
+        "tables": "array",
+        "temporary": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption": {
+        "algorithm": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption": {
+        "lock": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\ValidationOption": {
+        "validate": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\AddPartition": {
+        "count": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "definitions": "array",
+        "local": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\CoalescePartition": {
+        "count": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "local": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\DropPartition": {
+        "partitions": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\NamedPartitions"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\ExchangePartition": {
+        "partition": "SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "validation": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\ValidationOption"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\MaintainPartitions": {
+        "ignoredLocal": "bool",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\MaintenanceKind",
+        "local": "bool",
+        "options": "array",
+        "partitions": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionSelection"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\MaintenanceKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\PartitionBy": {
+        "partitioning": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\RemovePartitioning": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\ReorganizePartition": {
+        "definitions": "array",
+        "local": "bool",
+        "partitions": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\NamedPartitions"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\SecondaryLoad": {
+        "load": "bool",
+        "partitions": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\TablespaceCommand": {
+        "import": "bool",
+        "partitions": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionSelection"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\UpgradePartitioning": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\DuplicateColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\PartitionEntryRefused": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\RepeatedTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\TableExists": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\UnknownAlterChoice": {
+        "lock": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\UnknownColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\RenameTable": {
+        "renamings": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\TableRenaming": {
+        "from": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "to": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\TargetTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\TruncateTable": {
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate": {
+        "all": "bool",
+        "arguments": "array",
+        "distinct": "bool",
+        "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateFunction",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateFunction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\GroupConcat": {
+        "arguments": "array",
+        "distinct": "bool",
+        "order": "array",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification|null",
+        "separator": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\JsonObjectAggregate": {
+        "key": "SqlSemantics\\Statement\\Scalar",
+        "keyAll": "bool",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification|null",
+        "value": "SqlSemantics\\Statement\\Scalar",
+        "valueAll": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\CallArgument": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\CharCall": {
+        "arguments": "array",
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Clock": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall": {
+        "clock": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Clock",
+        "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
+        "precision": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Extract": {
+        "source": "SqlSemantics\\Statement\\Scalar",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\FunctionCall": {
+        "arguments": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "schema": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse": {
+        "default": "?SqlSemantics\\Statement\\Scalar",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponseKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponseKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonValueCall": {
+        "document": "SqlSemantics\\Statement\\Scalar",
+        "onEmpty": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
+        "onError": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
+        "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral",
+        "returning": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\NestedColumns": {
+        "columns": "array",
+        "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\OrdinalityColumn": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\PathColumn": {
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "errorFirst": "bool",
+        "exists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "onEmpty": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
+        "onError": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
+        "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral",
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordCall": {
+        "arguments": "array",
+        "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordFunction",
+        "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordFunction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Position": {
+        "string": "SqlSemantics\\Statement\\Scalar",
+        "substring": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\InvalidNamedConstant": {
+        "nullName": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\NamedArgument": {
+        "function": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\ReservedFunction": {
+        "function": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\UnsupportedWindowing": {
+        "limit": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowingLimit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowingLimit": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WrongArgumentCount": {
+        "arguments": "int",
+        "function": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\DateArithmetic": {
+        "date": "SqlSemantics\\Statement\\Scalar",
+        "quantity": "SqlSemantics\\Statement\\Scalar",
+        "subtract": "bool",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\GetFormat": {
+        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\TemporalFormat",
+        "standard": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\TemporalFormat": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\TimestampCall": {
+        "first": "SqlSemantics\\Statement\\Scalar",
+        "operation": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\TimestampOperation",
+        "second": "SqlSemantics\\Statement\\Scalar",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\TimestampOperation": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Trim": {
+        "removed": "?SqlSemantics\\Statement\\Scalar",
+        "side": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\TrimSide",
+        "subject": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\TrimSide": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightCast": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightLevel": {
+        "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "reverse": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightLevelRange": {
+        "from": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "to": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightString": {
+        "cast": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightCast",
+        "length": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "levels": "array",
+        "range": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightLevelRange",
+        "subject": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightStringParameters": {
+        "flags": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "length": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "subject": "SqlSemantics\\Statement\\Scalar",
+        "weights": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\CountingEdge": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\Frame": {
+        "end": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameBound",
+        "exclusion": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameExclusion",
+        "start": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameBound",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameBound": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameBoundKind",
+        "offset": "?SqlSemantics\\Statement\\Scalar",
+        "unit": "?SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameBoundKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameExclusion": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameUnit": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\NullTreatment": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\RoutineVariable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunction": {
+        "arguments": "array",
+        "edge": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\CountingEdge",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunctionKind",
+        "nulls": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\NullTreatment",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunctionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowSpec": {
+        "base": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "frame": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\Frame",
+        "order": "array",
+        "partition": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Assignment": {
+        "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DefaultRequest": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Delete": {
+        "hints": "array",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "options": "array",
+        "orderBy": "array",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DeleteOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Evaluation": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\HandlerClose": {
+        "handler": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\HandlerIndexRead": {
+        "direction": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\IndexDirection",
+        "handler": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\OpenHandler",
+        "index": "SqlSemantics\\Statement\\Identifier\\Name",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\HandlerIndexSeek": {
+        "comparison": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\KeyComparison",
+        "handler": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\OpenHandler",
+        "index": "SqlSemantics\\Statement\\Identifier\\Name",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "values": "array",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\HandlerOpen": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\HandlerScan": {
+        "direction": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\ScanDirection",
+        "handler": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\OpenHandler",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\IndexDirection": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\KeyComparison": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\OpenHandler": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\ScanDirection": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\ImportTable": {
+        "files": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ColumnList": {
+        "columns": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto": {
+        "columns": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ColumnList",
+        "hints": "array",
+        "ignore": "bool",
+        "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertPriority",
+        "replace": "bool",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertPriority": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertQuery": {
+        "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
+        "onDuplicate": "array",
+        "source": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertRows": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\RowAlias",
+        "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
+        "onDuplicate": "array",
+        "rows": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertSet": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\RowAlias",
+        "assignments": "array",
+        "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
+        "onDuplicate": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertedRow": {
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\RowAlias": {
+        "columns": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\BulkOptions": {
+        "bulk": "bool",
+        "memory": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\ByteSize",
+        "parallel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\FieldOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\FieldOptionKind",
+        "text": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\FieldOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LineOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LineOptionKind",
+        "text": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LineOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadFormat": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadInput": {
+        "count": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "countWord": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "local": "bool",
+        "primaryKeyOrder": "bool",
+        "source": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadSource"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadLock": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadSource": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadTable": {
+        "assignments": "array",
+        "bulk": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\BulkOptions",
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "columns": "array",
+        "compression": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "duplicates": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
+        "fields": "array",
+        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadFormat",
+        "ignored": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "input": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadInput",
+        "lines": "array",
+        "lock": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadLock",
+        "rowTag": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\TextFileFormat": {
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "fields": "array",
+        "lines": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\MultipleDelete": {
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\MultipleDeleteForm",
+        "hints": "array",
+        "options": "array",
+        "tables": "array",
+        "targets": "array",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\MultipleDeleteForm": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Deallocate": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Execute": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "variables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Prepare": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "source": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\DuplicateColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\GeneratedColumnWrite": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\UnknownDeleteTable": {
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\ValueCountMismatch": {
+        "actual": "int",
+        "expected": "int",
+        "row": "?int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteMisuse": {
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteRule",
+        "table": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\ProcedureCall": {
+        "arguments": "array",
+        "procedure": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Update": {
+        "assignments": "array",
+        "hints": "array",
+        "ignore": "bool",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "lowPriority": "bool",
+        "orderBy": "array",
+        "tables": "array",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "partitions": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Access\\DefaultOfColumn": {
+        "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Access\\FullTextMode": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Access\\FullTextSearch": {
+        "against": "SqlSemantics\\Statement\\Scalar",
+        "columns": "array",
+        "mode": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Access\\FullTextMode",
+        "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
+        "stated": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Access\\InsertedColumn": {
+        "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Access\\JsonExtraction": {
+        "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse",
+        "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "unquote": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Access\\OdbcEscape": {
+        "kind": "SqlSemantics\\Statement\\Identifier\\Name",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Branching\\CaseBranch": {
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "result": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Branching\\CaseExpression": {
+        "branches": "array",
+        "else": "?SqlSemantics\\Statement\\Scalar",
+        "operand": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Comparison": {
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\ComparisonOperator",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\ComparisonOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\AtTimeZone": {
+        "interval": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "precision": "?string",
+        "zone": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\Cast": {
+        "array": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CastAtLocal": {
+        "array": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CharsetConversion": {
+        "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped": {
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Logical": {
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\LogicalOperator",
+        "right": "SqlSemantics\\Statement\\Scalar",
+        "symbolic": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\LogicalOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Not": {
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\NullTest": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Arithmetic": {
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\ArithmeticOperator",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\ArithmeticOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\BinaryCast": {
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Collated": {
+        "collation": "SqlSemantics\\Statement\\Identifier\\Name",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Concatenation": {
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Interval": {
+        "quantity": "SqlSemantics\\Statement\\Scalar",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\IntervalAddition": {
+        "interval": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Interval",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\IntervalArithmetic": {
+        "interval": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Interval",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "subtract": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Unary": {
+        "keyword": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Predicate\\Between": {
+        "high": "SqlSemantics\\Statement\\Scalar",
+        "low": "SqlSemantics\\Statement\\Scalar",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Predicate\\InList": {
+        "elements": "array",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Predicate\\Like": {
+        "escape": "?SqlSemantics\\Statement\\Scalar",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "pattern": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Predicate\\MemberOf": {
+        "array": "SqlSemantics\\Statement\\Scalar",
+        "of": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Predicate\\Regexp": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "pattern": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Predicate\\SoundsLike": {
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "pattern": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\CollationMismatch": {
+        "charset": "string",
+        "collation": "string",
+        "expression": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\IllegalCollationMix": {
+        "operands": "array",
+        "operation": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\NotSupportedYet": {
+        "feature": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\OperandColumns": {
+        "actual": "int",
+        "expected": "int",
+        "expression": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\TooBigPrecision": {
+        "function": "string",
+        "maximum": "int",
+        "precision": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\UnknownCharset": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\UnknownCollation": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Row": {
+        "elements": "array",
+        "keyword": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\Exists": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\InQuery": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\QuantifiedComparison": {
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\ComparisonOperator",
+        "quantifier": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\Quantifier",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\Quantifier": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\ScalarSubquery": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Truth": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\TruthTest": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "truth": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Truth"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Tuple": {
+        "width": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Comment\\HintComment": {
+        "error": "?SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Comment\\HintError",
+        "hints": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Comment\\HintError": {
+        "closing": "bool",
+        "failure": "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Comment\\HintFailure",
+        "offset": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Comment\\HintFailure": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\BlockNameHint": {
+        "block": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\ExecutionTimeHint": {
+        "milliseconds": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\HintLiteral": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\HintLiteralKind",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\HintLiteralKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\HintTable": {
+        "block": "?string",
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\KeyHint": {
+        "block": "?string",
+        "hint": "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\HintName",
+        "indexes": "array",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\HintTable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\ResourceGroupHint": {
+        "group": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\StrategyHint": {
+        "block": "?string",
+        "hint": "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\HintName",
+        "strategies": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\TableHint": {
+        "block": "?string",
+        "hint": "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\HintName",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\VariableHint": {
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\Form\\HintLiteral",
+        "variable": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\HintForm": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Hint\\HintName": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\BooleanLiteral": {
+        "value": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\ByteSize": {
+        "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "word": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\EscapeRule": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NullLiteral": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberForm": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral": {
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberForm",
+        "text": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral": {
+        "hexadecimal": "bool",
+        "text": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Parameter": {
+        "marker": "string",
+        "position": "?int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\RadixLiteral": {
+        "digits": "string",
+        "introducer": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "radix": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\SignedLiteral": {
+        "negative": "bool",
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral": {
+        "escapes": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\EscapeRule",
+        "introducer": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "national": "bool",
+        "segments": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalForm": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalLiteral": {
+        "escapes": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\EscapeRule",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalForm",
+        "text": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text": {
+        "escapes": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\EscapeRule",
+        "radix": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AccountName": {
+        "host": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "user": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AmbiguousAlias": {
+        "candidates": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse": {
+        "dot": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CurrentUser": {
+        "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\InvalidProjectionAlias": {
+        "candidates": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasRule"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\MissingTableQualifier": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifier": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\TableWildcard": {
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecated": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecation": {
+        "construct": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecated",
+        "text": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\ParseFailure": {
+        "aborts": "bool",
+        "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\AllPartitions": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\LessThan": {
+        "row": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\PartitionRow"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\PartitionMaximum": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\PartitionRow": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\ValuesIn": {
+        "row": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\PartitionRow"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\ValuesInRows": {
+        "rows": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\ColumnsMethod": {
+        "columns": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\PartitionKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\ExpressionMethod": {
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\PartitionKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\HashMethod": {
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "linear": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\KeyMethod": {
+        "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "columns": "array",
+        "linear": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\PartitionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\NamedPartitions": {
+        "names": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionClause": {
+        "definitions": "array",
+        "method": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\PartitionMethod",
+        "partitions": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "subpartitioning": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Subpartitioning"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionDefinition": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "subpartitions": "array",
+        "values": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\PartitionBound"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionEntry": {
+        "partitioning": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOptionKind",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "text": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\InvalidPartitionExpression": {
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\MissingPartitions": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\PartitionKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\SubpartitionDefinition": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Subpartitioning": {
+        "count": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "method": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\PartitionMethod"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\Grouping": {
+        "items": "array",
+        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\GroupingModifier"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\GroupingModifier": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\LateOrdering": {
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "orderBy": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\OffsetSpelling": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\OutputOrdinal": {
+        "literal": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\ProcedureAnalyse": {
+        "arguments": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\ProgramVariable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\RowLimit": {
+        "count": "SqlSemantics\\Statement\\Scalar",
+        "offset": "?SqlSemantics\\Statement\\Scalar",
+        "spelling": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\OffsetSpelling"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\WindowDefinition": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "specification": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\ExplicitTable": {
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoDumpfile": {
+        "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoOutfile": {
+        "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\FileFormat"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoPosition": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoVariables": {
+        "targets": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Locking\\LockStrength": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Locking\\LockedRowAction": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Locking\\LockingClause": {
+        "action": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Locking\\LockedRowAction",
+        "strength": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Locking\\LockStrength",
+        "tables": "array",
+        "wildcards": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\OrderItem": {
+        "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\ParenthesizedQuery": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\AggregateInOrdering": {
+        "distinct": "bool",
+        "position": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CacheOptionConflict": {
+        "first": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption",
+        "second": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CountMismatch": {
+        "actual": "int",
+        "expected": "int",
+        "list": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CountedList",
+        "row": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CountedList": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\GroupingRule": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Misuse": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Statement\\Identifier\\QualifiedName|null",
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\MisuseRule"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\MisuseRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\NameConversion": {
+        "charset": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\NonGroupedColumn": {
+        "column": "string",
+        "having": "bool",
+        "ordering": "bool",
+        "position": "int",
+        "release": "SqlSemantics\\Contract\\GrammarRelease",
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\GroupingRule"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\OrdinalOutOfRange": {
+        "items": "int",
+        "position": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\RecursiveReference": {
+        "table": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\UndeclaredVariable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\UnknownPartition": {
+        "partition": "string",
+        "table": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\UnknownQualifier": {
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\UnpartitionedTable": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\QueryExpression": {
+        "body": "SqlSemantics\\Statement\\Query",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "orderBy": "array",
+        "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\QueryStatement": {
+        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoDestination",
+        "intoPosition": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoPosition",
+        "locking": "array",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select": {
+        "from": "?SqlSemantics\\Statement\\Relation",
+        "groupBy": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\Grouping",
+        "having": "?SqlSemantics\\Statement\\Scalar",
+        "hints": "array",
+        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoDestination",
+        "intoPosition": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoPosition",
+        "items": "array",
+        "late": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\LateOrdering",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "locking": "array",
+        "options": "array",
+        "orderBy": "array",
+        "procedure": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\ProcedureAnalyse",
+        "qualify": "?SqlSemantics\\Statement\\Scalar",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "windows": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "layout": "?SqlSemantics\\Statement\\Spelling\\Layout",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\LeadingUnion": {
+        "left": "SqlSemantics\\Statement\\Query|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\LeadingUnion",
+        "quantifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetQuantifier",
+        "right": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\OrderedSetOperation": {
+        "left": "SqlSemantics\\Statement\\Query|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\LeadingUnion",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperator",
+        "orderBy": "array",
+        "quantifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetQuantifier",
+        "right": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperation": {
+        "left": "SqlSemantics\\Statement\\Query|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\LeadingUnion",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperator",
+        "quantifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetQuantifier",
+        "right": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetQuantifier": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Star": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\ValueRow": {
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\ValuesQuery": {
+        "rows": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\CommonTableExpression": {
+        "columns": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\With": {
+        "recursive": "bool",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\DerivedTable": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "columns": "array",
+        "lateral": "bool",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\EscapedRelation": {
+        "relation": "SqlSemantics\\Statement\\Relation",
+        "word": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHint": {
+        "action": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHintAction",
+        "indexes": "array",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHintScope"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHintAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHintScope": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\PrimaryIndex": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\SamplingMethod": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\TableSample": {
+        "method": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\SamplingMethod",
+        "percentage": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Join\\JoinOperator": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\JoinedTable": {
+        "left": "SqlSemantics\\Statement\\Relation",
+        "on": "?SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Join\\JoinOperator",
+        "right": "SqlSemantics\\Statement\\Relation",
+        "using": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\JsonTable": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "columns": "array",
+        "document": "SqlSemantics\\Statement\\Scalar",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
+        "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\NestedRelation": {
+        "relation": "SqlSemantics\\Statement\\Relation"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\OdbcJoin": {
+        "relation": "SqlSemantics\\Statement\\Relation"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableList": {
+        "members": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableReference": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "dot": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
+        "indexHints": "array",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "partitions": "array",
+        "sample": "?SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\TableSample"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Filter\\ChangeReplicationFilter": {
+        "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "filters": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Filter\\DatabaseRewrite": {
+        "from": "SqlSemantics\\Statement\\Identifier\\Name",
+        "to": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Filter\\FilterKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Filter\\ReplicationFilter": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Filter\\FilterKind",
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Group\\Credential": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Group\\CredentialOption": {
+        "credential": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Group\\Credential",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Group\\StartGroupReplication": {
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Group\\StopGroupReplication": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Log\\BinlogEvent": {
+        "events": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Log\\PurgeLogsBefore": {
+        "moment": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Log\\PurgeLogsTo": {
+        "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedSetting": {
+        "error": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\ReplicationError"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\ReplicationError": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Replica\\ReplicaThread": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Replica\\ReplicaUntil": {
+        "gtids": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "point": "?SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Replica\\UntilPoint",
+        "positions": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Replica\\StartReplica": {
+        "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "defaultAuth": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "password": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "pluginDir": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology",
+        "threads": "array",
+        "until": "?SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Replica\\ReplicaUntil",
+        "user": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Replica\\StopReplica": {
+        "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology",
+        "threads": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Replica\\UntilPoint": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Reset\\Reset": {
+        "targets": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Reset\\ResetBinaryLogs": {
+        "first": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Reset\\ResetPersist": {
+        "component": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "ifExists": "bool",
+        "variable": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Reset\\ResetQueryCache": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Reset\\ResetReplica": {
+        "all": "bool",
+        "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "synonym": "bool",
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\AnonymousGtids": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\ChangeReplicationSource": {
+        "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "options": "array",
+        "synonym": "bool",
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\PrimaryKeyCheck": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\ServerIds": {
+        "ids": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\SourceOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\SourceOptionKind",
+        "synonym": "bool",
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\ServerIds|SqlSemantics\\Platform\\MySql\\Statement\\Name\\AccountName|SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\PrimaryKeyCheck|SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\AnonymousGtids|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\SourceOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\AlterEvent": {
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement|null",
+        "comment": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "completion": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Completion",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "newName": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "schedule": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Schedule",
+        "status": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\EventStatus"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\AlterRoutine": {
+        "characteristics": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\AccessLevel": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\DataAccess": {
+        "level": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\AccessLevel"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\Determinism": {
+        "deterministic": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\RoutineComment": {
+        "text": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\RoutineLanguage": {
+        "external": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\SecurityContext": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\SqlSecurity": {
+        "context": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Characteristic\\SecurityContext"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionClass": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionItemName": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\ConditionDiagnostics": {
+        "items": "array",
+        "number": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\DiagnosticsArea": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\GetDiagnostics": {
+        "area": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\DiagnosticsArea",
+        "information": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\ConditionDiagnostics|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\StatementDiagnostics"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\InformationItem": {
+        "item": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionItemName|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\StatementItemName",
+        "target": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\StatementDiagnostics": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\StatementItemName": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ErrorCode": {
+        "code": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\GeneralCondition": {
+        "class": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionClass"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Resignal": {
+        "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionName|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SqlState|null",
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Signal": {
+        "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionName|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SqlState",
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SignalItem": {
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionItemName",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SqlState": {
+        "state": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateEvent": {
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement",
+        "comment": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "completion": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Completion",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "schedule": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Schedule",
+        "status": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\EventStatus"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateFunction": {
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement",
+        "characteristics": "array",
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "parameters": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList",
+        "returns": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateLoadableFunction": {
+        "aggregate": "bool",
+        "ifNotExists": "bool",
+        "library": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "returns": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\LoadableResult"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateProcedure": {
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement",
+        "characteristics": "array",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "parameters": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateTrigger": {
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "event": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerEvent",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "order": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerOrder",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTable",
+        "time": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTime"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\DollarQuotedText": {
+        "tag": "string",
+        "text": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\DropProgram": {
+        "ifExists": "bool",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Completion": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\EventStatus": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\OnceSchedule": {
+        "at": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\RecurringSchedule": {
+        "ends": "?SqlSemantics\\Statement\\Scalar",
+        "quantity": "SqlSemantics\\Statement\\Scalar",
+        "starts": "?SqlSemantics\\Statement\\Scalar",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody": {
+        "code": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\DollarQuotedText|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\LoadableResult": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Parameter": {
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "mode": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterMode",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList": {
+        "parameters": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem": {
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramRule",
+        "subject": "?string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Block": {
+        "declarations": "array",
+        "endLabel": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "label": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "statements": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ConditionDeclaration": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ErrorCode|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SqlState"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\CloseCursor": {
+        "cursor": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\CursorDeclaration": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\FetchCursor": {
+        "cursor": "SqlSemantics\\Statement\\Identifier\\Name",
+        "targets": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\OpenCursor": {
+        "cursor": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\ConditionalBranch": {
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "statements": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\IfStatement": {
+        "branches": "array",
+        "otherwise": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\Iterate": {
+        "label": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\Leave": {
+        "label": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\Loop": {
+        "endLabel": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "label": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "statements": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\RepeatLoop": {
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "endLabel": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "label": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "statements": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\ReturnStatement": {
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\SearchedCase": {
+        "branches": "array",
+        "otherwise": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\SimpleCase": {
+        "branches": "array",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "otherwise": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\WhileLoop": {
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "endLabel": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "label": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "statements": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\HandlerAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\HandlerDeclaration": {
+        "action": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\HandlerAction",
+        "conditions": "array",
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramRow": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "domains": "array",
+        "names": "array",
+        "relation": "SqlSemantics\\Statement\\Relation"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\VariableDeclaration": {
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "default": "?SqlSemantics\\Statement\\Scalar",
+        "names": "array",
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerEvent": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerOrder": {
+        "other": "SqlSemantics\\Statement\\Identifier\\Name",
+        "placement": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTime": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\CheckOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\AlterDatabase": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\CreateDatabase": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseCharset": {
+        "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseCollation": {
+        "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseEncryption": {
+        "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseReadOnly": {
+        "value": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DropDatabase": {
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\UpgradeDatabaseName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\Flush": {
+        "items": "array",
+        "noWriteToBinlog": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushItem": {
+        "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "option": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushOption"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushLock": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushTables": {
+        "lock": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushLock",
+        "noWriteToBinlog": "bool",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\ForeignServer\\AlterServer": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\ForeignServer\\CreateServer": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "wrapper": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\ForeignServer\\DropServer": {
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\ForeignServer\\ServerOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\ForeignServer\\ServerOptionKind",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\ForeignServer\\ServerOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\AlterInstance": {
+        "action": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\InstanceAction"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\CloneInstance": {
+        "directory": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "donor": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "password": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "port": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "requireSsl": "?bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\CloneLocal": {
+        "directory": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\Kill": {
+        "process": "SqlSemantics\\Statement\\Scalar",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\KillScope"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\KillScope": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\RedoLogSwitch": {
+        "enable": "bool",
+        "engine": "SqlSemantics\\Statement\\Identifier\\Name",
+        "log": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\ReloadKeyring": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\ReloadTls": {
+        "channel": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "noRollbackOnError": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\Restart": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\RotateMasterKey": {
+        "keyring": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\Shutdown": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\KeyCache\\CacheIndex": {
+        "cache": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\KeyCache\\CachedTable": {
+        "indexes": "?array",
+        "partitions": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionSelection",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\KeyCache\\LoadIndex": {
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\KeyCache\\PreloadedTable": {
+        "ignoreLeaves": "bool",
+        "indexes": "?array",
+        "partitions": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionSelection",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\LockInstance": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\LockMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\LockTables": {
+        "locks": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\TableLock": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
+        "mode": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\LockMode",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\UnlockInstance": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\UnlockTables": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\AnalyzeTable": {
+        "histogram": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\Histogram",
+        "noWriteToBinlog": "bool",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\CheckTable": {
+        "options": "array",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\ChecksumMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\ChecksumTable": {
+        "mode": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\ChecksumMode",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\DropHistogram": {
+        "columns": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\HistogramUpdate": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\LoadHistogram": {
+        "columns": "array",
+        "data": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\MaintainedTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\OptimizeTable": {
+        "noWriteToBinlog": "bool",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\RepairTable": {
+        "noWriteToBinlog": "bool",
+        "options": "array",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\UpdateHistogram": {
+        "buckets": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "columns": "array",
+        "update": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\HistogramUpdate"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\ComponentSetting": {
+        "value": "SqlSemantics\\Statement\\Scalar",
+        "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\InstallComponent": {
+        "components": "array",
+        "settings": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\InstallPlugin": {
+        "library": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "plugin": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\OnWord": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\UninstallComponent": {
+        "components": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\UninstallPlugin": {
+        "plugin": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\BucketCountOutOfRange": {
+        "buckets": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\FractionalNumber": {
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\HistogramTables": {
+        "count": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\NonUniqueTable": {
+        "alias": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialProblem": {
+        "attribute": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\SpatialAttributeKind",
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialRule"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\StorageProblem": {
+        "option": "string",
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\StorageRule"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\StorageRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\UnknownHistogramColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\RepairOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\CreateSpatialReference": {
+        "attributes": "array",
+        "ifNotExists": "bool",
+        "orReplace": "bool",
+        "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\DropSpatialReference": {
+        "ifExists": "bool",
+        "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\SpatialAttribute": {
+        "identifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\SpatialAttributeKind",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\SpatialAttributeKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\AlterLogfileGroup": {
+        "file": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\LogFile",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\AlterTablespace": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\AlterTablespaceAccess": {
+        "access": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\TablespaceAccess",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\AlterTablespaceDatafile": {
+        "action": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\DatafileAction",
+        "datafile": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\AlterUndoTablespace": {
+        "active": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\CreateLogfileGroup": {
+        "file": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\LogFile",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\CreateTablespace": {
+        "datafile": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "logfileGroup": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\CreateUndoTablespace": {
+        "datafile": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\DropLogfileGroup": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\DropTablespace": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\DropUndoTablespace": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\LogFile": {
+        "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\LogFileKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\CommentOption": {
+        "comment": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\DatafileAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EncryptionOption": {
+        "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EngineAttributeOption": {
+        "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EngineOption": {
+        "engine": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\LogFileKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\NodegroupOption": {
+        "group": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\SizeOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\SizeOptionKind",
+        "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\ByteSize"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\SizeOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\TablespaceAccess": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\WaitOption": {
+        "wait": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\RenameTablespace": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "target": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Begin": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Commit": {
+        "chain": "?bool",
+        "release": "?bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\ReleaseSavepoint": {
+        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Rollback": {
+        "chain": "?bool",
+        "release": "?bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\RollbackToSavepoint": {
+        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Savepoint": {
+        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\StartTransaction": {
+        "characteristics": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\TransactionCharacteristic": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaCommit": {
+        "onePhase": "bool",
+        "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaEnd": {
+        "option": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaEndOption",
+        "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaEndOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaPrepare": {
+        "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaRecover": {
+        "convertXid": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaRollback": {
+        "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaStart": {
+        "option": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaStartOption",
+        "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaStartOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid": {
+        "branch": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "format": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "transaction": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Catalog\\SystemColumn": {
+        "collation": "?string",
+        "columnType": "string",
+        "comment": "string",
+        "database": "string",
+        "default": "?string",
+        "domain": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Domain",
+        "extra": "string",
+        "flags": "int",
+        "key": "string",
+        "listedNullable": "bool",
+        "name": "string",
+        "nullable": "bool",
+        "originalName": "string",
+        "originalTable": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Catalog\\SystemTable": {
+        "collation": "?string",
+        "columns": "array",
+        "comment": "string",
+        "declaration": "SqlSemantics\\Statement\\Declaration\\Table",
+        "engine": "?string",
+        "name": "string",
+        "options": "string",
+        "rowFormat": "?string",
+        "schema": "string",
+        "type": "string",
+        "version": "?int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Catalog\\SystemTables": {
+        "index": "array",
+        "releases": "array",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\CollateAttribute": {
+        "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\ColumnDefinition": {
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "specification": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\ColumnSpecification"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\CommentAttribute": {
+        "comment": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultExpression": {
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultLiteral": {
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\EnforcementAttribute": {
+        "enforced": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\EngineAttribute": {
+        "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "secondary": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\FormatAttribute": {
+        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\ColumnFormat"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\GeneratedColumn": {
+        "attributes": "array",
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
+        "storage": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage",
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\KeywordAttribute": {
+        "keyword": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\ColumnKeyword"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\ColumnFormat": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\ColumnKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\StorageMedium": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\OnUpdate": {
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\OrdinaryColumn": {
+        "attributes": "array",
+        "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\SridAttribute": {
+        "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\StorageAttribute": {
+        "medium": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\StorageMedium"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\CreateIndex": {
+        "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm",
+        "alterOptions": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "parts": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\CreateTable": {
+        "elements": "array",
+        "enclosed": "bool",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "partitioning": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Partitioning",
+        "query": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery",
+        "temporaryWords": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\CreateTableLike": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "source": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "temporaryWords": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\CheckConstraint": {
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "enforced": "?bool",
+        "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ConstraintName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ColumnPart": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
+        "length": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ConstraintName": {
+        "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ExpressionPart": {
+        "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ForeignKey": {
+        "columns": "array",
+        "constraint": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ConstraintName",
+        "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "references": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexDefinition": {
+        "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm",
+        "constraint": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ConstraintName",
+        "keyword": "bool",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
+        "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "options": "array",
+        "parts": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexComment": {
+        "comment": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexEngineAttribute": {
+        "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "secondary": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexParser": {
+        "parser": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexUsing": {
+        "algorithm": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexVisibility": {
+        "visible": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\KeyBlockSize": {
+        "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceEvent": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceMatch": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References": {
+        "actions": "array",
+        "columns": "?array",
+        "match": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceMatch",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferentialAction": {
+        "event": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceEvent",
+        "option": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceOption"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\AutoextendSizeOption": {
+        "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\ByteSize"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\CharsetOption": {
+        "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\CollationOption": {
+        "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\EngineOption": {
+        "engine": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\InsertMethodOption": {
+        "method": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\InsertMethod"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\InsertMethod": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\NumberOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\RowFormat": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\TextOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\NumberOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\NumberOptionKind",
+        "value": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\RowFormatOption": {
+        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\RowFormat"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\SecondaryEngineOption": {
+        "engine": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\StartTransaction": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\StorageOption": {
+        "medium": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\StorageMedium"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\TablespaceOption": {
+        "tablespace": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\TextOption": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\TextOptionKind",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\UnionOption": {
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\ParseGeneratedColumn": {
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\DuplicateColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\IncorrectColumnName": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\InvalidColumnAttribute": {
+        "attribute": "string",
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\KindRefusal": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\MultiplePrimaryKeys": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\NoColumns": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\NullablePrimaryKey": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\UnknownKeyColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\ViewColumnCount": {
+        "listed": "int",
+        "returned": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\WrongRelationKind": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "refusal": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\KindRefusal"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery": {
+        "duplicate": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Binary": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\BinaryKind",
+        "length": "?string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget": {
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\CharsetAttribute",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind",
+        "length": "?string",
+        "scale": "?string",
+        "words": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Character": {
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\CharsetAttribute",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharacterKind",
+        "length": "?string",
+        "national": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CharsetAttribute": {
+        "charset": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\BinaryMark"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Decimal": {
+        "modifiers": "array",
+        "precision": "?string",
+        "scale": "?string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Elementary": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\ElementaryKind",
+        "length": "?string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Enumeration": {
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\CharsetAttribute",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\EnumerationKind",
+        "members": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Floating": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\FloatingKind",
+        "modifiers": "array",
+        "precision": "?string",
+        "scale": "?string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Integral": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\IntegralKind",
+        "modifiers": "array",
+        "width": "?string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\BinaryKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\BinaryMark": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharacterKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\ElementaryKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\EnumerationKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\FloatingKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\IntegralKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\NumericModifier": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\SpatialKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\TemporalKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Problem\\InvalidTypeSize": {
+        "actual": "int",
+        "maximum": "int",
+        "name": "string",
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Problem\\TypeLimit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Problem\\TypeLimit": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Catalog": {
+        "charsets": "array",
+        "collations": "array",
+        "defaults": "array",
+        "instance": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Catalog",
+        "locales": "?array",
+        "releases": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset": {
+        "maxLength": "int",
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Coercibility": {
+        "name": "string",
+        "value": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation": {
+        "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "id": "int",
+        "name": "string",
+        "padSpace": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Domain": {
+        "capacity": "?int",
+        "coercibility": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Coercibility",
+        "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
+        "decimals": "int",
+        "display": "?int",
+        "displayDecimals": "?int",
+        "field": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Field",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Kind",
+        "length": "int",
+        "members": "array",
+        "storageField": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Field",
+        "unsigned": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Field": {
+        "name": "string",
+        "value": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Kind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Locale": {
+        "days": "array",
+        "months": "array",
+        "name": "string",
+        "shortDays": "array",
+        "shortMonths": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Settings": {
+        "blockEncryptionMode": "string",
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "connection": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
+        "derivedMerge": "bool",
+        "divPrecisionIncrement": "int",
+        "explicitDefaultsForTimestamp": "?bool",
+        "functions": "array",
+        "groupConcatMaxLen": "int",
+        "parameters": "array",
+        "program": "array",
+        "schemas": "array",
+        "server": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
+        "strict": "bool",
+        "timeNames": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Locale",
+        "unsignedSubtraction": "bool",
+        "userVariables": "?array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Spatial": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\SpatialKind"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Temporal": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\TemporalKind",
+        "modifiers": "array",
+        "precision": "?string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\DescribeTable": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text|null",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\Explain": {
+        "analyze": "bool",
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "format": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
+        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
+        "statement": "SqlSemantics\\Statement\\Statement"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainConnection": {
+        "analyze": "bool",
+        "connection": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "format": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
+        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\Help": {
+        "topic": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\UseDatabase": {
+        "database": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\ProgramVariable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\TableOrView": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\UtilityMisuse": {
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\UtilityRule",
+        "subject": "?SqlSemantics\\Statement\\Node"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\UtilityRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\AccessMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName": {
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "system": "bool",
+        "word": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\IsolationLevel": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\NameAssignment": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope",
+        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\NamesExpression": {
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\PasswordAssignment": {
+        "password": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Password",
+        "user": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetCharacterSet": {
+        "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetNames": {
+        "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetTransaction": {
+        "characteristics": "array",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetVariables": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SystemAssignment": {
+        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord",
+        "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\UserAssignment": {
+        "value": "SqlSemantics\\Statement\\Scalar",
+        "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowCreateEvent": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowCreateFunction": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowCreateProcedure": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowCreateTrigger": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowFunctionCode": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowFunctionStatus": {
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowProcedureCode": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowProcedureStatus": {
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Replication\\ShowBinaryLogStatus": {
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Replication\\ShowBinaryLogs": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Replication\\ShowBinlogEvents": {
+        "file": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "position": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Replication\\ShowRelaylogEvents": {
+        "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "file": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "position": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Replication\\ShowReplicaStatus": {
+        "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Replication\\ShowReplicas": {
+        "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowColumns": {
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null",
+        "listing": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowListing",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowCreateDatabase": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowCreateTable": {
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowCreateView": {
+        "view": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowDatabases": {
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowEvents": {
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowKeys": {
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "extended": "bool",
+        "filter": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowOpenTables": {
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTableStatus": {
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTables": {
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null",
+        "listing": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowListing"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTriggers": {
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null",
+        "full": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowCharacterSet": {
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowCollation": {
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowCreateUser": {
+        "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowEngineCatalog": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowEngineLogs": {
+        "engine": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowEngineMutex": {
+        "engine": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowEngineStatus": {
+        "engine": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowGrants": {
+        "user": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "using": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowPlugins": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowPrivileges": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowProcesslist": {
+        "full": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowStatus": {
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowVariables": {
+        "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Session\\ProfileSection": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Session\\ShowErrorCount": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Session\\ShowErrors": {
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Session\\ShowProfile": {
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "query": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "sections": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Session\\ShowProfiles": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Session\\ShowWarningCount": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Session\\ShowWarnings": {
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike": {
+        "pattern": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowListing": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowParseTree": {
+        "statement": "SqlSemantics\\Statement\\Statement"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere": {
+        "condition": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\Definition": {
+        "default": "string|int|null",
+        "domain": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Domain",
+        "maximum": "?int",
+        "minimum": "?int",
+        "name": "string",
+        "reach": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\Reach",
+        "shape": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\ValueShape",
+        "writability": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\Writability"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\Reach": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\SystemVariables": {
+        "definitions": "array",
+        "releases": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\ValueShape": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\Writability": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Problem\\UnknownSystemVariable": {
+        "assigned": "bool",
+        "name": "string",
+        "structured": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Problem\\UnstructuredVariable": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Problem\\VariableMisuse": {
+        "name": "string",
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Problem\\VariableRule"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Problem\\VariableRule": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable": {
+        "assigned": "bool",
+        "instance": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariableBinding": {
+        "exists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariableEntry": {
+        "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
+        "domain": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Domain"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableAssignment": {
+        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\AlterView": {
+        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewDefinition"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\CreateView": {
+        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewDefinition",
+        "orReplace": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\DropView": {
+        "behavior": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropBehavior",
+        "ifExists": "bool",
+        "views": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewAlgorithm": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewCheckOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewDefinition": {
+        "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewAlgorithm",
+        "check": "?SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewCheckOption",
+        "columns": "?array",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "query": "SqlSemantics\\Statement\\Query",
+        "security": "?SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewSecurity"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewSecurity": {
+        "name": "string",
+        "value": "string"
+    }
+}

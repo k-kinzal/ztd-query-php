@@ -238,7 +238,9 @@ final class ViewCommandTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
 
-        $statement = ViewCommand::reanalyze($session, 'd', 'v', [new Name('x')], 'SELECT a FROM t')->statement;
+        $query = $session->analyze('SELECT a FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $query);
+        $statement = ViewCommand::reanalyze($session, 'd', 'v', [new Name('x')], $query)->statement;
 
         self::assertInstanceOf(CreateView::class, $statement);
         self::assertSame([true, 'x'], [$statement->orReplace, $statement->definition->columns[0]->value ?? null]);

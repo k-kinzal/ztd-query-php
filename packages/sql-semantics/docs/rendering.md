@@ -1,6 +1,6 @@
 # Rendering
 
-`Operation::toString()` answers SQL rendered from the statement structure. It never answers the analyzed text, and the model keeps no copy of it. The text is produced once, when the operation is constructed, and is checked before the operation is returned. Written text is kept in one place only, a [spelled region](#spelled-regions): the expression of a result column that the database names after its text.
+`Operation::toString()` answers SQL rendered from the statement structure. It never answers the analyzed text, and the model keeps no copy of it. The text is rendered and checked when the operation is constructed, then discarded. `toString()` renders the immutable structure again; the operation retains no SQL-string cache. Written text is kept in one place only, a [spelled region](#spelled-regions): the expression of a result column that the database names after its text.
 
 ## How the text is produced
 

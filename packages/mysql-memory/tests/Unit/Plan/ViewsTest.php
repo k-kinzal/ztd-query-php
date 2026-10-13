@@ -62,7 +62,7 @@ final class ViewsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result2);
         $schema = $session->instance->dictionary->schema('d');
         self::assertNotNull($schema);
-        self::assertSame([[1, 0], [['6', '5']]], [Views::refresh($schema->views['v'], $session->instance->dictionary, $session->settings()), $result2->rows]);
+        self::assertSame([[1, 0], [['6', '5']]], [\MySqlMemory\Session\Resolution\Views::refresh($schema->views['v'], $session->instance->dictionary, $session->settings()), $result2->rows]);
     }
 
     public function testRefreshAllLeavesAnInvalidViewAsItIs(): void
@@ -77,7 +77,7 @@ final class ViewsTest extends TestCase
         $declaration = $schema->views['v']->declaration;
         $session->query('DROP TABLE t');
 
-        Views::refreshAll($session->instance->dictionary, $session->settings());
+        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
 
         self::assertSame($declaration, $schema->views['v']->declaration);
     }

@@ -36,4 +36,10 @@ final class PlatformsTest extends TestCase
         self::assertSame('SqlSemantics\\Platform\\PostgreSql\\Platform', Platforms::platformClass('postgresql'));
         self::assertNull(Platforms::platformClass('oracle'));
     }
+
+    public function testValueDirectoryFindsTheCoreAndDialectPackages(): void
+    {
+        self::assertFileExists(Platforms::valueDirectory(\SqlSemantics\Statement\Operation::class) . '/resources/value-schema.json');
+        self::assertFileExists(Platforms::valueDirectory(\SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral::class) . '/resources/value-schema.json');
+    }
 }

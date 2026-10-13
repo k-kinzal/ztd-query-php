@@ -41,12 +41,14 @@ final class Publication
      * Derives the facts and the checked SQL of a statement.
      *
      * @return array{Facts, string}
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a retained value is outside the closed immutable domain
      * @throws InvariantViolation When the rendered SQL does not correspond to the structure
      */
     public function establish(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): array
     {
         $platform = Platforms::of($context->profile->grammar->database());
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $platform->statementNamespace()]);
+        $graph->objects($context, true);
         $objects = $graph->objects($statement);
         $graph->objects($sources);
         foreach ($sources->origins as $origin) {

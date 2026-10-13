@@ -14,7 +14,6 @@ use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
-use MySqlMemory\Plan\Views;
 use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
@@ -77,12 +76,12 @@ final class ShowCreateViewCommand implements Command
     public function write(\MySqlMemory\Dictionary\View $view, Session $session, Context $context): Reply
     {
         try {
-            Views::refresh($view, $session->instance->dictionary, $session->settings());
+            \MySqlMemory\Session\Resolution\Views::refresh($view, $session->instance->dictionary, $session->settings());
         } catch (SqlError $error) {
             $context->diagnostics->warning($error->error, $error->getMessage());
         }
         $current = $session->variables->database;
-        $text = (new ViewText($view->created->facts, $current, $view->database))->query($view->definition, true, $view->hints) ?? $view->select;
+        $text = (new ViewText($view->created->facts, $current, $view->database))->query($view->definition, true, $view->hints) ?? $view->querySql();
         $create = $view->create(($view->schema === $current ? '' : Routine::quoted($view->schema) . '.') . Routine::quoted($view->name), $text);
         $flag = ColumnFlag::NotNull->value;
 

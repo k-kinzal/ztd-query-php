@@ -14,6 +14,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ViewTest extends TestCase
 {
+    public function testQuerySqlRendersTheRetainedQuery(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE VIEW v AS SELECT 1 AS x');
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+
+        self::assertSame('SELECT 1 AS x', $schema->views['v']->querySql());
+    }
+
     public function testCreateWritesTheAttributesAroundTheQuery(): void
     {
         $session = (new Instance())->connect();
@@ -25,6 +35,6 @@ final class ViewTest extends TestCase
         $view = $schema->views['v'];
 
         self::assertSame('CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `v` AS select 1 AS `x` WITH CASCADED CHECK OPTION', $view->create('`v`', 'select 1 AS `x`'));
-        self::assertSame(['SELECT 1 AS x', $view->operation], [$view->select, $view->created]);
+        self::assertSame(['SELECT 1 AS x', $view->operation], [$view->querySql(), $view->created]);
     }
 }
