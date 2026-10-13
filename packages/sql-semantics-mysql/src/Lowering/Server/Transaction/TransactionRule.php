@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the transaction statements: BEGIN, START TRANSACTION, COMMIT, ROLLBACK and the savepoint statements.

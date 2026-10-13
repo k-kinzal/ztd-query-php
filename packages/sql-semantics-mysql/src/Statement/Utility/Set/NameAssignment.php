@@ -50,11 +50,11 @@ final class NameAssignment implements SetItem
 
     /**
      * @param Name $name The assigned name
-     * @param Scalar|SetWord $value The value: an expression, or a keyword the grammar accepts there
+     * @param Scalar|BareName|SetWord $value The value: an expression, or a keyword the grammar accepts there
      * @param VariableScope|null $scope The scope keyword written before the name
      * @param Name|null $qualifier The component, key cache instance or trigger row written before the name
      */
-    public function __construct(public readonly Name $name, public readonly Scalar|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null)
+    public function __construct(public readonly Name $name, public readonly Scalar|BareName|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null)
     {
         Check::input(!$value instanceof BareName || $value->system === ($scope !== null), 'A bare name value is known to be text exactly when a scope keyword names a system variable.');
     }
@@ -65,7 +65,7 @@ final class NameAssignment implements SetItem
     public function deriveItem(Derivation $derivation): void
     {
         $valueFirst = !in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        if ($valueFirst && $this->value instanceof Scalar) {
+        if ($valueFirst && !$this->value instanceof SetWord) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
         $settings = Settings::of($derivation->context);
@@ -79,7 +79,7 @@ final class NameAssignment implements SetItem
         } elseif ($this->qualifier !== null && !$derivation->inProgram() && $settings->row($this->qualifier->value) === null) {
             (new SystemVariable($this->name, null, $this->qualifier, true))->structured($derivation);
         }
-        if (!$valueFirst && $this->value instanceof Scalar) {
+        if (!$valueFirst && !$this->value instanceof SetWord) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
     }

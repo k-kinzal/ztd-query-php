@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE USER, ALTER USER, DROP USER and RENAME USER of every release.

@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `XA RECOVER [CONVERT XID]`: a request to list the prepared XA transactions.

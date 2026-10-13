@@ -8,9 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `INSTALL COMPONENT 'urn', … [SET assignment, …]`: a request to load server components (MySQL 8.0 and later).
@@ -51,6 +51,9 @@ final class InstallComponent implements Statement
     public function __construct(array $components, array $settings = [])
     {
         $this->components = Check::listOf($components, Text::class, 'INSTALL COMPONENT names at least one component.', 1);
+        foreach ($this->components as $component) {
+            Check::input($component->radix === null, 'A component URN is a quoted string.');
+        }
         $this->settings = Check::listOf($settings, ComponentSetting::class, 'INSTALL COMPONENT takes a list of variable assignments.');
     }
 

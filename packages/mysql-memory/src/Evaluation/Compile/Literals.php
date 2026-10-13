@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 
 /**
  * Compiles literals into constants: the value the text writes, in the type SQL Semantics resolved for it.
@@ -54,7 +54,7 @@ final class Literals
     /**
      * Answers the type of a literal: the one SQL Semantics resolved, else the one its rules give.
      */
-    public function typed(Scalar $node, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain $rule): Domain
+    public function typed(Operand $node, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain $rule): Domain
     {
         return $this->compiler->resolved($node) ?? Domain::of($rule, false);
     }
@@ -62,7 +62,7 @@ final class Literals
     /**
      * Compiles a number literal, negated when a sign is written before it.
      */
-    public function number(NumberLiteral $literal, bool $negative = false, ?Scalar $node = null): Constant
+    public function number(NumberLiteral $literal, bool $negative = false, ?Operand $node = null): Constant
     {
         $domain = $this->typed($node ?? $literal, $this->rules()->number($literal, $negative));
         $text = ($negative ? '-' : '') . $literal->text;

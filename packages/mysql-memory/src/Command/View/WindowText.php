@@ -47,10 +47,17 @@ final class WindowText
      */
     public function call(WindowFunction $call): ?string
     {
-        $arguments = $this->expressions->scalars($call->arguments);
+        $arguments = [];
+        foreach ($call->arguments as $argument) {
+            $written = $argument instanceof Scalar ? $this->expressions->scalar($argument) : null;
+            if ($written === null) {
+                return null;
+            }
+            $arguments[] = $written;
+        }
         $over = $this->over($call->over);
 
-        return $arguments === null || $over === null ? null : strtolower($call->kind->value) . '(' . implode(',', $arguments) . ')' . $over;
+        return $over === null ? null : strtolower($call->kind->value) . '(' . implode(',', $arguments) . ')' . $over;
     }
 
     /**
@@ -177,7 +184,7 @@ final class WindowText
     {
         $names = [];
         $walker = new Walker();
-        $roots = [...array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items), ...array_map(static fn (OrderItem $item): Scalar => $item->expression, $select->orderBy)];
+        $roots = [...array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items), ...array_map(static fn (OrderItem $item): \SqlSemantics\Statement\Operand => $item->expression, $select->orderBy)];
         foreach ($roots as $root) {
             foreach ($walker->find($root, Scalar::class, false) as $node) {
                 $over = $node instanceof WindowFunction || $node instanceof Aggregate ? $node->over : null;

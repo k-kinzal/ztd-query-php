@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
@@ -32,11 +32,11 @@ final class Parameter implements Node
 
     /**
      * @param Name $name The parameter name
-     * @param TypeName $type The declared type
+     * @param DeclaredName $type The declared type
      * @param CollationName|null $collation The COLLATE clause of the type
      * @param ParameterMode|null $mode The direction keyword, when written
      */
-    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?CollationName $collation = null, public readonly ?ParameterMode $mode = null)
+    public function __construct(public readonly Name $name, public readonly DeclaredName $type, public readonly ?CollationName $collation = null, public readonly ?ParameterMode $mode = null)
     {
     }
 

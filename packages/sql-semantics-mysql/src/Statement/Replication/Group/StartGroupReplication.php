@@ -11,9 +11,9 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `START GROUP_REPLICATION [USER = …, PASSWORD = …, DEFAULT_AUTH = …]`: starts group replication (MySQL 5.7 and later).

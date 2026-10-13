@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
-use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -61,7 +61,7 @@ final class UpdateTest extends TestCase
     {
         $this->expectExceptionMessage('UPDATE holds at least one assignment.');
 
-        new Update(null, false, false, [new WriteTarget(new QualifiedName(new Name('t')))], []);
+        new Update(null, false, false, [new TableReference(new QualifiedName(new Name('t')))], []);
     }
 
     public function testRenderWritesTheHintCommentAfterTheVerb(): void

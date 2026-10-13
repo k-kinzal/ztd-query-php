@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Log;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `PURGE BINARY LOGS BEFORE datetime_expr`: deletes the binary log files older than a moment.

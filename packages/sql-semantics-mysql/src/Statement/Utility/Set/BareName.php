@@ -16,7 +16,7 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
@@ -47,7 +47,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET @@sql_mode = TRADITIONAL');
  *     [$set->statement->items[0]->value->word->value, $set->facts->scalar($set->statement->items[0]->value)->type->descriptor->name()] // => ['TRADITIONAL', 'VARCHAR']
  */
-final class BareName implements Scalar
+final class BareName implements Operand
 {
     use Snapshot;
 

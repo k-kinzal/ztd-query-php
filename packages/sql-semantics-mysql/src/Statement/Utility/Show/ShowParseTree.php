@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW PARSE_TREE: the parse tree of a statement, in debug builds of the server (MySQL 8.1 and later).

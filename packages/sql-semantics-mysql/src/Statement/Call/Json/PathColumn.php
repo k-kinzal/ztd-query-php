@@ -12,8 +12,8 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Declared;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
@@ -46,7 +46,7 @@ final class PathColumn implements JsonTableColumn
 
     /**
      * @param Name $name The column name
-     * @param TypeName $type The declared type
+     * @param DeclaredName $type The declared type
      * @param StringLiteral $path The path
      * @param bool $exists Whether the column is an EXISTS column
      * @param CollationName|null $collation The written collation
@@ -56,7 +56,7 @@ final class PathColumn implements JsonTableColumn
      */
     public function __construct(
         public readonly Name $name,
-        public readonly TypeName $type,
+        public readonly DeclaredName $type,
         public readonly StringLiteral $path,
         public readonly bool $exists = false,
         public readonly ?CollationName $collation = null,

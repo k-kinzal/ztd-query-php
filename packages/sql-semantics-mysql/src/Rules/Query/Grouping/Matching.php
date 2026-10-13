@@ -9,9 +9,9 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Scalar;
 use UnitEnum;
 
 /**
@@ -33,9 +33,9 @@ final class Matching
     /**
      * Tells whether an expression is written as one of a list of expressions.
      *
-     * @param list<Scalar> $expressions
+     * @param list<Operand> $expressions
      */
-    public function listed(Scalar $expression, array $expressions, ?Facts $facts = null): bool
+    public function listed(Operand $expression, array $expressions, ?Facts $facts = null): bool
     {
         foreach ($expressions as $candidate) {
             if ($this->same($this->unwrap($expression), $this->unwrap($candidate), $facts)) {
@@ -129,7 +129,7 @@ final class Matching
     /**
      * Answers the expression a GROUP BY or ORDER BY key reads: the select item an alias or a position names, or the key itself.
      */
-    public function target(Scalar $key, Facts $facts): Scalar
+    public function target(Operand $key, Facts $facts): Operand
     {
         $node = $this->unwrap($key);
         if ($facts->covers($node)) {
@@ -145,7 +145,7 @@ final class Matching
     /**
      * Removes the parentheses around an expression.
      */
-    public function unwrap(Scalar $expression): Scalar
+    public function unwrap(Operand $expression): Operand
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;

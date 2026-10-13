@@ -31,7 +31,7 @@ final class HandlerFacts
     /**
      * Derives a read of a handler and records its rows as the output.
      *
-     * @param list<Scalar> $values The key values of an index seek
+     * @param list<Scalar|\SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest> $values The key values of an index seek
      */
     public function read(OpenHandler $handler, array $values, ?Scalar $where, ?Limit $limit, Derivation $derivation): void
     {

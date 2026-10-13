@@ -227,7 +227,7 @@ final class SetCommand implements Command
      *
      * @return array{int|float|string|null, Domain|null}
      */
-    public function value(Scalar|SetWord $value, Planner $planner, Frame $frame): array
+    public function value(Scalar|BareName|SetWord $value, Planner $planner, Frame $frame): array
     {
         if ($value instanceof SetWord) {
             return $value === SetWord::Default ? [null, null] : [$value->value, Domain::string(16, Collation::known('utf8mb4_0900_ai_ci'))];

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming;
 use SqlSemantics\Platform\MySql\Statement\Alter\TargetTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the statements of the table change family other than the actions of ALTER TABLE.

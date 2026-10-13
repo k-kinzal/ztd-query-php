@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 
 /**
  * Evaluates direct select expressions when their rows pass sorting and bounds.
@@ -71,11 +71,11 @@ final class Emission
     /**
      * Follows output aliases and detects values that change between reads of the same row.
      */
-    public function independent(Scalar $expression): bool
+    public function independent(Operand $expression): bool
     {
         $target = (new Grouping($this->planner))->target($expression);
         $targets = array_map(static fn (VariableAssignment $assignment): UserVariable => $assignment->target, (new Walker())->find($target, VariableAssignment::class, false));
-        foreach ((new Walker())->find($target, Scalar::class, false) as $node) {
+        foreach ((new Walker())->find($target, Operand::class, false) as $node) {
             $resolved = (new Grouping($this->planner))->target($node);
             if ($resolved !== $node && !$this->independent($resolved)) {
                 return false;

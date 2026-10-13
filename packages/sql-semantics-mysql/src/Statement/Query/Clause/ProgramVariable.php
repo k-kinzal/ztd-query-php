@@ -11,8 +11,8 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t LIMIT n');
  *     $query->statement->limit->count->name->value // => 'n'
  */
-final class ProgramVariable implements Scalar
+final class ProgramVariable implements Operand
 {
     use Snapshot;
 

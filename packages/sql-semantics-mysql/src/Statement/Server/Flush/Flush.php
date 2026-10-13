@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Flush;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `FLUSH [NO_WRITE_TO_BINLOG | LOCAL] item, …`: a request to clear or reload server caches and logs.

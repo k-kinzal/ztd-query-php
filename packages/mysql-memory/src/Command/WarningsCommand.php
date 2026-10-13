@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarningCount;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
 use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Executes SHOW WARNINGS and SHOW ERRORS: the conditions of the diagnostics area.
@@ -103,7 +102,7 @@ final class WarningsCommand implements Command
     /**
      * Answers the value of a bound of LIMIT, an unsigned integer literal; none counts from the first condition.
      */
-    public function bound(?Scalar $value): ?int
+    public function bound(?\SqlSemantics\Statement\Operand $value): ?int
     {
         if ($value === null) {
             return null;

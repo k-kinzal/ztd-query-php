@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Lock;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `UNLOCK {TABLE | TABLES}`: a request to release the table locks of the session.

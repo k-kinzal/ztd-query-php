@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Group\StopGroupReplication
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers PURGE BINARY LOGS, BINLOG and START and STOP GROUP_REPLICATION.

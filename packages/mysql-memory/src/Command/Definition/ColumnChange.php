@@ -119,8 +119,8 @@ final class ColumnChange
             throw new SqlError($code, $this->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? "BLOB/TEXT column '" . $element->name->column->value . "' can't have a default value" : $code->message($element->name->column->value));
         }
         $attributes = array_values(array_filter($this->attributes($element), static fn (ColumnAttribute $attribute): bool => !$attribute instanceof DefaultLiteral && !$attribute instanceof DefaultExpression));
-        if ($command->value !== null) {
-            $attributes[] = $command->expression ? new DefaultExpression($command->value) : new DefaultLiteral($command->value);
+        if ($command->default !== null) {
+            $attributes[] = $command->default;
             unset($layout->undefaulted[mb_strtolower($element->name->column->value)]);
         } else {
             $layout->undefaulted[mb_strtolower($element->name->column->value)] = true;

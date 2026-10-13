@@ -24,7 +24,6 @@ use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 
 /**
@@ -138,7 +137,7 @@ final class ViewText
             if ($select->groupBy->modifier !== null) {
                 return null;
             }
-            $groups = $this->expressions->scalars(array_map(static fn (OrderItem $item): Scalar => $item->expression, $select->groupBy->items));
+            $groups = $this->expressions->scalars(array_map(static fn (OrderItem $item): \SqlSemantics\Statement\Operand => $item->expression, $select->groupBy->items));
             if ($groups === null) {
                 return null;
             }

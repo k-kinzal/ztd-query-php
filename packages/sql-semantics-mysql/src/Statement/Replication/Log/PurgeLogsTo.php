@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Log;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `PURGE BINARY LOGS TO 'file'`: deletes the binary log files listed before the named one.

@@ -17,10 +17,10 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 
@@ -60,7 +60,7 @@ final class GroupedColumns
      *
      * @param list<VisibleRelation> $visible The relations of the FROM clause of the block
      * @param list<Field|OpenStar> $fields The output fields of the select list, stars expanded
-     * @param list<Scalar>|null $ownedAggregates Resolved ownership, or null to inspect the written select list and HAVING
+     * @param list<Operand>|null $ownedAggregates Resolved ownership, or null to inspect the written select list and HAVING
      */
     public function check(Select $select, array $visible, array $fields, Derivation $derivation, ?array $ownedAggregates = null): void
     {
@@ -98,7 +98,7 @@ final class GroupedColumns
     public function computed(Select $select, Facts $facts): bool
     {
         $matching = new Matching();
-        $pending = array_map(static fn ($item): Scalar => $matching->target($item->expression, $facts), $select->groupBy->items ?? []);
+        $pending = array_map(static fn ($item): Operand => $matching->target($item->expression, $facts), $select->groupBy->items ?? []);
         while ($pending !== []) {
             $value = array_pop($pending);
             if (is_array($value)) {
@@ -165,7 +165,7 @@ final class GroupedColumns
      * during lookup. Verified with the same SQL on 8.0, 8.4 and 9.1 servers.
      *
      * @param array<int, VisibleRelation> $relations
-     * @param array{list<Scalar>, array<string, true>}|null $grouping
+     * @param array{list<Operand>, array<string, true>}|null $grouping
      */
     public function having(Select $select, array $relations, Facts $facts, ?array $grouping, Derivation $derivation): ?NonGroupedColumn
     {
@@ -182,7 +182,7 @@ final class GroupedColumns
      *
      * @param list<Field|OpenStar> $fields
      * @param array<int, VisibleRelation> $relations
-     * @param array{list<Scalar>, array<string, true>}|null $grouping The GROUP BY expressions and determined columns
+     * @param array{list<Operand>, array<string, true>}|null $grouping The GROUP BY expressions and determined columns
      */
     public function items(array $fields, array $relations, Facts $facts, ?array $grouping, GroupingRule $rule, Derivation $derivation): ?NonGroupedColumn
     {
@@ -210,7 +210,7 @@ final class GroupedColumns
      * Checks unselected columns and aggregate calls in DISTINCT ordering.
      *
      * @param array<int, VisibleRelation> $relations
-     * @param list<Scalar> $aggregates The aggregate occurrences owned by this block
+     * @param list<Operand> $aggregates The aggregate occurrences owned by this block
      */
     public function distinct(Select $select, array $relations, Facts $facts, Derivation $derivation, array $aggregates = []): NonGroupedColumn|AggregateInOrdering|null
     {

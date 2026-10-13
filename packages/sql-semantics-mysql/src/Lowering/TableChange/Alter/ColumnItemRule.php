@@ -134,8 +134,8 @@ final class ColumnItemRule
         }
 
         return match ($kind) {
-            'default' => new DefaultSetting($column, $this->lowering->literals->literal($form->node($operand))),
-            'expression' => new DefaultSetting($column, $this->lowering->expressions->expression($form->node($operand)), true),
+            'default' => new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral($this->lowering->literals->signed($form->node($operand)))),
+            'expression' => new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression($this->lowering->expressions->expression($form->node($operand)))),
             'visibility' => new ColumnVisibility($column, $this->lowering->tableDefinitions->visible($form->node($operand))),
         };
     }

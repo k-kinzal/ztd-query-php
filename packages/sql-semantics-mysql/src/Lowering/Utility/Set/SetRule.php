@@ -9,13 +9,13 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetItem;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetTransaction;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers SET statements: the assignment list, SET TRANSACTION, and the routing of SET PASSWORD.

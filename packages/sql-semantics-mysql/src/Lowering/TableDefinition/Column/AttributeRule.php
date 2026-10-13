@@ -11,6 +11,8 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyOptionRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule;
+use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
@@ -28,7 +30,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\SridAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the attributes of a column definition.
@@ -150,13 +151,13 @@ final class AttributeRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function value(Node $value): Scalar
+    public function value(Node $value): Literal|ClockCall
     {
         $form = $this->lowering->productions->form($value);
 
         return match ($form->signature) {
             'now_or_signed_literal: now' => $this->lowering->calls->currentTimestamp($form->node(0)),
-            'now_or_signed_literal: signed_literal', 'now_or_signed_literal: signed_literal_or_null' => $this->lowering->literals->literal($form->node(0)),
+            'now_or_signed_literal: signed_literal', 'now_or_signed_literal: signed_literal_or_null' => $this->lowering->literals->signed($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
     }

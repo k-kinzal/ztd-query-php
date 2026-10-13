@@ -20,8 +20,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
 
 /**
  * Lowers the table factors of the 5.x grammars, where one rule writes both derived tables and nested joins.

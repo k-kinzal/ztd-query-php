@@ -14,6 +14,9 @@ parameters:
             - src/Server/Client.php
             - src/Session/Session.php
             - fuzz/campaign.php
+            # Construction rejects out-of-domain choices; the CLI reports every failure.
+            - fuzz/Structure/Construction.php
+            - fuzz/structures.php
     phpVersion: 80100
     level: max
     paths: [src, tests, fuzz]

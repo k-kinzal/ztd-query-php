@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Query\Grouping;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 
 /**
  * Checks whether ORDER BY introduces aggregation into an otherwise ungrouped block.
@@ -25,7 +25,7 @@ final class OrderingAggregates
     /**
      * Answers the first ordering expression that illegally introduces a group.
      *
-     * @param list<Scalar> $aggregates The resolved aggregate occurrences owned by the block
+     * @param list<Operand> $aggregates The resolved aggregate occurrences owned by the block
      */
     public function check(Select $select, array $aggregates, GrammarRelease $release): ?AggregateInOrdering
     {
@@ -52,7 +52,7 @@ final class OrderingAggregates
      * @param array<int, true> $owned
      * @return array<int, true>
      */
-    public function occurrences(Scalar $expression, array $owned): array
+    public function occurrences(Operand $expression, array $owned): array
     {
         $pending = [$expression];
         $found = [];

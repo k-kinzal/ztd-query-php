@@ -175,7 +175,7 @@ final class OutputFields
     /**
      * Finds directly read GROUP_CONCAT or JSON aggregate outputs outside nested queries and windows.
      */
-    public function collected(Scalar $expression): bool
+    public function collected(\SqlSemantics\Statement\Operand $expression): bool
     {
         $pending = [$expression];
         while ($pending !== []) {

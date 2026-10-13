@@ -39,9 +39,9 @@ final class SystemAssignment implements SetItem
 
     /**
      * @param SystemVariable $variable The assigned variable with the scope written inside `@@`
-     * @param Scalar|SetWord $value The value: an expression, or a keyword the grammar accepts there
+     * @param Scalar|BareName|SetWord $value The value: an expression, or a keyword the grammar accepts there
      */
-    public function __construct(public readonly SystemVariable $variable, public readonly Scalar|SetWord $value)
+    public function __construct(public readonly SystemVariable $variable, public readonly Scalar|BareName|SetWord $value)
     {
         Check::input(!$value instanceof BareName || $value->system, 'A bare name assigned to a system variable is its text.');
     }
@@ -52,7 +52,7 @@ final class SystemAssignment implements SetItem
     public function deriveItem(Derivation $derivation): void
     {
         $valueFirst = !in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        if ($valueFirst && $this->value instanceof Scalar) {
+        if ($valueFirst && !$this->value instanceof SetWord) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
         $derivation->scalar($this->variable, $derivation->environment());
@@ -61,7 +61,7 @@ final class SystemAssignment implements SetItem
         } elseif (!$derivation->inProgram()) {
             $this->variable->structured($derivation);
         }
-        if (!$valueFirst && $this->value instanceof Scalar) {
+        if (!$valueFirst && !$this->value instanceof SetWord) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
     }

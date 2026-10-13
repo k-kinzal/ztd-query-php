@@ -14,9 +14,9 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Script;
 use SqlSemantics\Statement\Statement;
 
@@ -62,10 +62,10 @@ final class Publication
         $derivation->statement($statement);
         $facts = $derivation->facts();
         foreach ($objects as $object) {
-            if ($object instanceof Scalar || $object instanceof Relation || $object instanceof Query) {
+            if ($object instanceof Operand || $object instanceof Relation || $object instanceof Query) {
                 Check::invariant($facts->covers($object), 'Derivation left a ' . $object::class . ' without facts.');
             }
-            if ($object instanceof Scalar && ($replacement = $facts->scalar($object)->replacement) !== null) {
+            if ($object instanceof Operand && ($replacement = $facts->scalar($object)->replacement) !== null) {
                 Check::invariant($replacement !== $object && in_array($replacement, $graph->objects($object), true) && $facts->covers($replacement), 'A scalar replacement is a bound strict descendant of its occurrence.');
             }
         }

@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Renamings;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RENAME TABLE old TO new, …`: a request to rename tables, one rename after the other.

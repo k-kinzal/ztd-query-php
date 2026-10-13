@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
@@ -79,6 +80,9 @@ final class GroupConcat implements SetFunction
     ) {
         $this->arguments = Check::listOf($arguments, Scalar::class, 'GROUP_CONCAT takes at least one expression.', 1);
         $this->order = Check::listOf($order, OrderItem::class, 'An ordering is a list of ordering items.');
+        foreach ($this->order as $item) {
+            Check::input(!$item->expression instanceof OutputOrdinal, 'This ordering reads expressions rather than SELECT output positions.');
+        }
     }
 
     /**

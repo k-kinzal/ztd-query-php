@@ -28,9 +28,9 @@ final class Assignment implements Node
 
     /**
      * @param ColumnUse $column The column assigned to
-     * @param Scalar $value The value: an expression or DEFAULT
+     * @param Scalar|DefaultRequest $value The value: an expression or DEFAULT
      */
-    public function __construct(public readonly ColumnUse $column, public readonly Scalar $value)
+    public function __construct(public readonly ColumnUse $column, public readonly Scalar|DefaultRequest $value)
     {
     }
 

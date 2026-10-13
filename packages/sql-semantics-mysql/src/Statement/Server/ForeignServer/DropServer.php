@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\ForeignServer;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP SERVER [IF EXISTS] name`: a request to remove a FEDERATED server definition.

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Lock;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `LOCK INSTANCE FOR BACKUP`: a request to take the backup lock of the server instance (MySQL 8.0 and later).

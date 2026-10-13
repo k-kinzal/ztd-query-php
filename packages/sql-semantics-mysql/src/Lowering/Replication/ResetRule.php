@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetTarget;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers RESET with its items and RESET PERSIST.

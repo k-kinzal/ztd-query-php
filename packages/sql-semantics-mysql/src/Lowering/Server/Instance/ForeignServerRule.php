@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\DropServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE, ALTER and DROP SERVER.

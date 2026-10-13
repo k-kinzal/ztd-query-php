@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the XA transaction statements.

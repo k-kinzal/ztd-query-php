@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class PathColumnTest extends TestCase
 {
-    public function testDeriveColumnsAnswersTheDeclaredType(): void
+    public function testDeriveColumnsAnswersTheDeclaredName(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));

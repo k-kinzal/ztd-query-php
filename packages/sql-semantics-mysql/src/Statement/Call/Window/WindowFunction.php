@@ -19,6 +19,7 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
@@ -48,13 +49,13 @@ final class WindowFunction implements Scalar
     use Snapshot;
 
     /**
-     * @var list<Scalar> The arguments in order
+     * @var list<Scalar|RoutineVariable> The arguments in order
      */
     public readonly array $arguments;
 
     /**
      * @param WindowFunctionKind $kind The function
-     * @param list<Scalar> $arguments The arguments in order
+     * @param list<Scalar|RoutineVariable> $arguments The arguments in order
      * @param Name|WindowSpecification $over The window written after OVER
      * @param NullTreatment|null $nulls The written RESPECT NULLS or IGNORE NULLS
      * @param CountingEdge|null $edge The written FROM FIRST or FROM LAST of NTH_VALUE
@@ -66,14 +67,19 @@ final class WindowFunction implements Scalar
         public readonly ?NullTreatment $nulls = null,
         public readonly ?CountingEdge $edge = null,
     ) {
-        $this->arguments = Check::listOf($arguments, Scalar::class, 'Window function arguments are expressions.');
+        $values = [];
+        foreach (Check::listOf($arguments, Operand::class, 'Window function arguments are values.') as $position => $argument) {
+            Check::input($argument instanceof Scalar || ($argument instanceof RoutineVariable && $position === $kind->counted()), 'A routine variable is accepted only as a window count or offset.');
+            $values[] = $argument;
+        }
+        $this->arguments = $values;
         [$minimum, $maximum] = $kind->arity();
         Check::input(count($arguments) >= $minimum && count($arguments) <= $maximum, 'The grammar does not accept this number of arguments for ' . $kind->value . '.');
         Check::input($nulls === null || $kind->treatsNulls(), $kind->value . ' takes no NULL treatment.');
         Check::input($edge === null || $kind === WindowFunctionKind::NthValue, 'Only NTH_VALUE counts from an edge.');
         $counted = $arguments[$kind->counted() ?? -1] ?? null;
         Check::input($counted === null || $counted instanceof NumberLiteral || $counted instanceof Parameter || $counted instanceof UserVariable || $counted instanceof RoutineVariable, 'The count is an integer, a parameter marker or a variable.');
-        Check::input($kind !== WindowFunctionKind::NthValue || (new Precedence())->admits($arguments[1], Precedence::SIMPLE_EXPR), 'The row number of NTH_VALUE needs a grouping.');
+        Check::input($kind !== WindowFunctionKind::NthValue || ($arguments[1] instanceof Scalar && (new Precedence())->admits($arguments[1], Precedence::SIMPLE_EXPR)), 'The row number of NTH_VALUE needs a grouping.');
     }
 
     /**
@@ -83,7 +89,7 @@ final class WindowFunction implements Scalar
     {
         $facts = [];
         foreach ($this->arguments as $argument) {
-            $facts[] = (new Arguments())->one($argument, $derivation, $environment);
+            $facts[] = $argument instanceof RoutineVariable ? $derivation->scalar($argument, $environment) : (new Arguments())->one($argument, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
         $fact = (new WindowResults())->result($this, $facts, $derivation);

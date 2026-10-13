@@ -267,6 +267,8 @@ Rules are written from the MySQL reference manual and black-box observations of 
 The real server runs each input twice. Inputs whose reference observations differ after the bounded comparison contracts described below are counted separately and skipped; they are not counted as matches. The harness does not compare OK-packet information text or metadata PDO does not expose. It uses a textual ORDER BY check to decide whether to compare row order, including queries with LIMIT; nested ORDER BY clauses and unordered ties can still produce misleading findings. Grammar coverage and seed selection belong to SQL Faker.
 
 `composer test:integration` includes differential regressions against Testcontainers, covering text and prepared execution with and without CLIENT_FOUND_ROWS, insert ids, multiple result sets and resolution errors. Set `MYSQL_VERSION` to repeat them on another release.
+The [direct semantic structure campaign](docs/semantic-structures.md) additionally constructs objects from SQL Semantics' types and constructor invariants and executes them in memory. It exposes defects hidden by generating every structure through the SQL parser. This campaign still reports counterexamples; its bounded regression suite does not establish the property for the whole model.
+
 The fuzzer is part of the repository, not of the installed package. From `packages/mysql-memory` in a checkout:
 
 ```bash

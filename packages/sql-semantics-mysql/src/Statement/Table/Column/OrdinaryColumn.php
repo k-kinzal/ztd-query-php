@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Snapshot;
@@ -37,11 +37,11 @@ final class OrdinaryColumn implements ColumnSpecification
     public readonly array $attributes;
 
     /**
-     * @param TypeName $type The data type
+     * @param DeclaredName $type The data type
      * @param list<ColumnAttribute> $attributes The attributes in written order
      * @param References|null $references The inline reference, when written
      */
-    public function __construct(public readonly TypeName $type, array $attributes = [], public readonly ?References $references = null)
+    public function __construct(public readonly DeclaredName $type, array $attributes = [], public readonly ?References $references = null)
     {
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
     }
@@ -49,7 +49,7 @@ final class OrdinaryColumn implements ColumnSpecification
     /**
      * Answers the data type.
      */
-    public function dataType(): TypeName
+    public function dataType(): DeclaredName
     {
         return $this->type;
     }

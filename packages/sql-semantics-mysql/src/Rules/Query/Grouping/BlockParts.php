@@ -19,9 +19,9 @@ use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Takes apart the clauses of a query block whose equalities and keys determine columns.
@@ -39,9 +39,9 @@ final class BlockParts
     /**
      * Answers the AND operands of a condition.
      *
-     * @return list<Scalar>
+     * @return list<Operand>
      */
-    public function conjuncts(?Scalar $condition): array
+    public function conjuncts(?Operand $condition): array
     {
         if ($condition === null) {
             return [];

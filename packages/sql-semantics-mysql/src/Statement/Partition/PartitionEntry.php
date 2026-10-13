@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Partition;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A statement that is only a partitioning clause, `PARTITION BY …` (5.6 and 5.7).

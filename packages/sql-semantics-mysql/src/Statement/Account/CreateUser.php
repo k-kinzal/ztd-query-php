@@ -13,9 +13,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE USER [IF NOT EXISTS] account [auth], … [DEFAULT ROLE …] [REQUIRE …] [WITH limits] [options] [ATTRIBUTE|COMMENT '…']`: a request to create accounts.

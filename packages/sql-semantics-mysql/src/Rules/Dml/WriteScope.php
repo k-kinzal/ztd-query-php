@@ -57,7 +57,7 @@ final class WriteScope
     /**
      * Derives a value assigned to a column.
      */
-    public function value(Scalar $value, Field $column, Derivation $derivation, Environment $environment): ScalarFact
+    public function value(Scalar|DefaultRequest $value, Field $column, Derivation $derivation, Environment $environment): ScalarFact
     {
         if ($value instanceof DefaultRequest) {
             return $derivation->scalar($value, new Environment($derivation->context, $environment, [], [], [$column]));

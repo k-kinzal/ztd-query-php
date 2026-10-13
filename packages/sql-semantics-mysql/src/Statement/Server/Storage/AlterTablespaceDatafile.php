@@ -10,10 +10,10 @@ use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER TABLESPACE name {ADD | DROP | CHANGE} DATAFILE 'file' [option …]`: a request to add, remove or resize a data file of a tablespace.

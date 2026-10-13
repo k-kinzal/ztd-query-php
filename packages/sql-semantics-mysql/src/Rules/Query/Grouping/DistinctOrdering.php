@@ -12,9 +12,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Resolves DISTINCT ordering against selected expressions and owned aggregate calls.
@@ -27,7 +27,7 @@ final class DistinctOrdering
 {
     /**
      * @param array<int, \SqlSemantics\Resolution\VisibleRelation> $relations
-     * @param list<Scalar> $aggregates The aggregate occurrences owned by this block
+     * @param list<Operand> $aggregates The aggregate occurrences owned by this block
      */
     public function check(Select $select, array $relations, Facts $facts, Derivation $derivation, array $aggregates): NonGroupedColumn|AggregateInOrdering|null
     {
@@ -70,7 +70,7 @@ final class DistinctOrdering
     }
 
     /**
-     * @param list<Scalar> $expressions
+     * @param list<Operand> $expressions
      */
     public function redundant(Select $select, array $expressions, Facts $facts): bool
     {
@@ -93,7 +93,7 @@ final class DistinctOrdering
      * @param array<string, true> $selected
      * @param array<int, true> $owned
      */
-    public function missing(Scalar $expression, array $relations, Facts $facts, array $selected, array $owned): ResolvedColumn|Scalar|null
+    public function missing(Operand $expression, array $relations, Facts $facts, array $selected, array $owned): ResolvedColumn|Operand|null
     {
         $pending = [$expression];
         while ($pending !== []) {
@@ -105,7 +105,7 @@ final class DistinctOrdering
             if (!is_object($value)) {
                 continue;
             }
-            if ($value instanceof Scalar && isset($owned[spl_object_id($value)])) {
+            if ($value instanceof Operand && isset($owned[spl_object_id($value)])) {
                 return $value;
             }
             if ($value instanceof ColumnUse && $facts->covers($value)) {

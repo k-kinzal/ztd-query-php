@@ -56,7 +56,7 @@ final class ValueRule
      * @param bool $system Whether the assigned variable is known to be a system variable
      * @throws ImplementationGap When a production has no rule
      */
-    public function value(Node $value, bool $system): Scalar|SetWord
+    public function value(Node $value, bool $system): Scalar|BareName|SetWord
     {
         $form = $this->lowering->form($value);
         if ($form->signature !== 'set_expr_or_default: expr') {

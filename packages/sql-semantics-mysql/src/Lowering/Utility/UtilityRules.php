@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Lowering\Utility\Explain\ExplainRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\Set\SetRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\Show\LegacyShowRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\Show\ShowRule;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * The entry rules of the utility family: the methods other families and the statement dispatcher call.

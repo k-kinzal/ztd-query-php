@@ -31,7 +31,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogE
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowReplicas;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowReplicaStatus;
 use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Executes the SHOW statements of replication: SHOW REPLICA STATUS, SHOW REPLICAS, SHOW BINARY LOGS, SHOW BINARY LOG STATUS, SHOW BINLOG EVENTS and SHOW RELAYLOG EVENTS.
@@ -313,7 +312,7 @@ final class ReplicationShowCommand implements Command
     /**
      * Answers the value of a LIMIT operand, an unsigned integer literal; none for an absent one.
      */
-    public function bound(?Scalar $operand): ?int
+    public function bound(?\SqlSemantics\Statement\Operand $operand): ?int
     {
         if ($operand === null) {
             return null;

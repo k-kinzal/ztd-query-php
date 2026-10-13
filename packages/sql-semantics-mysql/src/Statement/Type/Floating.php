@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Float, '7', '3');
  *     [$type->name(), $type->precision, $type->scale] // => ['FLOAT', '7', '3']
  */
-final class Floating implements TypeName
+final class Floating implements DeclaredName
 {
     use Snapshot;
 

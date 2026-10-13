@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\PartitionRule;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * The entry rules of the table change family: the methods other families and the statement dispatcher call.

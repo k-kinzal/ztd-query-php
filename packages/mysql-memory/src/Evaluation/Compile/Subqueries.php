@@ -272,7 +272,7 @@ final class Subqueries
     {
         $query = $this->innermost($query);
         if ($query instanceof ValuesQuery) {
-            return count($query->rows) === 1 && count($query->rows[0]->values) === 1 ? $query->rows[0]->values[0] : null;
+            return count($query->rows) === 1 && count($query->rows[0]->values) === 1 && $query->rows[0]->values[0] instanceof \SqlSemantics\Statement\Scalar ? $query->rows[0]->values[0] : null;
         }
 
         return $query instanceof Select ? $this->selected($query) : null;

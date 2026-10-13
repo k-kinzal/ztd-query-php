@@ -34,10 +34,10 @@ final class ComponentSetting implements Node
 
     /**
      * @param SystemVariable $variable The variable with its scope and component
-     * @param Scalar $value The value: an expression, or OnWord
+     * @param Scalar|OnWord $value The value: an expression, or OnWord
      * @throws InvalidConstruction When the scope is neither absent, GLOBAL nor PERSIST
      */
-    public function __construct(public readonly SystemVariable $variable, public readonly Scalar $value)
+    public function __construct(public readonly SystemVariable $variable, public readonly Scalar|OnWord $value)
     {
         Check::input(in_array($variable->scope, [null, VariableScope::Global, VariableScope::Persist], true), 'A component variable is set GLOBAL or PERSIST.');
     }

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateLogfileGroup;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\LogFile;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the log file group statements.

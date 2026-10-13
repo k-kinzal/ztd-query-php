@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
@@ -40,7 +40,7 @@ final class GeneratedColumn implements ColumnSpecification
     public readonly array $attributes;
 
     /**
-     * @param TypeName $type The data type
+     * @param DeclaredName $type The data type
      * @param Scalar $expression The generation expression
      * @param CollationName|null $collation The collation written before AS
      * @param GeneratedStorage|null $storage VIRTUAL or STORED, when written
@@ -48,7 +48,7 @@ final class GeneratedColumn implements ColumnSpecification
      * @param References|null $references The inline reference, when written
      */
     public function __construct(
-        public readonly TypeName $type,
+        public readonly DeclaredName $type,
         public readonly Scalar $expression,
         public readonly ?CollationName $collation = null,
         public readonly ?GeneratedStorage $storage = null,
@@ -61,7 +61,7 @@ final class GeneratedColumn implements ColumnSpecification
     /**
      * Answers the data type.
      */
-    public function dataType(): TypeName
+    public function dataType(): DeclaredName
     {
         return $this->type;
     }

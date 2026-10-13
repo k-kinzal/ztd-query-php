@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Rules\Query\Projection;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DO: evaluates expressions and returns no rows.

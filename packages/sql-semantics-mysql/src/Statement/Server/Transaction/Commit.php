@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `COMMIT [WORK] [AND [NO] CHAIN] [[NO] RELEASE]`: a request to end the transaction and make its changes permanent.

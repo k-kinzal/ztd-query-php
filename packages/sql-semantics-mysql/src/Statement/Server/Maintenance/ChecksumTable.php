@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Maintenance;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CHECKSUM TABLE t, … [QUICK | EXTENDED]`: a request to compute a checksum of the contents of tables.

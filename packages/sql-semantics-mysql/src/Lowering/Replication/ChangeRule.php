@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFilter;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CHANGE MASTER TO, CHANGE REPLICATION SOURCE TO and CHANGE REPLICATION FILTER of every release.

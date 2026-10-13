@@ -16,8 +16,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -37,7 +38,7 @@ final class Block
      * @param list<SelectOption> $options The modifiers
      * @param list<SelectExpression|Star|TableWildcard> $items The select list
      * @param IntoDestination|null $into The INTO destination after the select list
-     * @param Relation|null $from The FROM clause
+     * @param Relation|Dual|null $from The FROM clause
      * @param Scalar|null $where The row predicate
      * @param Grouping|null $groupBy The GROUP BY clause
      * @param Scalar|null $having The group predicate
@@ -52,7 +53,7 @@ final class Block
         public readonly array $options,
         public readonly array $items,
         public readonly ?IntoDestination $into = null,
-        public readonly ?Relation $from = null,
+        public readonly Relation|Dual|null $from = null,
         public readonly ?Scalar $where = null,
         public readonly ?Grouping $groupBy = null,
         public readonly ?Scalar $having = null,

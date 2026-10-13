@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DropDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE, ALTER and DROP DATABASE.

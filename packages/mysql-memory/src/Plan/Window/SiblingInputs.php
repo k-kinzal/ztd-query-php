@@ -24,8 +24,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Stores ordinary select expressions alongside the input of a buffered window.
@@ -52,7 +52,7 @@ final class SiblingInputs
     /**
      * Collects ordinary variable-dependent outputs when at least one assigns a variable.
      *
-     * @return list<Scalar>
+     * @return list<Operand>
      */
     public function roots(Select $select): array
     {
@@ -94,7 +94,7 @@ final class SiblingInputs
     /**
      * Collects changing window arguments and parent reads before ordinary assignments.
      *
-     * @return array<int, Scalar> The expressions keyed by node identity
+     * @return array<int, Operand> The expressions keyed by node identity
      */
     public function nodes(Select $select): array
     {

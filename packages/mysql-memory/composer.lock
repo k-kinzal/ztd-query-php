@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a208d7f85a144cb2ca90c33530f391c4",
+    "content-hash": "fe690df6a6d532234a2d8d6b115db1a2",
     "packages": [
         {
             "name": "k-kinzal/sql-parser",
@@ -174,7 +174,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-semantics",
-                "reference": "82ad997d383bfd1617bc0b8c03204b21dd1a03f0"
+                "reference": "0902d06b565212fb7f25bbed86d011052cc725aa"
             },
             "require": {
                 "composer-runtime-api": "^2.2",
@@ -259,7 +259,8 @@
                     "@compat",
                     "@loc-guard",
                     "@tree-guard",
-                    "@deptrac"
+                    "@deptrac",
+                    "@schema:check"
                 ],
                 "loc-guard": [
                     "loc-guard --config=loc.yaml"
@@ -278,6 +279,9 @@
                 ],
                 "tree-guard": [
                     "tree-guard --config=tree.yaml"
+                ],
+                "schema:check": [
+                    "@php bin/value-schema.php"
                 ]
             },
             "license": [
@@ -298,7 +302,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-semantics-mysql",
-                "reference": "aefee5021986b364c34b7441135cc06b66440160"
+                "reference": "fa924cf244a8f86a61f1340771e2e0600fbebf60"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -404,7 +408,8 @@
                     "@compat",
                     "@loc-guard",
                     "@tree-guard",
-                    "@deptrac"
+                    "@deptrac",
+                    "@schema:check"
                 ],
                 "loc-guard": [
                     "loc-guard --config=loc.yaml"
@@ -423,6 +428,9 @@
                 ],
                 "tree-guard": [
                     "tree-guard --config=tree.yaml"
+                ],
+                "schema:check": [
+                    "@php vendor/k-kinzal/sql-semantics/bin/value-schema.php"
                 ]
             },
             "license": [
@@ -2284,16 +2292,16 @@
         },
         {
             "name": "phpstan/phpdoc-parser",
-            "version": "2.3.5",
+            "version": "2.3.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpdoc-parser.git",
-                "reference": "148cefffaf0233e4c08cc13db8a195a56dd6dfe9"
+                "reference": "1427af4647235b4a73b13940b1f1258d3584f36e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/148cefffaf0233e4c08cc13db8a195a56dd6dfe9",
-                "reference": "148cefffaf0233e4c08cc13db8a195a56dd6dfe9",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/1427af4647235b4a73b13940b1f1258d3584f36e",
+                "reference": "1427af4647235b4a73b13940b1f1258d3584f36e",
                 "shasum": ""
             },
             "require": {
@@ -2325,9 +2333,9 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https://github.com/phpstan/phpdoc-parser/issues",
-                "source": "https://github.com/phpstan/phpdoc-parser/tree/2.3.5"
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/2.3.6"
             },
-            "time": "2026-08-31T16:05:28+00:00"
+            "time": "2026-09-27T20:07:45+00:00"
         },
         {
             "name": "phpstan/phpstan",

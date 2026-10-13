@@ -31,7 +31,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Finds where in a statement each column name, select list position, function call and clock call is read, and in which order the server resolves it.
@@ -155,7 +154,7 @@ final class Locator
     public function assignments(array $assignments, array $order): void
     {
         $this->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $assignments), 'field list', [...$order, 0]);
-        $this->visit(array_map(static fn (Assignment $assignment): Scalar => $assignment->value, $assignments), 'field list', [...$order, 1]);
+        $this->visit(array_map(static fn (Assignment $assignment): \SqlSemantics\Statement\Operand => $assignment->value, $assignments), 'field list', [...$order, 1]);
     }
 
     /**

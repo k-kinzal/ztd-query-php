@@ -12,9 +12,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER USER [IF EXISTS] account n FACTOR {INITIATE REGISTRATION | FINISH REGISTRATION SET CHALLENGE_RESPONSE AS '…' | UNREGISTER}` (8.0.27+).
@@ -35,7 +35,7 @@ final class AlterRegistration implements Statement
     /**
      * @param bool $ifExists Whether IF EXISTS is written
      * @param Account|SessionUser $user The account
-     * @param Numeral $factor The factor number as written
+     * @param Numeral $factor The factor number, written as an unsigned decimal integer
      * @param RegistrationStep $step The registration step
      * @param Text|null $challengeResponse The challenge response of FINISH REGISTRATION
      */
@@ -46,6 +46,7 @@ final class AlterRegistration implements Statement
         public readonly RegistrationStep $step,
         public readonly ?Text $challengeResponse = null,
     ) {
+        Check::input(!$factor->hexadecimal && preg_match('/\A[0-9]+\z/D', $factor->text) === 1, 'A registration factor is an unsigned decimal integer.');
         Check::input(($challengeResponse !== null) === ($step === RegistrationStep::Finish), 'A challenge response is written exactly by FINISH REGISTRATION.');
     }
 

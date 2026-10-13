@@ -32,6 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
 
@@ -59,7 +60,7 @@ final class ExpressionText
     /**
      * Writes a list of expressions, or answers null when one cannot be written.
      *
-     * @param list<Scalar> $scalars
+     * @param list<Operand> $scalars
      * @return list<string>|null
      */
     public function scalars(array $scalars): ?array
@@ -79,12 +80,15 @@ final class ExpressionText
     /**
      * Writes an expression.
      */
-    public function scalar(Scalar $scalar): ?string
+    public function scalar(Operand $scalar): ?string
     {
+        if (!$scalar instanceof Scalar) {
+            return null;
+        }
         return match (true) {
             $scalar instanceof ColumnUse => $this->text->facts->covers($scalar) ? $this->text->column($this->text->facts->scalar($scalar)->resolution) : null,
             $scalar instanceof Grouped => $this->scalar($scalar->operand),
-            $scalar instanceof NumberLiteral, $scalar instanceof SignedLiteral, $scalar instanceof StringLiteral, $scalar instanceof NullLiteral, $scalar instanceof BooleanLiteral => $this->literal($scalar),
+            $scalar instanceof NumberLiteral, $scalar instanceof StringLiteral, $scalar instanceof NullLiteral, $scalar instanceof BooleanLiteral => $this->literal($scalar),
             $scalar instanceof FunctionCall => $this->call(strtolower($scalar->name->value), array_map(static fn ($argument): Scalar => $argument->expression, $scalar->arguments), $scalar->schema === null ? '' : Routine::quoted($scalar->schema->value) . '.'),
             $scalar instanceof Aggregate => ($scalar->over === null ? $this->aggregate($scalar) : (new WindowText($this))->aggregate($scalar)),
             $scalar instanceof WindowFunction => (new WindowText($this))->call($scalar),
@@ -100,7 +104,7 @@ final class ExpressionText
      * Writes a literal: a negative number as -(n), and a string with its introducer and its
      * backslashes and quotes escaped.
      */
-    public function literal(Scalar $literal): ?string
+    public function literal(Scalar|SignedLiteral $literal): ?string
     {
         return match (true) {
             $literal instanceof NumberLiteral => $literal->text,

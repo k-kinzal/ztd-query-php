@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE and DROP SPATIAL REFERENCE SYSTEM.

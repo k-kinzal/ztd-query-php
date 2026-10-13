@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table\Column;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Call\Clock;
+use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -26,10 +29,11 @@ final class DefaultLiteral implements ColumnAttribute
     use Snapshot;
 
     /**
-     * @param Scalar $value The value
+     * @param Literal|ClockCall $value The value
      */
-    public function __construct(public readonly Scalar $value)
+    public function __construct(public readonly Literal|ClockCall $value)
     {
+        Check::input(!$value instanceof ClockCall || $value->clock === Clock::Now, 'A column timestamp clause accepts only CURRENT_TIMESTAMP and its synonyms.');
     }
 
     /**

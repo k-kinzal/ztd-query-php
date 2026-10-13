@@ -41,6 +41,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
@@ -48,7 +49,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
 use SqlSemantics\Platform\MySql\Statement\View\AlterView;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Reports the statements a stored program may not contain.

@@ -52,7 +52,7 @@ final class FixedColumns
     /**
      * Answers the unqualified column fixed to a statement constant, or an empty name.
      */
-    public static function column(Scalar $column, Scalar $value, Facts $facts): string
+    public static function column(\SqlSemantics\Statement\Operand $column, Scalar $value, Facts $facts): string
     {
         return $column instanceof ColumnUse && $column->qualifier === null && Constancy::of($value, $facts) !== Constancy::Row ? strtolower($column->name->value) : '';
     }

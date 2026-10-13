@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
-use SqlSemantics\Statement\Relation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 
 /**
  * Lowers the table factors of the 8.0 and later grammars.

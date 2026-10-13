@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
-use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -56,7 +56,7 @@ final class MultipleDeleteTest extends TestCase
     {
         $this->expectExceptionMessage('A multiple-table DELETE names at least one table to delete from.');
 
-        new MultipleDelete(null, [], [], MultipleDeleteForm::Using, [new WriteTarget(new QualifiedName(new Name('t')))]);
+        new MultipleDelete(null, [], [], MultipleDeleteForm::Using, [new TableReference(new QualifiedName(new Name('t')))]);
     }
 
     public function testRenderWritesTheHintCommentAfterTheVerb(): void

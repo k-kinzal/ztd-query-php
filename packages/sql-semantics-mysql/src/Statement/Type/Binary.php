@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Binary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind::VarBinary, '16');
  *     [$type->name(), $type->length] // => ['VARBINARY', '16']
  */
-final class Binary implements TypeName
+final class Binary implements DeclaredName
 {
     use Snapshot;
 

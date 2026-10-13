@@ -20,8 +20,8 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SearchedCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SimpleCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the flow control statements of stored programs.

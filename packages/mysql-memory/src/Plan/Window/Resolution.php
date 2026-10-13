@@ -19,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Resolves the windows of a query block and checks them, in the order the server checks them.
@@ -214,7 +213,7 @@ final class Resolution
     /**
      * Answers the name the server gives a window function in its messages.
      */
-    public static function named(Scalar $call): string
+    public static function named(\SqlSemantics\Statement\Operand $call): string
     {
         return match (true) {
             $call instanceof WindowFunction => strtolower($call->kind->value),

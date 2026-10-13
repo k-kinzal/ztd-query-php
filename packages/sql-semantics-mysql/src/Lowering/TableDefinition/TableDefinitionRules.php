@@ -14,10 +14,10 @@ use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\ReferenceRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\View\ViewRule;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the table definition family: the methods other families and the statement dispatcher call.

@@ -341,8 +341,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\DefaultSetting": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
-        "expression": "bool",
-        "value": "?SqlSemantics\\Statement\\Scalar"
+        "default": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultExpression|null"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\AddConstraint": {
         "element": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableElement"
@@ -540,7 +539,7 @@
         "schema": "?SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse": {
-        "default": "?SqlSemantics\\Statement\\Scalar",
+        "default": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponseKind"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponseKind": {
@@ -569,7 +568,7 @@
         "onEmpty": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
         "onError": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
         "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral",
-        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordCall": {
         "arguments": "array",
@@ -716,7 +715,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Assignment": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse",
-        "value": "SqlSemantics\\Statement\\Scalar"
+        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DefaultRequest"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DefaultRequest": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Delete": {
@@ -1458,8 +1457,8 @@
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\RowLimit": {
-        "count": "SqlSemantics\\Statement\\Scalar",
-        "offset": "?SqlSemantics\\Statement\\Scalar",
+        "count": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Parameter|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\ProgramVariable",
+        "offset": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Parameter|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\ProgramVariable|null",
         "spelling": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\OffsetSpelling"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\WindowDefinition": {
@@ -1500,7 +1499,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\OrderItem": {
         "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
-        "expression": "SqlSemantics\\Statement\\Scalar"
+        "expression": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\OutputOrdinal"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\ParenthesizedQuery": {
         "query": "SqlSemantics\\Statement\\Query"
@@ -1576,7 +1575,7 @@
         "query": "SqlSemantics\\Statement\\Query"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select": {
-        "from": "?SqlSemantics\\Statement\\Relation",
+        "from": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource|SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual|null",
         "groupBy": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\Grouping",
         "having": "?SqlSemantics\\Statement\\Scalar",
         "hints": "array",
@@ -1655,7 +1654,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\EscapedRelation": {
-        "relation": "SqlSemantics\\Statement\\Relation",
+        "relation": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource",
         "word": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHint": {
@@ -1683,10 +1682,10 @@
         "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\JoinedTable": {
-        "left": "SqlSemantics\\Statement\\Relation",
+        "left": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource",
         "on": "?SqlSemantics\\Statement\\Scalar",
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Join\\JoinOperator",
-        "right": "SqlSemantics\\Statement\\Relation",
+        "right": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource",
         "using": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\JsonTable": {
@@ -1697,10 +1696,10 @@
         "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\NestedRelation": {
-        "relation": "SqlSemantics\\Statement\\Relation"
+        "relation": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\OdbcJoin": {
-        "relation": "SqlSemantics\\Statement\\Relation"
+        "relation": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableList": {
         "members": "array"
@@ -1836,7 +1835,7 @@
         "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\AlterEvent": {
-        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement|null",
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement|null",
         "comment": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "completion": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Completion",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
@@ -1927,7 +1926,7 @@
         "state": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateEvent": {
-        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement",
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
         "comment": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "completion": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Completion",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
@@ -1937,14 +1936,14 @@
         "status": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\EventStatus"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateFunction": {
-        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement",
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
         "characteristics": "array",
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
         "ifNotExists": "bool",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "parameters": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList",
-        "returns": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+        "returns": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateLoadableFunction": {
         "aggregate": "bool",
@@ -1954,7 +1953,7 @@
         "returns": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\LoadableResult"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateProcedure": {
-        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement",
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
         "characteristics": "array",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
         "ifNotExists": "bool",
@@ -1962,7 +1961,7 @@
         "parameters": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateTrigger": {
-        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement",
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
         "event": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerEvent",
         "ifNotExists": "bool",
@@ -2006,7 +2005,7 @@
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "mode": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterMode",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList": {
         "parameters": "array"
@@ -2101,7 +2100,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\HandlerDeclaration": {
         "action": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\HandlerAction",
         "conditions": "array",
-        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Statement\\Statement"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramRow": {
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
@@ -2113,7 +2112,7 @@
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "default": "?SqlSemantics\\Statement\\Scalar",
         "names": "array",
-        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement": {
         "name": "string",
@@ -2324,7 +2323,7 @@
         "update": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\HistogramUpdate"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\ComponentSetting": {
-        "value": "SqlSemantics\\Statement\\Scalar",
+        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\OnWord",
         "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\InstallComponent": {
@@ -2601,7 +2600,7 @@
         "expression": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultLiteral": {
-        "value": "SqlSemantics\\Statement\\Scalar"
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal|SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\EnforcementAttribute": {
         "enforced": "bool"
@@ -2619,7 +2618,7 @@
         "expression": "SqlSemantics\\Statement\\Scalar",
         "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
         "storage": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage",
-        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\KeywordAttribute": {
         "keyword": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\ColumnKeyword"
@@ -2641,12 +2640,12 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\OnUpdate": {
-        "value": "SqlSemantics\\Statement\\Scalar"
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\OrdinaryColumn": {
         "attributes": "array",
         "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
-        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\TypeName"
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\SridAttribute": {
         "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
@@ -3043,7 +3042,7 @@
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
-        "statement": "SqlSemantics\\Statement\\Statement"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Statement"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainConnection": {
         "analyze": "bool",
@@ -3093,7 +3092,7 @@
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "qualifier": "?SqlSemantics\\Statement\\Identifier\\Name",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope",
-        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord"
+        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\NamesExpression": {
         "value": "SqlSemantics\\Statement\\Scalar"
@@ -3121,7 +3120,7 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SystemAssignment": {
-        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord",
+        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord",
         "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\UserAssignment": {
@@ -3286,7 +3285,7 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowParseTree": {
-        "statement": "SqlSemantics\\Statement\\Statement"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Statement"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere": {
         "condition": "SqlSemantics\\Statement\\Scalar"

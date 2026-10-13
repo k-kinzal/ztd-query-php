@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Log;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `BINLOG 'str'`: applies binary log events written in base64 by mysqlbinlog.

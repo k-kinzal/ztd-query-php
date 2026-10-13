@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 
 /**
  * Lowers the parameter lists of stored routines and the data types of parameters, variables and return values.
@@ -103,7 +103,7 @@ final class ParameterRule
      * Lowers a data type with its optional COLLATE clause: a node of `type_with_opt_collate`, or a node
      * of `type` and the node of `opt_collate` that follows it.
      *
-     * @return array{TypeName, CollationName|null}
+     * @return array{DeclaredName, CollationName|null}
      * @throws ImplementationGap When a production has no rule
      */
     public function declared(Node $type, ?Node $collation): array

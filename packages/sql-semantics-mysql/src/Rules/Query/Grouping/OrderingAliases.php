@@ -12,9 +12,9 @@ use SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Rejects aggregate aliases in sorting subqueries and legacy embedded expressions.
@@ -31,7 +31,7 @@ final class OrderingAliases
     /**
      * Answers the first embedded reference to an aggregate owned by this block.
      *
-     * @param list<Scalar> $aggregates The resolved aggregate occurrences of the block
+     * @param list<Operand> $aggregates The resolved aggregate occurrences of the block
      */
     public function check(Select $select, Facts $facts, array $aggregates, GrammarRelease $release): ?InvalidProjectionAlias
     {
@@ -64,7 +64,7 @@ final class OrderingAliases
      *
      * @param array<int, true> $owned The aggregate occurrence identities
      */
-    public function correlated(Scalar $expression, Facts $facts, array $owned): ?InvalidProjectionAlias
+    public function correlated(Operand $expression, Facts $facts, array $owned): ?InvalidProjectionAlias
     {
         $pending = [$expression];
         while ($pending !== []) {
@@ -93,7 +93,7 @@ final class OrderingAliases
      *
      * @param array<int, true> $owned The aggregate occurrence identities
      */
-    public function nested(Scalar $expression, Facts $facts, array $owned): ?InvalidProjectionAlias
+    public function nested(Operand $expression, Facts $facts, array $owned): ?InvalidProjectionAlias
     {
         $pending = [$expression];
         while ($pending !== []) {

@@ -18,8 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers HANDLER of every release.

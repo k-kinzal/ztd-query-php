@@ -27,11 +27,11 @@ use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Counts the tables a query block joins that the server does not read as constants.
@@ -184,7 +184,7 @@ final class ConstantTables
     /**
      * Answers the column of a block an expression names, when it is one.
      */
-    public function column(Scalar $expression): ?ResolvedColumn
+    public function column(Operand $expression): ?ResolvedColumn
     {
         $expression = $this->unwrap($expression);
         if (!$expression instanceof ColumnUse || !$this->facts->covers($expression)) {
@@ -201,7 +201,7 @@ final class ConstantTables
      * @param array<int, true> $members The tables of the block, by object id
      * @param array<int, true> $constant The constant tables, by object id
      */
-    public function fixed(Scalar $value, array $members, array $constant): bool
+    public function fixed(Operand $value, array $members, array $constant): bool
     {
         foreach ((new Walker())->find($value, ColumnUse::class) as $use) {
             $resolution = $this->facts->covers($use) ? $this->facts->scalar($use)->resolution : null;
@@ -220,9 +220,9 @@ final class ConstantTables
     /**
      * Answers the AND operands of a condition.
      *
-     * @return list<Scalar>
+     * @return list<Operand>
      */
-    public function conjuncts(?Scalar $condition): array
+    public function conjuncts(?Operand $condition): array
     {
         if ($condition === null) {
             return [];
@@ -238,7 +238,7 @@ final class ConstantTables
     /**
      * Answers the AND operands of the conditions of the inner joins of a FROM clause.
      *
-     * @return list<Scalar>
+     * @return list<Operand>
      */
     public function joins(?Relation $relation): array
     {
@@ -255,7 +255,7 @@ final class ConstantTables
     /**
      * Removes the parentheses around an expression.
      */
-    public function unwrap(Scalar $expression): Scalar
+    public function unwrap(Operand $expression): Operand
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;

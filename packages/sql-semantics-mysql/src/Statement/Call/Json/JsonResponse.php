@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Call\Json;
 
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -30,9 +30,9 @@ final class JsonResponse implements Node
 
     /**
      * @param JsonResponseKind $kind The response
-     * @param Scalar|null $default The literal of DEFAULT; present exactly for DEFAULT
+     * @param Literal|null $default The literal of DEFAULT; present exactly for DEFAULT
      */
-    public function __construct(public readonly JsonResponseKind $kind, public readonly ?Scalar $default = null)
+    public function __construct(public readonly JsonResponseKind $kind, public readonly ?Literal $default = null)
     {
         Check::input(($default !== null) === ($kind === JsonResponseKind::Default), 'A response has a literal exactly when it is DEFAULT.');
     }

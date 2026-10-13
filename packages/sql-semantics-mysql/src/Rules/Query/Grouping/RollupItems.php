@@ -26,9 +26,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -145,7 +145,7 @@ final class RollupItems
     /**
      * Answers the grouping expressions of a block, each the select item its alias or position names, without parentheses.
      *
-     * @return list<Scalar>
+     * @return list<Operand>
      */
     public function groups(Select $select, Facts $facts): array
     {
@@ -161,7 +161,7 @@ final class RollupItems
     /**
      * Tells whether a field is a grouping expression: its expression is one, or it is a column of a star that one names.
      *
-     * @param list<Scalar> $groups
+     * @param list<Operand> $groups
      */
     public function rolled(Field $field, array $groups, Facts $facts): bool
     {
@@ -188,14 +188,14 @@ final class RollupItems
     /**
      * Tells whether an expression reads a grouping expression outside aggregates, window functions and subqueries.
      *
-     * @param list<Scalar> $groups
+     * @param list<Operand> $groups
      */
     public function reads(Node $node, array $groups, Facts $facts): bool
     {
         if ($node instanceof Query || $node instanceof WindowFunction || $node instanceof Aggregate && $node->over === null || $node instanceof GroupConcat && $node->over === null || $node instanceof JsonObjectAggregate || $node instanceof KeywordCall && $node->function === KeywordFunction::Grouping) {
             return false;
         }
-        if ($node instanceof Scalar && (new Matching())->listed($node, $groups, $facts)) {
+        if ($node instanceof Operand && (new Matching())->listed($node, $groups, $facts)) {
             return true;
         }
         $properties = get_object_vars($node);

@@ -17,12 +17,12 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Derives the statements that define stored programs: routines, triggers and events.

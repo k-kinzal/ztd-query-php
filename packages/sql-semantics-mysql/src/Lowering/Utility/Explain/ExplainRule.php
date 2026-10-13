@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers EXPLAIN, DESCRIBE, HELP and USE.

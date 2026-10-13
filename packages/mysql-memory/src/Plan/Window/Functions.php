@@ -21,6 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -74,7 +75,7 @@ final class Functions
             throw StatementError::NotSupportedYet->error($call->nulls === NullTreatment::Ignore ? 'IGNORE NULLS' : 'FROM LAST');
         }
         $name = Resolution::named($call);
-        $arguments = array_map(static fn (Scalar $argument): Evaluable => $compiler->compile($argument, $scope), $call->kind === WindowFunctionKind::Tile || $call->kind === WindowFunctionKind::NthValue ? [] : array_values(array_filter($call->arguments, static fn (int $position): bool => $position !== 1, ARRAY_FILTER_USE_KEY)));
+        $arguments = array_map(static fn (Operand $argument): Evaluable => $compiler->compile($argument, $scope), $call->kind === WindowFunctionKind::Tile || $call->kind === WindowFunctionKind::NthValue ? [] : array_values(array_filter($call->arguments, static fn (int $position): bool => $position !== 1, ARRAY_FILTER_USE_KEY)));
 
         return match ($call->kind) {
             WindowFunctionKind::RowNumber, WindowFunctionKind::Rank, WindowFunctionKind::DenseRank, WindowFunctionKind::CumulativeDistribution, WindowFunctionKind::PercentRank,
@@ -90,7 +91,7 @@ final class Functions
      *
      * @throws SqlError When the value is not such an integer
      */
-    public function count(Scalar $argument, string $name, int $minimum): int
+    public function count(Operand $argument, string $name, int $minimum): int
     {
         $compiled = $this->planner->compiler->compile($argument, new Scope());
         $value = $compiled->evaluate(new Frame($this->planner->compiler->connection->context));
@@ -110,7 +111,7 @@ final class Functions
      *
      * @throws SqlError When the value is not such an integer
      */
-    public function nth(Scalar $argument, string $name): int
+    public function nth(Operand $argument, string $name): int
     {
         if (!$this->planner->compiler->constancy($argument)->constant()) {
             throw StatementError::WrongArguments->error($name);

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Lowering\Utility\Show;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCreateUser;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowProcesslist;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the SHOW statements of MySQL 8.0 and later about the server, the session and accounts.

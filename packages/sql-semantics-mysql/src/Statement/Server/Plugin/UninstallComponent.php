@@ -8,9 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `UNINSTALL COMPONENT 'urn', …`: a request to unload server components (MySQL 8.0 and later).
@@ -40,6 +40,9 @@ final class UninstallComponent implements Statement
     public function __construct(array $components)
     {
         $this->components = Check::listOf($components, Text::class, 'UNINSTALL COMPONENT names at least one component.', 1);
+        foreach ($this->components as $component) {
+            Check::input($component->radix === null, 'A component URN is a quoted string.');
+        }
     }
 
     /**

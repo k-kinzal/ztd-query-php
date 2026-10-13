@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -35,14 +34,14 @@ final class RowLimit implements Limit
     use Snapshot;
 
     /**
-     * @param Scalar $count The row count
-     * @param Scalar|null $offset The number of rows skipped
+     * @param NumberLiteral|Parameter|ProgramVariable $count The row count
+     * @param NumberLiteral|Parameter|ProgramVariable|null $offset The number of rows skipped
      * @param OffsetSpelling|null $spelling How the offset is written; given exactly when there is an offset
      */
-    public function __construct(public readonly Scalar $count, public readonly ?Scalar $offset = null, public readonly ?OffsetSpelling $spelling = null)
+    public function __construct(public readonly NumberLiteral|Parameter|ProgramVariable $count, public readonly NumberLiteral|Parameter|ProgramVariable|null $offset = null, public readonly ?OffsetSpelling $spelling = null)
     {
         foreach ([$count, $offset] as $operand) {
-            Check::input($operand === null || $operand instanceof Parameter || $operand instanceof ProgramVariable || ($operand instanceof NumberLiteral && $operand->form === NumberForm::Integer), 'A LIMIT operand is an unsigned integer, a parameter marker or a stored program variable.');
+            Check::input(!$operand instanceof NumberLiteral || $operand->form === NumberForm::Integer, 'A LIMIT operand is an unsigned integer, a parameter marker or a stored program variable.');
         }
         Check::input(($offset === null) === ($spelling === null), 'An offset is written in exactly one spelling.');
     }

@@ -15,8 +15,8 @@ use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers INSTALL and UNINSTALL of plugins and components.

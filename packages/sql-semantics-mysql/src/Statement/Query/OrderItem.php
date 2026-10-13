@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
@@ -28,10 +29,10 @@ final class OrderItem implements Node
     use Snapshot;
 
     /**
-     * @param Scalar $expression The ordering expression
+     * @param Scalar|OutputOrdinal $expression The ordering expression
      * @param Direction|null $direction The direction, when written
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?Direction $direction = null)
+    public function __construct(public readonly Scalar|OutputOrdinal $expression, public readonly ?Direction $direction = null)
     {
     }
 

@@ -15,10 +15,10 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 
 /**
@@ -90,7 +90,7 @@ final class Ordering
     /**
      * Ignores constant keys, including constant DISTINCT assignments.
      */
-    public function constant(Select $select, ?Scalar $expression): bool
+    public function constant(Select $select, ?Operand $expression): bool
     {
         $assignmentsVary = !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $select->options, true);
 

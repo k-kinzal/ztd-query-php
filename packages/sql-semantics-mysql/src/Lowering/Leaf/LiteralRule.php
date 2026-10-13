@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rules\Introducers;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Platform\MySql\Rules\Strings;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
@@ -118,7 +119,7 @@ final class LiteralRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function literal(Node $literal): Scalar
+    public function literal(Node $literal): Scalar&Literal
     {
         $form = $this->lowering->productions->form($literal);
         while (isset(self::FORWARD[$form->signature])) {
@@ -142,7 +143,7 @@ final class LiteralRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function constant(Form $form): Scalar
+    public function constant(Form $form): Scalar&Literal
     {
         $digits = new RadixSpelling();
 
@@ -154,10 +155,27 @@ final class LiteralRule
             'literal: BIN_NUM' => new RadixLiteral(Radix::Bit, $digits->digits($form->token(0)->text)),
             'literal: UNDERSCORE_CHARSET HEX_NUM' => new RadixLiteral(Radix::Hexadecimal, $digits->digits($form->token(1)->text), $this->introducer($form)),
             'literal: UNDERSCORE_CHARSET BIN_NUM' => new RadixLiteral(Radix::Bit, $digits->digits($form->token(1)->text), $this->introducer($form)),
-            'signed_literal: + NUM_literal' => new SignedLiteral(false, $this->number($form->node(1))),
-            'signed_literal: - NUM_literal' => new SignedLiteral(true, $this->number($form->node(1))),
             default => throw ImplementationGap::production($form),
         });
+    }
+
+    /**
+     * Lowers a literal in a position that also accepts a signed number.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function signed(Node $literal): Literal
+    {
+        $form = $this->lowering->productions->form($literal);
+        while (isset(self::FORWARD[$form->signature])) {
+            $form = $this->lowering->productions->form($form->node(0));
+        }
+
+        return match ($form->signature) {
+            'signed_literal: + NUM_literal' => $this->lowering->leaves->record(new SignedLiteral(false, $this->number($form->node(1)))),
+            'signed_literal: - NUM_literal' => $this->lowering->leaves->record(new SignedLiteral(true, $this->number($form->node(1)))),
+            default => $this->literal($form->node),
+        };
     }
 
     /**

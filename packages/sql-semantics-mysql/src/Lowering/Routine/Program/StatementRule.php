@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the statements of stored programs and routes each to its rule.

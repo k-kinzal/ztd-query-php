@@ -15,8 +15,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare;
 use SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers DO, CALL, IMPORT TABLE and the prepared statement commands.

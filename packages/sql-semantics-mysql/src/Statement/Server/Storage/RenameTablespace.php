@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER TABLESPACE name RENAME TO new_name`: a request to rename a general tablespace (MySQL 8.0 and later).

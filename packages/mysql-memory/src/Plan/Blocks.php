@@ -376,7 +376,7 @@ final class Blocks
      *
      * @throws SqlError When the value is not an integer
      */
-    public function bound(Scalar $value, ?Scope $outer): int
+    public function bound(\SqlSemantics\Statement\Operand $value, ?Scope $outer): int
     {
         $evaluable = $this->planner->compiler->compile($value, new Scope($outer));
         $frame = new Frame($this->planner->compiler->connection->context);

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeRoles;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers GRANT and REVOKE of MySQL 8.0 and later.

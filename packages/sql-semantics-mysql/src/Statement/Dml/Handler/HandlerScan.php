@@ -7,10 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HANDLER ... READ FIRST|NEXT: reads rows of an open handler in natural row order.

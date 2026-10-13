@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKin
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the resource group statements (8.0+).

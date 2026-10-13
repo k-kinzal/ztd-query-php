@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * IMPORT TABLE: creates MyISAM tables from the metadata files a server exported (MySQL 8.0 and later).

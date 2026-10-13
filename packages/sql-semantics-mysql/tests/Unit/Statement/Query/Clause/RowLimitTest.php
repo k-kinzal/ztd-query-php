@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
@@ -45,7 +44,7 @@ final class RowLimitTest extends TestCase
     {
         $this->expectExceptionMessage('A LIMIT operand is an unsigned integer, a parameter marker or a stored program variable.');
 
-        new RowLimit(new NullLiteral());
+        new RowLimit(new NumberLiteral('1.5'));
     }
 
     public function testAnOffsetWithoutSpellingIsRejected(): void

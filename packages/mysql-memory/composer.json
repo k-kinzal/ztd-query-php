@@ -26,7 +26,9 @@
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
         "nikic/php-fuzzer": "^0.0.11",
+        "nikic/php-parser": "^5.0",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+        "phpstan/phpdoc-parser": "^2.3",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^10.5",
@@ -124,6 +126,10 @@
             "Composer\\Config::disableProcessTimeout",
             "@php -d memory_limit=1G -d xdebug.mode=off fuzz/seeds.php"
         ],
+        "fuzz:structures": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -d memory_limit=1G -d xdebug.mode=off fuzz/structures.php"
+        ],
         "fuzz:expression": [
             "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/expression') || mkdir('fuzz/corpus/expression', 0777, true);\" --",
@@ -165,6 +171,7 @@
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:integration": "phpunit --testsuite integration",
+        "test:property": "phpunit --testsuite property",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"
     },
@@ -181,6 +188,7 @@
         "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
         "fuzz": "Run every differential fuzz target with the bounded smoke budget.",
         "fuzz:seeds": "Replay every supplied sql-faker seed and compare its execution with MySQL.",
+        "fuzz:structures": "Generate semantic structures directly from their public constructor types and execute them in memory.",
         "fuzz:expression": "Compare SELECT statements over grammar-generated expressions with a MySQL server.",
         "fuzz:query": "Compare grammar-generated SELECT and DML statements over a fixture schema with a MySQL server.",
         "fuzz:smoke": "Run each differential fuzz target for up to 100 executions; individual fuzz:* commands run continuously.",
@@ -191,6 +199,7 @@
         "test": "Run all test suites in parallel.",
         "test:coverage": "Run the unit tests in parallel and write the coverage and JUnit reports to build/.",
         "test:integration": "Run the tests that compare the server with MySQL servers started with Testcontainers.",
+        "test:property": "Run direct semantic construction properties and regressions.",
         "test:unit": "Run the unit tests.",
         "tree-guard": "Check the directory structure rules."
     },

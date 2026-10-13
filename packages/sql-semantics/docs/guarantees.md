@@ -34,6 +34,21 @@ Strings remain necessary for names, literal values and result-column spellings. 
 
 Consumers may calculate plans and derived structures from the published data. `Construction\Reconstruction` rebuilds node occurrences through their constructors, supports substitutions by occurrence identity, and shares immutable non-node values. Construct a new `Operation` to derive facts for the resulting structure. A rewrite that changes an expression carrying a result-name layout must also preserve its intended output name explicitly; old spelling must not be applied to changed operands.
 
+## Operand roles when constructing MySQL models
+
+The type accepted by a constructor describes the role of that operand. An ordinary expression implements `Statement\Scalar`, which extends the shared `Statement\Operand` contract for deriving value facts. Position-restricted operands implement `Operand` directly: for example, a MySQL output ordinal belongs in an ORDER BY item, a program variable in a row limit, and a bare `DEFAULT` in a write value. They cannot be supplied where an ordinary expression is required.
+
+The MySQL model additionally distinguishes these roles:
+
+- `MySql\Statement\Literal` identifies literals accepted by literal-only defaults and JSON responses. A signed literal is a literal-only operand; a sign in a general expression is a unary operation.
+- `MySql\Statement\Relation\TableSource` identifies inputs to FROM, JOIN, UPDATE and multiple-table DELETE. SHOW result relations and stored-program parameter rows are not table inputs. SELECT handles its special `FROM DUAL` form separately.
+- `MySql\Statement\Type\DeclaredName` identifies column and routine declaration types. CAST targets remain `TypeName` values but do not implement `DeclaredName`.
+- `MySql\Statement\Statement` identifies a single MySQL statement. A generic multi-statement `Script` is not an operand where a stored program or EXPLAIN requires one statement.
+
+`ALTER TABLE ... ALTER COLUMN ... SET DEFAULT` retains either a `DefaultLiteral` or a `DefaultExpression`. Dropping the default retains `null`. Consumers do not interpret a separate Boolean flag to decide what an arbitrary expression means.
+
+These constraints apply to direct PHP construction as well as SQL analysis. They do not establish that every constructor-accepted combination executes successfully: release constraints and relationships between nested operands still require work. MySQL Memory's [direct construction campaign](../../mysql-memory/docs/semantic-structures.md) tests the model independently of the parser and retains such counterexamples.
+
 ## Failure classes
 
 Each outcome has its own class, so a caller can tell them apart:

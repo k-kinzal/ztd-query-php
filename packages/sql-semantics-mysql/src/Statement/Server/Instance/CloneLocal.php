@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CLONE LOCAL DATA DIRECTORY [=] 'directory'`: a request to clone the local server's data into a directory (MySQL 8.0.17 and later).

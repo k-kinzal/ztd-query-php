@@ -219,6 +219,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testAnywhereAnswersTheProblemOfTheStatement(string $sql, ?string $message): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($message, (new ProgramRestrictions())->anywhere($statement)?->message());
     }
@@ -254,6 +255,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testFunctionAnswersTheProblemOfTheStatement(string $sql, ProgramKind $kind, ?string $message): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($message, (new ProgramRestrictions())->function($statement, $kind)?->message());
     }
@@ -285,6 +287,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testResultsTellsWhetherTheStatementReturnsRows(string $sql, bool $expected): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($expected, (new ProgramRestrictions())->results($statement));
     }

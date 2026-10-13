@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Spatial;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP SPATIAL REFERENCE SYSTEM [IF EXISTS] srid`: a request to remove a spatial reference system (MySQL 8.0 and later).

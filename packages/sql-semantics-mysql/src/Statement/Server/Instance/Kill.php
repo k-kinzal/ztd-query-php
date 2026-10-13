@@ -7,10 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Utility\ProcessReferences;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `KILL [CONNECTION | QUERY] processlist_id`: a request to end a connection or the statement it runs.

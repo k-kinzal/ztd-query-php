@@ -17,9 +17,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER USER [IF EXISTS] account [auth], … [REQUIRE …] [WITH limits] [options] [ATTRIBUTE|COMMENT '…']`: a request to change accounts.

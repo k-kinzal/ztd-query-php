@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Type\Resolved;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\TypeDescriptor;
 
@@ -229,7 +229,7 @@ final class Domain implements TypeDescriptor
     /**
      * Answers the type name that declares a value of the same class, without the attributes of this type.
      */
-    public function declared(): TypeName
+    public function declared(): DeclaredName
     {
         $unsigned = $this->unsigned ? [NumericModifier::Unsigned] : [];
 
@@ -250,7 +250,7 @@ final class Domain implements TypeDescriptor
     /**
      * Answers the type name that declares a string of the same field and character set class.
      */
-    public function text(): TypeName
+    public function text(): DeclaredName
     {
         if ($this->field === Field::Geometry) {
             return new Spatial(SpatialKind::Geometry);

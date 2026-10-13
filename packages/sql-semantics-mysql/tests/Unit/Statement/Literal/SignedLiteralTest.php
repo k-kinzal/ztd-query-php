@@ -105,8 +105,8 @@ final class SignedLiteralTest extends TestCase
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $parser = $platform->parser($profile);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
-        $negative = $lowering->literals->literal($parser->parse('CREATE TABLE t (c INT DEFAULT -5)')->find('signed_literal')[0]);
-        $positive = $lowering->literals->literal($parser->parse('CREATE TABLE t (c INT DEFAULT +1.5)')->find('signed_literal')[0]);
+        $negative = $lowering->literals->signed($parser->parse('CREATE TABLE t (c INT DEFAULT -5)')->find('signed_literal')[0]);
+        $positive = $lowering->literals->signed($parser->parse('CREATE TABLE t (c INT DEFAULT +1.5)')->find('signed_literal')[0]);
 
         self::assertInstanceOf(SignedLiteral::class, $negative);
         self::assertTrue($negative->negative);

@@ -105,7 +105,7 @@ final class WindowRule
     /**
      * Lowers the offset and default of LEAD and LAG: a node of opt_lead_lag_info.
      *
-     * @return list<Scalar>
+     * @return list<Scalar|RoutineVariable>
      * @throws ImplementationGap When a production has no rule
      */
     public function offset(Node $options): array
@@ -132,7 +132,7 @@ final class WindowRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function stable(Node $integer): Scalar
+    public function stable(Node $integer): Scalar|RoutineVariable
     {
         $form = $this->lowering->form($integer);
         if ($form->signature === 'stable_integer: int64_literal') {

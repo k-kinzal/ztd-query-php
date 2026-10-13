@@ -38,7 +38,7 @@ use SqlSemantics\Platform\MySql\Lowering\Type\TypeRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\UtilityRules;
 use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
 use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * The lowering of one MySQL parse tree: the statement dispatcher and the entry rules of every family.

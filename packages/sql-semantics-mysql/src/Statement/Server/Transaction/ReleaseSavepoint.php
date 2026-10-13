@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RELEASE SAVEPOINT name`: a request to remove a savepoint of the current transaction.

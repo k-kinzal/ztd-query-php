@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TableRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
-use SqlSemantics\Statement\Relation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 
 /**
  * Lowers the table references and joins of the 5.x grammars.

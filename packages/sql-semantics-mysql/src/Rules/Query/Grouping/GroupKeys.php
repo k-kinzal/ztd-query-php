@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Distinguishes an implicit or constant group from groups partitioned by input rows.
@@ -66,7 +66,7 @@ final class GroupKeys
      */
     public function constant(Node $node, ?Facts $facts = null, array $assigned = []): bool
     {
-        $replacement = $node instanceof Scalar && $facts !== null && $facts->covers($node) ? $facts->scalar($node)->replacement : null;
+        $replacement = $node instanceof Operand && $facts !== null && $facts->covers($node) ? $facts->scalar($node)->replacement : null;
         if ($replacement !== null) {
             return $this->constant($replacement, $facts, $assigned);
         }

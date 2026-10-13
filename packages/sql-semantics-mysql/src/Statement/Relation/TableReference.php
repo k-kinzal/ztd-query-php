@@ -41,7 +41,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t PARTITION (p0, p1)');
  *     count($query->statement->from->partitions) // => 2
  */
-final class TableReference implements NamedRelation
+final class TableReference implements NamedRelation, TableSource
 {
     use Snapshot;
 

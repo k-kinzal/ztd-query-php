@@ -9,10 +9,10 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE UNDO TABLESPACE name ADD DATAFILE 'file' [option …]`: a request to create an undo tablespace (MySQL 8.0.14 and later).

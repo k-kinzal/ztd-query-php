@@ -19,16 +19,17 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
+use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Selection;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * One query block: SELECT with its modifiers, select list, FROM clause, filters, grouping, windows, ordering, limit, INTO and locking clauses.
@@ -96,7 +97,7 @@ final class Select implements Statement, Query, Selection
     /**
      * @param list<SelectOption> $options The modifiers in written order
      * @param list<Node> $items The select list of expressions and qualified stars; at least one item, an unqualified star only first
-     * @param Relation|null $from The FROM clause
+     * @param TableSource|Dual|null $from The FROM clause
      * @param Scalar|null $where The row predicate
      * @param Grouping|null $groupBy The GROUP BY clause
      * @param Scalar|null $having The group predicate
@@ -114,7 +115,7 @@ final class Select implements Statement, Query, Selection
     public function __construct(
         array $options,
         array $items,
-        public readonly ?Relation $from = null,
+        public readonly TableSource|Dual|null $from = null,
         public readonly ?Scalar $where = null,
         public readonly ?Grouping $groupBy = null,
         public readonly ?Scalar $having = null,
@@ -170,7 +171,7 @@ final class Select implements Statement, Query, Selection
     /**
      * Answers the input relation.
      */
-    public function input(): ?Relation
+    public function input(): TableSource|Dual|null
     {
         return $this->from;
     }

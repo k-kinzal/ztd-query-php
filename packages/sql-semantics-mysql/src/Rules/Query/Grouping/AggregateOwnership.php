@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Assigns aggregate occurrences to the block whose rows they summarize.
@@ -79,7 +79,7 @@ final class AggregateOwnership
             if (!is_object($value) || $value instanceof Query) {
                 continue;
             }
-            if ($value instanceof Scalar && $facts->covers($value)) {
+            if ($value instanceof Operand && $facts->covers($value)) {
                 $fact = $facts->scalar($value);
                 if ($fact->replacement !== null) {
                     $pending[] = $fact->replacement;

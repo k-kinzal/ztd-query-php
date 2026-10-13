@@ -102,7 +102,7 @@ final class CallRules
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function currentTimestamp(Node $now): Scalar
+    public function currentTimestamp(Node $now): \SqlSemantics\Platform\MySql\Statement\Call\ClockCall
     {
         return (new TemporalRule($this->lowering))->currentTimestamp($now);
     }

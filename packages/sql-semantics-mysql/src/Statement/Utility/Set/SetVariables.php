@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SET with a list of assignments: variables, the connection character sets, and in MySQL 5.6 a password.

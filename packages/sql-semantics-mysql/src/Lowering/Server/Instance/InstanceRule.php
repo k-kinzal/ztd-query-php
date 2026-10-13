@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadTls;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\RotateMasterKey;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Shutdown;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers KILL, SHUTDOWN, RESTART, CLONE and ALTER INSTANCE.

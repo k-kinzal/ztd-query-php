@@ -9,7 +9,7 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -53,11 +53,11 @@ final class VariableDeclaration implements Declaration, Relation
 
     /**
      * @param list<Name> $names The variable names; at least one
-     * @param TypeName $type The declared type
+     * @param DeclaredName $type The declared type
      * @param CollationName|null $collation The COLLATE clause of the type
      * @param Scalar|null $default The DEFAULT value
      */
-    public function __construct(array $names, public readonly TypeName $type, public readonly ?CollationName $collation = null, public readonly ?Scalar $default = null)
+    public function __construct(array $names, public readonly DeclaredName $type, public readonly ?CollationName $collation = null, public readonly ?Scalar $default = null)
     {
         $this->names = Check::listOf($names, Name::class, 'DECLARE names at least one variable.', 1);
     }

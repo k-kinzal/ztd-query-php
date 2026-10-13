@@ -98,7 +98,7 @@ final class ItemText
         return match (true) {
             $scalar instanceof Grouped => $this->scalar($scalar->operand),
             $scalar instanceof ColumnUse => '`' . str_replace('`', '``', $this->names[mb_strtolower($scalar->name->value)] ?? $scalar->name->value) . '`',
-            $scalar instanceof NumberLiteral, $scalar instanceof SignedLiteral, $scalar instanceof StringLiteral, $scalar instanceof NullLiteral, $scalar instanceof BooleanLiteral, $scalar instanceof RadixLiteral, $scalar instanceof TemporalLiteral => $this->literal($scalar),
+            $scalar instanceof NumberLiteral, $scalar instanceof StringLiteral, $scalar instanceof NullLiteral, $scalar instanceof BooleanLiteral, $scalar instanceof RadixLiteral, $scalar instanceof TemporalLiteral => $this->literal($scalar),
             $scalar instanceof Comparison => $this->binary($scalar->left, $scalar->operator === ComparisonOperator::NotEqual ? '<>' : $scalar->operator->value, $scalar->right),
             $scalar instanceof Arithmetic => $this->binary($scalar->left, $scalar->operator === ArithmeticOperator::Modulo ? '%' : $scalar->operator->value, $scalar->right),
             $scalar instanceof Logical => $this->logical($scalar->operator, $scalar->left, $scalar->right),
@@ -131,7 +131,7 @@ final class ItemText
     /**
      * Writes a literal: a negative number as -(n), a string with its introducer, a hexadecimal or bit literal as 0x and its bytes, and a temporal literal with its keyword.
      */
-    public function literal(Scalar $literal): ?string
+    public function literal(Scalar|SignedLiteral $literal): ?string
     {
         return match (true) {
             $literal instanceof NumberLiteral => $literal->text,

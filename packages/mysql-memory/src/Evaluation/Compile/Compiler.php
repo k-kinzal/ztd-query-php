@@ -83,6 +83,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -181,7 +182,7 @@ final class Compiler
      * @param bool $correlation Whether a correlated subquery varies by row
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row; when false, it stays as long as the value it assigns
      */
-    public function constancy(Scalar $node, bool $correlation = true, bool $assignmentsVary = true): Constancy
+    public function constancy(Operand $node, bool $correlation = true, bool $assignmentsVary = true): Constancy
     {
         if ($this->assigned === null) {
             $this->assigned = array_values(array_unique(array_map(static fn (VariableAssignment $assignment): string => strtolower($assignment->target->name->value), (new Walker())->find($this->planner->statement, VariableAssignment::class))));
@@ -210,11 +211,25 @@ final class Compiler
      *
      * @throws \MySqlMemory\Error\SqlError When the expression is refused
      */
-    public function compile(Scalar $node, Scope $scope): Evaluable
+    public function compile(Operand $node, Scope $scope): Evaluable
     {
         $bound = $scope->bound($node);
         if ($bound !== null) {
             return $bound[0] === 0 ? $bound[1] : $this->names->outer($bound[1], $bound[0]);
+        }
+        if ($node instanceof ProgramVariable || $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable) {
+            $variable = $this->connection->program?->variable($node->name->value) ?? throw ProgramError::UndeclaredVariable->error($node->name->value);
+
+            return new \MySqlMemory\Evaluation\Leaf\ProgramRead($variable);
+        }
+        if ($node instanceof SignedLiteral) {
+            return $this->typed($node, $this->literals->signed($node));
+        }
+        if ($node instanceof OutputOrdinal) {
+            return $this->typed($node, $this->names->ordinal($node, $scope));
+        }
+        if (!$node instanceof Scalar) {
+            throw StatementError::NotSupportedYet->error('value ' . (new ReflectionClass($node))->getShortName());
         }
 
         $replacement = $this->facts->covers($node) ? $this->facts->scalar($node)->replacement : null;
@@ -225,7 +240,7 @@ final class Compiler
     /**
      * Answers the type SQL Semantics resolved for a node, with the nullability it derived, or null when it resolved only the class of the type.
      */
-    public function resolved(Scalar $node): ?Domain
+    public function resolved(Operand $node): ?Domain
     {
         if (!$this->facts->covers($node)) {
             return null;
@@ -247,7 +262,7 @@ final class Compiler
      *
      * @throws \MySqlMemory\Error\SqlError When SQL Semantics resolved only the class of its type
      */
-    public function domain(Scalar $node): Domain
+    public function domain(Operand $node): Domain
     {
         return $this->resolved($node) ?? throw StatementError::NotSupportedYet->error('the type of ' . (new ReflectionClass($node))->getShortName());
     }
@@ -255,7 +270,7 @@ final class Compiler
     /**
      * Gives a compiled expression the type SQL Semantics resolved for its node, when it resolved one.
      */
-    public function typed(Scalar $node, Evaluable $evaluable): Evaluable
+    public function typed(Operand $node, Evaluable $evaluable): Evaluable
     {
         if (!$this->facts->covers($node)) {
             return $evaluable;
@@ -290,7 +305,7 @@ final class Compiler
      * reads a selected expression through its alias. Modern quiet function results retain their policy through
      * aliases and grouping. Verified through SQL on MySQL 5.6, 5.7, 8.0 and 8.4.
      */
-    public function conversionWarnings(Scalar $node, Evaluable $evaluable, Domain $domain): Domain
+    public function conversionWarnings(Operand $node, Evaluable $evaluable, Domain $domain): Domain
     {
         $origin = $evaluable;
         while ($origin instanceof Retyped) {
@@ -335,7 +350,6 @@ final class Compiler
     {
         return match (true) {
             $node instanceof NumberLiteral => $this->literals->number($node),
-            $node instanceof SignedLiteral => $this->literals->signed($node),
             $node instanceof StringLiteral => $this->literals->string($node),
             $node instanceof RadixLiteral => $this->literals->radix($node),
             $node instanceof TemporalLiteral => $this->literals->temporal($node),
@@ -357,11 +371,9 @@ final class Compiler
         return match (true) {
             $node instanceof Grouped => $this->compile($node->operand, $scope),
             $node instanceof ColumnUse => $this->names->column($node, $scope),
-            $node instanceof OutputOrdinal => $this->names->ordinal($node, $scope),
             $node instanceof DefaultOfColumn => $this->names->default($node, $scope),
             $node instanceof InsertedColumn => $this->names->inserted($node, $scope),
             $node instanceof UserVariable => $this->names->userVariable($node),
-            $node instanceof ProgramVariable => ($variable = $this->connection->program?->variable($node->name->value)) !== null ? new \MySqlMemory\Evaluation\Leaf\ProgramRead($variable) : throw ProgramError::UndeclaredVariable->error($node->name->value),
             $node instanceof SystemVariable => $this->names->systemVariable($node),
             $node instanceof VariableAssignment => $this->names->assignment($node, $scope),
             default => null,

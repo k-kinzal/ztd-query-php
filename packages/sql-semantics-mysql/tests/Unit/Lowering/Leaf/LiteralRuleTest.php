@@ -64,18 +64,10 @@ final class LiteralRuleTest extends TestCase
         self::assertSame("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'", $operation->toString());
     }
 
-    public function testConstantLowersIntroducedRadixLiteralsAndSignedNumbers(): void
+    public function testConstantLowersIntroducedRadixLiterals(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
-        $rule = new LiteralRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
-        $number = new Node('NUM_literal', 0, [new Node('int64_literal', 0, [new Token(0, 'NUM', '7', 0)])]);
-        $negative = $rule->constant(new Form(new Node('signed_literal', 2, [new Token(0, '-', '-', 0), $number]), 'signed_literal: - NUM_literal'));
         $introduced = (new Semantics(Dialect::MySql))->analyze("SELECT _latin1 X'4142', _utf8mb4 0b1")->statement;
 
-        self::assertInstanceOf(SignedLiteral::class, $negative);
-        self::assertTrue($negative->negative);
-        self::assertSame('7', $negative->number->text);
         self::assertInstanceOf(Select::class, $introduced);
         $item0 = $introduced->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
@@ -86,6 +78,19 @@ final class LiteralRuleTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(RadixLiteral::class, $item1->expression);
         self::assertSame(Radix::Bit, $item1->expression->radix);
+    }
+
+    public function testSignedLowersAnExplicitSignOutsideExpressions(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new LiteralRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $number = new Node('NUM_literal', 0, [new Node('int64_literal', 0, [new Token(0, 'NUM', '7', 0)])]);
+        $negative = $rule->signed(new Node('signed_literal', 2, [new Token(0, '-', '-', 0), $number]));
+
+        self::assertInstanceOf(SignedLiteral::class, $negative);
+        self::assertTrue($negative->negative);
+        self::assertSame('7', $negative->number->text);
     }
 
     public function testNumberLowersAnUnsignedNumber(): void

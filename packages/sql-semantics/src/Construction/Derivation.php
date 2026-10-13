@@ -18,11 +18,11 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\TableResolution;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Statement;
 
@@ -38,7 +38,7 @@ use SqlSemantics\Statement\Statement;
 final class Derivation
 {
     /**
-     * @var list<array{Scalar, ScalarFact}>
+     * @var list<array{Operand, ScalarFact}>
      */
     private array $scalars = [];
 
@@ -245,7 +245,7 @@ final class Derivation
     /**
      * Derives and records the facts of a scalar expression at its position.
      */
-    public function scalar(Scalar $node, Environment $environment): ScalarFact
+    public function scalar(Operand $node, Environment $environment): ScalarFact
     {
         $outer = $this->reading;
         $this->reading = $node;

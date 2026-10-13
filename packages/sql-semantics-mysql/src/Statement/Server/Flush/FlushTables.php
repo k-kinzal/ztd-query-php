@@ -9,9 +9,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `FLUSH [NO_WRITE_TO_BINLOG | LOCAL] TABLES [t, …] [WITH READ LOCK | FOR EXPORT]`: a request to close open tables.

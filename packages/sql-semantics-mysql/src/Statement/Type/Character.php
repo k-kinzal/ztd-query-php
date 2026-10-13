@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::VarChar, '255');
  *     [$type->name(), $type->length, $type->national] // => ['VARCHAR', '255', false]
  */
-final class Character implements TypeName
+final class Character implements DeclaredName
 {
     use Snapshot;
 

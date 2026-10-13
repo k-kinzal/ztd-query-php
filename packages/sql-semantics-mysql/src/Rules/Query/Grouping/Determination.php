@@ -14,9 +14,9 @@ use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 
@@ -77,7 +77,7 @@ final class Determination
      * @param list<array{string, string}> $dependencies The pairs of columns where the first determines the second
      * @return array{array<string, true>, list<array{string, string}>}
      */
-    public function equality(Scalar $conjunct, array $relations, Facts $facts, ?array $inner, array $determined, array $dependencies): array
+    public function equality(Operand $conjunct, array $relations, Facts $facts, ?array $inner, array $determined, array $dependencies): array
     {
         if (!$conjunct instanceof Comparison || ($conjunct->operator !== ComparisonOperator::Equal && $conjunct->operator !== ComparisonOperator::NullSafeEqual)) {
             return [$determined, $dependencies];
@@ -262,7 +262,7 @@ final class Determination
     /**
      * Tells whether a block has GROUP BY and every GROUP BY expression is determined: written as one of the determined select items, or reading only determined columns.
      *
-     * @param list<Scalar> $expressions The expressions of the determined select items
+     * @param list<Operand> $expressions The expressions of the determined select items
      * @param array<string, true> $determined
      * @param array<int, VisibleRelation> $relations The occurrences of the block
      */
@@ -311,11 +311,11 @@ final class Determination
     /**
      * Answers the first column an expression reads outside aggregates that the grouping does not determine, unless it is a GROUP BY expression.
      *
-     * @param list<Scalar> $groups
+     * @param list<Operand> $groups
      * @param array<string, true> $determined
      * @param array<int, VisibleRelation> $relations
      */
-    public function undetermined(Scalar $expression, array $groups, array $determined, array $relations, Facts $facts): ?ResolvedColumn
+    public function undetermined(Operand $expression, array $groups, array $determined, array $relations, Facts $facts): ?ResolvedColumn
     {
         if ((new Matching())->listed($expression, $groups, $facts)) {
             return null;

@@ -9,12 +9,12 @@ use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * EXPLAIN (DESCRIBE, DESC) with a statement: the execution plan of a SELECT, TABLE, VALUES, INSERT, REPLACE, UPDATE or DELETE.

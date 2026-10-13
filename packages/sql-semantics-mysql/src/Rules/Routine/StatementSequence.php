@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Rules\Routine;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Checks and writes the statement lists of stored programs.

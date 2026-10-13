@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Column;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Setting a literal default
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ALTER a SET DEFAULT 1');
- *     [$alter->statement->commands[0]->expression, $alter->toString()] // => [false, 'ALTER TABLE t ALTER COLUMN a SET DEFAULT 1']
+ *     [$alter->statement->commands[0]->default instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral, $alter->toString()] // => [true, 'ALTER TABLE t ALTER COLUMN a SET DEFAULT 1']
  */
 final class DefaultSetting implements AlterCommand
 {
@@ -35,12 +35,10 @@ final class DefaultSetting implements AlterCommand
 
     /**
      * @param ColumnName $column The column
-     * @param Scalar|null $value The new default, or null for DROP DEFAULT
-     * @param bool $expression Whether the default is an expression in parentheses rather than a literal
+     * @param DefaultLiteral|DefaultExpression|null $default The replacement default, or null for DROP DEFAULT
      */
-    public function __construct(public readonly ColumnName $column, public readonly ?Scalar $value, public readonly bool $expression = false)
+    public function __construct(public readonly ColumnName $column, public readonly DefaultLiteral|DefaultExpression|null $default)
     {
-        Check::input($value !== null || !$expression, 'DROP DEFAULT has no default expression.');
     }
 
     /**
@@ -48,9 +46,7 @@ final class DefaultSetting implements AlterCommand
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
-        if ($this->value !== null) {
-            $derivation->scalar($this->value, $scope);
-        }
+        $this->default?->deriveAttribute($derivation, $scope);
     }
 
     /**
@@ -59,12 +55,10 @@ final class DefaultSetting implements AlterCommand
     public function render(Output $out): void
     {
         $out->keyword('ALTER', 'COLUMN')->node($this->column);
-        if ($this->value === null) {
+        if ($this->default === null) {
             $out->keyword('DROP', 'DEFAULT');
-        } elseif ($this->expression) {
-            $out->keyword('SET', 'DEFAULT')->symbol('(')->node($this->value)->symbol(')');
         } else {
-            $out->keyword('SET', 'DEFAULT')->node($this->value);
+            $out->keyword('SET')->node($this->default);
         }
     }
 }

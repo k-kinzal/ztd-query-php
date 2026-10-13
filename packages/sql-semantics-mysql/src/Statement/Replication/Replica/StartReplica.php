@@ -14,9 +14,9 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `START REPLICA [threads] [UNTIL …] [USER = …] [PASSWORD = …] [DEFAULT_AUTH = …] [PLUGIN_DIR = …] [FOR CHANNEL …]`, or START SLAVE.

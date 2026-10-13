@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Rules\Dml\ChangeFacts;
 use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
 use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DELETE from several tables: the tables rows are deleted from, the table references that find the rows, and WHERE.

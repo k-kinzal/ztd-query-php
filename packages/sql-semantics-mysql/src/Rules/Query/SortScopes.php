@@ -89,7 +89,7 @@ final class SortScopes
     /**
      * Answers the name of an item that is a bare unqualified column reference, possibly in parentheses.
      */
-    public function word(Scalar $expression): ?Name
+    public function word(Scalar|OutputOrdinal $expression): ?Name
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;

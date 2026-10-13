@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Locates the names of an UPDATE, an INSERT or a DELETE in the order the server resolves them.
@@ -100,7 +99,7 @@ final class WriteOrder
             $locator->visit($statement->into, 'field list', [1]);
             $locator->visit(array_slice($statement->rows, 1), 'field list', [2]);
         } else {
-            $locator->visit(array_map(static fn (Assignment $assignment): Scalar => $assignment->value, $statement->assignments), 'field list', [1, 0]);
+            $locator->visit(array_map(static fn (Assignment $assignment): \SqlSemantics\Statement\Operand => $assignment->value, $statement->assignments), 'field list', [1, 0]);
             $locator->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $statement->assignments), 'field list', [1, 1]);
         }
         $locator->visit($statement->alias, 'field list', [3]);
@@ -123,7 +122,7 @@ final class WriteOrder
         $locator->visit($statement->into, 'field list', [0]);
         $locator->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $statement->onDuplicate), 'field list', [1]);
         $locator->visit($statement->source, 'field list', [2]);
-        $locator->visit(array_map(static fn (Assignment $assignment): Scalar => $assignment->value, $statement->onDuplicate), 'field list', [3]);
+        $locator->visit(array_map(static fn (Assignment $assignment): \SqlSemantics\Statement\Operand => $assignment->value, $statement->onDuplicate), 'field list', [3]);
     }
 
     /**

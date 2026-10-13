@@ -21,6 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -61,7 +62,7 @@ final class Constants
      *
      * @return array{int, bool}|null
      */
-    public function value(Scalar $node): ?array
+    public function value(Operand $node): ?array
     {
         return match (true) {
             $node instanceof Grouped => $this->value($node->operand),

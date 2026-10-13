@@ -36,10 +36,10 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -96,7 +96,7 @@ final class Grouping
             $targets[] = $this->target($item->expression);
         }
         $stored = (new Grouping\Inputs($this->planner))->stored($select, $targets);
-        $accumulations = array_map(fn (Scalar $node): Accumulation => $stored ? $this->accumulation($node, $scope) : (new Grouping\Tuples($this->planner))->plan($select, $node, $this->accumulation($node, $scope)), $aggregates);
+        $accumulations = array_map(fn (Operand $node): Accumulation => $stored ? $this->accumulation($node, $scope) : (new Grouping\Tuples($this->planner))->plan($select, $node, $this->accumulation($node, $scope)), $aggregates);
         $scope->aggregateInputs = [...$scope->aggregateInputs, ...array_values(array_filter(array_map(static fn (Accumulation $value): ?\MySqlMemory\Evaluation\Aggregate\TupleInput => $value->input, $accumulations), static fn (?\MySqlMemory\Evaluation\Aggregate\TupleInput $value): bool => $value !== null && $value->checks !== []))];
         [$input, $accumulations] = (new Grouping\Inputs($this->planner))->plan($select, $input, $accumulations, $targets);
         $grouped = $scope->grouped();
@@ -125,7 +125,7 @@ final class Grouping
      * (verified on live 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-optimization.html.
      *
-     * @param list<Scalar> $aggregates The aggregates of the block
+     * @param list<Operand> $aggregates The aggregates of the block
      */
     public function sorts(Select $select, array $aggregates, Scope $scope): bool
     {
@@ -223,7 +223,7 @@ final class Grouping
      *
      * @throws \MySqlMemory\Error\SqlError When the item groups by an aggregate or a window function
      */
-    public function groupable(Scalar $expression): void
+    public function groupable(Operand $expression): void
     {
         $facts = $this->planner->compiler->facts;
         $walker = new Walker();
@@ -231,13 +231,13 @@ final class Grouping
         while ($direct instanceof Grouped) {
             $direct = $direct->operand;
         }
-        foreach ($walker->find($expression, Scalar::class, false) as $node) {
+        foreach ($walker->find($expression, Operand::class, false) as $node) {
             $resolution = ($node instanceof ColumnUse || $node instanceof OutputOrdinal) && $facts->covers($node) ? $facts->scalar($node)->resolution : null;
             if (!$resolution instanceof AliasTarget || $resolution->field->expression === null) {
                 continue;
             }
             $computes = static fn (object $found): bool => Windowing::windowed($found) || (($found instanceof Aggregate || $found instanceof GroupConcat || $found instanceof JsonObjectAggregate) && $found->over === null);
-            $found = array_filter($walker->find($resolution->field->expression, Scalar::class, false), $computes);
+            $found = array_filter($walker->find($resolution->field->expression, Operand::class, false), $computes);
             if ($found !== [] && $node === $direct) {
                 throw QueryError::WrongGroupField->error($this->planner->blocks->name($resolution->field));
             }
@@ -254,7 +254,7 @@ final class Grouping
      * a grouping expression.
      *
      * @param list<Evaluable> $groups The compiled grouping expressions
-     * @param list<Scalar> $targets The grouping expressions as written, or the select items they name
+     * @param list<Operand> $targets The grouping expressions as written, or the select items they name
      * @param int $offset The position of the first grouping value in the grouped row
      * @return list<int|null>
      *
@@ -284,7 +284,7 @@ final class Grouping
         $walker = new Walker();
         $equivalence = new Equivalence($this->planner);
         foreach ($roots as $root) {
-            foreach ($walker->find($root, Scalar::class, false) as $node) {
+            foreach ($walker->find($root, Operand::class, false) as $node) {
                 if ($node instanceof KeywordCall && $node->function === KeywordFunction::Grouping) {
                     $grouped->bind($node, new GroupingFlags($this->planner->compiler->domain($node), $this->arguments($node, $targets), count($groups), $offset + count($groups)));
                     continue;
@@ -340,7 +340,7 @@ final class Grouping
     /**
      * Answers the position among the grouping expressions of the one each argument of GROUPING() names.
      *
-     * @param list<Scalar> $targets
+     * @param list<Operand> $targets
      * @return list<int>
      *
      * @throws \MySqlMemory\Error\SqlError When an argument is not a grouping expression
@@ -366,7 +366,7 @@ final class Grouping
     /**
      * Answers the expression a grouping item groups by: the select item an alias or a position names, or the item itself.
      */
-    public function target(Scalar $expression): Scalar
+    public function target(Operand $expression): Operand
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -389,7 +389,7 @@ final class Grouping
      */
     public function collect(Select $select): array
     {
-        return array_values(array_filter($this->planner->compiler->facts->query($select)->aggregates, static fn (Scalar $call): bool => $call instanceof Aggregate || $call instanceof GroupConcat || $call instanceof JsonObjectAggregate));
+        return array_values(array_filter($this->planner->compiler->facts->query($select)->aggregates, static fn (Operand $call): bool => $call instanceof Aggregate || $call instanceof GroupConcat || $call instanceof JsonObjectAggregate));
     }
 
     /**
@@ -397,7 +397,7 @@ final class Grouping
      *
      * @throws \MySqlMemory\Error\SqlError When the value cannot be compiled
      */
-    public function json(Scalar $value, Scope $scope): Evaluable
+    public function json(Operand $value, Scope $scope): Evaluable
     {
         $compiled = $this->planner->compiler->compile($value, $scope);
 
@@ -417,9 +417,9 @@ final class Grouping
             return new Accumulation(AggregateFunction::JsonArray, [$compiler->compile($node->key, $scope), $this->json($node->value, $scope)], false, $compiler->domain($node)->withSource('json_objectagg'), [], ',', 0, true);
         }
         if ($node instanceof Aggregate && $node->function === AggregateFunction::JsonArray) {
-            return new Accumulation($node->function, array_map(fn (Scalar $argument): Evaluable => $this->json($argument, $scope), $node->arguments), false, $compiler->domain($node)->withSource('json_arrayagg'), [], ',', 0);
+            return new Accumulation($node->function, array_map(fn (Operand $argument): Evaluable => $this->json($argument, $scope), $node->arguments), false, $compiler->domain($node)->withSource('json_arrayagg'), [], ',', 0);
         }
-        $arguments = array_map(static fn (Scalar $argument): Evaluable => $compiler->compile($argument, $scope), $node->arguments);
+        $arguments = array_map(static fn (Operand $argument): Evaluable => $compiler->compile($argument, $scope), $node->arguments);
         if ($node instanceof GroupConcat) {
             $order = array_map(static fn ($item): array => [$compiler->compile($item->expression, $scope), $item->direction?->value === 'DESC'], $node->order);
             $limit = $compiler->connection->variables->count('group_concat_max_len', 1024);

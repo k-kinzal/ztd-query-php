@@ -10,7 +10,6 @@ use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Scalar;
@@ -80,10 +79,6 @@ final class FieldConstants
             $node = $node->operand;
         }
         $negative = false;
-        if ($node instanceof SignedLiteral) {
-            $negative = $node->negative;
-            $node = $node->number;
-        }
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary && $node->operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus) {
             $negative = true;
             $node = $node->operand;

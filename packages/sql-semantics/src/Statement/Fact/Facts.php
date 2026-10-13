@@ -7,8 +7,8 @@ namespace SqlSemantics\Statement\Fact;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -27,7 +27,7 @@ final class Facts
     use Snapshot;
 
     /**
-     * @var array<int, array{Scalar, ScalarFact}>
+     * @var array<int, array{Operand, ScalarFact}>
      */
     private readonly array $scalars;
 
@@ -57,7 +57,7 @@ final class Facts
     public readonly array $warnings;
 
     /**
-     * @param list<array{Scalar, ScalarFact}> $scalars The fact of each scalar expression
+     * @param list<array{Operand, ScalarFact}> $scalars The fact of each scalar expression
      * @param list<array{Node, RelationFact}> $relations The fact of each relation occurrence and table use
      * @param list<array{Query, QueryFact}> $queries The fact of each query
      * @param list<Table> $declarations The relation declarations the statement provides
@@ -98,7 +98,7 @@ final class Facts
     /**
      * Answers the facts of a scalar expression of this operation.
      */
-    public function scalar(Scalar $node): ScalarFact
+    public function scalar(Operand $node): ScalarFact
     {
         $entry = $this->scalars[spl_object_id($node)] ?? null;
         Check::input($entry !== null && $entry[0] === $node, 'The expression is not part of this operation.');

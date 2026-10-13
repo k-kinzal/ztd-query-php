@@ -8,7 +8,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -33,12 +33,12 @@ final class IntoVariables implements IntoDestination
     public readonly array $targets;
 
     /**
-     * @param list<Scalar> $targets The targets in written order, each a user or stored program variable; at least one
+     * @param list<Operand> $targets The targets in written order, each a user or stored program variable; at least one
      */
     public function __construct(array $targets)
     {
         $list = [];
-        foreach (Check::listOf($targets, Scalar::class, 'INTO names at least one variable.', 1) as $target) {
+        foreach (Check::listOf($targets, Operand::class, 'INTO names at least one variable.', 1) as $target) {
             Check::input($target instanceof UserVariable || $target instanceof ProgramVariable, 'An INTO target is a user variable or a stored program variable.');
             $list[] = $target;
         }

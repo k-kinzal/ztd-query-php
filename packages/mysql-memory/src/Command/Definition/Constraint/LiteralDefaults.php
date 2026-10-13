@@ -15,10 +15,11 @@ use MySqlMemory\Evaluation\Leaf\Clock;
 use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Storage\Store;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Checks literal defaults of large and spatial columns before attempting value conversion.
@@ -36,7 +37,7 @@ final class LiteralDefaults
      *
      * @throws SqlError When the column's type refuses a literal default
      */
-    public function check(ColumnDefinition $column, Scalar $value, Context $context): ?Fill
+    public function check(ColumnDefinition $column, Literal|ClockCall $value, Context $context): ?Fill
     {
         if ($value instanceof NullLiteral || !in_array($column->domain->field, [Field::Blob, Field::Json, Field::Geometry], true)) {
             return null;

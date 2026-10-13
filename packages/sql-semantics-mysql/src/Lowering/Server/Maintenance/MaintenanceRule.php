@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the table maintenance statements and their options.

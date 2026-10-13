@@ -11,7 +11,7 @@ use MySqlMemory\Plan\Path\Transform\Project;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Plan\Window\Windowing;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 
 /**
  * Captures aggregate arguments before grouping the input of a window.
@@ -36,7 +36,7 @@ final class Inputs
      * Appends stored arguments and sorting keys, preserving each fold's domains.
      *
      * @param list<Accumulation> $accumulations The compiled aggregates
-     * @param list<Scalar> $groups The resolved grouping expressions
+     * @param list<Operand> $groups The resolved grouping expressions
      * @return array{AccessPath, list<Accumulation>}
      */
     public function plan(Select $select, AccessPath $input, array $accumulations, array $groups): array
@@ -66,7 +66,7 @@ final class Inputs
     /**
      * Identifies windows whose varying grouping keys require stored aggregate input.
      *
-     * @param list<Scalar> $groups The resolved grouping expressions
+     * @param list<Operand> $groups The resolved grouping expressions
      */
     public function stored(Select $select, array $groups): bool
     {

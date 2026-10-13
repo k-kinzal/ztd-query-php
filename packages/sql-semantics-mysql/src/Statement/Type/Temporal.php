@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::DateTime, '6');
  *     [$type->name(), $type->precision] // => ['DATETIME', '6']
  */
-final class Temporal implements TypeName
+final class Temporal implements DeclaredName
 {
     use Snapshot;
 

@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Invocation;
 use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\MathResults;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
@@ -109,7 +108,7 @@ final class MathResultsTest extends TestCase
 
         self::assertEquals([Domain::decimal(9, 2), Domain::decimal(7, 0), Domain::decimal(10, 3), Domain::integer(Field::LongLong, 21), Domain::double(23)], [
             $results->truncated(new Invocation([Domain::decimal(10, 3), Domain::integer()], [new NumberLiteral('1.234'), new NumberLiteral('2')], $settings, $derivation)),
-            $results->truncated(new Invocation([Domain::decimal(10, 3), Domain::integer()], [new NumberLiteral('1.234'), new SignedLiteral(true, new NumberLiteral('2'))], $settings, $derivation)),
+            $results->truncated(new Invocation([Domain::decimal(10, 3), Domain::integer()], [new NumberLiteral('1.234'), new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, new NumberLiteral('2'))], $settings, $derivation)),
             $results->truncated(new Invocation([Domain::decimal(10, 3), Domain::integer()], [new NumberLiteral('1.234'), new NumberLiteral('9')], $settings, $derivation)),
             $results->truncated(new Invocation([Domain::integer(Field::Tiny, 4), Domain::integer()], [new NumberLiteral('1'), new NumberLiteral('2')], $settings, $derivation)),
             $results->truncated(new Invocation([new Domain(Kind::Date, Field::Date, 10), Domain::integer()], [new NumberLiteral('1'), new NumberLiteral('2')], $settings, $derivation)),

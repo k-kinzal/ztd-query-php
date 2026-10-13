@@ -32,9 +32,9 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Plans the windows of a query block: after its grouping and HAVING, before its DISTINCT, ORDER BY and LIMIT.
@@ -197,7 +197,7 @@ final class Windowing
         $walker = new Walker();
         $found = [];
         foreach ($this->roots($select) as $root) {
-            foreach ($walker->find($root, Scalar::class, false) as $node) {
+            foreach ($walker->find($root, Operand::class, false) as $node) {
                 if (($node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate) && self::windowed($node)) {
                     $found[] = $node;
                 }
@@ -205,11 +205,11 @@ final class Windowing
         }
         $inner = [];
         foreach ($found as $call) {
-            $over = $call->over instanceof WindowSpec ? $walker->find($call->over, Scalar::class, false) : [];
+            $over = $call->over instanceof WindowSpec ? $walker->find($call->over, Operand::class, false) : [];
             foreach ($over as $node) {
                 $inner[spl_object_id($node)] = true;
             }
-            foreach ($walker->find($call, Scalar::class, false) as $node) {
+            foreach ($walker->find($call, Operand::class, false) as $node) {
                 if ($node !== $call && self::windowed($node) && !isset($inner[spl_object_id($node)])) {
                     throw QueryError::WindowFunctionMisplaced->error(Resolution::named($node));
                 }
@@ -222,7 +222,7 @@ final class Windowing
     /**
      * Answers the expressions of the select list and ORDER BY of a block.
      *
-     * @return list<Scalar>
+     * @return list<Operand>
      */
     public function roots(Select $select): array
     {
@@ -287,10 +287,10 @@ final class Windowing
     /**
      * Tells whether an expression reads a window function, itself or through the alias or position of a select item.
      */
-    public function reads(Scalar $expression): bool
+    public function reads(Operand $expression): bool
     {
         $facts = $this->planner->compiler->facts;
-        foreach ((new Walker())->find($expression, Scalar::class, false) as $node) {
+        foreach ((new Walker())->find($expression, Operand::class, false) as $node) {
             if (self::windowed($node)) {
                 return true;
             }

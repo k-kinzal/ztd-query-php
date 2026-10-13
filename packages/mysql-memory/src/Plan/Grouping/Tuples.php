@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 
 /**
  * Plans constant checks and row input for COUNT DISTINCT and GROUP_CONCAT.
@@ -75,7 +75,7 @@ final class Tuples
      * Legacy assignments of resolved constants freeze after their one NULL check;
      * assignments that read session or row values still run for every tuple.
      */
-    public function omitted(Select $select, Aggregate|GroupConcat|JsonObjectAggregate $node, Scalar $argument): bool
+    public function omitted(Select $select, Aggregate|GroupConcat|JsonObjectAggregate $node, Operand $argument): bool
     {
         $legacy = $this->planner->settings->legacy();
         $plain = $this->planner->compiler->constancy($argument)->constant();
@@ -88,7 +88,7 @@ final class Tuples
     /**
      * Identifies fields that need no row storage during implicit aggregation.
      */
-    public function constant(Scalar $argument): bool
+    public function constant(Operand $argument): bool
     {
         return Constancy::of($argument, $this->planner->compiler->facts, assignmentsVary: false, legacy: $this->planner->settings->legacy())->constant();
     }
@@ -96,7 +96,7 @@ final class Tuples
     /**
      * Identifies preparation-time values, including assignments of resolved values.
      */
-    public function checkable(Scalar $argument, bool $runtime = false): bool
+    public function checkable(Operand $argument, bool $runtime = false): bool
     {
         $constancy = $this->planner->compiler->constancy($argument instanceof VariableAssignment ? $argument->value : $argument);
 

@@ -29,11 +29,11 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the query family: the methods other families and the statement dispatcher call.
@@ -182,7 +182,7 @@ final class QueryRules
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function limitValue(Node $option): Scalar
+    public function limitValue(Node $option): \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral|\SqlSemantics\Platform\MySql\Statement\Literal\Parameter|\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable
     {
         return (new TailRule($this->lowering))->value($option);
     }

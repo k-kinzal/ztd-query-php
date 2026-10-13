@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers GRANT and REVOKE of MySQL 5.6 and 5.7.

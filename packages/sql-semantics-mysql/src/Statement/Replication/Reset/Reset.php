@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Reset;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RESET item, …`: resets the replica, the binary logs or (5.x) the query cache.

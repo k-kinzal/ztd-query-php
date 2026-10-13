@@ -13,12 +13,12 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * CREATE FUNCTION of a stored function: its parameters, return type, characteristics and body.
@@ -49,7 +49,7 @@ final class CreateFunction implements Statement
     /**
      * @param QualifiedName $name The function name with its optional database
      * @param ParameterList $parameters The parameters; none has a direction
-     * @param TypeName $returns The return type
+     * @param DeclaredName $returns The return type
      * @param Node $body The body: a program statement, an SQL statement, or external code
      * @param CollationName|null $collation The COLLATE clause of the return type
      * @param list<Characteristic> $characteristics The characteristics in written order
@@ -60,7 +60,7 @@ final class CreateFunction implements Statement
     public function __construct(
         public readonly QualifiedName $name,
         public readonly ParameterList $parameters,
-        public readonly TypeName $returns,
+        public readonly DeclaredName $returns,
         Node $body,
         public readonly ?CollationName $collation = null,
         array $characteristics = [],

@@ -46,7 +46,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Compiles the JSON operators: `col->'path'`, `col->>'path'` and `value MEMBER OF (array)`, and JSON_VALUE().
@@ -163,7 +162,7 @@ final class Jsons
     /**
      * Tells whether an expression is a predicate, whose value becomes a JSON boolean.
      */
-    public function boolean(Scalar $node): bool
+    public function boolean(\SqlSemantics\Statement\Operand $node): bool
     {
         while ($node instanceof Grouped) {
             $node = $node->operand;

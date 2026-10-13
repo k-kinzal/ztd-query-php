@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
 
@@ -69,7 +70,7 @@ final class Arguments
     /**
      * Tells whether evaluating an argument again could change its value or session state.
      */
-    public function stored(Scalar $argument): bool
+    public function stored(Operand $argument): bool
     {
         $effects = new CallEffects();
         foreach ((new Walker())->find($argument, Node::class) as $node) {
