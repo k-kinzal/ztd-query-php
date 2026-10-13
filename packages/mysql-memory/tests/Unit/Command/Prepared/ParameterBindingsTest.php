@@ -17,6 +17,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class ParameterBindingsTest extends TestCase
 {
+    public function testPositionReadsTheResolvedMarkerSlotRatherThanTheSelectItemIndex(): void
+    {
+        $operation = (new Instance())->connect()->analyze("SELECT '?' AS a, ? AS b", true);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement);
+        $item = $operation->statement->items[1];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $item);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class, $item->expression);
+
+        self::assertSame(0, ParameterBindings::position($operation, $item->expression));
+    }
+
     public function testCaptureDistinguishesStandaloneAndCastMarkers(): void
     {
         $operation = (new Instance())->connect()->analyze('SELECT ?, CAST(? AS SIGNED)', true);

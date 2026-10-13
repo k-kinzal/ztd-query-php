@@ -38,7 +38,8 @@ final class ParameterTest extends TestCase
         self::assertSame('?', $fact->type->missing[0]->marker);
         self::assertSame('the value bound to parameter ?', $fact->type->missing[0]->describe());
         self::assertSame(Nullability::Dependent, $fact->nullability);
-        self::assertNull($fact->resolution);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding::class, $fact->resolution);
+        self::assertSame(0, $fact->resolution->position);
     }
 
     public function testDeriveScalarNamesANamedMarker(): void

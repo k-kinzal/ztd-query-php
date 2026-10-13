@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -37,9 +38,8 @@ final class Parameter implements Scalar
 
     /**
      * @param string $marker The marker as written: `?` or `:name`
-     * @param int|null $position The position of the marker among the markers of the statement, counted from 0, when it was read from text
      */
-    public function __construct(public readonly string $marker = '?', public readonly ?int $position = null)
+    public function __construct(public readonly string $marker = '?')
     {
         Check::input(preg_match('/\A(?:\?|:[A-Za-z0-9_]+)\z/', $marker) === 1, 'A parameter marker is a question mark or a colon and a name.');
     }
@@ -49,9 +49,11 @@ final class Parameter implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $bound = $this->position === null ? null : (Settings::of($derivation->context)->parameters[$this->position] ?? null);
+        $position = $derivation->parameterPosition($this);
+        $bound = $position === null ? null : (Settings::of($derivation->context)->parameters[$position] ?? null);
+        $binding = $position === null ? null : new ParameterBinding($position);
 
-        return $bound === null ? new ScalarFact(new Dependent([new UnboundParameter($this->marker)]), Nullability::Dependent) : new ScalarFact(new Known($bound), Nullability::Nullable);
+        return $bound === null ? new ScalarFact(new Dependent([new UnboundParameter($this->marker)]), Nullability::Dependent, $binding) : new ScalarFact(new Known($bound), Nullability::Nullable, $binding);
     }
 
 
@@ -60,6 +62,6 @@ final class Parameter implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->spelled($this->marker);
+        $out->parameter($this, $this->marker);
     }
 }

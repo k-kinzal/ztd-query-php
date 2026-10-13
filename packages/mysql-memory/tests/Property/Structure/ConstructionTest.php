@@ -19,6 +19,7 @@ use ReflectionException;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 
 /**
  * Exercises the public semantic constructor domain without generating SQL.
@@ -30,9 +31,9 @@ final class ConstructionTest extends TestCase
     /**
      * @return iterable<string, array{class-string, string}>
      */
-    public static function providerLiterals(): iterable
+    public static function providerOperands(): iterable
     {
-        foreach ([NumberLiteral::class, BooleanLiteral::class, NullLiteral::class] as $class) {
+        foreach ([NumberLiteral::class, BooleanLiteral::class, NullLiteral::class, Parameter::class] as $class) {
             for ($seed = 0; $seed < 40; $seed++) {
                 yield $class . ':' . $seed => [$class, (string) $seed];
             }
@@ -44,8 +45,8 @@ final class ConstructionTest extends TestCase
      * @throws ReflectionException When a constructor cannot be invoked
      * @param class-string $class
      */
-    #[DataProvider('providerLiterals')]
-    public function testGeneratedLiteralExecutesWithoutSqlInput(string $class, string $seed): void
+    #[DataProvider('providerOperands')]
+    public function testGeneratedOperandExecutesWithoutSqlInput(string $class, string $seed): void
     {
         $construction = new Construction(new Choices($seed), new Catalogue(), new Metadata());
         $literal = $construction->object($class, 4);

@@ -212,7 +212,7 @@ final class Names
     public function parameter(Parameter $parameter): Evaluable
     {
         $bound = $this->compiler->connection->parameters;
-        $index = $parameter->position ?? $this->compiler->parameterIndex($parameter);
+        $index = $this->compiler->parameterIndex($parameter);
         if (!isset($bound[$index])) {
             return new Constant(Domain::null(), null);
         }

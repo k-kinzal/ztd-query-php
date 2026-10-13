@@ -23,6 +23,25 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testParameterRecordsOccurrencesInWrittenOrder(): void
+    {
+        $output = new Output(new Codec());
+        $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $second = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $output->node($first)->symbol(',')->node($second);
+
+        self::assertSame([$first, $second], $output->parameters());
+        self::assertSame('?, ?', (new Lexical())->join($output->pieces()));
+    }
+
+    public function testParametersExcludeQuestionMarksInLiteralData(): void
+    {
+        $output = new Output(new Codec());
+        $output->spelled("'?'");
+
+        self::assertSame([], $output->parameters());
+    }
+
     public function testKeywordWritesEachUpperCaseWordAsAPiece(): void
     {
         $output = new Output(new Codec());

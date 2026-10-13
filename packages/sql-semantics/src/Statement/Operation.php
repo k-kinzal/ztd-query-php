@@ -20,7 +20,7 @@ use SqlSemantics\Validation\Publication;
  * One analyzed statement: its structure, the facts derived against a fixed context, and its SQL.
  *
  * The constructor is the only way to obtain an operation and it is a checking
- * boundary. It audits the structure, derives every fact, renders the SQL, and
+ * boundary. It audits and renders the structure, derives every fact, and
  * confirms that the rendered SQL has the same structure. Nothing is filled in
  * afterwards and nothing can be changed. A different statement is a new
  * operation built from explicit inputs or from newly analyzed SQL; it has no

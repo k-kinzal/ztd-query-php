@@ -47,6 +47,8 @@ The MySQL model additionally distinguishes these roles:
 
 `ALTER TABLE ... ALTER COLUMN ... SET DEFAULT` retains either a `DefaultLiteral` or a `DefaultExpression`. Dropping the default retains `null`. Consumers do not interpret a separate Boolean flag to decide what an arbitrary expression means.
 
+A MySQL parameter occurrence retains its marker. Its scalar fact holds a `MySql\Statement\Variable\ParameterBinding` with the resolved input position, even when its value is unbound. The structural renderer records occurrences in written order before derivation, so the binding does not depend on source offsets, the order in which scopes are resolved, or the consumer's traversal order. Directly constructed statements receive the same bindings as parsed statements.
+
 These constraints apply to direct PHP construction as well as SQL analysis. They do not establish that every constructor-accepted combination executes successfully: release constraints and relationships between nested operands still require work. MySQL Memory's [direct construction campaign](../../mysql-memory/docs/semantic-structures.md) tests the model independently of the parser and retains such counterexamples.
 
 ## Failure classes

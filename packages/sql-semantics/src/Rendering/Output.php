@@ -9,6 +9,7 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Spelling\Layout;
 
 /**
@@ -38,6 +39,11 @@ final class Output
      * @var list<Piece>
      */
     private array $canonical = [];
+
+    /**
+     * @var list<Operand> Parameter occurrences in their written order
+     */
+    private array $parameters = [];
 
     /**
      * @param Codec $codec The name codec of the language profile
@@ -97,6 +103,28 @@ final class Output
         $this->add(PieceKind::Literal, $text);
 
         return $this;
+    }
+
+    /**
+     * Writes a parameter marker and records its occurrence without inspecting SQL text.
+     *
+     * @return $this
+     */
+    public function parameter(Operand $parameter, string $marker): self
+    {
+        $this->parameters[] = $parameter;
+
+        return $this->spelled($marker);
+    }
+
+    /**
+     * Answers parameter occurrences in the order established by the structure's rendering.
+     *
+     * @return list<Operand>
+     */
+    public function parameters(): array
+    {
+        return $this->parameters;
     }
 
     /**

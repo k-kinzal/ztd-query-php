@@ -174,11 +174,6 @@ final class Lowering
     public readonly UtilityRules $utility;
 
     /**
-     * @var list<int> The byte offsets of the parameter markers of the input, in order
-     */
-    private array $markers = [];
-
-    /**
      * @var array<int, HintComment> The hint comments of the input, by the offset of the keyword each follows
      */
     private array $hints = [];
@@ -213,19 +208,6 @@ final class Lowering
     }
 
     /**
-     * Answers the position of a parameter marker among the markers of the input, counted from 0.
-     *
-     * The markers are those of the input statements() last read; an offset that holds no marker
-     * answers null.
-     */
-    public function marker(int $offset): ?int
-    {
-        $position = array_search($offset, $this->markers, true);
-
-        return $position === false ? null : $position;
-    }
-
-    /**
      * Answers the hints of the comment that follows a keyword of the input statements() last read, in written order; none when no comment does.
      *
      * @return list<OptimizerHint>
@@ -243,12 +225,6 @@ final class Lowering
      */
     public function statements(Node $input): array
     {
-        $this->markers = [];
-        foreach ($input->tokens() as $token) {
-            if ($token->name === 'PARAM_MARKER') {
-                $this->markers[] = $token->offset;
-            }
-        }
         $this->hints = (new HintReader($this->profile->grammar, $this->profile->lexical->ansiQuotes))->comments($input);
         $form = $this->productions->form($input);
         Check::invariant(!isset(self::SELECTED[$form->signature]), 'A grammar selector entry is not reachable from SQL text: ' . $form->signature);

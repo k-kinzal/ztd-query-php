@@ -24,9 +24,10 @@ use SqlSemantics\Statement\Statement;
  * Establishes everything an operation publishes: audited structure, complete facts, and corresponding SQL.
  *
  * Rule: CORE-PUBLICATION-001. (1) The structure is audited against the closed
- * immutable value domain. (2) The statement derives its facts against the
- * context; every scalar, relation and query node must have received a fact.
- * (3) The structure is rendered to typed pieces and joined to text. (4) The
+ * immutable value domain. (2) The structure renders typed pieces and records
+ * parameter occurrences in written order. (3) The statement derives its facts
+ * against the context; every scalar, relation and query node must have received
+ * a fact. (4) The pieces are joined to text. The
  * text is parsed under the same profile and lowered by the same rules, and the
  * result must correspond operand by operand to the structure. Spelled regions
  * must only re-spell the rendered tokens (CORE-SPELLING-001). Any failure
@@ -58,7 +59,9 @@ final class Publication
         foreach ($sources->notices as $notice) {
             Check::input(in_array($notice->subject, $objects, true), 'An input notice belongs to an occurrence of this statement.');
         }
-        $derivation = new Derivation($context, $sources);
+        $output = new Output($platform->codec($context->profile));
+        $statement->render($output);
+        $derivation = new Derivation($context, $sources, $output->parameters());
         $derivation->statement($statement);
         $facts = $derivation->facts();
         foreach ($objects as $object) {
@@ -71,8 +74,6 @@ final class Publication
         }
         $graph->objects($facts);
 
-        $output = new Output($platform->codec($context->profile));
-        $statement->render($output);
         $sql = (new Lexical())->join($output->pieces()) . $output->trailing();
         (new Spellings($platform->parser($context->profile), $platform->productions($context->profile), $platform->leafKeys($context->profile)))->check((new Lexical())->join($output->canonical()), $sql);
         try {

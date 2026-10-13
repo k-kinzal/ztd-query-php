@@ -46,10 +46,10 @@ final class ParameterBindings
         $types = new self([]);
         $nodes = (new Walker())->find($operation->statement, Scalar::class);
         foreach ($nodes as $node) {
-            if ($node instanceof Parameter && $node->position !== null) {
+            if ($node instanceof Parameter) {
                 $type = $operation->facts->scalar($node)->type;
                 $domain = $type instanceof Known && $type->descriptor instanceof ResolvedDomain ? Domain::of($type->descriptor, true) : Domain::string(16383, Collation::binary());
-                $types->types[$node->position] = [$domain, false];
+                $types->types[self::position($operation, $node)] = [$domain, false];
             }
         }
         foreach ($nodes as $node) {
@@ -57,8 +57,8 @@ final class ParameterBindings
                 $types->operand($node->left, $node->right, $operation);
                 $types->operand($node->right, $node->left, $operation);
             }
-            if ($node instanceof Cast && $node->operand instanceof Parameter && $node->operand->position !== null) {
-                $types->types[$node->operand->position][1] = true;
+            if ($node instanceof Cast && $node->operand instanceof Parameter) {
+                $types->types[self::position($operation, $node->operand)][1] = true;
             }
         }
 
@@ -70,14 +70,25 @@ final class ParameterBindings
      */
     public function operand(Scalar $operand, Scalar $other, Operation $operation): void
     {
-        if (!$operand instanceof Parameter || $operand->position === null || $other instanceof Parameter || !$operation->facts->covers($other)) {
+        if (!$operand instanceof Parameter || $other instanceof Parameter || !$operation->facts->covers($other)) {
             return;
         }
         $type = $operation->facts->scalar($other)->type;
         if ($type instanceof Known && $type->descriptor instanceof ResolvedDomain) {
             $domain = Domain::of($type->descriptor, true);
-            $this->types[$operand->position] = [$domain->kind === Kind::Integer ? Domain::integer(unsigned: $domain->unsigned) : $domain, false];
+            $this->types[self::position($operation, $operand)] = [$domain->kind === Kind::Integer ? Domain::integer(unsigned: $domain->unsigned) : $domain, false];
         }
+    }
+
+    /**
+     * Reads the input slot SQL Semantics resolved for a marker occurrence.
+     */
+    public static function position(Operation $operation, Parameter $parameter): int
+    {
+        $binding = $operation->facts->scalar($parameter)->resolution;
+        \SqlSemantics\Diagnostic\Check::invariant($binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding, 'A parameter occurrence has a resolved input slot.');
+
+        return $binding->position;
     }
 
     /**

@@ -1264,8 +1264,7 @@
         "text": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Parameter": {
-        "marker": "string",
-        "position": "?int"
+        "marker": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix": {
         "name": "string"
@@ -3312,6 +3311,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Catalog\\Writability": {
         "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\ParameterBinding": {
+        "position": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Problem\\UnknownSystemVariable": {
         "assigned": "bool",

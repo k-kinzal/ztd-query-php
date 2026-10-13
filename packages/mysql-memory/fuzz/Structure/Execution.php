@@ -25,15 +25,17 @@ final class Execution
     /**
      * Derives the structure against the session context and executes it directly.
      *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Values and domains bound to the generated parameter occurrences
      * @throws \MySqlMemory\Error\SqlError When the database rejects the generated structure
      */
-    public function run(Statement|Scalar $node, string $release = '8.4.7'): Reply
+    public function run(Statement|Scalar $node, string $release = '8.4.7', array $parameters = []): Reply
     {
         $statement = $node instanceof Statement ? $node : new Select([], [new SelectExpression($node)]);
         $session = (new Instance($release))->connect();
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, null, $session->resolution());
+        $domains = array_map(static fn (array $parameter): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $parameter[1]->resolved(), $parameters);
+        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, null, $session->resolution($domains));
         $operation = new Operation($context, $statement);
 
-        return (new StatementExecution($session))->perform($operation, (new Dispatcher())->command($statement), read: false);
+        return (new StatementExecution($session))->perform($operation, (new Dispatcher())->command($statement), $parameters, read: false);
     }
 }

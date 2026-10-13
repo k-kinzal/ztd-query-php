@@ -35,6 +35,17 @@ use SqlSemantics\Statement\Shape\RowShape;
 #[Medium]
 final class DerivationTest extends TestCase
 {
+    public function testParameterPositionUsesOccurrenceIdentityAndWrittenOrder(): void
+    {
+        $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $second = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]), parameters: [$first, $second]);
+
+        self::assertSame(1, $derivation->parameterPosition($second));
+        self::assertSame(0, $derivation->parameterPosition($first));
+        self::assertNull($derivation->parameterPosition(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()));
+    }
+
     public function testEnvironmentSeesNoRelationAndTheContext(): void
     {
         $context = (new Semantics(Dialect::Sqlite))->context([]);

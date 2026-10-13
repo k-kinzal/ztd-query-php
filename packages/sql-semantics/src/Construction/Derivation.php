@@ -90,10 +90,21 @@ final class Derivation
     /**
      * @param AnalysisContext $context The fixed declaration context every part is derived against
      * @param \SqlSemantics\Statement\Source\SourceMap $sources Original spelling notices and optional occurrence ranges
+     * @param list<Operand> $parameters Parameter occurrences in written order, supplied by the structural renderer
      */
-    public function __construct(public AnalysisContext $context, public readonly \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap())
+    public function __construct(public AnalysisContext $context, public readonly \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap(), private readonly array $parameters = [])
     {
         $this->warnings = new Warnings($sources);
+    }
+
+    /**
+     * Answers a parameter's written position, independent of the order facts are derived.
+     */
+    public function parameterPosition(Operand $parameter): ?int
+    {
+        $position = array_search($parameter, $this->parameters, true);
+
+        return $position === false ? null : $position;
     }
 
     /**

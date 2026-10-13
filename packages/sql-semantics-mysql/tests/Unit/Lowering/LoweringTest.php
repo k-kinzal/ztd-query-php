@@ -23,31 +23,21 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 #[Medium]
 final class LoweringTest extends TestCase
 {
-    public function testMarkerAnswersThePositionOfAParameterMarkerOfTheLastInput(): void
+    public function testStatementsKeepParameterOccurrencesDistinct(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $select = $lowering->statements($platform->parser($profile)->parse('SELECT ?, ?'))[0];
 
-        $lowering->statements($platform->parser($profile)->parse('SELECT ?, a, ?'));
-
-        self::assertSame(0, $lowering->marker(7));
-        self::assertSame(1, $lowering->marker(13));
-        self::assertNull($lowering->marker(10));
-    }
-
-    public function testMarkerForgetsTheMarkersOfAnEarlierInput(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
-        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
-        $parser = $platform->parser($profile);
-
-        $lowering->statements($parser->parse('SELECT ?'));
-        $lowering->statements($parser->parse('SELECT 1, ?'));
-
-        self::assertNull($lowering->marker(7));
-        self::assertSame(0, $lowering->marker(10));
+        self::assertInstanceOf(Select::class, $select);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $select->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $select->items[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class, $select->items[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class, $select->items[1]->expression);
+        self::assertNotSame($select->items[0]->expression, $select->items[1]->expression);
+        self::assertSame('?', $select->items[0]->expression->marker);
+        self::assertSame('?', $select->items[1]->expression->marker);
     }
 
     public function testStatementsAnswerTheOneStatementOfAnInput(): void

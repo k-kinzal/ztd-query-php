@@ -146,11 +146,6 @@ final class Compiler
     public readonly Jsons $jsons;
 
     /**
-     * @var array<int, int>|null The index of each parameter marker of the statement, by object id
-     */
-    private ?array $parameters = null;
-
-    /**
      * @var list<string>|null The lower-case names of the user variables the statement assigns
      */
     private ?array $assigned = null;
@@ -192,18 +187,14 @@ final class Compiler
     }
 
     /**
-     * Answers the index of a parameter marker among the markers of the statement, in written order.
+     * Reads the input slot resolved for a parameter occurrence by SQL Semantics.
      */
     public function parameterIndex(Parameter $parameter): int
     {
-        if ($this->parameters === null) {
-            $this->parameters = [];
-            foreach ((new Walker())->find($this->planner->statement, Parameter::class) as $index => $marker) {
-                $this->parameters[spl_object_id($marker)] = $index;
-            }
-        }
+        $binding = $this->facts->scalar($parameter)->resolution;
+        \SqlSemantics\Diagnostic\Check::invariant($binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding, 'A parameter occurrence has a resolved input slot.');
 
-        return $this->parameters[spl_object_id($parameter)] ?? 0;
+        return $binding->position;
     }
 
     /**

@@ -32,7 +32,7 @@ final class ScalarFact
     /**
      * @param TypeFact $type What is known about the type
      * @param Nullability $nullability Whether the value can be NULL
-     * @param Resolution|null $resolution The name resolution when the expression is a name use
+     * @param Resolution|null $resolution The resolved reference when the expression reads a column, variable or parameter
      * @param Scalar|null $replacement The bound expression evaluated in place of this occurrence, when resolution eliminates a wrapper
      */
     public function __construct(
