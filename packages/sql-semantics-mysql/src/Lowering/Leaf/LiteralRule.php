@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Platform\MySql\Rules\Strings;
 use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
@@ -107,14 +106,6 @@ final class LiteralRule
     }
 
     /**
-     * Answers the escape rule of the profile.
-     */
-    public function escapes(): EscapeRule
-    {
-        return EscapeRule::under($this->lowering->profile->lexical);
-    }
-
-    /**
      * Lowers a literal at an expression position.
      *
      * @throws ImplementationGap When the production has no rule
@@ -129,7 +120,7 @@ final class LiteralRule
             return $this->lowering->leaves->record(new NumberLiteral($form->token(0)->text));
         }
         if (isset(self::TEMPORAL[$form->signature])) {
-            return $this->lowering->leaves->record(new TemporalLiteral(self::TEMPORAL[$form->signature], $this->decode($form->token(1)->text), $this->escapes()));
+            return $this->lowering->leaves->record(new TemporalLiteral(self::TEMPORAL[$form->signature], $this->decode($form->token(1)->text)));
         }
         if ($form->node->name === 'text_literal') {
             return $this->string($form->node);
@@ -211,9 +202,9 @@ final class LiteralRule
         }
 
         return $this->lowering->leaves->record(match ($form->signature) {
-            'text_literal: TEXT_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], $this->escapes()),
-            'text_literal: NCHAR_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], $this->escapes(), null, true),
-            'text_literal: UNDERSCORE_CHARSET TEXT_STRING' => new StringLiteral([$this->decode($form->token(1)->text), ...$segments], $this->escapes(), $this->introducer($form)),
+            'text_literal: TEXT_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments]),
+            'text_literal: NCHAR_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], null, true),
+            'text_literal: UNDERSCORE_CHARSET TEXT_STRING' => new StringLiteral([$this->decode($form->token(1)->text), ...$segments], $this->introducer($form)),
             default => throw ImplementationGap::production($form),
         });
     }
@@ -262,10 +253,10 @@ final class LiteralRule
         $form = $this->lowering->productions->form($string);
         $radix = self::RADIX_TEXT[$form->signature] ?? null;
         if ($radix !== null) {
-            return $this->lowering->leaves->record(new Text((new RadixSpelling())->digits($form->token(0)->text), $this->escapes(), $radix));
+            return $this->lowering->leaves->record(new Text((new RadixSpelling())->digits($form->token(0)->text), $radix));
         }
 
-        return $this->lowering->leaves->record(new Text($this->bytes($string), $this->escapes()));
+        return $this->lowering->leaves->record(new Text($this->bytes($string)));
     }
 
     /**

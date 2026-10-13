@@ -49,6 +49,8 @@ The MySQL model additionally distinguishes these roles:
 
 A MySQL parameter occurrence retains its marker. Its scalar fact holds a `MySql\Statement\Variable\ParameterBinding` with the resolved input position, even when its value is unbound. The structural renderer records occurrences in written order before derivation, so the binding does not depend on source offsets, the order in which scopes are resolved, or the consumer's traversal order. Directly constructed statements receive the same bindings as parsed statements.
 
+MySQL string literals, temporal literals and non-expression text retain decoded values without the lexical escape rule of the input SQL. A profile-aware string codec quotes those values when rendering. The same directly constructed literal can therefore be used with or without `NO_BACKSLASH_ESCAPES`; reconstruction preserves its decoded bytes in either profile.
+
 These constraints apply to direct PHP construction as well as SQL analysis. They do not establish that every constructor-accepted combination executes successfully: release constraints and relationships between nested operands still require work. MySQL Memory's [direct construction campaign](../../mysql-memory/docs/semantic-structures.md) tests the model independently of the parser and retains such counterexamples.
 
 ## Failure classes

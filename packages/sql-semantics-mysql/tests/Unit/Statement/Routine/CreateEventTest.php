@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -161,7 +160,7 @@ final class CreateEventTest extends TestCase
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new CreateEvent(new QualifiedName(new Name('e')), new OnceSchedule(new NumberLiteral('1')), new Block([]), null, null, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new CreateEvent(new QualifiedName(new Name('e')), new OnceSchedule(new NumberLiteral('1')), new Block([]), null, null, new Text('41', Radix::Hexadecimal));
     }
 
     public function testDeriveStatementWarnsOfDisableOnSlave(): void

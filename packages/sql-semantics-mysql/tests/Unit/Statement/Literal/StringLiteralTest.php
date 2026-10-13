@@ -11,7 +11,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -52,7 +51,6 @@ final class StringLiteralTest extends TestCase
         self::assertInstanceOf(StringLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);
 
-        self::assertSame(EscapeRule::Backslash, $literal->escapes);
         self::assertNull($literal->introducer);
         self::assertFalse($literal->national);
         self::assertInstanceOf(Known::class, $fact->type);
@@ -98,14 +96,14 @@ final class StringLiteralTest extends TestCase
         self::assertSame("SELECT N'x' 'y'", $operation->toString());
     }
 
-    public function testDeriveScalarRejectsALiteralSpelledUnderTheOtherEscapeRule(): void
+    public function testDeriveScalarKeepsDecodedBytesAcrossLexicalProfiles(): void
     {
-        $context = (new Semantics(Dialect::MySql))->context();
-        $statement = new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]);
+        $statement = new Select([], [new SelectExpression(new StringLiteral(['a\\b']))]);
+        $plain = new Semantics(Dialect::MySql);
+        $verbatim = new Semantics(Dialect::MySql, null, Mode::fromString('NO_BACKSLASH_ESCAPES'));
 
-        $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
-
-        new Operation($context, $statement);
+        self::assertSame("SELECT 'a\\\\b'", (new Operation($plain->context(), $statement))->toString());
+        self::assertSame("SELECT 'a\\b'", (new Operation($verbatim->context(), $statement))->toString());
     }
 
     public function testRenderDecodesAndSpellsEscapesUnderTheBackslashRule(): void
@@ -135,7 +133,6 @@ final class StringLiteralTest extends TestCase
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
 
-        self::assertSame(EscapeRule::Verbatim, $literal->escapes);
         self::assertSame('a\\nb', $literal->value());
         self::assertSame("SELECT 'a\\nb'", $operation->toString());
     }
@@ -170,14 +167,14 @@ final class StringLiteralTest extends TestCase
     {
         $this->expectExceptionMessage('An introducer names a character set of the server in lower case and excludes the national form.');
 
-        new StringLiteral(['a'], EscapeRule::Backslash, new Name('nope'));
+        new StringLiteral(['a'], new Name('nope'));
     }
 
     public function testRejectsAnIntroducerOnANationalString(): void
     {
         $this->expectExceptionMessage('An introducer names a character set of the server in lower case and excludes the national form.');
 
-        new StringLiteral(['a'], EscapeRule::Backslash, new Name('utf8mb4'), true);
+        new StringLiteral(['a'], new Name('utf8mb4'), true);
     }
 
     public function testDeriveScalarWarnsAboutAUtf8mb3Introducer(): void

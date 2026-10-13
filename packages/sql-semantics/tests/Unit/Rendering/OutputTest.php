@@ -23,6 +23,22 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testQuoteUsesTheDialectStringCodec(): void
+    {
+        $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+
+        self::assertSame("'a\\\\b''c'", $output->quote("a\\b'c"));
+        self::assertSame([], $output->pieces());
+    }
+
+    public function testQuoteRequiresAStringCodec(): void
+    {
+        $output = new Output(new Codec());
+        $this->expectExceptionMessage('The dialect codec must support decoded string literals.');
+
+        $output->quote('x');
+    }
+
     public function testParameterRecordsOccurrencesInWrittenOrder(): void
     {
         $output = new Output(new Codec());

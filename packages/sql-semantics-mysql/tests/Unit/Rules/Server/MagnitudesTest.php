@@ -11,7 +11,6 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -26,7 +25,7 @@ final class MagnitudesTest extends TestCase
     {
         $magnitudes = new Magnitudes();
 
-        self::assertSame([3, 2, 1], [$magnitudes->bytes(new Text('abc')), $magnitudes->bytes(new Text('abc', EscapeRule::Backslash, Radix::Hexadecimal)), $magnitudes->bytes(new Text('101', EscapeRule::Backslash, Radix::Bit))]);
+        self::assertSame([3, 2, 1], [$magnitudes->bytes(new Text('abc')), $magnitudes->bytes(new Text('abc', Radix::Hexadecimal)), $magnitudes->bytes(new Text('101', Radix::Bit))]);
     }
 
     public function testIntegralTellsWhetherANumberIsAnInteger(): void

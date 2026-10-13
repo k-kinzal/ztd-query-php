@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rendering;
 
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LexicalSettings;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Rules\Strings;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -25,16 +27,25 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility SqlSemantics
  */
-final class Codec implements \SqlSemantics\Contract\Codec
+final class Codec implements \SqlSemantics\Contract\StringCodec
 {
     private readonly Keywords $keywords;
 
     /**
      * @param GrammarRelease $release The grammar release whose keywords decide quoting
+     * @param LexicalSettings $lexical The settings used to spell decoded string bytes
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, private readonly LexicalSettings $lexical = new LexicalSettings(''))
     {
         $this->keywords = new Keywords($release);
+    }
+
+    /**
+     * Quotes decoded bytes using the escape rule of the output profile.
+     */
+    public function quote(string $value): string
+    {
+        return (new Strings())->encode($value, !$this->lexical->noBackslashEscapes);
     }
 
     /**

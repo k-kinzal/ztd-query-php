@@ -1248,9 +1248,6 @@
         "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "word": "?SqlSemantics\\Statement\\Identifier\\Name"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\EscapeRule": {
-        "name": "string"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NullLiteral": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberForm": {
         "name": "string"
@@ -1279,7 +1276,6 @@
         "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral": {
-        "escapes": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\EscapeRule",
         "introducer": "?SqlSemantics\\Statement\\Identifier\\Name",
         "national": "bool",
         "segments": "array"
@@ -1289,12 +1285,10 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalLiteral": {
-        "escapes": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\EscapeRule",
         "form": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalForm",
         "text": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text": {
-        "escapes": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\EscapeRule",
         "radix": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix",
         "value": "string"
     },

@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
@@ -123,7 +122,7 @@ final class AlterEventTest extends TestCase
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new AlterEvent(new QualifiedName(new Name('e')), null, null, null, null, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new AlterEvent(new QualifiedName(new Name('e')), null, null, null, null, new Text('41', Radix::Hexadecimal));
     }
 
     public function testABodyOfAnotherClassIsRejected(): void

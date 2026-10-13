@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -63,7 +62,6 @@ final class TemporalLiteralTest extends TestCase
 
         self::assertSame(TemporalForm::Timestamp, $literal->form);
         self::assertSame('2024-01-02 03:04:05.25', $literal->text);
-        self::assertSame(EscapeRule::Backslash, $literal->escapes);
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertInstanceOf(Domain::class, $fact->type->descriptor);
         self::assertSame(['DATETIME', 22, 2], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->decimals]);
@@ -85,14 +83,14 @@ final class TemporalLiteralTest extends TestCase
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
     }
 
-    public function testDeriveScalarRejectsALiteralSpelledUnderTheOtherEscapeRule(): void
+    public function testDeriveScalarKeepsDecodedTextAcrossLexicalProfiles(): void
     {
-        $context = (new Semantics(Dialect::MySql))->context();
-        $statement = new Select([], [new SelectExpression(new TemporalLiteral(TemporalForm::Date, '2024-01-02', EscapeRule::Verbatim))]);
+        $literal = new TemporalLiteral(TemporalForm::Date, '2024-01-02');
+        $statement = new Select([], [new SelectExpression($literal)]);
+        $plain = new Semantics(Dialect::MySql);
+        $verbatim = new Semantics(Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('NO_BACKSLASH_ESCAPES'));
 
-        $this->expectExceptionMessage('A temporal literal must be spelled under the escape rule of the language profile.');
-
-        new Operation($context, $statement);
+        self::assertEquals((new Operation($plain->context(), $statement))->facts->scalar($literal), (new Operation($verbatim->context(), $statement))->facts->scalar($literal));
     }
 
     public function testRenderWritesTheKeywordAndTheQuotedText(): void

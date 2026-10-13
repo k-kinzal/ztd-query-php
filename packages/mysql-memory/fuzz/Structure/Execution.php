@@ -28,10 +28,13 @@ final class Execution
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Values and domains bound to the generated parameter occurrences
      * @throws \MySqlMemory\Error\SqlError When the database rejects the generated structure
      */
-    public function run(Statement|Scalar $node, string $release = '8.4.7', array $parameters = []): Reply
+    public function run(Statement|Scalar $node, string $release = '8.4.7', array $parameters = [], ?string $mode = null): Reply
     {
         $statement = $node instanceof Statement ? $node : new Select([], [new SelectExpression($node)]);
         $session = (new Instance($release))->connect();
+        if ($mode !== null) {
+            $session->variables->session['sql_mode'] = $mode;
+        }
         $domains = array_map(static fn (array $parameter): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $parameter[1]->resolved(), $parameters);
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, null, $session->resolution($domains));
         $operation = new Operation($context, $statement);

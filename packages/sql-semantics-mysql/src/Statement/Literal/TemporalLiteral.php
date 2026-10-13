@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Strings;
 use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
 use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
@@ -28,8 +26,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * point, before an optional time zone offset, at most 6; never NULL. Text
  * the server cannot read as a value of the kind is an error of the statement
  * when it runs and is not decided here. Precision: exact for text the server
- * accepts. Diagnostics: none. A literal spelled under another escape rule
- * than the profile is an invalid construction.
+ * accepts. Diagnostics: none. The text holds decoded bytes independent of
+ * the lexical mode used to write them.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html. Status: Implemented.
  *
@@ -45,9 +43,8 @@ final class TemporalLiteral implements Scalar, Literal
     /**
      * @param TemporalForm $form The keyword of the literal
      * @param string $text The decoded text
-     * @param EscapeRule $escapes The rule the text is spelled under; the rule of the language profile
      */
-    public function __construct(public readonly TemporalForm $form, public readonly string $text, public readonly EscapeRule $escapes = EscapeRule::Backslash)
+    public function __construct(public readonly TemporalForm $form, public readonly string $text)
     {
     }
 
@@ -69,8 +66,6 @@ final class TemporalLiteral implements Scalar, Literal
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        Check::input($this->escapes === EscapeRule::under($derivation->context->profile->lexical), 'A temporal literal must be spelled under the escape rule of the language profile.');
-
         return new ScalarFact(new Known(Literals::of($derivation->context)->temporal($this)), Nullability::NotNull);
     }
 
@@ -79,6 +74,6 @@ final class TemporalLiteral implements Scalar, Literal
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->form->value)->spelled((new Strings())->encode($this->text, $this->escapes === EscapeRule::Backslash));
+        $out->keyword($this->form->value)->spelled($out->quote($this->text));
     }
 }

@@ -23,7 +23,7 @@ final class Literals
      * Answers the bytes a string literal stands for.
      *
      * @example A hexadecimal literal
-     *     (new \MySqlMemory\Command\Admin\Literals())->bytes(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('4142', \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::Backslash, \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal)) // => 'AB'
+     *     (new \MySqlMemory\Command\Admin\Literals())->bytes(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('4142', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal)) // => 'AB'
      */
     public function bytes(Text $text): string
     {

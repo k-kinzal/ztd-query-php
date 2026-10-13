@@ -311,7 +311,7 @@ final class ClauseRule
     {
         $literals = $this->lowering->literals;
 
-        return $this->lowering->leaves->record(new Text($literals->decode($form->token($position)->text), $literals->escapes()));
+        return $this->lowering->leaves->record(new Text($literals->decode($form->token($position)->text)));
     }
 
     /**

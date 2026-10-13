@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -369,13 +368,12 @@ final class SelectTest extends TestCase
         new Operation($semantics->context(), new Select([], [new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column));
     }
 
-    public function testAStringLiteralUnderAnotherEscapeRuleIsRejected(): void
+    public function testAStringLiteralRetainsItsDecodedBytes(): void
     {
         $semantics = new Semantics(Dialect::MySql);
+        $statement = new Select([], [new SelectExpression(new StringLiteral(["a\\b'c"]))]);
 
-        $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
-
-        new Operation($semantics->context(), new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]));
+        self::assertSame("SELECT 'a\\\\b''c'", (new Operation($semantics->context(), $statement))->toString());
     }
 
     public function testRejectsALateOrderingThatIsWrittenInPlace(): void

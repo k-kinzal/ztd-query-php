@@ -120,7 +120,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
      */
     public function codec(LanguageProfile $profile): Codec
     {
-        return new Codec($profile->grammar);
+        return new Codec($profile->grammar, $profile->lexical);
     }
 
     /**

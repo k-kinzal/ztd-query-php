@@ -142,7 +142,7 @@ final class SourceValueRule
         return match ($form->signature) {
             'assign_gtids_to_anonymous_transactions_def: OFF_SYM' => AnonymousGtids::Off,
             'assign_gtids_to_anonymous_transactions_def: LOCAL_SYM' => AnonymousGtids::Local,
-            'assign_gtids_to_anonymous_transactions_def: TEXT_STRING' => $this->lowering->leaves->record(new Text($literals->decode($form->token(0)->text), $literals->escapes())),
+            'assign_gtids_to_anonymous_transactions_def: TEXT_STRING' => $this->lowering->leaves->record(new Text($literals->decode($form->token(0)->text))),
             default => throw ImplementationGap::production($form),
         };
     }

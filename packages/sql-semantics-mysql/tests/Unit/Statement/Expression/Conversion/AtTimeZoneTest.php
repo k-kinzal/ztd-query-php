@@ -11,7 +11,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
@@ -52,7 +51,7 @@ final class AtTimeZoneTest extends TestCase
     {
         $this->expectExceptionMessage('A time zone is a quoted string.');
 
-        new AtTimeZone(new NumberLiteral('1'), new Text('00', EscapeRule::Backslash, Radix::Hexadecimal));
+        new AtTimeZone(new NumberLiteral('1'), new Text('00', Radix::Hexadecimal));
     }
 
     public function testDeriveScalarRefusesATooBigPrecisionWhileParsing(): void

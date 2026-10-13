@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
@@ -33,16 +32,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Medium]
 final class LiteralRuleTest extends TestCase
 {
-    public function testEscapesFollowsTheProfile(): void
-    {
-        $platform = new Platform();
-        $plain = $platform->profile(null, null, ParameterStyle::Native);
-        $verbatim = $platform->profile(null, Mode::fromString('NO_BACKSLASH_ESCAPES'), ParameterStyle::Native);
-
-        self::assertSame(EscapeRule::Backslash, (new LiteralRule(new Lowering($platform->productions($plain), new Leaves(), $plain)))->escapes());
-        self::assertSame(EscapeRule::Verbatim, (new LiteralRule(new Lowering($platform->productions($verbatim), new Leaves(), $verbatim)))->escapes());
-    }
-
     public function testLiteralLowersEveryLiteralForm(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'");

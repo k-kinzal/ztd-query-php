@@ -16,6 +16,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CodecTest extends TestCase
 {
+    public function testQuoteSpellsDecodedBytesUnderEachLexicalMode(): void
+    {
+        $escaped = new Codec(GrammarRelease::MySql847);
+        $verbatim = new Codec(GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('NO_BACKSLASH_ESCAPES'));
+
+        self::assertSame("'a\\\\b''c'", $escaped->quote("a\\b'c"));
+        self::assertSame("'a\\b''c'", $verbatim->quote("a\\b'c"));
+    }
+
     public function testNameWritesAPlainAsciiWordBare(): void
     {
         $codec = new Codec(GrammarRelease::MySql8044);

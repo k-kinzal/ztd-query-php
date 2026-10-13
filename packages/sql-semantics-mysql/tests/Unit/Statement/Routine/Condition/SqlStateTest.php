@@ -12,7 +12,6 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
@@ -83,13 +82,13 @@ final class SqlStateTest extends TestCase
     {
         $this->expectExceptionMessage('An SQLSTATE value is written as a quoted string.');
 
-        new SqlState(new Text('4500', EscapeRule::Backslash, Radix::Hexadecimal));
+        new SqlState(new Text('4500', Radix::Hexadecimal));
     }
 
     public function testRefusesABitText(): void
     {
         $this->expectExceptionMessage('An SQLSTATE value is written as a quoted string.');
 
-        new SqlState(new Text('0101', EscapeRule::Backslash, Radix::Bit));
+        new SqlState(new Text('0101', Radix::Bit));
     }
 }

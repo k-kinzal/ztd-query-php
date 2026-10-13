@@ -11,7 +11,6 @@ use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
@@ -76,8 +75,8 @@ final class InspectionTest extends TestCase
     public function testPatternReadsHexadecimalAndBitLiterals(): void
     {
         self::assertSame(['C', 'C', 'a_'], [
-            (new Inspection())->pattern(new Text('43', EscapeRule::Backslash, Radix::Hexadecimal)),
-            (new Inspection())->pattern(new Text('1000011', EscapeRule::Backslash, Radix::Bit)),
+            (new Inspection())->pattern(new Text('43', Radix::Hexadecimal)),
+            (new Inspection())->pattern(new Text('1000011', Radix::Bit)),
             (new Inspection())->pattern(new Text('a_')),
         ]);
     }

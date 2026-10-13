@@ -6,6 +6,7 @@ namespace SqlSemantics\Rendering;
 
 use SqlSemantics\Contract\Codec;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Contract\StringCodec;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
@@ -103,6 +104,16 @@ final class Output
         $this->add(PieceKind::Literal, $text);
 
         return $this;
+    }
+
+    /**
+     * Spells decoded string bytes under the output profile's lexical settings.
+     */
+    public function quote(string $value): string
+    {
+        Check::invariant($this->codec instanceof StringCodec, 'The dialect codec must support decoded string literals.');
+
+        return $this->codec->quote($value);
     }
 
     /**

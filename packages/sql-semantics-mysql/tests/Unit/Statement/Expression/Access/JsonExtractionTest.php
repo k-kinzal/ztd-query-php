@@ -11,7 +11,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\JsonExtraction;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -54,6 +53,6 @@ final class JsonExtractionTest extends TestCase
     {
         $this->expectExceptionMessage('A JSON path is a quoted string.');
 
-        new JsonExtraction(new ColumnUse(new Name('a')), new Text('24', EscapeRule::Backslash, Radix::Hexadecimal));
+        new JsonExtraction(new ColumnUse(new Name('a')), new Text('24', Radix::Hexadecimal));
     }
 }

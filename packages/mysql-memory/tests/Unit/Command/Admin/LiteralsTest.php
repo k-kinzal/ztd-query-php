@@ -8,7 +8,6 @@ use MySqlMemory\Command\Admin\Literals;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -36,7 +35,7 @@ final class LiteralsTest extends TestCase
     {
         $literals = new Literals();
 
-        self::assertSame(["\x0f", 'A', 'text'], [$literals->bytes(new Text('f', EscapeRule::Backslash, Radix::Hexadecimal)), $literals->bytes(new Text('1000001', EscapeRule::Backslash, Radix::Bit)), $literals->bytes(new Text('text'))]);
+        self::assertSame(["\x0f", 'A', 'text'], [$literals->bytes(new Text('f', Radix::Hexadecimal)), $literals->bytes(new Text('1000001', Radix::Bit)), $literals->bytes(new Text('text'))]);
     }
 
     public function testNumberReadsDecimalHexadecimalAndFloatingNumbers(): void

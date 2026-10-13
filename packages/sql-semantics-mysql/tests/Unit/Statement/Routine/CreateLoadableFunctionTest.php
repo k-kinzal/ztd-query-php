@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
@@ -83,6 +82,6 @@ final class CreateLoadableFunctionTest extends TestCase
     {
         $this->expectExceptionMessage('A library name is written as a quoted string.');
 
-        new CreateLoadableFunction(new Name('f'), LoadableResult::Real, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new CreateLoadableFunction(new Name('f'), LoadableResult::Real, new Text('41', Radix::Hexadecimal));
     }
 }
