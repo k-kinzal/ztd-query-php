@@ -43,6 +43,7 @@ final class RevokeAll implements Statement
         $this->users = Check::listOf($users, UserSpecification::class, 'REVOKE names at least one account.', 1);
         foreach ($this->users as $user) {
             Check::input($user->granted(), 'A REVOKE account is a named account with at most one authentication method.');
+            Check::input($user->identification === null, 'A REVOKE account has no authentication clause.');
         }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -19,6 +19,20 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class LoadInputTest extends TestCase
 {
+    public function testRejectsARadixLiteralAsAFileName(): void
+    {
+        $this->expectExceptionMessage('A LOAD file name is quoted text.');
+
+        new LoadInput(false, LoadSource::Infile, new Text('2', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testRejectsAFractionalFileCount(): void
+    {
+        $this->expectExceptionMessage('A LOAD file count is a decimal integer token no greater than 2147483647.');
+
+        new LoadInput(false, LoadSource::Infile, new Text('f'), new Numeral('1.5'));
+    }
+
     public function testRenderWritesTheInput(): void
     {
         self::assertSame("LOAD DATA LOCAL INFILE 'f' `count` 2 IN PRIMARY KEY ORDER INTO TABLE t", (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("load data local infile 'f' count 2 in primary key order into table t")->toString());

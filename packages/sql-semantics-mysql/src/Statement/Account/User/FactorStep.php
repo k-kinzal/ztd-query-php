@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
@@ -29,6 +30,7 @@ final class FactorStep implements Node
      */
     public function __construct(public readonly Numeral $factor, public readonly ?Identification $identification = null)
     {
+        Check::input($factor->isIntegerToken(), 'An authentication factor is a decimal integer token no greater than 2147483647.');
     }
 
     /**

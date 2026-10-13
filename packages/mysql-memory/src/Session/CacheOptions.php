@@ -51,7 +51,7 @@ final class CacheOptions
         } catch (LexicalException) {
             return $error;
         }
-        $target = (new Parse\VariablePrefix())->before($tokens, $statement, $cause?->token->offset ?? strlen($statement), $session);
+        $target = $this->prefix($tokens, $statement, $cause, $session);
         if ($target !== null) {
             return $target;
         }
@@ -76,6 +76,19 @@ final class CacheOptions
         }
 
         return $this->recorded($warned, $conflict, $usage ?? $error, $session, $error, false);
+    }
+
+    /**
+     * Resolves completed command prefixes that the legacy parser checks before later syntax.
+     *
+     * @param list<Token> $tokens The statement tokens
+     */
+    public function prefix(array $tokens, string $statement, ?SyntaxException $cause, Session $session): ?SqlError
+    {
+        $end = $cause?->token->offset ?? strlen($statement);
+
+        return (new Parse\VariablePrefix())->before($tokens, $statement, $end, $session)
+            ?? (new Parse\CommandPrefix())->before($tokens, $statement, $end, $session);
     }
 
     /**

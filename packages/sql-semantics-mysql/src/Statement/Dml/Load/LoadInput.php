@@ -51,6 +51,8 @@ final class LoadInput implements Node
         public readonly bool $primaryKeyOrder = false,
         public readonly ?Name $countWord = null,
     ) {
+        Check::input($file->radix === null, 'A LOAD file name is quoted text.');
+        Check::input($count === null || $count->isIntegerToken(), 'A LOAD file count is a decimal integer token no greater than 2147483647.');
         Check::input($countWord === null || ($count !== null && strcasecmp($countWord->value, 'count') === 0), 'The word before the number of files is COUNT.');
     }
 

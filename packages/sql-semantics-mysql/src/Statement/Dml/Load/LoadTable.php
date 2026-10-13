@@ -92,6 +92,8 @@ final class LoadTable implements Statement
         public readonly ?BulkOptions $bulk = null,
     ) {
         Check::input($table->alias === null, 'The table of LOAD has no correlation name.');
+        Check::input($compression === null || $compression->radix === null, 'A LOAD compression algorithm is quoted text.');
+        Check::input($ignored === null || $ignored->isIntegerToken(), 'A LOAD ignored-row count is a decimal integer token no greater than 2147483647.');
         $this->fields = Check::listOf($fields, FieldOption::class, 'The FIELDS clause holds field options.');
         $this->lines = Check::listOf($lines, LineOption::class, 'The LINES clause holds line options.');
         $list = [];

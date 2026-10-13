@@ -20,6 +20,18 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class CacheOptionsTest extends TestCase
 {
+    public function testPrefixResolvesAssignmentsAndLoadTargetsWithoutExecution(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $parser = $session->semantics()->parser();
+        $assignment = 'SET unknown_prefix=(';
+        $load = "LOAD DATA INFILE 'f' INTO TABLE t (";
+
+        self::assertSame(1193, (new CacheOptions())->prefix($parser->tokenize($assignment), $assignment, null, $session)?->getCode());
+        self::assertSame(1046, (new CacheOptions())->prefix($parser->tokenize($load), $load, null, $session)?->getCode());
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testReportedRefusesTwoModifiersBeforeASyntaxErrorIn57(): void
     {
         $session = (new Instance('5.7.44'))->connect();

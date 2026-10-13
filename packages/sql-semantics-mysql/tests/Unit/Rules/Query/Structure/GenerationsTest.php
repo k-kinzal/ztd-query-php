@@ -226,4 +226,13 @@ final class GenerationsTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $second->items[0]);
         self::assertSame($first->items[0]->expression, $second->items[0]->expression);
     }
+    public function testCheckRejectsNamedParametersUnderNativeObservableSpellings(): void
+    {
+        $layout = new \SqlSemantics\Statement\Spelling\Layout([new \SqlSemantics\Statement\Spelling\Spelled('', '1'), new \SqlSemantics\Statement\Spelling\Spelled('', '+'), new \SqlSemantics\Statement\Spelling\Spelled('', '2')]);
+        $item = new SelectExpression(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('2')), layout: $layout);
+
+        $this->expectExceptionMessage('A named parameter cannot accompany a spelling that requires native parameters.');
+
+        new Select([], [$item, new SelectExpression(new Parameter(':a'))]);
+    }
 }

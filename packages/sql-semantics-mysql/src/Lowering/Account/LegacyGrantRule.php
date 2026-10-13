@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
+use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use SqlParser\Parser\SyntaxException;
+use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -131,11 +134,25 @@ final class LegacyGrantRule
      *
      * @return non-empty-list<UserSpecification>
      * @throws ImplementationGap When a production has no rule
+     * @throws AnalysisException When a REVOKE account contains authentication
      */
     public function users(Node $list): array
     {
         if ($list->name === 'grant_list') {
-            return (new UserListRule($this->lowering, new IdentificationRule($this->lowering)))->granted($list);
+            $rule = new UserListRule($this->lowering, new IdentificationRule($this->lowering));
+            $users = [];
+            foreach ($rule->spine($list) as $item) {
+                $user = $rule->grant($item);
+                if ($user->identification !== null) {
+                    $tokens = $item->tokens();
+                    $last = $tokens[count($tokens) - 1];
+                    $at = $user->identification->secret === null ? new Token(0, '$end', '', $last->end()) : $last;
+                    throw new AnalysisException('Syntax error: REVOKE takes no authentication clause.', 0, new SyntaxException($at, [], ''));
+                }
+                $users[] = $user;
+            }
+
+            return $users;
         }
 
         return (new GrantRule($this->lowering))->specifications($list);

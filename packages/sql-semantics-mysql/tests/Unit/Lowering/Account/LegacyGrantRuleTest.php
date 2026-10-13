@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Account;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -23,7 +24,7 @@ final class LegacyGrantRuleTest extends TestCase
 
     public function testRevokeLowersEveryCommand(): void
     {
-        self::assertSame("REVOKE PROXY ON a FROM b IDENTIFIED BY 'x'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("revoke proxy on a from b identified by 'x'")->toString());
+        self::assertSame('REVOKE PROXY ON a FROM b', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('revoke proxy on a from b')->toString());
         self::assertSame('REVOKE ALL, GRANT OPTION FROM u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('revoke all privileges, grant option from u')->toString());
     }
 
@@ -35,5 +36,29 @@ final class LegacyGrantRuleTest extends TestCase
     public function testUsersLowersBothListKinds(): void
     {
         self::assertSame('REVOKE SELECT ON t FROM u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('revoke select on t from u')->toString());
+    }
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerAuthentication(): iterable
+    {
+        foreach (["BY 'pw'", "BY PASSWORD 'hash'", 'WITH plugin', "WITH plugin AS 'hash'"] as $clause) {
+            foreach (['ALL, GRANT OPTION', 'SELECT ON *.*', 'PROXY ON a'] as $target) {
+                yield $target . ' ' . $clause => ['REVOKE ' . $target . ' FROM b IDENTIFIED ' . $clause, str_contains($clause, "'") ? substr($clause, (int) strpos($clause, "'")) : ''];
+            }
+        }
+    }
+
+    #[DataProvider('providerAuthentication')]
+    public function testUsersRejectsAuthenticationAtTheNativePosition(string $sql, string $suffix): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze($sql);
+            self::fail('REVOKE cannot change authentication.');
+        } catch (\SqlSemantics\Diagnostic\AnalysisException $error) {
+            $cause = $error->getPrevious();
+            self::assertInstanceOf(\SqlParser\Parser\SyntaxException::class, $cause);
+            self::assertSame($suffix, substr($sql, $cause->token->offset));
+        }
     }
 }

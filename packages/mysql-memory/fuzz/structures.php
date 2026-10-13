@@ -18,6 +18,7 @@ use Fuzz\Structure\Construction;
 use Fuzz\Structure\Execution;
 use Fuzz\Structure\Exhausted;
 use Fuzz\Structure\Metadata;
+use Fuzz\Structure\Profiles;
 use MySqlMemory\Error\SqlError;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Scalar;
@@ -39,7 +40,7 @@ if ($root !== null && !in_array($root, $roots, true)) {
     fwrite(STDERR, "CLASS must be an inventoried Statement or Scalar.\n");
     exit(2);
 }
-$counts = ['passed' => 0, 'exhausted' => 0, 'generation' => 0, 'sql_error' => 0, 'structure' => 0];
+$counts = ['passed' => 0, 'exhausted' => 0, 'generation' => 0, 'profile' => 0, 'sql_error' => 0, 'structure' => 0];
 echo json_encode(['seed' => $seed, 'release' => $release, 'start' => $start, 'trials' => $count, 'rootTypes' => count($roots), 'selection' => $selection], JSON_THROW_ON_ERROR) . "\n";
 for ($trial = 0; $trial < $count; $trial++) {
     $index = $start + $trial;
@@ -53,8 +54,17 @@ for ($trial = 0; $trial < $count; $trial++) {
         if (!$node instanceof Statement && !$node instanceof Scalar) {
             throw new RuntimeException('A selected root does not implement its declared interface.');
         }
+        $version = $release;
+        $mode = null;
+        if ($release === 'auto') {
+            $stage = 'profile';
+            $profiles = new Profiles();
+            $profile = $profiles->select($node);
+            $version = substr($profile->grammar->value, 6);
+            $mode = $profiles->mode($profile);
+        }
         $stage = 'structure';
-        (new Execution())->run($node, $release);
+        (new Execution())->run($node, $version, mode: $mode);
         $counts['passed']++;
     } catch (Throwable $failure) {
         $kind = $failure instanceof Exhausted ? 'exhausted' : ($failure instanceof SqlError ? 'sql_error' : $stage);

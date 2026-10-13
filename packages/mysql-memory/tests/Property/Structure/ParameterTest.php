@@ -48,4 +48,16 @@ final class ParameterTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $reply);
         self::assertSame([[(string) $projected]], $reply->rows);
     }
+    /**
+     * The named extension preserves occurrence order alongside positional markers.
+     */
+    #[DataProvider('providerBindings')]
+    public function testNamedAndPositionalInputsBindAcrossNestedScopes(int $projected, int $nested): void
+    {
+        $query = new Select([], [new SelectExpression(new Parameter(':projected'))], new DerivedTable(new Select([], [new SelectExpression(new Parameter(':nested'), new Name('a'))]), new Name('t')), new Parameter());
+        $reply = (new Execution())->run($query, parameters: [[$projected, Domain::integer()], [$nested, Domain::integer()], [1, Domain::integer()]]);
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([[(string) $projected]], $reply->rows);
+    }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Account\Privilege;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -24,4 +25,25 @@ final class RevokeAllTest extends TestCase
     {
         self::assertSame('REVOKE IF EXISTS ALL, GRANT OPTION FROM u IGNORE UNKNOWN USER', (new Semantics(Dialect::MySql))->analyze('revoke if exists all privileges, grant option from u ignore unknown user')->toString());
     }
+    /**
+     * @return iterable<string, array{bool, bool}>
+     */
+    public static function providerOptions(): iterable
+    {
+        yield 'no options' => [false, false];
+        yield 'if exists' => [true, false];
+        yield 'ignore unknown user' => [false, true];
+        yield 'both' => [true, true];
+    }
+
+    #[DataProvider('providerOptions')]
+    public function testRejectsAuthenticationClauses(bool $ifExists, bool $ignoreUnknownUser): void
+    {
+        $user = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('u')), new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Password, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('pw')));
+
+        $this->expectExceptionMessage('A REVOKE account has no authentication clause.');
+
+        new RevokeAll($ifExists, [$user], $ignoreUnknownUser);
+    }
+
 }

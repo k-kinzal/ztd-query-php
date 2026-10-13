@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Query\Structure;
 use SplObjectStorage;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
@@ -56,6 +57,7 @@ final class Generations
         $requirements = 0;
         $modes = 0;
         $spelling = null;
+        $namedParameters = false;
         $lexical = new LexicalModes();
         while ($pending !== []) {
             $value = array_pop($pending);
@@ -71,6 +73,7 @@ final class Generations
                     Check::input($spelling === null || $spelling->compatibleWith($value), 'Observable spellings in one structure require one compatible language profile.');
                     $spelling = $value;
                 }
+                $namedParameters = $namedParameters || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter && $value->marker !== '?');
                 $requirements |= $this->requirement($value);
                 $modes |= $lexical->requirement($value);
                 $lexical->check($modes);
@@ -80,6 +83,7 @@ final class Generations
                 }
             }
         }
+        Check::input(!$namedParameters || $spelling === null || $spelling->parameters === ParameterStyle::Named, 'A named parameter cannot accompany a spelling that requires native parameters.');
     }
 
     /**

@@ -46,7 +46,7 @@ final class AlterRegistration implements Statement
         public readonly RegistrationStep $step,
         public readonly ?Text $challengeResponse = null,
     ) {
-        Check::input(!$factor->hexadecimal && preg_match('/\A[0-9]+\z/D', $factor->text) === 1, 'A registration factor is an unsigned decimal integer.');
+        Check::input($factor->isIntegerToken(), 'A registration factor is an unsigned decimal integer.');
         Check::input(($challengeResponse !== null) === ($step === RegistrationStep::Finish), 'A challenge response is written exactly by FINISH REGISTRATION.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

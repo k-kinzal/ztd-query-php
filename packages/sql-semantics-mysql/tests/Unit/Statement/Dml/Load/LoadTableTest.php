@@ -29,6 +29,20 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class LoadTableTest extends TestCase
 {
+    public function testRejectsARadixLiteralAsACompressionAlgorithm(): void
+    {
+        $this->expectExceptionMessage('A LOAD compression algorithm is quoted text.');
+
+        new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t'))), compression: new Text('2', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testRejectsAFractionalIgnoredRowCount(): void
+    {
+        $this->expectExceptionMessage('A LOAD ignored-row count is a decimal integer token no greater than 2147483647.');
+
+        new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t'))), ignored: new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5'));
+    }
+
     public function testDeriveStatementResolvesColumnsAndAssignments(): void
     {
         $semantics = new Semantics(Dialect::MySql);
