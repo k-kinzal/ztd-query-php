@@ -67,21 +67,29 @@
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;insert&#039;</span> =&gt; [<span class="tok-str">&#039;INSERT INTO t VALUES (1)&#039;</span>];</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;replace&#039;</span> =&gt; [<span class="tok-str">&#039;REPLACE INTO t SET a=1&#039;</span>];</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;update&#039;</span> =&gt; [<span class="tok-str">&#039;UPDATE t SET a=1&#039;</span>];</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;delete&#039;</span> =&gt; [<span class="tok-str">&#039;DELETE FROM t&#039;</span>];</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    }</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerStatements&#039;</span>)]</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testQueriesAndDataChangesHaveTheExplainableRole</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    {</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">Explainable</span>::<span class="tok-kw">class</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$sql</span>)-&gt;<span class="tok-id">statement</span>);</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    }</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testAdministrationDoesNotHaveTheExplainableRole</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    {</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotInstanceOf</span>(<span class="tok-id">Explainable</span>::<span class="tok-kw">class</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SHOW PLUGINS&#039;</span>)-&gt;<span class="tok-id">statement</span>);</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>}</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;delete joined targets&#039;</span> =&gt; [<span class="tok-str">&#039;DELETE t, u FROM t JOIN u ON t.a=u.a&#039;</span>];</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;delete using&#039;</span> =&gt; [<span class="tok-str">&#039;DELETE FROM t USING t JOIN u ON t.a=u.a&#039;</span>];</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;delete&#039;</span> =&gt; [<span class="tok-str">&#039;DELETE FROM t&#039;</span>];</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    }</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerStatements&#039;</span>)]</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testQueriesAndDataChangesHaveTheExplainableRole</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    {</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$sql</span>)-&gt;<span class="tok-id">statement</span>;</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-var">$explained</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;EXPLAIN &#039;</span> . <span class="tok-var">$sql</span>)-&gt;<span class="tok-id">statement</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">Explainable</span>::<span class="tok-kw">class</span>, <span class="tok-var">$statement</span>);</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain</span>::<span class="tok-kw">class</span>, <span class="tok-var">$explained</span>);</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$statement</span>::<span class="tok-kw">class</span>, <span class="tok-var">$explained</span>-&gt;<span class="tok-id">statement</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    }</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testAdministrationDoesNotHaveTheExplainableRole</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    {</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotInstanceOf</span>(<span class="tok-id">Explainable</span>::<span class="tok-kw">class</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SHOW PLUGINS&#039;</span>)-&gt;<span class="tok-id">statement</span>);</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    }</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>}</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
