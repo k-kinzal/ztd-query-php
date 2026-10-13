@@ -267,7 +267,7 @@
 <span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a>    }</span>
 <span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a></span>
 <span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a><span class="tok-com">     * Answers the type name that declares a value of the same class, without the attributes of this type.</span></span>
+<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a><span class="tok-com">     * Answers a writable declaration of the same class; varying strings retain their required length.</span></span>
 <span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">declared</span>(): <span class="tok-id">DeclaredName</span></span>
 <span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>    {</span>
@@ -299,14 +299,18 @@
 <span class="src-line" id="L259" data-diff="added"><a class="ln" href="#L259">259</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Elementary</span>(<span class="tok-id">ElementaryKind</span>::<span class="tok-id">Vector</span>);</span>
 <span class="src-line" id="L260" data-diff="added"><a class="ln" href="#L260">260</a>        }</span>
 <span class="src-line" id="L261" data-diff="added"><a class="ln" href="#L261">261</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">collation</span>-&gt;<span class="tok-id">bytes</span>()) {</span>
-<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Binary</span>(<span class="tok-id">self</span>::<span class="tok-id">BINARIES</span>[<span class="tok-var">$this</span>-&gt;<span class="tok-id">field</span>-&gt;<span class="tok-id">value</span>] ?? <span class="tok-id">BinaryKind</span>::<span class="tok-id">VarBinary</span>);</span>
-<span class="src-line" id="L263" data-diff="added"><a class="ln" href="#L263">263</a>        }</span>
-<span class="src-line" id="L264" data-diff="added"><a class="ln" href="#L264">264</a></span>
-<span class="src-line" id="L265" data-diff="added"><a class="ln" href="#L265">265</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Character</span>(<span class="tok-id">self</span>::<span class="tok-id">CHARACTERS</span>[<span class="tok-var">$this</span>-&gt;<span class="tok-id">field</span>-&gt;<span class="tok-id">value</span>] ?? <span class="tok-id">CharacterKind</span>::<span class="tok-id">VarChar</span>);</span>
-<span class="src-line" id="L266" data-diff="added"><a class="ln" href="#L266">266</a>    }</span>
-<span class="src-line" id="L267" data-diff="added"><a class="ln" href="#L267">267</a></span>
-<span class="src-line" id="L268" data-diff="added"><a class="ln" href="#L268">268</a>}</span>
-<span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a></span>
+<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a>            <span class="tok-var">$kind</span> = <span class="tok-id">self</span>::<span class="tok-id">BINARIES</span>[<span class="tok-var">$this</span>-&gt;<span class="tok-id">field</span>-&gt;<span class="tok-id">value</span>] ?? <span class="tok-id">BinaryKind</span>::<span class="tok-id">VarBinary</span>;</span>
+<span class="src-line" id="L263" data-diff="added"><a class="ln" href="#L263">263</a></span>
+<span class="src-line" id="L264" data-diff="added"><a class="ln" href="#L264">264</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Binary</span>(<span class="tok-var">$kind</span>, <span class="tok-var">$kind</span> === <span class="tok-id">BinaryKind</span>::<span class="tok-id">VarBinary</span> ? (string) <span class="tok-var">$this</span>-&gt;<span class="tok-id">length</span> : <span class="tok-id">null</span>);</span>
+<span class="src-line" id="L265" data-diff="added"><a class="ln" href="#L265">265</a>        }</span>
+<span class="src-line" id="L266" data-diff="added"><a class="ln" href="#L266">266</a></span>
+<span class="src-line" id="L267" data-diff="added"><a class="ln" href="#L267">267</a>        <span class="tok-var">$kind</span> = <span class="tok-id">self</span>::<span class="tok-id">CHARACTERS</span>[<span class="tok-var">$this</span>-&gt;<span class="tok-id">field</span>-&gt;<span class="tok-id">value</span>] ?? <span class="tok-id">CharacterKind</span>::<span class="tok-id">VarChar</span>;</span>
+<span class="src-line" id="L268" data-diff="added"><a class="ln" href="#L268">268</a></span>
+<span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Character</span>(<span class="tok-var">$kind</span>, <span class="tok-var">$kind</span> === <span class="tok-id">CharacterKind</span>::<span class="tok-id">VarChar</span> ? (string) <span class="tok-var">$this</span>-&gt;<span class="tok-id">length</span> : <span class="tok-id">null</span>);</span>
+<span class="src-line" id="L270" data-diff="added"><a class="ln" href="#L270">270</a>    }</span>
+<span class="src-line" id="L271" data-diff="added"><a class="ln" href="#L271">271</a></span>
+<span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a>}</span>
+<span class="src-line" id="L273" data-diff="added"><a class="ln" href="#L273">273</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
