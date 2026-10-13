@@ -44,7 +44,7 @@ final class CacheOptions
         $release = $session->settings()->release();
         $cause = $this->cause($error);
         if ($error->error !== StatementError::ParseError || ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744)) {
-            return $error;
+            return (new Parse\ModernWarnings())->reported($error, $statement, $session);
         }
         try {
             $tokens = $session->semantics()->parser()->tokenize($statement);

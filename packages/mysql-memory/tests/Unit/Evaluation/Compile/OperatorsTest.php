@@ -65,6 +65,16 @@ final class OperatorsTest extends TestCase
         self::assertSame([['-5', '5', '18446744073709551615', null, '3.5']], $result->rows);
     }
 
+    public function testUnaryCompilesAContiguousBangPairAsOneNegation(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT !!1, ! !1, !!!1, !!!!1, !!NULL, !!(1 OR 0), !!(1 IS NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '1', '1', null, '0', '1']], $result->rows);
+        self::assertCount(10, $session->diagnostics->conditions);
+    }
+
     public function testComparisonComparesInTheTypeOfTheOperands(): void
     {
         $session = (new Instance())->connect();

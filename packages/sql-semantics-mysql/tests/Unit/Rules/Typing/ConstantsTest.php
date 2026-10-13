@@ -51,6 +51,8 @@ final class ConstantsTest extends TestCase
         self::assertSame([-1, true], $constants->value(new Unary(UnaryOperator::Invert, new NumberLiteral('0'))));
         self::assertSame([3, false], $constants->value(new Unary(UnaryOperator::Plus, new NumberLiteral('3'))));
         self::assertSame([0, false], $constants->value(new Unary(UnaryOperator::Not, new NumberLiteral('3'))));
+        self::assertSame([0, false], $constants->value(new Unary(UnaryOperator::PairedNot, new NumberLiteral('3'))));
+        self::assertSame([1, false], $constants->value(new Unary(UnaryOperator::PairedNot, new NumberLiteral('0'))));
         self::assertNull($constants->value(new Unary(UnaryOperator::Minus, new Unary(UnaryOperator::Minus, new NumberLiteral('3')))));
         self::assertSame([PHP_INT_MIN, false], $constants->value(new Unary(UnaryOperator::Minus, new Grouped(new NumberLiteral('9223372036854775808')))));
         self::assertNull($constants->value(new NumberLiteral('1.5')));

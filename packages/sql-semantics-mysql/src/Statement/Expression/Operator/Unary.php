@@ -66,7 +66,7 @@ final class Unary implements Scalar
     {
         Check::input(!$this->keyword || $derivation->context->profile->lexical->highNotPrecedence, 'The tight NOT keyword requires HIGH_NOT_PRECEDENCE.');
         $operands = new Operands();
-        if ($this->operator === UnaryOperator::Not && !$this->keyword) {
+        if (in_array($this->operator, [UnaryOperator::Not, UnaryOperator::PairedNot], true) && !$this->keyword) {
             Deprecation::raise(Deprecated::BangNot, $derivation, $this, false);
         }
         $fact = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
@@ -82,7 +82,7 @@ final class Unary implements Scalar
             UnaryOperator::Plus => new ScalarFact($fact->type, $fact->nullability, $fact->resolution, $fact->replacement ?? $this->operand),
             UnaryOperator::Minus => new ScalarFact($operand === null ? $numbers->negation($this->operand, $fact) : new Known($this->negated($precise, $operand, $numbers, $derivation)), $fact->nullability),
             UnaryOperator::Invert => new ScalarFact($operand === null || !$bits instanceof Known ? $bits : new Known(TypeClass::of($bits->descriptor) === TypeClass::Unsigned ? $precise->bits() : $precise->binaryBits(null, $operand)), $fact->nullability),
-            UnaryOperator::Not => $operands->truth($fact->nullability),
+            UnaryOperator::Not, UnaryOperator::PairedNot => $operands->truth($fact->nullability),
         };
     }
 
@@ -93,6 +93,8 @@ final class Unary implements Scalar
     {
         if ($this->keyword) {
             $out->keyword('NOT');
+        } elseif ($this->operator === UnaryOperator::PairedNot) {
+            $out->symbol('!')->glue()->symbol('!');
         } else {
             $out->symbol($this->operator->value);
         }

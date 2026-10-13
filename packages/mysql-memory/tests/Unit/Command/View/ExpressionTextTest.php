@@ -23,6 +23,19 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class ExpressionTextTest extends TestCase
 {
+    public function testNotKeepsTheLegacyStoredViewSpelling(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('CREATE VIEW v AS SELECT !!a AS x FROM t');
+        $result = $session->query('SHOW CREATE VIEW v')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertStringEndsWith('AS select (not(`t`.`a`)) AS `x` from `t`', $result->rows[0][1] ?? '');
+    }
+
     public function testScalarsWritesEachExpression(): void
     {
         $session = (new Instance())->connect();

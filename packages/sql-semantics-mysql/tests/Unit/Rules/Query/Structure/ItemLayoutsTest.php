@@ -11,6 +11,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ItemLayouts;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Statement\Spelling\Layout;
@@ -20,6 +22,33 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Small]
 final class ItemLayoutsTest extends TestCase
 {
+    public function testPairsFindsNonOverlappingPairsInEachContiguousRun(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');
+
+        self::assertSame([0, 4, 6], (new ItemLayouts())->pairs($parser->tokenize('!!1 + !!!!0')));
+        self::assertSame([1], (new ItemLayouts())->pairs($parser->tokenize('! !!1')));
+        self::assertSame([], (new ItemLayouts())->pairs($parser->tokenize('!/**/!1')));
+    }
+
+    public function testCheckRefusesTriviaThatSeparatesANegationPair(): void
+    {
+        $expression = new Unary(UnaryOperator::PairedNot, new NumberLiteral('1'));
+        $layout = new Layout([new Spelled('', '!'), new Spelled(' ', '!'), new Spelled('', '1')]);
+        $this->expectExceptionMessage('A select-item layout preserves contiguous negation pairs and their warnings.');
+
+        new SelectExpression($expression, layout: $layout);
+    }
+
+    public function testCheckRefusesTriviaThatJoinsIndependentNegations(): void
+    {
+        $expression = new Unary(UnaryOperator::Not, new Unary(UnaryOperator::Not, new NumberLiteral('1')));
+        $layout = new Layout([new Spelled('', '!'), new Spelled('', '!'), new Spelled('', '1')]);
+        $this->expectExceptionMessage('A select-item layout preserves contiguous negation pairs and their warnings.');
+
+        new SelectExpression($expression, layout: $layout);
+    }
+
     public function testCheckAcceptsAnAlignedLayout(): void
     {
         $layout = new Layout([new Spelled('', '1'), new Spelled('', '+'), new Spelled('', '2')]);

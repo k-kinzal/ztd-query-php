@@ -81,7 +81,7 @@ final class ShowCreateViewCommand implements Command
             $context->diagnostics->warning($error->error, $error->getMessage());
         }
         $current = $session->variables->database;
-        $text = (new ViewText($view->created->facts, $current, $view->database))->query($view->definition, true, $view->hints) ?? $view->querySql();
+        $text = (new ViewText($view->created->facts, $current, $view->database, $session->settings()->legacy()))->query($view->definition, true, $view->hints) ?? $view->querySql();
         $create = $view->create(($view->schema === $current ? '' : Routine::quoted($view->schema) . '.') . Routine::quoted($view->name), $text);
         $flag = ColumnFlag::NotNull->value;
 

@@ -24,6 +24,19 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 #[Medium]
 final class PrimaryRuleTest extends TestCase
 {
+    public function testPairedRecognizesAdjacentSymbolicNegations(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $rule = new PrimaryRule($lowering);
+        $adjacent = $lowering->form($platform->parser($profile)->parse('SELECT !!1')->find('simple_expr')[0]);
+        $separate = $lowering->form($platform->parser($profile)->parse('SELECT ! !1')->find('simple_expr')[0]);
+
+        self::assertTrue($rule->paired($adjacent, $lowering->form($adjacent->node(1))));
+        self::assertFalse($rule->paired($separate, $lowering->form($separate->node(1))));
+    }
+
     public function testSimpleExpressionAppliesCollateAndConcatenationFromTheLeft(): void
     {
         $platform = new Platform();

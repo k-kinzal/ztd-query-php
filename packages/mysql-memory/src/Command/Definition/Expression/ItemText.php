@@ -268,7 +268,7 @@ final class ItemText
     {
         return match ($unary->operator) {
             UnaryOperator::Plus => $this->scalar($unary->operand),
-            UnaryOperator::Not => $this->negated($unary->operand),
+            UnaryOperator::Not, UnaryOperator::PairedNot => $this->negated($unary->operand),
             UnaryOperator::Minus, UnaryOperator::Invert => $this->wrap($unary->operand, $unary->operator->value . '(', ')'),
         };
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Expression\Operator;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
@@ -31,6 +32,31 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class UnaryTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int, UnaryOperator}>
+     */
+    public static function providerNegationSpellings(): iterable
+    {
+        yield 'paired' => ['!!1', 1, UnaryOperator::PairedNot];
+        yield 'three adjacent' => ['!!!1', 2, UnaryOperator::PairedNot];
+        yield 'four adjacent' => ['!!!!1', 2, UnaryOperator::PairedNot];
+        yield 'space separated' => ['! !1', 2, UnaryOperator::Not];
+        yield 'comment separated' => ['!/**/!1', 2, UnaryOperator::Not];
+        yield 'single before pair' => ['! !!1', 2, UnaryOperator::Not];
+    }
+
+    #[DataProvider('providerNegationSpellings')]
+    public function testDeriveScalarRetainsContiguousPairsAndTheirWarnings(string $expression, int $warnings, UnaryOperator $operator): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT ' . $expression);
+        $node = $operation->field(0)->expression;
+
+        self::assertInstanceOf(Unary::class, $node);
+        self::assertSame($operator, $node->operator);
+        self::assertCount($warnings, $operation->facts->warnings);
+        self::assertSame('SELECT ' . $expression, $operation->toString());
+    }
+
     public function testDeriveScalarRetainsTheBindingAndOperandOfUnaryPlus(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);

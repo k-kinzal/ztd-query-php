@@ -137,7 +137,7 @@ final class Constants
             UnaryOperator::Plus => $operand,
             UnaryOperator::Minus => $bits < 0 ? null : [-$bits, false],
             UnaryOperator::Invert => [~$bits, true],
-            UnaryOperator::Not => [$bits === 0 ? 1 : 0, false],
+            UnaryOperator::Not, UnaryOperator::PairedNot => [$bits === 0 ? 1 : 0, false],
         };
     }
 

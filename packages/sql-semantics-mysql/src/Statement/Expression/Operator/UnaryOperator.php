@@ -9,6 +9,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
  *
  * Under HIGH_NOT_PRECEDENCE the keyword NOT is the tight negation and is
  * represented by Not. Unary retains whether its spelling was NOT or `!`.
+ * PairedNot retains a contiguous `!!` pair: native 8.0, 8.4 and 9.1 treat it as
+ * one negation, with one warning. Two separated marks remain two negations.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/operator-precedence.html,
  * https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_high_not_precedence.
  *
@@ -23,4 +25,5 @@ enum UnaryOperator: string
     case Minus = '-';
     case Invert = '~';
     case Not = '!';
+    case PairedNot = '!!';
 }

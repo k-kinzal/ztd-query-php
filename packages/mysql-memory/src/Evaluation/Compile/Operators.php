@@ -97,7 +97,7 @@ final class Operators
      */
     public function unary(Unary $node, Scope $scope): Evaluable
     {
-        if ($node->operator === UnaryOperator::Not) {
+        if (in_array($node->operator, [UnaryOperator::Not, UnaryOperator::PairedNot], true)) {
             return $this->negated($node->operand, $scope, $node);
         }
         $operand = $this->compiler->compile($node->operand, $scope);
@@ -242,7 +242,7 @@ final class Operators
                 LogicalOperator::Xor => new Logic(LogicalOperator::Xor, $this->negated($operand->left, $scope, $node), $this->truthOperand($this->compiler->compile($operand->right, $scope), $operand->right), $domain),
             };
         }
-        $inner = $operand instanceof Not || ($operand instanceof Unary && $operand->operator === UnaryOperator::Not) ? $operand->operand : null;
+        $inner = $operand instanceof Not || ($operand instanceof Unary && in_array($operand->operator, [UnaryOperator::Not, UnaryOperator::PairedNot], true)) ? $operand->operand : null;
         while ($inner instanceof Grouped) {
             $inner = $inner->operand;
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlParser\MySql;
 
+use Closure;
 use RuntimeException;
 use SqlParser\Lexer\LexicalException;
 use SqlParser\Lexer\ParameterSyntax;
@@ -13,7 +14,7 @@ use SqlParser\MySql\Lexer\KeywordTable;
 use SqlParser\MySql\Lexer\MySqlLexer;
 use SqlParser\Parser\LrParser;
 use SqlParser\Parser\Node;
-use SqlParser\Parser\SqlParser;
+use SqlParser\Parser\ReductionParser;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\Resource\VersionRegistry;
 use SqlParser\Table\ParseTable;
@@ -46,7 +47,7 @@ use SqlParser\Table\TableFile;
  *     $parser = new \SqlParser\MySql\MySqlParser(parameters: \SqlParser\Lexer\ParameterSyntax::Named);
  *     $parser->tokenize('SELECT id FROM users WHERE id = :id')[7]->name // => 'PARAM_MARKER'
  */
-final class MySqlParser implements SqlParser
+final class MySqlParser implements ReductionParser
 {
     private readonly MySqlVersion $version;
 
@@ -103,15 +104,16 @@ final class MySqlParser implements SqlParser
      * Parses one statement.
      *
      * @param string $sql The SQL text
+     * @param (Closure(Node, Token): void)|null $reduced Receives each completed visible production before success or failure
      *
      * @return Node The tree, rooted at the grammar's start symbol, holding every byte of the text
      *
      * @throws LexicalException When the text holds something no token starts with
      * @throws SyntaxException When the statement is not in the grammar of the release
      */
-    public function parse(string $sql): Node
+    public function parse(string $sql, ?Closure $reduced = null): Node
     {
-        return (new LrParser($this->table))->parse($this->tokenize($sql), $sql);
+        return (new LrParser($this->table))->parse($this->tokenize($sql), $sql, $reduced);
     }
 
     /**

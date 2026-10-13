@@ -51,8 +51,9 @@ final class ViewText
      * @param Facts $facts The facts the query was resolved with
      * @param string $current The current database, which the names of its tables are written without
      * @param string $database The database the unqualified names of the query are in
+     * @param bool $legacy Whether the stored expression uses the MySQL 5.x representation
      */
-    public function __construct(public readonly Facts $facts, public readonly string $current, public readonly string $database)
+    public function __construct(public readonly Facts $facts, public readonly string $current, public readonly string $database, public readonly bool $legacy = false)
     {
         $this->expressions = new ExpressionText($this);
     }

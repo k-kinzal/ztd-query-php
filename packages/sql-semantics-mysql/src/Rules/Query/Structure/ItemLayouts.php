@@ -53,6 +53,7 @@ final class ItemLayouts
                 Check::input(count($tokens) === 1 && $tokens[0]->text === $token->text, 'Each select-item spelling slot contains exactly one complete token.');
             }
             $canonical = (new Lexical())->join($output->canonical());
+            Check::input($this->pairs($parser->tokenize($canonical)) === $this->pairs($parser->tokenize($layout->text())), 'A select-item layout preserves contiguous negation pairs and their warnings.');
             $correspondence = new TokenCorrespondence();
             $productions = $platform->productions($profile);
             $keys = $platform->leafKeys($profile);
@@ -62,5 +63,29 @@ final class ItemLayouts
         } catch (SourceException $error) {
             throw new InvalidConstruction('A select-item layout must preserve the expression under its spelling profile.', 0, $error);
         }
+    }
+
+    /**
+     * Identifies the first token of each contiguous exclamation-mark pair.
+     *
+     * @param list<Token> $tokens Tokens of one expression
+     * @return list<int> Pair positions in token order
+     */
+    public function pairs(array $tokens): array
+    {
+        $pairs = [];
+        $pending = null;
+        foreach ($tokens as $index => $token) {
+            if ($token->name !== '!') {
+                $pending = null;
+            } elseif ($pending !== null && $tokens[$pending]->end() === $token->offset) {
+                $pairs[] = $pending;
+                $pending = null;
+            } else {
+                $pending = $index;
+            }
+        }
+
+        return $pairs;
     }
 }

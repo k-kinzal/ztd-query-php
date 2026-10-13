@@ -26,6 +26,7 @@ use SqlParser\Sqlite\SqliteVersion;
 #[UsesClass(\SqlParser\Lexer\SourcePosition::class)]
 #[UsesClass(\SqlParser\Lexer\TerminalIndex::class)]
 #[UsesClass(\SqlParser\Parser\LrParser::class)]
+#[UsesClass(\SqlParser\Parser\Reductions::class)]
 #[UsesClass(\SqlParser\Parser\Node::class)]
 #[UsesClass(\SqlParser\Resource\SqlVersion::class)]
 #[UsesClass(\SqlParser\Resource\VersionRegistry::class)]

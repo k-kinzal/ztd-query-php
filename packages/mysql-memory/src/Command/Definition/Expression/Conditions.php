@@ -62,6 +62,6 @@ final class Conditions
             return in_array(strtolower($scalar->name->value), ['isnull', 'regexp_like'], true);
         }
 
-        return array_filter(self::KINDS, static fn (string $kind): bool => $scalar instanceof $kind) !== [] || ($scalar instanceof Unary && $scalar->operator === UnaryOperator::Not);
+        return array_filter(self::KINDS, static fn (string $kind): bool => $scalar instanceof $kind) !== [] || ($scalar instanceof Unary && in_array($scalar->operator, [UnaryOperator::Not, UnaryOperator::PairedNot], true));
     }
 }

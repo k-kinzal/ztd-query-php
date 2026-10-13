@@ -28,6 +28,7 @@ use SqlParser\PostgreSql\PostgreSqlVersion;
 #[UsesClass(\SqlParser\Lexer\SourcePosition::class)]
 #[UsesClass(\SqlParser\Lexer\TerminalIndex::class)]
 #[UsesClass(\SqlParser\Parser\LrParser::class)]
+#[UsesClass(\SqlParser\Parser\Reductions::class)]
 #[UsesClass(\SqlParser\Parser\Node::class)]
 #[UsesClass(\SqlParser\PostgreSql\Lexer\KeywordTable::class)]
 #[UsesClass(\SqlParser\PostgreSql\Lexer\LookaheadFilter::class)]

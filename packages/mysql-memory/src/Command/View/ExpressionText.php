@@ -147,7 +147,7 @@ final class ExpressionText
             return $this->scalar($unary->operand);
         }
 
-        return $unary->operator === UnaryOperator::Not ? $this->not($unary->operand) : $this->wrap($unary->operand, $unary->operator->value . '(', ')');
+        return in_array($unary->operator, [UnaryOperator::Not, UnaryOperator::PairedNot], true) ? $this->not($unary->operand) : $this->wrap($unary->operand, $unary->operator->value . '(', ')');
     }
 
     /**
@@ -206,7 +206,7 @@ final class ExpressionText
         if ($operand instanceof NullTest) {
             return $this->wrap($operand->operand, '(', $operand->negated ? ' is null)' : ' is not null)');
         }
-        if ($operand instanceof ColumnUse || $operand instanceof Arithmetic || $operand instanceof NumberLiteral || $operand instanceof FunctionCall) {
+        if (!$this->text->legacy && ($operand instanceof ColumnUse || $operand instanceof Arithmetic || $operand instanceof NumberLiteral || $operand instanceof FunctionCall)) {
             return $this->wrap($operand, '(0 = ', ')');
         }
         $text = $this->scalar($operand);

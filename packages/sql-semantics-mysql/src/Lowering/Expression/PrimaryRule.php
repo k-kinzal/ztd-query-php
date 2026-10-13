@@ -110,11 +110,29 @@ final class PrimaryRule
         $prefix = self::PREFIX[$form->signature] ?? null;
         if ($prefix !== null) {
             $keyword = $prefix === UnaryOperator::Not && $this->negation($form->node(0));
+            $operand = $this->lowering->form($form->node(1));
+            if ($prefix === UnaryOperator::Not && !$keyword && $this->paired($form, $operand)) {
+                return new Unary(UnaryOperator::PairedNot, $this->simpleExpression($operand->node(1)));
+            }
 
             return new Unary($prefix, $this->simpleExpression($form->node(1)), $keyword);
         }
 
         return (new FormRule($this->lowering))->lower($form);
+    }
+
+    /**
+     * Recognizes adjacent symbolic negations as one observable pair.
+     */
+    public function paired(Form $outer, Form $inner): bool
+    {
+        if ($inner->signature !== 'simple_expr: not2 simple_expr' || $this->negation($inner->node(0))) {
+            return false;
+        }
+        $left = $this->lowering->form($outer->node(0))->token(0);
+        $right = $this->lowering->form($inner->node(0))->token(0);
+
+        return $left->end() === $right->offset;
     }
 
     /**
