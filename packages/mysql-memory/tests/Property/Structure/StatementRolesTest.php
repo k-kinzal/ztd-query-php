@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
@@ -38,7 +39,7 @@ final class StatementRolesTest extends TestCase
         self::assertEqualsCanonicalizing([
             Select::class, ExplicitTable::class, ValuesQuery::class, ParenthesizedQuery::class,
             QueryExpression::class, QueryStatement::class, SetOperation::class,
-            InsertQuery::class, InsertRows::class, InsertSet::class, Update::class, Delete::class,
+            InsertQuery::class, InsertRows::class, InsertSet::class, Update::class, Delete::class, MultipleDelete::class,
         ], (new Catalogue())->implementations(Explainable::class));
     }
 

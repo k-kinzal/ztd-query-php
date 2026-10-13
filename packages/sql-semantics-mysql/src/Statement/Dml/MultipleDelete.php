@@ -9,11 +9,11 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\ChangeFacts;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
 use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
-use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE t.* , u FROM t JOIN u ON t.a = u.a WHERE t.b = 1');
  *     [count($delete->statement->targets), $delete->toString()] // => [2, 'DELETE t, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
  */
-final class MultipleDelete implements Statement
+final class MultipleDelete implements Explainable
 {
     use Snapshot;
 

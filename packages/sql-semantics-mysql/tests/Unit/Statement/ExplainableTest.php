@@ -27,13 +27,21 @@ final class ExplainableTest extends TestCase
         yield 'insert' => ['INSERT INTO t VALUES (1)'];
         yield 'replace' => ['REPLACE INTO t SET a=1'];
         yield 'update' => ['UPDATE t SET a=1'];
+        yield 'delete joined targets' => ['DELETE t, u FROM t JOIN u ON t.a=u.a'];
+        yield 'delete using' => ['DELETE FROM t USING t JOIN u ON t.a=u.a'];
         yield 'delete' => ['DELETE FROM t'];
     }
 
     #[DataProvider('providerStatements')]
     public function testQueriesAndDataChangesHaveTheExplainableRole(string $sql): void
     {
-        self::assertInstanceOf(Explainable::class, (new Semantics(Dialect::MySql))->analyze($sql)->statement);
+        $semantics = new Semantics(Dialect::MySql);
+        $statement = $semantics->analyze($sql)->statement;
+        $explained = $semantics->analyze('EXPLAIN ' . $sql)->statement;
+
+        self::assertInstanceOf(Explainable::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $explained);
+        self::assertSame($statement::class, $explained->statement::class);
     }
 
     public function testAdministrationDoesNotHaveTheExplainableRole(): void
