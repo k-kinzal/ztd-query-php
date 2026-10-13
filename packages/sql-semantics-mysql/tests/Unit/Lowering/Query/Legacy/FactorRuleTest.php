@@ -48,9 +48,10 @@ final class FactorRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM ((SELECT 1)) AS d');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(DerivedTable::class, $operation->statement->from);
-        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->from->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(DerivedTable::class, $operation->statement->query->from);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->query->from->query);
     }
 
     public function testSingleAnswersOnlyALoneParenthesizedOrSelectFactor(): void

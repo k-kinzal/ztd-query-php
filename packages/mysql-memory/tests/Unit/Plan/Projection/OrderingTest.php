@@ -27,6 +27,8 @@ final class OrderingTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT a AS x FROM t ORDER BY x DESC, b, 1 + 1');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -58,6 +60,8 @@ final class OrderingTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT DISTINCT @x:=7 AS v ORDER BY v');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -72,6 +76,8 @@ final class OrderingTest extends TestCase
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze('SELECT DISTINCT @x:=7 AS v ORDER BY v');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);

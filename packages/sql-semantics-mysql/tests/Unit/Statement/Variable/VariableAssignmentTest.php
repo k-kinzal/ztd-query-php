@@ -37,8 +37,9 @@ final class VariableAssignmentTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT @n := b, @m := a FROM t', [$table]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(VariableAssignment::class, $item0->expression);
         $nullable = $operation->facts->scalar($item0->expression);
@@ -46,7 +47,7 @@ final class VariableAssignmentTest extends TestCase
         self::assertSame('BIGINT', $nullable->type->descriptor->name());
         self::assertSame(Nullability::Nullable, $nullable->nullability);
         self::assertNull($nullable->resolution);
-        $item1 = $operation->statement->items[1];
+        $item1 = $operation->statement->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(VariableAssignment::class, $item1->expression);
         $notNull = $operation->facts->scalar($item1->expression);
@@ -61,8 +62,9 @@ final class VariableAssignmentTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @n := 5');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(VariableAssignment::class, $item0->expression);
         $target = $operation->facts->scalar($item0->expression->target);
@@ -75,12 +77,13 @@ final class VariableAssignmentTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @n := 5');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(Comparison::class, $operation->statement->where);
-        self::assertInstanceOf(VariableAssignment::class, $operation->statement->where->right);
-        self::assertSame('n', $operation->statement->where->right->target->name->value);
-        self::assertInstanceOf(NumberLiteral::class, $operation->statement->where->right->value);
-        self::assertSame('5', $operation->statement->where->right->value->text);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
+        self::assertInstanceOf(VariableAssignment::class, $operation->statement->query->where->right);
+        self::assertSame('n', $operation->statement->query->where->right->target->name->value);
+        self::assertInstanceOf(NumberLiteral::class, $operation->statement->query->where->right->value);
+        self::assertSame('5', $operation->statement->query->where->right->value->text);
         self::assertSame('SELECT a FROM t WHERE a = @n := 5', $operation->toString());
     }
 

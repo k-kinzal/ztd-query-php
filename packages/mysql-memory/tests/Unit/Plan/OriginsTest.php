@@ -211,7 +211,8 @@ final class OriginsTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (id INT)');
         $operation = $session->analyze('SELECT * FROM t AS x LEFT JOIN t AS y ON 1');
-        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        $statement = $operation->statement->query;
         $select = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement ? $statement->query : $statement;
 
         self::assertInstanceOf(Select::class, $select);

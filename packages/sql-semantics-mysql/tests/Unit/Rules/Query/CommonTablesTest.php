@@ -87,7 +87,7 @@ final class CommonTablesTest extends TestCase
             new CommonTableExpression(new Name('c'), [], $select('2')),
         ]), $select('3'));
         $root = new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [new CommonTableExpression(new Name('unused'), [], $inner)]), $select('4'));
-        $operation = new \SqlSemantics\Statement\Operation((new Semantics(Dialect::MySql, 'mysql-8.4.7'))->context(), $root);
+        $operation = new \SqlSemantics\Statement\Operation((new Semantics(Dialect::MySql, 'mysql-8.4.7'))->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($root));
         $warnings = $operation->facts->warnings;
 
         self::assertSame([], $operation->sources->notices);
@@ -126,7 +126,11 @@ final class CommonTablesTest extends TestCase
         $pending = new CommonBinding(new Name('c'), new Dual(), new RowShape([], [new RecursiveReference(new Name('c'))]));
         $scope = (new CommonTables())->extended($derivation->environment(), [$pending]);
         $refers = $semantics->analyze('SELECT 1 FROM c')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $refers);
+        $refers = $refers->query;
         $other = $semantics->analyze('SELECT 1 FROM d')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $other);
+        $other = $other->query;
 
         self::assertInstanceOf(Select::class, $refers);
         self::assertInstanceOf(Select::class, $other);
@@ -193,6 +197,8 @@ final class CommonTablesTest extends TestCase
     public function testOperandsAnswersTheChainInWrittenOrder(): void
     {
         $query = (new Semantics(Dialect::MySql))->analyze('(SELECT 1 UNION SELECT 2 UNION SELECT 3)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
         self::assertInstanceOf(ParenthesizedQuery::class, $query);
         self::assertCount(3, (new CommonTables())->operands($query));
@@ -206,7 +212,11 @@ final class CommonTablesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $derivation = new Derivation($semantics->context());
         $query = $semantics->analyze('SELECT 1 FROM db.c, (SELECT 1 FROM c) AS d')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
         $qualified = $semantics->analyze('SELECT 1 FROM db.c')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $qualified);
+        $qualified = $qualified->query;
 
         self::assertInstanceOf(Select::class, $query);
         self::assertInstanceOf(Select::class, $qualified);
@@ -217,6 +227,8 @@ final class CommonTablesTest extends TestCase
     public function testOperandsWalksALeadingUnion(): void
     {
         $query = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
         self::assertInstanceOf(SetOperation::class, $query);
         self::assertCount(3, (new CommonTables())->operands($query));

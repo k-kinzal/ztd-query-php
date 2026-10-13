@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
  * @visibility public
  * @example Reading the modifiers of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT DISTINCT SQL_BIG_RESULT a FROM t');
- *     $query->statement->options // => [\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::BigResult]
+ *     $query->statement->query->options // => [\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::BigResult]
  */
 enum SelectOption: string
 {

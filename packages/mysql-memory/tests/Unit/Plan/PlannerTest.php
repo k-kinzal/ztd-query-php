@@ -29,7 +29,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Query;
 
 #[CoversClass(Planner::class)]
 #[Small]
@@ -54,7 +53,8 @@ final class PlannerTest extends TestCase
         $session->query("INSERT INTO t VALUES (2, 'x'), (1, 'y')");
         $operation = $session->analyze('SELECT b, a FROM t WHERE a > 1');
         $statement = $operation->statement;
-        self::assertInstanceOf(Query::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
@@ -69,10 +69,10 @@ final class PlannerTest extends TestCase
     {
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze("SELECT GROUP_CONCAT(CONVERT('x' USING latin1)) AS q UNION ALL SELECT _latin1'y'");
-        self::assertInstanceOf(Query::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $plan = $planner->query($operation->statement, null);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $plan = $planner->query($operation->statement->query, null);
         $result = $planner->result($plan);
 
         self::assertSame($plan->root, $result->root);
@@ -99,6 +99,8 @@ final class PlannerTest extends TestCase
         $session->query('INSERT INTO t VALUES (2), (3), (1)');
         $operation = $session->analyze('(SELECT a FROM t) ORDER BY a DESC LIMIT 2');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(QueryExpression::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -140,6 +142,8 @@ final class PlannerTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH c AS (SELECT 1 AS n) SELECT n FROM c');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(QueryExpression::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -155,7 +159,8 @@ final class PlannerTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH c AS (SELECT 1 AS n UNION ALL SELECT 2) SELECT x.n, y.n FROM c AS x, c AS y ORDER BY x.n, y.n');
         $statement = $operation->statement;
-        self::assertInstanceOf(Query::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
@@ -180,6 +185,8 @@ final class PlannerTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 AS n UNION SELECT 1 UNION ALL SELECT 2');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(SetOperation::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -219,6 +226,8 @@ final class PlannerTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze("VALUES ROW(1, 'a'), ROW(2, 'b')");
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(ValuesQuery::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -235,6 +244,8 @@ final class PlannerTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -249,6 +260,8 @@ final class PlannerTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze("SELECT 1, 'a' UNION SELECT 2.5, 'bc'");
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(SetOperation::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);

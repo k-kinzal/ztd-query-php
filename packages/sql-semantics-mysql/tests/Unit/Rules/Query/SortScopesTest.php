@@ -49,10 +49,11 @@ final class SortScopesTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT b AS a FROM t ORDER BY a, 1, b', [$t]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->orderBy[0]->expression)->resolution);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->orderBy[1]->expression)->resolution);
-        $resolution = $operation->facts->scalar($operation->statement->orderBy[2]->expression)->resolution;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->resolution);
+        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->query->orderBy[1]->expression)->resolution);
+        $resolution = $operation->facts->scalar($operation->statement->query->orderBy[2]->expression)->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($t->columns[1], $resolution->declaration());
     }

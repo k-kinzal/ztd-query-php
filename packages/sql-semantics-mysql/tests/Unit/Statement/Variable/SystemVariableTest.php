@@ -35,8 +35,9 @@ final class SystemVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@GLOBAL.sort_buffer_size');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         $fact = $operation->facts->scalar($item0->expression);
@@ -51,8 +52,9 @@ final class SystemVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@SESSION.innodb.x');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertSame(VariableScope::Session, $item0->expression->scope);
@@ -67,8 +69,9 @@ final class SystemVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@autocommit');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertNull($item0->expression->scope);
@@ -92,8 +95,9 @@ final class SystemVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@LOCAL.x AS v');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertSame(VariableScope::Session, $item0->expression->scope);
@@ -109,7 +113,7 @@ final class SystemVariableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $variable = new SystemVariable(new Name('x'), VariableScope::Global, new Name('innodb'));
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression($variable)]));
+        $operation = new Operation($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression($variable)])));
 
         self::assertSame('SELECT @@GLOBAL.innodb.x', $operation->toString());
         self::assertSame(Nullability::Dependent, $operation->facts->scalar($variable)->nullability);
@@ -148,8 +152,9 @@ final class SystemVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@x.key_buffer_size');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         $fact = $operation->facts->scalar($item0->expression);

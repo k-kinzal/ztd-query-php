@@ -31,7 +31,7 @@ final class CursorDeclarationTest extends TestCase
         self::assertInstanceOf(CursorDeclaration::class, $cursor);
 
         self::assertSame('c', $cursor->name->value);
-        self::assertInstanceOf(Select::class, $cursor->query);
+        self::assertInstanceOf(Select::class, $cursor->query->query);
         self::assertSame([], $operation->facts->diagnostics);
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT x; END', $operation->toString());
     }

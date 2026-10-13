@@ -84,7 +84,9 @@ final class SpatialWarnings
         } catch (SourceException|AnalysisException) {
             return false;
         }
-        $item = $operation->statement instanceof Select ? ($operation->statement->items[0] ?? null) : null;
+        $root = $operation->statement;
+        $query = $root instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? $root->query : null;
+        $item = $query instanceof Select ? ($query->items[0] ?? null) : null;
         $call = $item instanceof SelectExpression ? $item->expression : null;
 
         return $call instanceof FunctionCall && $call->schema === null && count($call->arguments) === 1 && !$call->named();

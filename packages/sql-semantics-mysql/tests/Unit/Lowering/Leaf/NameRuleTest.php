@@ -32,9 +32,10 @@ final class NameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT a, `b c`, `d``e`, action, 猫 FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
         self::assertSame('SELECT a, `b c`, `d``e`, `action`, `猫` FROM t', $operation->toString());
-        $item2 = $operation->statement->items[2];
+        $item2 = $operation->statement->query->items[2];
         self::assertInstanceOf(SelectExpression::class, $item2);
         self::assertInstanceOf(ColumnUse::class, $item2->expression);
         self::assertSame('d`e', $item2->expression->name->value);
@@ -44,8 +45,9 @@ final class NameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT a AS 'it''s' FROM t");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame("it's", $operation->statement->items[0]->alias?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertSame("it's", $operation->statement->query->items[0]->alias?->value);
         self::assertSame("SELECT a AS `it's` FROM t", $operation->toString());
     }
 
@@ -72,13 +74,14 @@ final class NameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@innodb.x, @@y');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertSame('innodb', $item0->expression->instance?->value);
         self::assertSame('x', $item0->expression->name->value);
-        $item1 = $operation->statement->items[1];
+        $item1 = $operation->statement->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(SystemVariable::class, $item1->expression);
         self::assertNull($item1->expression->instance);
@@ -88,8 +91,9 @@ final class NameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT a FROM `my db`.t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $from = $operation->statement->from;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $from = $operation->statement->query->from;
         self::assertInstanceOf(TableReference::class, $from);
         self::assertSame('my db', $from->name->schema?->value);
         self::assertSame('t', $from->name->name->value);
@@ -131,14 +135,16 @@ final class NameRuleTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT a, t.b, db.t.c FROM t');
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT .t.d FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item2 = $operation->statement->items[2];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item2 = $operation->statement->query->items[2];
         self::assertInstanceOf(SelectExpression::class, $item2);
         self::assertInstanceOf(ColumnUse::class, $item2->expression);
         self::assertSame('db', $item2->expression->qualifier?->schema?->value);
         self::assertSame('SELECT a, t.b, db.t.c FROM t', $operation->toString());
-        self::assertInstanceOf(Select::class, $legacy->statement);
-        $item0 = $legacy->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $legacy->statement);
+        self::assertInstanceOf(Select::class, $legacy->statement->query);
+        $item0 = $legacy->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(ColumnUse::class, $item0->expression);
         self::assertNull($item0->expression->qualifier?->schema);
@@ -220,9 +226,10 @@ final class NameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM .t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        self::assertSame(OptionalWords::Written, $operation->statement->from->dot);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
+        self::assertSame(OptionalWords::Written, $operation->statement->query->from->dot);
         self::assertSame('SELECT 1 FROM .t', $operation->toString());
     }
     public function testIdentifierKeepsSpellingWarningsSeparateFromTheName(): void

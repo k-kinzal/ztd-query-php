@@ -17,7 +17,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Query;
 
 #[CoversClass(QueryCommand::class)]
 #[Small]
@@ -57,8 +56,9 @@ final class QueryCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('(SELECT 3) INTO @z')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
 
-        self::assertInstanceOf(Query::class, $statement);
         self::assertInstanceOf(IntoVariables::class, (new QueryCommand())->destination($statement));
     }
 
@@ -66,8 +66,9 @@ final class QueryCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('SELECT 1 UNION SELECT 2')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
 
-        self::assertInstanceOf(Query::class, $statement);
         self::assertNull((new QueryCommand())->destination($statement));
     }
 
@@ -137,8 +138,9 @@ final class QueryCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('SELECT 1 UNION (SELECT 2 INTO @z)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
 
-        self::assertInstanceOf(Query::class, $statement);
         self::assertInstanceOf(IntoVariables::class, (new QueryCommand())->destination($statement));
     }
 
@@ -201,10 +203,12 @@ final class QueryCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $first = $session->analyze('SELECT SQL_CALC_FOUND_ROWS 1 UNION SELECT 2')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $first);
+        $first = $first->query;
         $plain = $session->analyze('(SELECT 1 LIMIT 1)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain);
+        $plain = $plain->query;
 
-        self::assertInstanceOf(Query::class, $first);
-        self::assertInstanceOf(Query::class, $plain);
         self::assertSame([true, false], [(new QueryCommand())->calculates($first), (new QueryCommand())->calculates($plain)]);
     }
 
@@ -232,14 +236,18 @@ final class QueryCommandTest extends TestCase
         $session = (new Instance())->connect();
         $command = new QueryCommand();
         $ordered = $session->analyze('(SELECT 1 UNION SELECT 2) ORDER BY 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $ordered);
+        $ordered = $ordered->query;
         $nested = $session->analyze('SELECT 1 UNION SELECT 2 INTERSECT SELECT 2')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $nested);
+        $nested = $nested->query;
         $intersected = $session->analyze('(SELECT 1 UNION SELECT 2) INTERSECT SELECT 2')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $intersected);
+        $intersected = $intersected->query;
         $single = $session->analyze('SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $single);
+        $single = $single->query;
 
-        self::assertInstanceOf(Query::class, $ordered);
-        self::assertInstanceOf(Query::class, $nested);
-        self::assertInstanceOf(Query::class, $intersected);
-        self::assertInstanceOf(Query::class, $single);
         self::assertSame([true, true, false, false], [$command->unites($ordered), $command->unites($nested), $command->unites($intersected), $command->unites($single)]);
     }
 
@@ -274,9 +282,9 @@ final class QueryCommandTest extends TestCase
         $except = $session->analyze('SELECT x FROM a UNION SELECT x FROM a EXCEPT SELECT x FROM b');
         $union = $session->analyze('SELECT x FROM a EXCEPT SELECT x FROM b UNION SELECT x FROM a');
 
-        self::assertInstanceOf(Query::class, $except->statement);
-        self::assertInstanceOf(Query::class, $union->statement);
-        self::assertSame([[true], null], [(new QueryCommand())->restricted($except->statement, $except->facts), (new QueryCommand())->restricted($union->statement, $union->facts)]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $except->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $union->statement);
+        self::assertSame([[true], null], [(new QueryCommand())->restricted($except->statement->query, $except->facts), (new QueryCommand())->restricted($union->statement->query, $union->facts)]);
     }
 
     public function testNullablesAnswersEachColumnOfASingleQuery(): void
@@ -284,16 +292,17 @@ final class QueryCommandTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1, NULL');
 
-        self::assertInstanceOf(Query::class, $operation->statement);
-        self::assertSame([false, true], (new QueryCommand())->nullables($operation->statement, $operation->facts));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertSame([false, true], (new QueryCommand())->nullables($operation->statement->query, $operation->facts));
     }
 
     public function testOutermostUnwrapsParenthesesAndOrdering(): void
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('((SELECT 1) EXCEPT (SELECT 2)) ORDER BY 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
 
-        self::assertInstanceOf(Query::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation::class, (new QueryCommand())->outermost($statement));
     }
 

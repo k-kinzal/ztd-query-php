@@ -132,8 +132,8 @@ final class ProgramRestrictions
      */
     public function results(Statement $statement): bool
     {
-        if ($statement instanceof Query) {
-            return !$this->into($statement);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+            return !$this->into($statement->query);
         }
 
         return $statement instanceof Explain || $statement instanceof ExplainConnection || $statement instanceof DescribeTable || $statement instanceof Help

@@ -39,7 +39,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the column
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE VALUES(a)');
- *     $query->facts->scalar($query->statement->where)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
+ *     $query->facts->scalar($query->statement->query->where)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
  */
 final class InsertedColumn implements Scalar
 {

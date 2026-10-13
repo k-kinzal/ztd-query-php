@@ -116,8 +116,9 @@ final class FramesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
 
         self::assertSame(['2', Kind::Integer], [(string) (new Frames($planner))->value(new FrameBound(FrameBoundKind::Preceding, new NumberLiteral('2')), new Scope())[0], (new Frames($planner))->value(new FrameBound(FrameBoundKind::Preceding, new NumberLiteral('2')), new Scope())[1]->kind]);
     }
@@ -126,8 +127,9 @@ final class FramesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
 
         self::assertNotSame($session->diagnostics, (new Frames($planner))->quiet()->diagnostics);
     }
@@ -136,8 +138,9 @@ final class FramesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $frame = (new Frames($planner))->compile(new Specification('w', new WindowSpec(), [], []), [[new ColumnRead(Domain::integer(), 0), false]], new Scope());
 
         self::assertSame([FrameUnit::Range, FrameBoundKind::CurrentRow], [$frame->unit, $frame->end->kind]);
@@ -147,8 +150,9 @@ final class FramesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $frames = new Frames($planner);
         $numeric = $frames->bound(FrameUnit::Range, new FrameBound(FrameBoundKind::Preceding, new NumberLiteral('1')), [[new ColumnRead(Domain::integer(), 0), true]], new Scope());
         $temporal = $frames->bound(FrameUnit::Range, new FrameBound(FrameBoundKind::Preceding, new NumberLiteral('1'), IntervalUnit::Day), [[new ColumnRead(new Domain(Kind::Date, Field::Date, 10), 0), false]], new Scope());

@@ -46,7 +46,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a MOD 2 = 1')->toString() // => 'SELECT a FROM t WHERE a % 2 = 1'
  * @example Typing a division of integers as DECIMAL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE 1 / 2');
- *     $query->facts->scalar($query->statement->where)->type->descriptor->name() // => 'DECIMAL'
+ *     $query->facts->scalar($query->statement->query->where)->type->descriptor->name() // => 'DECIMAL'
  */
 final class Arithmetic implements Scalar
 {

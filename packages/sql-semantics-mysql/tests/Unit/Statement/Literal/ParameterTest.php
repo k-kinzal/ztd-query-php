@@ -25,6 +25,8 @@ final class ParameterTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = ?');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $parameter = $select->where->right;
@@ -46,6 +48,8 @@ final class ParameterTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, null, null, ParameterStyle::Named))->analyze('SELECT a FROM t WHERE a = :id');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $parameter = $select->where->right;

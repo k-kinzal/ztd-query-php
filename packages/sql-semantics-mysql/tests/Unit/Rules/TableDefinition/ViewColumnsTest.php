@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewColumns;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(ViewColumns::class)]
@@ -40,6 +39,8 @@ final class ViewColumnsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a, b AS c, 1+1 FROM t');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame([false, false, true], (new ViewColumns($operation->context->profile, $operation->context->columnNames))->generated($select, $operation->fields()->items ?? []));
@@ -49,11 +50,12 @@ final class ViewColumnsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('(SELECT 1 AS a) UNION SELECT 2');
         $values = (new Semantics(Dialect::MySql))->analyze('VALUES ROW(1)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $values);
+        $values = $values->query;
         $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
 
-        self::assertInstanceOf(Query::class, $operation->statement);
-        self::assertInstanceOf(Query::class, $values);
-        self::assertSame('a', $columns->block($operation->statement)?->items[0]->alias?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertSame('a', $columns->block($operation->statement->query)?->items[0]->alias?->value);
         self::assertNull($columns->block($values));
     }
 

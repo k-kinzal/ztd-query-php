@@ -129,6 +129,8 @@ final class GroupedColumnsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a FROM t1 GROUP BY a ORDER BY a, b', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableReference::class, $select->from);
         $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape, null, $select->from->name)];
@@ -145,6 +147,8 @@ final class GroupedColumnsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a, b FROM t1 GROUP BY id ORDER BY b', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
         $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
@@ -158,6 +162,8 @@ final class GroupedColumnsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT DISTINCT a, a + 1 AS c FROM t1 ORDER BY a, a + 1, b', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableReference::class, $select->from);
         $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape, null, $select->from->name)];
@@ -174,6 +180,8 @@ final class GroupedColumnsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT DISTINCT * FROM t1 ORDER BY b', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
         $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
@@ -187,6 +195,8 @@ final class GroupedColumnsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT)')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT COUNT(*) FROM t1 HAVING (SELECT t1.a)>0', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableReference::class, $select->from);
         $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape, null, $select->from->name)];
@@ -204,6 +214,8 @@ final class GroupedColumnsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a FROM t1', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableReference::class, $select->from);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
@@ -223,9 +235,10 @@ final class GroupedColumnsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $grouped = static function (string $sql) use ($semantics, $table): array {
             $query = $semantics->analyze($sql, [$table]);
-            self::assertInstanceOf(Select::class, $query->statement);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query->statement);
+            self::assertInstanceOf(Select::class, $query->statement->query);
 
-            return [$query->statement, $query->facts];
+            return [$query->statement->query, $query->facts];
         };
         [$window, $windowFacts] = $grouped('SELECT a, RANK() OVER () AS r FROM t GROUP BY r');
         [$plain, $plainFacts] = $grouped('SELECT a FROM t GROUP BY a');

@@ -116,7 +116,7 @@ final class Statements
         $session = $this->session;
         \MySqlMemory\Session\State\StatementCounters::query($session);
         $select = new Select([], [new SelectExpression($expression)]);
-        $operation = $this->operation($select);
+        $operation = $this->operation(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($select));
         $session->diagnostics->clear();
         (new Problems())->raise($operation, $session);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, microtime(true));

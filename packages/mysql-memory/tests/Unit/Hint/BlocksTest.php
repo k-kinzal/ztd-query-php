@@ -81,6 +81,8 @@ final class BlocksTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('WITH c AS (SELECT 1) SELECT * FROM c, c AS c2')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
 
         self::assertInstanceOf(QueryExpression::class, $statement);
@@ -93,6 +95,8 @@ final class BlocksTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('SELECT /*+ QB_NAME(q) */ 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
 
         self::assertInstanceOf(Select::class, $statement);
@@ -104,6 +108,8 @@ final class BlocksTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('SELECT 1 FROM (SELECT 1 a) d JOIN JSON_TABLE(\'[]\', \'$[*]\' COLUMNS (b INT PATH \'$\')) j ON j.b IN (SELECT 2)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
         $block = $blocks->open(true);
 
@@ -117,6 +123,8 @@ final class BlocksTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('SELECT (SELECT 1), (SELECT 2)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
 
         self::assertInstanceOf(Select::class, $statement);
@@ -146,6 +154,8 @@ final class BlocksTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('WITH c AS (SELECT 1) SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
 
         self::assertInstanceOf(QueryExpression::class, $statement);
@@ -161,6 +171,8 @@ final class BlocksTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('WITH c AS (SELECT 1), e AS (SELECT 2) SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
 
         self::assertInstanceOf(QueryExpression::class, $statement);
@@ -174,6 +186,8 @@ final class BlocksTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('WITH c AS (SELECT 1) SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
 
         self::assertInstanceOf(QueryExpression::class, $statement);

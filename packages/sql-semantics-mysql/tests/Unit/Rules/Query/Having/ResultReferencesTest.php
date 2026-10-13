@@ -36,6 +36,8 @@ final class ResultReferencesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL, b INT)');
         $operation = $semantics->analyze('SELECT b AS a FROM t GROUP BY a HAVING a > 0', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
         $resolution = $operation->facts->scalar($select->having->left)->resolution;
@@ -53,6 +55,8 @@ final class ResultReferencesTest extends TestCase
         $other = $semantics->analyze('SELECT u.a AS a FROM t, t AS u GROUP BY t.a HAVING u.a > 0', [$table]);
         $ambiguous = $semantics->analyze('SELECT 1 FROM t, t AS u GROUP BY t.a, u.a HAVING a > 0', [$table]);
         $select = $other->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
         $item = $select->items[0];
@@ -77,8 +81,14 @@ final class ResultReferencesTest extends TestCase
         $hidden = $semantics->analyze('SELECT t.a AS x FROM t HAVING a > 0', [$table]);
         $ambiguous = $semantics->analyze('SELECT a, b AS a FROM t HAVING a > 0', [$table]);
         $columnSelect = $column->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $columnSelect);
+        $columnSelect = $columnSelect->query;
         $computedSelect = $computed->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $computedSelect);
+        $computedSelect = $computedSelect->query;
         $hiddenSelect = $hidden->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $hiddenSelect);
+        $hiddenSelect = $hiddenSelect->query;
         self::assertInstanceOf(Select::class, $columnSelect);
         self::assertInstanceOf(Select::class, $computedSelect);
         self::assertInstanceOf(Select::class, $hiddenSelect);
@@ -187,6 +197,8 @@ final class ResultReferencesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, q INT)')->declarations();
         $operation = $semantics->analyze("SELECT 'é', a AS q, 1 AS r FROM t HAVING q > 0 AND r > 0", $table);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $having = $select->having;
         self::assertInstanceOf(Logical::class, $having);

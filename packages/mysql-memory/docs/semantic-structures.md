@@ -29,13 +29,13 @@ php fuzz/structures.php 1 example-seed - 8.4.7 22
 The arguments are `COUNT [SEED] [CLASS|-|@each] [RELEASE] [START]`. Omitting the seed chooses a random seed and prints it before the first trial. An explicit class selects a root from the same discovered inventory. `@each` visits the sorted root inventory in order, wrapping after its end; the initial record reports the number of root types. Use at least that many trials to exercise construction of every root type. This enumerates model types and does not measure SQL Faker grammar coverage. Reproduction requires the same revision because changes to types and constructors change deterministic choices.
 
 ```sh
-composer fuzz:structures -- 254 all-model-roots @each
+composer fuzz:structures -- 248 all-model-roots @each
 ```
 
-To select a compatible test environment before execution, use `auto` for the release:
+The default `auto` release selects a compatible test environment before execution. To state that selection explicitly:
 
 ```sh
-composer fuzz:structures -- 254 all-model-roots @each auto
+composer fuzz:structures -- 248 all-model-roots @each auto
 ```
 
 This mode renders the already constructed model under candidate grammar releases and lexical modes, parses and lowers that rendering, and checks structural correspondence. It does not derive facts or execute statements while selecting a profile. A retained observable spelling fixes the candidate profile; otherwise the candidate modes cover the interpretations of `NOT` and `||`. Named parameter markers select the named-parameter extension. If no candidate preserves the structure, the trial fails in the `profile` phase and the failure records each candidate's reason. Inputs are never regenerated because of this result. Once selected, the profile is used for one execution; an execution error does not cause another profile to be tried. The memory executor receives the constructed structure directly, without parsing the rendered SQL. An explicit release keeps the previous fixed-environment behavior.
@@ -76,6 +76,10 @@ DELETE targets reject the legacy equals-sign alias available to some read relati
 
 UPDATE normalizes unparenthesized comma lists into its ordered table list. LOAD normalizes the canonical COUNT spelling across keyword and identifier grammar forms. A routine inspection name has at most a database qualifier, a dollar-quote tag uses identifier characters without dollar signs, and a resource-group priority uses a decimal NUM token with its separate sign. These invariants preserve values and names through rendering and reconstruction.
 
-Index options are checked against their index kind in both CREATE INDEX and table definitions: WITH PARSER belongs to FULLTEXT, while USING is unavailable to FULLTEXT and SPATIAL. PROCEDURE ANALYSE requires a FROM clause. Repeated RESET targets use a consistent vocabulary for each target kind, while different target kinds retain their separate rename dates. GRANT role and account lists expose their existing nonempty invariant in their public collection types, so type-driven construction does not repeatedly sample an empty list.
+Index options are checked against their index kind in both CREATE INDEX and table definitions: WITH PARSER belongs to FULLTEXT, while USING is unavailable to FULLTEXT and SPATIAL. A standalone PROCEDURE ANALYSE query requires a FROM clause; an INSERT source can retain the no-FROM form and receive its SQL rejection during execution. Repeated RESET targets use a consistent vocabulary for each target kind, while different target kinds retain their separate rename dates. GRANT and REVOKE role and account lists expose their existing nonempty invariant in their public collection types, so type-driven construction does not repeatedly sample an empty list.
 
 A statement rejected at a later token can already have produced semantic conditions. Completed-prefix lowering returns typed `Deprecated` and `ParseFailure` values with integer offsets. Name decoding uses the input language profile, including backslash handling. Unknown collations in expressions continue parsing; unknown character sets and definition collations abort it. Cast-target rules are shared with ordinary semantic derivation. Their precision and array errors abort parsing in 8.4 and 9.1, but continue in 8.0. Memory records the ordered conditions and returns the first error without recovering names or target types from SQL.
+
+MySQL query bodies implement `Query`, while `QueryRoot` implements the standalone `Statement` and `Explainable` roles. Read an analyzed SELECT through `$operation->statement->query`; construct a standalone query with `new QueryRoot($query)`. Subqueries, INSERT sources and view definitions retain query bodies directly. This distinction puts position-specific invariants in the model: MySQL 5.7 admits a no-FROM filter in a subquery or INSERT source even though the same standalone SELECT needs a modern profile. MySQL 5.6 does not admit that subquery form. Profile selection must therefore precede execution of directly generated structures.
+
+A cursor declaration also holds a `QueryRoot`, because CURSOR FOR takes the statement grammar position. The query-role property constructs filtered scalar subqueries directly across the profiles that admit them, including an outer SQL_CACHE query on 5.7. The statement inventory requires that no query-body variant implements the standalone statement role and that each statement has an explicit command route. View rebinding resolves its retained query in a view-definition structure, preserving that query's grammatical position.

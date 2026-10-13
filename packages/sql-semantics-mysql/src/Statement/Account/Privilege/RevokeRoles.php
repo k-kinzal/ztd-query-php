@@ -31,12 +31,12 @@ final class RevokeRoles implements Statement
     use Snapshot;
 
     /**
-     * @var list<Grantable> The revoked roles in order
+     * @var non-empty-list<Grantable> The revoked roles in order
      */
     public readonly array $roles;
 
     /**
-     * @var list<Account> The accounts the roles are revoked from
+     * @var non-empty-list<Account> The accounts the roles are revoked from
      */
     public readonly array $users;
 

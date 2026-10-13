@@ -111,7 +111,9 @@ final class HandlerCommand implements Command
             throw SchemaError::TooManyKeyParts->error(count($key->columns));
         }
         $select = $session->analyze($this->select($handler, $statement->where === null ? null : $this->condition($operation->toString(), $statement->limit !== null)));
-        $query = $select->statement;
+        $root = $select->statement;
+        assert($root instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot);
+        $query = $root->query;
         foreach ($select->facts->diagnostics as $diagnostic) {
             throw (new Errors())->error($diagnostic, $session, 'field list', $query);
         }

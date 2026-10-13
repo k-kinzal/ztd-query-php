@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Locking;
  * @visibility public
  * @example Reading the strength of a locking read
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t FOR SHARE');
- *     $query->statement->locking[0]->strength // => \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share
+ *     $query->statement->query->locking[0]->strength // => \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share
  */
 enum LockStrength
 {

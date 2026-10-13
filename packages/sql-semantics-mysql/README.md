@@ -56,6 +56,14 @@ $semantics->analyze('SELECT missing FROM users', [$users])->facts->diagnostics[0
 
 See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md) for operations, facts, contexts, rendering and guarantees.
 
+A SELECT, TABLE, VALUES or set-operation statement has a `Statement\QueryRoot`
+root. Its `query` property holds the query body (`Statement\Query\Select`, for
+example). Query bodies also appear directly in subqueries, INSERT sources and
+view definitions. They implement the shared `Query` role, not `Statement`.
+Construct a standalone query as `new QueryRoot($body)` before passing it to
+`Operation`. The wrapper enforces constraints of the statement position;
+`inputRelation()`, result fields and rendered SQL remain available on the operation.
+
 Written declaration types implement `Statement\Type\DeclaredName`; VARCHAR and
 VARBINARY declarations require a length. Expression facts can instead hold
 `Statement\Type\StringFamily` when the length is unresolved. This descriptor

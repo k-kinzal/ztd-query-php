@@ -15,6 +15,15 @@ use SqlSemantics\Platform\MySql\Lowering\Dml\LoadRule;
 #[Medium]
 final class LoadRuleTest extends TestCase
 {
+    public function testInputNormalizesTheCountKeywordWithoutRecordingAnOperand(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' COUNT 2 INTO TABLE t")->toString());
+        self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' `COUNT` 2 INTO TABLE t")->toString());
+        self::assertSame("LOAD DATA URL 'f' `count` 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' count 2 INTO TABLE t")->toString());
+    }
+
     public function testStatementLowersEveryGeneration(): void
     {
         self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('load data infile \'f\' into table t')->toString());

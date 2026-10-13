@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the members of a comma list
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM t, u JOIN v ON u.a = v.a');
- *     [count($query->statement->from->members), $query->statement->from->members[1] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable] // => [2, true]
+ *     [count($query->statement->query->from->members), $query->statement->query->from->members[1] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable] // => [2, true]
  * @example Refusing a list of one member
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([new \SqlSemantics\Platform\MySql\Statement\Relation\Dual()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

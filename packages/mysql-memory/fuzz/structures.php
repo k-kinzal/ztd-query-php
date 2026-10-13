@@ -28,7 +28,7 @@ $count = filter_var($argv[1] ?? '100', FILTER_VALIDATE_INT, ['options' => ['min_
 $seed = $argv[2] ?? bin2hex(random_bytes(16));
 $selection = $argv[3] ?? '-';
 $root = in_array($selection, ['-', '@each'], true) ? null : $selection;
-$release = $argv[4] ?? '8.4.7';
+$release = $argv[4] ?? 'auto';
 $start = filter_var($argv[5] ?? '0', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
 if ($count === false || $start === false) {
     fwrite(STDERR, "Usage: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START]\n");

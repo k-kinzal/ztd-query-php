@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an assignment
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @n := 5');
- *     [$query->statement->where->right->target->name->value, $query->statement->where->right->value->text] // => ['n', '5']
+ *     [$query->statement->query->where->right->target->name->value, $query->statement->query->where->right->value->text] // => ['n', '5']
  */
 final class VariableAssignment implements Scalar
 {

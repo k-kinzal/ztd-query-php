@@ -22,6 +22,8 @@ final class ParameterBindingTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ? FROM (SELECT ? AS a) t WHERE ?');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         self::assertInstanceOf(DerivedTable::class, $select->from);

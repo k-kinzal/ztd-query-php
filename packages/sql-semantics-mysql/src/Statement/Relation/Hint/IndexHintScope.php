@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation\Hint;
  * @visibility public
  * @example Reading the scope of an index hint
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t USE INDEX FOR ORDER BY (i)');
- *     $query->statement->from->indexHints[0]->scope // => \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintScope::OrderBy
+ *     $query->statement->query->from->indexHints[0]->scope // => \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintScope::OrderBy
  */
 enum IndexHintScope
 {

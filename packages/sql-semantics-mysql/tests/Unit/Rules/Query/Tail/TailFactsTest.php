@@ -86,8 +86,9 @@ final class TailFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('(SELECT 1 UNION SELECT 2) FOR SHARE');
 
-        self::assertInstanceOf(QueryStatement::class, $operation->statement);
-        self::assertInstanceOf(Select::class, (new TailFacts())->trailing($operation->statement->query));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(QueryStatement::class, $operation->statement->query);
+        self::assertInstanceOf(Select::class, (new TailFacts())->trailing($operation->statement->query->query));
     }
 
     public function testLimitReportsAnUndeclaredVariable(): void
@@ -101,9 +102,10 @@ final class TailFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT ?, ?');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->limit->count)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(RowLimit::class, $operation->statement->query->limit);
+        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->query->limit->count)->type);
     }
 
     public function testDeriveWarnsOfTheCharacterSetIntoOutfileNames(): void

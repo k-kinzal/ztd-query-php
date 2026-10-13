@@ -84,6 +84,8 @@ final class DeterminationTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))');
         $operation = $semantics->analyze('SELECT a FROM t1 WHERE id = 1', $semantics->context([$table], true, new SearchPath('fz')));
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
         $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
@@ -97,6 +99,8 @@ final class DeterminationTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))');
         $operation = $semantics->analyze('SELECT a FROM t1 WHERE id = 1', $semantics->context([$table], true, new SearchPath('fz')));
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
         $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
@@ -110,6 +114,8 @@ final class DeterminationTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a + b, a + 1 FROM t1 GROUP BY a + 1', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
         self::assertNotNull($select->groupBy);
@@ -131,6 +137,8 @@ final class DeterminationTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT d.id FROM (SELECT id, a + 1 AS c FROM t1) AS d', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(DerivedTable::class, $select->from);
         $inner = (new BlockParts())->block($select->from, $operation->facts);
@@ -148,6 +156,8 @@ final class DeterminationTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT)')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT (id), id + 1, t1.* FROM t1', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $occurrences = (new BlockParts())->occurrences($select, $operation->facts);
         [$grouped, $expression, $id, $a] = $operation->facts->query($select)->projection;
@@ -168,6 +178,8 @@ final class DeterminationTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a + 1 AS k, MAX(b) FROM t1 GROUP BY k', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         $occurrences = (new BlockParts())->occurrences($select, $operation->facts);

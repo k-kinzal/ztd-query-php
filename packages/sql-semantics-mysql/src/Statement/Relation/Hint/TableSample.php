@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a sampling clause
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-9.1.0'))->analyze('SELECT a FROM t TABLESAMPLE BERNOULLI (10)');
- *     [$query->statement->from->sample->method, $query->statement->from->sample->percentage->text] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli, '10']
+ *     [$query->statement->query->from->sample->method, $query->statement->query->from->sample->percentage->text] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli, '10']
  * @example Refusing an expression as the percentage
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::System, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

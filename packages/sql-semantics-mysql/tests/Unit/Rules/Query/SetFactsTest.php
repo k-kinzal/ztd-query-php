@@ -62,6 +62,8 @@ final class SetFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $nested = $semantics->analyze('(SELECT 1 UNION SELECT 2) UNION SELECT 3')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $nested);
+        $nested = $nested->query;
         self::assertInstanceOf(SetOperation::class, $nested);
 
         self::assertSame([true, false], [(new SetFacts())->combined($nested->left), (new SetFacts())->combined($nested->right)]);
@@ -85,6 +87,6 @@ final class SetFactsTest extends TestCase
 
         $this->expectExceptionMessage('A SELECT that keeps its own LIMIT before a later UNION needs MySQL 5.6.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), $union);
+        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($union));
     }
 }

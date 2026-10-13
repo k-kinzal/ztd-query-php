@@ -30,6 +30,8 @@ final class StringLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = 'x' \"y\" 'z'");
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
@@ -44,6 +46,8 @@ final class StringLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 'a'");
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -63,6 +67,8 @@ final class StringLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _UTF8MB4'x'");
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -81,6 +87,8 @@ final class StringLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT N'x' 'y'");
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -102,8 +110,8 @@ final class StringLiteralTest extends TestCase
         $plain = new Semantics(Dialect::MySql);
         $verbatim = new Semantics(Dialect::MySql, null, Mode::fromString('NO_BACKSLASH_ESCAPES'));
 
-        self::assertSame("SELECT 'a\\\\b'", (new Operation($plain->context(), $statement))->toString());
-        self::assertSame("SELECT 'a\\b'", (new Operation($verbatim->context(), $statement))->toString());
+        self::assertSame("SELECT 'a\\\\b'", (new Operation($plain->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement)))->toString());
+        self::assertSame("SELECT 'a\\b'", (new Operation($verbatim->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement)))->toString());
     }
 
     public function testRenderDecodesAndSpellsEscapesUnderTheBackslashRule(): void
@@ -111,6 +119,8 @@ final class StringLiteralTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze("SELECT 'a\\nb'");
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -127,6 +137,8 @@ final class StringLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->analyze("SELECT 'a\\nb'");
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);

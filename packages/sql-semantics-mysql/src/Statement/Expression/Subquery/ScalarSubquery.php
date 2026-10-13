@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Comparing with a scalar subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = (SELECT 1)');
- *     $query->statement->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery // => true
+ *     $query->statement->query->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery // => true
  */
 final class ScalarSubquery implements Scalar
 {

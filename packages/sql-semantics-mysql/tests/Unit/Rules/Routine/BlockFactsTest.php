@@ -35,6 +35,8 @@ final class BlockFactsTest extends TestCase
         $inner = $outer->statements[0];
         self::assertInstanceOf(Block::class, $inner);
         $select = $inner->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -63,7 +65,7 @@ final class BlockFactsTest extends TestCase
         self::assertInstanceOf(Block::class, $block);
         $cursor = $block->declarations[1];
         self::assertInstanceOf(CursorDeclaration::class, $cursor);
-        $query = $cursor->query;
+        $query = $cursor->query->query;
         self::assertInstanceOf(Select::class, $query);
         $where = $query->where;
         self::assertInstanceOf(Comparison::class, $where);
@@ -167,6 +169,8 @@ final class BlockFactsTest extends TestCase
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $first = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $first);
@@ -205,6 +209,8 @@ final class BlockFactsTest extends TestCase
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);

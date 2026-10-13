@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the path of an unquoting extraction
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a->>'$.b' = 'x'");
- *     [$query->statement->where->left->path->value, $query->statement->where->left->unquote] // => ['$.b', true]
+ *     [$query->statement->query->where->left->path->value, $query->statement->query->where->left->unquote] // => ['$.b', true]
  */
 final class JsonExtraction implements Scalar
 {

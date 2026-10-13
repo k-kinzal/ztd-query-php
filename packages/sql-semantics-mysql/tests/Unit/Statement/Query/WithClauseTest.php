@@ -29,7 +29,8 @@ final class WithClauseTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('WITH c AS (SELECT 1 AS x) SELECT x FROM c');
-        $with = $operation->statement instanceof QueryExpression ? $operation->statement->with : null;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        $with = $operation->statement->query instanceof QueryExpression ? $operation->statement->query->with : null;
         $derivation = new Derivation($semantics->context());
 
         self::assertNotNull($with);

@@ -38,6 +38,8 @@ final class StringCodecTest extends TestCase
         $codec = Platforms::of('mysql')->codec($semantics->profile());
         self::assertInstanceOf(StringCodec::class, $codec);
         $statement = $semantics->analyze('SELECT ' . $codec->quote($bytes))->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(SelectExpression::class, $statement->items[0]);

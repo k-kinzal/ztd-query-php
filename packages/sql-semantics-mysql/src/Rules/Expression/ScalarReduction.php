@@ -40,11 +40,11 @@ final class ScalarReduction
         while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
-        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || $this->filtered($query->where) || $query->having !== null || $query->qualify !== null || $query->into !== null || count($query->items) !== 1 || (new RollupItems())->windowed($query) || ($release !== GrammarRelease::MySql910 && (new RollupItems())->rolls($query))) {
+        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || ($legacy ? $query->where !== null : $this->filtered($query->where)) || $query->having !== null || $query->qualify !== null || $query->into !== null || count($query->items) !== 1 || (new RollupItems())->windowed($query) || ($release !== GrammarRelease::MySql910 && (new RollupItems())->rolls($query))) {
             return null;
         }
         $item = $query->items[0];
-        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
 
         return $item instanceof SelectExpression && !($legacy && $item->expression instanceof ColumnUse) && !(new Aggregation())->aggregates([$item->expression]) ? $item->expression : null;
     }

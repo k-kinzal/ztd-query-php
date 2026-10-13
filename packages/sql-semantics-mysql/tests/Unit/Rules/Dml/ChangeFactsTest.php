@@ -24,7 +24,6 @@ use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
@@ -108,7 +107,8 @@ final class ChangeFactsTest extends TestCase
     public function testLabelAnswersTheCorrelationNameOrTheTableName(): void
     {
         $query = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
-        self::assertInstanceOf(Query::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
         self::assertSame('x', (new ChangeFacts())->label(new TableReference(new QualifiedName(new Name('t')), new Name('x')))?->value);
         self::assertSame('t', (new ChangeFacts())->label(new TableReference(new QualifiedName(new Name('t'))))?->value);
@@ -145,6 +145,8 @@ final class ChangeFactsTest extends TestCase
     public function testComputedTellsAnItemThatIsNotAColumn(): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze('SELECT a + 1 AS a, b, (c) AS d FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $statement);
 
         self::assertSame([true, false, false, false], [(new ChangeFacts())->computed($statement, 'A'), (new ChangeFacts())->computed($statement, 'b'), (new ChangeFacts())->computed($statement, 'd'), (new ChangeFacts())->computed($statement, 'z')]);
@@ -156,8 +158,14 @@ final class ChangeFactsTest extends TestCase
         $joined = $semantics->analyze('SELECT * FROM (t1 AS x JOIN t2) JOIN t3')->statement;
         $derived = $semantics->analyze('SELECT * FROM (SELECT * FROM t2 AS y) AS e, t1')->statement;
         $grouped = $semantics->analyze('SELECT * FROM (SELECT a FROM t2 GROUP BY a) AS e')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $joined);
+        $joined = $joined->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $joined);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $derived);
+        $derived = $derived->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $derived);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $grouped);
+        $grouped = $grouped->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $grouped);
 
         self::assertSame('x', (new ChangeFacts())->leading($joined->from)?->alias()?->value);
@@ -170,6 +178,8 @@ final class ChangeFactsTest extends TestCase
     {
         $statement = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
 
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $statement);
         self::assertSame($statement, (new ChangeFacts())->block(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($statement)));
     }

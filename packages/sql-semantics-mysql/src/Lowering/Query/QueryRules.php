@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\BlockRule;
@@ -66,10 +65,7 @@ final class QueryRules
      */
     public function statement(Node $statement): Statement
     {
-        $query = $this->query($statement);
-        Check::invariant($query instanceof Statement, 'Every query of the query family is also a statement.');
-
-        return $query;
+        return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($this->query($statement)), $statement);
     }
 
     /**

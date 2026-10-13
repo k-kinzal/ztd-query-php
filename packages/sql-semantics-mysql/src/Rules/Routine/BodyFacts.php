@@ -65,8 +65,8 @@ final class BodyFacts
         if ($statement instanceof SetVariables && $scope->time !== null && $scope->event !== null) {
             (new TriggerAssignments())->check($statement, $scope->time, $scope->event, $derivation, $scope);
         }
-        if ($statement instanceof Query) {
-            $derivation->query($statement, $scope->environment);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+            $derivation->query($statement->query, $scope->environment);
         } elseif ($statement instanceof Statement) {
             $derivation->program($statement, $scope->environment);
         }

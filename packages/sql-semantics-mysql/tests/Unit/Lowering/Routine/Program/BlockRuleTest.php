@@ -161,7 +161,7 @@ final class BlockRuleTest extends TestCase
         self::assertInstanceOf(CursorDeclaration::class, $declaration);
 
         self::assertSame('c', $declaration->name->value);
-        self::assertInstanceOf($class, $declaration->query);
+        self::assertInstanceOf($class, $declaration->query->query);
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR ' . $rendering . '; END', $operation->toString());
     }
 

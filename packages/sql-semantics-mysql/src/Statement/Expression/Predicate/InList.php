@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the elements of a list
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a NOT IN (1, 2)');
- *     [$query->statement->where->negated, count($query->statement->where->elements)] // => [true, 2]
+ *     [$query->statement->query->where->negated, count($query->statement->query->where->elements)] // => [true, 2]
  */
 final class InList implements Scalar
 {

@@ -76,6 +76,8 @@ final class BlocksTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT DISTINCT a FROM t ORDER BY b DESC LIMIT 3');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -159,11 +161,12 @@ final class BlocksTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY)');
         $operation = $session->analyze($sql);
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
-        self::assertSame($empty, (new Blocks($planner))->empty($operation->statement, null));
+        self::assertSame($empty, (new Blocks($planner))->empty($operation->statement->query, null));
         self::assertSame([], $session->diagnostics->conditions);
     }
 
@@ -186,6 +189,8 @@ final class BlocksTest extends TestCase
         $session->query("INSERT INTO t VALUES (1, 'x')");
         $operation = $session->analyze('TABLE t');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(ExplicitTable::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -259,6 +264,8 @@ final class BlocksTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 LIMIT 7, 0');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -286,6 +293,8 @@ final class BlocksTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT a AS c, a  +  1, a FROM t');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -351,6 +360,8 @@ final class BlocksTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL WHERE (1 AND (2 && 3)) AND (4 OR 5)');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->where);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -399,6 +410,8 @@ final class BlocksTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT b, a + 1 AS c FROM t');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -416,6 +429,8 @@ final class BlocksTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT a AS x FROM t ORDER BY x DESC, b, 1 + 1');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -502,6 +517,8 @@ final class BlocksTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT a FROM t');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);

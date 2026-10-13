@@ -177,9 +177,10 @@ final class QueryRulesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT a AS `x y`, b 'z' FROM t AS u");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        self::assertSame('x y', $operation->statement->items[0]->alias?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
+        self::assertSame('x y', $operation->statement->query->items[0]->alias?->value);
         self::assertSame('SELECT a AS `x y`, b z FROM t AS u', $operation->toString());
     }
 

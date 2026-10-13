@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Comparing how two names sound
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a SOUNDS LIKE 'Smith'");
- *     $query->statement->where->pattern->value() // => 'Smith'
+ *     $query->statement->query->where->pattern->value() // => 'Smith'
  */
 final class SoundsLike implements Scalar
 {

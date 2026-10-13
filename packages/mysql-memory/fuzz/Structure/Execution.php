@@ -36,7 +36,7 @@ final class Execution
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Values and domains bound to the generated parameter occurrences
      * @throws \MySqlMemory\Error\SqlError When the database rejects the generated structure
      */
-    public function run(Statement|Scalar $node, string $release = '8.4.7', array $parameters = [], ?string $mode = null): Reply
+    public function run(Statement|Scalar|\SqlSemantics\Statement\Query $node, string $release = '8.4.7', array $parameters = [], ?string $mode = null): Reply
     {
         $session = (new Instance($release))->connect();
         if ($mode !== null) {
@@ -52,9 +52,9 @@ final class Execution
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to parameter occurrences
      * @throws \MySqlMemory\Error\SqlError When execution rejects the structure
      */
-    public function runIn(Session $session, Statement|Scalar $node, array $parameters = []): Reply
+    public function runIn(Session $session, Statement|Scalar|\SqlSemantics\Statement\Query $node, array $parameters = []): Reply
     {
-        $statement = $node instanceof Statement ? $node : new Select([], [new SelectExpression($node)]);
+        $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot($node instanceof \SqlSemantics\Statement\Query ? $node : new Select([], [new SelectExpression($node)]));
         $domains = array_map(static fn (array $parameter): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $parameter[1]->resolved(), $parameters);
         $semantics = new Semantics(Dialect::MySql, 'mysql-' . $session->instance->version, Mode::fromString((string) $session->variables->read('sql_mode')), $this->parameters($statement));
         $context = $semantics->context($session->instance->dictionary->declarations(), true, null, $session->resolution($domains));

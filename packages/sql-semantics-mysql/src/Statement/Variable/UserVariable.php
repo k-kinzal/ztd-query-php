@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Naming the session state a variable depends on
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @total');
- *     [$query->statement->where->right->name->value, $query->facts->scalar($query->statement->where->right)->type->missing[0]->describe()] // => ['total', 'the session state: user variable @total']
+ *     [$query->statement->query->where->right->name->value, $query->facts->scalar($query->statement->query->where->right)->type->missing[0]->describe()] // => ['total', 'the session state: user variable @total']
  */
 final class UserVariable implements Scalar
 {

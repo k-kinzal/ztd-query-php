@@ -42,6 +42,8 @@ final class GroupKeysTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $query = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t(n INT)')]);
         $select = $query->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $keys = new GroupKeys();
 
@@ -81,10 +83,11 @@ final class GroupKeysTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $query = $semantics->analyze('SELECT MIN(n) FROM t GROUP BY 1+1,n', [$semantics->analyze('CREATE TABLE t(n INT)')]);
-        self::assertInstanceOf(Select::class, $query->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query->statement);
+        self::assertInstanceOf(Select::class, $query->statement->query);
 
-        self::assertTrue((new GroupKeys())->varying($query->statement, $query->facts));
-        self::assertTrue((new GroupKeys())->varying($query->statement));
+        self::assertTrue((new GroupKeys())->varying($query->statement->query, $query->facts));
+        self::assertTrue((new GroupKeys())->varying($query->statement->query));
     }
 
 }

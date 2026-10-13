@@ -69,7 +69,11 @@ final class RollupItemsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $rollup = $semantics->analyze('SELECT a FROM t GROUP BY a WITH ROLLUP')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $rollup);
+        $rollup = $rollup->query;
         $plain = $semantics->analyze('SELECT a FROM t GROUP BY a')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain);
+        $plain = $plain->query;
 
         self::assertInstanceOf(Select::class, $rollup);
         self::assertInstanceOf(Select::class, $plain);
@@ -82,6 +86,8 @@ final class RollupItemsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $operation = $semantics->analyze('SELECT a + 1 AS x, b FROM t GROUP BY x, 2 WITH ROLLUP', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame([$select->items[0]->expression ?? null, $select->items[1]->expression ?? null], (new RollupItems())->groups($select, $operation->facts));
@@ -93,6 +99,8 @@ final class RollupItemsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $operation = $semantics->analyze('SELECT t.*, a + 1 FROM t GROUP BY a, a + 1 WITH ROLLUP', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $groups = (new RollupItems())->groups($select, $operation->facts);
 
@@ -105,6 +113,8 @@ final class RollupItemsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $operation = $semantics->analyze('SELECT IFNULL(a, 0), SUM(a), GROUPING(a), b FROM t GROUP BY a WITH ROLLUP', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $groups = (new RollupItems())->groups($select, $operation->facts);
         $items = array_values(array_filter($select->items, static fn (object $item): bool => $item instanceof SelectExpression));
@@ -175,9 +185,11 @@ final class RollupItemsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $query = $semantics->analyze('SELECT a, COUNT(*) FROM t GROUP BY a WITH ROLLUP', [$table])->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
         self::assertInstanceOf(Select::class, $query);
         $derivation = new Derivation($semantics->context([$table]));
-        $query->deriveStatement($derivation);
+        $derivation->query($query, $derivation->environment());
 
         self::assertSame([true, false], [(new RollupItems())->rolledAt($query, 0, $derivation), (new RollupItems())->rolledAt($query, 1, $derivation)]);
     }
@@ -188,6 +200,8 @@ final class RollupItemsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (p INT)');
         $operation = $semantics->analyze('SELECT p, ROW_NUMBER() OVER (ORDER BY p DESC) FROM t GROUP BY p WITH ROLLUP', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
 
         self::assertTrue((new RollupItems())->windowed($select));

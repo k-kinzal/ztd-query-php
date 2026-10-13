@@ -131,7 +131,7 @@ final class Locations
      */
     public function defaults(Operation $operation, Locator $locator, Session $session, array $located): array
     {
-        foreach ($operation->statement instanceof Query ? (new Walker())->find($operation->statement, DefaultOfColumn::class) : [] as $default) {
+        foreach ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? (new Walker())->find($operation->statement, DefaultOfColumn::class) : [] as $default) {
             $place = $locator->place($default->column);
             $name = $place === null ? null : $this->undefaulted($default, $operation, $session);
             if ($place !== null && $name !== null) {

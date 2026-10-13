@@ -44,9 +44,10 @@ final class SelectFactsTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a AS x FROM t WHERE b = 1 GROUP BY a HAVING x > 1 ORDER BY x', [$t]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
         self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->orderBy[0]->expression)->resolution);
+        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->resolution);
         self::assertSame($t->columns[0], $operation->field('x')->column());
     }
 
@@ -76,6 +77,8 @@ final class SelectFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x, 2, a, 1+1, 3 AS y FROM t');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame(['x', '2', '1+1', 'y'], array_map(static fn (Field $field): ?string => $field->name?->value, (new SelectFacts())->aliases($select, $operation->fields()->items ?? [], $operation->context->profile)));
@@ -85,6 +88,8 @@ final class SelectFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1+1 FROM t ORDER BY `1+1`', []);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($select->orderBy[0]->expression)->resolution);

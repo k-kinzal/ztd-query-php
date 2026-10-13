@@ -29,10 +29,12 @@ final class FromRuleTest extends TestCase
         $one = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t');
         $two = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t, u');
 
-        self::assertInstanceOf(Select::class, $one->statement);
-        self::assertInstanceOf(Select::class, $two->statement);
-        self::assertInstanceOf(TableReference::class, $one->statement->from);
-        self::assertInstanceOf(TableList::class, $two->statement->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $one->statement);
+        self::assertInstanceOf(Select::class, $one->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $two->statement);
+        self::assertInstanceOf(Select::class, $two->statement->query);
+        self::assertInstanceOf(TableReference::class, $one->statement->query->from);
+        self::assertInstanceOf(TableList::class, $two->statement->query->from);
     }
 
     public function testMembersLowersTheReferencesInOrder(): void

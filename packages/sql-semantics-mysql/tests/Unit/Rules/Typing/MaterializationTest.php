@@ -157,6 +157,8 @@ final class MaterializationTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $derived = static function (string $sql) use ($semantics): DerivedTable {
             $select = $semantics->analyze($sql)->statement;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+            $select = $select->query;
             self::assertInstanceOf(Select::class, $select);
             self::assertInstanceOf(DerivedTable::class, $select->from);
 
@@ -173,8 +175,9 @@ final class MaterializationTest extends TestCase
     public function testMergeableRespectsTheReleaseAndSessionSetting(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $query = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $query = $operation->statement->query;
         $rules = new Materialization();
 
         self::assertFalse($rules->mergeable($query, GrammarRelease::MySql5651));
@@ -187,6 +190,8 @@ final class MaterializationTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $query = static function (string $sql) use ($semantics): \SqlSemantics\Statement\Query {
             $select = $semantics->analyze($sql)->statement;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+            $select = $select->query;
             self::assertInstanceOf(Select::class, $select);
             self::assertInstanceOf(DerivedTable::class, $select->from);
 

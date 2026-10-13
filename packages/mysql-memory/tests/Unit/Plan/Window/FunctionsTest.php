@@ -110,8 +110,9 @@ final class FunctionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $argument = new ColumnRead(Domain::integer(), 0);
         [$sum, $sums] = (new Functions($planner))->cached(new Analytic(null, new Accumulation(AggregateFunction::Sum, [$argument], false, Domain::decimal(33, 0)), [], 1, Domain::decimal(33, 0)), 3);
         [$lag, $lags] = (new Functions($planner))->cached(new Analytic(WindowFunctionKind::Lag, null, [$argument], 1, Domain::integer()), 4);

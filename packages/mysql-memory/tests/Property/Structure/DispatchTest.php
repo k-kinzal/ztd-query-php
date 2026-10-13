@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Statement;
-use SqlSemantics\Statement\Query;
 
 /**
  * Every inventoried statement variant has an explicit execution route.
@@ -45,7 +44,7 @@ final class DispatchTest extends TestCase
     #[DataProvider('providerStatements')]
     public function testEveryStatementHasAnExplicitCommandRoute(string $class): void
     {
-        $specialized = is_a($class, Query::class, true) || in_array($class, [InsertRows::class, InsertSet::class, InsertQuery::class, Update::class, Delete::class, Resignal::class], true);
+        $specialized = in_array($class, [InsertRows::class, InsertSet::class, InsertQuery::class, Update::class, Delete::class, Resignal::class], true);
         $command = Dispatcher::COMMANDS[$class] ?? null;
 
         self::assertTrue($specialized || $command !== null, 'No command consumes ' . $class);

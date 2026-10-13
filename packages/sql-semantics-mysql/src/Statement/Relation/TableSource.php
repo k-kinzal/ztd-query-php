@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation;
  *
  * @visibility public
  * @example Identifying an input table
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT * FROM t')->statement->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableSource // => true
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT * FROM t')->statement->query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableSource // => true
  */
 interface TableSource extends \SqlSemantics\Statement\Relation
 {

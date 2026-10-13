@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the escape character
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a LIKE 'x!%' ESCAPE '!'");
- *     $query->statement->where->escape->value() // => '!'
+ *     $query->statement->query->where->escape->value() // => '!'
  */
 final class Like implements Scalar
 {

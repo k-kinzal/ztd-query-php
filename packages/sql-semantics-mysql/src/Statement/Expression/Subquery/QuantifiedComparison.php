@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Comparing with every row
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a >= ALL (SELECT 1)');
- *     [$query->statement->where->operator->value, $query->statement->where->quantifier->value] // => ['>=', 'ALL']
+ *     [$query->statement->query->where->operator->value, $query->statement->query->where->quantifier->value] // => ['>=', 'ALL']
  */
 final class QuantifiedComparison implements Scalar
 {

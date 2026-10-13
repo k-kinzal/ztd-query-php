@@ -91,11 +91,9 @@ final class Cursors
             throw ProgramError::CursorAlreadyOpen->error();
         }
         $session = $this->statements->session;
-        $query = $cursor->declaration->query;
-        if (!$query instanceof \SqlSemantics\Statement\Statement) {
-            throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('a cursor over ' . $query::class);
-        }
-        $operation = $this->statements->operation($query);
+        $root = $cursor->declaration->query;
+        $query = $root->query;
+        $operation = $this->statements->operation($root);
         $session->diagnostics->clear();
         (new Problems())->raise($operation, $session);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, microtime(true));

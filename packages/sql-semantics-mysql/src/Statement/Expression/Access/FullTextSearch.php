@@ -38,7 +38,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the searched columns
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)");
- *     [count($query->statement->where->columns), $query->toString()] // => [2, "SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)"]
+ *     [count($query->statement->query->where->columns), $query->toString()] // => [2, "SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)"]
  */
 final class FullTextSearch implements Scalar
 {

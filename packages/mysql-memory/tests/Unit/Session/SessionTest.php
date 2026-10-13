@@ -187,7 +187,8 @@ final class SessionTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT a FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
         self::assertSame([], $operation->facts->diagnostics);
     }
 
@@ -207,7 +208,8 @@ final class SessionTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT ?', true);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
     }
 
     public function testAnalyzeRefusesAStatementThatDoesNotParse(): void

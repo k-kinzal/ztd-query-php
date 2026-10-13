@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Type\NullOnly;
  * @visibility public
  * @example Typing a bare NULL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = NULL');
- *     $query->facts->scalar($query->statement->where->right)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
+ *     $query->facts->scalar($query->statement->query->where->right)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
  */
 final class NullLiteral implements LiteralExpression
 {

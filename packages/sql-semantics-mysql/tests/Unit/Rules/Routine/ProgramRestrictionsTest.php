@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramRestrictions;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Query;
 
 #[CoversClass(ProgramRestrictions::class)]
 #[Medium]
@@ -320,7 +319,8 @@ final class ProgramRestrictionsTest extends TestCase
     public function testIntoTellsWhetherTheQueryWritesItsRows(string $sql, bool $expected): void
     {
         $query = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
-        self::assertInstanceOf(Query::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
         self::assertSame($expected, (new ProgramRestrictions())->into($query));
     }

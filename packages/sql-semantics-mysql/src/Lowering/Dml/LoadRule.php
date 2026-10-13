@@ -202,6 +202,10 @@ final class LoadRule
         if ($count->signature !== 'opt_source_count: IDENT_sys NUM') {
             throw ImplementationGap::production($count);
         }
+        $spelling = $this->lowering->form($count->node(0))->token(0)->text;
+        if ((new \SqlSemantics\Platform\MySql\Rules\Identifiers())->decode($spelling) === 'COUNT') {
+            return new LoadInput($local, $source, $file, $number, $order);
+        }
         $word = $this->lowering->names->identifier($count->node(0));
         if (strcasecmp($word->value, 'count') !== 0) {
             throw new AnalysisException('Syntax error: COUNT expected before the number of files.');

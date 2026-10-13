@@ -28,17 +28,19 @@ final class ExplicitTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('TABLE shop.t');
 
-        self::assertInstanceOf(ExplicitTable::class, $operation->statement);
-        self::assertSame('t', $operation->statement->name()->name->value);
-        self::assertSame('shop', $operation->statement->name()->schema?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(ExplicitTable::class, $operation->statement->query);
+        self::assertSame('t', $operation->statement->query->name()->name->value);
+        self::assertSame('shop', $operation->statement->query->name()->schema?->value);
     }
 
     public function testAliasAnswersNoCorrelationName(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t');
 
-        self::assertInstanceOf(ExplicitTable::class, $operation->statement);
-        self::assertNull($operation->statement->alias());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(ExplicitTable::class, $operation->statement->query);
+        self::assertNull($operation->statement->query->alias());
     }
 
     public function testDeriveStatementRecordsTheColumnsAsTheOutput(): void
@@ -54,8 +56,9 @@ final class ExplicitTableTest extends TestCase
         ]);
         $operation = $semantics->analyze('TABLE t', [$t]);
 
-        self::assertInstanceOf(ExplicitTable::class, $operation->statement);
-        self::assertSame($operation->facts->query($operation->statement), $operation->facts->output);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(ExplicitTable::class, $operation->statement->query);
+        self::assertSame($operation->facts->query($operation->statement->query), $operation->facts->output);
         self::assertSame($t->columns[1], $operation->field('b')->column());
     }
 
@@ -80,8 +83,9 @@ final class ExplicitTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t');
 
-        self::assertInstanceOf(ExplicitTable::class, $operation->statement);
-        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement)->table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(ExplicitTable::class, $operation->statement->query);
+        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement->query)->table);
         self::assertNull($operation->fields());
     }
 

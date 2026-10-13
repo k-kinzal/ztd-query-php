@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * @visibility public
  * @example Reading the width of a row
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE (a, b) IS NULL');
- *     $query->facts->scalar($query->statement->where->operand)->type->descriptor->width // => 2
+ *     $query->facts->scalar($query->statement->query->where->operand)->type->descriptor->width // => 2
  */
 final class Tuple implements TypeDescriptor
 {

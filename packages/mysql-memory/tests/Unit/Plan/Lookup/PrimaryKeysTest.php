@@ -18,7 +18,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Statement\Query;
 
 #[CoversClass(PrimaryKeys::class)]
 #[Small]
@@ -57,10 +56,10 @@ final class PrimaryKeysTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT,b INT,PRIMARY KEY(a,b))');
         $operation = $session->analyze('SELECT a,b FROM t WHERE ' . $predicate);
-        self::assertInstanceOf(Query::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $plan = $planner->query($operation->statement, null);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $plan = $planner->query($operation->statement->query, null);
 
         self::assertInstanceOf(Project::class, $plan->root);
         self::assertInstanceOf(Filter::class, $plan->root->input);

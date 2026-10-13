@@ -40,7 +40,7 @@ final class Locks
      */
     public function check(Statement $statement, Session $session): void
     {
-        if (!$statement instanceof Query && !$statement instanceof InsertRows && !$statement instanceof InsertSet && !$statement instanceof InsertQuery
+        if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && !$statement instanceof InsertRows && !$statement instanceof InsertSet && !$statement instanceof InsertQuery
             && !$statement instanceof Update && !$statement instanceof Delete && !$statement instanceof MultipleDelete) {
             return;
         }

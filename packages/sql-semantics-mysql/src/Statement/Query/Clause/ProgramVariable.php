@@ -35,7 +35,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a program variable used as a row count
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t LIMIT n');
- *     $query->statement->limit->count->name->value // => 'n'
+ *     $query->statement->query->limit->count->name->value // => 'n'
  */
 final class ProgramVariable implements Operand
 {

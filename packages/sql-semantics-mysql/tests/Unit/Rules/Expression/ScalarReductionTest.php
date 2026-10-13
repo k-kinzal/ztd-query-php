@@ -116,4 +116,14 @@ final class ScalarReductionTest extends TestCase
         self::assertNotNull($operation->facts->scalar($subquery)->replacement);
         self::assertSame(\SqlSemantics\Statement\Type\Nullability::Nullable, $operation->field(0)->nullability);
     }
+    public function testExpressionRetainsATrueFilterOnMySql57(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT (SELECT 1 WHERE 1)');
+        $subquery = $operation->field(0)->expression;
+        self::assertInstanceOf(ScalarSubquery::class, $subquery);
+
+        self::assertNull($operation->facts->scalar($subquery)->replacement);
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::Nullable, $operation->field(0)->nullability);
+    }
+
 }

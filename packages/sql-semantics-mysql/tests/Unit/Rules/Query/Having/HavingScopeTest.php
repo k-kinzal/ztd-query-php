@@ -46,7 +46,11 @@ final class HavingScopeTest extends TestCase
         $plain = $semantics->analyze('SELECT a AS x FROM t GROUP BY x HAVING a > 0', [$table]);
         $rollup = $semantics->analyze('SELECT a AS x FROM t GROUP BY x WITH ROLLUP HAVING a > 0', [$table]);
         $plainSelect = $plain->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plainSelect);
+        $plainSelect = $plainSelect->query;
         $rollupSelect = $rollup->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $rollupSelect);
+        $rollupSelect = $rollupSelect->query;
         self::assertInstanceOf(Select::class, $plainSelect);
         self::assertInstanceOf(Select::class, $rollupSelect);
         self::assertInstanceOf(Comparison::class, $plainSelect->having);
@@ -68,7 +72,11 @@ final class HavingScopeTest extends TestCase
         $selected = $semantics->analyze('SELECT a AS x FROM u HAVING a > 0');
         $missing = $semantics->analyze('SELECT a AS x FROM u HAVING b > 0');
         $groupedSelect = $grouped->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $groupedSelect);
+        $groupedSelect = $groupedSelect->query;
         $selectedSelect = $selected->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $selectedSelect);
+        $selectedSelect = $selectedSelect->query;
         self::assertInstanceOf(Select::class, $groupedSelect);
         self::assertInstanceOf(Select::class, $selectedSelect);
         self::assertInstanceOf(Comparison::class, $groupedSelect->having);
@@ -86,6 +94,8 @@ final class HavingScopeTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('SELECT MAX(a) FROM t HAVING MAX(c) > 0', [$semantics->analyze('CREATE TABLE t (a INT, c INT)')]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
         $maximum = $select->having->left;

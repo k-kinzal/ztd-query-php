@@ -33,6 +33,8 @@ final class GroupingTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 + 1');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -53,6 +55,8 @@ final class GroupingTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT a, COUNT(*), SUM(b) FROM t GROUP BY a');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -91,6 +95,8 @@ final class GroupingTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT COUNT(*), (SELECT MAX(a) FROM t), SUM(a) OVER () FROM t HAVING MIN(a) > 0 ORDER BY GROUP_CONCAT(a)');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -109,6 +115,8 @@ final class GroupingTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT (SELECT SUM(t.a)) FROM t');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -128,6 +136,8 @@ final class GroupingTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT COUNT(DISTINCT a) FROM t');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -153,6 +163,8 @@ final class GroupingTest extends TestCase
         $session->query('SET SESSION group_concat_max_len = 10');
         $operation = $session->analyze("SELECT GROUP_CONCAT(a ORDER BY a DESC SEPARATOR '-') FROM t");
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -246,6 +258,8 @@ final class GroupingTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT a + 0 AS x, b, t.* FROM t GROUP BY x, b WITH ROLLUP');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -303,6 +317,8 @@ final class GroupingTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT a + 1 AS x FROM t GROUP BY x, 1, (a)');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -423,8 +439,12 @@ final class GroupingTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT a, b FROM t GROUP BY (b), a');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $other = $session->analyze('SELECT a FROM t GROUP BY a + 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $other);
+        $other = $other->query;
         self::assertInstanceOf(Select::class, $other);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $grouping = new Grouping(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));

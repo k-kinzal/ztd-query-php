@@ -27,6 +27,8 @@ final class ColumnReadsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a + COUNT(b) + GROUPING(id) FROM t1 GROUP BY id WITH ROLLUP', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
@@ -41,6 +43,8 @@ final class ColumnReadsTest extends TestCase
     public function testAnyValueHoldsForACallOfAnyValue(): void
     {
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT ANY_VALUE(a), any_value(a) + 1, COALESCE(a) FROM t1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $reads = new ColumnReads();
 
@@ -50,6 +54,8 @@ final class ColumnReadsTest extends TestCase
     public function testAggregateHoldsForAnAggregateWithoutAWindowAndForGrouping(): void
     {
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT COUNT(a), COUNT(a) OVER (), GROUPING(a), a + 1, GROUP_CONCAT(a), JSON_OBJECTAGG(a, b) FROM t1 GROUP BY a WITH ROLLUP')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $reads = new ColumnReads();
 
@@ -62,6 +68,8 @@ final class ColumnReadsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT t1.a, A, b FROM t1', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         self::assertInstanceOf(SelectExpression::class, $select->items[1]);
@@ -84,6 +92,8 @@ final class ColumnReadsTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (Id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT 1 FROM t1 JOIN t1 AS x ON 1', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(JoinedTable::class, $select->from);
         $relations = [

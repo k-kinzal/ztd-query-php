@@ -36,9 +36,9 @@ final class Profiles
      *
      * @throws DomainException When no supported interpretation corresponds
      */
-    public function select(Statement|Scalar $node): LanguageProfile
+    public function select(Statement|Scalar|\SqlSemantics\Statement\Query $node): LanguageProfile
     {
-        $statement = $node instanceof Statement ? $node : new Select([], [new SelectExpression($node)]);
+        $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot($node instanceof \SqlSemantics\Statement\Query ? $node : new Select([], [new SelectExpression($node)]));
         $platform = Platforms::of('mysql');
         $failures = [];
         foreach ($this->candidates($statement) as $profile) {

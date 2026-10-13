@@ -32,10 +32,10 @@ use SqlSemantics\Statement\Spelling\Layout;
  * @visibility public
  * @example Reading a projected expression and its alias
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a AS total FROM t');
- *     [$query->statement->items[0]->expression->name->value, $query->statement->items[0]->alias?->value] // => ['a', 'total']
+ *     [$query->statement->query->items[0]->expression->name->value, $query->statement->query->items[0]->alias?->value] // => ['a', 'total']
  * @example Reading the text an unaliased item is written as
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1+1');
- *     [$query->statement->items[0]->layout?->text(), $query->field(0)->name?->value, $query->toString()] // => ['1+1', '1+1', 'SELECT 1+1']
+ *     [$query->statement->query->items[0]->layout?->text(), $query->field(0)->name?->value, $query->toString()] // => ['1+1', '1+1', 'SELECT 1+1']
  */
 final class SelectExpression implements SelectItem
 {

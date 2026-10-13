@@ -52,6 +52,8 @@ final class OrderingAliasesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
         $operation = $semantics->analyze('SELECT MIN(a) AS v FROM t ORDER BY (SELECT MIN(a) FROM t)', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
 
@@ -64,6 +66,8 @@ final class OrderingAliasesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
         $operation = $semantics->analyze('SELECT MIN(a) AS v FROM t GROUP BY a ORDER BY (SELECT ABS(v))', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
         $problem = (new OrderingAliases())->correlated($select->orderBy[0]->expression, $operation->facts, $owned);

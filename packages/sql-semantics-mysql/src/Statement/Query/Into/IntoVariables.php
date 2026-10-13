@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the targets
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t INTO @x, y');
- *     [$query->statement->into->targets[0]->name->value, $query->statement->into->targets[1]->name->value] // => ['x', 'y']
+ *     [$query->statement->query->into->targets[0]->name->value, $query->statement->query->into->targets[1]->name->value] // => ['x', 'y']
  */
 final class IntoVariables implements IntoDestination
 {

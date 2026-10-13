@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Testing a column for NULL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a IS NOT NULL');
- *     $query->statement->where->negated // => true
+ *     $query->statement->query->where->negated // => true
  */
 final class NullTest implements Scalar
 {

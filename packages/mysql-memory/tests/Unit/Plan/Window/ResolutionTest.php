@@ -28,6 +28,8 @@ final class ResolutionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $select = $session->analyze('SELECT ROW_NUMBER() OVER (ORDER BY 2 + 0), RANK() OVER w FROM (SELECT 1 a) t WINDOW w AS (PARTITION BY a), v AS (w ORDER BY a)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         self::assertInstanceOf(SelectExpression::class, $select->items[1]);

@@ -41,6 +41,7 @@ final class ModernForms
             || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, CastAtLocal::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
             || match (true) {
                 $value instanceof Select => $this->query($value),
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot => (new StatementQuery())->requiresModern($value->query),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement => count($value->locking) > 1,
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause => $value->strength === \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share || $value->tables !== [] || $value->action !== null,
                 $value instanceof ResetBinaryLogs, $value instanceof ResetReplica => $value->terminology === Terminology::Current,
@@ -50,11 +51,10 @@ final class ModernForms
             };
     }
     /**
-     * Identifies modern clauses and filtering without a FROM clause.
+     * Identifies clauses that require modern grammar in every query position.
      */
     public function query(Select $value): bool
     {
-        return $value->qualify !== null || count($value->locking) > 1
-            || ($value->from === null && ($value->where !== null || $value->groupBy !== null || $value->having !== null));
+        return $value->qualify !== null || count($value->locking) > 1;
     }
 }

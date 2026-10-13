@@ -64,6 +64,8 @@ final class ColumnResolverTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('SELECT b AS a FROM t GROUP BY a HAVING a > 0', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
         self::assertNotNull($group);
@@ -80,6 +82,8 @@ final class ColumnResolverTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('SELECT a AS x FROM t GROUP BY x ORDER BY x + 1', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
         self::assertNotNull($group);
@@ -105,6 +109,8 @@ final class ColumnResolverTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x FROM u GROUP BY x');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
         self::assertNotNull($group);
@@ -148,7 +154,11 @@ final class ColumnResolverTest extends TestCase
         $grouped = $semantics->analyze('SELECT 1 FROM u GROUP BY c HAVING c > 0');
         $other = $semantics->analyze('SELECT 1 FROM u GROUP BY d HAVING c > 0');
         $starSelect = $star->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $starSelect);
+        $starSelect = $starSelect->query;
         $groupedSelect = $grouped->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $groupedSelect);
+        $groupedSelect = $groupedSelect->query;
         self::assertInstanceOf(Select::class, $starSelect);
         self::assertInstanceOf(Select::class, $groupedSelect);
         self::assertInstanceOf(Comparison::class, $starSelect->having);
@@ -199,6 +209,8 @@ final class ColumnResolverTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze("SELECT 'é' FROM t GROUP BY q", [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
         self::assertNotNull($group);

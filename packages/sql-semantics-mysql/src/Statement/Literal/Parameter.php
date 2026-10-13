@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Naming the unbound parameter a fact depends on
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = ?');
- *     $query->facts->scalar($query->statement->where->right)->type->missing[0]->describe() // => 'the value bound to parameter ?'
+ *     $query->facts->scalar($query->statement->query->where->right)->type->missing[0]->describe() // => 'the value bound to parameter ?'
  */
 final class Parameter implements Scalar
 {

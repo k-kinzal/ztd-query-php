@@ -107,8 +107,9 @@ final class LockedTablesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT HIGH_PRIORITY 1 UNION SELECT 2 FOR SHARE');
 
-        self::assertInstanceOf(QueryStatement::class, $operation->statement);
-        self::assertSame([SelectOption::HighPriority], (new LockedTables())->leading($operation->statement)?->options);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(QueryStatement::class, $operation->statement->query);
+        self::assertSame([SelectOption::HighPriority], (new LockedTables())->leading($operation->statement->query)?->options);
     }
 
     public function testEntriesAnswersTheTablesOfTheBlock(): void

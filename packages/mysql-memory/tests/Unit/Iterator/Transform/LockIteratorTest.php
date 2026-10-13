@@ -29,6 +29,8 @@ final class LockIteratorTest extends TestCase
         $session->query('CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2); BEGIN');
         $operation = $session->analyze('SELECT * FROM t WHERE a = 2 FOR UPDATE');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $root = (new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary))->query($statement, null)->root;
@@ -94,6 +96,8 @@ final class LockIteratorTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT * FROM t WHERE a > 1 FOR UPDATE');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $root = (new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary))->query($statement, null)->root;
@@ -124,6 +128,8 @@ final class LockIteratorTest extends TestCase
         $session->query('CREATE TABLE t (a INT); INSERT INTO t VALUES (7)');
         $operation = $session->analyze('SELECT * FROM t FOR UPDATE');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $root = (new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary))->query($statement, null)->root;
@@ -142,6 +148,8 @@ final class LockIteratorTest extends TestCase
         $session->query('CREATE TABLE t (a INT); CREATE TABLE u (b INT, c INT); INSERT INTO t VALUES (1); INSERT INTO u VALUES (2, 3)');
         $operation = $session->analyze('SELECT * FROM t, u FOR UPDATE');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $root = (new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary))->query($statement, null)->root;

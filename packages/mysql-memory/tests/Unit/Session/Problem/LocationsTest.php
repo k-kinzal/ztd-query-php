@@ -25,27 +25,29 @@ final class LocationsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $operation = $session->analyze('SELECT nosuch(1), abs(1)');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        self::assertInstanceOf(FunctionCall::class, $operation->statement->items[0]->expression);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[1]);
-        self::assertInstanceOf(FunctionCall::class, $operation->statement->items[1]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
+        self::assertInstanceOf(FunctionCall::class, $operation->statement->query->items[0]->expression);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[1]);
+        self::assertInstanceOf(FunctionCall::class, $operation->statement->query->items[1]->expression);
 
-        self::assertTrue(Locations::undeclared($operation->statement->items[0]->expression, $operation));
-        self::assertFalse(Locations::undeclared($operation->statement->items[1]->expression, $operation));
+        self::assertTrue(Locations::undeclared($operation->statement->query->items[0]->expression, $operation));
+        self::assertFalse(Locations::undeclared($operation->statement->query->items[1]->expression, $operation));
     }
 
     public function testProblemAnswersTheProblemOfAnOrdinalAndOfACall(): void
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $operation = $session->analyze('SELECT nosuch(1) ORDER BY 2');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        self::assertInstanceOf(FunctionCall::class, $operation->statement->items[0]->expression);
-        self::assertInstanceOf(OutputOrdinal::class, $operation->statement->orderBy[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
+        self::assertInstanceOf(FunctionCall::class, $operation->statement->query->items[0]->expression);
+        self::assertInstanceOf(OutputOrdinal::class, $operation->statement->query->orderBy[0]->expression);
 
-        self::assertSame($operation->statement->items[0]->expression, (new Locations())->problem($operation->statement->items[0]->expression, $operation));
-        self::assertInstanceOf(OrdinalOutOfRange::class, (new Locations())->problem($operation->statement->orderBy[0]->expression, $operation));
+        self::assertSame($operation->statement->query->items[0]->expression, (new Locations())->problem($operation->statement->query->items[0]->expression, $operation));
+        self::assertInstanceOf(OrdinalOutOfRange::class, (new Locations())->problem($operation->statement->query->orderBy[0]->expression, $operation));
     }
 
     public function testWidthFindsTheWidthOfAllBeforeItsOperandAndOfInAfterIt(): void

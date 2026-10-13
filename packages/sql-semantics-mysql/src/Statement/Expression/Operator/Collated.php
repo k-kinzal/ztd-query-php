@@ -48,7 +48,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the collation
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a COLLATE utf8mb4_bin = 'x'");
- *     $query->statement->where->left->collation->value // => 'utf8mb4_bin'
+ *     $query->statement->query->where->left->collation->value // => 'utf8mb4_bin'
  */
 final class Collated implements Scalar
 {

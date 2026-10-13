@@ -22,10 +22,11 @@ final class ExpressionFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1 AS x) (SELECT x FROM c) ORDER BY 1 LIMIT 1', []);
 
-        self::assertInstanceOf(QueryExpression::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
         self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->orderBy[0]->expression)->resolution);
-        self::assertSame($operation->facts->query($operation->statement->body), $operation->facts->output);
+        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->resolution);
+        self::assertSame($operation->facts->query($operation->statement->query->body), $operation->facts->output);
     }
 
     public function testOrderingSeesTheOutputColumnsButNoTableOfTheQuery(): void

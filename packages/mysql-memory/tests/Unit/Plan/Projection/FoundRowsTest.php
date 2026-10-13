@@ -27,7 +27,8 @@ final class FoundRowsTest extends TestCase
     public function testRequestedReadsTheFirstSelectAcrossSetAndLimitWrappers(string $sql, bool $expected): void
     {
         $query = (new \MySqlMemory\Instance())->connect()->analyze($sql)->statement;
-        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
         self::assertSame($expected, (new \MySqlMemory\Plan\Projection\FoundRows())->requested($query));
     }

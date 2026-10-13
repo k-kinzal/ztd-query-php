@@ -53,10 +53,12 @@ final class SubqueryRowsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $rules = new SubqueryRows();
         $tableless = $semantics->analyze('(SELECT 1 FROM DUAL WHERE 0) UNION ALL SELECT 2 HAVING 0')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $tableless);
+        $tableless = $tableless->query;
         $tabled = $semantics->analyze('SELECT 1 FROM DUAL UNION ALL SELECT 2 FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $tabled);
+        $tabled = $tabled->query;
 
-        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $tableless);
-        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $tabled);
         self::assertTrue($rules->tableless($tableless));
         self::assertFalse($rules->tableless($tabled));
     }
@@ -237,8 +239,8 @@ final class SubqueryRowsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
 
-        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $operation->statement);
-        self::assertSame($limited, (new SubqueryRows())->limited($operation->statement));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertSame($limited, (new SubqueryRows())->limited($operation->statement->query));
     }
 
     #[DataProvider('providerLimits')]

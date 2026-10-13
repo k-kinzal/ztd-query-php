@@ -23,9 +23,10 @@ final class EscapedRelationTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $operation = $semantics->analyze('SELECT a FROM { oj t }', []);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(EscapedRelation::class, $operation->statement->from);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from->relation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(EscapedRelation::class, $operation->statement->query->from);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from->relation);
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
     }
 

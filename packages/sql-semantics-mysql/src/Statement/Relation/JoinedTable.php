@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a join
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM t LEFT JOIN u USING (a)');
- *     [$query->statement->from->operator, $query->statement->from->using[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Left, 'a']
+ *     [$query->statement->query->from->operator, $query->statement->query->from->using[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Left, 'a']
  * @example Refusing a left join without a condition
  *     $t = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
  *     $u = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')));

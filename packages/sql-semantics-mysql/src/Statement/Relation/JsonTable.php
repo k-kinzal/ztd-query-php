@@ -35,7 +35,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the alias of a JSON table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$')) AS j");
- *     $query->statement->from->alias?->value // => 'j'
+ *     $query->statement->query->from->alias?->value // => 'j'
  */
 final class JsonTable implements Relation
 {

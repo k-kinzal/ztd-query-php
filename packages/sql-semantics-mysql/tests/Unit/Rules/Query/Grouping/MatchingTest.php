@@ -27,6 +27,8 @@ final class MatchingTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT (A), t1.a, b FROM t1', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         self::assertInstanceOf(SelectExpression::class, $select->items[1]);
@@ -45,6 +47,8 @@ final class MatchingTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a + 1 AS x FROM t1 ORDER BY (x), b', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         $columns = new Matching();
@@ -56,6 +60,8 @@ final class MatchingTest extends TestCase
     public function testUnwrapRemovesEveryPairOfParentheses(): void
     {
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT ((a)), b FROM t1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         self::assertInstanceOf(SelectExpression::class, $select->items[1]);
@@ -73,6 +79,8 @@ final class MatchingTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT t1.a + 1, a + 1, a + 2 FROM t1', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         self::assertInstanceOf(SelectExpression::class, $select->items[1]);
@@ -114,6 +122,8 @@ final class MatchingTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT t1.a, a, b FROM t1', $context);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         self::assertInstanceOf(SelectExpression::class, $select->items[1]);

@@ -39,7 +39,7 @@ use SqlSemantics\Statement\Snapshot;
  *     [$input->name()->schema?->value, $input->name()->name->value, $input->alias()?->value] // => ['shop', 't', 'x']
  * @example Reading the partitions of a table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t PARTITION (p0, p1)');
- *     count($query->statement->from->partitions) // => 2
+ *     count($query->statement->query->from->partitions) // => 2
  */
 final class TableReference implements NamedRelation, TableSource
 {

@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Type\Known;
  * @visibility public
  * @example Reading the zone
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CAST(a AT TIME ZONE 'UTC' AS DATETIME(6))");
- *     [$query->statement->where->zone->value, $query->statement->where->precision] // => ['UTC', '6']
+ *     [$query->statement->query->where->zone->value, $query->statement->query->where->precision] // => ['UTC', '6']
  */
 final class AtTimeZone implements Scalar
 {

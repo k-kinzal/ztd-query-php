@@ -196,7 +196,7 @@ final class Placement
     {
         return match (true) {
             $query instanceof Select => [$query],
-            $query instanceof ParenthesizedQuery => $this->blocks($query->query),
+            $query instanceof ParenthesizedQuery, $query instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot => $this->blocks($query->query),
             $query instanceof QueryExpression => $this->blocks($query->body),
             $query instanceof SetOperation, $query instanceof OrderedSetOperation, $query instanceof LeadingUnion => [...$this->blocks($query->left), ...$this->blocks($query->right)],
             default => [],
@@ -209,6 +209,7 @@ final class Placement
     public function first(Node $statement): ?Select
     {
         $query = match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot => $statement->query,
             $statement instanceof InsertQuery => $statement->source,
             $statement instanceof CreateTable => $statement->query?->query,
             default => $statement,

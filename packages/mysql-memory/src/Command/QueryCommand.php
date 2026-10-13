@@ -60,8 +60,9 @@ final class QueryCommand implements Command
     #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        $statement = $operation->statement;
-        assert($statement instanceof Query);
+        $root = $operation->statement;
+        assert($root instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot);
+        $statement = $root->query;
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $into = $this->destination($statement);
         $plan = $planner->result($planner->query($statement, null));

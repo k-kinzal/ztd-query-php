@@ -37,6 +37,8 @@ final class ProjectionTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('SELECT 1 AS x, 2 AS y');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
         $scope = (new Projection())->scope($select->items, new Derivation($semantics->context()));
 

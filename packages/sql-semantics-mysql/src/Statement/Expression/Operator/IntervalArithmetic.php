@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Subtracting an interval
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE DATE '2024-01-31' - INTERVAL 1 MONTH");
- *     [$query->statement->where->subtract, $query->facts->scalar($query->statement->where)->type->descriptor->name()] // => [true, 'DATE']
+ *     [$query->statement->query->where->subtract, $query->facts->scalar($query->statement->query->where)->type->descriptor->name()] // => [true, 'DATE']
  */
 final class IntervalArithmetic implements Scalar
 {

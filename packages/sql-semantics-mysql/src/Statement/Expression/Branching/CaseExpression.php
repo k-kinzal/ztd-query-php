@@ -39,7 +39,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing a CASE by its results
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CASE a WHEN 1 THEN 'x' ELSE 'y' END");
- *     [$query->facts->scalar($query->statement->where)->type->descriptor->name(), $query->facts->scalar($query->statement->where)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->facts->scalar($query->statement->query->where)->type->descriptor->name(), $query->facts->scalar($query->statement->query->where)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::NotNull]
  */
 final class CaseExpression implements Scalar
 {

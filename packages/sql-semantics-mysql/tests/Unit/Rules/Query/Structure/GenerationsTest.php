@@ -112,7 +112,7 @@ final class GenerationsTest extends TestCase
         yield 'qualify and procedure' => [static fn (): Node => new Select([], [new SelectExpression(new NumberLiteral('1'))], qualify: new NumberLiteral('1'), from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), procedure: new ProcedureAnalyse())];
         yield 'except and unparenthesized limit' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new Select([], [new SelectExpression(new NumberLiteral('1'))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new NumberLiteral('1'))), SetOperator::Except, null, new Select([], [new SelectExpression(new NumberLiteral('2'))]))];
         yield 'modern value with leading column dot' => [static fn (): Node => new ValuesQuery([new ValueRow([new ColumnUse(new Name('a'), new QualifiedName(new Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)])])];
-        yield 'legacy explain modifier and modern query' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain(new ValuesQuery([new ValueRow([new NumberLiteral('1')])]), modifier: \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions)];
+        yield 'legacy explain modifier and modern query' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain(new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])), modifier: \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions)];
         yield 'modern with and dotted table' => [static fn (): Node => new QueryExpression(new With(false, [new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))]))]), new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new TableReference(new QualifiedName(new Name('t')), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)))];
         yield 'disjoint sibling subqueries in a scalar root' => [static fn (): Node => new Comparison(
             ComparisonOperator::Equal,
@@ -255,7 +255,7 @@ final class GenerationsTest extends TestCase
     public function testCheckRejectsConflictingRequirementsOnOneRoutine(): void
     {
         $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
-        new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), new Select([], [new SelectExpression(new NumberLiteral('1'))]), collation: new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null), ifNotExists: true);
+        new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))])), collation: new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null), ifNotExists: true);
     }
 
     public function testCheckRejectsMemberOfInALegacyGeneratedColumn(): void

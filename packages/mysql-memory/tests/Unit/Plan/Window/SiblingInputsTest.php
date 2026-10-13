@@ -18,33 +18,36 @@ final class SiblingInputsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT @x:=1, @x, @x+ROW_NUMBER() OVER ()');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
+        $planner = new \MySqlMemory\Plan\Planner($operation->statement->query, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $inputs = new \MySqlMemory\Plan\Window\SiblingInputs($planner);
 
-        self::assertCount(2, $inputs->roots($operation->statement));
+        self::assertCount(2, $inputs->roots($operation->statement->query));
     }
 
     public function testNodesCapturesWindowArgumentsAndParentsBeforeOrdinaryAssignments(): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT @x:=@x+1, FIRST_VALUE(@x:=@x+10) OVER ()+@x');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
+        $planner = new \MySqlMemory\Plan\Planner($operation->statement->query, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $inputs = new \MySqlMemory\Plan\Window\SiblingInputs($planner);
 
-        self::assertCount(2, $inputs->nodes($operation->statement));
+        self::assertCount(2, $inputs->nodes($operation->statement->query));
     }
 
     public function testVariablesExcludesEffectsAlreadyConsumedByAnAggregate(): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT SUM(@x:=@x+1),ROW_NUMBER() OVER ()');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
+        $planner = new \MySqlMemory\Plan\Planner($operation->statement->query, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $inputs = new \MySqlMemory\Plan\Window\SiblingInputs($planner);
 
-        self::assertSame([], $inputs->roots($operation->statement));
+        self::assertSame([], $inputs->roots($operation->statement->query));
     }
 
     public function testGroupedRetainsThePreviousOrdinaryValuesForRollupRows(): void
@@ -64,8 +67,9 @@ final class SiblingInputsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
+        $planner = new \MySqlMemory\Plan\Planner($operation->statement->query, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $domain = \MySqlMemory\Typing\Domain::integer();
         $assignment = new \MySqlMemory\Evaluation\Leaf\Assignment('x', new \MySqlMemory\Evaluation\Leaf\Constant($domain, 99), $domain, $domain);
         $read = (new \MySqlMemory\Plan\Window\SiblingInputs($planner))->stored($assignment, 0, true);

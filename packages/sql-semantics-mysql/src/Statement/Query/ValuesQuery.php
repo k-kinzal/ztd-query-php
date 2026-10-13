@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\Result\ResultSlots;
-use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -31,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Refusing a VALUES statement without rows
  *     new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class ValuesQuery implements Explainable, Query
+final class ValuesQuery implements Query
 {
     use Snapshot;
 
@@ -47,14 +46,6 @@ final class ValuesQuery implements Explainable, Query
     {
         $this->rows = Check::listOf($rows, ValueRow::class, 'VALUES holds at least one row.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
-    }
-
-    /**
-     * Derives the statement as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output($derivation->query($this, $derivation->environment()));
     }
 
     /**

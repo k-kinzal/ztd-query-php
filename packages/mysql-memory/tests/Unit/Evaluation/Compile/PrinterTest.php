@@ -25,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Shape\Field;
@@ -113,12 +112,13 @@ final class PrinterTest extends TestCase
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $session->query('CREATE TABLE tt (a INT)');
         $operation = $session->analyze('SELECT x.A FROM tt x');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        self::assertInstanceOf(ColumnUse::class, $operation->statement->items[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
+        self::assertInstanceOf(ColumnUse::class, $operation->statement->query->items[0]->expression);
 
-        self::assertSame('`p`.`x`.`a`', (new Printer($operation->facts, 'p'))->column($operation->statement->items[0]->expression));
-        self::assertSame('`x`.`A`', (new Printer())->column($operation->statement->items[0]->expression));
+        self::assertSame('`p`.`x`.`a`', (new Printer($operation->facts, 'p'))->column($operation->statement->query->items[0]->expression));
+        self::assertSame('`x`.`A`', (new Printer())->column($operation->statement->query->items[0]->expression));
     }
 
     public function testFieldPrintsTheExpressionOfAnOutputField(): void
@@ -126,8 +126,8 @@ final class PrinterTest extends TestCase
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $session->query('CREATE TABLE tt (a INT)');
         $operation = $session->analyze('SELECT a + 0 AS b FROM tt');
-        self::assertInstanceOf(Query::class, $operation->statement);
-        $field = $operation->facts->query($operation->statement)->projection[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        $field = $operation->facts->query($operation->statement->query)->projection[0];
         self::assertInstanceOf(Field::class, $field);
 
         self::assertSame('(`p`.`tt`.`a` + 0)', (new Printer($operation->facts, 'p'))->field($field));
@@ -139,12 +139,14 @@ final class PrinterTest extends TestCase
         $session->query('CREATE TABLE tt (a INT)');
         $merged = $session->analyze('SELECT a FROM (SELECT a + 0 AS a FROM tt) d');
         $materialized = $session->analyze('SELECT a FROM (SELECT DISTINCT a FROM tt) d');
-        self::assertInstanceOf(Select::class, $merged->statement);
-        self::assertInstanceOf(Select::class, $materialized->statement);
-        self::assertInstanceOf(SelectExpression::class, $merged->statement->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $materialized->statement->items[0]);
-        $first = $merged->facts->scalar($merged->statement->items[0]->expression)->resolution;
-        $second = $materialized->facts->scalar($materialized->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $merged->statement);
+        self::assertInstanceOf(Select::class, $merged->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $materialized->statement);
+        self::assertInstanceOf(Select::class, $materialized->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $merged->statement->query->items[0]);
+        self::assertInstanceOf(SelectExpression::class, $materialized->statement->query->items[0]);
+        $first = $merged->facts->scalar($merged->statement->query->items[0]->expression)->resolution;
+        $second = $materialized->facts->scalar($materialized->statement->query->items[0]->expression)->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $first);
         self::assertInstanceOf(ResolvedColumn::class, $second);
 
@@ -157,9 +159,10 @@ final class PrinterTest extends TestCase
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $session->query('CREATE TABLE tt (a INT)');
         $operation = $session->analyze('SELECT x.A FROM tt x');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        $resolution = $operation->facts->scalar($operation->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
+        $resolution = $operation->facts->scalar($operation->statement->query->items[0]->expression)->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         $relation = $resolution->relation;
         self::assertInstanceOf(NamedRelation::class, $relation);
@@ -176,12 +179,14 @@ final class PrinterTest extends TestCase
         $session->query('CREATE TABLE tt (a INT)');
         $merged = $session->analyze('SELECT a FROM (SELECT a + 0 AS a FROM tt) d');
         $materialized = $session->analyze('SELECT a FROM (SELECT DISTINCT a FROM tt) d');
-        self::assertInstanceOf(Select::class, $merged->statement);
-        self::assertInstanceOf(Select::class, $materialized->statement);
-        self::assertInstanceOf(SelectExpression::class, $merged->statement->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $materialized->statement->items[0]);
-        $first = $merged->facts->scalar($merged->statement->items[0]->expression)->resolution;
-        $second = $materialized->facts->scalar($materialized->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $merged->statement);
+        self::assertInstanceOf(Select::class, $merged->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $materialized->statement);
+        self::assertInstanceOf(Select::class, $materialized->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $merged->statement->query->items[0]);
+        self::assertInstanceOf(SelectExpression::class, $materialized->statement->query->items[0]);
+        $first = $merged->facts->scalar($merged->statement->query->items[0]->expression)->resolution;
+        $second = $materialized->facts->scalar($materialized->statement->query->items[0]->expression)->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $first);
         self::assertInstanceOf(ResolvedColumn::class, $second);
 
@@ -195,9 +200,10 @@ final class PrinterTest extends TestCase
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $session->query('CREATE TABLE tt (a INT)');
         $operation = $session->analyze('SELECT a FROM (SELECT DISTINCT a FROM tt) d');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        $resolution = $operation->facts->scalar($operation->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
+        $resolution = $operation->facts->scalar($operation->statement->query->items[0]->expression)->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
         self::assertSame('`d`.`a`', (new Printer())->materialized($resolution));
@@ -208,9 +214,10 @@ final class PrinterTest extends TestCase
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $session->query('CREATE TABLE tt (a INT)');
         $operation = $session->analyze('SELECT b FROM (SELECT a, a + 1 AS b FROM tt) d');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        $resolution = $operation->facts->scalar($operation->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
+        $resolution = $operation->facts->scalar($operation->statement->query->items[0]->expression)->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
         self::assertSame(1, (new Printer($operation->facts))->position($resolution));

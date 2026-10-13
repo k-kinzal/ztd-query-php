@@ -58,7 +58,7 @@ final class Walker
             }
         });
         foreach ($children as $child) {
-            $this->visit($child, $class, $intoQueries, $found);
+            $this->visit($child, $class, $intoQueries, $found, $root && $node instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot);
         }
     }
 }

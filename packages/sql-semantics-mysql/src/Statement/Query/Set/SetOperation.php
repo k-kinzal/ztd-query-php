@@ -7,9 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
-use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\SetFacts;
-use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -37,14 +35,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the operands of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t UNION SELECT b FROM u');
- *     [$query->statement->left->from->name->name->value, $query->statement->right->from->name->name->value] // => ['t', 'u']
+ *     [$query->statement->query->left->from->name->name->value, $query->statement->query->right->from->name->name->value] // => ['t', 'u']
  * @example Refusing a right operand that would associate differently without parentheses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))]);
  *     $three = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($one, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($two, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $three)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class SetOperation implements Explainable, Query
+final class SetOperation implements Query
 {
     use Snapshot;
 
@@ -65,14 +63,6 @@ final class SetOperation implements Explainable, Query
         Check::input(!$right instanceof Select || !$right->trailed(), 'The last operand of a set operation has no ORDER BY, LIMIT, INTO or locking clause of its own unless it is written in parentheses.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SetOperands())->left($left);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
-    }
-
-    /**
-     * Derives the set operation as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output((new SetOutput())->derive($this, $derivation));
     }
 
     /**

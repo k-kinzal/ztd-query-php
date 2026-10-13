@@ -59,11 +59,11 @@ final class MergeDependenciesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $pure = $semantics->analyze('SELECT 1 FROM t');
         $changing = $semantics->analyze('SELECT (SELECT RAND(1)) FROM t');
-        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $pure->statement);
-        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $changing->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $pure->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $changing->statement);
 
-        self::assertFalse((new MergeDependencies())->changing($pure->statement, GrammarRelease::MySql847));
-        self::assertTrue((new MergeDependencies())->changing($changing->statement, GrammarRelease::MySql847));
+        self::assertFalse((new MergeDependencies())->changing($pure->statement->query, GrammarRelease::MySql847));
+        self::assertTrue((new MergeDependencies())->changing($changing->statement->query, GrammarRelease::MySql847));
     }
 
     public function testExternalCountsQueryBlocksThroughNestedWrappers(): void

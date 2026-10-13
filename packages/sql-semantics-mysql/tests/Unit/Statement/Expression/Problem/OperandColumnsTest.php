@@ -33,6 +33,8 @@ final class OperandColumnsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 IN (SELECT 1,2), 1 = ALL (SELECT 1,2)');
         $query = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
         $diagnostics = $operation->facts->diagnostics;
 
         self::assertInstanceOf(Select::class, $query);

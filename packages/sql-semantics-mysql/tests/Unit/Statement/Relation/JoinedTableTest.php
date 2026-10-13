@@ -97,13 +97,15 @@ final class JoinedTableTest extends TestCase
         $modern = $semantics->analyze('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', [$t, $u]);
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', []);
 
-        self::assertInstanceOf(Select::class, $modern->statement);
-        self::assertInstanceOf(JoinedTable::class, $modern->statement->from);
-        self::assertInstanceOf(JoinedTable::class, $modern->statement->from->right);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern->statement);
+        self::assertInstanceOf(Select::class, $modern->statement->query);
+        self::assertInstanceOf(JoinedTable::class, $modern->statement->query->from);
+        self::assertInstanceOf(JoinedTable::class, $modern->statement->query->from->right);
         self::assertCount(1, $modern->facts->diagnostics);
-        self::assertInstanceOf(Select::class, $legacy->statement);
-        self::assertInstanceOf(JoinedTable::class, $legacy->statement->from);
-        self::assertInstanceOf(JoinedTable::class, $legacy->statement->from->left);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $legacy->statement);
+        self::assertInstanceOf(Select::class, $legacy->statement->query);
+        self::assertInstanceOf(JoinedTable::class, $legacy->statement->query->from);
+        self::assertInstanceOf(JoinedTable::class, $legacy->statement->query->from->left);
     }
 
     public function testRenderWritesTheOperatorAndTheCondition(): void

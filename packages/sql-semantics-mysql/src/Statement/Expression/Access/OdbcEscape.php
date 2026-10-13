@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing an ODBC date
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a = { d '2024-01-31' }");
- *     $query->facts->scalar($query->statement->where->right)->type->descriptor->name() // => 'DATE'
+ *     $query->facts->scalar($query->statement->query->where->right)->type->descriptor->name() // => 'DATE'
  */
 final class OdbcEscape implements Scalar
 {

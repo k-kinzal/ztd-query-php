@@ -72,6 +72,8 @@ final class RelationsTest extends TestCase
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT * FROM t');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -90,6 +92,8 @@ final class RelationsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -141,6 +145,8 @@ final class RelationsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH c AS (SELECT 1 AS n) SELECT n FROM c AS x');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(QueryExpression::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
@@ -185,6 +191,8 @@ final class RelationsTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT * FROM (SELECT a FROM t) AS x');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $from = $statement->from;
         self::assertInstanceOf(DerivedTable::class, $from);
@@ -221,6 +229,8 @@ final class RelationsTest extends TestCase
         $session->query('CREATE TABLE t (a INT NOT NULL, c VARCHAR(5))');
         $operation = $session->analyze('SELECT * FROM (SELECT a, c FROM t) AS x');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -240,9 +250,17 @@ final class RelationsTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $plain = $session->analyze('SELECT a FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain);
+        $plain = $plain->query;
         $distinct = $session->analyze('SELECT DISTINCT a FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $distinct);
+        $distinct = $distinct->query;
         $grouped = $session->analyze('SELECT a FROM t GROUP BY a')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $grouped);
+        $grouped = $grouped->query;
         $limited = $session->analyze('SELECT a FROM t LIMIT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $limited);
+        $limited = $limited->query;
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(Select::class, $distinct);
         self::assertInstanceOf(Select::class, $grouped);
@@ -265,6 +283,8 @@ final class RelationsTest extends TestCase
         $session->query('INSERT INTO u VALUES (3), (4)');
         $operation = $session->analyze('SELECT * FROM t, u');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $from = $statement->from;
         self::assertInstanceOf(TableList::class, $from);
@@ -299,6 +319,8 @@ final class RelationsTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT * FROM t, LATERAL (SELECT t.a) AS l, (SELECT 1) AS m');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $from = $statement->from;
         self::assertInstanceOf(TableList::class, $from);
@@ -373,6 +395,8 @@ final class RelationsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -394,6 +418,8 @@ final class RelationsTest extends TestCase
         self::assertNotNull($table);
         $operation = $session->analyze('SELECT 1 FROM DUAL');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -411,6 +437,8 @@ final class RelationsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -442,6 +470,8 @@ final class RelationsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
@@ -462,6 +492,8 @@ final class RelationsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);

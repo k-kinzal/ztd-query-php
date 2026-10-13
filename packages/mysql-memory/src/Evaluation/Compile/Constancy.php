@@ -74,7 +74,7 @@ enum Constancy: int
      */
     public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true): self
     {
-        return self::within($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
+        return self::within($node instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? $node->query : $node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
     }
 
     /**

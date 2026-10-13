@@ -30,6 +30,8 @@ final class LoweringTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $select = $lowering->statements($platform->parser($profile)->parse('SELECT ?, ?'))[0];
 
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $select->items[0]);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $select->items[1]);
@@ -50,7 +52,9 @@ final class LoweringTest extends TestCase
         self::assertSame([], $lowering->statements($parser->parse('')));
         self::assertCount(1, $lowering->statements($parser->parse('SELECT 1')));
         self::assertCount(1, $lowering->statements($parser->parse('SELECT 1;')));
-        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT 1;'))[0]);
+        $root = $lowering->statements($parser->parse('SELECT 1;'))[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
         self::assertCount(3, $lowering->leaves->all());
         $recorded = new Leaves();
         $projected = (new Lowering($platform->productions($profile), $recorded, $profile))->statements($parser->parse('SELECT a, 1 FROM t'));
@@ -66,8 +70,12 @@ final class LoweringTest extends TestCase
         $parser = $platform->parser($profile);
 
         self::assertSame([], $lowering->statements($parser->parse('')));
-        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT 1;'))[0]);
-        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT a FROM t WHERE a = 1'))[0]);
+        $root = $lowering->statements($parser->parse('SELECT 1;'))[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
+        $root = $lowering->statements($parser->parse('SELECT a FROM t WHERE a = 1'))[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
     }
 
     public function testStatementHandsARuleToTheFamilyThatOwnsIt(): void

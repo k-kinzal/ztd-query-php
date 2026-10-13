@@ -239,7 +239,8 @@ final class ViewCommandTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
 
         $query = $session->analyze('SELECT a FROM t')->statement;
-        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
         $statement = ViewCommand::reanalyze($session, 'd', 'v', [new Name('x')], $query)->statement;
 
         self::assertInstanceOf(CreateView::class, $statement);

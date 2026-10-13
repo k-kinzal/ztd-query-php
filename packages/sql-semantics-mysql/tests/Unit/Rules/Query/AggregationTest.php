@@ -20,8 +20,14 @@ final class AggregationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $aggregate = $semantics->analyze('SELECT COUNT(*) + 1 FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $aggregate);
+        $aggregate = $aggregate->query;
         $windowed = $semantics->analyze('SELECT COUNT(*) OVER () FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $windowed);
+        $windowed = $windowed->query;
         $nested = $semantics->analyze('SELECT (SELECT COUNT(*) FROM u) FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $nested);
+        $nested = $nested->query;
 
         self::assertInstanceOf(Select::class, $aggregate);
         self::assertInstanceOf(Select::class, $windowed);

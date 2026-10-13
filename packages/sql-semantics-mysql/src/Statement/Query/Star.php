@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a star item
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT * FROM t');
- *     $query->statement->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star // => true
+ *     $query->statement->query->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star // => true
  */
 final class Star implements SelectItem
 {

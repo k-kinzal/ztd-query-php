@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
-use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -32,9 +31,9 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the table of a TABLE statement
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('TABLE shop.t');
- *     [$query->statement->name()->schema?->value, $query->statement->name()->name->value] // => ['shop', 't']
+ *     [$query->statement->query->name()->schema?->value, $query->statement->query->name()->name->value] // => ['shop', 't']
  */
-final class ExplicitTable implements Explainable, Query, NamedRelation
+final class ExplicitTable implements Query, NamedRelation
 {
     use Snapshot;
 
@@ -61,14 +60,6 @@ final class ExplicitTable implements Explainable, Query, NamedRelation
     public function alias(): ?Name
     {
         return null;
-    }
-
-    /**
-     * Derives the statement as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output($derivation->query($this, $derivation->environment()));
     }
 
     /**

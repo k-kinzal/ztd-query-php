@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
-use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -29,9 +27,9 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a parenthesized operand
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('(SELECT a FROM t ORDER BY a LIMIT 1) UNION SELECT b FROM u');
- *     $query->statement->left->query->limit !== null // => true
+ *     $query->statement->query->left->query->limit !== null // => true
  */
-final class ParenthesizedQuery implements Explainable, Query
+final class ParenthesizedQuery implements Query
 {
     use Snapshot;
 
@@ -41,14 +39,6 @@ final class ParenthesizedQuery implements Explainable, Query
     public function __construct(public readonly Query $query)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
-    }
-
-    /**
-     * Derives the query as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output((new SetOutput())->derive($this, $derivation));
     }
 
     /**

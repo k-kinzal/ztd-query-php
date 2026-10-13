@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a derived table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT x FROM (SELECT 1) AS d (x)');
- *     [$query->statement->from->alias?->value, $query->statement->from->columns[0]->value] // => ['d', 'x']
+ *     [$query->statement->query->from->alias?->value, $query->statement->query->from->columns[0]->value] // => ['d', 'x']
  */
 final class DerivedTable implements Relation
 {

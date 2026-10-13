@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MySqlMemory\Session\State;
 
 use SqlSemantics\Platform\MySql\Statement as MySql;
-use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -175,7 +174,7 @@ final class StatementKind
         if ($statement instanceof MySql\Routine\AlterRoutine) {
             return 'Com_alter_' . strtolower($statement->kind->value);
         }
-        if ($statement instanceof Query) {
+        if ($statement instanceof MySql\QueryRoot) {
             return 'Com_select';
         }
 

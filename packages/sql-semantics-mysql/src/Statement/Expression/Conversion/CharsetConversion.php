@@ -38,7 +38,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the character set
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CONVERT(a USING utf8mb4) = 'x'");
- *     $query->statement->where->left->charset->name->value // => 'utf8mb4'
+ *     $query->statement->query->where->left->charset->name->value // => 'utf8mb4'
  */
 final class CharsetConversion implements Scalar
 {

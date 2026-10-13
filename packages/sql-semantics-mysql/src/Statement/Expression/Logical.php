@@ -34,9 +34,9 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading both operands of a conjunction
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a && b');
- *     [$query->statement->where->operator->value, $query->statement->where->symbolic, $query->toString()] // => ['AND', true, 'SELECT a FROM t WHERE a && b']
+ *     [$query->statement->query->where->operator->value, $query->statement->query->where->symbolic, $query->toString()] // => ['AND', true, 'SELECT a FROM t WHERE a && b']
  * @example Refusing an operand that would associate differently
- *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a OR b')->statement->where;
+ *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a OR b')->statement->query->where;
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Logical(\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And, $or, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('c'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Logical implements Scalar

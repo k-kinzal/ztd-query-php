@@ -34,6 +34,8 @@ final class JsonTablesTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $select = $session->analyze("SELECT 1 FROM (JSON_TABLE('[]', '$' COLUMNS (p FOR ORDINALITY)) AS x JOIN t ON 1), { OJ t LEFT JOIN JSON_TABLE('[]', '$' COLUMNS (q FOR ORDINALITY)) AS y ON 1 }")->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
 
@@ -44,6 +46,8 @@ final class JsonTablesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $select = $session->analyze("SELECT * FROM JSON_TABLE('[]', '$' COLUMNS (a INT PATH '$.a', NESTED PATH '$.b[*]' COLUMNS (c INT PATH '$.c', d FOR ORDINALITY))) AS j")->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(JsonTable::class, $select->from);
 

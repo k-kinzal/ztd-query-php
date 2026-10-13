@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an ODBC escape
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM { OJ t LEFT JOIN u ON t.a = u.a }');
- *     $query->statement->from->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable // => true
+ *     $query->statement->query->from->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable // => true
  */
 final class OdbcJoin implements Relation
 {

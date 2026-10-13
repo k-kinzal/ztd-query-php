@@ -141,6 +141,8 @@ final class ConstantsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $outer = $semantics->analyze('SELECT (SELECT -3), (SELECT -3 FROM t), (SELECT -3, 1)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $outer);
+        $outer = $outer->query;
 
         self::assertInstanceOf(Select::class, $outer);
         self::assertInstanceOf(SelectExpression::class, $outer->items[0]);

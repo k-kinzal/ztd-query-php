@@ -199,6 +199,8 @@ final class ConstancyTest extends TestCase
     {
         $operation = (new Instance())->connect()->analyze('SELECT USER(), SESSION_USER()');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $user = $statement->items[0];
         $session = $statement->items[1];

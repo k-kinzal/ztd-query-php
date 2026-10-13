@@ -51,7 +51,8 @@ final class TableShapesTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)], [new ImplicitColumn([new Name('h')], $hidden)]);
         $named = $semantics->analyze('SELECT h FROM t', [$table]);
         $star = $semantics->analyze('SELECT * FROM t', [$table]);
-        $fact = $named->statement instanceof Select && $named->statement->from !== null ? $named->facts->relation($named->statement->from) : null;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $named->statement);
+        $fact = $named->statement->query instanceof Select && $named->statement->query->from !== null ? $named->facts->relation($named->statement->query->from) : null;
 
         self::assertSame($hidden, $named->field('h')->column());
         self::assertSame([], $named->facts->diagnostics);
@@ -73,6 +74,8 @@ final class TableShapesTest extends TestCase
         ]);
         $operation = $semantics->analyze('TABLE t', [$t]);
         $table = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $table);
+        $table = $table->query;
 
         self::assertInstanceOf(ExplicitTable::class, $table);
         self::assertCount(2, (new TableShapes())->explicit($table, $operation->facts->relation($table), new Derivation($semantics->context()))->projection);

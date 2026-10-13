@@ -52,12 +52,12 @@ final class Views
         $lexical = $view->created->profile()->lexical;
         $mode = new Mode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace);
         $semantics = new Semantics(Dialect::MySql, 'mysql-' . $settings->version, $mode, ParameterStyle::Native);
-        $statement = $view->definition;
-        assert($statement instanceof \SqlSemantics\Statement\Statement);
+        $query = $view->definition;
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($view->name), new \SqlSemantics\Statement\Identifier\Name($view->schema));
+        $statement = new \SqlSemantics\Platform\MySql\Statement\View\CreateView(new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query));
         $operation = new Operation($semantics->context($dictionary->declarations(), true, new SearchPath($view->database), $settings->resolution()), $statement);
-        $query = $operation->statement;
         $view->operation = $operation;
-        if ($operation->facts->diagnostics !== [] || !$query instanceof Query) {
+        if ($operation->facts->diagnostics !== []) {
             throw SchemaError::ViewInvalid->error($view->schema, $view->name);
         }
         $names = PlannedViews::outputs($operation, $query);

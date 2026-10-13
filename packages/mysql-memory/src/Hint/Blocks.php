@@ -104,6 +104,9 @@ final class Blocks
      */
     public function read(Node $statement): self
     {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+            return $this->read($statement->query);
+        }
         if ($statement instanceof Explain) {
             return $this->read($statement->statement);
         }

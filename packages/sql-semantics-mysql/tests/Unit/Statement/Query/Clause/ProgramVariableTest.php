@@ -22,9 +22,10 @@ final class ProgramVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT n');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
-        $type = $operation->facts->scalar($operation->statement->limit->count)->type;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(RowLimit::class, $operation->statement->query->limit);
+        $type = $operation->facts->scalar($operation->statement->query->limit->count)->type;
         self::assertInstanceOf(Dependent::class, $type);
         self::assertSame('the session state: stored program variable n', $type->missing[0]->describe());
     }
@@ -40,6 +41,8 @@ final class ProgramVariableTest extends TestCase
         $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), program: [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \SqlSemantics\Statement\Identifier\Name('n')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()])]);
         $operation = $semantics->analyze('SELECT 1 LIMIT n', $semantics->context(null, true, null, $settings));
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $limit = $select->limit;
         self::assertInstanceOf(RowLimit::class, $limit);

@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing a binary cast
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE BINARY a = 'x'");
- *     $query->facts->scalar($query->statement->where->left)->type->descriptor->name() // => 'VARBINARY'
+ *     $query->facts->scalar($query->statement->query->where->left)->type->descriptor->name() // => 'VARBINARY'
  */
 final class BinaryCast implements Scalar
 {

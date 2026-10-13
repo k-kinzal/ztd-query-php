@@ -65,6 +65,8 @@ final class TemporalFieldsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (d DATE,n INT)');
         $query = $semantics->analyze($sql, [$table]);
         $select = $query->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
         $expression = $select->items[0]->expression;
@@ -99,6 +101,8 @@ final class TemporalFieldsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (d DATE,n INT)');
         $query = $semantics->analyze($sql, [$table]);
         $select = $query->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
 

@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Adding an interval written first
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE INTERVAL 1 DAY + DATE '2024-01-31'");
- *     $query->facts->scalar($query->statement->where)->type->descriptor->name() // => 'DATE'
+ *     $query->facts->scalar($query->statement->query->where)->type->descriptor->name() // => 'DATE'
  */
 final class IntervalAddition implements Scalar
 {

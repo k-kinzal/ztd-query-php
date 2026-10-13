@@ -45,9 +45,10 @@ final class ClauseRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t ORDER BY 1, a + 1');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(OutputOrdinal::class, $operation->statement->orderBy[0]->expression);
-        self::assertNotInstanceOf(OutputOrdinal::class, $operation->statement->orderBy[1]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(OutputOrdinal::class, $operation->statement->query->orderBy[0]->expression);
+        self::assertNotInstanceOf(OutputOrdinal::class, $operation->statement->query->orderBy[1]->expression);
     }
 
     public function testOrderItemsKeepsIntegersAsWritten(): void
@@ -72,8 +73,9 @@ final class ClauseRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t ORDER BY a ASC, b DESC, c');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame([Direction::Ascending, Direction::Descending, null], array_map(static fn (OrderItem $item): ?Direction => $item->direction, $operation->statement->orderBy));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertSame([Direction::Ascending, Direction::Descending, null], array_map(static fn (OrderItem $item): ?Direction => $item->direction, $operation->statement->query->orderBy));
     }
 
     public function testPositionsWrapsUnsignedIntegers(): void

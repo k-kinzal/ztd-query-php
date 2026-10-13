@@ -62,6 +62,8 @@ final class OrderingAggregatesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
         $operation = $semantics->analyze('SELECT 1 FROM t ORDER BY (SELECT SUM(t.a)), (SELECT SUM(1))', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
         $rule = new OrderingAggregates();

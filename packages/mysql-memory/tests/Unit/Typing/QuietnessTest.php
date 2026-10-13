@@ -22,6 +22,8 @@ final class QuietnessTest extends TestCase
     {
         $session = (new Instance('5.7.44'))->connect();
         $statement = $session->analyze("SELECT 'a', _latin1 X'41', @@hostname, VERSION(), IF(1, 'a', 'b'), (SELECT 'a'), CASE WHEN 1 THEN 'a' END, USER(), CONCAT('a'), COALESCE('a'), 'a' COLLATE latin1_bin, @v")->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $quietness = new Quietness();
 
@@ -31,6 +33,8 @@ final class QuietnessTest extends TestCase
     public function testBareAnswersTheExpressionInsideParenthesesAndUnaryPlus(): void
     {
         $statement = (new Instance('5.7.44'))->connect()->analyze("SELECT (+('a')), -'a'")->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $quietness = new Quietness();
 

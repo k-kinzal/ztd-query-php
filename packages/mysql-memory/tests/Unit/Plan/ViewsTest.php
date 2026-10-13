@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Query;
 
 #[CoversClass(Views::class)]
 #[Small]
@@ -136,8 +135,9 @@ final class ViewsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 AS A, 2 AS b');
         $query = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
-        self::assertInstanceOf(Query::class, $query);
         self::assertSame(['a', 'b'], Views::outputs($operation, $query));
     }
 
@@ -149,8 +149,9 @@ final class ViewsTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT a FROM t');
         $query = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
-        self::assertInstanceOf(Query::class, $query);
         self::assertSame(['d.t'], array_keys(Views::tables($operation, $query, 'd')));
     }
 

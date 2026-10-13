@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a boolean literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = TRUE');
- *     $query->statement->where->right->value // => true
+ *     $query->statement->query->where->right->value // => true
  */
 final class BooleanLiteral implements LiteralExpression
 {

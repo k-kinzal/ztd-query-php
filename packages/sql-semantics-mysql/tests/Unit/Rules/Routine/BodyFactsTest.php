@@ -41,6 +41,8 @@ final class BodyFactsTest extends TestCase
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $where = $select->where;
         self::assertInstanceOf(Comparison::class, $where);

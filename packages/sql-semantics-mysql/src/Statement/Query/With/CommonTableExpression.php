@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a common table expression
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('WITH c (x) AS (SELECT 1) SELECT x FROM c');
- *     [$query->statement->with->tables[0]->name->value, $query->statement->with->tables[0]->columns[0]->value] // => ['c', 'x']
+ *     [$query->statement->query->with->tables[0]->name->value, $query->statement->query->with->tables[0]->columns[0]->value] // => ['c', 'x']
  */
 final class CommonTableExpression implements Node
 {

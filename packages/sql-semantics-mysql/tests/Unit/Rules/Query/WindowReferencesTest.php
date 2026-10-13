@@ -38,6 +38,8 @@ final class WindowReferencesTest extends TestCase
     public function testNamesAnswersTheWindowNamesInWrittenOrder(): void
     {
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT ROW_NUMBER() OVER a, LAG(1) OVER (b), (SELECT RANK() OVER c) FROM DUAL WINDOW d AS (e)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
 
         self::assertSame(['a', 'b', 'e'], array_map(static fn (Name $name): string => $name->value, (new WindowReferences())->names([...$select->items, ...$select->windows])));

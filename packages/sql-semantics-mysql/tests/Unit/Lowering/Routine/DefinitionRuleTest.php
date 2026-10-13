@@ -56,7 +56,8 @@ final class DefinitionRuleTest extends TestCase
         self::assertCount(3, $statement->parameters->parameters);
         self::assertCount(1, $statement->characteristics);
         self::assertInstanceOf(RoutineComment::class, $statement->characteristics[0]);
-        self::assertInstanceOf(Select::class, $statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement->body);
+        self::assertInstanceOf(Select::class, $statement->body->query);
         self::assertNotNull($statement->definer);
         self::assertFalse($statement->ifNotExists);
         self::assertSame("CREATE DEFINER = root@`%` PROCEDURE db.p(IN a INT, OUT b INT, INOUT c INT) COMMENT 'x' SELECT a", $create->toString());

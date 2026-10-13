@@ -42,7 +42,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the value of adjacent strings
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a = 'x' \"y\"");
- *     [$query->statement->where->right->segments, $query->statement->where->right->value()] // => [['x', 'y'], 'xy']
+ *     [$query->statement->query->where->right->segments, $query->statement->query->where->right->value()] // => [['x', 'y'], 'xy']
  */
 final class StringLiteral implements LiteralExpression
 {

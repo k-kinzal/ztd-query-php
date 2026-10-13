@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Testing membership in a subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a NOT IN (SELECT 1)');
- *     $query->statement->where->negated // => true
+ *     $query->statement->query->where->negated // => true
  */
 final class InQuery implements Scalar
 {

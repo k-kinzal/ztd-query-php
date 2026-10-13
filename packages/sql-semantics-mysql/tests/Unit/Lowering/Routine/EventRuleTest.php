@@ -53,7 +53,8 @@ final class EventRuleTest extends TestCase
         self::assertSame('e', $statement->name->name->value);
         self::assertSame('db', $statement->name->schema?->value);
         self::assertInstanceOf(RecurringSchedule::class, $statement->schedule);
-        self::assertInstanceOf(Select::class, $statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement->body);
+        self::assertInstanceOf(Select::class, $statement->body->query);
         self::assertSame(Completion::NotPreserve, $statement->completion);
         self::assertSame(EventStatus::Disable, $statement->status);
         self::assertSame('c', $statement->comment?->value);
@@ -121,7 +122,8 @@ final class EventRuleTest extends TestCase
         self::assertSame('db', $statement->newName->schema?->value);
         self::assertSame(EventStatus::Disable, $statement->status);
         self::assertSame('x', $statement->comment?->value);
-        self::assertInstanceOf(Select::class, $statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement->body);
+        self::assertInstanceOf(Select::class, $statement->body->query);
         self::assertNotNull($statement->definer);
 
         $bare = (new Semantics(Dialect::MySql))->analyze('alter event e on completion preserve')->statement;

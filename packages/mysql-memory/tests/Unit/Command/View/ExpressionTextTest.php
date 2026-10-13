@@ -104,6 +104,8 @@ final class ExpressionTextTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 IN (1, 2)');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertStringEndsWith('AS `1 IN (1, 2)`', (string) (new ViewText($operation->facts, '', ''))->select($select));
@@ -128,6 +130,8 @@ final class ExpressionTextTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT COUNT(*), COUNT(DISTINCT 1, 2)');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame('select count(0) AS `COUNT(*)`,count(distinct 1,2) AS `COUNT(DISTINCT 1, 2)`', (new ViewText($operation->facts, '', ''))->select($select));

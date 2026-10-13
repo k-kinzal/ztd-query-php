@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
-use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -36,6 +35,7 @@ final class Dispatcher
      * @var array<class-string<Statement>, class-string<Command>>
      */
     public const COMMANDS = [
+        MySql\QueryRoot::class => QueryCommand::class,
         MySql\Partition\PartitionEntry::class => InternalCommand::class,
         MySql\Table\ParseGeneratedColumn::class => InternalCommand::class,
         MySql\Utility\Show\ShowParseTree::class => InternalCommand::class,
@@ -230,7 +230,6 @@ final class Dispatcher
         $command = self::COMMANDS[$statement::class] ?? null;
 
         return match (true) {
-            $statement instanceof Query => new QueryCommand(),
             $statement instanceof InsertRows, $statement instanceof InsertSet, $statement instanceof InsertQuery => new View\ViewWriteCommand(new InsertCommand()),
             $statement instanceof Update && MultipleChangeCommand::joined($statement) => new MultipleChangeCommand(),
             $statement instanceof Update, $statement instanceof Delete => new View\ViewWriteCommand(new ChangeCommand()),

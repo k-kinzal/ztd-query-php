@@ -44,11 +44,12 @@ final class ArgumentsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('SET @x=0');
         $operation = $session->analyze('SELECT ' . $function . ' OVER ()');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         self::assertInstanceOf(WindowFunction::class, $item->expression);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $analytic = (new Functions($planner))->compile($item->expression, new Scope());
         [$reads, $stored] = (new Arguments($planner))->split($analytic, 2, $item->expression);
 
@@ -60,11 +61,12 @@ final class ArgumentsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT @x:=1, 1/0');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $arguments = new Arguments($planner);
-        $assignment = $operation->statement->items[0];
-        $division = $operation->statement->items[1];
+        $assignment = $operation->statement->query->items[0];
+        $division = $operation->statement->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $assignment);
         self::assertInstanceOf(SelectExpression::class, $division);
         self::assertTrue($arguments->stored($assignment->expression));
@@ -88,8 +90,9 @@ final class ArgumentsTest extends TestCase
     {
         $session = (new Instance($version))->connect();
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $assignment = new Retyped(new Assignment('x', new ColumnRead(Domain::integer(), 0), Domain::integer(), Domain::integer()), Domain::integer());
 
         self::assertInstanceOf($type, (new Arguments($planner))->read($assignment, 3));

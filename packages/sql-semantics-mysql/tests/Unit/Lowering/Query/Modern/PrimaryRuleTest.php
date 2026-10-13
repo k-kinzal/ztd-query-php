@@ -19,8 +19,12 @@ final class PrimaryRuleTest extends TestCase
 {
     public function testPrimaryLowersEveryPrimary(): void
     {
-        self::assertInstanceOf(ExplicitTable::class, (new Semantics(Dialect::MySql))->analyze('TABLE t')->statement);
-        self::assertInstanceOf(Select::class, (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement);
+        $root = (new Semantics(Dialect::MySql))->analyze('TABLE t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(ExplicitTable::class, $root->query);
+        $root = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
     }
 
     public function testSpecificationLowersEveryClause(): void

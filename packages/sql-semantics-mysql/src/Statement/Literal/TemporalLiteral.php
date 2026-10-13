@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a temporal literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
- *     [$query->statement->where->right->form, $query->statement->where->right->text, $query->statement->where->right->type()->precision] // => [\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02 03:04:05.25', '2']
+ *     [$query->statement->query->where->right->form, $query->statement->query->where->right->text, $query->statement->query->where->right->type()->precision] // => [\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02 03:04:05.25', '2']
  */
 final class TemporalLiteral implements LiteralExpression
 {

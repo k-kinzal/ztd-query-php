@@ -40,7 +40,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading one literal from either spelling
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
- *     [$semantics->analyze("SELECT a FROM t WHERE a = X'1F'")->statement->where->right->digits, $semantics->analyze('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
+ *     [$semantics->analyze("SELECT a FROM t WHERE a = X'1F'")->statement->query->where->right->digits, $semantics->analyze('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
  */
 final class RadixLiteral implements LiteralExpression
 {

@@ -91,6 +91,8 @@ final class RoutineCallsTest extends TestCase
         $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), functions: ['d.f' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
         $operation = $semantics->analyze('SELECT f(1), g(1)', $semantics->context(null, true, new \SqlSemantics\Contract\SearchPath('d'), $settings));
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
 
         [$first, $second] = $select->items;

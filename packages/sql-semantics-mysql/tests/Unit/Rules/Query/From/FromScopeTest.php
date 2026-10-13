@@ -119,6 +119,8 @@ final class FromScopeTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT 1 FROM t LEFT JOIN u ON u.c = 1', [$t, $u]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(JoinedTable::class, $select->from);

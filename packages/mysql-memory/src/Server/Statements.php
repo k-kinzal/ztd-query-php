@@ -126,14 +126,14 @@ final class Statements
      */
     public function columns(\SqlSemantics\Statement\Operation $operation, \MySqlMemory\Session\Session $session, int $parameters): array
     {
-        if (!$operation->statement instanceof \SqlSemantics\Statement\Query) {
+        if (!$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
             return [];
         }
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), new \MySqlMemory\Session\Diagnostics(), $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, []);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operation->statement->query, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
 
-        return (new \MySqlMemory\Command\Output())->columns($planner->query($operation->statement, null));
+        return (new \MySqlMemory\Command\Output())->columns($planner->query($operation->statement->query, null));
     }
 
     /**

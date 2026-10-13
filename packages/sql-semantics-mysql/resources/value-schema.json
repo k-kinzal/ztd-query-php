@@ -1433,6 +1433,9 @@
         "count": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "method": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\PartitionMethod"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\QueryRoot": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\Grouping": {
         "items": "array",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\GroupingModifier"
@@ -2042,7 +2045,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\CursorDeclaration": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "query": "SqlSemantics\\Statement\\Query"
+        "query": "SqlSemantics\\Platform\\MySql\\Statement\\QueryRoot"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\FetchCursor": {
         "cursor": "SqlSemantics\\Statement\\Identifier\\Name",

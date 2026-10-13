@@ -46,7 +46,8 @@ final class StatementsTest extends TestCase
         $session->query('USE d');
         $activation = new Activation('PROCEDURE', 'd.p', false, Collation::known('utf8mb4_0900_ai_ci'));
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
-        self::assertInstanceOf(Select::class, $select);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        self::assertInstanceOf(Select::class, $select->query);
 
         $reply = (new Statements($session, $activation))->run($select);
 
@@ -105,10 +106,11 @@ final class StatementsTest extends TestCase
         $activation->scope[] = new Row(new ParameterList([]), [new Variable('x', Domain::integer(), 3)]);
         $session->program = $activation;
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT x > 2, x IS NULL')->statement;
-        self::assertInstanceOf(Select::class, $select);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        self::assertInstanceOf(Select::class, $select->query);
         $statements = new Statements($session, $activation);
 
-        [$first, $second] = $select->items;
+        [$first, $second] = $select->query->items;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $first);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $second);
 

@@ -58,13 +58,15 @@ final class DistinctOrderingTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(n INT)');
         $plain = $semantics->analyze('SELECT DISTINCT n FROM t GROUP BY n', [$table]);
         $rollup = $semantics->analyze('SELECT DISTINCT n FROM t GROUP BY n WITH ROLLUP', [$table]);
-        self::assertInstanceOf(Select::class, $plain->statement);
-        self::assertInstanceOf(Select::class, $rollup->statement);
-        self::assertInstanceOf(SelectExpression::class, $plain->statement->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $rollup->statement->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain->statement);
+        self::assertInstanceOf(Select::class, $plain->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $rollup->statement);
+        self::assertInstanceOf(Select::class, $rollup->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $plain->statement->query->items[0]);
+        self::assertInstanceOf(SelectExpression::class, $rollup->statement->query->items[0]);
 
-        self::assertTrue((new DistinctOrdering())->redundant($plain->statement, [$plain->statement->items[0]->expression], $plain->facts));
-        self::assertFalse((new DistinctOrdering())->redundant($rollup->statement, [$rollup->statement->items[0]->expression], $rollup->facts));
+        self::assertTrue((new DistinctOrdering())->redundant($plain->statement->query, [$plain->statement->query->items[0]->expression], $plain->facts));
+        self::assertFalse((new DistinctOrdering())->redundant($rollup->statement->query, [$rollup->statement->query->items[0]->expression], $rollup->facts));
     }
 
     public function testMissingSkipsAliasReferencesButFindsWrittenAggregateCalls(): void
@@ -72,6 +74,8 @@ final class DistinctOrderingTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, '8.4.7');
         $operation = $semantics->analyze('SELECT DISTINCT SUM(n) AS x FROM t GROUP BY n ORDER BY x+1, SUM(n)+1', [$semantics->analyze('CREATE TABLE t(n INT)')]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
         $checker = new DistinctOrdering();

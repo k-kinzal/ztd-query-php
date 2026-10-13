@@ -164,6 +164,8 @@ final class LocatorTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
         $statement = $session->analyze('SELECT a FROM t WHERE b = c')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $locator = new Locator();
         $locator->visit($statement->where, 'on clause', [9]);
@@ -176,6 +178,8 @@ final class LocatorTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
         $statement = $session->analyze('SELECT a FROM t ORDER BY b, c')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $locator = new Locator();
         $locator->visit($statement->orderBy, 'order clause', []);
@@ -189,6 +193,8 @@ final class LocatorTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
         $statement = $session->analyze('SELECT a FROM t WHERE b')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ColumnUse::class, $statement->where);
         $locator = new Locator();
@@ -203,6 +209,8 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $statement = $session->analyze('SELECT 1 FROM DUAL WHERE CAST(1 AS SIGNED ARRAY)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast::class, $statement->where);
         $locator = new Locator();
@@ -217,6 +225,8 @@ final class LocatorTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
         $statement = $session->analyze('SELECT a FROM t WHERE b = 1 LIMIT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $locator = new Locator();
         $locator->select($statement, [4]);
@@ -331,6 +341,8 @@ final class LocatorTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $statement = $session->analyze('SELECT ROW_NUMBER() OVER w FROM t WINDOW w AS ()')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $item = $statement->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $item);

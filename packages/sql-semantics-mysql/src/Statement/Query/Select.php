@@ -9,7 +9,6 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
-use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
 use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
@@ -53,14 +52,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parts of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t WHERE a > 1 GROUP BY a, b HAVING a > 2 ORDER BY a LIMIT 3');
- *     [count($query->statement->items), $query->statement->where !== null, $query->statement->having !== null, count($query->statement->orderBy)] // => [2, true, true, 1]
+ *     [count($query->statement->query->items), $query->statement->query->where !== null, $query->statement->query->having !== null, count($query->statement->query->orderBy)] // => [2, true, true, 1]
  * @example Depending on a table the context does not declare
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t');
  *     $query->field('a')->type instanceof \SqlSemantics\Statement\Type\Dependent // => true
  * @example Refusing a star after the first item
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Query\Star()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Select implements Explainable, Query, Selection
+final class Select implements Query, Selection
 {
     use Snapshot;
 
@@ -130,7 +129,6 @@ final class Select implements Explainable, Query, Selection
         public readonly ?LateOrdering $late = null,
         array $hints = [],
     ) {
-        Check::input($procedure === null || $from !== null, 'PROCEDURE ANALYSE requires a FROM clause.');
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a query block are optimizer hints.');
         $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
         $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'A selection projects at least one item.');
@@ -171,15 +169,6 @@ final class Select implements Explainable, Query, Selection
     public function input(): TableSource|Dual|null
     {
         return $this->from;
-    }
-
-    /**
-     * Derives the selection as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        Check::input($this->late === null, 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
-        $derivation->output($derivation->query($this, $derivation->environment()));
     }
 
     /**

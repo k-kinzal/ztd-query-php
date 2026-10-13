@@ -6,9 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
-use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
@@ -34,12 +32,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the INTO destination of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t UNION SELECT b FROM u INTO @x');
- *     $query->statement->into->targets[0]->name->value // => 'x'
+ *     $query->statement->query->into->targets[0]->name->value // => 'x'
  * @example Refusing a query statement without clauses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class QueryStatement implements Explainable, Query
+final class QueryStatement implements Query
 {
     use Snapshot;
 
@@ -64,14 +62,6 @@ final class QueryStatement implements Explainable, Query
         Check::input(!$query instanceof self && !$query instanceof Select && !($query instanceof QueryExpression && $query->body instanceof Select), 'The INTO and locking clauses of a single query block belong to the block.');
         Check::input(!$query instanceof OrderedSetOperation, 'A set operation ordered after its last SELECT ends its subquery.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
-    }
-
-    /**
-     * Derives the query as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output((new SetOutput())->derive($this, $derivation));
     }
 
     /**

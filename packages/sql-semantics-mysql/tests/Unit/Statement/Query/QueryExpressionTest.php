@@ -45,15 +45,17 @@ final class QueryExpressionTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM t UNION SELECT c FROM u ORDER BY a LIMIT 1', [$t, $u]);
 
-        self::assertInstanceOf(QueryExpression::class, $operation->statement);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->body);
-        self::assertSame($operation->facts->query($operation->statement->body), $operation->facts->output);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
+        self::assertInstanceOf(SetOperation::class, $operation->statement->query->body);
+        self::assertSame($operation->facts->query($operation->statement->query->body), $operation->facts->output);
     }
 
     public function testDeriveQueryResolvesOrdinalsAgainstTheOutput(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 ORDER BY 1');
-        $ordinal = $operation->statement instanceof QueryExpression ? $operation->statement->orderBy[0]->expression : null;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        $ordinal = $operation->statement->query instanceof QueryExpression ? $operation->statement->query->orderBy[0]->expression : null;
 
         self::assertInstanceOf(OutputOrdinal::class, $ordinal);
         self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($ordinal)->resolution);
@@ -65,8 +67,9 @@ final class QueryExpressionTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('WITH c (x) AS (SELECT 1) SELECT x FROM c', []);
 
-        self::assertInstanceOf(QueryExpression::class, $operation->statement);
-        self::assertNotNull($operation->statement->with);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
+        self::assertNotNull($operation->statement->query->with);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
         self::assertSame([], $operation->facts->diagnostics);
     }

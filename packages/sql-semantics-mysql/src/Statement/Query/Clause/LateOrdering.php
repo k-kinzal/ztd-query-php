@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an ORDER BY written after FOR UPDATE in a 5.6 subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT a FROM t FOR UPDATE ORDER BY a)');
- *     count($query->statement->items[0]->expression->query->late->orderBy) // => 1
+ *     count($query->statement->query->items[0]->expression->query->late->orderBy) // => 1
  * @example Refusing a late ordering without clauses
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

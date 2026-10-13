@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the row count and the offset
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t LIMIT 10 OFFSET 5');
- *     [$query->statement->limit->count->text, $query->statement->limit->offset->text] // => ['10', '5']
+ *     [$query->statement->query->limit->count->text, $query->statement->query->limit->offset->text] // => ['10', '5']
  * @example Refusing an expression as a row count
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

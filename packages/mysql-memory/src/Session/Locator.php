@@ -229,6 +229,9 @@ final class Locator
                     $children[] = $item;
                     $positions[] = [...$at, $index];
                 }
+            } elseif ($current instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+                $children[] = $current->query;
+                $positions[] = $at;
             } elseif ($current instanceof Select) {
                 $this->select($current, $at);
             } elseif ($current instanceof QueryExpression) {

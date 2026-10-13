@@ -32,6 +32,8 @@ final class RadixLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = X'1F'");
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
@@ -51,6 +53,8 @@ final class RadixLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _LATIN1 b'1'");
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -81,6 +85,8 @@ final class RadixLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 0x1');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -95,6 +101,8 @@ final class RadixLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 0b01 AS v');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);

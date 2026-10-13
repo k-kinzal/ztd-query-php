@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the position of an ordering item
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t ORDER BY 2');
- *     $query->statement->orderBy[0]->expression->position() // => 2
+ *     $query->statement->query->orderBy[0]->expression->position() // => 2
  * @example Refusing a decimal as a position
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.0')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

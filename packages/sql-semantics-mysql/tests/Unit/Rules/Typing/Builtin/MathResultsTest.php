@@ -94,6 +94,8 @@ final class MathResultsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT ABS(CAST(1 AS UNSIGNED)), FLOOR(1.5)');
         $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $items = array_map(static fn ($item) => $item instanceof SelectExpression ? $operation->facts->scalar($item->expression)->type : null, $statement->items);
 
