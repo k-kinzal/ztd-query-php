@@ -63,7 +63,7 @@
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * Answers the bytes a string literal stands for.</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * @example A hexadecimal literal</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     *     (new \MySqlMemory\Command\Admin\Literals())-&gt;bytes(new \SqlSemantics\Platform\MySql\Statement\Literal\Text(&#039;4142&#039;, \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::Backslash, \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal)) // =&gt; &#039;AB&#039;</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     *     (new \MySqlMemory\Command\Admin\Literals())-&gt;bytes(new \SqlSemantics\Platform\MySql\Statement\Literal\Text(&#039;4142&#039;, \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal)) // =&gt; &#039;AB&#039;</span></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">bytes</span>(<span class="tok-id">Text</span> <span class="tok-var">$text</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    {</span>
