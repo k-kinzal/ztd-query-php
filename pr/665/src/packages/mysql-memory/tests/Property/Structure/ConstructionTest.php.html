@@ -128,8 +128,25 @@
 <span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">SetOperation</span>::<span class="tok-kw">class</span>, <span class="tok-var">$construction</span>-&gt;<span class="tok-id">object</span>(<span class="tok-id">SetOperation</span>::<span class="tok-kw">class</span>, <span class="tok-num">6</span>));</span>
 <span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        <span class="tok-id">self</span>::<span class="tok-id">assertLessThanOrEqual</span>(<span class="tok-num">2000</span>, <span class="tok-var">$construction</span>-&gt;<span class="tok-id">attempts</span>);</span>
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    }</span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>}</span>
-<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a></span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     * Uses the retained non-empty collection types without replacing the selected root.</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-com">     * @throws JsonException When the value inventory is invalid</span></span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-com">     * @throws ReflectionException When a constructor cannot be invoked</span></span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPrivilegeRootFitsTheBudgetWithoutReplacingItsType</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>    {</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>        <span class="tok-var">$catalogue</span> = <span class="tok-kw">new</span> <span class="tok-id">Catalogue</span>();</span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>        <span class="tok-var">$choices</span> = <span class="tok-kw">new</span> <span class="tok-id">Choices</span>(<span class="tok-str">&#039;2674a4091ceacb6852ced919ff7dec51:402&#039;</span>);</span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>        <span class="tok-var">$class</span> = <span class="tok-var">$choices</span>-&gt;<span class="tok-id">one</span>(<span class="tok-var">$catalogue</span>-&gt;<span class="tok-id">roots</span>());</span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>        <span class="tok-var">$construction</span> = <span class="tok-kw">new</span> <span class="tok-id">Construction</span>(<span class="tok-var">$choices</span>, <span class="tok-var">$catalogue</span>, <span class="tok-kw">new</span> <span class="tok-id">Metadata</span>());</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a></span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges</span>::<span class="tok-kw">class</span>, <span class="tok-var">$class</span>);</span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-var">$class</span>, <span class="tok-var">$construction</span>-&gt;<span class="tok-id">object</span>(<span class="tok-var">$class</span>, <span class="tok-num">6</span>));</span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>        <span class="tok-id">self</span>::<span class="tok-id">assertLessThanOrEqual</span>(<span class="tok-num">2000</span>, <span class="tok-var">$construction</span>-&gt;<span class="tok-id">attempts</span>);</span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>    }</span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>}</span>
+<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
