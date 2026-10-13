@@ -70,7 +70,7 @@ final class SubqueryOptionsTest extends TestCase
 
     public function testCheckRejectsProcedureAnalyseAcrossAnExpressionSubqueryBoundary(): void
     {
-        $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse());
+        $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), procedure: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse());
         $this->expectExceptionMessage('An expression subquery cannot invoke PROCEDURE ANALYSE.');
         (new SubqueryOptions())->check($query);
     }

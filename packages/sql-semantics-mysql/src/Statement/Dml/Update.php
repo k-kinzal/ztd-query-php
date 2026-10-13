@@ -43,7 +43,7 @@ final class Update implements Explainable
     public readonly array $hints;
 
     /**
-     * @var list<Relation> The table references in written order
+     * @var non-empty-list<Relation> The table references in written order
      */
     public readonly array $tables;
 
@@ -81,7 +81,11 @@ final class Update implements Explainable
         array $hints = [],
     ) {
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
-        $this->tables = Check::listOf($tables, Relation::class, 'UPDATE names at least one table reference.', 1);
+        $members = [];
+        foreach (Check::listOf($tables, Relation::class, 'UPDATE names at least one table reference.', 1) as $table) {
+            array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));
+        }
+        $this->tables = $members;
         $this->assignments = Check::listOf($assignments, Assignment::class, 'UPDATE holds at least one assignment.', 1);
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
         foreach ($this->orderBy as $item) {

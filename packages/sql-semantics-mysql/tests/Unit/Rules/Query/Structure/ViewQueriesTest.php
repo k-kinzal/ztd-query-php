@@ -20,7 +20,7 @@ final class ViewQueriesTest extends TestCase
 {
     public function testCheckRejectsAProcessorInsideQueryWrappers(): void
     {
-        $query = new ParenthesizedQuery(new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse()));
+        $query = new ParenthesizedQuery(new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), procedure: new ProcedureAnalyse()));
         $this->expectExceptionMessage('A view query cannot invoke PROCEDURE ANALYSE.');
 
         (new ViewQueries())->check($query);

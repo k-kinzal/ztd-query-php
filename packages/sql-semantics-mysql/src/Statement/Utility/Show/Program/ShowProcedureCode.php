@@ -41,6 +41,7 @@ final class ShowProcedureCode implements Statement
      */
     public function __construct(public readonly QualifiedName $name)
     {
+        \SqlSemantics\Diagnostic\Check::input($name->catalog === null, 'A stored-program name has at most a database qualifier.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

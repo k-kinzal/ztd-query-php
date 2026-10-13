@@ -70,6 +70,7 @@ final class LegacyForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset => $value->charset->name === null,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable => $value->temporaryWords > 1,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Parameter,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,

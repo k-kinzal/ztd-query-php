@@ -19,7 +19,7 @@ final class ViewDefinitionTest extends TestCase
     {
         $this->expectExceptionMessage('A view query cannot invoke PROCEDURE ANALYSE.');
 
-        new ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], procedure: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse()));
+        new ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), procedure: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse()));
     }
 
     public function testRenderHeadWritesAlgorithmDefinerAndSecurity(): void

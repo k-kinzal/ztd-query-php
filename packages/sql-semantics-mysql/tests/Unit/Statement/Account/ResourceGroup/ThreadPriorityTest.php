@@ -25,4 +25,11 @@ final class ThreadPriorityTest extends TestCase
     {
         self::assertSame('ALTER RESOURCE GROUP g THREAD_PRIORITY = -5', (new Semantics(Dialect::MySql))->analyze('alter resource group g thread_priority = -5')->toString());
     }
+
+    public function testPriorityRejectsAFractionalToken(): void
+    {
+        $this->expectExceptionMessage('A thread priority uses a decimal integer token no greater than 2147483647.');
+        new ThreadPriority(false, new Numeral('1.5'));
+    }
+
 }

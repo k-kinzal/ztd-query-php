@@ -28,4 +28,18 @@ final class ResetTest extends TestCase
     {
         self::assertSame("RESET SLAVE FOR CHANNEL 'a\\nb', BINARY LOGS AND GTIDS TO 1.5", (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("reset slave for channel 'a\\nb', master to 1.5")->toString());
     }
+
+    public function testTargetsRejectMixedVocabulariesOfTheSameKind(): void
+    {
+        $this->expectExceptionMessage('Repeated RESET targets use one vocabulary for each target kind.');
+        new Reset([new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy), new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current)]);
+    }
+
+    public function testTargetsAllowDifferentKindsWithDifferentRenameDates(): void
+    {
+        $reset = new Reset([new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy), new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current)]);
+
+        self::assertCount(2, $reset->targets);
+    }
+
 }

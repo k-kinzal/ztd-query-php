@@ -35,6 +35,11 @@ final class LoadInput implements Node
     use Snapshot;
 
     /**
+     * The noncanonical spelling of COUNT when read as an identifier.
+     */
+    public readonly ?Name $countWord;
+
+    /**
      * @param bool $local Whether the client reads the file
      * @param LoadSource $source The kind of location
      * @param Text $file The file name, URL or pattern
@@ -49,11 +54,12 @@ final class LoadInput implements Node
         public readonly Text $file,
         public readonly ?Numeral $count = null,
         public readonly bool $primaryKeyOrder = false,
-        public readonly ?Name $countWord = null,
+        ?Name $countWord = null,
     ) {
         Check::input($file->radix === null, 'A LOAD file name is quoted text.');
         Check::input($count === null || $count->isIntegerToken(), 'A LOAD file count is a decimal integer token no greater than 2147483647.');
         Check::input($countWord === null || ($count !== null && strcasecmp($countWord->value, 'count') === 0), 'The word before the number of files is COUNT.');
+        $this->countWord = $countWord?->value === 'COUNT' ? null : $countWord;
     }
 
     /**

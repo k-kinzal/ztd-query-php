@@ -34,12 +34,12 @@ final class GrantRoles implements Statement
     use Snapshot;
 
     /**
-     * @var list<Grantable> The granted roles in order
+     * @var non-empty-list<Grantable> The granted roles in order
      */
     public readonly array $roles;
 
     /**
-     * @var list<Account> The accounts the roles are granted to
+     * @var non-empty-list<Account> The accounts the roles are granted to
      */
     public readonly array $users;
 

@@ -32,4 +32,16 @@ final class ModernFormsTest extends TestCase
         self::assertTrue($forms->requires($nowait));
         self::assertTrue($forms->requires($query));
     }
+
+    public function testQueryRecognizesFilteringWithoutFrom(): void
+    {
+        $forms = new ModernForms();
+        $plain = new Select([], [new SelectExpression(new NumberLiteral('1'))]);
+        $filtered = new Select([], [new SelectExpression(new NumberLiteral('1'))], where: new NumberLiteral('1'));
+
+        self::assertFalse($forms->query($plain));
+        self::assertTrue($forms->query($filtered));
+        self::assertTrue($forms->requires($filtered));
+    }
+
 }

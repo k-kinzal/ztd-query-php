@@ -45,4 +45,14 @@ final class LoadInputTest extends TestCase
 
         new LoadInput(false, LoadSource::Infile, new Text('f'), new Numeral('2'), false, new Name('many'));
     }
+
+    public function testCountWordNormalizesTheCanonicalKeywordSpelling(): void
+    {
+        $input = new LoadInput(false, LoadSource::Infile, new Text('data'), new Numeral('3'), countWord: new Name('COUNT'));
+
+        self::assertNull($input->countWord);
+        self::assertNotNull($input->count);
+        self::assertSame('3', $input->count->text);
+    }
+
 }

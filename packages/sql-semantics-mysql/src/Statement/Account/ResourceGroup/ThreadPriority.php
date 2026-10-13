@@ -29,6 +29,7 @@ final class ThreadPriority implements Node
      */
     public function __construct(public readonly bool $negative, public readonly Numeral $number)
     {
+        \SqlSemantics\Diagnostic\Check::input($number->isIntegerToken(), 'A thread priority uses a decimal integer token no greater than 2147483647.');
     }
 
     /**

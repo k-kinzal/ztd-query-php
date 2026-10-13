@@ -130,6 +130,7 @@ final class Select implements Explainable, Query, Selection
         public readonly ?LateOrdering $late = null,
         array $hints = [],
     ) {
+        Check::input($procedure === null || $from !== null, 'PROCEDURE ANALYSE requires a FROM clause.');
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a query block are optimizer hints.');
         $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
         $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'A selection projects at least one item.');

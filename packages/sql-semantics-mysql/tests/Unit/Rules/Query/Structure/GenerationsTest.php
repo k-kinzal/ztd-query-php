@@ -104,12 +104,12 @@ final class GenerationsTest extends TestCase
         yield 'legacy password and modern assignment' => [static fn (): Node => new SetVariables([new PasswordAssignment(new Password(new Text('pw'), PasswordFunction::Password)), new UserAssignment(new UserVariable(new Name('x')), new JsonValueCall(new StringLiteral(['{}']), new StringLiteral(['$.x'])))])];
         yield 'with and procedure' => [static fn (): Node => new QueryExpression(
             new With(false, [new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))]))]),
-            new Select([], [new SelectExpression(new NumberLiteral('2'))], procedure: new ProcedureAnalyse()),
+            new Select([], [new SelectExpression(new NumberLiteral('2'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), procedure: new ProcedureAnalyse()),
         )];
-        yield 'procedure in common table' => [static fn (): Node => new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse()))];
+        yield 'procedure in common table' => [static fn (): Node => new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), procedure: new ProcedureAnalyse()))];
         yield 'modern query in legacy projection' => [static fn (): Node => new Select([SelectOption::Cache], [new SelectExpression(new ScalarSubquery(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])))])];
         yield 'legacy query in modern rows' => [static fn (): Node => new ValuesQuery([new ValueRow([new ScalarSubquery(new Select([], [new SelectExpression(new WeightString(new NumberLiteral('1'), levels: [new WeightLevel(new Numeral('1'))]))]))])])];
-        yield 'qualify and procedure' => [static fn (): Node => new Select([], [new SelectExpression(new NumberLiteral('1'))], qualify: new NumberLiteral('1'), procedure: new ProcedureAnalyse())];
+        yield 'qualify and procedure' => [static fn (): Node => new Select([], [new SelectExpression(new NumberLiteral('1'))], qualify: new NumberLiteral('1'), from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), procedure: new ProcedureAnalyse())];
         yield 'except and unparenthesized limit' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new Select([], [new SelectExpression(new NumberLiteral('1'))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new NumberLiteral('1'))), SetOperator::Except, null, new Select([], [new SelectExpression(new NumberLiteral('2'))]))];
         yield 'modern value with leading column dot' => [static fn (): Node => new ValuesQuery([new ValueRow([new ColumnUse(new Name('a'), new QualifiedName(new Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)])])];
         yield 'legacy explain modifier and modern query' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain(new ValuesQuery([new ValueRow([new NumberLiteral('1')])]), modifier: \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions)];
@@ -134,7 +134,7 @@ final class GenerationsTest extends TestCase
 
     public function testCheckAllowsAnEntirelyLegacyGraph(): void
     {
-        $query = new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse());
+        $query = new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), procedure: new ProcedureAnalyse());
         (new Generations())->check($query);
 
         self::assertSame(SelectOption::Cache, $query->options[0]);
@@ -257,4 +257,17 @@ final class GenerationsTest extends TestCase
         $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
         new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), new Select([], [new SelectExpression(new NumberLiteral('1'))]), collation: new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null), ifNotExists: true);
     }
+
+    public function testCheckRejectsMemberOfInALegacyGeneratedColumn(): void
+    {
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+        new ParseGeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf(new NumberLiteral('1'), new StringLiteral(['[]'])));
+    }
+
+    public function testCheckRejectsDefaultCharsetWithModernDatabaseOptions(): void
+    {
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+        new \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase(null, [new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly(null), new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset(new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null))]);
+    }
+
 }

@@ -414,4 +414,11 @@ final class SelectTest extends TestCase
         self::assertSame('SELECT /*+ BKA(`t`) */ 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT /*+ BKA(t) */ 1')->toString());
         self::assertSame('SELECT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT /*+ BKA(t) */ 1')->toString());
     }
+
+    public function testProcedureRequiresAFromClause(): void
+    {
+        $this->expectExceptionMessage('PROCEDURE ANALYSE requires a FROM clause.');
+        new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse());
+    }
+
 }

@@ -75,4 +75,15 @@ final class UpdateTest extends TestCase
     {
         self::assertSame('WITH c AS (SELECT 1) UPDATE /*+ NO_BKA(`t`) */ t SET a = 1', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1) UPDATE /*+ no_bka(t) */ t SET a = 1')->toString());
     }
+
+    public function testTablesFlattenAnUnparenthesizedCommaList(): void
+    {
+        $first = new TableReference(new QualifiedName(new Name('a')));
+        $second = new TableReference(new QualifiedName(new Name('b')));
+        $third = new TableReference(new QualifiedName(new Name('c')));
+        $update = new Update(null, false, false, [$first, new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([$second, $third])], [new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('id')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+
+        self::assertSame([$first, $second, $third], $update->tables);
+    }
+
 }

@@ -39,6 +39,13 @@ final class Reset implements Statement
     public function __construct(array $targets)
     {
         $this->targets = Check::listOf($targets, ResetTarget::class, 'RESET names a list of items.', 1);
+        $terms = [];
+        foreach ($this->targets as $target) {
+            if ($target instanceof ResetBinaryLogs || $target instanceof ResetReplica) {
+                Check::input(!isset($terms[$target::class]) || $terms[$target::class] === $target->terminology, 'Repeated RESET targets use one vocabulary for each target kind.');
+                $terms[$target::class] = $target->terminology;
+            }
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
