@@ -74,7 +74,8 @@
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com"> * @example Reading both operands</span></span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t WHERE a &gt;= 10&#039;);</span></span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-com"> *     [$query-&gt;statement-&gt;where-&gt;left-&gt;name-&gt;value, $query-&gt;statement-&gt;where-&gt;right-&gt;text] // =&gt; [&#039;a&#039;, &#039;10&#039;]</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">38</span><span class="tok-com"> *     [$query-&gt;statement-&gt;where-&gt;left-&gt;name-&gt;value, $query-&gt;statement-&gt;where-&gt;right-&gt;text] // =&gt; [&#039;a&#039;, &#039;10&#039;]</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com"> *     [$query-&gt;statement-&gt;query-&gt;where-&gt;left-&gt;name-&gt;value, $query-&gt;statement-&gt;query-&gt;where-&gt;right-&gt;text] // =&gt; [&#039;a&#039;, &#039;10&#039;]</span></span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Comparison</span> <span class="tok-kw">implements</span> <span class="tok-id">Scalar</span></span>
 <span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>{</span>

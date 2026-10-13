@@ -61,7 +61,8 @@
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * @example Reading the targets</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a, b FROM t INTO @x, y&#039;);</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> *     [$query-&gt;statement-&gt;into-&gt;targets[0]-&gt;name-&gt;value, $query-&gt;statement-&gt;into-&gt;targets[1]-&gt;name-&gt;value] // =&gt; [&#039;x&#039;, &#039;y&#039;]</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-com"> *     [$query-&gt;statement-&gt;into-&gt;targets[0]-&gt;name-&gt;value, $query-&gt;statement-&gt;into-&gt;targets[1]-&gt;name-&gt;value] // =&gt; [&#039;x&#039;, &#039;y&#039;]</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> *     [$query-&gt;statement-&gt;query-&gt;into-&gt;targets[0]-&gt;name-&gt;value, $query-&gt;statement-&gt;query-&gt;into-&gt;targets[1]-&gt;name-&gt;value] // =&gt; [&#039;x&#039;, &#039;y&#039;]</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">IntoVariables</span> <span class="tok-kw">implements</span> <span class="tok-id">IntoDestination</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>{</span>

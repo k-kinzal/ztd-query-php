@@ -64,7 +64,8 @@
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Keeping a grouping that changes the association</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t WHERE a AND (b OR c)&#039;);</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> *     $query-&gt;statement-&gt;where-&gt;right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped // =&gt; true</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">28</span><span class="tok-com"> *     $query-&gt;statement-&gt;where-&gt;right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped // =&gt; true</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *     $query-&gt;statement-&gt;query-&gt;where-&gt;right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped // =&gt; true</span></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Grouped</span> <span class="tok-kw">implements</span> <span class="tok-id">Scalar</span></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>{</span>
