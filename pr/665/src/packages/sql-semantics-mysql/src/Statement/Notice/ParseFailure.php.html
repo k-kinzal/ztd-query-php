@@ -57,38 +57,39 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * parses after it follow the error, and every such error of the statement</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * is recorded. A cast to an array of a type no multi-valued index takes,</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * and a cast to TIME or DATETIME with a precision above 6, stop the parse</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * instead: no construct after it raises a warning. The</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * problem is reported as a diagnostic too; this notice keeps its order</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * among the warnings. Terminates: no recursion. Source:</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html.</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * Status: Implemented.</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * @example Reading the place of an unknown collation</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;SELECT BINARY (&#039;a&#039; COLLATE nope)&quot;);</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     [$query-&gt;facts-&gt;warnings[0]-&gt;message(), $query-&gt;facts-&gt;warnings[1]-&gt;message()] // =&gt; [&quot;Unknown collation: &#039;nope&#039;&quot;, &quot;&#039;BINARY expr&#039; is deprecated and will be removed in a future release. Please use CAST instead&quot;]</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ParseFailure</span> <span class="tok-kw">implements</span> <span class="tok-id">Warning</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>{</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * @param Diagnostic $problem The problem the server finds while it parses</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * @param bool $aborts Whether the server stops parsing at the problem, so the constructs it would parse later raise no warning</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Diagnostic</span> <span class="tok-var">$problem</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$aborts</span> = <span class="tok-id">false</span>)</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    {</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    }</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * Answers the text of the problem.</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    {</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span>-&gt;<span class="tok-id">message</span>();</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    }</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>}</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * in 8.4 and 9.1: no construct after it raises a warning. In 8.0 those</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * cast errors are recorded and parsing continues. The</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * problem is reported as a diagnostic too; this notice keeps its order</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * among the warnings. Terminates: no recursion. Source:</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html.</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * Status: Implemented.</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Reading the place of an unknown collation</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;SELECT BINARY (&#039;a&#039; COLLATE nope)&quot;);</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> *     [$query-&gt;facts-&gt;warnings[0]-&gt;message(), $query-&gt;facts-&gt;warnings[1]-&gt;message()] // =&gt; [&quot;Unknown collation: &#039;nope&#039;&quot;, &quot;&#039;BINARY expr&#039; is deprecated and will be removed in a future release. Please use CAST instead&quot;]</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ParseFailure</span> <span class="tok-kw">implements</span> <span class="tok-id">Warning</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>{</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * @param Diagnostic $problem The problem the server finds while it parses</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @param bool $aborts Whether the server stops parsing at the problem, so the constructs it would parse later raise no warning</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Diagnostic</span> <span class="tok-var">$problem</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$aborts</span> = <span class="tok-id">false</span>)</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    {</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * Answers the text of the problem.</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    {</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span>-&gt;<span class="tok-id">message</span>();</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    }</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>}</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
