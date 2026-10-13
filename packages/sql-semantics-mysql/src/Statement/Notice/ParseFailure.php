@@ -17,7 +17,8 @@ use SqlSemantics\Statement\Snapshot;
  * parses after it follow the error, and every such error of the statement
  * is recorded. A cast to an array of a type no multi-valued index takes,
  * and a cast to TIME or DATETIME with a precision above 6, stop the parse
- * instead: no construct after it raises a warning. The
+ * in 8.4 and 9.1: no construct after it raises a warning. In 8.0 those
+ * cast errors are recorded and parsing continues. The
  * problem is reported as a diagnostic too; this notice keeps its order
  * among the warnings. Terminates: no recursion. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html.

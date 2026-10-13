@@ -65,7 +65,7 @@ final class AtTimeZone implements Scalar
         if ((int) ($this->precision ?? '0') > 6) {
             $problem = new TooBigPrecision((int) $this->precision, 'CAST');
             $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, true));
+            $derivation->warn(new ParseFailure($problem, $derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql8044));
         }
         $decimals = min(6, (int) ($this->precision ?? '0'));
 

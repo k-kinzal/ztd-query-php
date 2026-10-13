@@ -7,6 +7,7 @@ namespace MySqlMemory\Session\Parse;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\CacheOptions;
+use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlParser\Lexer\SourceException;
 use SqlParser\Lexer\Token;
@@ -15,6 +16,7 @@ use SqlParser\Parser\SqlParser;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 
 /**
  * Preserves modern operator and SELECT-modifier warnings before a syntax refusal.
@@ -45,14 +47,45 @@ final class ModernWarnings
             $tokens = $parser->tokenize(substr($statement, 0, $end));
             $statement = substr($statement, 0, $end);
         }
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->settings()->release());
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
         foreach ($this->before($tokens, $statement, $end, $parser) as $offset => $notice) {
             $notices[] = [$offset, $notice];
         }
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $warnings = array_column($notices, 1);
 
-        return $warnings === [] ? $error : (new CacheOptions())->recorded($warnings, null, $error, $session);
+        return $warnings === [] ? $error : $this->recorded($warnings, $error, $session);
+    }
+
+    /**
+     * Records typed conditions in order, retaining the first error as the reply.
+     *
+     * @param list<Deprecated|ParseFailure> $notices The completed semantic notices
+     */
+    public function recorded(array $notices, SqlError $syntax, Session $session): SqlError
+    {
+        $session->diagnostics->clear();
+        $first = null;
+        $aborted = false;
+        foreach ($notices as $notice) {
+            if ($notice instanceof Deprecated) {
+                $session->diagnostics->warning($notice->code(), $notice->value);
+                continue;
+            }
+            $failure = (new Errors())->error($notice->problem, $session);
+            $session->diagnostics->error($failure->getCode(), $failure->getMessage());
+            $first ??= $failure;
+            if ($notice->aborts) {
+                $aborted = true;
+                break;
+            }
+        }
+        if (!$aborted) {
+            $session->diagnostics->error($syntax->getCode(), $syntax->getMessage());
+        }
+        $first ??= $syntax;
+
+        return new SqlError($first->error, $first->getMessage(), $syntax, [], null, null, true);
     }
 
     /**

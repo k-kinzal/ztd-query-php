@@ -62,4 +62,13 @@ final class AtTimeZoneTest extends TestCase
         self::assertSame("Too-big precision 7 specified for 'CAST'. Maximum is 6.", $operation->facts->diagnostics[0]->message());
     }
 
+    public function testDeriveScalarKeepsParsingAfterThePrecisionErrorInMySql80(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.0.44'))->analyze("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7)), BINARY 1");
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[0]);
+        self::assertFalse($operation->facts->warnings[0]->aborts);
+        self::assertCount(2, $operation->facts->warnings);
+    }
+
 }

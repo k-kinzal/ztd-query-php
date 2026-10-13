@@ -9,11 +9,17 @@ use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlParser\Parser\ReductionParser;
 use SqlSemantics\Construction\SourceRanges;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Lowering\Productions;
+use SqlSemantics\Platform\MySql\Lowering\Expression\SyntaxCasts;
+use SqlSemantics\Platform\MySql\Lowering\Expression\SyntaxDeprecations;
+use SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxNames;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 
 /**
- * Interprets warnings of completed expressions before a later input refusal.
+ * Interprets notices of completed expressions before a later input refusal.
  *
  * BINARY and assignment expressions warn after their operand has been read.
  * A missing operand therefore produces no notice. The temporary parser nodes
@@ -23,7 +29,8 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
  * @visibility public
  * @example Preserving a completed BINARY warning before an unprepared marker
  *     $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');
- *     $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, 'SELECT BINARY 1,?', 16, \SqlSemantics\Contract\GrammarRelease::MySql847);
+ *     $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
+ *     $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, 'SELECT BINARY 1,?', 16, $profile);
  *     array_column($notices, 1) // => [\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator]
  */
 final class SyntaxWarnings
@@ -31,29 +38,26 @@ final class SyntaxWarnings
     /**
      * Returns completion notices raised before the token at the refusal offset.
      *
-     * @return list<array{int, Deprecated}> Input boundaries and warning descriptors
+     * @return list<array{int, Deprecated|ParseFailure}> Input boundaries and semantic notices
      */
-    public function completed(ReductionParser $parser, string $statement, int $end, GrammarRelease $release): array
+    public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile): array
     {
         $warnings = [];
         $ranges = new SourceRanges();
+        $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');
+        $lowering = new Lowering($productions, new Leaves(), $profile);
+        $aborted = false;
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, $ranges, $end, $release): void {
-                if ($lookahead->offset > $end) {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, $ranges, $end, $profile, $lowering): void {
+                if ($aborted || $lookahead->offset > $end) {
                     return;
                 }
-                $first = $node->children[0] ?? null;
-                $assignment = $node->children[$node->name === 'variable_aux' ? 1 : 2] ?? null;
-                $construct = match (true) {
-                    $node->name === 'text_literal' && $first instanceof Token && $first->name === 'NCHAR_STRING' => Deprecated::National,
-                    $node->name === 'simple_expr' && $first instanceof Token && in_array($first->name, ['BINARY', 'BINARY_SYM'], true) => Deprecated::BinaryOperator,
-                    in_array($node->name, ['variable_aux', 'in_expression_user_variable_assignment'], true) && $assignment instanceof Token && $assignment->name === 'SET_VAR' => Deprecated::AssignmentInExpression,
-                    default => null,
-                };
-                if ($construct !== null && $construct->warnedIn($release)) {
+                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering);
+                if ($notice !== null) {
                     $range = $ranges->span($node, true);
                     if ($range !== null) {
-                        $warnings[] = [$range[1], $construct];
+                        $warnings[] = [$range[1], $notice];
+                        $aborted = $notice instanceof ParseFailure && $notice->aborts;
                     }
                 }
             });

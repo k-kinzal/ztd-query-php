@@ -77,7 +77,7 @@ final class Cast implements Scalar
         $problem = $this->precisionProblem();
         if ($problem !== null) {
             $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, true));
+            $derivation->warn(new ParseFailure($problem, $grammar !== GrammarRelease::MySql8044));
         }
         if ($this->target->charset?->charset !== null) {
             Deprecation::charset($this->target->charset->charset->value, $derivation);
@@ -90,7 +90,7 @@ final class Cast implements Scalar
             }
             $problem = new NotSupportedYet($refusal);
             $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, true));
+            $derivation->warn(new ParseFailure($problem, $grammar !== GrammarRelease::MySql8044));
 
             return new ScalarFact(new Invalid($problem), $fact->nullability);
         }
@@ -102,37 +102,11 @@ final class Cast implements Scalar
     }
 
     /**
-     * Answers a precision beyond the cast target's limit, before resolving its operand.
-     *
-     * FLOAT accepts at most 53 bits and reports an overflowing request as a signed 32-bit
-     * integer. Temporal fractions accept at most 6 digits. Verified on MySQL 8.4.7.
+     * Answers a precision beyond the cast target's limit.
      */
     public function precisionProblem(): ?TooBigPrecision
     {
-        $maximum = match ($this->target->kind) {
-            CastKind::Float => 53,
-            CastKind::Time, CastKind::DateTime => 6,
-            CastKind::Signed, CastKind::Unsigned, CastKind::Date, CastKind::Decimal,
-            CastKind::Char, CastKind::Binary, CastKind::NationalChar, CastKind::Json,
-            CastKind::Double, CastKind::Real, CastKind::Year, CastKind::Point,
-            CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint,
-            CastKind::MultiLineString, CastKind::MultiPolygon, CastKind::GeometryCollection => null,
-        };
-        if ($maximum === null || $this->target->length === null || (int) $this->target->length <= $maximum) {
-            return null;
-        }
-        $precision = (int) $this->target->length;
-        if ($this->target->kind === CastKind::Float) {
-            $precision = 0;
-            foreach (str_split(explode('.', $this->target->length)[0]) as $digit) {
-                $precision = ($precision * 10 + (int) $digit) % 4294967296;
-            }
-            if ($precision >= 2147483648) {
-                $precision -= 4294967296;
-            }
-        }
-
-        return new TooBigPrecision($precision, 'CAST', $maximum);
+        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->precision($this->target);
     }
 
     /**
@@ -141,27 +115,11 @@ final class Cast implements Scalar
     public const ARRAY_OUTSIDE_INDEX = 'Use of CAST( .. AS .. ARRAY) outside of functional index in CREATE(non-SELECT)/ALTER TABLE or in general expressions';
 
     /**
-     * Answers the form the server refuses while it parses a cast to an array, or null when the type is one a multi-valued index takes.
-     *
-     * A multi-valued index takes no character set, no BLOB, and none of JSON, the floating-point
-     * types, YEAR and the spatial types; the parse stops there, in any statement. A cast to
-     * another type is refused outside a functional index when the expression is resolved
-     * (ARRAY_OUTSIDE_INDEX), which these facts do not tell (verified on a live 8.4 server).
+     * Answers a target that cannot be used by a multi-valued index.
      */
     public function arrayRefusal(): ?string
     {
-        $kind = $this->target->kind;
-        if ($this->target->charset !== null || $kind === CastKind::NationalChar) {
-            return 'specifying charset for multi-valued index';
-        }
-
-        return match ($kind) {
-            CastKind::Char, CastKind::Binary => $this->target->length === null ? 'CAST-ing data to array of char/binary BLOBs' : null,
-            CastKind::Real => 'CAST-ing data to array of DOUBLE',
-            CastKind::MultiLineString => 'CAST-ing data to array of MULTILINESTRING>',
-            CastKind::Json, CastKind::Double, CastKind::Float, CastKind::Year, CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiPolygon, CastKind::GeometryCollection => 'CAST-ing data to array of ' . $kind->value,
-            CastKind::Signed, CastKind::Unsigned, CastKind::Date, CastKind::Time, CastKind::DateTime, CastKind::Decimal => null,
-        };
+        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->array($this->target);
     }
 
     /**

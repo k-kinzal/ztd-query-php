@@ -111,6 +111,16 @@ final class CastTest extends TestCase
         self::assertSame("This version of MySQL doesn't yet support 'CAST-ing data to array of JSON'.", $operation->facts->diagnostics[0]->message());
     }
 
+    public function testDeriveScalarPreservesContinuingCastErrorsInMySql80(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('SELECT CAST(1 AS DATETIME(7)), CAST(1 AS JSON ARRAY), BINARY 1');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[0]);
+        self::assertFalse($operation->facts->warnings[0]->aborts);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[1]);
+        self::assertFalse($operation->facts->warnings[1]->aborts);
+    }
+
     public function testDeriveScalarWarnsAboutAUtf8mb3Target(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT CAST(1 AS CHAR CHARACTER SET utf8mb3)');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Session\Parse;
 
 use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Parse\ModernWarnings;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -17,6 +18,37 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class ModernWarningsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int, list<int>}>
+     */
+    public static function providerFailures(): iterable
+    {
+        yield 'collation continues' => ['SELECT 1 COLLATE missing,?', 1273, [1273, 1064]];
+        yield 'duplicates remain' => ['SELECT 1 COLLATE missing COLLATE missing,?', 1273, [1273, 1273, 1064]];
+        yield 'interleaved warnings' => ['SELECT !1 COLLATE missing, BINARY 1,?', 1273, [1287, 1273, 1287, 1064]];
+        yield 'charset aborts' => ['SELECT CONVERT(1 USING missing), !?, 1 COLLATE other', 1115, [1115]];
+        yield 'cast charset aborts' => ['SELECT CAST(1 AS CHAR CHARACTER SET missing),?', 1115, [1115]];
+        yield 'collation then abort' => ['SELECT 1 COLLATE missing, CONVERT(1 USING other),?', 1273, [1273, 1115]];
+        yield 'empty collation resolves later' => ["SELECT 1 COLLATE '',?", 1064, [1064]];
+        yield 'known collation' => ['SELECT 1 COLLATE utf8mb4_bin,?', 1064, [1064]];
+        yield 'name after refusal' => ['SELECT ? COLLATE missing', 1064, [1064]];
+    }
+
+    /**
+     * @param list<int> $codes The ordered condition numbers
+     */
+    #[DataProvider('providerFailures')]
+    public function testRecordedKeepsTheFirstErrorAndAbortingNotices(string $sql, int $primary, array $codes): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->run($sql)[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame($primary, $reply->getCode());
+        self::assertSame($codes, array_column($session->diagnostics->conditions, 1));
+        self::assertSame(array_map(static fn (int $code): string => $code === 1287 ? 'Warning' : 'Error', $codes), array_column($session->diagnostics->conditions, 0));
+    }
+
     /**
      * @return iterable<string, array{string, list<Deprecated>}>
      */
