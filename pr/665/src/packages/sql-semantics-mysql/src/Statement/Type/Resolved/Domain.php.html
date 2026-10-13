@@ -47,20 +47,20 @@
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Binary</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Character</span>;</span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Decimal</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Elementary</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Floating</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Integral</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind</span>;</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind</span>;</span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind</span>;</span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier</span>;</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind</span>;</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind</span>;</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Spatial</span>;</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Temporal</span>;</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\TypeName</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\DeclaredName</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Elementary</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Floating</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Integral</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind</span>;</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind</span>;</span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind</span>;</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier</span>;</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind</span>;</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind</span>;</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Spatial</span>;</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Temporal</span>;</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\TypeDescriptor</span>;</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a></span>
@@ -269,7 +269,7 @@
 <span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a><span class="tok-com">     * Answers the type name that declares a value of the same class, without the attributes of this type.</span></span>
 <span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">declared</span>(): <span class="tok-id">TypeName</span></span>
+<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">declared</span>(): <span class="tok-id">DeclaredName</span></span>
 <span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>    {</span>
 <span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>        <span class="tok-var">$unsigned</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">unsigned</span> ? [<span class="tok-id">NumericModifier</span>::<span class="tok-id">Unsigned</span>] : [];</span>
 <span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a></span>
@@ -290,7 +290,7 @@
 <span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a><span class="tok-com">     * Answers the type name that declares a string of the same field and character set class.</span></span>
 <span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">text</span>(): <span class="tok-id">TypeName</span></span>
+<span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">text</span>(): <span class="tok-id">DeclaredName</span></span>
 <span class="src-line" id="L254" data-diff="added"><a class="ln" href="#L254">254</a>    {</span>
 <span class="src-line" id="L255" data-diff="added"><a class="ln" href="#L255">255</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">field</span> === <span class="tok-id">Field</span>::<span class="tok-id">Geometry</span>) {</span>
 <span class="src-line" id="L256" data-diff="added"><a class="ln" href="#L256">256</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Spatial</span>(<span class="tok-id">SpatialKind</span>::<span class="tok-id">Geometry</span>);</span>

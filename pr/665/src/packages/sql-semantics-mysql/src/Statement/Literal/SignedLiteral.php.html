@@ -45,11 +45,12 @@
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Typing\Literals</span>;</span>
-<span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Decimal</span>;</span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\ScalarFact</span>;</span>
-<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal</span>;</span>
+<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Decimal</span>;</span>
+<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
+<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\ScalarFact</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Known</span>;</span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a></span>
@@ -71,7 +72,8 @@
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> *     $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral(true, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;5&#039;));</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com"> *     [$literal-&gt;negative, $literal-&gt;number-&gt;text] // =&gt; [true, &#039;5&#039;]</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SignedLiteral</span> <span class="tok-kw">implements</span> <span class="tok-id">Scalar</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">34</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SignedLiteral</span> <span class="tok-kw">implements</span> <span class="tok-id">Scalar</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SignedLiteral</span> <span class="tok-kw">implements</span> <span class="tok-id">Literal</span></span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>{</span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a></span>

@@ -46,8 +46,9 @@
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Declaration\Table</span>;</span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operand</span>;</span>
+<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
@@ -66,7 +67,8 @@
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com">     * @var array&lt;int, array{Scalar, ScalarFact}&gt;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">30</span><span class="tok-com">     * @var array&lt;int, array{Scalar, ScalarFact}&gt;</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @var array&lt;int, array{Operand, ScalarFact}&gt;</span></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>    <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$scalars</span>;</span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a></span>
@@ -91,12 +93,13 @@
 <span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$diagnostics</span>;</span>
 <span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a></span>
 <span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">55</span><span class="tok-com">     * @param list&lt;array{Scalar, ScalarFact}&gt; $scalars The fact of each scalar expression</span></span>
 <span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     * @var list&lt;Warning&gt; The conditions the statement raises without failing, in the order it raises them</span></span>
 <span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$warnings</span>;</span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a></span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a><span class="tok-com">     * @param list&lt;array{Scalar, ScalarFact}&gt; $scalars The fact of each scalar expression</span></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a><span class="tok-com">     * @param list&lt;array{Operand, ScalarFact}&gt; $scalars The fact of each scalar expression</span></span>
 <span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a><span class="tok-com">     * @param list&lt;array{Node, RelationFact}&gt; $relations The fact of each relation occurrence and table use</span></span>
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a><span class="tok-com">     * @param list&lt;array{Query, QueryFact}&gt; $queries The fact of each query</span></span>
 <span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a><span class="tok-com">     * @param list&lt;Table&gt; $declarations The relation declarations the statement provides</span></span>
@@ -138,7 +141,8 @@
 <span class="src-line" id="L98" data-diff="same"><a class="ln" href="#L98">98</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L99" data-diff="same"><a class="ln" href="#L99">99</a><span class="tok-com">     * Answers the facts of a scalar expression of this operation.</span></span>
 <span class="src-line" id="L100" data-diff="same"><a class="ln" href="#L100">100</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L101" data-diff="same"><a class="ln" href="#L101">101</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">scalar</span>(<span class="tok-id">Scalar</span> <span class="tok-var">$node</span>): <span class="tok-id">ScalarFact</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">94</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">scalar</span>(<span class="tok-id">Scalar</span> <span class="tok-var">$node</span>): <span class="tok-id">ScalarFact</span></span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">scalar</span>(<span class="tok-id">Operand</span> <span class="tok-var">$node</span>): <span class="tok-id">ScalarFact</span></span>
 <span class="src-line" id="L102" data-diff="same"><a class="ln" href="#L102">102</a>    {</span>
 <span class="src-line" id="L103" data-diff="same"><a class="ln" href="#L103">103</a>        <span class="tok-var">$entry</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">scalars</span>[<span class="tok-id">spl_object_id</span>(<span class="tok-var">$node</span>)] ?? <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L104" data-diff="same"><a class="ln" href="#L104">104</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$entry</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$entry</span>[<span class="tok-num">0</span>] === <span class="tok-var">$node</span>, <span class="tok-str">&#039;The expression is not part of this operation.&#039;</span>);</span>

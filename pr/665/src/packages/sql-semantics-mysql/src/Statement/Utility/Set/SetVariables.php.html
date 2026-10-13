@@ -45,10 +45,11 @@
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Variable\VariableScope</span>;</span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
+<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Variable\VariableScope</span>;</span>
+<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * SET with a list of assignments: variables, the connection character sets, and in MySQL 5.6 a password.</span></span>
@@ -124,14 +125,14 @@
 <span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>    {</span>
 <span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">items</span> <span class="tok-kw">as</span> <span class="tok-var">$item</span>) {</span>
 <span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>            <span class="tok-var">$item</span>-&gt;<span class="tok-id">deriveItem</span>(<span class="tok-var">$derivation</span>);</span>
-<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>        }</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>        }</span>
 <span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        <span class="tok-kw">if</span> (!<span class="tok-id">in_array</span>(<span class="tok-var">$derivation</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">profile</span>-&gt;<span class="tok-id">grammar</span>, [<span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span>::<span class="tok-id">MySql5651</span>, <span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span>::<span class="tok-id">MySql5744</span>], <span class="tok-id">true</span>)) {</span>
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">items</span> <span class="tok-kw">as</span> <span class="tok-var">$item</span>) {</span>
 <span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>                <span class="tok-kw">if</span> (<span class="tok-var">$item</span> <span class="tok-kw">instanceof</span> <span class="tok-id">NamesExpression</span>) {</span>
 <span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>                    <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">warn</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure</span>(<span class="tok-var">$item</span>-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$derivation</span>), <span class="tok-id">true</span>));</span>
 <span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>                }</span>
 <span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>            }</span>
-<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        }</span>
+<span class="src-line" id="L95" data-diff="same"><a class="ln" href="#L95">95</a>        }</span>
 <span class="src-line" id="L96" data-diff="same"><a class="ln" href="#L96">96</a>    }</span>
 <span class="src-line" id="L97" data-diff="same"><a class="ln" href="#L97">97</a></span>
 <span class="src-line" id="L98" data-diff="same"><a class="ln" href="#L98">98</a>    <span class="tok-com">/**</span></span>

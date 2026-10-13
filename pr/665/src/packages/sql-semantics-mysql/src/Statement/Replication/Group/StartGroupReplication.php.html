@@ -50,9 +50,10 @@
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError</span>;</span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * `START GROUP_REPLICATION [USER = …, PASSWORD = …, DEFAULT_AUTH = …]`: starts group replication (MySQL 5.7 and later).</span></span>
@@ -104,7 +105,7 @@
 <span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>            <span class="tok-kw">if</span> (<span class="tok-var">$option</span>-&gt;<span class="tok-id">credential</span> === <span class="tok-id">Credential</span>::<span class="tok-id">Password</span> &amp;&amp; <span class="tok-id">strlen</span>(<span class="tok-var">$option</span>-&gt;<span class="tok-id">value</span>-&gt;<span class="tok-id">value</span>) &gt; <span class="tok-id">self</span>::<span class="tok-id">PASSWORD</span>) {</span>
 <span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>                <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-kw">new</span> <span class="tok-id">RefusedSetting</span>(<span class="tok-id">ReplicationError</span>::<span class="tok-id">GroupPasswordTooLong</span>));</span>
 <span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>            }</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>        }</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        }</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-var">$credentials</span> = [];</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">options</span> <span class="tok-kw">as</span> <span class="tok-var">$option</span>) {</span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-var">$credentials</span>[<span class="tok-var">$option</span>-&gt;<span class="tok-id">credential</span>-&gt;<span class="tok-id">value</span>] = <span class="tok-var">$option</span>-&gt;<span class="tok-id">value</span>-&gt;<span class="tok-id">value</span>;</span>
@@ -113,7 +114,7 @@
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-kw">new</span> <span class="tok-id">RefusedSetting</span>(<span class="tok-id">ReplicationError</span>::<span class="tok-id">GroupUserEmpty</span>));</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        } <span class="tok-kw">elseif</span> (<span class="tok-kw">isset</span>(<span class="tok-var">$credentials</span>[<span class="tok-str">&#039;PASSWORD&#039;</span>]) &amp;&amp; !<span class="tok-kw">isset</span>(<span class="tok-var">$credentials</span>[<span class="tok-str">&#039;USER&#039;</span>])) {</span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>            <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-kw">new</span> <span class="tok-id">RefusedSetting</span>(<span class="tok-id">ReplicationError</span>::<span class="tok-id">GroupUserMissing</span>));</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        }</span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>        }</span>
 <span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>    }</span>
 <span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a></span>
 <span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>    <span class="tok-com">/**</span></span>

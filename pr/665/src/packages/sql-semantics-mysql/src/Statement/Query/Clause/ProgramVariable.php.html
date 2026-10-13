@@ -50,8 +50,9 @@
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\ScalarFact</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Missing\SessionState</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operand</span>;</span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Missing\SessionState</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Dependent</span>;</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Known</span>;</span>
@@ -79,7 +80,8 @@
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t LIMIT n&#039;);</span></span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-com"> *     $query-&gt;statement-&gt;limit-&gt;count-&gt;name-&gt;value // =&gt; &#039;n&#039;</span></span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ProgramVariable</span> <span class="tok-kw">implements</span> <span class="tok-id">Scalar</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">36</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ProgramVariable</span> <span class="tok-kw">implements</span> <span class="tok-id">Scalar</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ProgramVariable</span> <span class="tok-kw">implements</span> <span class="tok-id">Operand</span></span>
 <span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>{</span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a></span>

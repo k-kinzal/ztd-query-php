@@ -52,9 +52,9 @@
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Select</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\SelectExpression</span>;</span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\Facts</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Column\AliasTarget</span>;</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Column\ResolvedColumn</span>;</span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operand</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Column\AliasTarget</span>;</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Column\ResolvedColumn</span>;</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * Resolves DISTINCT ordering against selected expressions and owned aggregate calls.</span></span>
@@ -67,7 +67,7 @@
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>{</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param array&lt;int, \SqlSemantics\Resolution\VisibleRelation&gt; $relations</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param list&lt;Scalar&gt; $aggregates The aggregate occurrences owned by this block</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param list&lt;Operand&gt; $aggregates The aggregate occurrences owned by this block</span></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">check</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>, <span class="tok-kw">array</span> <span class="tok-var">$relations</span>, <span class="tok-id">Facts</span> <span class="tok-var">$facts</span>, <span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-kw">array</span> <span class="tok-var">$aggregates</span>): <span class="tok-id">NonGroupedColumn</span>|<span class="tok-id">AggregateInOrdering</span>|<span class="tok-id">null</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    {</span>
@@ -110,7 +110,7 @@
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    }</span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a></span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     * @param list&lt;Scalar&gt; $expressions</span></span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     * @param list&lt;Operand&gt; $expressions</span></span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">redundant</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>, <span class="tok-kw">array</span> <span class="tok-var">$expressions</span>, <span class="tok-id">Facts</span> <span class="tok-var">$facts</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    {</span>
@@ -133,7 +133,7 @@
 <span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-com">     * @param array&lt;string, true&gt; $selected</span></span>
 <span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-com">     * @param array&lt;int, true&gt; $owned</span></span>
 <span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">missing</span>(<span class="tok-id">Scalar</span> <span class="tok-var">$expression</span>, <span class="tok-kw">array</span> <span class="tok-var">$relations</span>, <span class="tok-id">Facts</span> <span class="tok-var">$facts</span>, <span class="tok-kw">array</span> <span class="tok-var">$selected</span>, <span class="tok-kw">array</span> <span class="tok-var">$owned</span>): <span class="tok-id">ResolvedColumn</span>|<span class="tok-id">Scalar</span>|<span class="tok-id">null</span></span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">missing</span>(<span class="tok-id">Operand</span> <span class="tok-var">$expression</span>, <span class="tok-kw">array</span> <span class="tok-var">$relations</span>, <span class="tok-id">Facts</span> <span class="tok-var">$facts</span>, <span class="tok-kw">array</span> <span class="tok-var">$selected</span>, <span class="tok-kw">array</span> <span class="tok-var">$owned</span>): <span class="tok-id">ResolvedColumn</span>|<span class="tok-id">Operand</span>|<span class="tok-id">null</span></span>
 <span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    {</span>
 <span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>        <span class="tok-var">$pending</span> = [<span class="tok-var">$expression</span>];</span>
 <span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>        <span class="tok-kw">while</span> (<span class="tok-var">$pending</span> !== []) {</span>
@@ -145,7 +145,7 @@
 <span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>            <span class="tok-kw">if</span> (!<span class="tok-id">is_object</span>(<span class="tok-var">$value</span>)) {</span>
 <span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>                <span class="tok-kw">continue</span>;</span>
 <span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>            }</span>
-<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>            <span class="tok-kw">if</span> (<span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar</span> &amp;&amp; <span class="tok-kw">isset</span>(<span class="tok-var">$owned</span>[<span class="tok-id">spl_object_id</span>(<span class="tok-var">$value</span>)])) {</span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>            <span class="tok-kw">if</span> (<span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Operand</span> &amp;&amp; <span class="tok-kw">isset</span>(<span class="tok-var">$owned</span>[<span class="tok-id">spl_object_id</span>(<span class="tok-var">$value</span>)])) {</span>
 <span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>                <span class="tok-kw">return</span> <span class="tok-var">$value</span>;</span>
 <span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>            }</span>
 <span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a>            <span class="tok-kw">if</span> (<span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ColumnUse</span> &amp;&amp; <span class="tok-var">$facts</span>-&gt;<span class="tok-id">covers</span>(<span class="tok-var">$value</span>)) {</span>

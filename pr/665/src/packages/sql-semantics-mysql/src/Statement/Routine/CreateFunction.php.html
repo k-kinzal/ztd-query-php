@@ -52,12 +52,14 @@
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Name\CollationName</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic</span>;</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\TypeName</span>;</span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\QualifiedName</span>;</span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\TypeName</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\DeclaredName</span>;</span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\QualifiedName</span>;</span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * CREATE FUNCTION of a stored function: its parameters, return type, characteristics and body.</span></span>
@@ -88,7 +90,8 @@
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com">     * @param QualifiedName $name The function name with its optional database</span></span>
 <span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a><span class="tok-com">     * @param ParameterList $parameters The parameters; none has a direction</span></span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a><span class="tok-com">     * @param TypeName $returns The return type</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">52</span><span class="tok-com">     * @param TypeName $returns The return type</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * @param DeclaredName $returns The return type</span></span>
 <span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     * @param Node $body The body: a program statement, an SQL statement, or external code</span></span>
 <span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     * @param CollationName|null $collation The COLLATE clause of the return type</span></span>
 <span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a><span class="tok-com">     * @param list&lt;Characteristic&gt; $characteristics The characteristics in written order</span></span>
@@ -99,7 +102,8 @@
 <span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">QualifiedName</span> <span class="tok-var">$name</span>,</span>
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">ParameterList</span> <span class="tok-var">$parameters</span>,</span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TypeName</span> <span class="tok-var">$returns</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">63</span>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TypeName</span> <span class="tok-var">$returns</span>,</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">DeclaredName</span> <span class="tok-var">$returns</span>,</span>
 <span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>        <span class="tok-id">Node</span> <span class="tok-var">$body</span>,</span>
 <span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">CollationName</span> <span class="tok-var">$collation</span> = <span class="tok-id">null</span>,</span>
 <span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>        <span class="tok-kw">array</span> <span class="tok-var">$characteristics</span> = [],</span>

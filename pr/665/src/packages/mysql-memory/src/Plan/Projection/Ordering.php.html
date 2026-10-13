@@ -55,10 +55,10 @@
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Name\ColumnUse</span>;</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal</span>;</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Select</span>;</span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Column\AliasTarget</span>;</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Column\ResolvedColumn</span>;</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operand</span>;</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Column\AliasTarget</span>;</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Column\ResolvedColumn</span>;</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Shape\Field</span>;</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">/**</span></span>
@@ -130,7 +130,7 @@
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     * Ignores constant keys, including constant DISTINCT assignments.</span></span>
 <span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">constant</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>, ?<span class="tok-id">Scalar</span> <span class="tok-var">$expression</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">constant</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>, ?<span class="tok-id">Operand</span> <span class="tok-var">$expression</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    {</span>
 <span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-var">$assignmentsVary</span> = !<span class="tok-id">in_array</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Query\SelectOption</span>::<span class="tok-id">Distinct</span>, <span class="tok-var">$select</span>-&gt;<span class="tok-id">options</span>, <span class="tok-id">true</span>);</span>
 <span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a></span>

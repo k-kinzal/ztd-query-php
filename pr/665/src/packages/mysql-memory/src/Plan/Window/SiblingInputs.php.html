@@ -64,8 +64,8 @@
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Variable\UserVariable</span>;</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment</span>;</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operand</span>;</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * Stores ordinary select expressions alongside the input of a buffered window.</span></span>
@@ -92,7 +92,7 @@
 <span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     * Collects ordinary variable-dependent outputs when at least one assigns a variable.</span></span>
 <span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     * @return list&lt;Scalar&gt;</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     * @return list&lt;Operand&gt;</span></span>
 <span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">roots</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    {</span>
@@ -134,7 +134,7 @@
 <span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-com">     * Collects changing window arguments and parent reads before ordinary assignments.</span></span>
 <span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a><span class="tok-com">     * @return array&lt;int, Scalar&gt; The expressions keyed by node identity</span></span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a><span class="tok-com">     * @return array&lt;int, Operand&gt; The expressions keyed by node identity</span></span>
 <span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">nodes</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>    {</span>

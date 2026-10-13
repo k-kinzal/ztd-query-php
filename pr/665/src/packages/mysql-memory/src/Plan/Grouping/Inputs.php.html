@@ -51,7 +51,7 @@
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Plan\Planner</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Plan\Window\Windowing</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Select</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operand</span>;</span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Captures aggregate arguments before grouping the input of a window.</span></span>
@@ -76,7 +76,7 @@
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * Appends stored arguments and sorting keys, preserving each fold&#039;s domains.</span></span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @param list&lt;Accumulation&gt; $accumulations The compiled aggregates</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     * @param list&lt;Scalar&gt; $groups The resolved grouping expressions</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     * @param list&lt;Operand&gt; $groups The resolved grouping expressions</span></span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * @return array{AccessPath, list&lt;Accumulation&gt;}</span></span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">plan</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>, <span class="tok-id">AccessPath</span> <span class="tok-var">$input</span>, <span class="tok-kw">array</span> <span class="tok-var">$accumulations</span>, <span class="tok-kw">array</span> <span class="tok-var">$groups</span>): <span class="tok-kw">array</span></span>
@@ -106,7 +106,7 @@
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     * Identifies windows whose varying grouping keys require stored aggregate input.</span></span>
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a><span class="tok-com">     * @param list&lt;Scalar&gt; $groups The resolved grouping expressions</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a><span class="tok-com">     * @param list&lt;Operand&gt; $groups The resolved grouping expressions</span></span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">stored</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>, <span class="tok-kw">array</span> <span class="tok-var">$groups</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    {</span>

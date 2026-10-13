@@ -68,11 +68,13 @@
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Star</span>;</span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\WithClause</span>;</span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex</span>;</span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Relation</span>;</span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Relation\TableSource</span> <span class="tok-kw">as</span> <span class="tok-id">Relation</span>;</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
+<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">34</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Relation</span>;</span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">36</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a></span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a><span class="tok-com"> * The entry rules of the query family: the methods other families and the statement dispatcher call.</span></span>
@@ -222,7 +224,8 @@
 <span class="src-line" id="L182" data-diff="same"><a class="ln" href="#L182">182</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L183" data-diff="same"><a class="ln" href="#L183">183</a><span class="tok-com">     * @throws ImplementationGap When a production has no rule</span></span>
 <span class="src-line" id="L184" data-diff="same"><a class="ln" href="#L184">184</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L185" data-diff="same"><a class="ln" href="#L185">185</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">limitValue</span>(<span class="tok-id">Node</span> <span class="tok-var">$option</span>): <span class="tok-id">Scalar</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">183</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">limitValue</span>(<span class="tok-id">Node</span> <span class="tok-var">$option</span>): <span class="tok-id">Scalar</span></span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">limitValue</span>(<span class="tok-id">Node</span> <span class="tok-var">$option</span>): <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral</span>|<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Literal\Parameter</span>|<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable</span></span>
 <span class="src-line" id="L186" data-diff="same"><a class="ln" href="#L186">186</a>    {</span>
 <span class="src-line" id="L187" data-diff="same"><a class="ln" href="#L187">187</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">TailRule</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>))-&gt;<span class="tok-id">value</span>(<span class="tok-var">$option</span>);</span>
 <span class="src-line" id="L188" data-diff="same"><a class="ln" href="#L188">188</a>    }</span>

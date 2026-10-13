@@ -51,8 +51,9 @@
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Name\CollationName</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\TypeName</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\TypeName</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\DeclaredName</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings</span>;</span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
@@ -85,7 +86,8 @@
 <span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a></span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com">     * @param Name $name The column name</span></span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a><span class="tok-com">     * @param TypeName $type The declared type</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">47</span><span class="tok-com">     * @param TypeName $type The declared type</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     * @param DeclaredName $type The declared type</span></span>
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com">     * @param StringLiteral $path The path</span></span>
 <span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a><span class="tok-com">     * @param bool $exists Whether the column is an EXISTS column</span></span>
 <span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a><span class="tok-com">     * @param CollationName|null $collation The written collation</span></span>
@@ -95,7 +97,8 @@
 <span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Name</span> <span class="tok-var">$name</span>,</span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TypeName</span> <span class="tok-var">$type</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">57</span>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TypeName</span> <span class="tok-var">$type</span>,</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">DeclaredName</span> <span class="tok-var">$type</span>,</span>
 <span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">StringLiteral</span> <span class="tok-var">$path</span>,</span>
 <span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$exists</span> = <span class="tok-id">false</span>,</span>
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">CollationName</span> <span class="tok-var">$collation</span> = <span class="tok-id">null</span>,</span>

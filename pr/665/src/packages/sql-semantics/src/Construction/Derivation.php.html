@@ -57,11 +57,12 @@
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\Warning</span>;</span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\QualifiedName</span>;</span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Table\CommonTable</span>;</span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Table\TableResolution</span>;</span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Relation</span>;</span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operand</span>;</span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Table\CommonTable</span>;</span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Table\TableResolution</span>;</span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Relation</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Shape\Field</span>;</span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a></span>
@@ -77,7 +78,8 @@
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Derivation</span></span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>{</span>
 <span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a><span class="tok-com">     * @var list&lt;array{Scalar, ScalarFact}&gt;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">38</span><span class="tok-com">     * @var list&lt;array{Scalar, ScalarFact}&gt;</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * @var list&lt;array{Operand, ScalarFact}&gt;</span></span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    <span class="tok-kw">private</span> <span class="tok-kw">array</span> <span class="tok-var">$scalars</span> = [];</span>
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a></span>
@@ -288,7 +290,8 @@
 <span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L246" data-diff="same"><a class="ln" href="#L246">246</a><span class="tok-com">     * Derives and records the facts of a scalar expression at its position.</span></span>
 <span class="src-line" id="L247" data-diff="same"><a class="ln" href="#L247">247</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L248" data-diff="same"><a class="ln" href="#L248">248</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">scalar</span>(<span class="tok-id">Scalar</span> <span class="tok-var">$node</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">ScalarFact</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">168</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">scalar</span>(<span class="tok-id">Scalar</span> <span class="tok-var">$node</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">ScalarFact</span></span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">scalar</span>(<span class="tok-id">Operand</span> <span class="tok-var">$node</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">ScalarFact</span></span>
 <span class="src-line" id="L249" data-diff="same"><a class="ln" href="#L249">249</a>    {</span>
 <span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>        <span class="tok-var">$outer</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">reading</span>;</span>
 <span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">reading</span> = <span class="tok-var">$node</span>;</span>
