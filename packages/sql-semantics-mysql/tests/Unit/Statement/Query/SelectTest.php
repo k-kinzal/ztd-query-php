@@ -360,12 +360,11 @@ final class SelectTest extends TestCase
 
     public function testANodeUsedAtTwoPositionsIsRejected(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
         $column = new ColumnUse(new Name('a'));
 
         $this->expectExceptionMessage('A statement node occurs at one position only.');
 
-        new Operation($semantics->context(), new Select([], [new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column));
+        new Select([], [new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column);
     }
 
     public function testAStringLiteralRetainsItsDecodedBytes(): void

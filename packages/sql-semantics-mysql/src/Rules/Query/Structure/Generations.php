@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Statement\Node;
 
 /**
- * Refuses statement and expression graphs with contradictory language requirements.
+ * Refuses repeated node occurrences and contradictory language requirements.
  *
  * Rule: MYSQL-QUERY-GENERATIONS-001. PROCEDURE ANALYSE, SQL_CACHE and the
  * legacy trailing-clause forms end before 8.0. WITH, VALUES, TABLE, window
@@ -47,7 +47,7 @@ final class Generations
     /**
      * Checks all nested operands, including subqueries, assignments and routine bodies.
      *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When no grammar generation or lexical mode can contain the combination
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a node occurs twice or no language profile can contain the combination
      */
     public function check(Node $root): void
     {
@@ -63,6 +63,7 @@ final class Generations
                 array_push($pending, ...array_values($value));
             } elseif (is_object($value)) {
                 if (isset($seen[$value])) {
+                    Check::input(!$value instanceof Node, 'A statement node occurs at one position only.');
                     continue;
                 }
                 $seen[$value] = true;
