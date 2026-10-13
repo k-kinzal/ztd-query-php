@@ -58,7 +58,6 @@ final class DerivedTable implements Relation
     {
         Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a derived table holds names.');
-        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
     }
 
     /**

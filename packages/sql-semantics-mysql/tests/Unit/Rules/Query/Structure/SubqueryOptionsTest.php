@@ -38,7 +38,6 @@ final class SubqueryOptionsTest extends TestCase
         yield 'exists' => [static fn (Query $query): Node => new Exists($query)];
         yield 'in' => [static fn (Query $query): Node => new InQuery(new NumberLiteral('1'), $query)];
         yield 'quantified' => [static fn (Query $query): Node => new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::Equal, Quantifier::Any, $query)];
-        yield 'derived table' => [static fn (Query $query): Node => new DerivedTable($query)];
     }
 
     /**
@@ -60,4 +59,13 @@ final class SubqueryOptionsTest extends TestCase
 
         self::assertSame($query, $subquery->query);
     }
+    public function testCheckKeepsTheIndependentGrammarOfANestedDerivedTable(): void
+    {
+        $derived = new DerivedTable(new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))]), new \SqlSemantics\Statement\Identifier\Name('x'));
+        $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], from: $derived);
+        $subquery = new ScalarSubquery($query);
+
+        self::assertSame($query, $subquery->query);
+    }
+
 }

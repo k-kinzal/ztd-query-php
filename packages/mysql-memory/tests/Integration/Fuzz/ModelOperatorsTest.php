@@ -24,7 +24,7 @@ final class ModelOperatorsTest extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        $statements = ['SELECT 1 <=> ANY (SELECT 1)', 'SELECT 1 <=> ALL (SELECT 1)', 'SELECT 1 <=> SOME (SELECT 1)', 'SELECT 1 LIMIT 1 UNION SELECT 2', 'SELECT 1 ORDER BY 1 UNION SELECT 2', 'SELECT EXISTS (SELECT SQL_CACHE 1)', 'SELECT (SELECT SQL_CACHE 1)', 'SELECT EXISTS (SELECT SQL_NO_CACHE 1)', '(SELECT SQL_CACHE 1)'];
+        $statements = ['SELECT 1 <=> ANY (SELECT 1)', 'SELECT 1 <=> ALL (SELECT 1)', 'SELECT 1 <=> SOME (SELECT 1)', 'SELECT 1 LIMIT 1 UNION SELECT 2', 'SELECT 1 ORDER BY 1 UNION SELECT 2', 'SELECT EXISTS (SELECT SQL_CACHE 1)', 'SELECT (SELECT SQL_CACHE 1)', 'SELECT EXISTS (SELECT SQL_NO_CACHE 1)', '(SELECT SQL_CACHE 1)', 'SELECT 1 FROM (SELECT SQL_CACHE SQL_CACHE 1) x', 'SELECT (SELECT 1 FROM (SELECT SQL_CACHE 1) x)', 'SELECT 1 FROM (SELECT SQL_CACHE 1) x'];
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }
