@@ -63,4 +63,14 @@ final class ShowEventsCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame(['Status', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::String, 72, 0], [$result->columns[10]->name, $result->columns[10]->type, $result->columns[10]->length, $result->columns[10]->decimals]);
     }
+
+    public function testLegacyHeadingsUseInformationSchemaMetadata(): void
+    {
+        $headings = (new ShowEventsCommand())->legacyHeadings(false);
+
+        self::assertSame([93, 0, 32, 'EVENT_SCHEMA', 'EVENTS', 'information_schema'], [$headings[2]->length, $headings[4]->decimals, $headings[12]->length, $headings[0]->originalName, $headings[0]->originalTable, $headings[0]->schema]);
+        self::assertSame(77, (new ShowEventsCommand())->legacyHeadings(true)[2]->length);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong, $headings[11]->field);
+    }
+
 }

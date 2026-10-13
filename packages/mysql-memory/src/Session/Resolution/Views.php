@@ -57,6 +57,7 @@ final class Views
         $operation = new Operation($semantics->context($dictionary->declarations(), true, new SearchPath($view->database), $settings->resolution()), $statement);
         $query = $operation->statement;
         if ($operation->facts->diagnostics !== [] || !$query instanceof Query) {
+            $view->operation = $operation;
             throw SchemaError::ViewInvalid->error($view->schema, $view->name);
         }
         $names = PlannedViews::outputs($operation, $query);

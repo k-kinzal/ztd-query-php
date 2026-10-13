@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * Mirrors SQLCOM_ALTER_DB_UPGRADE. Rule: MYSQL-UPGRADE-DATABASE-001. The
  * name is that of the database as written after the old `#mysql50#` prefix.
  * The statement changes no declaration.
- * Source: https://dev.mysql.com/doc/refman/5.7/en/alter-database.html.
+ * Source: https://docs.oracle.com/cd/E17952_01/mysql-5.7-en/alter-database.html.
  * Status: Implemented.
  *
  * @visibility public
@@ -37,10 +37,11 @@ final class UpgradeDatabaseName implements Statement
     }
 
     /**
-     * Has nothing to derive: a database is no relation.
+     * Records the release's deprecation warning; a database is no relation.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UpgradeDatabaseName, $derivation);
     }
 
     /**

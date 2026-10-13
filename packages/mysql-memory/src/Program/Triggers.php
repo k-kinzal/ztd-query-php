@@ -100,6 +100,9 @@ final class Triggers
     public function run(Trigger $trigger, ?array $new, ?array $old, Context $context, bool $before): ?array
     {
         $session = $this->session;
+        if ($session->instance->dictionary->schema($trigger->schema) === null) {
+            throw \MySqlMemory\Error\Family\QueryError::BadDatabase->error($trigger->schema);
+        }
         $activation = new Activation('TRIGGER', $trigger->schema . '.' . $trigger->name, true, Collation::named($trigger->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'), $session->program);
         $relation = $trigger->statement->table;
         $rows = [];

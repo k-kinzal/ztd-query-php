@@ -60,7 +60,10 @@ final class ShowEventsCommand implements Command
 
         $total = array_sum(array_map(static fn ($schema): int => count($schema->events), $session->instance->dictionary->schemas));
 
-        return (new Listing($this->headings($total === 0 || ($total === 1 && !$statement->filter instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike), $session->settings()->release() === GrammarRelease::MySql8044)))->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
+        $headings = $session->settings()->legacy() ? $this->legacyHeadings($session->settings()->release() === GrammarRelease::MySql5651)
+            : $this->headings($total === 0 || ($total === 1 && !$statement->filter instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike), $session->settings()->release() === GrammarRelease::MySql8044);
+
+        return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
     }
 
     /**
@@ -98,6 +101,37 @@ final class ShowEventsCommand implements Command
             Heading::text('character_set_client', Field::VarString, 64, $nameFlags, 0, 'character_set_client', $table, $constant ? 'cs_client' : 'character_sets', $schema),
             Heading::text('collation_connection', Field::VarString, 64, $nameFlags, 0, 'collation_connection', $table, $constant ? 'coll_conn' : 'collations', $schema),
             Heading::text('Database Collation', Field::VarString, 64, $nameFlags, 0, 'Database Collation', $table, $constant ? 'coll_db' : 'collations', $schema),
+        ];
+    }
+
+    /**
+     * Answers the INFORMATION_SCHEMA columns sent by MySQL 5.6 and 5.7.
+     * Their metadata does not depend on event cardinality. Verified on both releases.
+     *
+     * @param bool $oldest Whether account names have the 5.6 length limit
+     * @return list<Heading>
+     */
+    public function legacyHeadings(bool $oldest): array
+    {
+        $text = static fn (string $name, string $original, int $length, int $flags = 1): Heading => Heading::text($name, Field::VarString, $length, $flags, 0, $original, 'EVENTS', 'EVENTS', 'information_schema');
+        $time = static fn (string $name, string $original): Heading => new Heading($name, Field::DateTime, 19, 128, 0, false, $original, 'EVENTS', 'EVENTS', 'information_schema');
+
+        return [
+            $text('Db', 'EVENT_SCHEMA', 64),
+            $text('Name', 'EVENT_NAME', 64),
+            $text('Definer', 'DEFINER', $oldest ? 77 : 93),
+            $text('Time zone', 'TIME_ZONE', 64),
+            $text('Type', 'EVENT_TYPE', 9),
+            $time('Execute at', 'EXECUTE_AT'),
+            $text('Interval value', 'INTERVAL_VALUE', 256, 0),
+            $text('Interval field', 'INTERVAL_FIELD', 18, 0),
+            $time('Starts', 'STARTS'),
+            $time('Ends', 'ENDS'),
+            $text('Status', 'STATUS', 18),
+            new Heading('Originator', Field::LongLong, 10, 32769, 0, false, 'ORIGINATOR', 'EVENTS', 'EVENTS', 'information_schema'),
+            $text('character_set_client', 'CHARACTER_SET_CLIENT', 32),
+            $text('collation_connection', 'COLLATION_CONNECTION', 32),
+            $text('Database Collation', 'DATABASE_COLLATION', 32),
         ];
     }
 }

@@ -74,6 +74,7 @@ enum Deprecated: string
     case SystemVariable = "'@@<variable>' is deprecated and will be removed in a future release.";
     case LowPriorityWrite = "'LOW_PRIORITY WRITE' is deprecated and will be removed in a future release. Please use WRITE instead";
     case AlterIgnore = "'IGNORE' is deprecated and will be removed in a future release.";
+    case UpgradeDatabaseName = "'UPGRADE DATA DIRECTORY NAME' is deprecated and will be removed in a future release.";
 
     /**
      * Answers the error number the warning is raised with.
@@ -87,7 +88,7 @@ enum Deprecated: string
             self::SuperPrivilege => 1287,
             self::InsertDelayed, self::ReplaceDelayed => 3005,
             self::UnquotedFull => 4119,
-            self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore => 1681,
+            self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
             self::Utf8Alias => 3719,
             self::National => 3720,
             self::IntoInsideQuery => 3962,
@@ -103,7 +104,7 @@ enum Deprecated: string
      */
     public function warnedIn(GrammarRelease $release): bool
     {
-        if ($this === self::SpatialFunction) {
+        if ($this === self::SpatialFunction || $this === self::UpgradeDatabaseName) {
             return $release === GrammarRelease::MySql5744;
         }
         if ($release === GrammarRelease::MySql5651) {

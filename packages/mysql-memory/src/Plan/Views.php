@@ -74,6 +74,12 @@ final class Views
     public function query(View $view): QueryPlan
     {
         if (!$view->valid) {
+            foreach ($this->planner->settings->legacy() ? $view->operation->facts->diagnostics : [] as $diagnostic) {
+                if ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable) {
+                    $this->planner->compiler->connection->context->diagnostics->error(1146, QueryError::NoSuchTable->message($diagnostic->name->schema->value ?? $view->database, $diagnostic->name->name->value));
+                    break;
+                }
+            }
             throw SchemaError::ViewInvalid->error($view->schema, $view->name);
         }
         $positions = $view->positions === [] ? array_keys($view->declaration->columns) : $view->positions;

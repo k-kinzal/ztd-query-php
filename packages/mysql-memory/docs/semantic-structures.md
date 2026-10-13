@@ -16,6 +16,10 @@ Before choosing a nested type, the generator checks whether its constructor type
 
 The generated root is a MySQL statement or an ordinary expression placed in a SELECT item. The runner derives its semantic facts against a fresh in-memory session and sends the result directly to statement execution. The generator has no list of supported SQL commands and does not use execution success or semantic diagnostics to select inputs.
 
+Direct submission reports the semantic warnings of a newly submitted statement, including deprecations, just as SQL submission does. Only execution of a previously created stored-program statement suppresses those initial warnings. A separate inventory check requires an explicit command route for every public MySQL statement variant. Internal parser entry points and debug-only commands produce their native client rejection; they do not fall through to a generic missing implementation.
+
+For MySQL 5.6 and 5.7, `UpgradeDatabaseName` consumes the typed database name. Its command moves table declarations and data to the upgraded name, retains view and trigger references, and removes stored routines and events. SQL Semantics supplies the 5.7 deprecation fact. Differential histories against isolated servers check the resulting rows, metadata, warnings and errors, including invalid references after the move.
+
 Every failure record includes its seed index, concrete root class, exception, and constructor rejection counts. To replay one trial from the same revision, give its index as the final argument:
 
 ```sh

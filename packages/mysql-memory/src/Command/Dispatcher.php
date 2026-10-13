@@ -54,6 +54,7 @@ final class Dispatcher
         MySql\Alter\RenameTable::class => Definition\RenameTableCommand::class,
         MySql\Table\CreateTableLike::class => Definition\CreateTableLikeCommand::class,
         MySql\Server\Database\AlterDatabase::class => Definition\AlterDatabaseCommand::class,
+        MySql\Server\Database\UpgradeDatabaseName::class => Definition\UpgradeDatabaseCommand::class,
         MySql\Dml\Load\LoadTable::class => Access\LoadDataCommand::class,
         MySql\Dml\ImportTable::class => Access\ImportTableCommand::class,
         MySql\Server\Lock\LockTables::class => Access\LockTablesCommand::class,

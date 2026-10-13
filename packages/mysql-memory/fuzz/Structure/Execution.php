@@ -52,6 +52,6 @@ final class Execution
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, null, $session->resolution($domains));
         $operation = new Operation($context, $statement);
 
-        return (new StatementExecution($session))->perform($operation, (new Dispatcher())->command($statement), $parameters, read: false);
+        return (new StatementExecution($session))->perform($operation, (new Dispatcher())->command($statement), $parameters);
     }
 }

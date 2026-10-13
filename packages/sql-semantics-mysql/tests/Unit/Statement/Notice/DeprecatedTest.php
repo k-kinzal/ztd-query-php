@@ -19,6 +19,7 @@ final class DeprecatedTest extends TestCase
         self::assertSame(1287, Deprecated::PipesOr->code());
         self::assertSame(3005, Deprecated::ReplaceDelayed->code());
         self::assertSame(1681, Deprecated::Zerofill->code());
+        self::assertSame(1681, Deprecated::UpgradeDatabaseName->code());
         self::assertSame(3719, Deprecated::Utf8Alias->code());
         self::assertSame(3962, Deprecated::IntoInsideQuery->code());
     }
