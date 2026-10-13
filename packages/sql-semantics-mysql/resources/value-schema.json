@@ -1589,7 +1589,8 @@
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
         "expression": "SqlSemantics\\Statement\\Scalar",
         "layout": "?SqlSemantics\\Statement\\Spelling\\Layout",
-        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark"
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
+        "spellingProfile": "?SqlSemantics\\Contract\\LanguageProfile"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption": {
         "name": "string",

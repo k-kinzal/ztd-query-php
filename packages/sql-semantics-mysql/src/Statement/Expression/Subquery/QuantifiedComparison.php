@@ -25,8 +25,8 @@ use SqlSemantics\Statement\Snapshot;
  * bool_pri operand (MYSQL-PRECEDENCE-001).
  *
  * Rule: MYSQL-QUANTIFIED-COMPARISON-001. Facts: 1, 0 or NULL, an integer;
- * NULL fact by MYSQL-SUBQUERY-ROWS-001 (`<=>` with ALL or ANY is still NULL
- * when no row decides). Only `= ANY` and `<> ALL` compare rows, as IN and
+ * NULL fact by MYSQL-SUBQUERY-ROWS-001. Null-safe equality cannot be quantified;
+ * it is a plain comparison operator only. Only `= ANY` and `<> ALL` compare rows, as IN and
  * NOT IN do; another quantified comparison with a subquery of several columns
  * is refused as needing one (verified on a live 8.4 server). Terminates: the
  * operand and the query are strict parts.
@@ -51,7 +51,9 @@ final class QuantifiedComparison implements Scalar
      */
     public function __construct(public readonly Scalar $operand, public readonly ComparisonOperator $operator, public readonly Quantifier $quantifier, public readonly Query $query)
     {
+        Check::input($operator !== ComparisonOperator::NullSafeEqual, 'Null-safe equality is not a quantified comparison operator.');
         Check::input((new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The operand of a quantified comparison needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

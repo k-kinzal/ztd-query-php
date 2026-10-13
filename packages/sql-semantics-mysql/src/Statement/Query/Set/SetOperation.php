@@ -63,6 +63,7 @@ final class SetOperation implements Explainable, Query
         Check::input(!$left instanceof OrderedSetOperation && !$right instanceof OrderedSetOperation, 'A set operation ordered after its last SELECT ends its subquery.');
         Check::input(!$right instanceof QueryExpression && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause or with ordering of its own is written in parentheses as a set operand.');
         Check::input(!$right instanceof Select || !$right->trailed(), 'The last operand of a set operation has no ORDER BY, LIMIT, INTO or locking clause of its own unless it is written in parentheses.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SetOperands())->left($left);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

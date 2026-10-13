@@ -179,7 +179,7 @@ final class ItemRule
             $layout = null;
         }
 
-        return new SelectExpression($lowered, $name, $layout, $this->mark($alias));
+        return new SelectExpression($lowered, $name, $layout, $this->mark($alias), $layout === null ? null : $this->lowering->profile);
     }
 
     /**

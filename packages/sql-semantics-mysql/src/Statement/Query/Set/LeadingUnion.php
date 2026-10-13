@@ -60,6 +60,7 @@ final class LeadingUnion implements Node
         Check::input($right->trailed() && $right->orderBy === [] && $right->procedure === null && $right->into === null && $right->late === null, 'The last operand of a leading union keeps its own LIMIT or locking clauses and nothing else.');
         Check::input(!$left instanceof SetOperation || $left->operator === SetOperator::Union, 'A leading union continues a UNION.');
         Check::input(!$left instanceof QueryStatement && !$left instanceof OrderedSetOperation && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause, INTO, locking clauses or an ordering of its result is written in parentheses as a set operand.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SetOperands())->left($left);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

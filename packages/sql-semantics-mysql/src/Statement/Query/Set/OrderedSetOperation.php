@@ -83,6 +83,7 @@ final class OrderedSetOperation implements Query
         Check::input(!$left instanceof SetOperation || !$operator->tighter($left->operator), 'A looser set operation on the left of INTERSECT is written in parentheses.');
         Check::input(!$left instanceof LeadingUnion || $operator === SetOperator::Union, 'A leading union continues with UNION.');
         Check::input(!$left instanceof self && !$left instanceof QueryStatement && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause, INTO, locking clauses or an ordering of its result is written in parentheses as a set operand.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SetOperands())->left($left);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

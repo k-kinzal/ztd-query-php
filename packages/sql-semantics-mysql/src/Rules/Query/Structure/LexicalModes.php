@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query\Structure;
 
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
@@ -30,6 +31,9 @@ final class LexicalModes
      */
     public function requirement(object $value): int
     {
+        if ($value instanceof LanguageProfile) {
+            return ($value->lexical->highNotPrecedence ? 2 : 1) | ($value->lexical->pipesAsConcat ? 8 : 4);
+        }
         if ($value instanceof Not) {
             return 1;
         }

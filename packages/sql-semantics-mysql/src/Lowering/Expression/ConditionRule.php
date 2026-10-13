@@ -171,8 +171,8 @@ final class ConditionRule
             'bool_pri: bool_pri IS not NULL_SYM' => $this->negatedNull($form, $left),
             'bool_pri: bool_pri EQUAL_SYM predicate' => new Comparison(ComparisonOperator::NullSafeEqual, $left, $predicates->predicate($form->node(2))),
             'bool_pri: bool_pri comp_op predicate' => new Comparison($this->operator($form->node(1)), $left, $predicates->predicate($form->node(2))),
-            'bool_pri: bool_pri comp_op all_or_any ( subselect )' => new QuantifiedComparison($left, $this->operator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(4))),
-            'bool_pri: bool_pri comp_op all_or_any table_subquery' => new QuantifiedComparison($left, $this->operator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(3))),
+            'bool_pri: bool_pri comp_op all_or_any ( subselect )' => new QuantifiedComparison($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(4))),
+            'bool_pri: bool_pri comp_op all_or_any table_subquery' => new QuantifiedComparison($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(3))),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -197,6 +197,23 @@ final class ConditionRule
         $form = $this->lowering->form($operator);
 
         return self::OPERATORS[$form->signature] ?? throw ImplementationGap::production($form);
+    }
+
+    /**
+     * Refuses the null-safe operator in a quantified comparison, as native MySQL does.
+     *
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When null-safe equality is followed by ALL, ANY or SOME
+     * @throws ImplementationGap When the production has no operator rule
+     */
+    public function quantifiedOperator(Node $operator): ComparisonOperator
+    {
+        $comparison = $this->operator($operator);
+        if ($comparison === ComparisonOperator::NullSafeEqual) {
+            $failure = new \SqlParser\Parser\SyntaxException($this->lowering->form($operator)->token(0), [], 'Null-safe equality is not a quantified comparison operator.');
+            throw new \SqlSemantics\Diagnostic\AnalysisException($failure->getMessage(), 0, $failure);
+        }
+
+        return $comparison;
     }
 
     /**

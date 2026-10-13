@@ -234,7 +234,7 @@ final class ItemNaming
      */
     public function canonical(Scalar $expression): string
     {
-        $out = new Output(new Codec($this->profile->grammar));
+        $out = new Output(new Codec($this->profile->grammar, $this->profile->lexical));
         $out->layout(null, $expression);
 
         return (new Lexical())->join($out->pieces());

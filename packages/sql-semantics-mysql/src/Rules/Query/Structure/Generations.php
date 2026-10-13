@@ -5,34 +5,22 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Query\Structure;
 
 use SplObjectStorage;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
-use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
-use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel;
-use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevelRange;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
-use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry;
-use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
-use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
-use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
-use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
-use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
+use SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample;
 use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
-use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
-use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceAccess;
-use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Statement\Node;
 
 /**
@@ -67,6 +55,7 @@ final class Generations
         $seen = new SplObjectStorage();
         $requirements = 0;
         $modes = 0;
+        $spelling = null;
         $lexical = new LexicalModes();
         while ($pending !== []) {
             $value = array_pop($pending);
@@ -77,6 +66,10 @@ final class Generations
                     continue;
                 }
                 $seen[$value] = true;
+                if ($value instanceof LanguageProfile) {
+                    Check::input($spelling === null || $spelling->compatibleWith($value), 'Observable spellings in one structure require one compatible language profile.');
+                    $spelling = $value;
+                }
                 $requirements |= $this->requirement($value);
                 $modes |= $lexical->requirement($value);
                 $lexical->check($modes);
@@ -93,13 +86,14 @@ final class Generations
      */
     public function requirement(object $value): int
     {
-        if (in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, ParseGeneratedColumn::class, PartitionEntry::class, AlterTablespaceAccess::class], true)
-            || in_array($value, [SelectOption::Cache, KeywordFunction::Password, KeywordFunction::OldPassword, PasswordFunction::Password, PasswordFunction::OldPassword, AliasMark::Equals], true)
-            || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)) {
+        if ($value instanceof LanguageProfile) {
+            return in_array($value->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 1 : 2;
+        }
+        if ((new LegacyForms())->requires($value)) {
             return 1;
         }
         if ($value instanceof WithClause || $value instanceof WindowSpecification
-            || in_array($value::class, [CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, OdbcJoin::class], true)
+            || in_array($value::class, [CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, OdbcJoin::class, TableSample::class], true)
             || ($value instanceof Select && $value->qualify !== null)
             || ($value instanceof DerivedTable && ($value->lateral || $value->columns !== []))
             || $value === SetOperator::Intersect || $value === SetOperator::Except) {
@@ -108,4 +102,5 @@ final class Generations
 
         return 0;
     }
+
 }

@@ -74,4 +74,12 @@ final class QuantifiedComparisonTest extends TestCase
         self::assertSame([1, 3], [$refused[0]->expected, $refused[0]->actual]);
         self::assertSame([], $semantics->analyze('SELECT (1, 2) = ANY (SELECT 1, 2)')->facts->diagnostics);
     }
+
+    public function testNullSafeEqualityCannotBeQuantified(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))]);
+        $this->expectExceptionMessage('Null-safe equality is not a quantified comparison operator.');
+
+        new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::NullSafeEqual, Quantifier::Any, $query);
+    }
 }

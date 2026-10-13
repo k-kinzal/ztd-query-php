@@ -43,6 +43,7 @@ final class InQuery implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly Query $query, public readonly bool $negated = false)
     {
         Check::input((new Precedence())->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of IN needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

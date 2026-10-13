@@ -105,7 +105,7 @@ final class ViewRewrite
             assert($value instanceof Scalar);
             /** A changed expression keeps its resolved output name, not its old spelling layout. */
             return (new \SqlSemantics\Validation\Equivalence())->difference($value, $node->expression) === null
-                ? new SelectExpression($value, $node->alias, $node->layout, $node->mark)
+                ? new SelectExpression($value, $node->alias, $node->layout, $node->mark, $node->spellingProfile)
                 : new SelectExpression($value, $names[spl_object_id($node->expression)] ?? $node->alias);
         }
         if ($node instanceof ColumnUse && $operation->facts->covers($node)) {

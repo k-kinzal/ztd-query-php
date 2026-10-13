@@ -47,6 +47,7 @@ final class ScalarSubquery implements Scalar
      */
     public function __construct(public readonly Query $query)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

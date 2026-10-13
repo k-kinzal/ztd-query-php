@@ -68,6 +68,16 @@ final class ConditionRuleTest extends TestCase
         self::assertInstanceOf(NullTest::class, $expression->left);
     }
 
+    public function testQuantifiedOperatorRejectsNullSafeEqualityAsInputSyntax(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $this->expectExceptionMessage("Unexpected '<=>' at line 1, column 10");
+
+        (new ConditionRule($lowering))->boolean($platform->parser($profile)->parse('SELECT 1 <=> ALL (SELECT 2)')->find('bool_pri')[0]);
+    }
+
     public function testApplyLowersAQuantifiedComparison(): void
     {
         $platform = new Platform();

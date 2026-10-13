@@ -57,6 +57,9 @@ final class GenerationsTest extends TestCase
         yield 'window' => [new WindowSpec(), 2];
         yield 'intersect' => [SetOperator::Intersect, 2];
         yield 'except' => [SetOperator::Except, 2];
+        yield 'leading column dot' => [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a'), new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), 1];
+        yield 'leading table dot' => [new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), 1];
+        yield 'legacy explain modifier' => [\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions, 1];
     }
 
     #[DataProvider('providerRequirements')]
@@ -79,11 +82,15 @@ final class GenerationsTest extends TestCase
         )];
         yield 'procedure in common table' => [static fn (): Node => new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse()))];
         yield 'modern query in legacy projection' => [static fn (): Node => new Select([SelectOption::Cache], [new SelectExpression(new ScalarSubquery(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])))])];
-        yield 'legacy query in modern rows' => [static fn (): Node => new ValuesQuery([new ValueRow([new ScalarSubquery(new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))]))])])];
+        yield 'legacy query in modern rows' => [static fn (): Node => new ValuesQuery([new ValueRow([new ScalarSubquery(new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse()))])])];
         yield 'qualify and procedure' => [static fn (): Node => new Select([], [new SelectExpression(new NumberLiteral('1'))], qualify: new NumberLiteral('1'), procedure: new ProcedureAnalyse())];
+        yield 'except and unparenthesized limit' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new Select([], [new SelectExpression(new NumberLiteral('1'))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new NumberLiteral('1'))), SetOperator::Except, null, new Select([], [new SelectExpression(new NumberLiteral('2'))]))];
+        yield 'modern value with leading column dot' => [static fn (): Node => new ValuesQuery([new ValueRow([new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a'), new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)])])];
+        yield 'legacy explain modifier and modern query' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain(new ValuesQuery([new ValueRow([new NumberLiteral('1')])]), modifier: \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions)];
+        yield 'modern with and dotted table' => [static fn (): Node => new QueryExpression(new With(false, [new CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))]))]), new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)))];
         yield 'disjoint sibling subqueries in a scalar root' => [static fn (): Node => new Comparison(
             ComparisonOperator::Equal,
-            new ScalarSubquery(new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))])),
+            new ScalarSubquery(new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse())),
             new ScalarSubquery(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])),
         )];
     }
@@ -115,4 +122,28 @@ final class GenerationsTest extends TestCase
 
         self::assertSame($body, $query->body);
     }
+    public function testCheckRefusesConflictingSpellingProfilesAcrossItems(): void
+    {
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('2'));
+        $layout = new \SqlSemantics\Statement\Spelling\Layout([new \SqlSemantics\Statement\Spelling\Spelled('', '1'), new \SqlSemantics\Statement\Spelling\Spelled('', '+'), new \SqlSemantics\Statement\Spelling\Spelled('', '2')]);
+        $ordinary = new SelectExpression($expression, layout: $layout);
+        $ansi = new SelectExpression($expression, layout: $layout, spellingProfile: new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('ANSI_QUOTES')));
+
+        $this->expectExceptionMessage('one compatible language profile');
+
+        new Select([], [$ordinary, $ansi]);
+    }
+
+    public function testCheckRefusesAnOperatorConflictingWithAnotherItemsSpelling(): void
+    {
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('2'));
+        $layout = new \SqlSemantics\Statement\Spelling\Layout([new \SqlSemantics\Statement\Spelling\Spelled('', '1'), new \SqlSemantics\Statement\Spelling\Spelled('', '+'), new \SqlSemantics\Statement\Spelling\Spelled('', '2')]);
+        $ordinary = new SelectExpression($expression, layout: $layout);
+        $concat = new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation(new StringLiteral(['a']), new StringLiteral(['b'])));
+
+        $this->expectExceptionMessage('both enabled and disabled PIPES_AS_CONCAT');
+
+        new Select([], [$ordinary, $concat]);
+    }
+
 }
