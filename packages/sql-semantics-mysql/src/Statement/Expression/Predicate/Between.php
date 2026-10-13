@@ -52,6 +52,7 @@ final class Between implements Scalar
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of BETWEEN needs a grouping to keep its place.');
         Check::input($precedence->admits($low, Precedence::BIT_EXPR) && !$precedence->absorbs($low, Precedence::CONJUNCTION, Precedence::CONJUNCTION), 'The lower bound of BETWEEN needs a grouping to keep its place.');
         Check::input($precedence->admits($high, Precedence::PREDICATE), 'The upper bound of BETWEEN needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

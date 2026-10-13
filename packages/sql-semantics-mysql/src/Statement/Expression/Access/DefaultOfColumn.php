@@ -36,6 +36,7 @@ final class DefaultOfColumn implements Scalar
      */
     public function __construct(public readonly ColumnUse $column)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -41,6 +41,7 @@ final class WeightStringParameters implements Scalar
      */
     public function __construct(public readonly Scalar $subject, public readonly Numeral $length, public readonly Numeral $weights, public readonly Numeral $flags)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

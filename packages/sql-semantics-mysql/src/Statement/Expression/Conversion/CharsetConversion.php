@@ -51,6 +51,7 @@ final class CharsetConversion implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly CharsetName $charset)
     {
         Check::input($charset->name !== null, 'CONVERT … USING names a character set.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

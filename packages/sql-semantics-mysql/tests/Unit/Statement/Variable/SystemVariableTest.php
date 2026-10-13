@@ -24,6 +24,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class SystemVariableTest extends TestCase
 {
+    public function testRejectsAnAssignmentOnlyScope(): void
+    {
+        $this->expectExceptionMessage('A system-variable read has an implicit, GLOBAL or SESSION scope.');
+
+        new SystemVariable(new Name('sql_mode'), VariableScope::Persist);
+    }
+
     public function testDeriveScalarTypesAReadAsTheReleaseDefinesTheVariable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@GLOBAL.sort_buffer_size');

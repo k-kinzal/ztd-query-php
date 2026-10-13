@@ -83,6 +83,7 @@ final class GroupConcat implements SetFunction
         foreach ($this->order as $item) {
             Check::input(!$item->expression instanceof OutputOrdinal, 'This ordering reads expressions rather than SELECT output positions.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

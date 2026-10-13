@@ -1876,7 +1876,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\ConditionDiagnostics": {
         "items": "array",
-        "number": "SqlSemantics\\Statement\\Scalar"
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableAssignment"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\DiagnosticsArea": {
         "name": "string",
@@ -2317,7 +2317,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\ComponentSetting": {
         "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\OnWord",
-        "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable"
+        "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemTarget"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\InstallComponent": {
         "components": "array",
@@ -3035,7 +3035,7 @@
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
-        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Statement"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainConnection": {
         "analyze": "bool",
@@ -3114,7 +3114,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SystemAssignment": {
         "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord",
-        "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable"
+        "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemTarget"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\UserAssignment": {
         "value": "SqlSemantics\\Statement\\Scalar",
@@ -3324,8 +3324,12 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Problem\\VariableRule": {
         "name": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemTarget": {
+        "instance": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable": {
-        "assigned": "bool",
         "instance": "?SqlSemantics\\Statement\\Identifier\\Name",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope"

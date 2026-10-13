@@ -53,6 +53,7 @@ final class AtTimeZone implements Scalar
     {
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

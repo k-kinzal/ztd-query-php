@@ -8,11 +8,11 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
-use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -39,7 +39,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class QueryStatement implements Statement, Query
+final class QueryStatement implements Explainable, Query
 {
     use Snapshot;
 
@@ -63,6 +63,7 @@ final class QueryStatement implements Statement, Query
         Check::input($intoPosition !== IntoPosition::AfterLocking || $locking !== [], 'An INTO after the locking clauses follows at least one of them.');
         Check::input(!$query instanceof self && !$query instanceof Select && !($query instanceof QueryExpression && $query->body instanceof Select), 'The INTO and locking clauses of a single query block belong to the block.');
         Check::input(!$query instanceof OrderedSetOperation, 'A set operation ordered after its last SELECT ends its subquery.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

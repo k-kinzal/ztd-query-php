@@ -54,6 +54,7 @@ final class OdbcEscape implements Scalar
      */
     public function __construct(public readonly Name $kind, public readonly Scalar $operand)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

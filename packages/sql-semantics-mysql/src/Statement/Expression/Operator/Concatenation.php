@@ -48,6 +48,7 @@ final class Concatenation implements Scalar
         $precedence = new Precedence();
         Check::input($precedence->fits($left, Precedence::SIMPLE_EXPR, Precedence::SIMPLE_EXPR), 'The left operand of || needs a grouping to keep its place.');
         Check::input($precedence->opening($right) > Precedence::SIMPLE_EXPR, 'The right operand of || needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

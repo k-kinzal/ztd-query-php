@@ -108,7 +108,7 @@ final class PluginRule
             'install_option_type: GLOBAL_SYM' => VariableScope::Global,
             'install_option_type: PERSIST_SYM' => VariableScope::Persist,
             default => throw ImplementationGap::production($scope),
-        });
+        }, true);
         $this->lowering->options->skip($form->node(2));
         $value = $this->lowering->form($form->node(3));
 

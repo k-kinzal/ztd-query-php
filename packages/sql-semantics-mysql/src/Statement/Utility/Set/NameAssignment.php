@@ -10,7 +10,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -77,7 +77,7 @@ final class NameAssignment implements SetItem
                 $access->assign($this->name->value, $this->scope, $derivation);
             }
         } elseif ($this->qualifier !== null && !$derivation->inProgram() && $settings->row($this->qualifier->value) === null) {
-            (new SystemVariable($this->name, null, $this->qualifier, true))->structured($derivation);
+            (new SystemTarget($this->name, null, $this->qualifier))->structured($derivation);
         }
         if (!$valueFirst && !$this->value instanceof SetWord) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);

@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
-use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
@@ -38,10 +38,10 @@ final class SystemAssignment implements SetItem
     use Snapshot;
 
     /**
-     * @param SystemVariable $variable The assigned variable with the scope written inside `@@`
+     * @param SystemTarget $variable The assigned variable with the scope written inside `@@`
      * @param Scalar|BareName|SetWord $value The value: an expression, or a keyword the grammar accepts there
      */
-    public function __construct(public readonly SystemVariable $variable, public readonly Scalar|BareName|SetWord $value)
+    public function __construct(public readonly SystemTarget $variable, public readonly Scalar|BareName|SetWord $value)
     {
         Check::input(!$value instanceof BareName || $value->system, 'A bare name assigned to a system variable is its text.');
     }

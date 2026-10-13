@@ -59,6 +59,7 @@ final class FunctionCall implements Scalar
     {
         $this->arguments = Check::listOf($arguments, CallArgument::class, 'Function arguments are call arguments.');
         Check::input($schema === null || !$this->named(), 'Only an unqualified call takes argument aliases.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

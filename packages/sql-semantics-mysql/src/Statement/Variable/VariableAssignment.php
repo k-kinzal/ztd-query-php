@@ -42,6 +42,7 @@ final class VariableAssignment implements Scalar
      */
     public function __construct(public readonly UserVariable $target, public readonly Scalar $value)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

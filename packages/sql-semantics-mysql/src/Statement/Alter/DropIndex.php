@@ -48,7 +48,7 @@ final class DropIndex implements Statement
     public function __construct(public readonly Name $index, public readonly QualifiedName $table, array $options = [])
     {
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
-        $this->options = Check::listOf($options, AlterOption::class, 'The options of DROP INDEX are a list of ALGORITHM and LOCK options.');
+        $this->options = (new \SqlSemantics\Platform\MySql\Rules\TableChange\IndexOptions())->checked($options);
     }
 
     /**

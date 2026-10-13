@@ -9,7 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
-use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
 
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t SET a = 1, b = a + 1');
  *     [count($insert->statement->assignments), $insert->toString()] // => [2, 'INSERT INTO t SET a = 1, b = a + 1']
  */
-final class InsertSet implements Statement
+final class InsertSet implements Explainable
 {
     use Snapshot;
 

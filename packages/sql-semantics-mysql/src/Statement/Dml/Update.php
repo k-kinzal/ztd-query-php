@@ -8,13 +8,13 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\ChangeFacts;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
 use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
-use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10');
  *     [count($update->statement->assignments), $update->statement->where !== null, $update->toString()] // => [1, true, 'UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10']
  */
-final class Update implements Statement
+final class Update implements Explainable
 {
     use Snapshot;
 

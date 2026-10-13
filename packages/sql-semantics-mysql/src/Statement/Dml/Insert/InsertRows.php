@@ -9,7 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
-use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
 
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("INSERT IGNORE INTO t (a, b) VALUE (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)");
  *     [count($insert->statement->rows), count($insert->statement->onDuplicate), $insert->toString()] // => [2, 1, "INSERT IGNORE INTO t (a, b) VALUES (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)"]
  */
-final class InsertRows implements Statement
+final class InsertRows implements Explainable
 {
     use Snapshot;
 

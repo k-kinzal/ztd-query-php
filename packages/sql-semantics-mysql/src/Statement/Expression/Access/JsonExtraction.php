@@ -50,6 +50,7 @@ final class JsonExtraction implements Scalar
     public function __construct(public readonly ColumnUse $column, public readonly Text $path, public readonly bool $unquote = false)
     {
         Check::input($path->radix === null, 'A JSON path is a quoted string.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

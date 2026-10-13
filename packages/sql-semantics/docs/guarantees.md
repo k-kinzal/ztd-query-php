@@ -44,12 +44,17 @@ The MySQL model additionally distinguishes these roles:
 - `MySql\Statement\Relation\TableSource` identifies inputs to FROM, JOIN, UPDATE and multiple-table DELETE. SHOW result relations and stored-program parameter rows are not table inputs. SELECT handles its special `FROM DUAL` form separately.
 - `MySql\Statement\Type\DeclaredName` identifies column and routine declaration types. CAST targets remain `TypeName` values but do not implement `DeclaredName`.
 - `MySql\Statement\Statement` identifies a single MySQL statement. A generic multi-statement `Script` is not an operand where a stored program or EXPLAIN requires one statement.
+- `MySql\Statement\Variable\SystemTarget` identifies the variable assigned by SET or an INSTALL COMPONENT setting. It is an `Operand`, not a `Scalar`. A `SystemVariable` is always a read, has no assignment flag, and accepts only implicit, GLOBAL or SESSION scope. Assignment targets can request PERSIST and PERSIST_ONLY without making those scopes available in a value expression.
+
+MySQL's `Explainable` role restricts EXPLAIN to queries and data manipulation. Condition numbers retain literal, variable or name operands rather than arbitrary expressions. Index option pairs reject duplicate ALGORITHM or LOCK clauses; positions requiring quoted text reject radix forms. Select-item layout token counts are checked against the expression during construction. These are intrinsic model constraints, not an execution approval decision.
 
 `ALTER TABLE ... ALTER COLUMN ... SET DEFAULT` retains either a `DefaultLiteral` or a `DefaultExpression`. Dropping the default retains `null`. Consumers do not interpret a separate Boolean flag to decide what an arbitrary expression means.
 
 A MySQL parameter occurrence retains its marker. Its scalar fact holds a `MySql\Statement\Variable\ParameterBinding` with the resolved input position, even when its value is unbound. The structural renderer records occurrences in written order before derivation, so the binding does not depend on source offsets, the order in which scopes are resolved, or the consumer's traversal order. Directly constructed statements receive the same bindings as parsed statements.
 
 MySQL string literals, temporal literals and non-expression text retain decoded values without the lexical escape rule of the input SQL. A profile-aware string codec quotes those values when rendering. The same directly constructed literal can therefore be used with or without `NO_BACKSLASH_ESCAPES`; reconstruction preserves its decoded bytes in either profile.
+
+Query and composite-expression constructors check a shared grammar-generation invariant across their nested operands. Known features removed before 8.0 (including PROCEDURE ANALYSE, SQL_CACHE and legacy trailing-clause forms) cannot occur in the same graph as features introduced in 8.x or later (including WITH, VALUES, TABLE and windows). This does not certify execution or choose a target release: a graph using only legacy features still needs a legacy profile.
 
 These constraints apply to direct PHP construction as well as SQL analysis. They do not establish that every constructor-accepted combination executes successfully: release constraints and relationships between nested operands still require work. MySQL Memory's [direct construction campaign](../../mysql-memory/docs/semantic-structures.md) tests the model independently of the parser and retains such counterexamples.
 

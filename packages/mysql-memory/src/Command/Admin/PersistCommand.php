@@ -18,8 +18,9 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes RESET PERSIST: removes persisted global variable settings.
  *
- * The emulated server writes no option file, so it has no persisted setting: RESET PERSIST of all
- * settings succeeds, and naming a variable is ER_VAR_DOES_NOT_EXIST, a warning under IF EXISTS.
+ * The saved settings are held by the instance. Resetting them does not change
+ * the running global or session values. Naming a variable without a saved
+ * setting is ER_VAR_DOES_NOT_EXIST, a warning under IF EXISTS.
  * The variable is named as the statement wrote it, after its component. The statement does not
  * commit the open transaction (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/reset-persist.html.
@@ -44,10 +45,18 @@ final class PersistCommand implements Command
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
-        if (!$statement instanceof ResetPersist || $statement->variable === null) {
+        assert($statement instanceof ResetPersist);
+        if ($statement->variable === null) {
+            $session->variables->globals->persisted = [];
             return new Completion();
         }
         $name = ($statement->component === null ? '' : $statement->component->value . '.') . $statement->variable->value;
+        $key = ($statement->component === null ? '' : $statement->component->value . '.') . strtolower($statement->variable->value);
+        if (array_key_exists($key, $session->variables->globals->persisted)) {
+            unset($session->variables->globals->persisted[$key]);
+
+            return new Completion();
+        }
         if (!$statement->ifExists) {
             throw AdministrationError::VariableNotPersisted->error($name);
         }

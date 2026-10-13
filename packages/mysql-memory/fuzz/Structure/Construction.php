@@ -18,6 +18,11 @@ final class Construction
     public readonly Inhabitants $types;
 
     /**
+     * The constructor-type depth constraints, independent of execution.
+     */
+    public readonly Depth $depth;
+
+    /**
      * @var array<string, int> Constructor rejection counts, including the invariant message
      */
     public array $rejections = [];
@@ -35,6 +40,7 @@ final class Construction
     public function __construct(public readonly Choices $choices, public readonly Catalogue $catalogue, public readonly Metadata $metadata)
     {
         $this->types = new Inhabitants($this);
+        $this->depth = new Depth($catalogue, $metadata);
     }
 
     /**
@@ -50,8 +56,12 @@ final class Construction
         if (enum_exists($class)) {
             return $this->choices->one($class::cases());
         }
-        $implementations = interface_exists($class) ? $this->catalogue->implementations($class) : [$class];
+        $implementations = array_values(array_filter(interface_exists($class) ? $this->catalogue->implementations($class) : [$class], fn (string $candidate): bool => $this->depth->object($candidate, $depth)));
+        $deadline = min(2000, $this->attempts + 24 * 2 ** $depth);
         for ($attempt = 0; $attempt < 24 && $this->attempts < 2000; $attempt++) {
+            if ($this->attempts >= $deadline) {
+                throw new Exhausted('The subtree construction budget was exhausted at ' . $class);
+            }
             $this->attempts++;
             $concrete = $this->choices->one($implementations);
             if (enum_exists($concrete)) {
@@ -64,11 +74,12 @@ final class Construction
             try {
                 $arguments = [];
                 foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
-                    if ($parameter->isDefaultValueAvailable() && $this->choices->integer(0, 3) !== 0) {
+                    $type = $parameters[$parameter->getName()] ?? null;
+                    $fits = $type === null ? $this->depth->native($parameter->getType(), $concrete, $depth) : $this->depth->type($type, $concrete, $depth);
+                    if ($parameter->isDefaultValueAvailable() && (!$fits || $this->choices->integer(0, 3) !== 0)) {
                         $arguments[] = $parameter->getDefaultValue();
                         continue;
                     }
-                    $type = $parameters[$parameter->getName()] ?? null;
                     $arguments[] = $type === null ? $this->types->native($parameter->getType(), $concrete, $depth) : $this->types->generate($type, $concrete, $depth);
                 }
 

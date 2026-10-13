@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
-use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('(SELECT a FROM t ORDER BY a LIMIT 1) UNION SELECT b FROM u');
  *     $query->statement->left->query->limit !== null // => true
  */
-final class ParenthesizedQuery implements Statement, Query
+final class ParenthesizedQuery implements Explainable, Query
 {
     use Snapshot;
 
@@ -40,6 +40,7 @@ final class ParenthesizedQuery implements Statement, Query
      */
     public function __construct(public readonly Query $query)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -43,6 +43,7 @@ final class TruthTest implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly Truth $truth, public readonly bool $negated = false)
     {
         Check::input((new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The operand of a truth test needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -41,6 +41,7 @@ final class CommonTableExpression implements Node
     public function __construct(public readonly Name $name, array $columns, public readonly Query $query)
     {
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a common table expression holds names.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

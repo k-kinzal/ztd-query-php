@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
-use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
@@ -60,7 +60,7 @@ final class SystemAssignmentTest extends TestCase
     public function testRefusesAnUnresolvedWord(): void
     {
         $this->expectExceptionMessage('A bare name assigned to a system variable is its text.');
-        new SystemAssignment(new SystemVariable(new Name('x')), new BareName(new Name('y'), null, false));
+        new SystemAssignment(new SystemTarget(new Name('x')), new BareName(new Name('y'), null, false));
     }
 
     public function testDeriveItemLeavesTheAssignmentsOfAStoredProgramToItsRun(): void

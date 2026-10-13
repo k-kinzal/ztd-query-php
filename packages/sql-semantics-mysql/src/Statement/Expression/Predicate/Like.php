@@ -49,6 +49,7 @@ final class Like implements Scalar
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of LIKE needs a grouping to keep its place.');
         Check::input($precedence->admits($pattern, Precedence::SIMPLE_EXPR), 'The pattern of LIKE needs a grouping to keep its place.');
         Check::input($escape === null || $precedence->admits($escape, Precedence::SIMPLE_EXPR), 'The escape character of LIKE needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

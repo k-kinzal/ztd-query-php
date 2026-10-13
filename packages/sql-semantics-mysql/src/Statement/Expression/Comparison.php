@@ -51,6 +51,7 @@ final class Comparison implements Scalar
         $precedence = new Precedence();
         Check::input($precedence->fits($left, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The left operand of a comparison needs a grouping to keep its place.');
         Check::input($precedence->opening($right) >= Precedence::PREDICATE, 'The right operand of a comparison needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

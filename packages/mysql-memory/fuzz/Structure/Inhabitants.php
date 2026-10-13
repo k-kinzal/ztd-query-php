@@ -40,7 +40,7 @@ final class Inhabitants
     public function native(?ReflectionType $type, string $scope, int $depth): mixed
     {
         if ($type instanceof ReflectionUnionType) {
-            return $this->native($this->construction->choices->one(array_values($type->getTypes())), $scope, $depth);
+            return $this->native($this->construction->choices->one(array_values(array_filter($type->getTypes(), fn (ReflectionType $alternative): bool => $this->construction->depth->native($alternative, $scope, $depth)))), $scope, $depth);
         }
         if (!$type instanceof ReflectionNamedType) {
             throw new RuntimeException('Unsupported native constructor type in ' . $scope);
@@ -61,10 +61,10 @@ final class Inhabitants
     {
         $choices = $this->construction->choices;
         if ($type instanceof UnionTypeNode) {
-            return $this->generate($choices->one(array_values($type->types)), $scope, $depth);
+            return $this->generate($choices->one(array_values(array_filter($type->types, fn (TypeNode $alternative): bool => $this->construction->depth->type($alternative, $scope, $depth)))), $scope, $depth);
         }
         if ($type instanceof NullableTypeNode) {
-            return $choices->integer(0, 1) === 0 ? null : $this->generate($type->type, $scope, $depth);
+            return !$this->construction->depth->type($type->type, $scope, $depth) || $choices->integer(0, 1) === 0 ? null : $this->generate($type->type, $scope, $depth);
         }
         if ($type instanceof IdentifierTypeNode) {
             return $this->atom($type->name, $scope, $depth);
@@ -142,6 +142,12 @@ final class Inhabitants
     public function sequence(TypeNode $element, string $scope, int $depth, int $minimum): array
     {
         $values = [];
+        if (!$this->construction->depth->type($element, $scope, $depth)) {
+            if ($minimum === 0) {
+                return [];
+            }
+            throw new Exhausted('A nonempty collection has no element at this depth.');
+        }
         $size = $this->construction->choices->integer($minimum, 3);
         for ($index = 0; $index < $size; $index++) {
             $values[] = $this->generate($element, $scope, $depth);
@@ -215,7 +221,7 @@ final class Inhabitants
     {
         $values = [];
         foreach ($type->items as $item) {
-            if ($item->optional && $this->construction->choices->integer(0, 1) === 0) {
+            if ($item->optional && (!$this->construction->depth->type($item->valueType, $scope, $depth) || $this->construction->choices->integer(0, 1) === 0)) {
                 continue;
             }
             $key = $item->keyName === null ? count($values) : ($item->keyName instanceof ConstExprIntegerNode ? (int) $item->keyName->value : ($item->keyName instanceof ConstExprStringNode ? $item->keyName->value : $item->keyName->name));

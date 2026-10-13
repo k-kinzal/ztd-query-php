@@ -63,6 +63,7 @@ final class Arithmetic implements Scalar
         Check::input($precedence->fits($left, $operator->level(), $operator->level()), 'The left operand of ' . $operator->value . ' needs a grouping to keep its place.');
         Check::input($precedence->opening($right) > $operator->level(), 'The right operand of ' . $operator->value . ' needs a grouping to keep its place.');
         Check::input(!$precedence->leading($right) instanceof IntervalAddition || ($operator !== ArithmeticOperator::Plus && $operator !== ArithmeticOperator::Minus), 'A leading interval after ' . $operator->value . ' is read as a trailing interval and needs a grouping.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

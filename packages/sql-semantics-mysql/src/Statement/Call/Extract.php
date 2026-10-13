@@ -41,6 +41,7 @@ final class Extract implements Scalar
      */
     public function __construct(public readonly IntervalUnit $unit, public readonly Scalar $source)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

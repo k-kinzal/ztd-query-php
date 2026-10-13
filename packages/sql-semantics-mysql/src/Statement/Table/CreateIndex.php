@@ -89,7 +89,7 @@ final class CreateIndex implements Statement, Relation
         Check::input($algorithm === null || $kind === IndexKind::Index || $kind === IndexKind::Unique, 'A full-text or spatial index has no USING clause before ON.');
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');
-        $this->alterOptions = Check::listOf($alterOptions, AlterOption::class, 'ALGORITHM and LOCK clauses are an ordered list.');
+        $this->alterOptions = (new \SqlSemantics\Platform\MySql\Rules\TableChange\IndexOptions())->checked($alterOptions);
     }
 
     /**

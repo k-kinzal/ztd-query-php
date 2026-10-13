@@ -52,6 +52,7 @@ final class QuantifiedComparison implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly ComparisonOperator $operator, public readonly Quantifier $quantifier, public readonly Query $query)
     {
         Check::input((new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The operand of a quantified comparison needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

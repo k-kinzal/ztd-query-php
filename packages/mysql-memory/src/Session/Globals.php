@@ -22,6 +22,11 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 final class Globals
 {
     /**
+     * @var array<string, string|int|null> The checked configuration values saved by SET PERSIST or PERSIST_ONLY
+     */
+    public array $persisted = [];
+
+    /**
      * @param array<string, string|int|null> $values The values set at start or by SET GLOBAL, by lower-case name
      */
     public function __construct(public array $values = [])

@@ -44,6 +44,7 @@ final class SoundsLike implements Scalar
         $precedence = new Precedence();
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The left operand of SOUNDS LIKE needs a grouping to keep its place.');
         Check::input($precedence->admits($pattern, Precedence::BIT_EXPR), 'The right operand of SOUNDS LIKE needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -8,6 +8,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
@@ -111,19 +112,22 @@ final class VariableRule
     /**
      * Lowers a system variable name of MySQL 8.0 and later, read or assigned, under a scope.
      *
+     * @return ($assigned is true ? SystemTarget : SystemVariable)
      * @throws ImplementationGap When the production has no rule
      */
-    public function system(Node $name, ?VariableScope $scope, bool $assigned = false): SystemVariable
+    public function system(Node $name, ?VariableScope $scope, bool $assigned = false): SystemVariable|SystemTarget
     {
         $form = $this->lowering->productions->form($name);
         $names = $this->lowering->names;
 
-        return $this->lowering->leaves->record(match ($form->signature) {
-            'rvalue_system_variable: ident_or_text', 'lvalue_variable: lvalue_ident' => new SystemVariable($names->identifier($form->node(0)), $scope, null, $assigned),
-            'rvalue_system_variable: ident_or_text . ident', 'lvalue_variable: lvalue_ident . ident' => new SystemVariable($names->identifier($form->node(2)), $scope, $names->identifier($form->node(0)), $assigned),
-            'lvalue_variable: DEFAULT_SYM . ident' => new SystemVariable($names->identifier($form->node(2)), $scope, $this->lowering->leaves->record(new Name('default')), $assigned),
+        [$variable, $instance] = match ($form->signature) {
+            'rvalue_system_variable: ident_or_text', 'lvalue_variable: lvalue_ident' => [$names->identifier($form->node(0)), null],
+            'rvalue_system_variable: ident_or_text . ident', 'lvalue_variable: lvalue_ident . ident' => [$names->identifier($form->node(2)), $names->identifier($form->node(0))],
+            'lvalue_variable: DEFAULT_SYM . ident' => [$names->identifier($form->node(2)), $this->lowering->leaves->record(new Name('default'))],
             default => throw ImplementationGap::production($form),
-        });
+        };
+
+        return $this->lowering->leaves->record($assigned ? new SystemTarget($variable, $scope, $instance) : new SystemVariable($variable, $scope, $instance));
     }
 
     /**

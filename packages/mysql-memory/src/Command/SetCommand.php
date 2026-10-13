@@ -73,6 +73,7 @@ final class SetCommand implements Command
         $values = $session->variables->session;
         $globals = $session->variables->globals->values;
         $caches = $session->variables->globals->caches;
+        $persisted = $session->variables->globals->persisted;
         try {
             foreach ($actions as $action) {
                 $action();
@@ -82,6 +83,7 @@ final class SetCommand implements Command
             $session->variables->session = $values;
             $session->variables->globals->values = $globals;
             $session->variables->globals->caches = $caches;
+            $session->variables->globals->persisted = $persisted;
             throw $error;
         }
         $session->instance->registry->eventScheduler->configured($session->variables->globals, $session->variables->catalog, $session->instance->dictionary);
@@ -115,13 +117,13 @@ final class SetCommand implements Command
         }
         if ($item instanceof NameAssignment) {
             [$value, $domain] = $this->value($item->value, $planner, $frame);
-            $scope = $this->scope($inherited);
+            $scope = $inherited;
             $name = $item->name->value;
             $cache = $item->qualifier?->value;
 
             return static function () use ($assigner, $name, $scope, $value, $domain, $cache): void {
                 $assigner->retired($name);
-                $assigner->assign($name, $scope, $value, $domain, $cache);
+                (new \MySqlMemory\Variable\Persistence())->assign($assigner, $name, $scope, $value, $domain, $cache);
             };
         }
         if ($item instanceof SetNames || $item instanceof SetCharacterSet) {
@@ -137,7 +139,7 @@ final class SetCommand implements Command
     public function system(SystemAssignment $item, Planner $planner, Frame $frame, Assigner $assigner, Session $session): Closure
     {
         [$value, $domain] = $this->value($item->value, $planner, $frame);
-        $scope = $this->scope($item->variable->scope);
+        $scope = $item->variable->scope;
         $definition = $session->variables->catalog->find($item->variable->name->value);
         $name = $item->variable->name->value;
         if ($item->variable->scope === null && $domain !== null && $definition !== null && in_array($definition->name, ['transaction_isolation', 'tx_isolation', 'transaction_read_only', 'tx_read_only'], true)) {
@@ -150,7 +152,7 @@ final class SetCommand implements Command
 
         return static function () use ($assigner, $name, $scope, $value, $domain, $cache): void {
             $assigner->retired($name);
-            $assigner->assign($name, $scope, $value, $domain, $cache);
+            (new \MySqlMemory\Variable\Persistence())->assign($assigner, $name, $scope, $value, $domain, $cache);
         };
     }
 

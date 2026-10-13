@@ -52,6 +52,7 @@ final class ClockCall implements Scalar
     {
         Check::input($precision === null || ($clock->precise() && !$precision->hexadecimal && ctype_digit($precision->text)), 'Only a time function takes a precision, and a precision is a decimal integer.');
         Check::input($parentheses === OptionalWords::Written || ($precision === null && $clock->bare() !== null), 'A precision is written in parentheses, and SYSDATE is only written with them.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -50,6 +50,7 @@ final class Regexp implements Scalar
         $precedence = new Precedence();
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of REGEXP needs a grouping to keep its place.');
         Check::input($precedence->admits($pattern, Precedence::BIT_EXPR), 'The pattern of REGEXP needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

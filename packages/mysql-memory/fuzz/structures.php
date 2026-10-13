@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Direct semantic-structure campaign: php fuzz/structures.php COUNT [SEED] [CLASS|-] [RELEASE] [START].
+ * Direct semantic-structure campaign: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START].
  *
  * Every non-success is retained. A SQL error is an unresolved property failure until its
  * state dependence is established, not an automatic success. Exit 2 means generation was
@@ -24,11 +24,12 @@ use SqlSemantics\Statement\Scalar;
 
 $count = filter_var($argv[1] ?? '100', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 $seed = $argv[2] ?? bin2hex(random_bytes(16));
-$root = ($argv[3] ?? '-') === '-' ? null : $argv[3];
+$selection = $argv[3] ?? '-';
+$root = in_array($selection, ['-', '@each'], true) ? null : $selection;
 $release = $argv[4] ?? '8.4.7';
 $start = filter_var($argv[5] ?? '0', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
 if ($count === false || $start === false) {
-    fwrite(STDERR, "Usage: php fuzz/structures.php COUNT [SEED] [CLASS|-] [RELEASE] [START]\n");
+    fwrite(STDERR, "Usage: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START]\n");
     exit(2);
 }
 $catalogue = new Catalogue();
@@ -39,12 +40,12 @@ if ($root !== null && !in_array($root, $roots, true)) {
     exit(2);
 }
 $counts = ['passed' => 0, 'exhausted' => 0, 'generation' => 0, 'sql_error' => 0, 'structure' => 0];
-echo json_encode(['seed' => $seed, 'release' => $release, 'start' => $start, 'trials' => $count, 'rootTypes' => count($roots)], JSON_THROW_ON_ERROR) . "\n";
+echo json_encode(['seed' => $seed, 'release' => $release, 'start' => $start, 'trials' => $count, 'rootTypes' => count($roots), 'selection' => $selection], JSON_THROW_ON_ERROR) . "\n";
 for ($trial = 0; $trial < $count; $trial++) {
     $index = $start + $trial;
     $choices = new Choices($seed . ':' . $index);
     $selected = $choices->one($roots);
-    $class = $root ?? $selected;
+    $class = $selection === '@each' ? $roots[$index % count($roots)] : ($root ?? $selected);
     $construction = new Construction($choices, $catalogue, $metadata);
     $stage = 'generation';
     try {

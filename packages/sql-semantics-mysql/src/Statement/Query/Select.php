@@ -9,6 +9,7 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
 use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
@@ -21,7 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableSource;
-use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -60,7 +60,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Refusing a star after the first item
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Query\Star()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Select implements Statement, Query, Selection
+final class Select implements Explainable, Query, Selection
 {
     use Snapshot;
 
@@ -132,12 +132,7 @@ final class Select implements Statement, Query, Selection
     ) {
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a query block are optimizer hints.');
         $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
-        $list = [];
-        foreach (Check::listOf($items, Node::class, 'A selection projects at least one item.', 1) as $position => $item) {
-            Check::input($item instanceof SelectExpression || $item instanceof TableWildcard || ($item instanceof Star && $position === 0), 'A select list item is an expression or a qualified star, and an unqualified star comes first.');
-            $list[] = $item;
-        }
-        $this->items = $list;
+        $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'A selection projects at least one item.');
         $this->windows = Check::listOf($windows, WindowDefinition::class, 'The WINDOW clause holds window definitions.');
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
         $this->locking = Check::listOf($locking, LockingClause::class, 'The locking clauses of a selection are locking clauses.');
@@ -148,6 +143,7 @@ final class Select implements Statement, Query, Selection
         Check::input($late === null || $late->orderBy === [] || ($this->orderBy === [] && $limit === null), 'An ORDER BY written after a block that orders or limits its rows orders the rows of the block.');
         Check::input($late === null || $this->locking !== [] || $limit !== null, 'An ORDER BY or LIMIT of the block is written in place unless locking clauses or a LIMIT of the block precede it.');
         Check::input($late === null || ($into === null && $procedure === null), 'A block with a late ordering has no INTO or PROCEDURE ANALYSE.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

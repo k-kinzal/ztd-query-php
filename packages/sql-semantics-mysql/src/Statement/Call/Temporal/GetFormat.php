@@ -38,6 +38,7 @@ final class GetFormat implements Scalar
      */
     public function __construct(public readonly TemporalFormat $format, public readonly Scalar $standard)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

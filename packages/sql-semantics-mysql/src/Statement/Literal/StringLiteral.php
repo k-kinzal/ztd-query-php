@@ -68,6 +68,7 @@ final class StringLiteral implements LiteralExpression
         Check::input($list !== [] && array_is_list($segments), 'A string literal holds at least one segment.');
         Check::input($introducer === null || (!$national && (new Introducers())->known($introducer->value)), 'An introducer names a character set of the server in lower case and excludes the national form.');
         $this->segments = $list;
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

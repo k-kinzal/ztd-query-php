@@ -60,6 +60,7 @@ final class Cast implements Scalar
      */
     public function __construct(public readonly Scalar $operand, public readonly CastTarget $target, public readonly bool $array = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

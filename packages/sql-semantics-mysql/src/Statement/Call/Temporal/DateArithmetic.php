@@ -49,6 +49,7 @@ final class DateArithmetic implements Scalar
      */
     public function __construct(public readonly bool $subtract, public readonly Scalar $date, public readonly Scalar $quantity, public readonly IntervalUnit $unit)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind;
 use SqlSemantics\Rendering\Output;
@@ -30,6 +31,7 @@ final class LogFile implements Node
      */
     public function __construct(public readonly LogFileKind $kind, public readonly Text $file)
     {
+        Check::input($file->radix === null, 'A log file name is a quoted string.');
     }
 
     /**

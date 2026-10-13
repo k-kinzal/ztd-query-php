@@ -10,8 +10,8 @@ use SqlSemantics\Platform\MySql\Rules\Query\ExpressionFacts;
 use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
 use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
-use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -43,7 +43,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Refusing a wrapper that adds nothing
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class QueryExpression implements Statement, Query
+final class QueryExpression implements Explainable, Query
 {
     use Snapshot;
 
@@ -65,6 +65,7 @@ final class QueryExpression implements Statement, Query
         Check::input($with !== null || $orderBy !== [] || $limit !== null, 'A query expression holds a WITH clause, an ordering or a limit.');
         Check::input(!$body instanceof Select || ($orderBy === [] && $limit === null) || ($orderBy !== [] && ($body->orderBy !== [] || $body->limit !== null) && $body->late === null), 'The ordering and the limit of a single query block belong to the block unless an ORDER BY follows a block that orders or limits its rows.');
         Check::input(!$body instanceof self && !$body instanceof QueryStatement && !$body instanceof OrderedSetOperation, 'A query expression, a query statement or an ordered set operation as a body is written in parentheses.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

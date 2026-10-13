@@ -61,6 +61,7 @@ final class KeywordCall implements Scalar
         [$minimum, $maximum] = $function->arity();
         Check::input(count($arguments) >= $minimum && ($maximum === -1 || count($arguments) <= $maximum), 'The grammar does not accept this number of arguments for ' . $function->value . '.');
         Check::input($parentheses === OptionalWords::Written || $function === KeywordFunction::CurrentUser, 'Only CURRENT_USER is written without parentheses.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

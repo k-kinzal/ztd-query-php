@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Group;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
@@ -28,6 +29,7 @@ final class CredentialOption implements Node
      */
     public function __construct(public readonly Credential $credential, public readonly Text $value)
     {
+        Check::input($value->radix === null, 'A group replication credential is a quoted string.');
     }
 
     /**

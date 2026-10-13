@@ -48,6 +48,7 @@ final class Row implements Scalar
     public function __construct(array $elements, public readonly OptionalWords $keyword = OptionalWords::Omitted)
     {
         $this->elements = Check::listOf($elements, Scalar::class, 'A row constructor has at least two elements.', 2);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

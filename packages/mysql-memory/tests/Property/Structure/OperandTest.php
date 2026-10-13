@@ -66,5 +66,6 @@ final class OperandTest extends TestCase
         self::assertNotContains(\SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral::class, $scalars);
         self::assertNotContains(\SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal::class, $scalars);
         self::assertNotContains(\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable::class, $scalars);
+        self::assertNotContains(\SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget::class, $scalars);
     }
 }

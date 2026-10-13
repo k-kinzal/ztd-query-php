@@ -56,6 +56,7 @@ final class Unary implements Scalar
     {
         Check::input(!$keyword || $operator === UnaryOperator::Not, 'Only logical negation has a keyword spelling.');
         Check::input((new Precedence())->opening($operand) >= Precedence::PREFIX, 'The operand of a prefix operator needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

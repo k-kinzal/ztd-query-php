@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
  * the session and a session-only one set globally are refused. A boolean takes ON, OFF, 1 and
  * 0; an integer is clipped to its bounds with a warning; NULL is taken by character_set_results,
  * session_track_system_variables, innodb_tmpdir and innodb_ft_user_stopword_table only, and
- * refused by any other variable; DEFAULT restores the global value, or the compiled default for
+ * refused by other text variables; an integer-typed NULL is assigned as zero; DEFAULT restores the global value, or the compiled default for
  * a global assignment. block_encryption_mode takes the name of an AES mode, in any case, or its
  * number, and holds the name in lower case. A variable MySQL 5.6 or 5.7 deprecates warns as its
  * assignment is checked (see DeprecatedVariables).
@@ -188,6 +188,9 @@ final class Assigner
      */
     public function boolean(Definition $definition, int|float|string|null $value, Domain $domain, string $text): string
     {
+        if ($value === null && $domain->kind === Kind::Integer) {
+            return 'OFF';
+        }
         if ($value !== null && ($domain->kind === Kind::Integer || $domain->kind === Kind::Decimal) && in_array($text, ['0', '1'], true)) {
             return $text === '1' ? 'ON' : 'OFF';
         }
@@ -215,9 +218,6 @@ final class Assigner
      */
     public function integer(Definition $definition, int|float|string|null $value, Domain $domain, string $text): int
     {
-        if ($value === null) {
-            throw AdministrationError::WrongValueForVariable->error($definition->name, 'NULL');
-        }
         if ($domain->kind !== Kind::Integer && $domain->kind !== Kind::Year) {
             throw AdministrationError::WrongTypeForVariable->error($definition->name);
         }

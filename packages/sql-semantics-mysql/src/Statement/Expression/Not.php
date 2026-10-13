@@ -43,6 +43,7 @@ final class Not implements Scalar
     public function __construct(public readonly Scalar $operand)
     {
         Check::input((new Precedence())->opening($operand) >= Precedence::NEGATION, 'The operand of NOT needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -50,6 +50,7 @@ final class IntervalAddition implements Scalar
     public function __construct(public readonly Interval $interval, public readonly Scalar $operand)
     {
         Check::input((new Precedence())->opening($operand) >= Precedence::NEGATION, 'The operand of a leading interval needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

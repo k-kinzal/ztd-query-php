@@ -9,6 +9,7 @@ use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
@@ -40,7 +41,7 @@ final class Explain implements Statement
     use Snapshot;
 
     /**
-     * @param Statement $statement The explained statement
+     * @param Explainable $statement The explained statement
      * @param Name|null $format The format name after FORMAT =
      * @param bool $analyze Whether ANALYZE is written
      * @param ExplainModifier|null $modifier The EXTENDED or PARTITIONS keyword of MySQL 5.x
@@ -48,7 +49,7 @@ final class Explain implements Statement
      * @param Name|null $database The database after FOR DATABASE
      */
     public function __construct(
-        public readonly Statement $statement,
+        public readonly Explainable $statement,
         public readonly ?Name $format = null,
         public readonly bool $analyze = false,
         public readonly ?ExplainModifier $modifier = null,

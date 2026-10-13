@@ -44,6 +44,7 @@ final class Position implements Scalar
     {
         $precedence = new Precedence();
         Check::input($precedence->admits($substring, Precedence::BIT_EXPR) && !$precedence->absorbs($substring, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The substring of POSITION needs a grouping.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

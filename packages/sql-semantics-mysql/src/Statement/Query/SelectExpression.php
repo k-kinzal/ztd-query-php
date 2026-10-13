@@ -49,6 +49,7 @@ final class SelectExpression implements SelectItem
         Check::input($alias === null || $layout === null, 'An aliased select item is named by its alias and keeps no layout.');
         Check::input($layout === null || $layout->trail === '', 'MySQL names a select item without the trivia after its expression, so its layout has no trailing trivia.');
         Check::input($mark !== AliasMark::Equals && ($alias !== null || $mark === AliasMark::As), 'A select alias is written with or without AS, and an item without alias has no alias mark.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ItemLayouts())->check($expression, $layout);
     }
 
     /**

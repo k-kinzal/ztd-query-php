@@ -58,6 +58,7 @@ final class JsonObjectAggregate implements SetFunction
         public readonly bool $valueAll = false,
         public readonly Name|WindowSpecification|null $over = null,
     ) {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -8,6 +8,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
@@ -176,10 +177,15 @@ final class ExplainRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function explained(Form $form): Statement
+    public function explained(Form $form): Explainable
     {
         $statement = $form->node(self::EXPLAINED[$form->signature] ?? throw ImplementationGap::production($form));
 
-        return isset(self::QUERIES[$statement->name]) ? $this->lowering->queries->statement($statement) : $this->lowering->dml->statement($statement);
+        $explained = isset(self::QUERIES[$statement->name]) ? $this->lowering->queries->statement($statement) : $this->lowering->dml->statement($statement);
+        if (!$explained instanceof Explainable) {
+            throw ImplementationGap::production($form);
+        }
+
+        return $explained;
     }
 }

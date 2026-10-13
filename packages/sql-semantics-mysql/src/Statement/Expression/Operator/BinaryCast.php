@@ -50,6 +50,7 @@ final class BinaryCast implements Scalar
     public function __construct(public readonly Scalar $operand)
     {
         Check::input((new Precedence())->opening($operand) >= Precedence::PREFIX, 'The operand of BINARY needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

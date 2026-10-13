@@ -60,6 +60,7 @@ final class Collated implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly Name $collation)
     {
         Check::input((new Precedence())->fits($operand, Precedence::COLLATION, Precedence::SIMPLE_EXPR), 'The operand of COLLATE needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

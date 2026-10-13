@@ -41,6 +41,7 @@ final class With implements WithClause
     public function __construct(public readonly bool $recursive, array $tables)
     {
         $this->tables = Check::listOf($tables, CommonTableExpression::class, 'A WITH clause defines at least one common table expression.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

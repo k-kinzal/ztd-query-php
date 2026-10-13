@@ -43,6 +43,7 @@ final class NullTest implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly bool $negated = false)
     {
         Check::input((new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The operand of a NULL test needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

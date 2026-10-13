@@ -247,8 +247,8 @@ final class AssignerTest extends TestCase
         $session = (new Instance())->connect();
 
         $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1231);
-        $this->expectExceptionMessage("Variable 'div_precision_increment' can't be set to the value of 'NULL'");
+        $this->expectExceptionCode(1232);
+        $this->expectExceptionMessage("Incorrect argument type to variable 'div_precision_increment'");
 
         $session->query('SET div_precision_increment = NULL');
     }

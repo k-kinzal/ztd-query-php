@@ -74,6 +74,7 @@ final class Aggregate implements SetFunction
         Check::input(count($arguments) <= 1 || ($function === AggregateFunction::Count && $distinct && !$all), 'Only COUNT(DISTINCT ...) takes several arguments.');
         Check::input(!$distinct || $function->distinctive(), 'The grammar does not accept DISTINCT for ' . $function->value . '.');
         Check::input(!($distinct && $all && $function === AggregateFunction::Count), 'COUNT(DISTINCT ...) takes no ALL.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

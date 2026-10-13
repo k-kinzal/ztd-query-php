@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Variable;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Utility\SystemNames;
 use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
-use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
-use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -24,7 +22,7 @@ use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * A system variable read as a value or named as the target of SET: `@@name`, `@@GLOBAL.name`, `@@instance.name`.
+ * A system variable read as a value: `@@name`, `@@GLOBAL.name`, `@@instance.name`.
  *
  * A structured variable is written with the name of its instance or
  * component before the variable name; `DEFAULT.name` names the instance
@@ -60,28 +58,26 @@ final class SystemVariable implements Scalar
 
     /**
      * @param Name $name The variable name
-     * @param VariableScope|null $scope The scope written before the name; the grammar reads GLOBAL or SESSION in an expression and also PERSIST and PERSIST_ONLY in SET
+     * @param VariableScope|null $scope The read scope: GLOBAL, SESSION or the implicit scope
      * @param Name|null $instance The instance or component name of a structured variable
-     * @param bool $assigned Whether SET assigns the variable rather than an expression reading it
      */
-    public function __construct(public readonly Name $name, public readonly ?VariableScope $scope = null, public readonly ?Name $instance = null, public readonly bool $assigned = false)
+    public function __construct(public readonly Name $name, public readonly ?VariableScope $scope = null, public readonly ?Name $instance = null)
     {
+        Check::input(in_array($scope, [null, VariableScope::Global, VariableScope::Session], true), 'A system-variable read has an implicit, GLOBAL or SESSION scope.');
     }
 
     /**
-     * Derives the type of a read from the variables of the release, reporting a variable the read cannot have; an assigned variable is checked by its assignment.
+     * Derives the type of a read from the variables of the release, reporting a variable the read cannot have.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        if ($this->instance === null && !$this->assigned) {
+        if ($this->instance === null) {
             Deprecation::variable($this->name->value, $derivation);
         }
         $subject = 'system variable @@' . ($this->scope === null ? '' : $this->scope->value . '.') . ($this->instance === null ? '' : $this->instance->value . '.') . $this->name->value;
         $dependent = new ScalarFact(new Dependent([new SessionState($subject)]), Nullability::Dependent);
-        if (!$this->assigned) {
-            $this->structured($derivation);
-        }
-        if ($this->assigned || ($this->instance !== null && !in_array(strtolower($this->name->value), self::KEY_CACHE, true))) {
+        $this->structured($derivation);
+        if ($this->instance !== null && !in_array(strtolower($this->name->value), self::KEY_CACHE, true)) {
             return $dependent;
         }
         $definition = $this->instance === null ? (new VariableAccess())->read($this->name->value, $this->scope, $derivation) : SystemVariables::of($derivation->context->profile->grammar)->find($this->name->value);
@@ -94,20 +90,7 @@ final class SystemVariable implements Scalar
      */
     public function structured(Derivation $derivation): void
     {
-        if ($this->instance === null || in_array(strtolower($this->name->value), self::KEY_CACHE, true)) {
-            return;
-        }
-        $grammar = $derivation->context->profile->grammar;
-        $variables = SystemVariables::of($grammar);
-        if ($grammar === GrammarRelease::MySql5651 || $grammar === GrammarRelease::MySql5744) {
-            $derivation->report($variables->find($this->name->value) === null ? new UnknownSystemVariable($this->name->value, $this->assigned, true) : new UnstructuredVariable($this->name->value));
-
-            return;
-        }
-        $name = $this->instance->value . '.' . $this->name->value;
-        if ($variables->find($name) === null) {
-            $derivation->report(new UnknownSystemVariable($name, $this->assigned, true));
-        }
+        (new SystemNames())->structured($this->name, $this->instance, false, $derivation);
     }
 
     /**
@@ -115,13 +98,6 @@ final class SystemVariable implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->symbol('@')->glue()->symbol('@')->glue();
-        if ($this->scope !== null) {
-            $out->keyword($this->scope->value)->symbol('.');
-        }
-        if ($this->instance !== null) {
-            $out->name($this->instance, NameUse::Label)->symbol('.');
-        }
-        $out->name($this->name, NameUse::Label);
+        (new SystemNames())->render($this->name, $this->scope, $this->instance, $out);
     }
 }

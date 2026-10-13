@@ -63,6 +63,7 @@ final class FullTextSearch implements Scalar
         Check::input($precedence->admits($against, Precedence::BIT_EXPR), 'The search string of AGAINST needs a grouping to keep its place.');
         Check::input($stated === OptionalWords::Omitted || $mode !== FullTextMode::Boolean, 'Only a natural language search states IN NATURAL LANGUAGE MODE.');
         Check::input(($mode !== FullTextMode::Boolean && $stated === OptionalWords::Omitted) || !$precedence->absorbs($against, Precedence::PREDICATE, Precedence::BIT_EXPR), 'A search string followed by IN ... MODE needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

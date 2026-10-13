@@ -81,6 +81,7 @@ final class SystemSchemas
         'mysql.time_zone' => Server\TimeZones::class,
         'mysql.time_zone_name' => Server\TimeZones::class,
         'performance_schema.global_variables' => Performance\GlobalVariables::class,
+        'performance_schema.persisted_variables' => Performance\PersistedVariables::class,
         'performance_schema.session_variables' => Performance\SessionVariables::class,
         'performance_schema.variables_by_thread' => Performance\VariablesByThread::class,
         'performance_schema.global_status' => Performance\GlobalStatus::class,

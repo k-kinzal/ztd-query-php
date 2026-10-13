@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
@@ -33,11 +33,11 @@ final class ComponentSetting implements Node
     use Snapshot;
 
     /**
-     * @param SystemVariable $variable The variable with its scope and component
+     * @param SystemTarget $variable The variable with its scope and component
      * @param Scalar|OnWord $value The value: an expression, or OnWord
      * @throws InvalidConstruction When the scope is neither absent, GLOBAL nor PERSIST
      */
-    public function __construct(public readonly SystemVariable $variable, public readonly Scalar|OnWord $value)
+    public function __construct(public readonly SystemTarget $variable, public readonly Scalar|OnWord $value)
     {
         Check::input(in_array($variable->scope, [null, VariableScope::Global, VariableScope::Persist], true), 'A component variable is set GLOBAL or PERSIST.');
     }

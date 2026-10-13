@@ -53,6 +53,7 @@ final class CharCall implements Scalar
     {
         Check::input($charset === null || $charset->name !== null, 'CHAR USING names a character set rather than DEFAULT.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'CHAR() takes at least one expression.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

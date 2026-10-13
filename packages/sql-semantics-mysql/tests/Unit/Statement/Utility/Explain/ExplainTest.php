@@ -60,7 +60,7 @@ final class ExplainTest extends TestCase
     public function testRefusesAModifierWithOptions(): void
     {
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $select);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Explainable::class, $select);
         $this->expectExceptionMessage('EXTENDED and PARTITIONS are written alone.');
         new Explain($select, null, true, ExplainModifier::Extended);
     }

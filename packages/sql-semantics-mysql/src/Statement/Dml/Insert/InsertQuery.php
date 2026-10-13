@@ -9,11 +9,11 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
-use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a) SELECT b FROM u');
  *     [$insert->statement->source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, $insert->toString()] // => [true, 'INSERT INTO t (a) SELECT b FROM u']
  */
-final class InsertQuery implements Statement
+final class InsertQuery implements Explainable
 {
     use Snapshot;
 

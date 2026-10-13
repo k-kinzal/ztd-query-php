@@ -102,9 +102,9 @@ final class VariableRuleTest extends TestCase
         $ident = static fn (string $text): Node => new Node('ident', 0, [new Node('IDENT_sys', 0, [new Token(0, 'IDENT', $text, 0)])]);
         $lvalue = static fn (string $text): Node => new Node('lvalue_ident', 0, [new Node('IDENT_sys', 0, [new Token(0, 'IDENT', $text, 0)])]);
         $dot = new Token(0, '.', '.', 0);
-        $plain = $rule->system(new Node('lvalue_variable', 0, [$lvalue('x')]), VariableScope::Persist);
-        $component = $rule->system(new Node('lvalue_variable', 1, [$lvalue('innodb'), $dot, $ident('x')]), null);
-        $default = $rule->system(new Node('lvalue_variable', 2, [new Token(0, 'DEFAULT_SYM', 'DEFAULT', 0), $dot, $ident('x')]), VariableScope::Global);
+        $plain = $rule->system(new Node('lvalue_variable', 0, [$lvalue('x')]), VariableScope::Persist, true);
+        $component = $rule->system(new Node('lvalue_variable', 1, [$lvalue('innodb'), $dot, $ident('x')]), null, true);
+        $default = $rule->system(new Node('lvalue_variable', 2, [new Token(0, 'DEFAULT_SYM', 'DEFAULT', 0), $dot, $ident('x')]), VariableScope::Global, true);
 
         self::assertSame('x', $plain->name->value);
         self::assertSame(VariableScope::Persist, $plain->scope);

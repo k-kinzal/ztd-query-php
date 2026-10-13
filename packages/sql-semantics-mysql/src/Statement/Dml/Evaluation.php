@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Dml;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Rules\Query\Projection;
@@ -15,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Snapshot;
 
@@ -39,7 +37,7 @@ final class Evaluation implements Statement
     use Snapshot;
 
     /**
-     * @var list<SelectExpression|Star|TableWildcard> The items in written order
+     * @var non-empty-list<SelectExpression|Star|TableWildcard> The items in written order
      */
     public readonly array $items;
 
@@ -49,12 +47,7 @@ final class Evaluation implements Statement
      */
     public function __construct(array $items)
     {
-        $list = [];
-        foreach (Check::listOf($items, Node::class, 'DO evaluates at least one expression.', 1) as $item) {
-            Check::input($item instanceof SelectExpression || $item instanceof Star || $item instanceof TableWildcard, 'An item of DO is an expression or a star.');
-            $list[] = $item;
-        }
-        $this->items = $list;
+        $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'DO evaluates at least one expression.');
     }
 
     /**

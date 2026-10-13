@@ -52,6 +52,7 @@ final class InList implements Scalar
     {
         Check::input((new Precedence())->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of IN needs a grouping to keep its place.');
         $this->elements = Check::listOf($elements, Scalar::class, 'An IN list has at least one element.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

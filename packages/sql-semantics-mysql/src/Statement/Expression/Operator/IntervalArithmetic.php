@@ -50,6 +50,7 @@ final class IntervalArithmetic implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly Interval $interval, public readonly bool $subtract = false)
     {
         Check::input((new Precedence())->fits($operand, Precedence::ADDITIVE, Precedence::ADDITIVE), 'The operand of interval arithmetic needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

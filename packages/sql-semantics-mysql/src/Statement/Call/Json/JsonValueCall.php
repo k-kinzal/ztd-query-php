@@ -55,6 +55,7 @@ final class JsonValueCall implements Scalar
         public readonly ?JsonResponse $onError = null,
     ) {
         Check::input((new Precedence())->admits($document, Precedence::SIMPLE_EXPR), 'The document of JSON_VALUE needs a grouping.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

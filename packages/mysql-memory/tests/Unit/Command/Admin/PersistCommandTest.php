@@ -17,6 +17,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PersistCommandTest extends TestCase
 {
+    public function testExecuteRemovesASavedSettingWithoutChangingTheRunningValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET PERSIST autocommit=0; RESET PERSIST AUTOCOMMIT');
+        $read = $session->query('SELECT @@GLOBAL.autocommit')[0];
+
+        self::assertSame([], $session->variables->globals->persisted);
+        self::assertInstanceOf(ResultSet::class, $read);
+        self::assertSame([['0']], $read->rows);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new PersistCommand())->clearsDiagnostics());

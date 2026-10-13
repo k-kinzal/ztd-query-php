@@ -58,6 +58,7 @@ final class CaseExpression implements Scalar
     public function __construct(public readonly ?Scalar $operand, array $branches, public readonly ?Scalar $else = null)
     {
         $this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression has at least one WHEN branch.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

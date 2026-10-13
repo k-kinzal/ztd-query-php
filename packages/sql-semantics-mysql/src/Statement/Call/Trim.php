@@ -41,6 +41,7 @@ final class Trim implements Scalar
      */
     public function __construct(public readonly Scalar $subject, public readonly ?TrimSide $side = null, public readonly ?Scalar $removed = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

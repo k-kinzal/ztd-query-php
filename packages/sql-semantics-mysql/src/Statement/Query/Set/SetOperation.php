@@ -9,10 +9,10 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
 use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\SetFacts;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -44,7 +44,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $three = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($one, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($two, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $three)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class SetOperation implements Statement, Query
+final class SetOperation implements Explainable, Query
 {
     use Snapshot;
 
@@ -63,6 +63,7 @@ final class SetOperation implements Statement, Query
         Check::input(!$left instanceof OrderedSetOperation && !$right instanceof OrderedSetOperation, 'A set operation ordered after its last SELECT ends its subquery.');
         Check::input(!$right instanceof QueryExpression && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause or with ordering of its own is written in parentheses as a set operand.');
         Check::input(!$right instanceof Select || !$right->trailed(), 'The last operand of a set operation has no ORDER BY, LIMIT, INTO or locking clause of its own unless it is written in parentheses.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
