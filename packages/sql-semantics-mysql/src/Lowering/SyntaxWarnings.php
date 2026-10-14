@@ -48,11 +48,12 @@ final class SyntaxWarnings
         $lowering = new Lowering($productions, new Leaves(), $profile);
         $aborted = false;
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, $ranges, $end, $profile, $lowering): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, $ranges, $end, $profile, $lowering, $parser, $statement): void {
                 if ($aborted || $lookahead->offset > $end) {
                     return;
                 }
-                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new Replication\SyntaxDeprecations())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering);
+                $replication = new Replication\SyntaxDeprecations();
+                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering);
                 if ($notice !== null) {
                     $range = $ranges->span($node, true);
                     if ($range !== null) {

@@ -38,11 +38,6 @@ final class ResetBinaryLogs implements ResetTarget
     use Snapshot;
 
     /**
-     * The greatest file number TO accepts (MAX_ALLOWED_FN_EXT_RESET_BIN_LOGS).
-     */
-    private const LAST = 2000000000;
-
-    /**
      * @param Terminology $terminology The vocabulary of the release
      * @param Numeral|null $first The number of the first new binary log file, when TO is written
      */
@@ -59,15 +54,26 @@ final class ResetBinaryLogs implements ResetTarget
         $releases = new Releases();
         Check::input($releases->binaryLogs($release) === $this->terminology, 'RESET BINARY LOGS AND GTIDS is written in the vocabulary of the release.');
         Check::input($this->first === null || !$releases->legacy($release), 'RESET MASTER TO needs MySQL 8.0 or later.');
+        $problem = $this->problem();
+        if ($problem !== null) {
+            $derivation->report($problem);
+        }
+    }
+
+    /**
+     * Describes an invalid file index independently of the later RESET items.
+     */
+    public function problem(): ?RefusedSetting
+    {
         if ($this->first === null) {
-            return;
+            return null;
         }
         $magnitudes = new Magnitudes();
         if ($magnitudes->fractional($this->first)) {
-            $derivation->report(new RefusedSetting(ReplicationError::FractionalNumber));
-        } elseif ($magnitudes->integer($this->first) === 0 || $magnitudes->exceeds($this->first, self::LAST)) {
-            $derivation->report(new RefusedSetting(ReplicationError::FileNumberOutOfRange));
+            return new RefusedSetting(ReplicationError::FractionalNumber);
         }
+
+        return $magnitudes->integer($this->first) === 0 || $magnitudes->exceeds($this->first, 2000000000) ? new RefusedSetting(ReplicationError::FileNumberOutOfRange, $this->first) : null;
     }
 
     /**

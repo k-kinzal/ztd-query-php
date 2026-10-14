@@ -44,6 +44,7 @@ final class StatementSequence
      */
     public function member(Node $statement): ProgramStatement|Statement
     {
+        Check::input(!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin, 'BEGIN in a stored program introduces a block; use START TRANSACTION for a transaction.');
         Check::input(!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent, 'BINLOG is a top-level client statement, not a stored program member.');
         if ($statement instanceof ProgramStatement || $statement instanceof Statement) {
             return $statement;

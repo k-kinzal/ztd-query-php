@@ -33,6 +33,7 @@ final class PurgeLogsTo implements Statement
      */
     public function __construct(public readonly Text $file)
     {
+        \SqlSemantics\Diagnostic\Check::input($file->radix === null, 'A binary log file name is quoted text.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

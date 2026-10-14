@@ -26,4 +26,10 @@ final class ShowBinlogEventsTest extends TestCase
     {
         self::assertSame('SHOW BINLOG EVENTS FROM 4', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW BINLOG EVENTS FROM 4')->toString());
     }
+
+    public function testValueRejectsIncompatibleFile(): void
+    {
+        $this->expectExceptionMessage('A binary log file name is quoted text.');
+        new ShowBinlogEvents(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

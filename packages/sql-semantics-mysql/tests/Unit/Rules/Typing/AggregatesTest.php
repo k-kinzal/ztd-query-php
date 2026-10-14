@@ -56,7 +56,7 @@ final class AggregatesTest extends TestCase
         self::assertEquals(Domain::double(23), $aggregates->result(AggregateFunction::Sum, Domain::double()));
         self::assertEquals(Domain::integer(Field::LongLong, 21), $aggregates->result(AggregateFunction::Count, null));
         self::assertEquals(Domain::decimal(8, 2), $aggregates->result(AggregateFunction::Maximum, Domain::decimal(8, 2)));
-        self::assertNull($aggregates->result(AggregateFunction::Collect, Domain::integer()));
+        self::assertEquals(new Domain(Kind::String, Field::Geometry, 16777216, Domain::NOT_FIXED, false, Collation::binary(), [], Coercibility::Coercible), $aggregates->result(AggregateFunction::Collect, Domain::integer()));
     }
 
     public function testExtremeSeparatesTheColumnExpressionBoundFromItsMetadata(): void
@@ -65,7 +65,6 @@ final class AggregatesTest extends TestCase
         $argument = new Domain(Kind::String, Field::Blob, 65535, 0, false, Collation::known('utf8mb4_bin'));
         $column = $aggregates->result(AggregateFunction::Minimum, $argument, GrammarRelease::MySql847, true);
 
-        self::assertNotNull($column);
         self::assertSame([65535, 262140, Domain::NOT_FIXED], [$column->length, $column->metadataLength(), $column->decimals]);
         self::assertSame([65535, 262140, 0], [$aggregates->extreme($argument, GrammarRelease::MySql847, false)->length, $aggregates->extreme($argument, GrammarRelease::MySql847, false)->metadataLength(), $aggregates->extreme($argument, GrammarRelease::MySql847, false)->decimals]);
     }
@@ -91,9 +90,9 @@ final class AggregatesTest extends TestCase
         $aggregates = new Aggregates(new Settings(Collation::known('utf8mb4_0900_ai_ci')));
         $json = new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::known('utf8mb4_bin'));
 
-        self::assertSame(Domain::NOT_FIXED, $aggregates->result(AggregateFunction::Maximum, $json)?->decimals);
-        self::assertSame(16777216, $aggregates->result(AggregateFunction::JsonArray, Domain::integer(), GrammarRelease::MySql5744)?->length);
-        self::assertSame(4294967295, $aggregates->result(AggregateFunction::JsonArray, Domain::integer())?->length);
+        self::assertSame(Domain::NOT_FIXED, $aggregates->result(AggregateFunction::Maximum, $json)->decimals);
+        self::assertSame(16777216, $aggregates->result(AggregateFunction::JsonArray, Domain::integer(), GrammarRelease::MySql5744)->length);
+        self::assertSame(4294967295, $aggregates->result(AggregateFunction::JsonArray, Domain::integer())->length);
     }
 
     public function testConcatenatedPreservesReleaseSpecificMetadata(): void

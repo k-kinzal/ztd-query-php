@@ -88,4 +88,17 @@ final class StatementSequenceTest extends TestCase
         $this->expectExceptionMessage('BINLOG is a top-level client statement, not a stored program member.');
         (new StatementSequence())->member(new \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent(new Text('A')));
     }
+
+    public function testMemberRejectsATransactionBeginInTheBlockPosition(): void
+    {
+        $this->expectExceptionMessage('BEGIN in a stored program introduces a block; use START TRANSACTION for a transaction.');
+        (new StatementSequence())->member(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin());
+    }
+
+    public function testMemberRetainsStartTransaction(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('START TRANSACTION')->statement;
+        self::assertSame($statement, (new StatementSequence())->member($statement));
+    }
+
 }

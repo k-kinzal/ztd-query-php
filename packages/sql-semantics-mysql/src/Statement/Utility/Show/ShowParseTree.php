@@ -37,6 +37,7 @@ final class ShowParseTree implements Statement
      */
     public function __construct(public readonly Statement $statement)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin, 'SHOW PARSE_TREE takes a simple statement; BEGIN is a separate transaction entry.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

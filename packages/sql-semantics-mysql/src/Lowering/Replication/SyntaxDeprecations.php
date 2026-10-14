@@ -25,7 +25,7 @@ final class SyntaxDeprecations
     /**
      * Answers a deprecation for a completed legacy replication keyword.
      */
-    public function completed(Node $node, Lowering $lowering): ?Deprecation
+    public function completed(Node $node, Lowering $lowering, ?Token $preceding = null): ?Deprecation
     {
         $first = $node->children[0] ?? null;
         if (!Deprecated::ReplicationSpelling->warnedIn($lowering->profile->grammar) || !$first instanceof Token) {
@@ -34,6 +34,9 @@ final class SyntaxDeprecations
         if ($node->name === 'change_replication_source' && $first->name === 'MASTER_SYM') {
             $old = 'CHANGE MASTER';
             $replacement = 'CHANGE REPLICATION SOURCE';
+        } elseif ($node->name === 'replica' && $first->name === 'SLAVE' && $preceding?->name === 'START_SYM') {
+            $old = 'START SLAVE';
+            $replacement = 'START REPLICA';
         } elseif ((str_starts_with($node->name, 'change_replication_source_') || in_array($node->name, ['source_log_file', 'source_log_pos'], true)) && (str_starts_with($first->name, 'MASTER_') || $first->name === 'GET_MASTER_PUBLIC_KEY_SYM')) {
             $kind = (new SourceOptionRule($lowering))->keyword($node);
             $old = $kind->keyword(Terminology::Legacy);
@@ -43,5 +46,24 @@ final class SyntaxDeprecations
         }
 
         return new Deprecation(Deprecated::ReplicationSpelling, "'" . $old . "' is deprecated and will be removed in a future release. Please use " . $replacement . ' instead');
+    }
+
+    /**
+     * Reads the preceding accepted keyword while the syntax tree is still transient.
+     */
+    public function preceding(Node $node, \SqlParser\Parser\SqlParser $parser, string $sql): ?Token
+    {
+        if ($node->name !== 'replica') {
+            return null;
+        }
+        $range = (new \SqlSemantics\Construction\SourceRanges())->span($node, true);
+        $preceding = null;
+        foreach ($range === null ? [] : $parser->tokenize(substr($sql, 0, $range[0])) as $token) {
+            if ($token->text !== '') {
+                $preceding = $token;
+            }
+        }
+
+        return $preceding;
     }
 }

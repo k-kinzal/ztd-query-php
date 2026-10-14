@@ -54,4 +54,22 @@ final class ModernFormsTest extends TestCase
         self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($filtered)));
     }
 
+
+    public function testRequiresDistinguishesModernHintsAndSpatialAggregation(): void
+    {
+        $forms = new ModernForms();
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Hint\Form\ResourceGroupHint('batch')));
+        self::assertFalse($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint('block')));
+        self::assertTrue($forms->requires(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect));
+        self::assertFalse($forms->requires(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count));
+        self::assertTrue($forms->requires(\SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Rollup));
+    }
+
+    public function testLockingDistinguishesSimpleUpdateFromShare(): void
+    {
+        $forms = new ModernForms();
+        self::assertFalse($forms->locking(new LockingClause(LockStrength::Update)));
+        self::assertTrue($forms->locking(new LockingClause(LockStrength::Share)));
+    }
+
 }

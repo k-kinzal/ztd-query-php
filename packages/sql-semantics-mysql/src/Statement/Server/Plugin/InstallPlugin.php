@@ -35,6 +35,7 @@ final class InstallPlugin implements Statement
      */
     public function __construct(public readonly Name $plugin, public readonly Text $library)
     {
+        \SqlSemantics\Diagnostic\Check::input($library->radix === null, 'A plugin library name is quoted text.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -31,6 +31,7 @@ final class LegacyFormsTest extends TestCase
         $forms = new LegacyForms();
 
         self::assertTrue($forms->requires(SelectOption::Cache));
+        self::assertTrue($forms->requires(\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Redo));
         self::assertTrue($forms->requires(ExplainModifier::Partitions));
         self::assertFalse($forms->requires(SelectOption::NoCache));
     }
@@ -55,4 +56,15 @@ final class LegacyFormsTest extends TestCase
         self::assertFalse($forms->definition($named));
         self::assertFalse($forms->definition($type));
     }
+
+    public function testDefinitionRecognizesDirectionsOnlyInGrouping(): void
+    {
+        $forms = new LegacyForms();
+        $item = new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending);
+        self::assertFalse($forms->requires($item));
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping([$item])));
+        self::assertFalse($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping([new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))])));
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning()));
+    }
+
 }

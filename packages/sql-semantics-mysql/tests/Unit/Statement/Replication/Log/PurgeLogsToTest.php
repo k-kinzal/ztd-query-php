@@ -24,4 +24,10 @@ final class PurgeLogsToTest extends TestCase
     {
         self::assertSame("PURGE BINARY LOGS TO 'b.000001'", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("purge master logs to 'b.000001'")->toString());
     }
+
+    public function testValueRejectsIncompatibleFile(): void
+    {
+        $this->expectExceptionMessage('A binary log file name is quoted text.');
+        new PurgeLogsTo(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

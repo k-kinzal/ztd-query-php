@@ -40,4 +40,34 @@ final class StartReplicaTest extends TestCase
             (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("start slave io_thread, sql_thread until master_log_file = 'f', master_log_pos = 4 user = 'u' password = 'p' default_auth = 'a' plugin_dir = 'd' for channel 'c'")->toString(),
         );
     }
+
+    public function testValueRejectsIncompatibleUser(): void
+    {
+        $this->expectExceptionMessage('Replication credentials and channel names are quoted text.');
+        new StartReplica(Terminology::Legacy, user: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testValueRejectsIncompatiblePassword(): void
+    {
+        $this->expectExceptionMessage('Replication credentials and channel names are quoted text.');
+        new StartReplica(Terminology::Legacy, password: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testValueRejectsIncompatibleDefaultauth(): void
+    {
+        $this->expectExceptionMessage('Replication credentials and channel names are quoted text.');
+        new StartReplica(Terminology::Legacy, defaultAuth: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testValueRejectsIncompatiblePlugindir(): void
+    {
+        $this->expectExceptionMessage('Replication credentials and channel names are quoted text.');
+        new StartReplica(Terminology::Legacy, pluginDir: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testValueRejectsIncompatibleChannel(): void
+    {
+        $this->expectExceptionMessage('Replication credentials and channel names are quoted text.');
+        new StartReplica(Terminology::Legacy, channel: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

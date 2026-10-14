@@ -44,8 +44,8 @@ final class LegacyForms
      */
     public function requires(object $value): bool
     {
-        return in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, ParseGeneratedColumn::class, PartitionEntry::class, AlterTablespaceAccess::class, ResetQueryCache::class], true)
-            || in_array($value, [SelectOption::Cache, KeywordFunction::Password, KeywordFunction::OldPassword, PasswordFunction::Password, PasswordFunction::OldPassword, AliasMark::Equals], true)
+        return in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, ParseGeneratedColumn::class, PartitionEntry::class, AlterTablespaceAccess::class, ResetQueryCache::class, \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning::class], true)
+            || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Redo, SelectOption::Cache, KeywordFunction::Password, KeywordFunction::OldPassword, PasswordFunction::Password, PasswordFunction::OldPassword, AliasMark::Equals], true)
             || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)
             || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)
             || $value instanceof ExplainModifier
@@ -71,6 +71,7 @@ final class LegacyForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping => array_filter($value->items, static fn (\SqlSemantics\Platform\MySql\Statement\Query\OrderItem $item): bool => $item->direction !== null) !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy => $this->grant($value),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset => $value->charset->name === null,
@@ -86,7 +87,7 @@ final class LegacyForms
      */
     public function grant(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy $value): bool
     {
-        if (array_filter($value->grantees, static fn (\SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification $user): bool => $user->identification !== null) !== []) {
+        if (array_filter($value->grantees, static fn (\SqlSemantics\Platform\MySql\Statement\Account\User\Grantee $user): bool => $user->identification !== null) !== []) {
             return true;
         }
         return $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges

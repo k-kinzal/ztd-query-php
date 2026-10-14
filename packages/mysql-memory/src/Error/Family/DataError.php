@@ -51,6 +51,7 @@ enum DataError: int implements ErrorCode
     case GeometrySridMismatch = 3643;
     case GeometryCannotBeNull = 3673;
     case PolygonRingDirection = 4033;
+    case GisDifferentSridsAggregation = 4034;
     case DataTooLong = 1406;
     case WrongValueForType = 1411;
     case DatetimeFunctionOverflow = 1441;

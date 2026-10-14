@@ -34,6 +34,7 @@ final class OdbcJoin implements Relation
      */
     public function __construct(public readonly Relation $relation)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$relation instanceof TableList && !$relation instanceof self, 'An ODBC escape holds a table factor or join; a comma list or nested escape requires parentheses.');
     }
 
     /**

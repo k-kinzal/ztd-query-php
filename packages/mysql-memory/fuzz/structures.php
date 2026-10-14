@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Direct semantic-structure campaign: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START].
+ * Direct semantic-structure campaign: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START] [native].
  *
  * Every non-success is retained. A SQL error is an unresolved property failure until its
  * state dependence is established, not an automatic success. Exit 2 means generation was
@@ -20,7 +20,10 @@ use Fuzz\Structure\Execution;
 use Fuzz\Structure\Exhausted;
 use Fuzz\Structure\Metadata;
 use Fuzz\Structure\Profiles;
+use Fuzz\Structure\Reference;
 use MySqlMemory\Error\SqlError;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Scalar;
 
@@ -30,8 +33,10 @@ $selection = $argv[3] ?? '-';
 $root = in_array($selection, ['-', '@each'], true) ? null : $selection;
 $release = $argv[4] ?? 'auto';
 $start = filter_var($argv[5] ?? '0', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+$audit = ($argv[6] ?? '') === 'native';
+$auditCounts = ['matchingError' => 0, 'different' => 0, 'failed' => 0];
 if ($count === false || $start === false) {
-    fwrite(STDERR, "Usage: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START]\n");
+    fwrite(STDERR, "Usage: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START] [native]\n");
     exit(2);
 }
 $catalogue = new Catalogue();
@@ -42,7 +47,7 @@ if ($root !== null && !in_array($root, $roots, true)) {
     exit(2);
 }
 $counts = ['passed' => 0, 'exhausted' => 0, 'generation' => 0, 'profile' => 0, 'sql_error' => 0, 'structure' => 0];
-echo json_encode(['seed' => $seed, 'release' => $release, 'start' => $start, 'trials' => $count, 'rootTypes' => count($roots), 'selection' => $selection], JSON_THROW_ON_ERROR) . "\n";
+echo json_encode(['seed' => $seed, 'release' => $release, 'start' => $start, 'trials' => $count, 'rootTypes' => count($roots), 'selection' => $selection, 'nativeAudit' => $audit], JSON_THROW_ON_ERROR) . "\n";
 for ($trial = 0; $trial < $count; $trial++) {
     $index = $start + $trial;
     $choices = new Choices($seed . ':' . $index);
@@ -50,19 +55,24 @@ for ($trial = 0; $trial < $count; $trial++) {
     $class = $selection === '@each' ? $roots[$index % count($roots)] : ($root ?? $selected);
     $construction = new Construction($choices, $catalogue, $metadata);
     $stage = 'generation';
+    $node = null;
+    $profile = null;
+    $mode = null;
     try {
         $node = $construction->object($class, 6);
         if (!$node instanceof Statement && !$node instanceof Scalar) {
             throw new RuntimeException('A selected root does not implement its declared interface.');
         }
         $version = $release;
-        $mode = null;
         if ($release === 'auto') {
             $stage = 'profile';
             $profiles = new Profiles();
             $profile = $profiles->select($node);
             $version = substr($profile->grammar->value, 6);
             $mode = $profiles->mode($profile);
+        }
+        if ($audit && $mode === null) {
+            $mode = (string) (new MySqlMemory\Instance($version))->connect()->variables->read('sql_mode');
         }
         $stage = 'structure';
         (new Execution())->run($node, $version, (new Bindings())->nulls($node), $mode);
@@ -71,7 +81,19 @@ for ($trial = 0; $trial < $count; $trial++) {
         $kind = $failure instanceof Exhausted ? 'exhausted' : ($failure instanceof SqlError ? 'sql_error' : $stage);
         $counts[$kind]++;
         echo json_encode(['index' => $index, 'class' => $class, 'kind' => $kind, 'failure' => $failure::class, 'message' => $failure->getMessage(), 'code' => $failure->getCode(), 'constructorAttempts' => $construction->attempts, 'rejections' => $construction->rejections], JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n";
+        if ($audit && $failure instanceof SqlError && ($node instanceof Statement || $node instanceof Scalar)) {
+            try {
+                $profile ??= new LanguageProfile(GrammarRelease::from('mysql-' . $release), parameters: (new Execution())->parameters($node));
+                $port = filter_var(getenv('MYSQL_MEMORY_STRUCTURE_NATIVE_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
+                $observed = (new Reference())->rejection($node, $profile, $failure, $port === false ? null : $port, $mode);
+                $auditCounts[$observed['matches'] === true ? 'matchingError' : 'different']++;
+                echo json_encode(['index' => $index, 'audit' => $observed], JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n";
+            } catch (Throwable $auditFailure) {
+                $auditCounts['failed']++;
+                echo json_encode(['index' => $index, 'auditFailure' => $auditFailure::class, 'message' => $auditFailure->getMessage()], JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n";
+            }
+        }
     }
 }
-echo json_encode(['seed' => $seed, 'release' => $release, 'counts' => $counts], JSON_THROW_ON_ERROR) . "\n";
+echo json_encode(['seed' => $seed, 'release' => $release, 'counts' => $counts, 'nativeAudit' => $auditCounts], JSON_THROW_ON_ERROR) . "\n";
 exit($counts['generation'] + $counts['exhausted'] > 0 ? 2 : ($counts['passed'] === $count ? 0 : 1));

@@ -42,4 +42,10 @@ final class ResetTest extends TestCase
         self::assertCount(2, $reset->targets);
     }
 
+
+    public function testValueRejectsIncompatibleGeneration(): void
+    {
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+        new Reset([new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')), new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache()]);
+    }
 }

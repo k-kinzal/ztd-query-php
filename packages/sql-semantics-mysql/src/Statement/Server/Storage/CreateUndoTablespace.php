@@ -44,6 +44,7 @@ final class CreateUndoTablespace implements Statement
      */
     public function __construct(public readonly Name $name, public readonly Text $datafile, array $options = [])
     {
+        \SqlSemantics\Diagnostic\Check::input($datafile->radix === null, 'A tablespace file name is a quoted string.');
         $this->options = (new StorageOptions())->checked($options, StorageOptions::UNDO_TABLESPACE);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

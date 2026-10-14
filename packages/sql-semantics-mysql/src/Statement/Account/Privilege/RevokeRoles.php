@@ -7,9 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
@@ -31,7 +32,7 @@ final class RevokeRoles implements Statement
     use Snapshot;
 
     /**
-     * @var non-empty-list<Grantable> The revoked roles in order
+     * @var non-empty-list<GrantedRole|DynamicPrivilege|StaticPrivilege> The revoked roles in order
      */
     public readonly array $roles;
 
@@ -48,11 +49,8 @@ final class RevokeRoles implements Statement
      */
     public function __construct(public readonly bool $ifExists, array $roles, array $users, public readonly bool $ignoreUnknownUser = false)
     {
-        $this->roles = Check::listOf($roles, Grantable::class, 'REVOKE names at least one role.', 1);
+        $this->roles = (new \SqlSemantics\Platform\MySql\Rules\Account\RoleItems())->checked($roles, 'REVOKE names at least one role.');
         $this->users = Check::listOf($users, Account::class, 'REVOKE names at least one account.', 1);
-        foreach ($this->roles as $role) {
-            Check::input(!$role instanceof AllPrivileges && !($role instanceof DynamicPrivilege && $role->columns === []), 'A role list holds roles; a name without columns reads as a role.');
-        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

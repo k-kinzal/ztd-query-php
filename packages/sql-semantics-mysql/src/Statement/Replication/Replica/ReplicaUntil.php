@@ -40,6 +40,7 @@ final class ReplicaUntil implements Node
      */
     public function __construct(public readonly ?UntilPoint $point, public readonly ?Text $gtids = null, array $positions = [])
     {
+        Check::input($gtids === null || $gtids->radix === null, 'A GTID set is quoted text.');
         $this->positions = Check::listOf($positions, SourceOption::class, 'UNTIL lists log positions.');
         Check::input(($gtids !== null) === ($point === UntilPoint::BeforeGtids || $point === UntilPoint::AfterGtids), 'A GTID condition, and only it, holds a GTID set.');
         Check::input($point !== null || $this->positions !== [], 'UNTIL holds at least one condition.');

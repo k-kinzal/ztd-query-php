@@ -25,9 +25,11 @@ final class RefusedSetting implements Diagnostic
 
     /**
      * @param ReplicationError $error The check the value fails
+     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null $number The refused binary log index, including when only a statement prefix was read
      */
-    public function __construct(public readonly ReplicationError $error)
+    public function __construct(public readonly ReplicationError $error, public readonly ?\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number = null)
     {
+        \SqlSemantics\Diagnostic\Check::input(($error === ReplicationError::FileNumberOutOfRange) === ($number !== null), 'A refused binary log index retains its numeric operand.');
     }
 
     /**

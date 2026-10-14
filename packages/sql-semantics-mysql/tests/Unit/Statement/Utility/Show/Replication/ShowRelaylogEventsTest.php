@@ -26,4 +26,16 @@ final class ShowRelaylogEventsTest extends TestCase
     {
         self::assertSame("SHOW RELAYLOG EVENTS IN 'r' LIMIT 1", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SHOW RELAYLOG EVENTS IN 'r' LIMIT 1")->toString());
     }
+
+    public function testValueRejectsIncompatibleFile(): void
+    {
+        $this->expectExceptionMessage('A relay log file name is quoted text.');
+        new ShowRelaylogEvents(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testValueRejectsIncompatibleChannel(): void
+    {
+        $this->expectExceptionMessage('A replication channel is quoted text.');
+        new ShowRelaylogEvents(channel: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

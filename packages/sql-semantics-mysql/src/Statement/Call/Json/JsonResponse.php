@@ -34,6 +34,7 @@ final class JsonResponse implements Node
      */
     public function __construct(public readonly JsonResponseKind $kind, public readonly ?Literal $default = null)
     {
+        Check::input(!$default instanceof Literal\NullLiteral, 'A JSON DEFAULT response holds a non-NULL literal; NULL is its own response.');
         Check::input(($default !== null) === ($kind === JsonResponseKind::Default), 'A response has a literal exactly when it is DEFAULT.');
     }
 

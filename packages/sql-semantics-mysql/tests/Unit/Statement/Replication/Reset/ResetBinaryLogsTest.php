@@ -21,11 +21,20 @@ final class ResetBinaryLogsTest extends TestCase
     {
         $reset = (new Semantics(Dialect::MySql))->analyze('RESET BINARY LOGS AND GTIDS TO 0, BINARY LOGS AND GTIDS TO 2000000001, BINARY LOGS AND GTIDS TO 2000000000');
 
-        self::assertEquals([new RefusedSetting(ReplicationError::FileNumberOutOfRange), new RefusedSetting(ReplicationError::FileNumberOutOfRange)], $reset->facts->diagnostics);
+        self::assertEquals([new RefusedSetting(ReplicationError::FileNumberOutOfRange, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')), new RefusedSetting(ReplicationError::FileNumberOutOfRange, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2000000001'))], $reset->facts->diagnostics);
     }
 
     public function testRenderKeepsMasterBeforeTheCurrentSpellingExists(): void
     {
         self::assertSame('RESET MASTER TO 7', (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze('reset master to 7')->toString());
+    }
+
+    public function testProblemRetainsTheRefusedIndexWithoutAStatement(): void
+    {
+        $number = new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2000000001');
+        $target = new ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, $number);
+
+        self::assertSame($number, $target->problem()?->number);
+        self::assertNull((new ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current))->problem());
     }
 }

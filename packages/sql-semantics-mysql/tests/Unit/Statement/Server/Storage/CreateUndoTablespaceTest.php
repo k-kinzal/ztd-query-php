@@ -27,4 +27,11 @@ final class CreateUndoTablespaceTest extends TestCase
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }
+
+    public function testValueRejectsAnUnquotedDatafile(): void
+    {
+        $this->expectExceptionMessage('A tablespace file name is a quoted string.');
+        new CreateUndoTablespace(new \SqlSemantics\Statement\Identifier\Name('u'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('0', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Bit));
+    }
+
 }

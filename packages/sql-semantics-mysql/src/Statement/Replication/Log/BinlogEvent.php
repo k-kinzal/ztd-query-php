@@ -32,6 +32,7 @@ final class BinlogEvent implements Statement
      */
     public function __construct(public readonly Text $events)
     {
+        \SqlSemantics\Diagnostic\Check::input($events->radix === null, 'Encoded binary log events are quoted text.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

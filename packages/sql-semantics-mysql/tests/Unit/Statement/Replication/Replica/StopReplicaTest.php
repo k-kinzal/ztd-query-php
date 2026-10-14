@@ -29,4 +29,10 @@ final class StopReplicaTest extends TestCase
     {
         self::assertSame('STOP REPLICA SQL_THREAD, IO_THREAD', (new Semantics(Dialect::MySql))->analyze('stop replica sql_thread, relay_thread')->toString());
     }
+
+    public function testValueRejectsIncompatibleChannel(): void
+    {
+        $this->expectExceptionMessage('A replication channel is quoted text.');
+        new StopReplica(Terminology::Legacy, channel: new Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

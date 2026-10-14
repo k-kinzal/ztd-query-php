@@ -123,4 +123,50 @@ final class ConstructionTest extends TestCase
         self::assertLessThanOrEqual(2000, $construction->attempts);
     }
 
+    /**
+     * Uses the role-list operand union instead of sampling ALL at an impossible depth.
+     *
+     * @throws JsonException When the value inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testGrantRolesFitsTheBudgetWithItsRetainedOperandUnion(): void
+    {
+        $catalogue = new Catalogue();
+        $choices = new Choices('e86863ababc9d6721024d56dcde28f5c:697');
+        $choices->one($catalogue->roots());
+        $construction = new Construction($choices, $catalogue, new Metadata());
+        $class = \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles::class;
+
+        self::assertInstanceOf($class, $construction->object($class, 6));
+        self::assertLessThanOrEqual(2000, $construction->attempts);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerGrantSeeds(): iterable
+    {
+        yield 'first exhausted grant' => ['e86863ababc9d6721024d56dcde28f5c:172'];
+        yield 'second exhausted grant' => ['e86863ababc9d6721024d56dcde28f5c:512'];
+    }
+
+    /**
+     * Constructs the retained grant operands directly, without searching SQL or execution results.
+     *
+     * @throws JsonException When the value inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    #[DataProvider('providerGrantSeeds')]
+    public function testGrantPrivilegesFitsTheBudgetWithItsGranteeType(string $seed): void
+    {
+        $catalogue = new Catalogue();
+        $choices = new Choices($seed);
+        $choices->one($catalogue->roots());
+        $construction = new Construction($choices, $catalogue, new Metadata());
+        $class = \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class;
+
+        self::assertInstanceOf($class, $construction->object($class, 6));
+        self::assertLessThanOrEqual(2000, $construction->attempts);
+    }
+
 }

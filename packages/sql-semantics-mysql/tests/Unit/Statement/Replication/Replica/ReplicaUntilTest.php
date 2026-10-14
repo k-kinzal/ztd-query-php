@@ -30,4 +30,10 @@ final class ReplicaUntilTest extends TestCase
 
         new ReplicaUntil(null, null, [new SourceOption(Terminology::Current, SourceOptionKind::Port, new Numeral('1'))]);
     }
+
+    public function testValueRejectsIncompatibleGtids(): void
+    {
+        $this->expectExceptionMessage('A GTID set is quoted text.');
+        new ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::BeforeGtids, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

@@ -18,4 +18,16 @@ final class RefusedSettingTest extends TestCase
     {
         self::assertSame(ReplicationError::WildPattern->value, (new RefusedSetting(ReplicationError::WildPattern))->message());
     }
+
+    public function testValueRequiresTheRefusedLogIndex(): void
+    {
+        $this->expectExceptionMessage('A refused binary log index retains its numeric operand.');
+        new RefusedSetting(ReplicationError::FileNumberOutOfRange);
+    }
+
+    public function testValueRejectsAnUnrelatedNumericOperand(): void
+    {
+        $this->expectExceptionMessage('A refused binary log index retains its numeric operand.');
+        new RefusedSetting(ReplicationError::WildPattern, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'));
+    }
 }

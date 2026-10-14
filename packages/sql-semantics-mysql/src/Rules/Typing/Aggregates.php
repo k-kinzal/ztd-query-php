@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\JsonResults;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -38,9 +39,9 @@ final class Aggregates
     }
 
     /**
-     * Resolves an aggregate other than GROUP_CONCAT over an argument, or answers null for ST_COLLECT.
+     * Resolves an aggregate other than GROUP_CONCAT over an argument.
      */
-    public function result(AggregateFunction $function, ?Domain $argument, GrammarRelease $release = GrammarRelease::MySql847, bool $column = false): ?Domain
+    public function result(AggregateFunction $function, ?Domain $argument, GrammarRelease $release = GrammarRelease::MySql847, bool $column = false): Domain
     {
         $numbers = new Numbers();
         $operand = $argument === null ? Kind::Integer : $numbers->operand($argument);
@@ -63,7 +64,7 @@ final class Aggregates
             AggregateFunction::StandardDeviation, AggregateFunction::Variance, AggregateFunction::SampleStandardDeviation,
             AggregateFunction::SampleVariance => Domain::double(23),
             AggregateFunction::JsonArray => JsonResults::json($release, true),
-            AggregateFunction::Collect => null,
+            AggregateFunction::Collect => new Domain(Kind::String, Field::Geometry, 16777216, Domain::NOT_FIXED, false, Collation::binary(), [], Coercibility::Coercible),
         };
     }
 

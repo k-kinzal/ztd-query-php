@@ -43,6 +43,7 @@ final class ReplicationFilter implements Node
     {
         $this->values = Check::listOf($values, $kind->member(), 'The values of ' . $kind->value . ' are of the class the filter lists.');
         foreach ($this->values as $value) {
+            Check::input(!$value instanceof Text || $value->radix === null, 'A replication wildcard pattern is quoted text.');
             Check::input(!$value instanceof QualifiedName || ($value->schema !== null && $value->catalog === null), 'A filtered table is qualified by its database.');
         }
     }

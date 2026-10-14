@@ -67,6 +67,9 @@ final class StartReplica implements Statement
         public readonly ?Text $pluginDir = null,
         public readonly ?Text $channel = null,
     ) {
+        foreach ([$user, $password, $defaultAuth, $pluginDir, $channel] as $text) {
+            Check::input($text === null || $text->radix === null, 'Replication credentials and channel names are quoted text.');
+        }
         $this->threads = Check::listOf($threads, ReplicaThread::class, 'START REPLICA names a list of threads.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

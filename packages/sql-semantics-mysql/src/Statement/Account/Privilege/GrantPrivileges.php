@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Grantee;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
@@ -48,7 +49,7 @@ final class GrantPrivileges implements Statement
     public readonly array $privileges;
 
     /**
-     * @var non-empty-list<UserSpecification> The accounts privileges are granted to
+     * @var non-empty-list<Grantee> The accounts privileges are granted to
      */
     public readonly array $grantees;
 
@@ -61,7 +62,7 @@ final class GrantPrivileges implements Statement
      * @param list<Grantable> $privileges The granted privileges in order; ALL stands alone
      * @param ObjectKind $kind The kind of object the level names
      * @param PrivilegeLevel $level The privilege level
-     * @param list<UserSpecification> $grantees The accounts privileges are granted to; at least one
+     * @param list<Grantee|UserSpecification> $grantees The accounts privileges are granted to; at least one
      * @param TlsRequirement|null $tls The REQUIRE clause of MySQL 5.x, when written
      * @param list<WithOption> $options The options of the WITH clause in order
      * @param GrantAs|null $as The AS clause, when written
@@ -76,14 +77,11 @@ final class GrantPrivileges implements Statement
         public readonly ?GrantAs $as = null,
     ) {
         $this->privileges = Check::listOf($privileges, Grantable::class, 'GRANT names at least one privilege.', 1);
-        $this->grantees = Check::listOf($grantees, UserSpecification::class, 'GRANT names at least one account.', 1);
+        $this->grantees = array_map(Grantee::from(...), Check::listOf($grantees, \SqlSemantics\Statement\Node::class, 'GRANT names at least one account.', 1));
         $this->options = Check::listOf($options, WithOption::class, 'The WITH clause lists options.');
         foreach ($this->privileges as $privilege) {
             Check::input(!$privilege instanceof AllPrivileges || count($this->privileges) === 1, 'ALL is the only item of its list.');
             Check::input(!$privilege instanceof GrantedRole || $privilege->role->host !== null, 'A role without a host in a privilege list reads as a dynamic privilege.');
-        }
-        foreach ($this->grantees as $grantee) {
-            Check::input($grantee->granted(), 'A GRANT account is a named account with at most one authentication method.');
         }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

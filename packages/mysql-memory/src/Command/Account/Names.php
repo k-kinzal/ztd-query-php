@@ -31,6 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\SetDefaultRole;
 use SqlSemantics\Platform\MySql\Statement\Account\SetPassword;
 use SqlSemantics\Platform\MySql\Statement\Account\SetRole;
 use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Grantee;
 use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
@@ -135,13 +136,13 @@ final class Names
     /**
      * Answers the account each alteration of a statement names.
      *
-     * @param list<UserAlteration> $users
+     * @param list<UserAlteration|Grantee> $users
      * @return list<Account|SessionUser>
      */
     public function users(array $users): array
     {
-        return array_map(static fn (UserAlteration $user): Account|SessionUser => match (true) {
-            $user instanceof UserSpecification, $user instanceof FactorChange => $user->user,
+        return array_map(static fn (UserAlteration|Grantee $user): Account|SessionUser => match (true) {
+            $user instanceof UserSpecification, $user instanceof FactorChange, $user instanceof Grantee => $user->user,
             default => throw new LogicException('An account alteration names an account.'),
         }, $users);
     }

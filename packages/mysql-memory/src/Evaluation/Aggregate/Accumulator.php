@@ -54,6 +54,8 @@ final class Accumulator
      */
     private array $json = [];
 
+    private ?SpatialCollection $spatial = null;
+
     /**
      * @param Accumulation $accumulation The aggregate folded
      */
@@ -151,6 +153,9 @@ final class Accumulator
         $domain = $argument->domain();
         $context = $frame->context;
         switch ($this->accumulation->function) {
+            case AggregateFunction::Collect:
+                ($this->spatial ??= new SpatialCollection())->add($frame, (string) Convert::toText($value, $domain));
+                break;
             case AggregateFunction::Minimum:
             case AggregateFunction::Maximum:
                 $this->extreme($value, $domain);
@@ -251,7 +256,8 @@ final class Accumulator
             AggregateFunction::Variance, AggregateFunction::SampleVariance => $this->spread(false),
             null => $this->concatenation($frame),
             AggregateFunction::JsonArray => $this->count === 0 ? null : ($this->accumulation->object ? JsonEdit::object($this->json) : new JsonNode(JsonKind::Array, array_values($this->json)))->store(),
-            AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::Collect => $this->extremeResult($frame),
+            AggregateFunction::Collect => $this->spatial?->result(),
+            AggregateFunction::Minimum, AggregateFunction::Maximum => $this->extremeResult($frame),
         };
     }
 

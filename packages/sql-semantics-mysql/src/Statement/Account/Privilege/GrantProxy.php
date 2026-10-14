@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Grantee;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Statement;
@@ -30,21 +31,18 @@ final class GrantProxy implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserSpecification> The proxy accounts
+     * @var non-empty-list<Grantee> The proxy accounts
      */
     public readonly array $grantees;
 
     /**
      * @param Account $proxied The proxied account
-     * @param list<UserSpecification> $grantees The proxy accounts; at least one
+     * @param list<Grantee|UserSpecification> $grantees The proxy accounts; at least one
      * @param bool $withGrantOption Whether WITH GRANT OPTION is written
      */
     public function __construct(public readonly Account $proxied, array $grantees, public readonly bool $withGrantOption = false)
     {
-        $this->grantees = Check::listOf($grantees, UserSpecification::class, 'GRANT PROXY names at least one account.', 1);
-        foreach ($this->grantees as $grantee) {
-            Check::input($grantee->granted(), 'A GRANT account is a named account with at most one authentication method.');
-        }
+        $this->grantees = array_map(Grantee::from(...), Check::listOf($grantees, \SqlSemantics\Statement\Node::class, 'GRANT PROXY names at least one account.', 1));
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

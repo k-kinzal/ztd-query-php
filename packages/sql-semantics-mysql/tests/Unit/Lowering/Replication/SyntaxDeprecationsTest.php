@@ -20,6 +20,15 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 #[Medium]
 final class SyntaxDeprecationsTest extends TestCase
 {
+    public function testPrecedingUsesTheAcceptedKeywordAcrossComments(): void
+    {
+        $parser = new MySqlParser('mysql-8.0.44');
+        $sql = '/* head */ START /* gap */ SLAVE';
+        $replica = $parser->parse($sql)->find('replica')[0];
+
+        self::assertSame('START_SYM', (new SyntaxDeprecations())->preceding($replica, $parser, $sql)?->name);
+    }
+
     /**
      * @return iterable<string, array{GrammarRelease, string, list<Deprecation>}>
      */
@@ -35,6 +44,11 @@ final class SyntaxDeprecationsTest extends TestCase
         yield 'rejected command' => [GrammarRelease::MySql8044, 'CHANGE ) MASTER TO MASTER_LOG_POS=0xb', []];
         yield 'legacy vocabulary is not deprecated' => [GrammarRelease::MySql5744, 'CHANGE MASTER TO MASTER_LOG_POS=0xb', []];
         yield 'removed vocabulary is not deprecated' => [GrammarRelease::MySql847, 'CHANGE MASTER TO MASTER_LOG_POS=0xb', []];
+        $start = new Deprecation(Deprecated::ReplicationSpelling, "'START SLAVE' is deprecated and will be removed in a future release. Please use START REPLICA instead");
+        yield 'start before credentials' => [GrammarRelease::MySql8044, 'START SLAVE USER = 0x41', [$start]];
+        yield 'start before gtid set' => [GrammarRelease::MySql8044, 'START SLAVE UNTIL SQL_BEFORE_GTIDS = 0x41', [$start]];
+        yield 'stop waits for completion' => [GrammarRelease::MySql8044, 'STOP SLAVE FOR CHANNEL 0x41', []];
+        yield 'show waits for completion' => [GrammarRelease::MySql8044, 'SHOW SLAVE STATUS FOR CHANNEL 0x41', []];
     }
 
     /**

@@ -37,17 +37,17 @@ final class ModernForms
     public function requires(object $value): bool
     {
         return $value instanceof WithClause || $value instanceof WindowSpecification
-            || $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption
-            || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Row, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::System], true)
-            || $value === \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword
-            || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, CastAtLocal::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
+            || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Row, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::System, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword, \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect, \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Rollup, \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Cube], true)
+            || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConstraintEnforcement::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption::class, \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, CastAtLocal::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
             || match (true) {
                 $value instanceof Select => $this->query($value),
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint => !$value->name()->available(\SqlSemantics\Contract\GrammarRelease::MySql5744),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification => $this->authentication($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot => (new StatementQuery())->requiresModern($value->query),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement => count($value->locking) > 1,
-                $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause => $value->strength === \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share || $value->tables !== [] || $value->action !== null,
-                $value instanceof ResetBinaryLogs, $value instanceof ResetReplica => $value->terminology === Terminology::Current,
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause => $this->locking($value),
+                $value instanceof ResetBinaryLogs => $value->terminology === Terminology::Current || $value->first !== null,
+                $value instanceof ResetReplica => $value->terminology === Terminology::Current,
                 $value instanceof DerivedTable => $value->lateral || $value->columns !== [],
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,
                 default => in_array($value, [SetOperator::Intersect, SetOperator::Except], true),
@@ -68,4 +68,12 @@ final class ModernForms
     {
         return $value->factors !== [] || $value->initial !== null || $value->replace !== null || $value->retainCurrent || $value->discardOld;
     }
+    /**
+     * Identifies the expanded locking clauses introduced in MySQL 8.0.
+     */
+    public function locking(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause $value): bool
+    {
+        return $value->strength === \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share || $value->tables !== [] || $value->action !== null;
+    }
+
 }

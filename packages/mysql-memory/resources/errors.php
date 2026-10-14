@@ -196,6 +196,7 @@ return [
     3055 => ['HY000', 'Geometry byte string must be little endian.'],
     4032 => ['22S01', 'Invalid cast from %s to %s.'],
     4033 => ['22S04', 'Invalid cast from %s to %s. A polygon ring is in the wrong direction.'],
+    4034 => ['22S05', 'Arguments to function %s contains geometries with different SRIDs: %u and %u. All geometries must have the same SRID.'],
     1366 => ['HY000', "Incorrect %s value: '%s' for column '%s' at row %d"],
     1372 => ['HY000', 'Password hash should be a %d-digit hexadecimal number'],
     1373 => ['HY000', 'Target log not found in binlog index'],

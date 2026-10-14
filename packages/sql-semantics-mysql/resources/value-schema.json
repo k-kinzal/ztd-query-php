@@ -283,6 +283,10 @@
         "factor": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "identification": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Identification"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Grantee": {
+        "identification": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Identification",
+        "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Identification": {
         "credential": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Credential",
         "plugin": "?SqlSemantics\\Statement\\Identifier\\Name",
@@ -1755,7 +1759,8 @@
         "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedSetting": {
-        "error": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\ReplicationError"
+        "error": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\ReplicationError",
+        "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\ReplicationError": {
         "name": "string",
