@@ -9,6 +9,7 @@ use Container\MySqlRelease;
 use MySqlMemory\Server\Server;
 use PDO;
 use PDOException;
+use RuntimeException;
 use Testcontainers\Testcontainers;
 
 /**
@@ -82,7 +83,7 @@ final class Servers
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
-        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native));
+        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version));
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
@@ -227,4 +228,30 @@ final class Servers
 
         return $timestamps;
     }
+    /**
+     * Samples the platform capability with an isolated group before the differential fixture.
+     *
+     * The probe is independent of generated SQL and leaves no resource group behind.
+     * @throws RuntimeException When the server returns an unexpected priority value
+     */
+    public function resourcePriorities(PDO $native, string $version): bool
+    {
+        if (str_starts_with($version, '5.')) {
+            return true;
+        }
+        $name = 'memory_priority_' . bin2hex(random_bytes(8));
+        $native->exec('CREATE RESOURCE GROUP ' . $name . ' TYPE USER THREAD_PRIORITY 1');
+        try {
+            $result = $native->query("SELECT THREAD_PRIORITY FROM information_schema.RESOURCE_GROUPS WHERE RESOURCE_GROUP_NAME = '" . $name . "'");
+            $priority = $result === false ? false : $result->fetchColumn();
+            if (!in_array($priority, [0, 1, '0', '1'], true)) {
+                throw new RuntimeException('The resource-group priority probe returned no supported capability value.');
+            }
+
+            return $priority === 1 || $priority === '1';
+        } finally {
+            $native->exec('DROP RESOURCE GROUP ' . $name);
+        }
+    }
+
 }

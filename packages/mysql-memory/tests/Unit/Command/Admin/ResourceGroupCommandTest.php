@@ -10,6 +10,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Registry\ResourceGroups;
 use MySqlMemory\Result\Completion;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup;
@@ -93,7 +94,7 @@ final class ResourceGroupCommandTest extends TestCase
         $this->expectExceptionCode(3652);
         $this->expectExceptionMessage('Invalid cpu id 7208');
 
-        (new ResourceGroupCommand())->alter($statement, new ResourceGroups());
+        (new ResourceGroupCommand())->alter($statement, new ResourceGroups(), $session->diagnostics);
     }
 
     public function testAlterRefusesAPriorityOutsideTheRangeOfTheGroup(): void
@@ -272,4 +273,45 @@ final class ResourceGroupCommandTest extends TestCase
         self::assertInstanceOf(SqlError::class, $reversed);
         self::assertSame([3651, 3652, 3655, 3653], [$missing->getCode(), $cpu->getCode(), $predefined->getCode(), $reversed->getCode()]);
     }
+    public function testConfiguredIgnoresUnsupportedNonzeroPrioritiesWithAWarning(): void
+    {
+        $session = (new Instance(resourcePriorities: false))->connect();
+        $priority = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority(false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('20'));
+        $value = (new ResourceGroupCommand())->configured($priority, $session->instance->registry->resourceGroups, $session->diagnostics);
+
+        self::assertSame(0, $value);
+        self::assertSame([['Warning', 3659, 'Attribute thread_priority is ignored (using default value).']], $session->diagnostics->conditions);
+    }
+
+    /**
+     * @return iterable<string, array{string, int, list<list<string>>}>
+     */
+    public static function providerPreparationFailures(): iterable
+    {
+        yield 'priority before commit' => ['CREATE RESOURCE GROUP g TYPE USER THREAD_PRIORITY 20', 3654, []];
+        yield 'create CPU before commit' => ['CREATE RESOURCE GROUP g TYPE USER VCPU 99999', 3652, []];
+        yield 'alter CPU before commit' => ['ALTER RESOURCE GROUP g VCPU 99999', 3652, []];
+        yield 'range after commit' => ['CREATE RESOURCE GROUP g TYPE USER VCPU 1-0', 3653, [['1']]];
+    }
+
+    /**
+     * @param list<list<string>> $rows Rows that survive ROLLBACK after the refusal
+     */
+    #[DataProvider('providerPreparationFailures')]
+    public function testPrepareKeepsTheImplicitCommitBoundary(string $sql, int $code, array $rows): void
+    {
+        $session = (new Instance(databases: ['app']))->connect(database: 'app');
+        $session->query('CREATE TABLE t (id INT); START TRANSACTION; INSERT INTO t VALUES (1)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        try {
+            $session->query($sql);
+        } finally {
+            $session->query('ROLLBACK');
+            $result = $session->query('SELECT * FROM t')[0];
+            self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+            self::assertSame($rows, $result->rows);
+        }
+    }
+
 }

@@ -17,6 +17,8 @@ use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\DropResourceGrou
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup;
+use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -63,4 +65,57 @@ final class ResourceGroupTest extends TestCase
 
         self::assertNull($session->instance->registry->resourceGroups->find($name->value));
     }
+    /**
+     * Creation and alteration consume the same signed value without reading SQL.
+     */
+    #[DataProvider('providerHistories')]
+    public function testPrioritiesRetainTheirValuesAcrossCommands(string $release, int $seed): void
+    {
+        $choices = new Choices('resource-group-priority:' . $seed);
+        $kind = $choices->one(ResourceGroupKind::cases());
+        $created = $kind === ResourceGroupKind::System ? $choices->integer(-20, 0) : $choices->integer(0, 19);
+        $changed = $kind === ResourceGroupKind::System ? $choices->integer(-20, 0) : $choices->integer(0, 19);
+        $zeros = str_repeat('0', $choices->integer(0, 8));
+        $negativeZero = $choices->one([true, false]);
+        $session = (new Instance($release))->connect();
+        $session->text = 'unrelated invalid SQL';
+        $execution = new Execution();
+        $execution->runIn($session, new CreateResourceGroup(new ResourceGroupName(new Name('g')), $kind, priority: new ThreadPriority($created < 0 || $created === 0 && $negativeZero, new Numeral($zeros . abs($created)))));
+        $group = $session->instance->registry->resourceGroups->find('g');
+
+        self::assertNotNull($group);
+        self::assertSame($created, $group->priority);
+        self::assertSame($kind === ResourceGroupKind::System, $group->system);
+
+        $execution->runIn($session, new AlterResourceGroup(new ResourceGroupName(new Name('g')), priority: new ThreadPriority($changed < 0 || $changed === 0 && $negativeZero, new Numeral($zeros . abs($changed)))));
+
+        self::assertSame($changed, $group->priority);
+    }
+
+    /**
+     * The same priority domain is executable when the platform ignores priorities.
+     */
+    #[DataProvider('providerHistories')]
+    public function testPlatformWithoutPrioritiesAcceptsEveryGeneratedInteger(string $release, int $seed): void
+    {
+        $choices = new Choices('resource-group-platform:' . $seed);
+        $kind = $choices->one(ResourceGroupKind::cases());
+        $number = $choices->one([0, 1, 19, 20, 21, 2147483647, $choices->integer(0, 2147483647)]);
+        $negative = $choices->one([true, false]);
+        $session = (new Instance($release, resourcePriorities: false))->connect();
+        $session->text = 'unrelated invalid SQL';
+        $execution = new Execution();
+        $execution->runIn($session, new CreateResourceGroup(new ResourceGroupName(new Name('g')), $kind, priority: new ThreadPriority($negative, new Numeral((string) $number))));
+        $group = $session->instance->registry->resourceGroups->find('g');
+
+        self::assertNotNull($group);
+        self::assertSame(0, $group->priority);
+        self::assertSame($number === 0 ? 0 : 1, $session->diagnostics->count());
+
+        $execution->runIn($session, new AlterResourceGroup(new ResourceGroupName(new Name('g')), priority: new ThreadPriority($negative, new Numeral('000' . $number))));
+
+        self::assertSame(0, $group->priority);
+        self::assertSame($number === 0 ? 0 : 1, $session->diagnostics->count());
+    }
+
 }

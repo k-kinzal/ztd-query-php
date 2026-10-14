@@ -41,6 +41,26 @@ final class ThreadPriority implements Node
     }
 
     /**
+     * Answers the signed numeric value, independently of leading zeros.
+     */
+    public function value(): int
+    {
+        $magnitude = (int) $this->number->text;
+
+        return $this->negative ? -$magnitude : $magnitude;
+    }
+
+    /**
+     * Tells whether the priority belongs to the declared group's range.
+     */
+    public function fits(ResourceGroupKind $kind): bool
+    {
+        $value = $this->value();
+
+        return $kind === ResourceGroupKind::System ? $value >= -20 && $value <= 0 : $value >= 0 && $value <= 19;
+    }
+
+    /**
      * Writes the priority.
      */
     public function render(Output $out): void

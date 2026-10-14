@@ -13,7 +13,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange;
-use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup;
+use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
@@ -69,7 +69,7 @@ final class Refusals
             },
             $diagnostic instanceof SpatialProblem => $this->spatial($diagnostic, $statement),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber => new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number->text, '/') . '/') . "' at line 1"),
-            $diagnostic instanceof PriorityOutOfRange => $this->priority($diagnostic, $statement),
+            $diagnostic instanceof PriorityOutOfRange => $this->priority($diagnostic),
             $diagnostic instanceof RefusedSetting => $diagnostic->number !== null ? AdministrationError::BinlogIndexOutOfRange->error((new Literals())->number($diagnostic->number)) : $this->replication($diagnostic->error, $statement, $text, $legacy),
             $diagnostic instanceof NumberOutOfRange => $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number, '/') . '/') . "' at line 1"),
             default => new SqlError(StatementError::UnknownError, $diagnostic->message()),
@@ -101,13 +101,11 @@ final class Refusals
     /**
      * Answers the error of a thread priority outside the range of the type of a new resource group.
      */
-    public function priority(PriorityOutOfRange $problem, ?Node $statement): SqlError
+    public function priority(PriorityOutOfRange $problem): SqlError
     {
-        $system = $problem->type === 'SYSTEM';
-        $name = $statement instanceof CreateResourceGroup ? $statement->name->value : '';
-        $value = $statement instanceof CreateResourceGroup ? (string) (new ResourceGroupCommand())->priority($statement->priority) : $problem->priority;
+        $system = $problem->kind === ResourceGroupKind::System;
 
-        return AdministrationError::InvalidThreadPriority->error($value, $system ? 'System' : 'User', $name, $system ? '-20' : '0', $system ? '0' : '19');
+        return AdministrationError::InvalidThreadPriority->error((string) $problem->priority->value(), $system ? 'System' : 'User', $problem->name->value, $system ? '-20' : '0', $system ? '0' : '19');
     }
 
     /**

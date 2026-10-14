@@ -27,9 +27,10 @@ final class ResourceGroups
     public array $bindings = [];
 
     /**
+     * @param bool $priorities Whether the emulated platform applies thread priorities
      * @param int $processors The number of CPUs the server sees; the CPUs are numbered from 0
      */
-    public function __construct(public readonly int $processors = 8)
+    public function __construct(public readonly int $processors = 8, public readonly bool $priorities = true)
     {
         foreach (['USR_default' => false, 'SYS_default' => true] as $name => $system) {
             $this->groups[Registry::key($name)] = new ResourceGroup($name, $system, range(0, $processors - 1));

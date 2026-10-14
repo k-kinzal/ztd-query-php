@@ -184,6 +184,7 @@ mysql -h127.0.0.1 -P33061 -uroot -e 'SELECT @@sql_mode, 1+1'
 | `--database=NAME` | none | A database to create at start; repeat it for more |
 | `--global=NAME=VALUE` | none | The global value of a system variable at start; repeat it for more |
 | `--global-null=NAME` | none | A global variable starting as SQL NULL, distinct from an empty value |
+| `--no-resource-priorities` | off | Emulate a platform that ignores resource-group thread priorities, with warning 3659 |
 | `--client-host=HOST` | the peer address | The host every client is seen connecting from |
 | `--routine-time=KIND:NAME:CREATED:MODIFIED` | current time | Installation epochs for a standard `sys` routine; repeat for more routines |
 
@@ -215,6 +216,7 @@ $pdo->query('SELECT VERSION(), @@sql_mode, USER()')->fetch(PDO::FETCH_NUM);
 - **`version`**: the release to emulate. See [Supported Releases](#supported-releases).
 - **`globals`**: global values of system variables, by name. Every session starts with these values for the variables that have a session scope, as a MySQL server started with these options does. They are stored as written, without the checks and normalization `SET GLOBAL` applies, so give each value as `SELECT @@GLOBAL.name` reports it, including PHP `null` for SQL NULL. A variable not given keeps the default of the release.
 - **`databases`**: databases created at start, besides `information_schema`, `mysql`, `performance_schema` and, from MySQL 5.7, `sys`, which always exist.
+- **`resourcePriorities`**: whether the emulated platform applies resource-group thread priorities (default `true`). Set it to `false` to store priority 0 and report warning 3659 for nonzero requests, including values outside the usual group range. This setting describes the emulated platform, independently of the host running PHP.
 - **`clientHost`**: the host every client of the server is seen connecting from, as `USER()` reports it. By default it is the peer address, with `127.0.0.1` and `::1` read as `localhost`. In process, the host is the `host` argument of `connect()`.
 - **`routineTimestamps`**: creation and modification epochs for installed `sys` routines, keyed by `FUNCTION:name` or `PROCEDURE:name`. Omitted entries use the instance's creation time. The catalog includes MySQL 5.7, 8.x and 9.x signatures and attributes; installed routine bodies are not implemented.
 

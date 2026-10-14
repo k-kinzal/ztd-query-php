@@ -202,8 +202,9 @@
         "option": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\PriorityOutOfRange": {
-        "priority": "string",
-        "type": "string"
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupKind",
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
+        "priority": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RejectedPasswordHash": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RepeatedTlsAttribute": {

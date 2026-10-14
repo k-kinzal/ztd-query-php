@@ -61,4 +61,18 @@ final class ServerTest extends TestCase
 
         self::assertFalse(is_resource($process));
     }
+    public function testStartPreservesThePlatformPriorityCapability(): void
+    {
+        $server = Server::start(resourcePriorities: false);
+        try {
+            $client = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $client->exec('CREATE RESOURCE GROUP g TYPE USER THREAD_PRIORITY 20');
+            $warnings = $client->query('SHOW WARNINGS');
+            self::assertNotFalse($warnings);
+            self::assertSame([['Warning', 3659, 'Attribute thread_priority is ignored (using default value).']], $warnings->fetchAll(PDO::FETCH_NUM));
+        } finally {
+            $server->stop();
+        }
+    }
+
 }

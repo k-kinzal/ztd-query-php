@@ -78,8 +78,8 @@ final class RefusalsTest extends TestCase
 
     public function testPriorityNamesTheGroupAndTheValue(): void
     {
-        $statement = (new Instance())->connect()->analyze('CREATE RESOURCE GROUP FLUSH TYPE SYSTEM THREAD_PRIORITY = 000000000040')->statement;
-        $error = (new Refusals())->priority(new PriorityOutOfRange('SYSTEM', '000000000040'), $statement);
+        $problem = new PriorityOutOfRange(new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName(new Name('FLUSH')), \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind::System, new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority(false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('000000000040')));
+        $error = (new Refusals())->priority($problem);
 
         self::assertSame([3654, 'Invalid thread priority value 40 for System resource group FLUSH. Allowed range is [-20, 0].'], [$error->getCode(), $error->getMessage()]);
     }

@@ -32,6 +32,16 @@ final class ResourceGroupNamesTest extends TestCase
         $long = '`' . str_repeat('a', 65) . '`';
         array_push($statements, 'CREATE RESOURCE GROUP ' . $long . ' TYPE USER VCPU 99999', 'ALTER RESOURCE GROUP ' . $long . ' VCPU 99999', 'SET RESOURCE GROUP ' . $long . ' FOR 99999', 'DROP RESOURCE GROUP ' . $long . ' nonsense', 'CREATE RESOURCE GROUP ' . $long . ' nonsense');
         array_push($statements, 'DROP RESOURCE GROUP `😀` nonsense', 'CREATE RESOURCE GROUP `😀` nonsense', 'ALTER RESOURCE GROUP `😀` THREAD_PRIORITY', 'SET RESOURCE GROUP `😀` FOR', 'CREATE RESOURCE GROUP `😀` TYPE USER VCPU 9999999999999999999999', 'DROP RESOURCE GROUP `' . str_repeat('😀', 65) . '` nonsense');
+        foreach (['priority_group', str_repeat('a', 65), str_repeat('😀', 65)] as $name) {
+            foreach (['TYPE USER THREAD_PRIORITY 20', 'TYPE SYSTEM VCPU 99999 THREAD_PRIORITY 1', 'TYPE USER THREAD_PRIORITY -1', 'TYPE SYSTEM THREAD_PRIORITY -21', 'TYPE USER THREAD_PRIORITY 00000020', 'TYPE SYSTEM THREAD_PRIORITY -0'] as $tail) {
+                $statements[] = 'CREATE RESOURCE GROUP `' . $name . '` ' . $tail;
+            }
+        }
+        array_push($statements, 'CREATE RESOURCE GROUP `😀` TYPE USER THREAD_PRIORITY 20', 'CREATE RESOURCE GROUP g TYPE USER THREAD_PRIORITY 20 nonsense', 'CREATE RESOURCE GROUP priority_group TYPE USER THREAD_PRIORITY 20', 'CREATE RESOURCE GROUP g TYPE SYSTEM VCPU 99999 THREAD_PRIORITY -21', 'CREATE RESOURCE GROUP low_priority TYPE USER THREAD_PRIORITY 000019', 'CREATE RESOURCE GROUP negative_zero TYPE USER THREAD_PRIORITY -000');
+        array_push($statements, 'CREATE DATABASE priority_tx', 'USE priority_tx', 'CREATE TABLE t (id INT)', 'CREATE RESOURCE GROUP transaction_group TYPE USER');
+        foreach (['CREATE RESOURCE GROUP bad TYPE USER THREAD_PRIORITY 20', 'CREATE RESOURCE GROUP transaction_group TYPE USER THREAD_PRIORITY 20', 'CREATE RESOURCE GROUP other TYPE USER VCPU 99999 THREAD_PRIORITY 20', 'ALTER RESOURCE GROUP transaction_group VCPU 1-0 THREAD_PRIORITY 20', 'ALTER RESOURCE GROUP transaction_group VCPU 99999 THREAD_PRIORITY 20', 'ALTER RESOURCE GROUP transaction_group THREAD_PRIORITY 20 FORCE', 'ALTER RESOURCE GROUP USR_default THREAD_PRIORITY 20', 'CREATE RESOURCE GROUP reversed TYPE USER VCPU 1-0 THREAD_PRIORITY 1', 'CREATE RESOURCE GROUP reversed_no_priority TYPE USER VCPU 1-0', 'CREATE RESOURCE GROUP out_of_range TYPE USER VCPU 99999'] as $command) {
+            array_push($statements, 'START TRANSACTION', 'INSERT INTO t VALUES (1)', $command, 'ROLLBACK', 'SELECT * FROM t', 'DELETE FROM t');
+        }
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }
@@ -50,7 +60,7 @@ final class ResourceGroupNamesTest extends TestCase
         try {
             $endpoint = $container->getData(Endpoint::class);
             $native = new PDO('mysql:host=' . $endpoint->host . ';port=' . $endpoint->port, $endpoint->username, $endpoint->password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-            $server = Server::start($release);
+            $server = Server::start($release, resourcePriorities: (new \Fuzz\Target\Servers())->resourcePriorities($native, $release));
             try {
                 $memory = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
                 $observer = new Observer();

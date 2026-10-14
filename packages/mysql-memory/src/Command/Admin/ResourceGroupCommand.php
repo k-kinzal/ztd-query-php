@@ -12,6 +12,7 @@ use MySqlMemory\Registry\ResourceGroup;
 use MySqlMemory\Registry\ResourceGroups;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
+use MySqlMemory\Session\Diagnostics;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup;
@@ -26,7 +27,8 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes CREATE, ALTER, DROP and SET RESOURCE GROUP.
  *
- * CREATE, ALTER and DROP commit the open transaction. The VCPU list is checked first: a CPU the
+ * CREATE, ALTER and DROP commit the open transaction. CREATE interprets its priority and
+ * both CREATE and ALTER check CPU availability before that commit. A CPU the
  * server lacks is ER_INVALID_VCPU_ID, then a range whose first CPU follows its last is
  * ER_INVALID_VCPU_RANGE. A group that exists is ER_RESOURCE_GROUP_EXISTS, one that does not is
  * ER_RESOURCE_GROUP_NOT_EXIST; the default groups cannot be altered or dropped. ALTER checks the
@@ -67,11 +69,14 @@ final class ResourceGroupCommand implements Command
 
             return new Completion();
         }
+        if ($statement instanceof CreateResourceGroup || $statement instanceof AlterResourceGroup) {
+            $this->prepare($statement, $groups, $session->diagnostics);
+        }
         $session->transaction->commit();
         if ($statement instanceof CreateResourceGroup) {
             $this->create($statement, $groups);
         } elseif ($statement instanceof AlterResourceGroup) {
-            $this->alter($statement, $groups);
+            $this->alter($statement, $groups, $session->diagnostics);
         } elseif ($statement instanceof DropResourceGroup) {
             $this->drop($statement, $groups);
         }
@@ -87,11 +92,12 @@ final class ResourceGroupCommand implements Command
     public function create(CreateResourceGroup $statement, ResourceGroups $groups): void
     {
         $name = $statement->name->value;
+        $priority = $groups->priorities ? $this->priority($statement->priority) : 0;
         $cpus = $this->cpus($statement->cpus, $groups->processors);
         if ($groups->find($name) !== null) {
             throw AdministrationError::ResourceGroupExists->error($name);
         }
-        $groups->add(new ResourceGroup($name, $statement->kind === ResourceGroupKind::System, $cpus, $this->priority($statement->priority), $statement->enabled ?? true));
+        $groups->add(new ResourceGroup($name, $statement->kind === ResourceGroupKind::System, $cpus, $priority, $statement->enabled ?? true));
     }
 
     /**
@@ -102,7 +108,7 @@ final class ResourceGroupCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the CPUs, the group, the priority or FORCE is wrong
      */
-    public function alter(AlterResourceGroup $statement, ResourceGroups $groups): void
+    public function alter(AlterResourceGroup $statement, ResourceGroups $groups, Diagnostics $diagnostics): void
     {
         $name = $statement->name->value;
         $this->cpus($statement->cpus, $groups->processors, false);
@@ -111,7 +117,7 @@ final class ResourceGroupCommand implements Command
             throw AdministrationError::OperationDisallowed->error('Alter', 'default resource groups.');
         }
         $cpus = $this->cpus($statement->cpus, $groups->processors);
-        $priority = $this->priority($statement->priority);
+        $priority = $this->configured($statement->priority, $groups, $diagnostics);
         [$low, $high] = $group->system ? [-20, 0] : [0, 19];
         if ($priority < $low || $priority > $high) {
             throw AdministrationError::InvalidThreadPriority->error((string) $priority, $group->system ? 'System' : 'User', $name, (string) $low, (string) $high);
@@ -217,14 +223,37 @@ final class ResourceGroupCommand implements Command
      */
     public function priority(?ThreadPriority $priority): int
     {
-        if ($priority === null) {
+        return $priority?->value() ?? 0;
+    }
+
+    /**
+     * Applies the platform's thread-priority capability, retaining the ignored-attribute warning.
+     */
+    public function configured(?ThreadPriority $priority, ResourceGroups $groups, Diagnostics $diagnostics): int
+    {
+        $value = $this->priority($priority);
+        if (!$groups->priorities && $value !== 0) {
+            $diagnostics->warning(3659, 'Attribute thread_priority is ignored (using default value).');
+
             return 0;
         }
-        $value = (new Literals())->number($priority->number);
-        if (bccomp($value, '2147483647') > 0) {
-            $value = '2147483647';
-        }
 
-        return $priority->negative ? -(int) $value : (int) $value;
+        return $value;
+    }
+
+    /**
+     * Checks platform-dependent preparation conditions before an implicit commit.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a supported CREATE priority or CPU identifier is invalid
+     */
+    public function prepare(CreateResourceGroup|AlterResourceGroup $statement, ResourceGroups $groups, Diagnostics $diagnostics): void
+    {
+        if ($statement instanceof CreateResourceGroup) {
+            $this->configured($statement->priority, $groups, $diagnostics);
+            if ($groups->priorities && $statement->priority !== null && !$statement->priority->fits($statement->kind)) {
+                throw (new Refusals())->priority(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange($statement->name, $statement->kind, $statement->priority));
+            }
+        }
+        $this->cpus($statement->cpus, $groups->processors, false);
     }
 }

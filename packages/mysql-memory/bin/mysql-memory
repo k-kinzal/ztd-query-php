@@ -4,7 +4,7 @@
 /**
  * Runs an in-memory MySQL server.
  *
- * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]... [--global-null=NAME]... [--client-host=HOST] [--unsupervised] [--routine-time=KIND:NAME:CREATED:MODIFIED]...
+ * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]... [--global-null=NAME]... [--client-host=HOST] [--unsupervised] [--no-resource-priorities] [--routine-time=KIND:NAME:CREATED:MODIFIED]...
  * Prints "ready ADDRESS" once it accepts connections.
  */
 
@@ -24,10 +24,13 @@ $databases = [];
 $globals = [];
 $clientHost = null;
 $supervised = true;
+$resourcePriorities = true;
 $routineTimestamps = [];
 foreach (array_slice($argv, 1) as $argument) {
     if (str_starts_with($argument, '--listen=')) {
         $listen = substr($argument, 9);
+    } elseif ($argument === '--no-resource-priorities') {
+        $resourcePriorities = false;
     } elseif ($argument === '--unsupervised') {
         $supervised = false;
     } elseif (str_starts_with($argument, '--release=')) {
@@ -47,7 +50,7 @@ foreach (array_slice($argv, 1) as $argument) {
     }
 }
 
-$listener = new MySqlMemory\Server\Listener(new MySqlMemory\Instance($release, $globals, $databases, $clientHost, $supervised, $routineTimestamps), $listen);
+$listener = new MySqlMemory\Server\Listener(new MySqlMemory\Instance($release, $globals, $databases, $clientHost, $supervised, $routineTimestamps, $resourcePriorities), $listen);
 $address = $listener->open();
 fwrite(STDOUT, 'ready ' . $address . "\n");
 fflush(STDOUT);
