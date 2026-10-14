@@ -22,4 +22,16 @@ final class ProgramRowTest extends TestCase
 
         self::assertSame([1, null], [$row->position(new Name('b')), $row->position(new Name('c'))]);
     }
+
+    public function testPositionUsesAccentInsensitiveVariableIdentityButDistinctTriggerColumns(): void
+    {
+        $parameters = new ParameterList([]);
+        $names = [new Name('É'), new Name('e')];
+        $domains = [Domain::integer(), Domain::integer()];
+        $variables = new ProgramRow($parameters, $names, $domains);
+        $trigger = new ProgramRow($parameters, $names, $domains, new Name('NEW'));
+
+        self::assertSame(0, $variables->position(new Name('e')));
+        self::assertSame(1, $trigger->position(new Name('e')));
+    }
 }

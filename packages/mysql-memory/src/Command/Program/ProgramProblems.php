@@ -64,23 +64,6 @@ final class ProgramProblems
     }
 
     /**
-     * Tells whether a diagnostic is an undeclared variable a routine declares as a parameter, as a LIMIT of its body may name one.
-     */
-    public static function parameter(\SqlSemantics\Statement\Statement $statement, Diagnostic $diagnostic): bool
-    {
-        if (!$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable || (!$statement instanceof CreateProcedure && !$statement instanceof CreateFunction)) {
-            return false;
-        }
-        foreach ($statement->parameters->parameters as $parameter) {
-            if (strcasecmp($parameter->name->value, $diagnostic->name->value) === 0) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Raises the first problem of a statement that stores a program, and answers whether the statement stores one.
      *
      * @throws SqlError When the body has a problem the server finds while parsing it
@@ -229,7 +212,7 @@ final class ProgramProblems
         $diagnostics = $operation->facts->diagnostics;
         usort($diagnostics, static fn (Diagnostic $left, Diagnostic $right): int => ($left instanceof ProgramProblem ? 0 : 1) <=> ($right instanceof ProgramProblem ? 0 : 1));
         foreach ($diagnostics as $diagnostic) {
-            if (!$this->parsed($diagnostic, $statement instanceof CreateTrigger) || self::parameter($statement, $diagnostic)) {
+            if (!$this->parsed($diagnostic, $statement instanceof CreateTrigger)) {
                 continue;
             }
             if ($diagnostic instanceof ProgramProblem && $diagnostic->rule === ProgramRule::MissingReturn && $statement instanceof CreateFunction) {

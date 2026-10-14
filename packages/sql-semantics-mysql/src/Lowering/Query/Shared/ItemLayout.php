@@ -48,7 +48,7 @@ final class ItemLayout
      *
      * @throws \SqlSemantics\Diagnostic\InvariantViolation When the node covers no token
      */
-    public function of(Node $expression): Layout
+    public function of(Node $expression, bool $leading = false): Layout
     {
         $layout = (new Layouts())->of($expression);
         $tokens = [];
@@ -58,6 +58,11 @@ final class ItemLayout
                 $tokens[] = $tokens === [] ? new Spelled('', $text) : new Spelled($this->gap($gap, $before, $text), $text);
                 $before = $text;
             }
+        }
+
+        if ($leading && $this->release === GrammarRelease::MySql5651) {
+            $gap = ltrim($this->gap($expression->tokens()[0]->leading, ' ', $tokens[0]->text));
+            $tokens[0] = new Spelled($gap, $tokens[0]->text);
         }
 
         return new Layout($tokens);

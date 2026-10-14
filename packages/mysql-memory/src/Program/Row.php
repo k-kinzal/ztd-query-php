@@ -26,12 +26,17 @@ final class Row
     }
 
     /**
-     * Finds the variable of a name, compared without regard to letter case; a name held twice is found at its first position.
+     * Finds a parameter or local variable by its case- and accent-insensitive identity.
+     *
+     * Qualified trigger columns retain column-name comparison. A repeated name
+     * is found at its first position, consistently with the semantic program row.
      */
     public function variable(string $name): ?Variable
     {
+        $weights = new \SqlSemantics\Platform\MySql\Rules\Typing\Ordering\GeneralWeights();
+        $key = $this->alias === null ? $weights->key($name) : null;
         foreach ($this->variables as $variable) {
-            if (strcasecmp($variable->name, $name) === 0) {
+            if ($key === null ? strcasecmp($variable->name, $name) === 0 : $weights->key($variable->name) === $key) {
                 return $variable;
             }
         }

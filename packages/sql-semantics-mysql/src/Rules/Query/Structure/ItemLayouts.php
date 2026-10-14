@@ -39,13 +39,15 @@ final class ItemLayouts
     public function check(Scalar $expression, Layout $layout, LanguageProfile $profile): void
     {
         Check::input($profile->grammar->database() === 'mysql', 'A MySQL select-item layout uses a MySQL language profile.');
-        Check::input($layout->tokens[0]->gap === '', 'A select-item layout starts at its first token and keeps no leading trivia.');
+        $naming = new ItemNaming($profile);
+        $own = $naming->own($expression);
+        Check::input($layout->tokens[0]->gap === '' || ($profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $own instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse && $own->qualifier === null), 'A select-item layout starts at its first token and keeps no leading trivia.');
         $platform = Platforms::of('mysql');
         $output = new Output($platform->codec($profile));
         $expression->render($output);
         Check::input(count($layout->tokens) === count($output->canonical()), 'A select-item layout has one token per expression token.');
-        $naming = new ItemNaming($profile);
-        Check::input($naming->own($expression) === null && $layout->text() !== $naming->canonical($expression), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
+        $text = $layout->tokens[0]->gap . $layout->text();
+        Check::input($naming->keeps($expression) && $text !== $naming->canonical($expression), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
         $parser = $platform->parser($profile);
         try {
             foreach ($layout->tokens as $token) {
@@ -58,7 +60,7 @@ final class ItemLayouts
             $productions = $platform->productions($profile);
             $keys = $platform->leafKeys($profile);
             $rendered = $correspondence->keys($parser->parse('SELECT ' . $canonical), $productions, $keys);
-            $written = $correspondence->keys($parser->parse('SELECT ' . $layout->text()), $productions, $keys);
+            $written = $correspondence->keys($parser->parse('SELECT ' . $text), $productions, $keys);
             Check::input($correspondence->difference($rendered, $written) === null, 'A select-item layout must preserve the expression under its spelling profile.');
         } catch (SourceException $error) {
             throw new InvalidConstruction('A select-item layout must preserve the expression under its spelling profile.', 0, $error);

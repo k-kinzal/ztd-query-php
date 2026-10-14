@@ -31,4 +31,16 @@ final class RowTest extends TestCase
 
         self::assertSame([$relation, 'a', 'NEW'], [$row->relation, $row->names[0]->value, $row->alias?->value]);
     }
+
+    public function testVariableSharesSemanticIdentityWithoutMergingTriggerColumns(): void
+    {
+        $first = new Variable('É', Domain::integer());
+        $second = new Variable('e', Domain::integer());
+        $relation = new ParameterList([]);
+        $variables = new Row($relation, [$first, $second]);
+        $trigger = new Row($relation, [$first, $second], 'NEW');
+
+        self::assertSame($first, $variables->variable('e'));
+        self::assertSame($second, $trigger->variable('e'));
+    }
 }

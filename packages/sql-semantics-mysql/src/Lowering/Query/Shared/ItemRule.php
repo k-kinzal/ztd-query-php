@@ -29,8 +29,10 @@ use SqlSemantics\Statement\Identifier\Name;
  * identifier. An item without alias that the server names after its text
  * keeps the layout of its expression (MYSQL-ITEM-LAYOUT-001) unless the
  * expression is written exactly as its canonical rendering, which an item
- * without layout stands for; an item that names itself, such as a column
- * reference or a string (MYSQL-SELECT-ITEM-NAME-001), keeps none. Constructs: SelectOption, SelectExpression, Star, and the
+ * without layout stands for. Unqualified references also retain observable
+ * spelling because they may resolve to stored-program variables. Other
+ * self-naming items, such as qualified columns and strings, keep none.
+ * Constructs: SelectOption, SelectExpression, Star, and the
  * TableWildcard of the leaf rules. Terminates: lists are flattened
  * iteratively. Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  * Status: Implemented.
@@ -174,8 +176,8 @@ final class ItemRule
         $name = $this->alias($alias);
         $lowered = $this->lowering->expressions->expression($expression);
         $naming = new ItemNaming($this->lowering->profile);
-        $layout = $name === null && $naming->own($lowered) === null ? (new ItemLayout($this->lowering->profile->grammar))->of($expression) : null;
-        if ($layout !== null && $layout->text() === $naming->canonical($lowered)) {
+        $layout = $name === null && $naming->keeps($lowered) ? (new ItemLayout($this->lowering->profile->grammar))->of($expression, $naming->own($lowered) instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) : null;
+        if ($layout !== null && $layout->tokens[0]->gap === '' && $layout->text() === $naming->canonical($lowered)) {
             $layout = null;
         }
 

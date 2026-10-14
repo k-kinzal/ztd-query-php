@@ -62,7 +62,30 @@ final class ItemNamingTest extends TestCase
 
         $this->expectExceptionMessage('A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
 
-        $naming->name(new SelectExpression(new ColumnUse(new Name('a')), null, new Layout([new Spelled('', '`a`')])));
+        $naming->name(new SelectExpression(new StringLiteral(['a']), null, new Layout([new Spelled('', '"a"')])));
+    }
+
+    public function testKeepsUnqualifiedReferenceSpellingUntilItsRoleIsResolved(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->profile());
+
+        self::assertTrue($naming->keeps(new Grouped(new ColumnUse(new Name('e')))));
+        self::assertFalse($naming->keeps(new ColumnUse(new Name('e'), new QualifiedName(new Name('t')))));
+        self::assertFalse($naming->keeps(new StringLiteral(['e'])));
+    }
+
+    public function testNameUsesVariableSpellingAndColumnIdentityInTheirOwnEnvironments(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $naming = new ItemNaming($semantics->profile());
+        $parameters = new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]);
+        $row = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow($parameters, [new Name('É')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), program: [$row]);
+        $environment = new \SqlSemantics\Resolution\Environment($semantics->context(session: $settings));
+        $item = new SelectExpression(new ColumnUse(new Name('e')), layout: new Layout([new Spelled('', '`e`')]));
+
+        self::assertEquals(new Name('`e`'), $naming->name($item, $environment));
+        self::assertEquals(new Name('e'), $naming->name($item, new \SqlSemantics\Resolution\Environment($semantics->context())));
     }
 
     public function testNameRefusesALayoutThatSpellsTheCanonicalRendering(): void

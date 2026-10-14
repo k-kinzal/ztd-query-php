@@ -130,7 +130,7 @@ final class Reading
                 $this->declared($select, $ended, $session, $operation);
             }
         });
-        if (in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && !$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
+        if (!$program && in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && !$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
             $this->into($operation->statement, $session);
         }
     }
@@ -147,9 +147,6 @@ final class Reading
     {
         $alias = null;
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (\MySqlMemory\Command\Program\ProgramProblems::parameter($operation->statement, $diagnostic)) {
-                continue;
-            }
             if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && Stages::selfChecked($operation->statement))) {
                 if ($diagnostic instanceof UnknownSystemVariable) {
                     (new \MySqlMemory\Command\Program\ProgramProblems())->variables($operation->statement);

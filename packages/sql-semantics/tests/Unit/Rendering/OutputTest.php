@@ -23,6 +23,14 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testLayoutKeepsValidatedLeadingTriviaWhenTheDialectRequestsIt(): void
+    {
+        $output = new Output(new Codec());
+        $output->keyword('SELECT')->layout(new Layout([new Spelled(' /* prefix */ ', '7')]), new IntegerLiteral('7'), true);
+
+        self::assertSame('SELECT /* prefix */ 7', (new Lexical())->join($output->pieces()));
+    }
+
     public function testQuoteUsesTheDialectStringCodec(): void
     {
         $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));

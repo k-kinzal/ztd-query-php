@@ -236,7 +236,7 @@ final class SelectTest extends TestCase
         $operation = $semantics->analyze('SELECT "a" FROM t', [$table]);
 
         self::assertSame($table->columns[0], $operation->field('a')->column());
-        self::assertSame('SELECT a FROM t', $operation->toString());
+        self::assertSame('SELECT "a" FROM t', $operation->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void

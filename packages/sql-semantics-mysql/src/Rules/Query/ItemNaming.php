@@ -38,7 +38,8 @@ use SqlSemantics\Statement\Scalar;
  * Rule: MYSQL-SELECT-ITEM-NAME-001. An alias names the item. Otherwise an
  * item that names itself keeps its own name, also in parentheses or after a
  * unary plus, which create no item in the server: a column reference is
- * named by its column name as written; a string literal by the decoded
+ * named by its column name as written, except that a reference resolved to a
+ * stored-program variable uses the complete expression spelling; a string literal by the decoded
  * value of its first quoted part; NULL by `NULL`; `?` by `?`; an integer or
  * floating-point number by its text (at most 256 bytes) and a decimal number
  * by its full text; in 5.6 and 5.7 TRUE and FALSE by `TRUE` and `FALSE`;
@@ -100,13 +101,13 @@ final class ItemNaming
     /**
      * Answers the output name of an item, or the input its name depends on.
      *
-     * An item keeps a layout only where the server names it after its text
-     * and the text is not the canonical rendering, as lowering builds it;
+     * An item keeps a layout where its resolved role can make the server name
+     * it after its text and the text is not the canonical rendering;
      * another layout is an invalid construction.
      *
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an item that names itself has a layout, or a layout spells the canonical rendering
      */
-    public function name(SelectExpression $item): Name|MissingInput
+    public function name(SelectExpression $item, ?\SqlSemantics\Resolution\Environment $environment = null): Name|MissingInput
     {
         if ($item->alias !== null) {
             $text = ltrim($item->alias->value, "\x00..\x20\x7F");
@@ -114,8 +115,12 @@ final class ItemNaming
             return $this->identifier($text === $item->alias->value ? $item->alias : new Name($text));
         }
         $own = $this->own($item->expression);
-        Check::input($item->layout === null || ($own === null && $item->layout->text() !== $this->canonical($item->expression)), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
+        Check::input($item->layout === null || ($this->keeps($item->expression) && $this->text($item) !== $this->canonical($item->expression)), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
         if ($own instanceof ColumnUse) {
+            $variable = $environment !== null && $own->qualifier === null ? (new \SqlSemantics\Platform\MySql\Rules\ProgramVariables())->find($environment, $own->name) : null;
+            if ($variable instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn) {
+                return $this->stored($this->text($item), 'client');
+            }
             return $this->identifier($own->name);
         }
         if ($own instanceof Name) {
@@ -123,6 +128,19 @@ final class ItemNaming
         }
 
         return $own === null ? $this->stored($this->text($item), 'client') : $this->stored($own[0], $own[1]);
+    }
+
+    /**
+     * Tells whether expression spelling can determine a result name.
+     *
+     * An unqualified column use may resolve to a stored-program variable; its
+     * result then keeps the entire expression spelling, including wrappers.
+     */
+    public function keeps(Scalar $expression): bool
+    {
+        $own = $this->own($expression);
+
+        return $own === null || ($own instanceof ColumnUse && $own->qualifier === null);
     }
 
     /**
@@ -229,7 +247,7 @@ final class ItemNaming
      */
     public function text(SelectExpression $item): string
     {
-        return $item->layout?->text() ?? $this->canonical($item->expression);
+        return $item->layout === null ? $this->canonical($item->expression) : $item->layout->tokens[0]->gap . $item->layout->text();
     }
 
     /**

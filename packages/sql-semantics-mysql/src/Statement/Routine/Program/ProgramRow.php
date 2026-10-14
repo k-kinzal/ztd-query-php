@@ -54,12 +54,17 @@ final class ProgramRow
     }
 
     /**
-     * Answers the position of a name in the row, compared without regard to letter case, or null when the row does not hold it; a name held twice is found at its first position.
+     * Answers the position of a name, or null when absent; a repeated name is found at its first position.
+     *
+     * Parameters and local variables use their case- and accent-insensitive identity.
+     * Qualified trigger columns retain column-name comparison instead.
      */
     public function position(Name $name): ?int
     {
+        $weights = new \SqlSemantics\Platform\MySql\Rules\Typing\Ordering\GeneralWeights();
+        $key = $this->alias === null ? $weights->key($name->value) : null;
         foreach ($this->names as $position => $candidate) {
-            if (strcasecmp($candidate->value, $name->value) === 0) {
+            if ($key === null ? strcasecmp($candidate->value, $name->value) === 0 : $weights->key($candidate->value) === $key) {
                 return $position;
             }
         }

@@ -57,6 +57,13 @@ final class ItemLayoutsTest extends TestCase
         self::assertSame($layout, $item->layout);
     }
 
+    public function testCheckRejectsAnOperandInjectedThroughLegacyLeadingTrivia(): void
+    {
+        $this->expectExceptionMessage('must preserve the expression');
+
+        new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('e')), layout: new Layout([new Spelled('1 + ', 'e')]), spellingProfile: new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+    }
+
     /**
      * @return iterable<string, array{list<Spelled>}>
      */

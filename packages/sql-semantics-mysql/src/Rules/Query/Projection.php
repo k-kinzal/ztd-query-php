@@ -54,7 +54,7 @@ final class Projection
     public function items(array $items, Derivation $derivation, Environment $environment, JoinedInput $from): array
     {
         $fields = [];
-        $projection = $this->scope($items, $derivation);
+        $projection = $this->scope($items, $derivation, $environment);
         $environment = new Environment($environment->context, $environment->outer, $environment->relations, $environment->commonTables, $environment->aliases, $environment->written, $environment->aggregation, $environment->aggregatesAllowed, $environment->aggregateArgument, $projection);
         foreach ($items as $position => $item) {
             if ($item instanceof SelectExpression) {
@@ -63,7 +63,7 @@ final class Projection
                     $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName($item->alias), $item);
                 }
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
-                $name = (new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client))->name($item);
+                $name = (new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client))->name($item, $environment);
                 $slot = $name instanceof Name ? new OutputSlot($name, $fact->type, $fact->nullability, null, $origin) : new OutputSlot(null, $fact->type, $fact->nullability, null, $origin, [$name]);
                 $field = new Field(count($fields), $slot, $item->expression, $fact->resolution);
                 $fields[] = $field;
@@ -83,13 +83,13 @@ final class Projection
      *
      * @param list<SelectExpression|Star|TableWildcard> $items
      */
-    public function scope(array $items, Derivation $derivation): ProjectionScope
+    public function scope(array $items, Derivation $derivation, ?Environment $environment = null): ProjectionScope
     {
         $declared = [];
         $naming = new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client);
         foreach ($items as $position => $item) {
             if ($item instanceof SelectExpression) {
-                $declared[$position] = [$naming->name($item), $item->expression];
+                $declared[$position] = [$naming->name($item, $environment), $item->expression];
             }
         }
 

@@ -34,7 +34,7 @@ final class NameRuleTest extends TestCase
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame('SELECT a, `b c`, `d``e`, `action`, `猫` FROM t', $operation->toString());
+        self::assertSame('SELECT a, `b c`, `d``e`, action, 猫 FROM t', $operation->toString());
         $item2 = $operation->statement->query->items[2];
         self::assertInstanceOf(SelectExpression::class, $item2);
         self::assertInstanceOf(ColumnUse::class, $item2->expression);
@@ -53,7 +53,7 @@ final class NameRuleTest extends TestCase
 
     public function testIdentifierLowersALegacyKeywordAsTheNameItSpells(): void
     {
-        self::assertSame('SELECT `ascii`, `action` FROM t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT ascii, action FROM t')->toString());
+        self::assertSame('SELECT ascii, action FROM t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT ascii, action FROM t')->toString());
     }
 
     public function testKeywordTellsTheKeywordAsIdentifierProductions(): void

@@ -71,7 +71,7 @@ final class SelectExpression implements SelectItem
      */
     public function render(Output $out): void
     {
-        $out->layout($this->layout, $this->expression);
+        $out->layout($this->layout, $this->expression, $this->spellingProfile?->grammar === GrammarRelease::MySql5651);
         if ($this->alias !== null) {
             $this->mark->write($out);
             if (str_contains($this->alias->value, "\0")) {

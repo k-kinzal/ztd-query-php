@@ -32,12 +32,14 @@ final class ProgramProblemsTest extends TestCase
         self::assertSame([true, false], [ProgramProblems::stores($session->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1')->statement), ProgramProblems::stores($session->analyze('SELECT 1')->statement)]);
     }
 
-    public function testParameterTellsAnUndeclaredVariableTheRoutineDeclares(): void
+    public function testRaiseConsumesScopedVariableResolutionFromSemantics(): void
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT n')->statement;
 
-        self::assertSame([true, false], [ProgramProblems::parameter($statement, new \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable(new Name('N'))), ProgramProblems::parameter($statement, new \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable(new Name('m')))]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
+        self::assertSame([], $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT N')->facts->diagnostics);
+        self::assertSame(['Undeclared variable: m'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT m')->facts->diagnostics));
     }
 
     public function testRaiseRaisesTheProblemsOfTheRulesFirst(): void

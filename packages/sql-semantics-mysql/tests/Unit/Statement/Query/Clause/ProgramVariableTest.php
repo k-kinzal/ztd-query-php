@@ -49,4 +49,20 @@ final class ProgramVariableTest extends TestCase
 
         self::assertSame([\SqlSemantics\Statement\Type\Known::class, []], [$operation->facts->scalar($limit->count)->type::class, $operation->facts->diagnostics]);
     }
+
+    public function testDeriveScalarResolvesAParameterDuringProgramDefinition(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(`É` INT) SELECT 1 INTO e');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        $body = $operation->statement->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $body);
+        self::assertInstanceOf(Select::class, $body->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables::class, $body->query->into);
+        $fact = $operation->facts->scalar($body->query->into->targets[0]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $fact->resolution);
+
+        self::assertSame($operation->statement->parameters, $fact->resolution->relation);
+        self::assertSame('É', $fact->resolution->slot->name?->value);
+        self::assertSame([], $operation->facts->diagnostics);
+    }
 }

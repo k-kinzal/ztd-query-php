@@ -207,9 +207,10 @@ final class Output
      * layout spells every token of the region.
      *
      * @return $this
+     * @param bool $leading Whether the dialect has validated observable trivia before the first token
      * @throws \SqlSemantics\Diagnostic\InvariantViolation When the layout does not have one token per rendered piece
      */
-    public function layout(?Layout $layout, Node $node): self
+    public function layout(?Layout $layout, Node $node, bool $leading = false): self
     {
         if ($layout === null || $this->spelling) {
             $node->render($this);
@@ -225,7 +226,7 @@ final class Output
         $spelled = [];
         foreach (array_slice($this->pieces, $start) as $offset => $canonical) {
             $token = $layout->tokens[$offset];
-            $spelled[] = new Piece($canonical->kind, $token->text, $canonical->glued, $offset === 0 ? $canonical->gap : $token->gap);
+            $spelled[] = new Piece($canonical->kind, $token->text, $canonical->glued, $offset === 0 && (!$leading || $token->gap === '') ? $canonical->gap : $token->gap);
         }
         $this->pieces = [...array_slice($this->pieces, 0, $start), ...$spelled];
         $this->trail = $layout->trail === '' ? null : $layout->trail;

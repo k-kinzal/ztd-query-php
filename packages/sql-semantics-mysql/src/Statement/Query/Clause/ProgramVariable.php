@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -26,8 +25,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * outside one the server reports an undeclared variable. A statement of a
  * running program is given the variables in scope (Settings::$program): the
  * name then has the declared type of the innermost variable of the name and
- * can be NULL. Otherwise the declaration is program state the analysis
- * context does not hold, so the type and the NULL fact depend on it. Source:
+ * can be NULL. During program definition the lexical environment resolves
+ * the same declaration, and an absent declaration is reported. Outside a
+ * program, an absent declaration leaves the type dependent on program state. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/select.html (LIMIT),
  * https://dev.mysql.com/doc/refman/8.4/en/select-into.html.
  * Status: Implemented.
@@ -49,13 +49,16 @@ final class ProgramVariable implements Operand
     }
 
     /**
-     * Has the type of the variable a running program declares, else depends on the declaration of the variable in the enclosing stored program.
+     * Resolves the nearest program declaration during definition or execution.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $declared = Settings::of($derivation->context)->variable($this->name->value);
-        if ($declared !== null) {
-            return new ScalarFact(new Known($declared[0]->domains[$declared[1]]), Nullability::Nullable);
+        $declared = (new \SqlSemantics\Platform\MySql\Rules\ProgramVariables())->find($environment, $this->name);
+        if ($declared instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn) {
+            return new ScalarFact($declared->slot->type, $declared->slot->nullability, $declared);
+        }
+        if ($derivation->inProgram()) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable($this->name));
         }
         return new ScalarFact(new Dependent([new SessionState('stored program variable ' . $this->name->value)]), Nullability::Dependent);
     }

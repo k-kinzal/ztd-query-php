@@ -24,8 +24,10 @@ use SqlSemantics\Statement\Type\Nullability;
  * or local variable in scope has denotes that variable before any column of
  * the same name: the server reads a simple identifier of a stored program as
  * a variable when one of that name is declared around it. The innermost
- * declaration wins, and a name declared twice in one declaration keeps its
- * first position. The variables are found in the environment, while the
+ * declaration wins. Variable identities use the same case- and accent-insensitive
+ * comparison as parameter declarations; trigger column names remain distinct.
+ * A name declared twice in one declaration keeps its first position.
+ * The variables are found in the environment, while the
  * program is derived, and else among the rows of the program a running
  * statement is given (Settings::$program). A name at a position that names
  * the columns a statement writes (Environment::$written: the columns of
@@ -52,6 +54,8 @@ final class ProgramVariables
         if ($qualifier !== null) {
             return $this->field($environment, $column, $qualifier);
         }
+        $weights = new Typing\Ordering\GeneralWeights();
+        $key = $weights->key($column->value);
         for ($scope = $environment; $scope !== null; $scope = $scope->outer) {
             if ($scope->written) {
                 return null;
@@ -62,7 +66,7 @@ final class ProgramVariables
                     continue;
                 }
                 foreach ($relation->shape->slots as $position => $slot) {
-                    if ($slot->name !== null && !in_array($position, $relation->hidden, true) && strcasecmp($slot->name->value, $column->value) === 0) {
+                    if ($slot->name !== null && !in_array($position, $relation->hidden, true) && $weights->key($slot->name->value) === $key) {
                         return new ResolvedColumn($relation->relation, $slot);
                     }
                 }
