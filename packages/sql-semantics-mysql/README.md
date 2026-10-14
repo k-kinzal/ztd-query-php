@@ -379,3 +379,5 @@ See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sq
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+`Statement\Routine\Condition\SqlState` accepts quoted values containing five uppercase letters or digits, excluding success class `00`. Invalid PHP construction raises `InvalidConstruction`. An invalid SQL operand such as `SIGNAL SQLSTATE '00000'` instead raises `SqlSemantics\Construction\RejectedInput`; its `problem` is a typed `ProgramProblem`, and `end` is the exclusive byte offset of the operand. No operation containing that invalid value is returned.

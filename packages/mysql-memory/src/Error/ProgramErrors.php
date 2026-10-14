@@ -64,9 +64,18 @@ final class ProgramErrors
     /**
      * Answers the error of a program problem, with the message SQL Semantics wrote for it.
      */
-    public function error(ProgramProblem $problem): SqlError
+    public function error(ProgramProblem $problem, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): SqlError
     {
-        return new SqlError($this->code($problem->rule), $problem->message());
+        $message = $problem->message();
+        if ($problem->rule === ProgramRule::BadSqlState) {
+            $subject = explode("\0", $problem->subject ?? '')[0];
+            if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                $subject = preg_split('/[\xF0-\xF4][\x80-\xBF]{3}/', $subject)[0] ?? $subject;
+            }
+            $message = str_replace('%s', $subject, $problem->rule->value);
+        }
+
+        return new SqlError($this->code($problem->rule), $message);
     }
 
     /**

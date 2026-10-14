@@ -51,8 +51,16 @@ final class Reader
             }
             (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy());
         }
+        $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
+        $databaseError = $rejection === null ? null : (new RoutinePrefix())->database($statement, $rejection->end, $session);
+        if ($databaseError !== null) {
+            throw $databaseError;
+        }
         if (!(new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
-            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->temporals($tree, $session->modes(), $session, $statement);
+            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->temporals($tree, $session->modes(), $session, $statement, $rejection->end ?? PHP_INT_MAX);
+        }
+        if ($rejection !== null) {
+            throw $this->rejection($rejection, $statement, $session);
         }
         $session->dots = $session->settings()->release() === GrammarRelease::MySql5744 ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->dots($tree) : [];
         $session->hinted = (new \MySqlMemory\Hint\Hints())->syntax($tree, $statement, $session);
@@ -74,6 +82,37 @@ final class Reader
         $undeclared = $legacy ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->undeclared($tree, $error, $session->program) : null;
 
         return ($undeclared === null ? null : (new CacheOptions())->undeclared($undeclared, $statement, $session)) ?? ($clash === null ? null : (new CacheOptions())->clashed($clash[0], $clash[1], $statement, $session)) ?? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->error($error, $statement, $release, $session->following);
+    }
+
+    /**
+     * Converts a typed operand refusal, preserving notices completed before its boundary.
+     */
+    public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
+    {
+        $earlier = (new RoutinePrefix())->database($statement, $failure->end, $session);
+        if ($earlier !== null) {
+            return $earlier;
+        }
+        $error = (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
+        $parser = $session->semantics()->parser();
+        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $failure->end, $session->semantics()->profile());
+        if ($session->settings()->legacy()) {
+            [$warnings, $conflict] = (new Modifiers($parser->tokenize($statement), $session->settings()->release()))->scan($failure->end, $failure->end);
+            if ($conflict !== null) {
+                return (new CacheOptions())->recorded($warnings, $conflict, $error, $session);
+            }
+            foreach ($warnings as $offset => $notice) {
+                $notices[] = [$offset, $notice];
+            }
+        } else {
+            foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, $failure->end, $parser) as $offset => $notice) {
+                $notices[] = [$offset, $notice];
+            }
+        }
+        usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+
+        return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);
     }
 
     /**

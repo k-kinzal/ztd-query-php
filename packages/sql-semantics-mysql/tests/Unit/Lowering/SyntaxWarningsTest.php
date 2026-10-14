@@ -96,4 +96,16 @@ final class SyntaxWarningsTest extends TestCase
 
         self::assertSame([], (new SyntaxWarnings())->completed(new MySqlParser('mysql-5.7.44'), $sql, (int) strpos($sql, '?'), new LanguageProfile(GrammarRelease::MySql5744)));
     }
+
+    public function testRejectedRetainsTheFirstInvalidConditionOperand(): void
+    {
+        $sql = "CREATE PROCEDURE p() BEGIN SIGNAL SQLSTATE '00000'; SIGNAL SQLSTATE 'bad'; END";
+        $parser = new MySqlParser('mysql-8.4.7');
+        $profile = new LanguageProfile(GrammarRelease::MySql847);
+        $failure = (new SyntaxWarnings())->rejected($parser->parse($sql), $profile);
+
+        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertSame("Bad SQLSTATE: '00000'", $failure->problem->message());
+        self::assertNull((new SyntaxWarnings())->rejected($parser->parse("SIGNAL SQLSTATE '45000'"), $profile));
+    }
 }

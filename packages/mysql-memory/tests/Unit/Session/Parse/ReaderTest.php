@@ -79,4 +79,18 @@ final class ReaderTest extends TestCase
 
         self::assertSame(1064, (new Reader())->refusal($tree, new AnalysisException('refused'), 'SELECT 1', '', $session)->getCode());
     }
+
+    public function testRejectionRetainsTheTypedProblemAndPrecedingNotices(): void
+    {
+        $session = (new Instance())->connect();
+        $session->variables->database = 'd';
+        $sql = "CREATE PROCEDURE p() BEGIN SELECT BINARY 1; SIGNAL SQLSTATE '00000'; END";
+        $failure = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadSqlState, '00000'), strlen($sql) - 5);
+
+        $error = (new Reader())->rejection($failure, $sql, $session);
+
+        self::assertSame(1407, $error->getCode());
+        self::assertTrue($error->recorded);
+        self::assertSame([1287, 1407], array_column($session->diagnostics->conditions, 1));
+    }
 }

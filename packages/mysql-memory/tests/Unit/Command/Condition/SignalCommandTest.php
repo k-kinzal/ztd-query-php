@@ -27,9 +27,9 @@ final class SignalCommandTest extends TestCase
         self::assertFalse(SignalCommand::resignal(new Resignal(null))->clearsDiagnostics());
     }
 
-    public function testResignalClearsTheDiagnosticsAreaOfABadSqlstate(): void
+    public function testResignalKeepsTheDiagnosticsAreaWithAConstructedSqlstate(): void
     {
-        self::assertTrue(SignalCommand::resignal(new Resignal(new SqlState(new Text('x'))))->clearsDiagnostics());
+        self::assertFalse(SignalCommand::resignal(new Resignal(new SqlState(new Text('45000'))))->clearsDiagnostics());
     }
 
     public function testClearsDiagnosticsAnswersTrueForSignal(): void

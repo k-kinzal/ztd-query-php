@@ -38,6 +38,15 @@ final class EncodingTest extends TestCase
     {
         self::assertSame('Ã', Encoding::packet("\xC3"));
         self::assertSame("\xC3", Encoding::packet("\xC3", 'latin1'));
-        self::assertSame('?', Encoding::packet('猫', 'latin1'));
+        self::assertSame('\\732B', Encoding::packet('猫', 'latin1'));
+        self::assertSame('\\00E9\\732B\\03A9\\00F0\\009F\\0098\\0080', Encoding::packet('é猫Ω😀', 'ascii'));
+        self::assertSame('é猫Ω😀', Encoding::packet('é猫Ω😀', 'binary'));
+    }
+
+    public function testConditionConvertsSystemBytesWithoutPacketEscapes(): void
+    {
+        self::assertSame('é猫Ω????', Encoding::condition('é猫Ω😀', 'utf8mb4'));
+        self::assertSame('???????', Encoding::condition('é猫Ω😀', 'ascii'));
+        self::assertSame('é猫Ω😀', Encoding::condition('é猫Ω😀', 'binary'));
     }
 }

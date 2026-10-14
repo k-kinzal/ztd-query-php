@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Lowering\Routine\Program;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlParser\MySql\MySqlParser;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Lowering\Productions;
+use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Lowering\Routine\Program\InputPrefix;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
+use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use SqlSemantics\Statement\Identifier\Name;
+
+#[CoversClass(InputPrefix::class)]
+#[Medium]
+final class InputPrefixTest extends TestCase
+{
+    /**
+     * @return iterable<string, array{string, string|null}>
+     */
+    public static function providerPrefixes(): iterable
+    {
+        yield 'unbound condition' => ['SIGNAL missing_condition;', 'Undefined CONDITION: missing_condition'];
+        yield 'duplicate variable' => ['DECLARE x INT; DECLARE x INT;', 'Duplicate variable: x'];
+        yield 'unknown system variable' => ['SELECT @@missing_variable;', "Unknown system variable 'missing_variable'"];
+        yield 'declared condition' => ["DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c;", null];
+        yield 'outer condition' => ["DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN SIGNAL c; END;", null];
+        yield 'closed inner scope' => ["BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; END; SIGNAL c;", 'Undefined CONDITION: c'];
+        yield 'deferred column binding' => ['SELECT missing_column;', null];
+    }
+
+    #[DataProvider('providerPrefixes')]
+    public function testBeforeResolvesCompletedStatementsInTheirScopes(string $prefix, ?string $message): void
+    {
+        $sql = 'CREATE PROCEDURE p() BEGIN ' . $prefix . " SIGNAL SQLSTATE '00000'; END";
+        $end = strpos($sql, "'00000'");
+        self::assertNotFalse($end);
+        $rule = new InputPrefix(new Lowering(Productions::load(__DIR__ . '/../../../../../resources/productions/mysql-8.4.7.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql847)));
+        $failure = $rule->before((new MySqlParser('mysql-8.4.7'))->parse($sql), $end + 7);
+
+        self::assertSame($message, $failure?->problem->message());
+        self::assertTrue($failure === null || $failure->end < $end);
+    }
+
+    public function testDiagnosticResolvesAConditionNameWithoutSourceText(): void
+    {
+        $rule = new InputPrefix(new Lowering(Productions::load(__DIR__ . '/../../../../../resources/productions/mysql-8.4.7.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql847)));
+
+        self::assertSame('Undefined CONDITION: absent', $rule->diagnostic(new Block([], [new Signal(new ConditionName(new Name('absent')))]), new ParameterList([]))?->message());
+        self::assertNull($rule->diagnostic(new Block(), new ParameterList([])));
+    }
+
+    public function testBeforeKeepsAnOpenNestedScope(): void
+    {
+        $sql = "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN SIGNAL c; SIGNAL SQLSTATE '00000'; END; END";
+        $end = strpos($sql, "'00000'");
+        self::assertNotFalse($end);
+        $rule = new InputPrefix(new Lowering(Productions::load(__DIR__ . '/../../../../../resources/productions/mysql-8.4.7.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql847)));
+
+        self::assertNull($rule->before((new MySqlParser('mysql-8.4.7'))->parse($sql), $end + 7));
+    }
+}

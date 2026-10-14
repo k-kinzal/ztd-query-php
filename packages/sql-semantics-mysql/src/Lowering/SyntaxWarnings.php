@@ -53,7 +53,7 @@ final class SyntaxWarnings
                     return;
                 }
                 $replication = new Replication\SyntaxDeprecations();
-                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering);
+                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering);
                 foreach ($notice === null ? (new Type\SyntaxNotices())->completed($node, $lowering) : [$notice] as $condition) {
                     $range = $ranges->span($node, true);
                     if ($range !== null) {
@@ -67,5 +67,22 @@ final class SyntaxWarnings
         }
 
         return $warnings;
+    }
+
+    /**
+     * Finds the first rejected condition operand of a parsed input, without deriving an operation.
+     */
+    public function rejected(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
+    {
+        foreach ($tree->find('sqlstate') as $condition) {
+            $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
+            try {
+                (new Routine\Condition\ConditionRule($lowering))->value($condition);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
+            }
+        }
+
+        return null;
     }
 }

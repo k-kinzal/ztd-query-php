@@ -336,7 +336,7 @@ final class Errors
             $diagnostic instanceof UnknownSystemVariable => $this->unknownVariable($diagnostic, $session->settings()->legacy()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable => AdministrationError::VariableIsNotStruct->error($diagnostic->name),
             $diagnostic instanceof VariableMisuse => new SqlError(ErrorNumbers::from($diagnostic->rule->code()), $diagnostic->message()),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem => (new \MySqlMemory\Error\ProgramErrors())->error($diagnostic),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem => (new \MySqlMemory\Error\ProgramErrors())->error($diagnostic, $session->settings()->release()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly => StatementError::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesShadow => ProgramError::VariableShadow->error('names'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesExpression => StatementError::ParseError->error('', 1),

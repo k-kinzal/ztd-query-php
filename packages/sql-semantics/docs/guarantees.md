@@ -65,6 +65,7 @@ Each outcome has its own class, so a caller can tell them apart:
 | Outcome | Class |
 |---------|-------|
 | The text is outside the grammar of the release | `AnalysisException` |
+| An input operand violates a semantic constructor domain | `Construction\RejectedInput` |
 | The SQL is grammatical but semantically wrong | a successful operation with diagnostics |
 | A declaration, signature, parameter value or session value is missing | a successful operation with `Dependent` facts naming it |
 | A rule is not implemented | `ImplementationGap` |
@@ -148,3 +149,5 @@ See the [PostgreSQL package](https://github.com/k-kinzal/ztd-query-php/blob/main
 See the [SQLite package](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-sqlite/README.md#limitations).
 
 MySQL statement constructors also check composition before returning. The same check applies to composite expressions. Contradictory lexical requirements cannot coexist in a single structure: for example, one NOT expression requiring HIGH_NOT_PRECEDENCE and another requiring its absence. The check also rejects known combinations of features belonging to disjoint grammar generations. These are intrinsic structural constraints, not an execution certificate. Matching the structure to a particular release and session mode remains necessary; the composition rules do not yet enumerate every release constraint.
+
+SQLSTATE values require five uppercase letters or digits and exclude success class `00`. An invalid direct constructor input raises `InvalidConstruction`; SQL lowering raises `Construction\RejectedInput` with the same domain failure represented as a typed diagnostic and integer operand end offset. It does not publish an invalid statement or delegate this invariant to its consumer. Name resolution and execution-state failures remain separate. This is an operand invariant, not a test of whether a statement can execute in a particular database.

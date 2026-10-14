@@ -42,10 +42,6 @@ final class SignalTest extends TestCase
      */
     public static function providerDeriveStatementReportsTheBrokenRule(): iterable
     {
-        yield 'success value' => ["SIGNAL SQLSTATE '00000'", ProgramRule::BadSqlState, "Bad SQLSTATE: '00000'"];
-        yield 'success class' => ["SIGNAL SQLSTATE '00123'", ProgramRule::BadSqlState, "Bad SQLSTATE: '00123'"];
-        yield 'short value' => ["SIGNAL SQLSTATE '4500'", ProgramRule::BadSqlState, "Bad SQLSTATE: '4500'"];
-        yield 'lower-case letter' => ["SIGNAL SQLSTATE '4500a'", ProgramRule::BadSqlState, "Bad SQLSTATE: '4500a'"];
         yield 'name without declaration' => ['SIGNAL gone', ProgramRule::UndefinedCondition, 'Undefined CONDITION: gone'];
         yield 'item set twice' => ["SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'", ProgramRule::DuplicateSignalItem, "Duplicate condition information item 'MESSAGE_TEXT'"];
     }
@@ -98,10 +94,6 @@ final class SignalTest extends TestCase
         yield 'name without declaration' => [
             'CREATE PROCEDURE p() BEGIN SIGNAL gone; END',
             ['Undefined CONDITION: gone'],
-        ];
-        yield 'success class' => [
-            "CREATE PROCEDURE p() BEGIN SIGNAL SQLSTATE '00123'; END",
-            ["Bad SQLSTATE: '00123'"],
         ];
         yield 'item set twice' => [
             "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MYSQL_ERRNO = 1, MESSAGE_TEXT = 'a', MYSQL_ERRNO = 2; END",

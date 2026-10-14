@@ -225,6 +225,10 @@ final class Lowering
      */
     public function statements(Node $input): array
     {
+        $rejection = (new SyntaxWarnings())->rejected($input, $this->profile);
+        if ($rejection !== null) {
+            throw $rejection;
+        }
         $this->hints = (new HintReader($this->profile->grammar, $this->profile->lexical->ansiQuotes))->comments($input);
         $form = $this->productions->form($input);
         Check::invariant(!isset(self::SELECTED[$form->signature]), 'A grammar selector entry is not reachable from SQL text: ' . $form->signature);

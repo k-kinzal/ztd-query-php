@@ -39,6 +39,7 @@ interface Platform
      *
      * @param \SqlSemantics\Construction\Origins|null $origins The optional recorder for original input locations
      * @return list<Statement>
+     * @throws \SqlSemantics\Construction\RejectedInput When an operand is outside a semantic constructor domain
      */
     public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null): array;
 

@@ -34,6 +34,17 @@ final class ProgramErrorsTest extends TestCase
         self::assertSame(["'d.t' is not VIEW", "Unknown table 'e.v'"], [$errors->relation(new WrongRelationKind(new QualifiedName(new Name('t')), KindRefusal::NotView), 'd')->getMessage(), $errors->relation(new WrongRelationKind(new QualifiedName(new Name('v'), new Name('e')), KindRefusal::UnknownTable), 'd')->getMessage()]);
     }
 
+    public function testErrorFormatsRejectedConditionBytesForTheRelease(): void
+    {
+        $errors = new ProgramErrors();
+        $unicode = new ProgramProblem(ProgramRule::BadSqlState, 'é猫Ω😀');
+
+        self::assertSame("Bad SQLSTATE: 'A'", $errors->error(new ProgramProblem(ProgramRule::BadSqlState, "A\0AAA"))->getMessage());
+        self::assertSame("Bad SQLSTATE: 'é猫Ω'", $errors->error($unicode, \SqlSemantics\Contract\GrammarRelease::MySql5744)->getMessage());
+        self::assertSame("Bad SQLSTATE: 'é猫Ω😀'", $errors->error($unicode, \SqlSemantics\Contract\GrammarRelease::MySql847)->getMessage());
+        self::assertSame('é猫Ω😀', $unicode->subject);
+    }
+
     public function testCodesHoldEveryRule(): void
     {
         self::assertSame(array_map(static fn (ProgramRule $rule): string => $rule->name, ProgramRule::cases()), array_keys(ProgramErrors::CODES));

@@ -61,7 +61,7 @@ final class SignalCommand implements Command
     public static function resignal(Resignal $statement): self
     {
         $names = array_map(static fn ($item): string => $item->name->value, $statement->items);
-        $valid = ($statement->condition === null || ($statement->condition instanceof SqlState && $statement->condition->valid())) && count(array_unique($names)) === count($names);
+        $valid = ($statement->condition === null || $statement->condition instanceof SqlState) && count(array_unique($names)) === count($names);
 
         return new self(!$valid);
     }

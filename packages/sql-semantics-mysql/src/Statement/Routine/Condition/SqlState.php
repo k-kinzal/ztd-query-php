@@ -12,15 +12,15 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * An SQLSTATE value: `SQLSTATE [VALUE] 'xxxxx'`.
  *
- * The optional word VALUE carries no meaning and is not kept. A value that
- * is not five digits or upper-case letters, or that begins with `00`, is
- * still structured; the statement that holds it reports it.
+ * The optional word VALUE carries no meaning and is not kept. Construction
+ * requires five digits or upper-case letters and excludes the success class
+ * `00`. SQL lowering reports an invalid operand as RejectedInput.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html.
  *
  * @visibility public
  * @example Checking the form of an SQLSTATE value
- *     $text = new \SqlSemantics\Platform\MySql\Statement\Literal\Text('00000');
- *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState($text))->valid() // => false
+ *     $text = new \SqlSemantics\Platform\MySql\Statement\Literal\Text('45000');
+ *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState($text))->valid() // => true
  */
 final class SqlState implements Condition
 {
@@ -32,6 +32,7 @@ final class SqlState implements Condition
     public function __construct(public readonly Text $state)
     {
         Check::input($state->radix === null, 'An SQLSTATE value is written as a quoted string.');
+        Check::input(self::accepts($state->value), 'An SQLSTATE value has five uppercase letters or digits and excludes class 00.');
     }
 
     /**
@@ -39,7 +40,15 @@ final class SqlState implements Condition
      */
     public function valid(): bool
     {
-        return preg_match('/\A[0-9A-Z]{5}\z/', $this->state->value) === 1 && !str_starts_with($this->state->value, '00');
+        return self::accepts($this->state->value);
+    }
+
+    /**
+     * Answers whether a decoded string belongs to the SQLSTATE value domain.
+     */
+    public static function accepts(string $value): bool
+    {
+        return preg_match('/\A[0-9A-Z]{5}\z/', $value) === 1 && !str_starts_with($value, '00');
     }
 
     /**

@@ -36,21 +36,45 @@ final class Encoding
      * Repairs each invalid byte while retaining complete UTF-8 characters.
      *
      * @param bool $packet Whether an error packet uses the byte's Latin-1 code point instead of '?'
+     * @param bool $threeByte Whether the source is the diagnostic system charset, which excludes four-byte characters
      */
-    public static function repair(string $text, bool $packet = false): string
+    public static function repair(string $text, bool $packet = false, bool $threeByte = false): string
     {
+        $supplementary = $threeByte ? '' : '|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2}';
+
         return (string) preg_replace_callback(
-            '/[\x00-\x7F]+|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE-\xEF][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2}|([\x80-\xFF])/',
+            '/[\x00-\x7F]+|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE-\xEF][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]' . $supplementary . '|([\x80-\xFF])/',
             static fn (array $match): string => !isset($match[1]) ? $match[0] : ($packet ? mb_convert_encoding($match[1], 'UTF-8', 'ISO-8859-1') : '?'),
             $text,
         );
     }
 
     /**
-     * Encodes an error message in the result character set after repairing cut bytes.
+     * Encodes a system error message, escaping code points absent from the result charset.
      */
     public static function packet(string $text, ?string $results = null): string
     {
-        return CharsetEncoding::convert(self::repair($text, true), Charset::known('utf8mb4'), Charset::named($results ?? 'utf8mb4') ?? Charset::known('utf8mb4'));
+        $target = Charset::named($results ?? 'utf8mb4') ?? Charset::known('utf8mb4');
+        if ($target->name === 'binary') {
+            return $text;
+        }
+        $source = Charset::known('utf8mb4');
+        $encoded = '';
+        foreach (mb_str_split(self::repair($text, true, true), 1, 'UTF-8') as $character) {
+            $converted = CharsetEncoding::convert($character, $source, $target);
+            $encoded .= $converted === '?' && $character !== '?' ? sprintf('\\%04X', mb_ord($character, 'UTF-8')) : $converted;
+        }
+
+        return $encoded;
+    }
+
+    /**
+     * Encodes a stored condition using replacement characters; binary results retain its bytes.
+     */
+    public static function condition(string $text, ?string $results = null): string
+    {
+        $target = Charset::named($results ?? 'utf8mb3') ?? Charset::known('utf8mb3');
+
+        return $target->name === 'binary' ? $text : CharsetEncoding::convert(self::repair($text, false, true), Charset::known('utf8mb3'), $target);
     }
 }

@@ -152,6 +152,7 @@ final class Semantics
      * @param string|Node $sql The SQL text, or the tree parser() produced for it
      * @param list<Table|Operation>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand violates a semantic constructor domain
      * @throws AnalysisException When the SQL is outside the selected grammar
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the context belongs to another language profile
      */
@@ -193,6 +194,7 @@ final class Semantics
      * @param list<Table|Operation>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
      * @return list<Operation>
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand violates a semantic constructor domain
      * @throws AnalysisException When a statement is outside the selected grammar
      */
     public function analyzeAll(string $sql, array|AnalysisContext|null $context = null): array

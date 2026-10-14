@@ -187,11 +187,11 @@ final class Syntax
      *
      * @throws SqlError When a temporal literal holds no value of its form
      */
-    public function temporals(Node $tree, SqlModes $modes, ?Session $session = null, string $statement = ''): void
+    public function temporals(Node $tree, SqlModes $modes, ?Session $session = null, string $statement = '', int $end = PHP_INT_MAX): void
     {
         foreach ($tree->find('temporal_literal') as $literal) {
             $tokens = $literal->tokens();
-            if (count($tokens) !== 2) {
+            if (count($tokens) !== 2 || $tokens[0]->offset >= $end) {
                 continue;
             }
             $form = match ($tokens[0]->name) {

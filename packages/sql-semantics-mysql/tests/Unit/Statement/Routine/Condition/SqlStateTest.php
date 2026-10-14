@@ -24,27 +24,46 @@ use SqlSemantics\Rendering\Output;
 final class SqlStateTest extends TestCase
 {
     /**
-     * @return iterable<string, array{string, bool}>
+     * @return iterable<string, array{string}>
      */
     public static function providerValidTellsTheFormOfTheValue(): iterable
     {
-        yield 'user-defined exception' => ['45000', true];
-        yield 'warning' => ['01000', true];
-        yield 'letters and digits' => ['42S02', true];
-        yield 'not found' => ['02000', true];
-        yield 'success' => ['00000', false];
-        yield 'success class' => ['00123', false];
-        yield 'four characters' => ['4500', false];
-        yield 'six characters' => ['450000', false];
-        yield 'lower-case letter' => ['4500a', false];
-        yield 'punctuation' => ['45-00', false];
-        yield 'empty' => ['', false];
+        yield 'user-defined exception' => ['45000'];
+        yield 'warning' => ['01000'];
+        yield 'letters and digits' => ['42S02'];
+        yield 'not found' => ['02000'];
     }
 
     #[DataProvider('providerValidTellsTheFormOfTheValue')]
-    public function testValidTellsTheFormOfTheValue(string $value, bool $expected): void
+    public function testValidTellsTheFormOfTheValue(string $value): void
     {
-        self::assertSame($expected, (new SqlState(new Text($value)))->valid());
+        self::assertTrue(SqlState::accepts($value));
+        self::assertTrue((new SqlState(new Text($value)))->valid());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerInvalidValues(): iterable
+    {
+        yield 'success' => ['00000'];
+        yield 'success class' => ['00123'];
+        yield 'four characters' => ['4500'];
+        yield 'six characters' => ['450000'];
+        yield 'lower-case letter' => ['4500a'];
+        yield 'punctuation' => ['45-00'];
+        yield 'empty' => [''];
+        yield 'multibyte' => ['45猫00'];
+        yield 'embedded nul' => ["45\0AA"];
+    }
+
+    #[DataProvider('providerInvalidValues')]
+    public function testRefusesValuesOutsideTheSqlStateDomain(string $value): void
+    {
+        self::assertFalse(SqlState::accepts($value));
+        $this->expectExceptionMessage('An SQLSTATE value has five uppercase letters or digits and excludes class 00.');
+
+        new SqlState(new Text($value));
     }
 
     public function testRenderWritesTheKeywordAndTheQuotedValue(): void
@@ -90,5 +109,10 @@ final class SqlStateTest extends TestCase
         $this->expectExceptionMessage('An SQLSTATE value is written as a quoted string.');
 
         new SqlState(new Text('0101', Radix::Bit));
+    }
+    public function testAcceptsNamesTheSqlStateOperandDomain(): void
+    {
+        self::assertTrue(SqlState::accepts('42S02'));
+        self::assertFalse(SqlState::accepts('00ABC'));
     }
 }

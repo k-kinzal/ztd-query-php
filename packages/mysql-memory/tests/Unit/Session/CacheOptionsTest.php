@@ -188,4 +188,16 @@ final class CacheOptionsTest extends TestCase
 
         self::assertSame(['v', null, null], [(new CacheOptions())->variable($tokens, 100, true, true, $session), (new CacheOptions())->variable($tokens, 100, false, true, $session), (new CacheOptions())->variable($tokens, 100, true, false, $session)]);
     }
+
+    public function testConditionReportsARejectedOperandBeforeLaterSyntax(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $error = new SqlError(StatementError::ParseError, 'later syntax');
+
+        $condition = (new CacheOptions())->condition($error, "SIGNAL SQLSTATE '00000' SET MESSAGE_TEXT = +", $session);
+
+        self::assertSame(1407, $condition?->getCode());
+        self::assertTrue($condition->recorded);
+        self::assertNull((new CacheOptions())->condition($error, "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = +", $session));
+    }
 }
