@@ -74,12 +74,22 @@ final class SyntaxWarnings
      */
     public function rejected(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
     {
-        foreach ($tree->find('sqlstate') as $condition) {
-            $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
-            try {
-                (new Routine\Condition\ConditionRule($lowering))->value($condition);
-            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
+        $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
+        $pending = [$tree];
+        while ($pending !== []) {
+            $condition = array_pop($pending);
+            if (in_array($condition->name, ['sp_cond', 'sqlstate'], true)) {
+                try {
+                    (new Routine\Condition\ConditionRule($lowering))->value($condition);
+                } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                    return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
+                }
+                continue;
+            }
+            foreach (array_reverse($condition->children) as $child) {
+                if ($child instanceof Node) {
+                    $pending[] = $child;
+                }
             }
         }
 

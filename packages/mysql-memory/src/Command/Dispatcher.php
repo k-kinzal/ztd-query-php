@@ -246,11 +246,11 @@ final class Dispatcher
     }
 
     /**
-     * Tells whether a statement creates a stored program whose body declares a handler, which the server creates leaving the diagnostics area as it was.
+     * Tells whether a statement creates a stored program whose body declares a condition or handler, which the server creates leaving the diagnostics area as it was.
      */
     public static function handles(Statement $statement): bool
     {
-        return self::program($statement) && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, MySql\Routine\Program\HandlerDeclaration::class) !== [];
+        return self::program($statement) && ((new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, MySql\Routine\Program\HandlerDeclaration::class) !== [] || (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, MySql\Routine\Program\ConditionDeclaration::class) !== []);
     }
 
     /**

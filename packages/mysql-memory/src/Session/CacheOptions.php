@@ -83,7 +83,7 @@ final class CacheOptions
     }
 
     /**
-     * Answers a typed condition refusal completed before a later legacy syntax error.
+     * Answers a typed condition refusal completed before a later syntax error.
      */
     public function condition(SqlError $error, string $statement, Session $session): ?SqlError
     {

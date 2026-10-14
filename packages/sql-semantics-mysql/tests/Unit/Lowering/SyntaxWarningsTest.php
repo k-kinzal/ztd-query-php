@@ -108,4 +108,22 @@ final class SyntaxWarningsTest extends TestCase
         self::assertSame("Bad SQLSTATE: '00000'", $failure->problem->message());
         self::assertNull((new SyntaxWarnings())->rejected($parser->parse("SIGNAL SQLSTATE '45000'"), $profile));
     }
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerConditionOrder(): iterable
+    {
+        yield 'code before state' => ["CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0; SIGNAL SQLSTATE '00000'; END", "Incorrect CONDITION value: '0'"];
+        yield 'state before nested code' => ["CREATE PROCEDURE p() BEGIN SIGNAL SQLSTATE '00000'; BEGIN DECLARE c CONDITION FOR 0; END; END", "Bad SQLSTATE: '00000'"];
+        yield 'duplicate before code' => ['CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE x INT; DECLARE c CONDITION FOR 0; END', 'Duplicate variable: x'];
+    }
+
+    #[DataProvider('providerConditionOrder')]
+    public function testRejectedPreservesOrderAcrossConditionKinds(string $sql, string $expected): void
+    {
+        $failure = (new SyntaxWarnings())->rejected((new MySqlParser('mysql-8.4.7'))->parse($sql), new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertSame($expected, $failure?->problem->message());
+    }
+
 }

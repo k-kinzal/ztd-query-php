@@ -45,7 +45,7 @@ final class ConditionRule
      * Lowers an error code or an SQLSTATE value: a node of `sp_cond` or `sqlstate`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When an SQLSTATE operand is outside its constructor domain
+     * @throws RejectedInput When a condition operand is outside its constructor domain
      */
     public function value(Node $condition): ErrorCode|SqlState
     {
@@ -54,7 +54,12 @@ final class ConditionRule
             $form = $this->lowering->form($form->node(0));
         }
         if ($form->signature === 'sp_cond: ulong_num') {
-            return new ErrorCode($this->lowering->numbers->numeral($form->node(0)));
+            $code = $this->lowering->numbers->numeral($form->node(0));
+            if (!ErrorCode::accepts($code)) {
+                throw new RejectedInput(new ProgramProblem(ProgramRule::ZeroErrorCode), (new SourceRanges())->span($condition)[1] ?? 0);
+            }
+
+            return new ErrorCode($code);
         }
         if ($form->signature !== 'sqlstate: SQLSTATE_SYM opt_value TEXT_STRING_literal') {
             throw ImplementationGap::production($form);

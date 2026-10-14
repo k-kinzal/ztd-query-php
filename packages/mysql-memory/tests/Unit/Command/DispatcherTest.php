@@ -239,6 +239,15 @@ final class DispatcherTest extends TestCase
         self::assertSame([true, false], [Dispatcher::program($semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET @x = 1')->statement), Dispatcher::program($semantics->analyze('SELECT 1')->statement)]);
     }
 
+    public function testHandlesKeepsDiagnosticsForANamedConditionDeclaration(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CREATE PROCEDURE d.p() BEGIN BEGIN DECLARE c CONDITION FOR 1; END; END')->statement;
+
+        self::assertTrue(Dispatcher::handles($statement));
+        self::assertFalse((new Dispatcher())->command($statement)->clearsDiagnostics());
+    }
+
     public function testCommandOfAProgramDeclaringAHandlerKeepsTheDiagnosticsArea(): void
     {
         $session = (new Instance())->connect();

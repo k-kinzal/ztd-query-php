@@ -34,6 +34,9 @@ final class ModernWarningsTest extends TestCase
      */
     public static function providerFailures(): iterable
     {
+        yield 'routine database before zero code and syntax' => ['CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0; SELECT +; END', 1046, [1046]];
+        yield 'routine database before state and syntax' => ["CREATE PROCEDURE p() BEGIN SIGNAL SQLSTATE '00000' SET MESSAGE_TEXT = +; END", 1046, [1046]];
+        yield 'qualified routine zero code before syntax' => ['CREATE PROCEDURE d.p() BEGIN DECLARE c CONDITION FOR 0; SELECT +; END', 1525, [1525]];
         yield 'binary stops after refused operand' => ['SELECT BINARY CAST(1 AT LOCAL AS SIGNED),?', 1235, [1235, 1287]];
         yield 'duplicate common table aborts' => ['WITH x AS (SELECT !1), x AS (SELECT BINARY 2) SELECT !?', 1066, [1287, 1287, 1066]];
         yield 'collation before duplicate' => ['WITH x AS (SELECT 1 COLLATE missing), x AS (SELECT 2) SELECT ?', 1273, [1273, 1066]];

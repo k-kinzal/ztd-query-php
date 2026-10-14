@@ -145,7 +145,7 @@ final class Handlers
         $class = substr($state, 0, 2);
 
         return match (true) {
-            $condition instanceof ErrorCode => ($condition->code->hexadecimal ? (int) hexdec($condition->code->text) : (int) $condition->code->text) === $number ? 4 : 0,
+            $condition instanceof ErrorCode => $condition->number() === $number ? 4 : 0,
             $condition instanceof SqlState => $condition->state->value === $state ? 3 : 0,
             $condition instanceof GeneralCondition => match ($condition->class) {
                 ConditionClass::NotFound => $class === '02' ? 1 : 0,

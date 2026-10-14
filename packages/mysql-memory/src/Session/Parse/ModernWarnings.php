@@ -37,6 +37,10 @@ final class ModernWarnings
         if ($error->recorded || $error->error !== StatementError::ParseError || $session->settings()->legacy()) {
             return $error;
         }
+        $condition = (new CacheOptions())->condition($error, $statement, $session);
+        if ($condition !== null) {
+            return $condition;
+        }
         $parser = $session->semantics()->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
         $end = (new CacheOptions())->cause($error)?->token->offset ?? strlen($statement);

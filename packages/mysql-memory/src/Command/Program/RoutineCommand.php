@@ -47,7 +47,7 @@ use SqlSemantics\Statement\Operation;
 final class RoutineCommand implements Command
 {
     /**
-     * @param bool $clears Whether the statement starts with an empty diagnostics area: a program whose body declares a handler is created leaving the area as it was (verified on a live 8.4 server)
+     * @param bool $clears Whether the statement starts with an empty diagnostics area: a program whose body declares a condition or handler is created leaving the area as it was (verified on a live 8.4 server)
      */
     public function __construct(public readonly bool $clears = true)
     {

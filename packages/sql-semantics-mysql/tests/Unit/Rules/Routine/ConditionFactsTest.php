@@ -155,10 +155,6 @@ final class ConditionFactsTest extends TestCase
      */
     public static function providerValueReportsTheErrorCodeZero(): iterable
     {
-        yield 'zero in a condition in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'zero in a handler in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 0 BEGIN END; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'a decimal below one in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.7; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'a hexadecimal zero in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0x00; END', ["Incorrect CONDITION value: '0'"]];
         yield 'a floating number in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1e2; END', []];
     }
 

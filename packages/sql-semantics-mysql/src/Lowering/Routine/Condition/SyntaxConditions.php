@@ -20,11 +20,11 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 final class SyntaxConditions
 {
     /**
-     * Answers the typed refusal of a completed SQLSTATE, or null for accepted operands.
+     * Answers the typed refusal of a completed condition operand, or null for accepted operands.
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
-        if ($node->name !== 'sqlstate') {
+        if (!in_array($node->name, ['sqlstate', 'sp_cond'], true)) {
             return null;
         }
         try {
