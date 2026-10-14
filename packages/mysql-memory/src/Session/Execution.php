@@ -81,15 +81,7 @@ final class Execution
         $session = $this->session;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $this->area($operation, $command);
-        $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
-        if ($read && !$session->replayed) {
-            $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
-        }
-        try {
-            (new Problem\Reading())->read($operation, $session);
-        } catch (SqlError $error) {
-            throw (new Problem\Precision())->legacy($error, $session->settings()->release());
-        }
+        $late = $this->reading($operation, $read);
         State\StatementCounters::evaluated($operation->statement, $session);
         $this->access($operation->statement, $context);
         $hints->report($session);
@@ -125,6 +117,32 @@ final class Execution
         $last = $reply instanceof \MySqlMemory\Result\Batch ? ($reply->replies[count($reply->replies) - 1] ?? null) : $reply;
         $session->variables->rowCount = $last instanceof Completion ? $last->affectedRows : -1;
         return $reply;
+    }
+
+    /**
+     * Reports initial conditions and returns the warnings deferred until access checks.
+     *
+     * A legacy table target needs a database before later definition conditions are
+     * read. Stored-program execution and replay keep their existing notice policy.
+     *
+     * @return array<int, \SqlSemantics\Statement\Fact\Warning> Deferred notices with their original indexes
+     * @throws SqlError When an initial condition rejects the statement
+     */
+    public function reading(Operation $operation, bool $read): array
+    {
+        $session = $this->session;
+        (new Access\TableCreation())->database($operation->statement, $session);
+        $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
+        if ($read && !$session->replayed) {
+            $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
+        }
+        try {
+            (new Problem\Reading())->read($operation, $session);
+        } catch (SqlError $error) {
+            throw (new Problem\Precision())->legacy($error, $session->settings()->release());
+        }
+
+        return $late;
     }
 
     /**
@@ -204,6 +222,9 @@ final class Execution
                 continue;
             }
             $session->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
+            if ($warning instanceof Deprecation && $warning->aborts) {
+                break;
+            }
         }
         foreach ($session->hinted as [$message, $leading]) {
             if (!$leading) {

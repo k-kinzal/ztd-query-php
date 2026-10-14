@@ -7,12 +7,14 @@ namespace Tests\Property\Structure;
 use Fuzz\Structure\Choices;
 use Fuzz\Structure\Execution;
 use Fuzz\Structure\Profiles;
+use JsonException;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use ReflectionException;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
@@ -29,6 +31,35 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class ProfileTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerRepairedModels(): iterable
+    {
+        yield 'condition operand' => ['e91a273aff1ba87d6d5a79bfff108f6d', 153];
+        yield 'create table options' => ['e91a273aff1ba87d6d5a79bfff108f6d', 298];
+        yield 'late subquery limit' => ['6a7d1bc45f092c61dc9b56b4d0676cd1', 121];
+        yield 'relay log position' => ['6a7d1bc45f092c61dc9b56b4d0676cd1', 609];
+    }
+
+    /**
+     * Replays type-driven construction at formerly incompatible model inputs.
+     *
+     * @throws JsonException When a semantic inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    #[DataProvider('providerRepairedModels')]
+    public function testSelectFindsAProfileForTheConstructedStatement(string $seed, int $index): void
+    {
+        $catalogue = new \Fuzz\Structure\Catalogue();
+        $choices = new Choices($seed . ':' . $index);
+        $class = $choices->one($catalogue->roots());
+        $node = (new \Fuzz\Structure\Construction($choices, $catalogue, new \Fuzz\Structure\Metadata()))->object($class, 6);
+        self::assertTrue($node instanceof \SqlSemantics\Platform\MySql\Statement\Statement || $node instanceof \SqlSemantics\Statement\Scalar);
+
+        self::assertSame('mysql', (new Profiles())->select($node)->grammar->database());
+    }
+
     /**
      * @return iterable<string, array{string, string}>
      */

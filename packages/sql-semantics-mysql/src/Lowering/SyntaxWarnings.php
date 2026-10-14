@@ -53,12 +53,12 @@ final class SyntaxWarnings
                     return;
                 }
                 $replication = new Replication\SyntaxDeprecations();
-                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering);
-                if ($notice !== null) {
+                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering);
+                foreach ($notice === null ? (new Type\SyntaxNotices())->completed($node, $lowering) : [$notice] as $condition) {
                     $range = $ranges->span($node, true);
                     if ($range !== null) {
-                        $warnings[] = [$range[1], $notice];
-                        $aborted = $notice instanceof ParseFailure && $notice->aborts;
+                        $warnings[] = [$range[1], $condition];
+                        $aborted = ($condition instanceof ParseFailure || $condition instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) && $condition->aborts;
                     }
                 }
             });

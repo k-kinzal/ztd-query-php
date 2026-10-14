@@ -1353,6 +1353,7 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecation": {
+        "aborts": "bool",
         "construct": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecated",
         "text": "string"
     },
@@ -1892,7 +1893,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\ConditionDiagnostics": {
         "items": "array",
-        "number": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableAssignment"
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\DiagnosticsArea": {
         "name": "string",
@@ -1929,7 +1930,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SignalItem": {
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionItemName",
-        "value": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableAssignment"
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SqlState": {
         "state": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"

@@ -70,6 +70,10 @@ final class ModernWarnings
         foreach ($notices as $notice) {
             if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) {
                 $session->diagnostics->warning($notice->code(), $notice->message());
+                if ($notice->aborts) {
+                    $aborted = true;
+                    break;
+                }
                 continue;
             }
             if ($notice instanceof Deprecated) {

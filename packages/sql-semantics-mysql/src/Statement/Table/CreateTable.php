@@ -137,6 +137,7 @@ final class CreateTable implements Statement, Relation
                 (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation);
             }
         }
+        (new ElementFacts())->options($this->options, $derivation);
         $output = $this->query === null ? null : $derivation->query($this->query->query, $derivation->environment());
         $table = (new TableDeclaration())->table($this, $output, $derivation);
         $derivation->declare($table);

@@ -319,7 +319,7 @@ final class Errors
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat => StatementError::UnknownExplainFormat->error($diagnostic->name->value),
             $diagnostic instanceof BucketCountOutOfRange => DataError::DataOutOfRange->error('Number of buckets', 'ANALYZE TABLE'),
-            $diagnostic instanceof UnknownSystemVariable => new SqlError(AdministrationError::UnknownSystemVariable, $diagnostic->message(), following: $diagnostic->assigned && !$diagnostic->structured && $session->settings()->legacy() ? [[AdministrationError::UnknownSystemVariable->value, $diagnostic->message()]] : []),
+            $diagnostic instanceof UnknownSystemVariable => $this->unknownVariable($diagnostic, $session->settings()->legacy()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable => AdministrationError::VariableIsNotStruct->error($diagnostic->name),
             $diagnostic instanceof VariableMisuse => new SqlError(ErrorNumbers::from($diagnostic->rule->code()), $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem => (new \MySqlMemory\Error\ProgramErrors())->error($diagnostic),
@@ -329,6 +329,17 @@ final class Errors
             \MySqlMemory\Command\Admin\Refusals::handles($diagnostic) => (new \MySqlMemory\Command\Admin\Refusals())->error($diagnostic, $statement, $session->text, $session->settings()->legacy()),
             default => null,
         };
+    }
+
+    /**
+     * Formats the retained variable name within the server diagnostic's byte limit.
+     */
+    public function unknownVariable(UnknownSystemVariable $diagnostic, bool $legacy): SqlError
+    {
+        $name = (new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $diagnostic->name, 2)[0], 64, $legacy);
+        $message = AdministrationError::UnknownSystemVariable->message($name);
+
+        return new SqlError(AdministrationError::UnknownSystemVariable, $message, following: $diagnostic->assigned && !$diagnostic->structured && $legacy ? [[AdministrationError::UnknownSystemVariable->value, $message]] : []);
     }
 
     /**

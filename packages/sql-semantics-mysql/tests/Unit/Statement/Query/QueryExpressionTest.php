@@ -32,6 +32,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class QueryExpressionTest extends TestCase
 {
+    public function testRejectsASecondOrderingAfterAnOrderedDualBlock(): void
+    {
+        $body = new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), orderBy: [new OrderItem(new NumberLiteral('1.5'))]);
+        $this->expectExceptionMessage('A second ordering after an ordered block requires an ordinary FROM relation.');
+        new QueryExpression(null, $body, [new OrderItem(new NumberLiteral('1.5'))]);
+    }
+
     public function testDeriveStatementRecordsTheRowsOfTheBody(): void
     {
         $semantics = new Semantics(Dialect::MySql);

@@ -63,6 +63,7 @@ final class ModernFormsTest extends TestCase
         self::assertTrue($forms->requires(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect));
         self::assertFalse($forms->requires(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count));
         self::assertTrue($forms->requires(\SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Rollup));
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction()));
     }
 
     public function testLockingDistinguishesSimpleUpdateFromShare(): void

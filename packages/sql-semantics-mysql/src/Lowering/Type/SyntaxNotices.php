@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Lowering\Type;
+
+use SqlParser\Parser\Node;
+use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+
+/**
+ * Interprets completed character-type attributes before later malformed input.
+ *
+ * The attribute is lowered to its ordinary typed value. Full derivation and
+ * prefix lowering then use the same ordered warning rule. Unknown charset
+ * names can abort before the enclosing attribute completes.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class SyntaxNotices
+{
+    /**
+     * Returns warnings from the first completed occurrence of an attribute.
+     *
+     * @return list<Deprecated> The warnings supported by the input release
+     */
+    public function completed(Node $node, Lowering $lowering): array
+    {
+        if (in_array($node->name, ['ascii', 'unicode'], true)) {
+            $attribute = $lowering->types->parts->shorthand($node);
+        } elseif (in_array($node->name, ['opt_binary', 'opt_charset_with_opt_binary'], true)) {
+            $first = $node->children[0] ?? null;
+            if ($first instanceof Node && in_array($first->name, ['ascii', 'unicode'], true)) {
+                return [];
+            }
+            $attribute = $lowering->types->parts->charset($node);
+        } else {
+            return [];
+        }
+
+        return array_values(array_filter((new TypeNotices())->charsetWarnings($attribute), static fn (Deprecated $notice): bool => $notice->warnedIn($lowering->profile->grammar)));
+    }
+}

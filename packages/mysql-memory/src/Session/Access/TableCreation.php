@@ -17,9 +17,10 @@ use SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction;
 use SqlSemantics\Statement\Statement;
 
 /**
- * Validates CREATE TABLE ... START TRANSACTION and its restriction on following commands.
+ * Checks table-creation state and CREATE TABLE ... START TRANSACTION restrictions.
  *
- * These checks follow parse-time diagnostics and precede table and column resolution.
+ * The legacy default-database check precedes definition diagnostics. Transaction
+ * checks follow those diagnostics and precede table and column resolution.
  * Only BINLOG, COMMIT and ROLLBACK may run until the transaction ends. Verified on MySQL 8.4.7.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
@@ -27,6 +28,22 @@ use SqlSemantics\Statement\Statement;
  */
 final class TableCreation
 {
+    /**
+     * Checks the legacy default database before conditions from later definition clauses.
+     *
+     * MySQL 5.6 and 5.7 resolve an unqualified CREATE TABLE target before reading its
+     * options and query. Modern releases report those conditions first. Observed on
+     * isolated 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers.
+     *
+     * @throws SqlError When the legacy table target has no default database
+     */
+    public function database(Statement $statement, Session $session): void
+    {
+        if ($session->settings()->legacy() && $statement instanceof CreateTable && $statement->name->schema === null && $session->variables->database === '') {
+            throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+        }
+    }
+
     /**
      * Refuses statements outside the restricted transaction's command set.
      *

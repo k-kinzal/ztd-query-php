@@ -80,20 +80,41 @@ final class TypeNotices
      */
     public function charset(?CharsetAttribute $charset, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null): void
     {
-        if ($charset?->form === CharsetForm::Binary || $charset?->mark === BinaryMark::Leading) {
-            Deprecation::raise(Deprecated::BinaryAttribute, $derivation, $at);
+        foreach ($this->charsetWarnings($charset) as $notice) {
+            Deprecation::raise($notice, $derivation, $at);
         }
-        if ($charset?->charset !== null) {
-            Deprecation::charset($charset->charset->value, $derivation, $at);
+    }
+
+    /**
+     * Lists the shorthand notices in operand order, before applying a release profile.
+     *
+     * @return list<Deprecated> The ordered warnings of the typed attribute
+     */
+    public function charsetWarnings(?CharsetAttribute $charset): array
+    {
+        $notices = [];
+        if ($charset?->form === CharsetForm::Binary || $charset?->mark === BinaryMark::Leading) {
+            $notices[] = Deprecated::BinaryAttribute;
+        }
+        $named = match (strtolower($charset?->charset->value ?? '')) {
+            'utf8' => Deprecated::Utf8Alias,
+            'utf8mb3' => Deprecated::Utf8mb3,
+            'ucs2' => Deprecated::Ucs2,
+            default => null,
+        };
+        if ($named !== null) {
+            $notices[] = $named;
         }
         if ($charset?->form === CharsetForm::Ascii) {
-            Deprecation::raise(Deprecated::AsciiCharset, $derivation, $at);
+            $notices[] = Deprecated::AsciiCharset;
         }
         if ($charset?->form === CharsetForm::Unicode) {
-            Deprecation::raise(Deprecated::UnicodeCharset, $derivation, $at);
+            $notices[] = Deprecated::UnicodeCharset;
         }
         if ($charset?->mark === BinaryMark::Trailing) {
-            Deprecation::raise(Deprecated::BinaryAttribute, $derivation, $at);
+            $notices[] = Deprecated::BinaryAttribute;
         }
+
+        return $notices;
     }
 }

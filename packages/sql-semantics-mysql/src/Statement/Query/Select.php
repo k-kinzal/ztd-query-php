@@ -142,6 +142,7 @@ final class Select implements Query, Selection
         Check::input($late === null || $late->orderBy === [] || ($this->orderBy === [] && $limit === null), 'An ORDER BY written after a block that orders or limits its rows orders the rows of the block.');
         Check::input($late === null || $this->locking !== [] || $limit !== null, 'An ORDER BY or LIMIT of the block is written in place unless locking clauses or a LIMIT of the block precede it.');
         Check::input($late === null || ($into === null && $procedure === null), 'A block with a late ordering has no INTO or PROCEDURE ANALYSE.');
+        Check::input($late === null || $this->orderBy === [] || ($from !== null && !$from instanceof Dual), 'A late clause after an ordered block requires an ordinary FROM relation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

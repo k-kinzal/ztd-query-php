@@ -15,6 +15,12 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEve
 #[Medium]
 final class ShowBinlogEventsTest extends TestCase
 {
+    public function testValueRejectsHexadecimalPosition(): void
+    {
+        $this->expectExceptionMessage('A log event position uses decimal number syntax.');
+        new ShowBinlogEvents(position: new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3', true));
+    }
+
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW BINLOG EVENTS FROM 4');

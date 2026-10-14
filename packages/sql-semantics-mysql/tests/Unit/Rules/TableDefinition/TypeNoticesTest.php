@@ -24,6 +24,14 @@ use SqlSemantics\Statement\Fact\Warning;
 #[Medium]
 final class TypeNoticesTest extends TestCase
 {
+    public function testCharsetWarningsPreservesTheTypedAttributeOrder(): void
+    {
+        $attribute = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Unicode, mark: \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Leading);
+
+        self::assertSame([Deprecated::BinaryAttribute, Deprecated::UnicodeCharset], (new TypeNotices())->charsetWarnings($attribute));
+        self::assertSame([], (new TypeNotices())->charsetWarnings(null));
+    }
+
     public function testTypeWarnsAboutTheDeprecatedPartsOfEachColumnType(): void
     {
         $semantics = new Semantics(Dialect::MySql);

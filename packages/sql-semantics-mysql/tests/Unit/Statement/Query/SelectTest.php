@@ -403,6 +403,13 @@ final class SelectTest extends TestCase
         new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')), null, [], null, null, new LateOrdering([new OrderItem(new NumberLiteral('1.5'))]));
     }
 
+    public function testRejectsALateLimitAfterANoFromOrdering(): void
+    {
+        $this->expectExceptionMessage('A late clause after an ordered block requires an ordinary FROM relation.');
+        new Select([], [new SelectExpression(new NumberLiteral('1'))], orderBy: [new OrderItem(new NumberLiteral('1.5'))], limit: new RowLimit(new NumberLiteral('1')), late: new LateOrdering([], new RowLimit(new NumberLiteral('2'))));
+    }
+
+
     public function testDeriveStatementRefusesALateOrderingAtTheTop(): void
     {
         $select = new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')), null, [], null, null, new LateOrdering([], new RowLimit(new NumberLiteral('2'))));

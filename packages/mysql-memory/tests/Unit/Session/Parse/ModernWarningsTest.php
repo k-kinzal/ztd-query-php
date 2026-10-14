@@ -34,6 +34,10 @@ final class ModernWarningsTest extends TestCase
      */
     public static function providerFailures(): iterable
     {
+        yield 'binary stops after refused operand' => ['SELECT BINARY CAST(1 AT LOCAL AS SIGNED),?', 1235, [1235, 1287]];
+        yield 'duplicate common table aborts' => ['WITH x AS (SELECT !1), x AS (SELECT BINARY 2) SELECT !?', 1066, [1287, 1287, 1066]];
+        yield 'collation before duplicate' => ['WITH x AS (SELECT 1 COLLATE missing), x AS (SELECT 2) SELECT ?', 1273, [1273, 1066]];
+        yield 'type attributes before marker' => ['CREATE TABLE t(a TEXT BINARY ASCII, b INT DEFAULT ?)', 1064, [1287, 1287, 1064]];
         yield 'collation continues' => ['SELECT 1 COLLATE missing,?', 1273, [1273, 1064]];
         yield 'duplicates remain' => ['SELECT 1 COLLATE missing COLLATE missing,?', 1273, [1273, 1273, 1064]];
         yield 'interleaved warnings' => ['SELECT !1 COLLATE missing, BINARY 1,?', 1273, [1287, 1273, 1287, 1064]];

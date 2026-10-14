@@ -15,6 +15,12 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogE
 #[Medium]
 final class ShowRelaylogEventsTest extends TestCase
 {
+    public function testValueRejectsHexadecimalPosition(): void
+    {
+        $this->expectExceptionMessage('A log event position uses decimal number syntax.');
+        new ShowRelaylogEvents(position: new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3', true));
+    }
+
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SHOW RELAYLOG EVENTS IN 'r' LIMIT 1");

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
 
@@ -30,11 +29,12 @@ final class SignalItem implements \SqlSemantics\Statement\Node
 
     /**
      * @param ConditionItemName $name The item that is set; not RETURNED_SQLSTATE
-     * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable|VariableAssignment $value The value
+     * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable $value The value
      */
-    public function __construct(public readonly ConditionItemName $name, public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable|VariableAssignment $value)
+    public function __construct(public readonly ConditionItemName $name, public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable $value)
     {
         Check::input($name !== ConditionItemName::ReturnedSqlstate, 'RETURNED_SQLSTATE is set by the condition value, not by an item.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

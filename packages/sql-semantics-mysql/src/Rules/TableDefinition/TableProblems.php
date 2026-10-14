@@ -84,16 +84,11 @@ final class TableProblems
     }
 
     /**
-     * Reports explicit table and column collations that the selected release does not provide.
+     * Reports explicit column collations that the selected release does not provide.
      */
     public function collations(CreateTable $definition, Derivation $derivation): void
     {
         $names = [];
-        foreach ($definition->options as $option) {
-            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption) {
-                $names[] = $option->collation->name;
-            }
-        }
         foreach ($definition->elements as $element) {
             if (!$element instanceof ColumnDefinition) {
                 continue;

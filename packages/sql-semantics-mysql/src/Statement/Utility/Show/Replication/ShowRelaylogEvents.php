@@ -44,6 +44,7 @@ final class ShowRelaylogEvents implements Statement
     {
         \SqlSemantics\Diagnostic\Check::input($file === null || $file->radix === null, 'A relay log file name is quoted text.');
         \SqlSemantics\Diagnostic\Check::input($channel === null || $channel->radix === null, 'A replication channel is quoted text.');
+        \SqlSemantics\Diagnostic\Check::input($position === null || !$position->hexadecimal, 'A log event position uses decimal number syntax.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

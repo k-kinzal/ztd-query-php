@@ -76,6 +76,19 @@ final class ElementFactsTest extends TestCase
         self::assertSame(Nullability::NotNull, (new ElementFacts())->declaration($column)->nullability);
     }
 
+    public function testOptionsPreservesTheOrderOfAbortingNameFailures(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) CHARACTER SET missing COLLATE other AS SELECT BINARY 1');
+        $warnings = $create->facts->warnings;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warnings[0]->problem);
+        self::assertTrue($warnings[0]->aborts);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $warnings[1]->problem);
+        self::assertTrue($warnings[1]->aborts);
+    }
+
     public function testReferencesAnswersTheInlineReference(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT REFERENCES p (x))');

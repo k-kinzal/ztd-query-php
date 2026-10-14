@@ -23,7 +23,7 @@ final class SyntaxDeprecations
     /**
      * Answers a deprecation raised on completion of its grammar production.
      */
-    public function completed(Node $node, GrammarRelease $release): ?Deprecated
+    public function completed(Node $node, GrammarRelease $release): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|null
     {
         $first = $node->children[0] ?? null;
         $assignment = $node->children[$node->name === 'variable_aux' ? 1 : 2] ?? null;
@@ -34,6 +34,36 @@ final class SyntaxDeprecations
             default => null,
         };
 
+        if ($construct === Deprecated::BinaryOperator && $construct->warnedIn($release) && $release !== GrammarRelease::MySql8044 && $this->stopsBinary($node)) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($construct, aborts: true);
+        }
+
         return $construct !== null && $construct->warnedIn($release) ? $construct : null;
     }
+    /**
+     * Recognizes a BINARY operand that consists of AT LOCAL and optional grouping only.
+     * Arithmetic and other enclosing expressions remain distinct operands.
+     */
+    public function stopsBinary(Node $node): bool
+    {
+        $operand = $node->children[1] ?? null;
+        while ($operand instanceof Node) {
+            $first = $operand->children[0] ?? null;
+            if (count($operand->children) === 1 && $first instanceof Node) {
+                $operand = $first;
+                continue;
+            }
+            $last = $operand->children[2] ?? null;
+            if (count($operand->children) === 3 && $first instanceof Token && $first->text === '(' && $last instanceof Token && $last->text === ')') {
+                $operand = $operand->children[1];
+                continue;
+            }
+            $local = $operand->children[4] ?? null;
+
+            return $operand->name === 'simple_expr' && $first instanceof Token && $first->name === 'CAST_SYM' && $local instanceof Token && $local->name === 'LOCAL_SYM';
+        }
+
+        return false;
+    }
+
 }

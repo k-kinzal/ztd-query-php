@@ -63,6 +63,7 @@ final class QueryExpression implements Query
         Check::input($with !== null || $orderBy !== [] || $limit !== null, 'A query expression holds a WITH clause, an ordering or a limit.');
         Check::input(!$body instanceof Select || ($orderBy === [] && $limit === null) || ($orderBy !== [] && ($body->orderBy !== [] || $body->limit !== null) && $body->late === null), 'The ordering and the limit of a single query block belong to the block unless an ORDER BY follows a block that orders or limits its rows.');
         Check::input(!$body instanceof self && !$body instanceof QueryStatement && !$body instanceof OrderedSetOperation, 'A query expression, a query statement or an ordered set operation as a body is written in parentheses.');
+        Check::input(!$body instanceof Select || $orderBy === [] || $body->orderBy === [] || ($body->from !== null && !$body->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual), 'A second ordering after an ordered block requires an ordinary FROM relation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -41,6 +41,7 @@ final class ShowBinlogEvents implements Statement
     public function __construct(public readonly ?Text $file = null, public readonly ?Numeral $position = null, public readonly ?Limit $limit = null)
     {
         \SqlSemantics\Diagnostic\Check::input($file === null || $file->radix === null, 'A binary log file name is quoted text.');
+        \SqlSemantics\Diagnostic\Check::input($position === null || !$position->hexadecimal, 'A log event position uses decimal number syntax.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

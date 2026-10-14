@@ -15,6 +15,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ExecutionTest extends TestCase
 {
+    public function testReadingChecksLegacyDatabaseBeforeDefinitionConditions(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $operation = $session->analyze('CREATE TABLE t(a INT) CHARACTER SET missing');
+
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1046);
+        (new Execution($session))->reading($operation, true);
+    }
+
     public function testFailedRetainsRowsProducedBeforeTheError(): void
     {
         $session = (new Instance())->connect();
@@ -107,6 +117,15 @@ final class ExecutionTest extends TestCase
         self::assertSame([], $session->diagnostics->conditions);
         $session->run('SELECT SRID(NULL) WHERE FALSE');
         self::assertSame([1287, 1064], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testParsingStopsAtAnAbortingDeprecation(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->run('SELECT BINARY CAST(1 AT LOCAL AS SIGNED), BINARY 2')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertSame([1235, 1287], array_column($session->diagnostics->conditions, 1));
     }
 
     public function testParsingRecordsTheWarningsRaisedWhileTheStatementIsRead(): void

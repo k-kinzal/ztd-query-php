@@ -15,6 +15,24 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TableCreationTest extends TestCase
 {
+    public function testDatabasePrecedesLegacyDefinitionConditions(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+        $session->query('CREATE TABLE t(a INT) CHARACTER SET missing');
+    }
+
+    public function testDatabaseLeavesModernDefinitionConditionsFirst(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1115);
+        $session->query('CREATE TABLE t(a INT) CHARACTER SET missing');
+    }
+
     public function testCheckRefusesStatementsUntilTheTransactionEnds(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

@@ -8,6 +8,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Problem\Errors;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -33,6 +34,29 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Small]
 final class ErrorsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, bool, bool, bool}>
+     */
+    public static function providerUnknownVariableNames(): iterable
+    {
+        yield 'modern partial character' => [str_repeat('a', 63) . '猫', str_repeat('a', 63) . '?', false, false, false];
+        yield 'legacy partial character' => [str_repeat('a', 63) . '猫', str_repeat('a', 63), true, false, false];
+        yield 'NUL' => ["missing\0tail", 'missing', false, false, false];
+        yield 'legacy repeated assignment error' => [str_repeat('a', 100), str_repeat('a', 64), true, true, false];
+        yield 'legacy structured assignment' => [str_repeat('a', 100), str_repeat('a', 64), true, true, true];
+    }
+
+    #[DataProvider('providerUnknownVariableNames')]
+    public function testUnknownVariableBoundsOnlyItsDisplay(string $name, string $shown, bool $legacy, bool $assigned, bool $structured): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable($name, $assigned, $structured);
+        $error = (new Errors())->unknownVariable($problem, $legacy);
+
+        self::assertSame("Unknown system variable '" . $shown . "'", $error->getMessage());
+        self::assertSame($assigned && !$structured && $legacy ? [[1193, $error->getMessage()]] : [], $error->following);
+        self::assertSame($name, $problem->name);
+    }
+
     public function testExpressionBoundsCollationNamesForBothDiagnosticEncodings(): void
     {
         $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation(str_repeat('é', 31) . '€');

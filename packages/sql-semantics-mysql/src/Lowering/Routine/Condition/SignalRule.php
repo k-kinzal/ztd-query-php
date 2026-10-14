@@ -116,7 +116,7 @@ final class SignalRule
         if ($form->signature !== 'opt_set_signal_information: SET signal_information_item_list' && $form->signature !== 'opt_set_signal_information: SET_SYM signal_information_item_list') {
             throw ImplementationGap::production($form);
         }
-        $items = [];
+        $pending = [];
         $list = $this->lowering->form($form->node(1));
         while (true) {
             $first = match ($list->signature) {
@@ -124,29 +124,50 @@ final class SignalRule
                 'signal_information_item_list: signal_information_item_list , signal_condition_information_item_name EQ signal_allowed_expr' => 2,
                 default => throw ImplementationGap::production($list),
             };
-            $name = $this->lowering->form($list->node($first));
-            array_unshift($items, new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($list->node($first + 2))));
+            $pending[] = [$list, $first];
             if ($first === 0) {
-                return $items;
+                break;
             }
             $list = $this->lowering->form($list->node(0));
         }
+        $items = [];
+        foreach (array_reverse($pending) as [$item, $offset]) {
+            $name = $this->lowering->form($item->node($offset));
+            $items[] = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
+        }
+
+        return $items;
     }
 
     /**
      * Lowers the value of an item or a condition number: a node of `signal_allowed_expr`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When the operand assigns a variable instead of reading it
      */
-    public function operand(Node $expression): LiteralExpression|ColumnUse|SystemVariable|UserVariable|VariableAssignment
+    public function operand(Node $expression, ?Node $container = null): LiteralExpression|ColumnUse|SystemVariable|UserVariable
     {
         $form = $this->lowering->form($expression);
 
-        return match ($form->signature) {
+        $value = match ($form->signature) {
             'signal_allowed_expr: literal', 'signal_allowed_expr: literal_or_null' => $this->lowering->literals->literal($form->node(0)),
             'signal_allowed_expr: variable', 'signal_allowed_expr: rvalue_system_or_user_variable' => $this->lowering->variables->variable($form->node(0)),
             'signal_allowed_expr: simple_ident' => $this->lowering->names->column($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
+        if ($value instanceof VariableAssignment) {
+            $tokens = $expression->tokens();
+            $end = $tokens[count($tokens) - 1]->end();
+            $at = new \SqlParser\Lexer\Token(0, '$end', '', $end);
+            foreach ($container === null ? [] : $container->tokens() as $token) {
+                if ($token->offset >= $end) {
+                    $at = $token->text === ',' ? new \SqlParser\Lexer\Token(0, '$end', '', $token->end()) : $token;
+                    break;
+                }
+            }
+            throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: a condition operand reads a variable; it cannot assign one.', 0, new \SqlParser\Parser\SyntaxException($at, [], ''));
+        }
+
+        return $value;
     }
 }

@@ -26,9 +26,9 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * at the position the caller gives, whose only visible relation is the
  * table being defined or changed (MYSQL-DEFINITION-SCOPE-001). The parent
  * table of a REFERENCES clause is resolved and recorded as a table use
- * (MYSQL-REFERENCES-001). Table options hold no expression and no
- * resolvable name: the tables of a MERGE UNION option are named, not read,
- * when the table is defined. Terminates: one pass over the element.
+ * (MYSQL-REFERENCES-001). Table options resolve character sets and collations
+ * in written order. The tables of a MERGE UNION option are named, not read,
+ * when the table is defined. Terminates: one pass over the element or option list.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-table.html. Status: Implemented.
  *
@@ -63,13 +63,27 @@ final class ElementFacts
     }
 
     /**
-     * Confirms a list of table options; they hold nothing to derive.
+     * Resolves table character sets and collations in option order, before later clauses.
+     *
+     * Unknown names stop parsing. These notices use the retained names and option order,
+     * so direct construction and SQL lowering produce the same diagnostic sequence.
      *
      * @param list<TableOption> $options
      */
     public function options(array $options, Derivation $derivation): void
     {
         Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
+        foreach ($options as $option) {
+            $problem = match (true) {
+                $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption && $option->collation->name !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($option->collation->name->value)?->availableIn($derivation->context->profile->grammar) ?? false) => new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($option->collation->name->value),
+                $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption && $option->charset->name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($option->charset->name->value) === null => new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($option->charset->name->value),
+                default => null,
+            };
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
+            }
+        }
     }
 
     /**

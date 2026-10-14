@@ -23,13 +23,14 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 final class SyntaxCastsTest extends TestCase
 {
     /**
-     * @return iterable<string, array{string, list<Deprecated|ParseFailure>}>
+     * @return iterable<string, array{string, list<Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure>}>
      */
     public static function providerCasts(): iterable
     {
         yield 'datetime precision' => ['SELECT CAST(1 AS DATETIME(7)),?', [new ParseFailure(new TooBigPrecision(7, 'CAST'), true)]];
         yield 'float precision' => ['SELECT CAST(1 AS FLOAT(54)),?', [new ParseFailure(new TooBigPrecision(54, 'CAST', 53), true)]];
         yield 'convert precision' => ['SELECT CONVERT(1,DATETIME(7)),?', [new ParseFailure(new TooBigPrecision(7, 'CAST'), true)]];
+        yield 'binary stops after local operand' => ['SELECT BINARY CAST(1 AT LOCAL AS SIGNED),?', [new ParseFailure(new NotSupportedYet('AT LOCAL')), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::BinaryOperator, aborts: true)]];
         yield 'incomplete cast' => ['SELECT CAST(1 AS DATETIME(7),?', []];
         yield 'json array' => ['SELECT CAST(1 AS JSON ARRAY),?', [new ParseFailure(new NotSupportedYet('CAST-ing data to array of JSON'), true)]];
         yield 'incomplete array' => ['SELECT CAST(1 AS JSON ARRAY,?', []];
@@ -42,7 +43,7 @@ final class SyntaxCastsTest extends TestCase
     }
 
     /**
-     * @param list<Deprecated|ParseFailure> $expected The completed notices
+     * @param list<Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure> $expected The completed notices
      */
     #[DataProvider('providerCasts')]
     public function testCompletedUsesOnlyCompletedTargetsAndCasts(string $sql, array $expected): void

@@ -32,8 +32,9 @@ final class Deprecation implements Warning
     /**
      * @param Deprecated $construct The construct warned about
      * @param string $text The text of the warning when it names the construct, or an empty string for the text of the construct
+     * @param bool $aborts Whether completing this construct stops parsing after an earlier operand error
      */
-    public function __construct(public readonly Deprecated $construct, public readonly string $text = '')
+    public function __construct(public readonly Deprecated $construct, public readonly string $text = '', public readonly bool $aborts = false)
     {
     }
 

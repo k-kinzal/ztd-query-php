@@ -17,6 +17,18 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class SyntaxDeprecationsTest extends TestCase
 {
+    public function testStopsBinaryFollowsOnlyTheDirectCastOperand(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');
+        $nodes = array_values(array_filter($parser->parse('SELECT BINARY ((CAST(1 AT LOCAL AS SIGNED)))')->find('simple_expr'), static fn (Node $node): bool => ($node->tokens()[0]->text ?? '') === 'BINARY'));
+        self::assertNotEmpty($nodes);
+        $rules = new SyntaxDeprecations();
+
+        self::assertTrue($rules->stopsBinary($nodes[0]));
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::BinaryOperator, aborts: true), $rules->completed($nodes[0], GrammarRelease::MySql847));
+        self::assertFalse($rules->stopsBinary(new Node('simple_expr', 0, [])));
+    }
+
     public function testCompletedKeepsTheReleaseAndOriginalTextLiteralReduction(): void
     {
         $rules = new SyntaxDeprecations();
