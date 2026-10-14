@@ -55,22 +55,22 @@
 <span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Dependent</span>;</span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Known</span>;</span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * A local variable of a stored program named where only a variable is accepted: a LIMIT operand or an INTO target.</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * Rule: MYSQL-PROGRAM-VARIABLE-001. A bare name in LIMIT or after INTO</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * denotes a variable or parameter declared by the enclosing stored program;</span></span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * A local variable of a stored program named where only a variable is accepted: a LIMIT operand or an INTO target.</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * Rule: MYSQL-PROGRAM-VARIABLE-001. A bare name in LIMIT or after INTO</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * denotes a variable or parameter declared by the enclosing stored program;</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-com"> * outside one the server reports an undeclared variable. The declaration is</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">25</span><span class="tok-com"> * runtime program state the analysis context does not hold, so the type and</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">26</span><span class="tok-com"> * the NULL fact depend on it. Source:</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * outside one the server reports an undeclared variable. A statement of a</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * running program is given the variables in scope (Settings::$program): the</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * name then has the declared type of the innermost variable of the name and</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * can be NULL. Otherwise the declaration is program state the analysis</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * context does not hold, so the type and the NULL fact depend on it. Source:</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * outside one the server reports an undeclared variable. A statement of a</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * running program is given the variables in scope (Settings::$program): the</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * name then has the declared type of the innermost variable of the name and</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * can be NULL. During program definition the lexical environment resolves</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * the same declaration, and an absent declaration is reported. Outside a</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * program, an absent declaration leaves the type dependent on program state. Source:</span></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/select.html (LIMIT),</span></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/select-into.html.</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com"> * Status: Implemented.</span></span>
@@ -95,26 +95,29 @@
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a></span>
 <span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">48</span><span class="tok-com">     * Depends on the declaration of the variable in the enclosing stored program.</span></span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * Has the type of the variable a running program declares, else depends on the declaration of the variable in the enclosing stored program.</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * Resolves the nearest program declaration during definition or execution.</span></span>
 <span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveScalar</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">ScalarFact</span></span>
 <span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    {</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-var">$declared</span> = <span class="tok-id">Settings</span>::<span class="tok-id">of</span>(<span class="tok-var">$derivation</span>-&gt;<span class="tok-id">context</span>)-&gt;<span class="tok-id">variable</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>);</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-kw">if</span> (<span class="tok-var">$declared</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ScalarFact</span>(<span class="tok-kw">new</span> <span class="tok-id">Known</span>(<span class="tok-var">$declared</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">domains</span>[<span class="tok-var">$declared</span>[<span class="tok-num">1</span>]]), <span class="tok-id">Nullability</span>::<span class="tok-id">Nullable</span>);</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-var">$declared</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\ProgramVariables</span>())-&gt;<span class="tok-id">find</span>(<span class="tok-var">$environment</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>);</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-kw">if</span> (<span class="tok-var">$declared</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Statement\Reference\Column\ResolvedColumn</span>) {</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ScalarFact</span>(<span class="tok-var">$declared</span>-&gt;<span class="tok-id">slot</span>-&gt;<span class="tok-id">type</span>, <span class="tok-var">$declared</span>-&gt;<span class="tok-id">slot</span>-&gt;<span class="tok-id">nullability</span>, <span class="tok-var">$declared</span>);</span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        }</span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ScalarFact</span>(<span class="tok-kw">new</span> <span class="tok-id">Dependent</span>([<span class="tok-kw">new</span> <span class="tok-id">SessionState</span>(<span class="tok-str">&#039;stored program variable &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>)]), <span class="tok-id">Nullability</span>::<span class="tok-id">Dependent</span>);</span>
-<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>    }</span>
-<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a></span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a><span class="tok-com">     * Writes the name.</span></span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>    {</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Column</span>);</span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    }</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>}</span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-kw">if</span> (<span class="tok-var">$derivation</span>-&gt;<span class="tok-id">inProgram</span>()) {</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>));</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        }</span>
+<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ScalarFact</span>(<span class="tok-kw">new</span> <span class="tok-id">Dependent</span>([<span class="tok-kw">new</span> <span class="tok-id">SessionState</span>(<span class="tok-str">&#039;stored program variable &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>)]), <span class="tok-id">Nullability</span>::<span class="tok-id">Dependent</span>);</span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    }</span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a></span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a><span class="tok-com">     * Writes the name.</span></span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>    {</span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Column</span>);</span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    }</span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>}</span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
