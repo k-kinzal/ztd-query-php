@@ -72,6 +72,7 @@ final class PartitionExpressionsTest extends TestCase
         $failure = $operation->facts->warnings[1];
         self::assertInstanceOf(ParseFailure::class, $failure);
         self::assertTrue($failure->aborts);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, $failure->phase);
         self::assertInstanceOf(InvalidPartitionExpression::class, $failure->problem);
         $origin = $operation->sources->of($failure->problem->expression);
         self::assertNotNull($origin);

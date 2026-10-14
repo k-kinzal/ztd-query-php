@@ -97,17 +97,20 @@ final class TableProblems
             if ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn || $specification instanceof GeneratedColumn) {
                 foreach ($specification->attributes as $attribute) {
                     if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute) {
-                        $names[] = $attribute->collation->name;
+                        $names[] = $attribute->collation;
                     }
                 }
             }
             if ($specification instanceof GeneratedColumn) {
-                $names[] = $specification->collation?->name;
+                $names[] = $specification->collation;
             }
         }
-        foreach ($names as $name) {
+        foreach ($names as $collation) {
+            $name = $collation?->name;
             if ($name !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($name->value)?->availableIn($derivation->context->profile->grammar) ?? false)) {
-                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($name->value));
+                $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($name->value);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $collation);
             }
         }
     }

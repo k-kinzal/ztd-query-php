@@ -80,6 +80,13 @@ final class TypeNotices
      */
     public function charset(?CharsetAttribute $charset, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null): void
     {
+        $name = $charset?->charset;
+        $problem = $name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($name->value) === null ? new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($name->value) : null;
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $at);
+            return;
+        }
         foreach ($this->charsetWarnings($charset) as $notice) {
             Deprecation::raise($notice, $derivation, $at);
         }

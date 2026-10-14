@@ -35,6 +35,22 @@ final class DebugOperandsTest extends TestCase
             "SHOW PARSE_TREE GRANT ALL ON *.* TO '{$user}'",
             'SHOW PARSE_TREE SELECT absent_column',
             "SHOW /* marker */ PARSE_TREE DROP USER 'u'",
+            'SHOW PARSE_TREE SELECT CAST(1 AT LOCAL AS DATETIME)',
+            'SHOW PARSE_TREE SELECT CAST(1 AT LOCAL AS SIGNED)',
+            'SHOW PARSE_TREE SELECT BINARY 1',
+            'SHOW PARSE_TREE SELECT CONVERT(1 USING missing)',
+            "SHOW PARSE_TREE SELECT 1 COLLATE 'missing'",
+            'SHOW PARSE_TREE SELECT @@missing_variable',
+            "SHOW PARSE_TREE SELECT DATE 'bad'",
+            'SHOW PARSE_TREE SELECT BINARY CAST(1 AT LOCAL AS DATETIME)',
+            'SHOW PARSE_TREE CREATE TABLE t (a INT) PARTITION BY HASH(CAST(1 AT LOCAL AS SIGNED)) PARTITIONS 2',
+            'SHOW PARSE_TREE CREATE TABLE t (a INT) PARTITION BY HASH(@v)',
+            'SHOW PARSE_TREE CREATE TABLE t (a INT) PARTITION BY HASH(RAND())',
+            'SHOW PARSE_TREE CREATE TABLE t (a INT) PARTITION BY RANGE(a)',
+            'SHOW PARSE_TREE CREATE TABLE t (a INT) PARTITION BY LIST COLUMNS(a) SUBPARTITION BY HASH(CAST(@v AT LOCAL AS SIGNED))',
+            'SHOW PARSE_TREE CREATE TABLE t (a VARCHAR(2) CHARACTER SET missing)',
+            'SHOW PARSE_TREE CREATE TABLE t (a VARCHAR(2) COLLATE missing)',
+            'SHOW PARSE_TREE SELECT CAST(1 AS CHAR CHARACTER SET missing)',
         ];
         foreach (['8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];

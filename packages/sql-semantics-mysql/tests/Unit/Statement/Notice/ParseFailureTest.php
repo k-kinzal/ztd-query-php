@@ -28,6 +28,7 @@ final class ParseFailureTest extends TestCase
 
         self::assertInstanceOf(ParseFailure::class, $operation->facts->warnings[0]);
         self::assertFalse($operation->facts->warnings[0]->aborts);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, $operation->facts->warnings[0]->phase);
         self::assertInstanceOf(Deprecation::class, $operation->facts->warnings[1]);
     }
 }

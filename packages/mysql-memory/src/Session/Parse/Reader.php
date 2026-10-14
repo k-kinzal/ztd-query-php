@@ -56,7 +56,9 @@ final class Reader
         if ($databaseError !== null) {
             throw $databaseError;
         }
-        if (!(new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
+        $tokens = $tree->tokens();
+        $inspected = ($tokens[0]->name ?? '') === 'SHOW' && ($tokens[1]->name ?? '') === 'PARSE_TREE_SYM';
+        if (!$inspected && !(new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
             (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->temporals($tree, $session->modes(), $session, $statement, $rejection->end ?? PHP_INT_MAX);
         }
         if ($rejection !== null) {

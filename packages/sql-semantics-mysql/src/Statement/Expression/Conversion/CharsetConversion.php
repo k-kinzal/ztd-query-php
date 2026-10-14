@@ -65,7 +65,9 @@ final class CharsetConversion implements Scalar
         Deprecation::charset($name->value, $derivation);
         $charset = Charset::named($name->value);
         if ($charset === null) {
-            $derivation->report(new UnknownCharset($name->value));
+            $problem = new UnknownCharset($name->value);
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
         }
         $type = strtolower($name->value) === 'binary' ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(charset: new CharsetAttribute(CharsetForm::Named, $name));
         $operand = (new Precision())->domain($fact->type);

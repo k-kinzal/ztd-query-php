@@ -81,6 +81,11 @@ final class Cast implements Scalar
         }
         if ($this->target->charset?->charset !== null) {
             Deprecation::charset($this->target->charset->charset->value, $derivation);
+            if (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($this->target->charset->charset->value) === null) {
+                $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($this->target->charset->charset->value);
+                $derivation->report($problem);
+                $derivation->warn(new ParseFailure($problem, true));
+            }
         }
         $result = new CastResult();
         if ($this->array) {

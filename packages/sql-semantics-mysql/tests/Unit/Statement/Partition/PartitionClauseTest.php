@@ -32,6 +32,7 @@ final class PartitionClauseTest extends TestCase
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
         self::assertTrue($warning->aborts);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, $warning->phase);
         self::assertSame('For RANGE partitions each partition must be defined.', $warning->message());
     }
 

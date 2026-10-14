@@ -68,7 +68,7 @@ final class PartitionClause implements Partitioning
         if ($this->definitions === [] && ($this->method instanceof Method\ExpressionMethod || $this->method instanceof Method\ColumnsMethod)) {
             $problem = new Problem\MissingPartitions($this->method->kind);
             $derivation->report($problem);
-            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization));
         }
     }
 

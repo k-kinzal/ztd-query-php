@@ -93,4 +93,14 @@ final class ReaderTest extends TestCase
         self::assertTrue($error->recorded);
         self::assertSame([1287, 1407], array_column($session->diagnostics->conditions, 1));
     }
+
+    public function testReadDefersTemporalValidationInADebugInspection(): void
+    {
+        $session = (new Instance())->connect();
+
+        $tree = (new Reader())->read("SHOW PARSE_TREE SELECT DATE 'bad'", false, $session);
+
+        self::assertSame('start_entry', $tree->name);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
 }

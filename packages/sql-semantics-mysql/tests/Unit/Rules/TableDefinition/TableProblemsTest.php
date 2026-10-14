@@ -30,6 +30,8 @@ final class TableProblemsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $column->facts->diagnostics[0]);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $table->facts->diagnostics[0]);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $generated->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $generated->facts->warnings[0]);
+        self::assertTrue($generated->facts->warnings[0]->aborts);
         self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(v VARCHAR(10)) COLLATE utf8mb4_0900_as_cs')->facts->diagnostics);
     }
 

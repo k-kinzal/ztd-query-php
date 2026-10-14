@@ -91,7 +91,7 @@ final class CacheOptions
         $parser = $session->semantics()->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
         foreach ((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $cause?->token->offset ?? strlen($statement), $session->semantics()->profile()) as [$offset, $notice]) {
-            if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && $notice->problem->rule === \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadSqlState) {
+            if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->aborts) {
                 return (new Parse\Reader())->rejection(new \SqlSemantics\Construction\RejectedInput($notice->problem, $offset), $statement, $session);
             }
         }

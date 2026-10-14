@@ -1357,8 +1357,13 @@
         "construct": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecated",
         "text": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NoticePhase": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\ParseFailure": {
         "aborts": "bool",
+        "phase": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NoticePhase",
         "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\AllPartitions": [],

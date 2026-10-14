@@ -57,7 +57,7 @@ final class PartitionExpressions
         if ($this->forbidden($expression, $derivation->context->profile->grammar)) {
             $problem = new InvalidPartitionExpression($expression);
             $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, true));
+            $derivation->warn(new ParseFailure($problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization));
         }
     }
 

@@ -89,6 +89,7 @@ final class CharsetConversionTest extends TestCase
 
         $problems = array_values(array_filter($derivation->facts()->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset));
         self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($name)], $problems);
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($name), true)], $derivation->facts()->warnings);
     }
 
 }

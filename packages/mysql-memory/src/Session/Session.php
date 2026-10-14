@@ -340,8 +340,11 @@ final class Session
         } finally {
             $typing->restore($this);
         }
-        (new \MySqlMemory\Command\InternalCommand())->operands($operation);
-        (new Syntax())->debugOnly($tree, $statement);
+        try {
+            (new Syntax())->debugOnly($tree, $statement);
+        } catch (SqlError $error) {
+            throw (new Parse\DebugRequest())->refusal($operation, $error, $this);
+        }
         (new Syntax())->internal($operation->statement, $statement);
         (new Syntax())->purged($tree, $operation->statement, $statement, $this->settings()->release());
         if ((new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {

@@ -131,6 +131,9 @@ final class Execution
     public function reading(Operation $operation, bool $read): array
     {
         $session = $this->session;
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree) {
+            throw (new Parse\DebugRequest())->refusal($operation, (new \MySqlMemory\Command\InternalCommand())->error($operation), $session);
+        }
         (new Access\TableCreation())->database($operation->statement, $session);
         $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
         if ($read && !$session->replayed) {

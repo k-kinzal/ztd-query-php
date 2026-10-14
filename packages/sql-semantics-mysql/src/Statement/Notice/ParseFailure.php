@@ -9,7 +9,7 @@ use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * The place, among the warnings of a statement, of a problem the server finds while it parses the statement.
+ * The ordered place of a problem found while reading or contextualizing a statement.
  *
  * Rule: MYSQL-PARSE-FAILURE-001. The server looks up the collation of
  * COLLATE and refuses CAST ... AT LOCAL when it parses the construct: it
@@ -36,8 +36,9 @@ final class ParseFailure implements Warning
     /**
      * @param Diagnostic $problem The problem the server finds while it parses
      * @param bool $aborts Whether the server stops parsing at the problem, so the constructs it would parse later raise no warning
+     * @param NoticePhase $phase Whether grammar interpretation or subsequent contextualization raises the problem
      */
-    public function __construct(public readonly Diagnostic $problem, public readonly bool $aborts = false)
+    public function __construct(public readonly Diagnostic $problem, public readonly bool $aborts = false, public readonly NoticePhase $phase = NoticePhase::Syntax)
     {
     }
 
