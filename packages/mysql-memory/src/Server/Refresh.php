@@ -59,7 +59,7 @@ final class Refresh
                 $session->diagnostics->error($code, $message);
             }
 
-            return $this->client->send($this->client->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
+            return $this->client->send($this->client->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) $session->variables->read('character_set_results')));
         }
         $session->variables->rowCount = 0;
 

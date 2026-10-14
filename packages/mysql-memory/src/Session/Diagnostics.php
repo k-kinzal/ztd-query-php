@@ -106,7 +106,7 @@ final class Diagnostics
         if ($signalled !== null) {
             $this->signalled[count($this->conditions)] = $signalled;
         }
-        $this->conditions[] = ['Error', $code, $message];
+        $this->conditions[] = ['Error', $code, \MySqlMemory\Value\Diagnostic\Encoding::repair($message)];
     }
 
     /**

@@ -36,7 +36,7 @@ final class CommandPrefix
         if (in_array($command, ['DESC', 'DESCRIBE', 'EXPLAIN'], true)) {
             return $this->format($statement, $end, $session);
         }
-        if (!$session->settings()->legacy() || !in_array($command, ['LOAD', 'CREATE', 'REVOKE', 'SET'], true)) {
+        if (!$this->applicable($tokens, $session)) {
             return null;
         }
         if (in_array($command, ['LOAD', 'CREATE'], true) && $session->variables->database !== '') {
@@ -70,6 +70,19 @@ final class CommandPrefix
         }
 
         return null;
+    }
+
+    /**
+     * Selects commands whose completed prefixes can reject later malformed input.
+     *
+     * @param list<Token> $tokens The input statement tokens
+     */
+    public function applicable(array $tokens, Session $session): bool
+    {
+        $command = strtoupper($tokens[0]->text ?? '');
+
+        return ($command === 'ALTER' && in_array(strtoupper($tokens[1]->text ?? ''), ['DATABASE', 'SCHEMA'], true))
+            || ($session->settings()->legacy() && in_array($command, ['LOAD', 'CREATE', 'REVOKE', 'SET'], true));
     }
 
     /**

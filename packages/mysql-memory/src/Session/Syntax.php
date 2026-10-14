@@ -24,6 +24,13 @@ use Throwable;
 final class Syntax
 {
     /**
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null $client The encoding of incoming SQL, defaulting to UTF-8
+     */
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null)
+    {
+    }
+
+    /**
      * The deprecated constructs written before the names of a statement, whose warnings come before those of leading dots.
      */
     public const HEAD = [
@@ -98,11 +105,11 @@ final class Syntax
      * @param string $following The statements written after this one in the same text, which the error quotes too
      * @throws SqlError When the statement holds a parameter marker
      */
-    public function markers(Node $tree, string $statement, string $following = ''): void
+    public function markers(Node $tree, string $statement, string $following = '', bool $legacy = false): void
     {
         foreach ($tree->tokens() as $token) {
             if ($token->text === '?' && $token->name === 'PARAM_MARKER') {
-                throw $this->near($token->offset, $statement, $following, new SyntaxException($token, [], ''));
+                throw $this->near($token->offset, $statement, $following, new SyntaxException($token, [], ''), $legacy);
             }
         }
     }
@@ -112,11 +119,11 @@ final class Syntax
      *
      * @param string $following The statements written after this one in the same text
      */
-    public function near(int $offset, string $statement, string $following, Throwable $failure): SqlError
+    public function near(int $offset, string $statement, string $following, Throwable $failure, bool $legacy = false): SqlError
     {
         $line = substr_count(ltrim(substr($statement, 0, $offset)), "\n") + 1;
 
-        return new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(rtrim(substr($statement, $offset) . $following, " \t\n\r\f\v"), 0, 80, 'UTF-8'), $line), $failure);
+        return new SqlError(StatementError::ParseError, StatementError::ParseError->message(\MySqlMemory\Value\Diagnostic\Encoding::prefix(rtrim(substr($statement, $offset) . $following, " \t\n\r\f\v"), $this->client ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'), $legacy), $line), $failure);
     }
 
     /**
@@ -124,7 +131,7 @@ final class Syntax
      *
      * @param string $following The statements written after this one in the same text
      */
-    public function premature(Throwable $failure, string $statement, \SqlParser\Parser\SqlParser $parser, string $following = ''): ?SqlError
+    public function premature(Throwable $failure, string $statement, \SqlParser\Parser\SqlParser $parser, string $following = '', bool $legacy = false): ?SqlError
     {
         $cause = $failure;
         while ($cause !== null && !$cause instanceof SyntaxException) {
@@ -140,7 +147,7 @@ final class Syntax
                 return null;
             }
             if ($token->name === 'PARAM_MARKER') {
-                return $this->near($token->offset, $statement, $following, new SyntaxException($token, [], ''));
+                return $this->near($token->offset, $statement, $following, new SyntaxException($token, [], ''), $legacy);
             }
         }
 
@@ -301,13 +308,13 @@ final class Syntax
                 }
             }
 
-            return $this->near($lexical instanceof LexicalException ? $lexical->offset : strlen($statement), $statement, $following, $failure);
+            return $this->near($lexical instanceof LexicalException ? $lexical->offset : strlen($statement), $statement, $following, $failure, in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
         }
         $offset = $cause->token->offset;
         if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && in_array($cause->token->name, ['WITH', 'WITH_CUBE_SYM', 'WITH_ROLLUP_SYM'], true)) {
             $offset += 4 + strspn($statement, " \t\n\r\f\v", $offset + 4);
         }
 
-        return $this->near($offset, $statement, $following, $failure);
+        return $this->near($offset, $statement, $following, $failure, in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
     }
 }

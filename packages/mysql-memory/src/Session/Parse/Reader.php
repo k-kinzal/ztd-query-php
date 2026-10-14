@@ -42,19 +42,19 @@ final class Reader
         try {
             $tree = $semantics->parser()->parse($statement);
         } catch (SourceException $error) {
-            throw (!$prepared ? (new Syntax())->premature($error, $statement, $semantics->parser(), $session->following) : null) ?? (new Syntax())->error($error, $statement, $session->settings()->release(), $session->following, $semantics->parser());
+            throw (!$prepared ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->premature($error, $statement, $semantics->parser(), $session->following, $session->settings()->legacy()) : null) ?? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->error($error, $statement, $session->settings()->release(), $session->following, $semantics->parser());
         }
         if (!$prepared) {
             $listed = $session->settings()->release() === GrammarRelease::MySql5651 ? (new Clashes())->listed($tree, $session->variables->database) : null;
             if ($listed !== null) {
                 throw (new CacheOptions())->clashed($listed[0], $listed[1], $statement, $session);
             }
-            (new Syntax())->markers($tree, $statement, $session->following);
+            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy());
         }
         if (!(new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
-            (new Syntax())->temporals($tree, $session->modes(), $session, $statement);
+            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->temporals($tree, $session->modes(), $session, $statement);
         }
-        $session->dots = $session->settings()->release() === GrammarRelease::MySql5744 ? (new Syntax())->dots($tree) : [];
+        $session->dots = $session->settings()->release() === GrammarRelease::MySql5744 ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->dots($tree) : [];
         $session->hinted = (new \MySqlMemory\Hint\Hints())->syntax($tree, $statement, $session);
         $session->commented = str_contains($statement, '/*+');
 
@@ -71,9 +71,9 @@ final class Reader
         $release = $session->settings()->release();
         $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $clash = $legacy ? ((new Clashes())->targets($tree, $error, $database) ?? (new Clashes())->nested($tree, $error, $database)) : null;
-        $undeclared = $legacy ? (new Syntax())->undeclared($tree, $error, $session->program) : null;
+        $undeclared = $legacy ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->undeclared($tree, $error, $session->program) : null;
 
-        return ($undeclared === null ? null : (new CacheOptions())->undeclared($undeclared, $statement, $session)) ?? ($clash === null ? null : (new CacheOptions())->clashed($clash[0], $clash[1], $statement, $session)) ?? (new Syntax())->error($error, $statement, $release);
+        return ($undeclared === null ? null : (new CacheOptions())->undeclared($undeclared, $statement, $session)) ?? ($clash === null ? null : (new CacheOptions())->clashed($clash[0], $clash[1], $statement, $session)) ?? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->error($error, $statement, $release, $session->following);
     }
 
     /**
@@ -85,7 +85,7 @@ final class Reader
     public function refused(SqlError $error, string $sql, bool $prepared, Session $session): SqlError
     {
         $session->diagnostics->clear();
-        $error = (!$prepared ? (new Syntax())->premature($error, $sql, $session->semantics()->parser()) : null) ?? $error;
+        $error = (!$prepared ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->premature($error, $sql, $session->semantics()->parser(), '', $session->settings()->legacy()) : null) ?? $error;
         $error = (new CacheOptions())->reported($error, $sql, $session);
         if (!$error->recorded) {
             $session->diagnostics->error($error->getCode(), $error->getMessage());

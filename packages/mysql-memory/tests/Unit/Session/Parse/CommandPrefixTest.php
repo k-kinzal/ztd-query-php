@@ -37,6 +37,7 @@ final class CommandPrefixTest extends TestCase
             }
         }
         yield 'modern load' => ['8.4.7', "LOAD DATA INFILE 'f' INTO TABLE t (", null];
+        yield 'modern database option' => ['8.4.7', 'ALTER DATABASE d READ ONLY 2 +', 1064];
         yield 'legacy password comma' => ['5.7.44', "SET PASSWORD = 'pw', @@time_zone = SYSTEM", 1064];
         yield 'unrelated command' => ['5.6.51', 'SELECT 1 FROM t (', null];
     }
@@ -49,6 +50,17 @@ final class CommandPrefixTest extends TestCase
         self::assertNotNull($error);
         self::assertSame([1791, "Unknown EXPLAIN format name: 'yaml'"], [$error->getCode(), $error->getMessage()]);
         self::assertNull((new CommandPrefix())->format('EXPLAIN FORMAT = JSON SELECT ?', 29, $session));
+    }
+
+    public function testApplicableSeparatesDatabaseOptionsFromOtherAlterCommands(): void
+    {
+        $session = (new Instance())->connect();
+        $parser = $session->semantics()->parser();
+        $prefix = new CommandPrefix();
+
+        self::assertTrue($prefix->applicable($parser->tokenize('ALTER SCHEMA d READ ONLY 2'), $session));
+        self::assertFalse($prefix->applicable($parser->tokenize('ALTER TABLE t ADD a INT'), $session));
+        self::assertFalse($prefix->applicable($parser->tokenize('SELECT 1'), $session));
     }
 
     #[DataProvider('providerPrefixes')]

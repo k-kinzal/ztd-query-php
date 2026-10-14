@@ -129,12 +129,17 @@ final class DatabaseRule
      * Lowers READ ONLY.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When the value converts to neither 0 nor 1
      */
     public function readOnly(Form $form): DatabaseReadOnly
     {
         $this->lowering->options->present($form->node(2));
+        $value = $this->lowering->numbers->ternary($form->node(3));
+        if ($value !== null && !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '1')) {
+            throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: READ ONLY accepts 0, 1 or DEFAULT.', 0, new \SqlParser\Parser\SyntaxException($form->node(3)->tokens()[0], [], ''));
+        }
 
-        return new DatabaseReadOnly($this->lowering->numbers->ternary($form->node(3)));
+        return new DatabaseReadOnly($value);
     }
 
     /**

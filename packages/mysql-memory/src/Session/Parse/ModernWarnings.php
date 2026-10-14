@@ -47,6 +47,10 @@ final class ModernWarnings
             $tokens = $parser->tokenize(substr($statement, 0, $end));
             $statement = substr($statement, 0, $end);
         }
+        if (strtoupper($tokens[0]->text ?? '') === 'ALTER') {
+            $error = (new CommandPrefix())->before($tokens, $statement, $end, $session) ?? $error;
+            $end = (new CacheOptions())->cause($error)?->token->offset ?? $end;
+        }
         $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
         foreach ($this->before($tokens, $statement, $end, $parser) as $offset => $notice) {
             $notices[] = [$offset, $notice];

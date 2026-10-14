@@ -98,7 +98,7 @@ final class Statements
             foreach ($error->following as [$code, $message]) {
                 $session->diagnostics->error($code, $message);
             }
-            return $this->client->send($this->client->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
+            return $this->client->send($this->client->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) $session->variables->read('character_set_results')));
         }
         $id = $this->next++;
         $this->prepared[$id] = [$sql, $parameters, [], [], \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation)];
@@ -172,7 +172,7 @@ final class Statements
         }
         foreach ($answers as $index => $answer) {
             if ($answer instanceof SqlError) {
-                return $this->client->send($this->client->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage()));
+                return $this->client->send($this->client->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage(), (string) $this->client->session()->variables->read('character_set_results')));
             }
             $this->client->reply($answer, $index < count($answers) - 1 ? 8 : 0, $answer instanceof ResultSet);
         }

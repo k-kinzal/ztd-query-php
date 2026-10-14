@@ -58,9 +58,9 @@ final class Messages
     /**
      * Builds an ERR packet.
      */
-    public function error(int $code, string $state, string $message): string
+    public function error(int $code, string $state, string $message, ?string $results = null): string
     {
-        return (new PayloadWriter())->integer(0xFF, 1)->integer($code, 2)->bytes('#' . str_pad(substr($state, 0, 5), 5, '0'))->bytes($message)->payload();
+        return (new PayloadWriter())->integer(0xFF, 1)->integer($code, 2)->bytes('#' . str_pad(substr($state, 0, 5), 5, '0'))->bytes(\MySqlMemory\Value\Diagnostic\Encoding::packet($message, $results))->payload();
     }
 
     /**

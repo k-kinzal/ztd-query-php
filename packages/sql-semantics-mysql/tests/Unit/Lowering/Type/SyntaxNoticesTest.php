@@ -45,4 +45,12 @@ final class SyntaxNoticesTest extends TestCase
 
         self::assertSame($expected, array_column($notices, 1));
     }
+
+    public function testCompletedKeepsDatabaseCharsetWarningsBeforeALaterOption(): void
+    {
+        $sql = 'ALTER DATABASE d CHARACTER SET utf8 READ ONLY 2';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, (int) strpos($sql, '2'), new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertSame([Deprecated::Utf8Alias], array_column($notices, 1));
+    }
 }

@@ -27,7 +27,10 @@ final class SyntaxNotices
      */
     public function completed(Node $node, Lowering $lowering): array
     {
-        if (in_array($node->name, ['ascii', 'unicode'], true)) {
+        if ($node->name === 'default_charset') {
+            $name = $lowering->charsets->charset($node)->name;
+            $attribute = $name === null ? null : new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named, $name);
+        } elseif (in_array($node->name, ['ascii', 'unicode'], true)) {
             $attribute = $lowering->types->parts->shorthand($node);
         } elseif (in_array($node->name, ['opt_binary', 'opt_charset_with_opt_binary'], true)) {
             $first = $node->children[0] ?? null;

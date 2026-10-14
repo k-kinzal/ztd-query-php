@@ -35,6 +35,14 @@ final class DatabaseRuleTest extends TestCase
         self::assertSame('ALTER DATABASE d READ ONLY DEFAULT', (new Semantics(Dialect::MySql))->analyze('alter database d read only = default')->toString());
     }
 
+    public function testReadOnlyRefusesAnInvalidValueBeforePublishingAnOption(): void
+    {
+        $this->expectException(\SqlSemantics\Diagnostic\AnalysisException::class);
+        $this->expectExceptionMessage('READ ONLY accepts 0, 1 or DEFAULT');
+
+        (new Semantics(Dialect::MySql))->analyze("ALTER DATABASE d READ ONLY 2 ENCRYPTION 'N'");
+    }
+
     public function testEncryptionLowersTheValue(): void
     {
         self::assertSame("CREATE DATABASE d DEFAULT ENCRYPTION 'Y'", (new Semantics(Dialect::MySql))->analyze("create database d encryption 'Y'")->toString());

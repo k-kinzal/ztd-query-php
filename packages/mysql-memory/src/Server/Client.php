@@ -176,7 +176,7 @@ final class Client
             $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database, $this->port, $this->id);
             $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
         } catch (SqlError $error) {
-            $this->packet($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
+            $this->packet($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) ($this->session?->variables->read('character_set_results') ?? 'utf8mb4')));
 
             return false;
         }
@@ -240,7 +240,7 @@ final class Client
         try {
             $this->session()->use($database);
         } catch (SqlError $error) {
-            return $this->send($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
+            return $this->send($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) ($this->session?->variables->read('character_set_results') ?? 'utf8mb4')));
         }
 
         return $this->send($this->messages->ok(0, 0, $this->status(), 0));
@@ -267,7 +267,7 @@ final class Client
         $session = $this->session();
         foreach ((new \MySqlMemory\Session\Script\Replies($session))->run($sql) as [$answer, $more]) {
             if ($answer instanceof SqlError) {
-                $this->send($this->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage()));
+                $this->send($this->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage(), (string) $session->variables->read('character_set_results')));
                 continue;
             }
             $this->reply($answer, $more ? 8 : 0, false);
