@@ -17,6 +17,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseStop;
 
 /**
  * Preserves modern operator and SELECT-modifier warnings before a syntax refusal.
@@ -68,14 +69,19 @@ final class ModernWarnings
     /**
      * Records typed conditions in order, retaining the first error as the reply.
      *
-     * @param list<Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure> $notices The completed semantic notices
+     * @param list<Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop> $notices The completed semantic notices
+     * @param bool $append Whether the final refusal follows the recorded notices or is already among them
      */
-    public function recorded(array $notices, SqlError $syntax, Session $session): SqlError
+    public function recorded(array $notices, SqlError $syntax, Session $session, bool $append = true): SqlError
     {
         $session->diagnostics->clear();
         $first = null;
         $aborted = false;
         foreach ($notices as $notice) {
+            if ($notice instanceof ParseStop) {
+                $aborted = true;
+                break;
+            }
             if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) {
                 $session->diagnostics->warning($notice->code(), $notice->message());
                 if ($notice->aborts) {
@@ -100,7 +106,7 @@ final class ModernWarnings
                 break;
             }
         }
-        if (!$aborted) {
+        if (!$aborted && $append) {
             $session->diagnostics->error($syntax->getCode(), $syntax->getMessage());
         }
         $first ??= $syntax;

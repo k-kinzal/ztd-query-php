@@ -27,13 +27,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class BinaryCastTest extends TestCase
 {
-    public function testDeriveScalarRetainsAnAbortingCompletionAfterARefusedOperand(): void
-    {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT BINARY ((CAST(1 AT LOCAL AS SIGNED))), BINARY 2');
-
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator, aborts: true), $operation->facts->warnings[1]);
-    }
-
     public function testDeriveScalarIsANullableBinaryString(): void
     {
         $platform = new Platform();

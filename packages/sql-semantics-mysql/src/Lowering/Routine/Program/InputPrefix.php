@@ -93,21 +93,21 @@ final class InputPrefix
     }
 
     /**
-     * Adds a completed declaration or statement, preserving a parameter-list refusal.
+     * Adds a completed declaration or statement, preserving an input-operand refusal.
      */
     public function completed(Node $node, PrefixFrame $frame, ParameterList $parameters): ParameterList|RejectedInput
     {
-        if (in_array($node->name, ['sp_pdparam_list', 'sp_fdparam_list'], true)) {
-            try {
+        try {
+            if (in_array($node->name, ['sp_pdparam_list', 'sp_fdparam_list'], true)) {
                 return (new ParameterRule($this->lowering))->parameters($node);
-            } catch (RejectedInput $failure) {
-                return $failure;
             }
-        }
-        if ($node->name === 'sp_decl') {
-            $frame->declarations[] = (new BlockRule($this->lowering))->declaration($node);
-        } else {
-            $frame->statements[] = (new StatementRule($this->lowering))->statement($node);
+            if ($node->name === 'sp_decl') {
+                $frame->declarations[] = (new BlockRule($this->lowering))->declaration($node);
+            } else {
+                $frame->statements[] = (new StatementRule($this->lowering))->statement($node);
+            }
+        } catch (RejectedInput $failure) {
+            return $failure;
         }
 
         return $parameters;

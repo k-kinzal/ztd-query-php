@@ -12,11 +12,9 @@ use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Lowering\Productions;
-use SqlSemantics\Platform\MySql\Lowering\Expression\SyntaxCasts;
-use SqlSemantics\Platform\MySql\Lowering\Expression\SyntaxDeprecations;
-use SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxNames;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseStop;
 
 /**
  * Interprets notices of completed expressions before a later input refusal.
@@ -38,7 +36,7 @@ final class SyntaxWarnings
     /**
      * Returns completion notices raised before the token at the refusal offset.
      *
-     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure}> Input boundaries and semantic notices
+     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop}> Input boundaries and semantic notices
      */
     public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile): array
     {
@@ -47,17 +45,23 @@ final class SyntaxWarnings
         $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');
         $lowering = new Lowering($productions, new Leaves(), $profile);
         $aborted = false;
+        $failed = false;
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, $ranges, $end, $profile, $lowering, $parser, $statement): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, &$failed, $ranges, $end, $lowering, $parser, $statement): void {
                 if ($aborted || $lookahead->offset > $end) {
                     return;
                 }
-                $replication = new Replication\SyntaxDeprecations();
-                $notice = (new SyntaxDeprecations())->completed($node, $profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering);
+                if ($failed && in_array($node->name, ['sp_proc_stmt', 'ev_sql_stmt_inner'], true)) {
+                    $warnings[] = [($ranges->span($node, true)[1] ?? 0), ParseStop::ProgramStatement];
+                    $aborted = true;
+                    return;
+                }
+                $notice = (new CompletedNotice())->of($node, $lowering, $parser, $statement);
                 foreach ($notice === null ? (new Type\SyntaxNotices())->completed($node, $lowering) : [$notice] as $condition) {
                     $range = $ranges->span($node, true);
                     if ($range !== null) {
                         $warnings[] = [$range[1], $condition];
+                        $failed = $failed || $condition instanceof ParseFailure;
                         $aborted = ($condition instanceof ParseFailure || $condition instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) && $condition->aborts;
                     }
                 }
@@ -69,7 +73,7 @@ final class SyntaxWarnings
         usort($warnings, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
         foreach ($warnings as $index => [, $notice]) {
-            if (($notice instanceof ParseFailure || $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) && $notice->aborts) {
+            if ($notice instanceof ParseStop || (($notice instanceof ParseFailure || $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) && $notice->aborts)) {
                 return array_slice($warnings, 0, $index + 1);
             }
         }
@@ -78,7 +82,7 @@ final class SyntaxWarnings
     }
 
     /**
-     * Finds the first rejected condition operand of a parsed input, without deriving an operation.
+     * Finds a rejected operand of a parsed input, retaining earlier program-scope refusals.
      */
     public function rejected(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
     {
@@ -86,6 +90,10 @@ final class SyntaxWarnings
         $pending = [$tree];
         while ($pending !== []) {
             $condition = array_pop($pending);
+            if ($condition->name === 'simple_expr' && $lowering->form($condition)->signature === 'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )') {
+                $end = (new SourceRanges())->span($condition)[1] ?? 0;
+                return (new Routine\Program\InputPrefix($lowering))->before($tree, $end) ?? new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'), $end, false);
+            }
             if (in_array($condition->name, ['sp_cond', 'sqlstate'], true)) {
                 try {
                     (new Routine\Condition\ConditionRule($lowering))->value($condition);

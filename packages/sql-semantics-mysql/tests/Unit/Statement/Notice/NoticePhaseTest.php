@@ -18,7 +18,7 @@ final class NoticePhaseTest extends TestCase
 {
     public function testCasesDistinguishTheInnerOperandFromItsPartitionContext(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SHOW PARSE_TREE CREATE TABLE t (a INT) PARTITION BY HASH(CAST(@v AT LOCAL AS SIGNED))');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SHOW PARSE_TREE CREATE TABLE t (a INT) PARTITION BY HASH(@v COLLATE missing)');
 
         $notices = array_values(array_filter($operation->facts->warnings, static fn ($notice): bool => $notice instanceof ParseFailure));
 

@@ -24,6 +24,15 @@ final class RejectedInputTest extends TestCase
         self::assertSame(20, $failure->end);
         self::assertSame("Bad SQLSTATE: '00'", $failure->getMessage());
         self::assertNull($failure->getPrevious());
+        self::assertTrue($failure->aborts);
+    }
+
+    public function testContinuingRefusalsRetainTheirCompletionPolicy(): void
+    {
+        $failure = new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'), 37, false);
+
+        self::assertFalse($failure->aborts);
+        self::assertSame(37, $failure->end);
     }
 
     public function testRejectsANegativeBoundary(): void

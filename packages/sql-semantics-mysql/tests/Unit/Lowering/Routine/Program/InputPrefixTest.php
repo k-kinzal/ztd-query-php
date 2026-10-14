@@ -37,6 +37,7 @@ final class InputPrefixTest extends TestCase
         yield 'outer condition' => ["DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN SIGNAL c; END;", null];
         yield 'closed inner scope' => ["BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; END; SIGNAL c;", 'Undefined CONDITION: c'];
         yield 'deferred column binding' => ['SELECT missing_column;', null];
+        yield 'rejected expression' => ['SELECT CAST(1 AT LOCAL AS DATE);', "This version of MySQL doesn't yet support 'AT LOCAL'."];
     }
 
     #[DataProvider('providerPrefixes')]

@@ -95,6 +95,9 @@ final class Reader
         if ($earlier !== null) {
             return $earlier;
         }
+        if (!$failure->aborts) {
+            return (new ContinuingRefusal())->error($failure, $statement, $session);
+        }
         $error = (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
         $parser = $session->semantics()->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');

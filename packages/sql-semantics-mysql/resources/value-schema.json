@@ -1026,11 +1026,6 @@
         "operand": "SqlSemantics\\Statement\\Scalar",
         "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CastAtLocal": {
-        "array": "bool",
-        "operand": "SqlSemantics\\Statement\\Scalar",
-        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CharsetConversion": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
         "operand": "SqlSemantics\\Statement\\Scalar"
@@ -1376,6 +1371,9 @@
         "aborts": "bool",
         "phase": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NoticePhase",
         "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\ParseStop": {
+        "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\TrimmedName": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"

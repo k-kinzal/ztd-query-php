@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Lowering\Lists;
@@ -15,10 +17,10 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -31,7 +33,7 @@ use SqlSemantics\Statement\Scalar;
  * a CAST; the parentheses around the MATCH columns and the words
  * `IN NATURAL LANGUAGE MODE` are not part of the structure. The WHEN
  * branches are flattened along their list spine. Constructs:
- * CaseExpression, CaseBranch, Cast, CastAtLocal, AtTimeZone,
+ * CaseExpression, CaseBranch, Cast, AtTimeZone,
  * CharsetConversion, BinaryCast, FullTextSearch. Terminates: list spines
  * are flattened in a loop; every other child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flow-control-functions.html,
@@ -54,6 +56,7 @@ final class ConstructRule
      * Lowers one of the constructs.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When AT LOCAL has no semantic expression domain
      */
     public function lower(Form $form): Scalar
     {
@@ -64,7 +67,7 @@ final class ConstructRule
             'simple_expr: CASE_SYM opt_expr when_list opt_else END' => new CaseExpression($this->optional($form->node(1)), $this->branches($form->node(2)), $this->optional($form->node(3))),
             'simple_expr: CAST_SYM ( expr AS cast_type )', 'simple_expr: CONVERT_SYM ( expr , cast_type )' => new Cast($expressions->expression($form->node(2)), $types->castTarget($form->node(4))),
             'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' => new Cast($expressions->expression($form->node(2)), $types->castTarget($form->node(4)), $this->flag($form->node(5))),
-            'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )' => new CastAtLocal($expressions->expression($form->node(2)), $types->castTarget($form->node(6)), $this->flag($form->node(7))),
+            'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )' => throw new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($form->node)[1] ?? 0, false),
             'simple_expr: CAST_SYM ( expr AT_SYM TIME_SYM ZONE_SYM opt_interval TEXT_STRING_literal AS DATETIME_SYM type_datetime_precision )' => $this->zone($form),
             'simple_expr: CONVERT_SYM ( expr USING charset_name )' => new CharsetConversion($expressions->expression($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
             'simple_expr: BINARY simple_expr', 'simple_expr: BINARY_SYM simple_expr' => new BinaryCast($expressions->simpleExpression($form->node(1))),

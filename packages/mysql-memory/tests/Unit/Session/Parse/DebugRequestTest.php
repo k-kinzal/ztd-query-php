@@ -11,16 +11,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
-use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operation;
@@ -35,7 +33,7 @@ final class DebugRequestTest extends TestCase
      */
     public static function providerOperands(): iterable
     {
-        yield 'continuing parse error' => [new CastAtLocal(new NumberLiteral('1'), new CastTarget(CastKind::DateTime)), [1235, 1064]];
+        yield 'continuing parse error' => [new Collated(new NumberLiteral('1'), new Name('missing')), [1273, 1064]];
         yield 'aborting charset' => [new CharsetConversion(new NumberLiteral('1'), new CharsetName(new Name('missing'))), [1115]];
         yield 'later binding diagnostic' => [new ColumnUse(new Name('absent')), [1064]];
     }
@@ -60,13 +58,13 @@ final class DebugRequestTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
-        $partitioning = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new CastAtLocal(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('v')), new CastTarget(CastKind::Signed))), null, null, []);
+        $partitioning = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new Collated(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('v')), new Name('missing'))), null, null, []);
         $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), partitioning: $partitioning));
         $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
 
         $error = (new DebugRequest())->refusal($operation, (new InternalCommand())->error($operation), $session);
 
-        self::assertSame(1235, $error->getCode());
-        self::assertSame([1235, 1064], array_column($session->diagnostics->conditions, 1));
+        self::assertSame(1273, $error->getCode());
+        self::assertSame([1273, 1064], array_column($session->diagnostics->conditions, 1));
     }
 }

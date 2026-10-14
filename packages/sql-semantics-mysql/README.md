@@ -171,6 +171,14 @@ $semantics->analyze('SELECT @total')->field(0)->type->missing[0]->describe(); //
 
 ### Result column names
 
+Within a stored program, parameter and local-variable references resolve to the
+nearest declaration using MySQL's case- and accent-insensitive name identity.
+`INTO` and `LIMIT` operands retain the same declaration and type facts during
+definition. An unqualified select item can name either a column or a program
+variable, so its validated spelling remains available until resolution. A
+program-variable result uses the expression spelling, including quotes and
+parentheses; an ordinary column result uses its decoded name.
+
 MySQL names a select list item without alias after the text of its expression as the statement writes it, so `SELECT 1+1` and `SELECT 1 + 1` return columns named `1+1` and `1 + 1`. An item that names itself keeps its own name: a column reference its column name, a string the value of its first quoted part, `NULL` the name `NULL`, a number its text, `?` the name `?`, and in MySQL 5.6 and 5.7 `TRUE` and `FALSE` those words; parentheses and a unary plus do not change it. The server removes leading spaces and control characters from the name, and keeps at most 255 bytes of it.
 
 Such an item keeps the spelling of its expression as a layout (`SelectExpression::$layout`), and `toString()` writes the expression as it was written, comments included, so the rendered SQL returns the same column names. The optional words that change that text are part of the model: `AS` before an alias, `OUTER` and `INNER` of a join, the empty parentheses of `CURDATE()` and the other niladic functions, `ROW`, the `OF` of `MEMBER OF`, `INT` after `SIGNED`, `CHARACTER SET` for `CHARSET`, and the 5.6 and 5.7 leading dot of `.t`. Version comment markers are left out, as the server leaves them out of the name. An item built without a layout is named after, and written as, the canonical rendering of its expression. The name ends where the expression ends: whitespace and comments after it are not part of it, so `SELECT 1+1 /* c */` returns a column named `1+1`.
@@ -367,6 +375,15 @@ The original spelling of an unquoted `FULL` identifier produces warning 4119 in 
 Deprecated type attributes produce warnings in written order, including integer display widths, `ASCII`, `UNICODE`, `BINARY` and national character types. These checks do not establish complete validation of every type or table option.
 
 ## Limitations
+
+`CAST(... AT LOCAL AS ...)` has no public expression type: every supported
+MySQL release rejects this form. Lowering reports `Construction\RejectedInput`
+with the typed `NotSupportedYet` problem before publishing a structure. The
+failure's `aborts` field distinguishes an immediate input stop from a refusal
+that still permits later grammar conditions. It is an input diagnostic, not an
+execution approval flag. SQL input remains accepted by SQL Parser wherever the
+grammar permits it; `Lowering\SyntaxWarnings` preserves the ordered observations
+of the rejected input, including a stored-program statement's stopping boundary.
 
 - Optimizer hints (`/*+ ... */` after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` or `DELETE`) are not analyzed. The server reads them with a grammar of their own, and the parser this package uses delivers them as a comment, so from 5.7 on a statement with a hint is refused with `ImplementationGap` instead of being read without it. In MySQL 5.6 such a comment is an ordinary comment.
 - Version comments (`/*!80000 ... */`) are read as the selected release reads them: the body is part of the statement when the release is at least the written version, and a comment otherwise. Rendered SQL writes that reading without the comment markers, so it is SQL for the selected release.

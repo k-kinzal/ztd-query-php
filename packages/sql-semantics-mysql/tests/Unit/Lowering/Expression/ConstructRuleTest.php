@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextMode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
@@ -26,6 +25,21 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 #[Medium]
 final class ConstructRuleTest extends TestCase
 {
+    public function testAtLocalIsRejectedBeforePublishingAnExpression(): void
+    {
+        $failure = null;
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CAST(1 AT LOCAL AS DATE), BINARY 2');
+        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
+            $failure = $caught;
+        }
+
+        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'), $failure->problem);
+        self::assertFalse($failure->aborts);
+        self::assertSame(strlen('SELECT CAST(1 AT LOCAL AS DATE)'), $failure->end);
+    }
+
     public function testLowerLowersTheKeywordConstructs(): void
     {
         $platform = new Platform();
@@ -38,7 +52,6 @@ final class ConstructRuleTest extends TestCase
 
         self::assertInstanceOf(Cast::class, $convert);
         self::assertFalse($convert->array);
-        self::assertInstanceOf(CastAtLocal::class, $rule->lower($productions->form($parser->parse('SELECT CAST(1 AT LOCAL AS DATE)')->find('simple_expr')[0])));
         self::assertInstanceOf(CharsetConversion::class, $rule->lower($productions->form($parser->parse('SELECT CONVERT(1 USING latin1)')->find('simple_expr')[0])));
         self::assertInstanceOf(BinaryCast::class, $rule->lower($productions->form($parser->parse('SELECT BINARY 1')->find('simple_expr')[0])));
         self::assertInstanceOf(FullTextSearch::class, $rule->lower($productions->form($parser->parse("SELECT MATCH (a) AGAINST ('x')")->find('simple_expr')[0])));

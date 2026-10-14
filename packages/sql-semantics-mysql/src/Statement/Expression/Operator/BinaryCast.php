@@ -58,12 +58,8 @@ final class BinaryCast implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
-        $source = $this->operand;
-        while ($source instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
-            $source = $source->operand;
-        }
         if (Deprecated::BinaryOperator->warnedIn($derivation->context->profile->grammar)) {
-            $derivation->warn(new Deprecation(Deprecated::BinaryOperator, aborts: $derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql8044 && $source instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal));
+            $derivation->warn(new Deprecation(Deprecated::BinaryOperator));
         }
 
         $operand = (new Precision())->domain($fact->type);
