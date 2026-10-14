@@ -164,13 +164,19 @@ final class DispatcherTest extends TestCase
 
     public function testCommandRefusesAStatementNoCommandExecutes(): void
     {
-        $statement = new \SqlSemantics\Statement\Script([]);
+        $session = (new Instance())->connect();
+        $statement = new \SqlSemantics\Statement\Script([$session->analyze('SELECT 1')->statement, $session->analyze('SELECT 2')->statement]);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
         $this->expectExceptionMessage("This version of MySQL doesn't yet support 'Script'");
 
         (new Dispatcher())->command($statement);
+    }
+
+    public function testCommandCompletesAnEmptySemanticScript(): void
+    {
+        self::assertInstanceOf(\MySqlMemory\Command\EmptyCommand::class, (new Dispatcher())->command(new \SqlSemantics\Statement\Script([])));
     }
 
     public function testCommandChoosesTheCommandsOfServerAdministration(): void

@@ -18,6 +18,19 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DiagnosticsCommandTest extends TestCase
 {
+    public function testAssignStopsAtAnIllegalNameAndKeepsTheEarlierAssignments(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @before = -1, @after = -1');
+
+        $reply = $session->query("GET DIAGNOSTICS @before = NUMBER, @'' = ROW_COUNT, @after = NUMBER")[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([0, -1], [$session->variables->user('before')[0], $session->variables->user('after')[0]]);
+        self::assertSame([['Error', 3061, "User variable name '' is illegal"]], $session->diagnostics->conditions);
+        self::assertArrayNotHasKey('', $session->variables->user);
+    }
+
     public function testClearsDiagnosticsAnswersFalse(): void
     {
         self::assertFalse((new DiagnosticsCommand())->clearsDiagnostics());

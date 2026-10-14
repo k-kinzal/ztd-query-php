@@ -18,6 +18,28 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CreateUserCommandTest extends TestCase
 {
+    public function testAbsentRecordsEveryCredentialFailureAndExistingAccountInOrder(): void
+    {
+        $session = (new Instance())->connect();
+
+        $reply = $session->run('CREATE USER IF NOT EXISTS a IDENTIFIED WITH missing, CURRENT_USER, b IDENTIFIED WITH missing2')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1524, $reply->getCode());
+        self::assertSame([1524, 3163, 1524], array_column($session->diagnostics->conditions, 1));
+        self::assertNull($session->instance->accounts->find(new Identity('a', '%')));
+    }
+
+    public function testAbsentIgnoresReplacementCredentialsForAnExistingAccount(): void
+    {
+        $session = (new Instance())->connect();
+
+        $reply = $session->query('CREATE USER IF NOT EXISTS CURRENT_USER IDENTIFIED WITH missing')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([3163], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testCreateRefusesInitialAuthenticationForBuiltInPlugins(): void
     {
         $session = (new Instance())->connect();

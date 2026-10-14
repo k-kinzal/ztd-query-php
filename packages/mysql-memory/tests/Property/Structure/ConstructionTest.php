@@ -30,6 +30,26 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 final class ConstructionTest extends TestCase
 {
     /**
+     * A repaired clone operand remains representable in a supported language profile.
+     *
+     * @throws JsonException When the value inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testCloneInstanceRetainsQuotedPasswordAndDirectoryOperands(): void
+    {
+        $catalogue = new Catalogue();
+        $choices = new Choices('823a2230910f3f4d34f8537f3d259098:1');
+        $choices->one($catalogue->roots());
+        $construction = new Construction($choices, $catalogue, new Metadata());
+        $statement = $construction->object(\SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneInstance::class, 6);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneInstance::class, $statement);
+        self::assertNull($statement->password->radix);
+        self::assertNull($statement->directory?->radix);
+        self::assertSame(\SqlSemantics\Contract\GrammarRelease::MySql8044, (new \Fuzz\Structure\Profiles())->select($statement)->grammar);
+    }
+
+    /**
      * @return iterable<string, array{class-string, string}>
      */
     public static function providerOperands(): iterable

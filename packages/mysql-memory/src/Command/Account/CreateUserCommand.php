@@ -75,9 +75,6 @@ final class CreateUserCommand implements Command
         if ((new Credentials($release))->legacy()) {
             return $this->legacy($statement, $session, $context, $plugin);
         }
-        foreach ($statement->users as $user) {
-            $options->check($user->initial ?? $user->identification, $plugin);
-        }
         $created = $this->absent($statement, $names, $session, $context);
         $defaults = $this->defaults($statement, $session);
         $accounts = $session->instance->accounts;
@@ -98,8 +95,9 @@ final class CreateUserCommand implements Command
     /**
      * Answers the accounts of CREATE USER that do not exist yet, each named once.
      *
-     * An account that exists, or is named a second time, fails the statement (ER_CANNOT_USER,
-     * naming every such account), or with IF NOT EXISTS draws a note.
+     * Existing accounts under IF NOT EXISTS draw notes without validating replacement credentials.
+     * Other occurrences validate their credentials before checking existence. All occurrences
+     * contribute diagnostics in order; credential failures precede the final existence error.
      *
      * @return list<array{Identity, UserSpecification}>
      *
@@ -109,19 +107,34 @@ final class CreateUserCommand implements Command
     {
         $failed = [];
         $created = [];
+        $first = null;
+        $options = new Options($session->settings()->release());
+        $plugin = (new Credentials($session->settings()->release()))->default();
         foreach ($statement->users as $user) {
             $identity = $names->identity($user->user, $session);
-            if ($session->instance->accounts->find($identity) !== null || isset($created[$identity->key()])) {
+            $exists = $session->instance->accounts->find($identity) !== null || isset($created[$identity->key()]);
+            if ($exists && $statement->ifNotExists) {
+                $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));
+                continue;
+            }
+            try {
+                $options->check($user->initial ?? $user->identification, $plugin);
+            } catch (SqlError $error) {
+                $session->diagnostics->error($error->getCode(), $error->getMessage());
+                $first ??= $error;
+                continue;
+            }
+            if ($exists) {
                 $failed[] = $identity;
                 continue;
             }
             $created[$identity->key()] = [$identity, $user];
         }
-        if ($failed !== [] && !$statement->ifNotExists) {
-            throw AccountError::CannotUser->error('CREATE USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
+        if ($first !== null) {
+            throw new SqlError($first->error, $first->getMessage(), $first, recorded: true);
         }
-        foreach ($failed as $identity) {
-            $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));
+        if ($failed !== []) {
+            throw AccountError::CannotUser->error('CREATE USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
 
         return array_values($created);
@@ -143,7 +156,9 @@ final class CreateUserCommand implements Command
     }
 
     /**
-     * Creates the accounts as MySQL 5.6 and 5.7 do, one after the other: an account whose plugin or authentication string is refused is recorded as an error, and one that exists is refused or, with IF NOT EXISTS, noted; the others are created all the same. A refusal is followed by ER_CANNOT_USER, which names the refused accounts in 5.6 and none in 5.7 (verified on live 5.6.51 and 5.7.44 servers).
+     * Creates accounts one after another in MySQL 5.6 and 5.7, preserving successful changes.
+     * Credential failures are followed by ER_CANNOT_USER, which lists credential and existence
+     * failures in 5.6, and existence failures alone in 5.7 (verified on isolated servers).
      *
      * @param string $plugin The plugin an account takes when the statement names none
      *
@@ -180,7 +195,7 @@ final class CreateUserCommand implements Command
         }
         $quoted = static fn (Identity $identity): string => $identity->quoted();
         if ($refusal !== null) {
-            $listed = $release === GrammarRelease::MySql5651 ? implode(',', array_map($quoted, [...$refused, ...$failed])) : '';
+            $listed = implode(',', array_map($quoted, $release === GrammarRelease::MySql5651 ? [...$refused, ...$failed] : $failed));
 
             throw new SqlError($refusal->error, $refusal->getMessage(), $refusal, [[AccountError::CannotUser->value, AccountError::CannotUser->message('CREATE USER', $listed)]], null, null, true);
         }

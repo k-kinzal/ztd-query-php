@@ -237,6 +237,7 @@ final class Execution
             return false;
         }
         $kept = [
+            \MySqlMemory\Command\EmptyCommand::class,
             \MySqlMemory\Command\TransactionCommand::class, \MySqlMemory\Command\Transaction\SetTransactionCommand::class, \MySqlMemory\Command\Transaction\SavepointCommand::class,
             \MySqlMemory\Command\Transaction\XaCommand::class, \MySqlMemory\Command\DatabaseCommand::class, \MySqlMemory\Command\Definition\Database\AlterDatabaseCommand::class, \MySqlMemory\Command\Definition\Database\UpgradeDatabaseCommand::class, \MySqlMemory\Command\Account\CreateUserCommand::class,
             \MySqlMemory\Command\Account\DropUserCommand::class, \MySqlMemory\Command\Account\AlterUserCommand::class, \MySqlMemory\Command\Account\RenameUserCommand::class,

@@ -230,6 +230,7 @@ final class Dispatcher
         $command = self::COMMANDS[$statement::class] ?? null;
 
         return match (true) {
+            $statement instanceof \SqlSemantics\Statement\Script && $statement->statements === [] => new EmptyCommand(),
             $statement instanceof InsertRows, $statement instanceof InsertSet, $statement instanceof InsertQuery => new View\ViewWriteCommand(new InsertCommand()),
             $statement instanceof Update && MultipleChangeCommand::joined($statement) => new MultipleChangeCommand(),
             $statement instanceof Update, $statement instanceof Delete => new View\ViewWriteCommand(new ChangeCommand()),

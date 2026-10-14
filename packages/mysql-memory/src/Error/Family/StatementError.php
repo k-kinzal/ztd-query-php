@@ -52,6 +52,7 @@ enum StatementError: int implements ErrorCode
     case DeprecatedSyntaxNoReplacement = 1681;
     case UnknownExplainFormat = 1791;
     case ExplainNotSupported = 3012;
+    case IllegalUserVariable = 3061;
     case LocalInfileDisabled = 3948;
     case ExplainIntoImplicitFormat = 6006;
     case ExplainIntoFormat = 6007;

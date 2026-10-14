@@ -11,6 +11,7 @@ use MySqlMemory\Session\Variables;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Scope;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,46 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 #[Small]
 final class VariablesTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDisplayedNames(): iterable
+    {
+        yield 'legacy complete characters' => ['5.7.44', str_repeat('界', 33)];
+        yield 'modern incomplete byte' => ['8.4.7', str_repeat('界', 33) . '?'];
+    }
+
+    #[DataProvider('providerDisplayedNames')]
+    public function testCheckUserNameBoundsTheDisplayedBytes(string $release, string $displayed): void
+    {
+        $variables = (new Instance($release))->connect()->variables;
+        $this->expectExceptionCode(3061);
+        $this->expectExceptionMessage("User variable name '" . $displayed . "' is illegal");
+
+        $variables->checkUserName(str_repeat('界', 65));
+    }
+
+    public function testCheckUserNameRefusesAnOverlongAssignmentName(): void
+    {
+        $variables = (new Instance())->connect()->variables;
+        $this->expectExceptionCode(3061);
+        $this->expectExceptionMessage("User variable name '" . str_repeat('a', 65) . "' is illegal");
+
+        $variables->checkUserName(str_repeat('a', 65));
+    }
+
+    public function testAssignCountsCharactersAndKeepsLegacyNames(): void
+    {
+        $modern = (new Instance())->connect()->variables;
+        $legacy = (new Instance('5.6.51'))->connect()->variables;
+
+        $modern->assign(str_repeat('é', 64), 7, Domain::integer());
+        $legacy->assign('', 8, Domain::integer());
+        $legacy->assign(str_repeat('a', 65), 9, Domain::integer());
+
+        self::assertSame([7, 8, 9], [$modern->user(str_repeat('é', 64))[0], $legacy->user('')[0], $legacy->user(str_repeat('a', 65))[0]]);
+    }
+
     public function testSystemAndSetShareTheLastInsertIdOfTheFunction(): void
     {
         $session = (new Instance())->connect();

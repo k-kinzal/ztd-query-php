@@ -7,12 +7,19 @@ namespace Tests\Property\Structure;
 use Fuzz\Structure\Choices;
 use Fuzz\Structure\Execution;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementDiagnostics;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName;
+use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
+use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Statement\Identifier\Name;
@@ -24,6 +31,42 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class UserVariableTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDiagnosticNames(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
+            for ($seed = 0; $seed < 20; $seed++) {
+                $choices = new Choices('diagnostic-name:' . $release . ':' . $seed);
+                $length = $choices->integer($release === '5.6.51' ? 0 : 1, $release === '5.6.51' ? 75 : 64);
+                yield $release . ':' . $seed => [$release, str_repeat($choices->one(['a', 'é', '界', '0']), $length)];
+            }
+        }
+    }
+
+    /**
+     * Constructed diagnostic assignments accept character-bounded multibyte names.
+     */
+    #[DataProvider('providerDiagnosticNames')]
+    public function testConstructedDiagnosticsAssignCharacterBoundedNames(string $release, string $name): void
+    {
+        $session = (new Instance($release))->connect();
+        $execution = new Execution();
+        $execution->runIn($session, new SetVariables([new UserAssignment(new UserVariable(new Name($name)), new NumberLiteral('7'))]));
+        $statement = new GetDiagnostics(new StatementDiagnostics([
+            new InformationItem(new UserVariable(new Name($name)), StatementItemName::Number),
+        ]));
+
+        $reply = $execution->runIn($session, $statement);
+        $read = $execution->runIn($session, new UserVariable(new Name($name)));
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertInstanceOf(ResultSet::class, $read);
+        self::assertSame([['0']], $read->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     /**
      * @return iterable<string, array{string, string}>
      */
@@ -43,14 +86,14 @@ final class UserVariableTest extends TestCase
     {
         $session = (new Instance('5.6.51'))->connect();
         $execution = new Execution();
-        $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables([
+        $statement = new SetVariables([
             new \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment(new \SqlSemantics\Platform\MySql\Statement\Account\Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($password), \SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::Password)),
-            new \SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment(new UserVariable(new Name('value')), new NumberLiteral($value)),
+            new UserAssignment(new UserVariable(new Name('value')), new NumberLiteral($value)),
         ]);
         $write = $execution->runIn($session, $statement);
         $read = $execution->runIn($session, new UserVariable(new Name('value')));
 
-        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $write);
+        self::assertInstanceOf(Completion::class, $write);
         self::assertInstanceOf(ResultSet::class, $read);
         self::assertSame([[$value]], $read->rows);
         self::assertSame($password, $session->instance->accounts->find(new \MySqlMemory\Account\Identity('root', '%'))?->password);

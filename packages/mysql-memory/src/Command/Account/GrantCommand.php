@@ -107,6 +107,7 @@ final class GrantCommand implements Command
             $grantees[] = $identity;
         }
         $found = [];
+        $session->databaseGrants->refused($target);
         if ((new Catalog($session->settings()->release()))->legacy()) {
             $found = $this->accounts($statement, $grantees, $session);
         }
@@ -124,6 +125,7 @@ final class GrantCommand implements Command
         $option = $option || array_filter($statement->options, static fn ($with): bool => $with instanceof GrantOptionRight) !== [];
         foreach ($found as $account) {
             $this->grant($account, $target, $static, $columns, $dynamic, $option, $all, $named);
+            $session->databaseGrants->remember($account, $target);
         }
     }
 

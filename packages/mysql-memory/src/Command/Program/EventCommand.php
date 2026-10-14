@@ -86,7 +86,7 @@ final class EventCommand implements Command
         $key = strtolower($statement->name->name->value);
         if ($statement instanceof AlterEvent) {
             $event = $this->found($statement, $database, $session, $context);
-            $this->alter($statement, $event, $session, $schedule, $context);
+            $this->alter($statement, $event, $session, $schedule, $context, ProgramText::of($operation, $session));
         } else {
             if ($schema !== null && isset($schema->events[$key])) {
                 if (!$statement->ifNotExists) {
@@ -101,7 +101,7 @@ final class EventCommand implements Command
             }
             assert($schedule !== null);
             $now = ProgramSource::now();
-            $event = new Event($database, $statement->name->name->value, ProgramSource::definer($statement->definer, $session, $context), (string) $session->variables->read('time_zone'), $schedule[0], $schedule[1], $schedule[2], $schedule[3], $this->status($statement->status), $statement->completion === EventCompletion::Preserve, $statement->comment->value ?? '', ProgramSource::of($session)->body('ev_sql_stmt'), (string) $session->variables->read('sql_mode'), $now, $now, ProgramSource::charsets($session, $database));
+            $event = new Event($database, $statement->name->name->value, ProgramSource::definer($statement->definer, $session, $context), (string) $session->variables->read('time_zone'), $schedule[0], $schedule[1], $schedule[2], $schedule[3], $this->status($statement->status), $statement->completion === EventCompletion::Preserve, $statement->comment->value ?? '', ProgramText::of($operation, $session)->body($statement->body, 'ev_sql_stmt'), (string) $session->variables->read('sql_mode'), $now, $now, ProgramSource::charsets($session, $database));
             $schema->events[$key] = $event;
         }
         if ($schedule !== null) {
@@ -179,7 +179,7 @@ final class EventCommand implements Command
      *
      * @throws SqlError When the new name is the old one, names a missing database or an existing event
      */
-    public function alter(AlterEvent $statement, Event $event, Session $session, ?array $schedule, Context $context): void
+    public function alter(AlterEvent $statement, Event $event, Session $session, ?array $schedule, Context $context, ?ProgramText $text = null): void
     {
         $dictionary = $session->instance->dictionary;
         $move = null;
@@ -213,7 +213,7 @@ final class EventCommand implements Command
             $event->comment = $statement->comment->value;
         }
         if ($statement->body !== null) {
-            $event->body = ProgramSource::of($session)->body('ev_sql_stmt');
+            $event->body = ($text ?? new ProgramText($session->semantics()->context()->profile))->body($statement->body, 'ev_sql_stmt');
         }
         if ($statement->definer !== null) {
             $event->definer = ProgramSource::definer($statement->definer, $session);

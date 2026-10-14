@@ -120,7 +120,13 @@ final class DiagnosticsCommand implements Command
                 $variable->assign($value, $domain, $context);
                 continue;
             }
-            $session->variables->assign($target->name->value, $value, $domain);
+            try {
+                $session->variables->assign($target->name->value, $value, $domain);
+            } catch (SqlError $error) {
+                $session->diagnostics->error($error->getCode(), $error->getMessage());
+
+                return;
+            }
         }
     }
 

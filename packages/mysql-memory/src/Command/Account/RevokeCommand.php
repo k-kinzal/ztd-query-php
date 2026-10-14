@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\Account;
-use MySqlMemory\Account\Catalog;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Account\Privileges;
+use MySqlMemory\Command\Account\Revoke\Recipients;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\SqlError;
@@ -17,6 +17,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
@@ -31,15 +32,18 @@ use SqlSemantics\Statement\Operation;
  * The statement commits the open transaction. REVOKE of privileges checks its privileges and
  * level as GRANT does, though a dynamic privilege below the global level is only a warning under
  * IF EXISTS and a dynamic privilege the server does not register is a warning; it warns of each
- * host name. An account that does not exist is ER_NONEXISTING_GRANT, or with IGNORE UNKNOWN USER
- * a warning. A database, table or routine the account holds no grant on is ER_NONEXISTING_GRANT,
+ * host name. Missing accounts and grants are diagnosed once per occurrence, in account order,
+ * including after an error; IGNORE UNKNOWN USER warns about missing accounts. A database,
+ * table or routine the account holds no grant on is ER_NONEXISTING_GRANT,
  * ER_NONEXISTING_TABLE_GRANT or ER_NONEXISTING_PROC_GRANT, a warning under IF EXISTS; the global
- * level never is. ALL at the global level revokes every privilege at every level. REVOKE of
+ * level never is. In 8.x and later, ALL at the global level revokes every privilege at every
+ * level and tolerates missing accounts; in 5.x it removes only global static privileges. REVOKE of
  * roles refuses an account or a role that does not exist (ER_UNKNOWN_AUTHID, for a role a
  * warning under IF EXISTS); revoking a role that is not granted does nothing. REVOKE ALL, GRANT
  * OPTION keeps the roles and refuses an account that does not exist (ER_REVOKE_GRANTS). REVOKE
  * PROXY requires authority over the proxied account (see Proxies).
- * Nothing is revoked when the statement fails (verified on a live 8.4 server).
+ * A failed privilege REVOKE keeps successful changes in 5.x and rolls them back in 8.x and later
+ * (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html.
  *
  * @visibility MySqlMemory
@@ -73,7 +77,9 @@ final class RevokeCommand implements Command
                 default => $this->privileges($operation, $session),
             };
         } catch (SqlError $error) {
-            $accounts->restore($saved);
+            if (!$statement instanceof RevokePrivileges || !$session->settings()->legacy()) {
+                $accounts->restore($saved);
+            }
             throw $error;
         }
 
@@ -95,24 +101,7 @@ final class RevokeCommand implements Command
         $levels->parsed($operation, $session);
         $target = $levels->target($statement->kind, $statement->level, $session);
         $levels->dynamic($statement->privileges, $target, $session, $statement->ifExists);
-        $found = $this->found($names->users($statement->users), $statement->ignoreUnknownUser, $session, true);
-        $levels->usage($operation);
-        [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);
-        foreach ($dynamic as $name) {
-            if (!(new Catalog($session->settings()->release()))->registered($name)) {
-                $session->diagnostics->warning(AccountError::UnregisteredDynamicPrivilege, AccountError::UnregisteredDynamicPrivilege->message($name));
-            }
-        }
-        foreach ($found as $account) {
-            foreach ($target[0] === 'GLOBAL' ? $dynamic : [] as $name) {
-                unset($account->grants->dynamic[$name]);
-            }
-            if ($target[0] === 'GLOBAL' && $all) {
-                $account->grants->clear();
-                continue;
-            }
-            $this->revoke($account, $target, $static, $columns, $option, $all, $statement->ifExists, $session);
-        }
+        (new Recipients())->run($statement, $operation, $target, $session);
     }
 
     /**
@@ -126,11 +115,18 @@ final class RevokeCommand implements Command
      */
     public function revoke(Account $account, array $target, array $static, array $columns, bool $option, bool $all, bool $ifExists, Session $session): void
     {
-        if ($static === [] && $columns === [] && !$option && !$all) {
+        $empty = $static === [] && $columns === [] && !$option && !$all;
+        $release = $session->settings()->release();
+        if ($empty && ($target[0] === 'GLOBAL' || ($target[0] === 'DATABASE' && ($release === GrammarRelease::MySql847 || $release === GrammarRelease::MySql910)))) {
+            if ($target[0] === 'DATABASE') {
+                $session->databaseGrants->reuse($account, $target[1]);
+            }
+
             return;
         }
         $privileges = (new Levels($session->settings()->release()))->at($account->grants, $target, false);
-        if ($target[0] !== 'GLOBAL' && ($privileges === null || !$this->holds($privileges, $static, $columns, $option, $all))) {
+        if ($target[0] !== 'GLOBAL' && ($privileges === null || (!$empty && !$this->holds($privileges, $static, $columns, $option, $all)))) {
+            $session->databaseGrants->refused($target);
             $error = $this->missing($account->identity, $target);
             if (!$ifExists) {
                 throw $error;
@@ -148,6 +144,7 @@ final class RevokeCommand implements Command
         }
         $privileges->grantOption = $privileges->grantOption && !$option;
         $account->grants->prune();
+        $session->databaseGrants->remember($account, $target);
     }
 
     /**

@@ -98,7 +98,7 @@ final class RoutineCommand implements Command
         if ($schema === null) {
             throw QueryError::BadDatabase->error($database);
         }
-        $routine = $this->routine($statement, $session, $context, $schema, [$access, $deterministic, $security, $comment]);
+        $routine = $this->routine($statement, $session, $context, $schema, [$access, $deterministic, $security, $comment], ProgramText::of($operation, $session));
         if ($function) {
             $schema->functions[$key] = $routine;
         } else {
@@ -133,24 +133,25 @@ final class RoutineCommand implements Command
     }
 
     /**
-     * Builds the routine a CREATE PROCEDURE or CREATE FUNCTION stores in a database, with its text as written.
+     * Builds the stored routine from its semantic declaration and optional display spelling.
      *
      * @param array{string, bool, string, string} $characteristics The data access, determinism, security context and comment of the routine
+     * @param ProgramText|null $text The display spelling; absent input renders the typed declaration
      */
-    public function routine(CreateProcedure|CreateFunction $statement, Session $session, Context $context, Schema $schema, array $characteristics): Routine
+    public function routine(CreateProcedure|CreateFunction $statement, Session $session, Context $context, Schema $schema, array $characteristics, ?ProgramText $text = null): Routine
     {
         [$access, $deterministic, $security, $comment] = $characteristics;
         $function = $statement instanceof CreateFunction;
-        $source = ProgramSource::of($session);
+        $text ??= new ProgramText($session->semantics()->context()->profile);
         $now = gmdate('Y-m-d H:i:s', (int) floor($context->started));
 
         return new Routine(
             $schema->name,
             $statement->name->name->value,
             ProgramSource::definer($statement->definer, $session, $context),
-            $source->between($function ? 'sf_tail' : 'sp_tail'),
+            $text->parameters($statement->parameters, $function),
             $statement instanceof CreateFunction ? $this->returns($statement, $schema, $session->settings()->release()) : '',
-            $source->tree->find('stored_routine_body') === [] ? rtrim(rtrim($source->body('sp_proc_stmt'), ';')) : $source->body('stored_routine_body'),
+            $text->routineBody($statement->body),
             $access,
             $deterministic,
             $security,

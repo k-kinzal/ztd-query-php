@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use MySqlMemory\Error\DiagnosticText;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Scope;
 use MySqlMemory\Variable\UserEntry;
@@ -129,6 +131,7 @@ final class Variables
      */
     public function assign(string $name, int|float|string|null $value, Domain $domain, ?Collation $preparedCollation = null): void
     {
+        $this->checkUserName($name);
         $previous = $this->user[strtolower($name)] ?? null;
         $collation = $domain->kind->numeric() ? Collation::named((string) $this->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci') : $domain->collation;
         if ($value === null) {
@@ -147,7 +150,23 @@ final class Variables
      */
     public function allocate(string $name, Collation $collation): void
     {
+        $this->checkUserName($name);
         $this->user[strtolower($name)] ??= new UserEntry(null, Domain::string(0, $collation, Field::MediumBlob)->withCollation($collation, Coercibility::Implicit), $collation);
+    }
+
+    /**
+     * Refuses empty assignment names or names above 64 characters from MySQL 5.7 onward.
+     * Reads of absent variables remain NULL, including names an assignment would refuse.
+     * Error messages retain at most 100 bytes of the name.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the release refuses the assignment name
+     */
+    public function checkUserName(string $name): void
+    {
+        if ($this->instance->version !== '5.6.51' && ($name === '' || mb_strlen($name, 'UTF-8') > 64)) {
+            throw StatementError::IllegalUserVariable->error((new DiagnosticText())->bytes($name, 100, $this->instance->version === '5.7.44'));
+        }
     }
 
     /**

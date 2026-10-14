@@ -73,6 +73,10 @@ final class SyntaxWarningsTest extends TestCase
         yield 'nested binaries' => ['SELECT BINARY BINARY 1,?', [Deprecated::BinaryOperator, Deprecated::BinaryOperator]];
         yield 'system variable read' => ['SELECT @@autocommit,?', []];
         yield 'earlier syntax error' => ['SELECT ) BINARY 1,?', []];
+        yield 'insert delayed' => ['INSERT DELAYED t VALUES (?)', [Deprecated::InsertDelayed]];
+        yield 'replace delayed' => ['REPLACE DELAYED t VALUES (?)', [Deprecated::ReplaceDelayed]];
+        yield 'commented insert modifier' => ['INSERT /* x */ DELAYED t VALUES (?)', [Deprecated::InsertDelayed]];
+        yield 'rejected insert modifier' => ['INSERT HIGH_PRIORITY DELAYED t VALUES (?)', []];
     }
 
     /**

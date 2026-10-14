@@ -17,6 +17,18 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class RepliesTest extends TestCase
 {
+    public function testRunReturnsASeparateCompletionForATrailingComment(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = iterator_to_array((new Replies($session))->run('SELECT 1; /* trailing */'));
+
+        self::assertCount(2, $answers);
+        self::assertInstanceOf(ResultSet::class, $answers[0][0]);
+        self::assertTrue($answers[0][1]);
+        self::assertInstanceOf(Completion::class, $answers[1][0]);
+        self::assertFalse($answers[1][1]);
+    }
+
     public function testRunExecutesTheNextStatementOnlyAfterItsPredecessorIsConsumed(): void
     {
         $session = (new Instance())->connect();

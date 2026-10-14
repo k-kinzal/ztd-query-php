@@ -11,6 +11,7 @@
 declare(strict_types=1);
 
 return [
+    3061 => ['42000', "User variable name '%s' is illegal"],
     1453 => ['42000', "Variable '%s' must be quoted with `...`, or renamed"],
     1283 => ['HY000', "Column '%s' cannot be part of FULLTEXT index"],
     1464 => ['HY000', "The used table type doesn't support SPATIAL indexes"],

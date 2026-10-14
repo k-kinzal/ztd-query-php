@@ -81,6 +81,11 @@ final class Session
     public readonly State\Activity $activity;
 
     /**
+     * The database grant value retained independently of committed account state.
+     */
+    public readonly State\DatabaseGrants $databaseGrants;
+
+    /**
      * The open transaction and the rows a failing statement restores.
      */
     public readonly Transaction $transaction;
@@ -155,6 +160,7 @@ final class Session
         $this->variables = new Variables($instance->catalog, $instance->globals, $instance);
         $this->preparation = new State\Preparation();
         $this->activity = new State\Activity($this->variables);
+        $this->databaseGrants = new State\DatabaseGrants();
         $this->variables->connection = $id;
         $this->variables->account = $user . '@' . $host;
         $this->variables->definer = $user . '@%';
@@ -264,7 +270,7 @@ final class Session
             throw StatementError::EmptyQuery->error();
         }
         try {
-            $statements = $this->semantics()->split($sql);
+            $statements = (new Script\Trailing())->statements($this->semantics()->split($sql), $this->semantics()->parser());
         } catch (AnalysisException $error) {
             throw (new Syntax())->error($error, $sql, $this->settings()->release(), parser: $this->semantics()->parser());
         }

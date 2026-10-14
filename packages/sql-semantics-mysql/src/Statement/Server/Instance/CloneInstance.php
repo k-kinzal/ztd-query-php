@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
@@ -48,6 +49,8 @@ final class CloneInstance implements Statement
         public readonly ?Text $directory = null,
         public readonly ?bool $requireSsl = null,
     ) {
+        Check::input($password->radix === null, 'A clone password is quoted text.');
+        Check::input($directory === null || $directory->radix === null, 'A clone directory is quoted text.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -136,12 +136,20 @@ final class FlushCommand implements Command
         if ($statement->tables === []) {
             $session->instance->registry->status->add('Flush_commands');
             $cache->close();
+            foreach ($session->instance->sessions as $connection) {
+                $connection->get()?->databaseGrants->clear();
+            }
 
             return;
         }
         foreach ($statement->tables as $table) {
             $schema = $table->name->schema->value ?? $session->variables->database;
             $cache->close($schema, $table->name->name->value);
+            if ($schema === 'mysql' && $table->name->name->value === 'db') {
+                foreach ($session->instance->sessions as $connection) {
+                    $connection->get()?->databaseGrants->clear();
+                }
+            }
         }
     }
 }

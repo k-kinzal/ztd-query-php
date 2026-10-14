@@ -12,6 +12,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -69,6 +70,34 @@ final class RevokeCommandTest extends TestCase
         $this->expectExceptionMessage("There is no such grant defined for user 'u' on host '%'");
 
         (new RevokeCommand())->revoke(new Account(new Identity('u', '%')), ['DATABASE', 'd', ''], ['SELECT'], [], false, false, false, (new Instance())->connect());
+    }
+
+    /**
+     * @return iterable<string, array{string, string, list<int>}>
+     */
+    public static function providerUsage(): iterable
+    {
+        yield '5.6 database' => ['5.6.51', 'd.*', [1141]];
+        yield '5.7 database' => ['5.7.44', 'd.*', [1141]];
+        yield '8.0 database' => ['8.0.44', 'd.*', [1141]];
+        yield '8.4 database' => ['8.4.7', 'd.*', []];
+        yield '9.1 database' => ['9.1.0', 'd.*', []];
+        yield '8.4 table' => ['8.4.7', 'd.t', [1147]];
+        yield '8.4 routine' => ['8.4.7', 'PROCEDURE d.p', [1403]];
+    }
+
+    /**
+     * @param list<int> $errors The missing-grant errors for an empty privilege list
+     */
+    #[DataProvider('providerUsage')]
+    public function testRevokeChecksUsageAtTheRequestedLevel(string $release, string $level, array $errors): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->query('CREATE USER u');
+
+        $session->run('REVOKE USAGE ON ' . $level . ' FROM u');
+
+        self::assertSame($errors, array_column($session->diagnostics->conditions, 1));
     }
 
     public function testHoldsCountsAColumnPrivilege(): void

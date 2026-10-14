@@ -11,6 +11,7 @@ use MySqlMemory\Session\Execution as StatementExecution;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
@@ -57,7 +58,9 @@ final class Execution
         $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot($node instanceof \SqlSemantics\Statement\Query ? $node : new Select([], [new SelectExpression($node)]));
         $domains = array_map(static fn (array $parameter): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $parameter[1]->resolved(), $parameters);
         $semantics = new Semantics(Dialect::MySql, 'mysql-' . $session->instance->version, Mode::fromString((string) $session->variables->read('sql_mode')), $this->parameters($statement));
-        $context = $semantics->context($session->instance->dictionary->declarations(), true, null, $session->resolution($domains));
+        $session->instance->dictionary->temporaries = $session->temporaries;
+        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
+        $context = $semantics->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new SearchPath($session->variables->database), $session->resolution($domains));
         $operation = new Operation($context, $statement);
 
         return (new StatementExecution($session))->perform($operation, (new Dispatcher())->command($statement), $parameters);
