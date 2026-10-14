@@ -60,9 +60,9 @@ final class Variables
     public string $account = 'root@localhost';
 
     /**
-     * The account the privileges are checked for (CURRENT_USER()).
+     * The account the privileges are checked for (CURRENT_USER()), separate from the login name.
      */
-    public string $definer = 'root@%';
+    public \MySqlMemory\Account\Identity $definer;
 
     /**
      * @var list<\MySqlMemory\Account\Identity> The roles active in the session (CURRENT_ROLE())
@@ -108,6 +108,7 @@ final class Variables
      */
     public function __construct(public readonly SystemVariables $catalog, public readonly Globals $globals, public readonly \MySqlMemory\Instance $instance = new \MySqlMemory\Instance())
     {
+        $this->definer = new \MySqlMemory\Account\Identity('root', '%');
         $this->connected = $globals->values;
     }
 

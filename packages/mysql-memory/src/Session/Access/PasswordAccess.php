@@ -43,11 +43,11 @@ final class PasswordAccess
             return;
         }
         $names = new Names($session->settings()->release());
-        if ($statement instanceof SetPassword && ($statement->user === null || $names->identity($statement->user, $session)->text() === $session->variables->definer)) {
+        if ($statement instanceof SetPassword && ($statement->user === null || $names->identity($statement->user, $session)->key() === $session->variables->definer->key())) {
             return;
         }
         foreach ($statement instanceof AlterUser ? $statement->users : [] as $user) {
-            if ($user instanceof UserSpecification && $user->identification !== null && $names->identity($user->user, $session)->text() === $session->variables->definer) {
+            if ($user instanceof UserSpecification && $user->identification !== null && $names->identity($user->user, $session)->key() === $session->variables->definer->key()) {
                 return;
             }
         }
@@ -60,7 +60,7 @@ final class PasswordAccess
      */
     public function changed(Account $account, Session $session): void
     {
-        if ($account->identity->text() === $session->variables->definer) {
+        if ($account->identity->key() === $session->variables->definer->key()) {
             $session->passwordExpired = $account->expired;
         }
     }

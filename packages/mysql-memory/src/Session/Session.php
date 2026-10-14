@@ -163,7 +163,7 @@ final class Session
         $this->databaseGrants = new State\DatabaseGrants();
         $this->variables->connection = $id;
         $this->variables->account = $user . '@' . $host;
-        $this->variables->definer = $user . '@%';
+        $this->variables->definer = new \MySqlMemory\Account\Identity($user, '%');
         $this->passwordExpired = $instance->accounts->find(new \MySqlMemory\Account\Identity($user, '%'))->expired ?? false;
         $this->variables->roles = array_values($instance->accounts->defaults[(new \MySqlMemory\Account\Identity($user, '%'))->key()] ?? []);
         $this->diagnostics = new Diagnostics();

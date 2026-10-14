@@ -137,7 +137,7 @@ final class AlterDatabaseCommand implements Command
             throw $statement->name === null ? QueryError::NoDatabase->error() : SchemaError::WrongDatabaseName->error($name);
         }
         if (in_array(strtolower($name), ['information_schema', 'performance_schema'], true)) {
-            throw AccountError::DatabaseAccessDenied->error($session->user, explode('@', $session->variables->definer)[1] ?? '%', $name);
+            throw AccountError::DatabaseAccessDenied->error($session->user, $session->variables->definer->host, $name);
         }
         $schema = $session->instance->dictionary->schema($name);
         if ($schema === null) {

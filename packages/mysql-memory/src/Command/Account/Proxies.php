@@ -96,9 +96,8 @@ final class Proxies
      */
     public function check(Identity $proxied, Session $session): void
     {
-        [$user, $host] = explode('@', $session->variables->definer, 2) + [1 => ''];
-        $current = new Identity($user, $host);
-        if ($current->key() === $proxied->key() && $session->user === $user) {
+        $current = $session->variables->definer;
+        if ($current->key() === $proxied->key() && $session->user === $current->user) {
             return;
         }
         foreach ($session->instance->accounts->find($current)?->grants->proxies ?? [] as [$identity, $option]) {

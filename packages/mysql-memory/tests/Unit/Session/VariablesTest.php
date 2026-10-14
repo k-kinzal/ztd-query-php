@@ -248,7 +248,7 @@ final class VariablesTest extends TestCase
         $session = (new Instance())->connect('app', 'example.com');
 
         self::assertSame('app@example.com', $session->variables->account);
-        self::assertSame('app@%', $session->variables->definer);
+        self::assertSame('app@%', $session->variables->definer->text());
         self::assertSame($session->id, $session->variables->connection);
         self::assertSame(0, $session->variables->rowCount);
         self::assertSame(0, $session->variables->lastInsertId);

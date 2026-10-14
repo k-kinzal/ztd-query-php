@@ -72,6 +72,15 @@ final class NamesTest extends TestCase
         self::assertSame("app\0%", (new Names())->identity(new SessionUser(), (new Instance())->connect('app'))->key());
     }
 
+    public function testIdentityRetainsRenamedUserAndHostSeparately(): void
+    {
+        $session = (new Instance())->connect('login');
+        $session->variables->definer = new Identity('renamed@user', 'host');
+
+        self::assertSame("renamed@user\0host", (new Names())->identity(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser(), $session)->key());
+        self::assertSame('login', $session->user);
+    }
+
     public function testAsciiWarnsForEachGrantTable(): void
     {
         $diagnostics = new Diagnostics();

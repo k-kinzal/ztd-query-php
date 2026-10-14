@@ -107,9 +107,7 @@ final class ProgramSource
             return [$definer->user->value, $host];
         }
         $account = $session->variables->definer;
-        $at = (int) strrpos($account, '@');
-
-        return [substr($account, 0, $at), substr($account, $at + 1)];
+        return [$account->user, $account->host];
     }
 
     /**

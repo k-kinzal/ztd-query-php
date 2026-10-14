@@ -22,7 +22,10 @@ use SqlSemantics\Statement\Operation;
  * The statement commits the open transaction. The pairs are renamed in order, so a later pair
  * may rename the account an earlier one named. A pair whose account does not exist, or whose
  * new name does, fails the statement (ER_CANNOT_USER, naming the account of every such pair)
- * and nothing is renamed. No pair may name an account granted to another as a role, before
+ * and modern releases restore the accounts; legacy releases keep successful renames.
+ * Modern renames of the executing account update this connection's CURRENT_USER immediately,
+ * including before a later error, while USER() and other connections stay unchanged.
+ * No pair may name an account granted to another as a role, before
  * any pair is renamed (ER_RENAME_ROLE). The privileges, roles and default roles of the account
  * keep with it (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/rename-user.html.
@@ -68,15 +71,22 @@ final class RenameUserCommand implements Command
         }
         $saved = $accounts->copy();
         $failed = [];
-        foreach ($pairs as [$from, $to]) {
+        foreach ($statement->renamings as $renaming) {
+            $from = $names->identity($renaming->from, $session);
+            $to = $names->identity($renaming->to, $session);
             if ($accounts->find($from) === null || $accounts->find($to) !== null) {
                 $failed[] = $from;
                 continue;
             }
             $accounts->rename($from, $to);
+            if (!$session->settings()->legacy() && $session->variables->definer->key() === $from->key()) {
+                $session->variables->definer = $to;
+            }
         }
         if ($failed !== []) {
-            $accounts->restore($saved);
+            if (!$session->settings()->legacy()) {
+                $accounts->restore($saved);
+            }
             throw AccountError::CannotUser->error('RENAME USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
 

@@ -143,8 +143,7 @@ final class Miscellany
      */
     public function administers(Accounts $accounts, Variables $variables): bool
     {
-        $at = strrpos($variables->definer, '@');
-        $account = $accounts->find($at === false ? Identity::of($variables->definer, '%') : Identity::of(substr($variables->definer, 0, $at), substr($variables->definer, $at + 1)));
+        $account = $accounts->find($variables->definer);
         if ($account === null) {
             return true;
         }

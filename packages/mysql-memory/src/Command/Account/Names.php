@@ -156,7 +156,7 @@ final class Names
             return Identity::of($name->user->value, $name->host?->value);
         }
 
-        return new Identity($session->user, '%');
+        return $session->variables->definer;
     }
 
     /**

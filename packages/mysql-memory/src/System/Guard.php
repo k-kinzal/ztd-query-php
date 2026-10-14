@@ -58,7 +58,7 @@ final class Guard
         foreach ([...$defined, ...$written] as $name) {
             $schema = $this->schema($name, $session);
             if (strcasecmp($schema, 'information_schema') === 0) {
-                throw AccountError::DatabaseAccessDenied->error($session->user, explode('@', $session->variables->definer)[1] ?? '%', 'information_schema');
+                throw AccountError::DatabaseAccessDenied->error($session->user, $session->variables->definer->host, 'information_schema');
             }
         }
         foreach ($written as $name) {

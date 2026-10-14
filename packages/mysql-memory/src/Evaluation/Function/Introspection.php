@@ -36,7 +36,7 @@ final class Introspection
             new Routine('USER', 0, 0, fn (Frame $f): string => $f->context->variables->account),
             new Routine('SESSION_USER', 0, 0, fn (Frame $f): string => $f->context->variables->account),
             new Routine('SYSTEM_USER', 0, 0, fn (Frame $f): string => $f->context->variables->account),
-            new Routine('CURRENT_USER', 0, 0, fn (Frame $f): string => $f->context->variables->definer),
+            new Routine('CURRENT_USER', 0, 0, fn (Frame $f): string => $f->context->variables->definer->text()),
             new Routine('CURRENT_ROLE', 0, 0, fn (Frame $f): string => $this->currentRole($f->context->variables->roles)),
             new Routine('VERSION', 0, 0, fn (Frame $f): string => (string) $f->context->variables->read('version')),
             new Routine('CONNECTION_ID', 0, 0, fn (Frame $f): int => (int) $f->context->variables->read('pseudo_thread_id')),
