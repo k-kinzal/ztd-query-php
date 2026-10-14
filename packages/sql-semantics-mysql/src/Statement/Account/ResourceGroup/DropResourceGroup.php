@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -26,10 +24,10 @@ final class DropResourceGroup implements Statement
     use Snapshot;
 
     /**
-     * @param Name $name The group name
+     * @param ResourceGroupName $name The group name
      * @param bool $force Whether FORCE is written
      */
-    public function __construct(public readonly Name $name, public readonly bool $force = false)
+    public function __construct(public readonly ResourceGroupName $name, public readonly bool $force = false)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -39,6 +37,7 @@ final class DropResourceGroup implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $this->name->derive($derivation);
     }
 
     /**
@@ -46,7 +45,7 @@ final class DropResourceGroup implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('DROP', 'RESOURCE', 'GROUP')->name($this->name, NameUse::Label);
+        $out->keyword('DROP', 'RESOURCE', 'GROUP')->node($this->name);
         if ($this->force) {
             $out->keyword('FORCE');
         }

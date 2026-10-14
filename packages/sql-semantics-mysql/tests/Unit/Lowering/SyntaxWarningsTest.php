@@ -126,4 +126,12 @@ final class SyntaxWarningsTest extends TestCase
         self::assertSame($expected, $failure?->problem->message());
     }
 
+    public function testCompletedDiscardsNameConversionsAfterAnAbortingCondition(): void
+    {
+        $sql = 'CREATE PROCEDURE p() BEGIN SELECT CONVERT(1 USING missing); DROP RESOURCE GROUP `😀`; END';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertEquals([new ParseFailure(new UnknownCharset('missing'), true)], array_column($notices, 1));
+    }
+
 }

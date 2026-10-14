@@ -222,4 +222,28 @@ final class ItemNamingTest extends TestCase
 
         self::assertSame(['慢', '', '?', '扡', '😀'], [$naming->wide('abc', 'utf16'), $naming->wide('a', 'utf16'), $naming->wide('abcde', 'utf32'), $naming->wide('ab', 'utf16le'), $naming->wide("\xD8\x3D\xDE\x00", 'utf16')]);
     }
+    public function testStoredStopsAtNulAfterRemovingLeadingControls(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('zero'), $naming->stored("\0zero\0tail", 'client'));
+        self::assertEquals(new Name('zero'), $naming->stored("zero\0tail", 'binary'));
+        self::assertEquals(new Name('稀'), $naming->stored("\x00z\x00\x00\x00b", 'ucs2'));
+        self::assertEquals(new Name('z'), $naming->stored("\x00z\x00\x00\x00b", 'utf16'));
+    }
+
+    public function testIdentifierStopsAnExplicitAliasAtNul(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('zero'), $naming->identifier(new Name("zero\0tail")));
+    }
+
+    public function testNameRemovesLeadingControlsFromAnExplicitAlias(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('zero'), $naming->name(new SelectExpression(new NumberLiteral('1'), new Name(" \0zero\0tail"))));
+    }
+
 }

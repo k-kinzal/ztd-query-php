@@ -64,4 +64,12 @@ final class ResourceGroupRuleTest extends TestCase
     {
         self::assertSame('SET RESOURCE GROUP g FOR 9', (new Semantics(Dialect::MySql))->analyze('set resource group g for 9')->toString());
     }
+    public function testNameRefusesAnOperandBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Identifier name '" . str_repeat('猫', 22) . "' is too long");
+
+        (new Semantics(Dialect::MySql))->analyze('DROP RESOURCE GROUP `' . str_repeat('猫', 22) . '`');
+    }
+
 }

@@ -252,4 +252,17 @@ final class ExecutionTest extends TestCase
         self::assertSame([$error], (new Execution($session))->failed($error));
         self::assertSame([-1, [['Error', 1046, 'No database selected']]], [$session->variables->rowCount, $session->diagnostics->conditions]);
     }
+    public function testRetainsClearsLegacyDiagnosticsWhenADerivedTableIsOpened(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('SELECT missing');
+        $session->query('SELECT 1');
+
+        self::assertSame(1054, $session->diagnostics->conditions[0][1]);
+
+        $session->query('SELECT n FROM (SELECT 1 AS n) AS t');
+
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
 }

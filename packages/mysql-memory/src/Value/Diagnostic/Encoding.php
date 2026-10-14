@@ -21,10 +21,11 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 final class Encoding
 {
     /**
-     * Converts an excerpt from the client's character set and applies its byte bound.
+     * Converts a NUL-terminated excerpt from the client's character set and applies its byte bound.
      */
     public static function prefix(string $text, Charset $client, bool $legacy): string
     {
+        $text = explode("\0", $text, 2)[0];
         $converted = $client->name === 'binary'
             ? (string) preg_replace_callback('/[\x80-\xFF]/', static fn (array $match): string => sprintf('\\x%02X', ord($match[0])), $text)
             : CharsetEncoding::convert($text, $client, Charset::known('utf8mb3'));

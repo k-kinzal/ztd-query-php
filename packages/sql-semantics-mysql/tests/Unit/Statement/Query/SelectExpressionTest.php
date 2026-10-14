@@ -168,4 +168,12 @@ final class SelectExpressionTest extends TestCase
         self::assertSame('SELECT 1 + 1', $operation->toString());
         self::assertSame('1 + 1', $operation->field(0)->name?->value);
     }
+    public function testRenderUsesAStringAliasWhenAnIdentifierCannotSpellNul(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 AS 'zero\0tail'");
+
+        self::assertSame("SELECT 1 AS 'zero\\0tail'", $operation->toString());
+        self::assertSame('zero', $operation->field(0)->name?->value);
+    }
+
 }

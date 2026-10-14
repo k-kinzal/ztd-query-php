@@ -38,11 +38,11 @@ final class SyntaxWarnings
     /**
      * Returns completion notices raised before the token at the refusal offset.
      *
-     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure}> Input boundaries and semantic notices
+     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure}> Input boundaries and semantic notices
      */
     public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile): array
     {
-        $warnings = [];
+        $warnings = (new Account\SyntaxResourceNames())->completed($parser, $statement, $end);
         $ranges = new SourceRanges();
         $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');
         $lowering = new Lowering($productions, new Leaves(), $profile);
@@ -64,6 +64,14 @@ final class SyntaxWarnings
             });
         } catch (SourceException) {
             // Completed reductions precede the original refusal; the caller owns that error.
+        }
+
+        usort($warnings, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+
+        foreach ($warnings as $index => [, $notice]) {
+            if (($notice instanceof ParseFailure || $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) && $notice->aborts) {
+                return array_slice($warnings, 0, $index + 1);
+            }
         }
 
         return $warnings;

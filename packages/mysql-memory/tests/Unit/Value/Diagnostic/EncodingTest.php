@@ -49,4 +49,10 @@ final class EncodingTest extends TestCase
         self::assertSame('???????', Encoding::condition('é猫Ω😀', 'ascii'));
         self::assertSame('é猫Ω😀', Encoding::condition('é猫Ω😀', 'binary'));
     }
+    public function testPrefixEndsAtNulBeforeMessageFormatting(): void
+    {
+        self::assertSame('`zero', Encoding::prefix("`zero\0tail`", Charset::known('utf8mb4'), false));
+        self::assertSame('`zero', Encoding::prefix("`zero\0tail`", Charset::known('utf8mb4'), true));
+    }
+
 }

@@ -74,7 +74,11 @@ final class SelectExpression implements SelectItem
         $out->layout($this->layout, $this->expression);
         if ($this->alias !== null) {
             $this->mark->write($out);
-            $out->name($this->alias, NameUse::Alias);
+            if (str_contains($this->alias->value, "\0")) {
+                $out->spelled($out->quote($this->alias->value));
+            } else {
+                $out->name($this->alias, NameUse::Alias);
+            }
         }
     }
 }

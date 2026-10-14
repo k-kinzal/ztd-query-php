@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -36,10 +34,10 @@ final class SetResourceGroup implements Statement
     public readonly array $threads;
 
     /**
-     * @param Name $name The group name
+     * @param ResourceGroupName $name The group name
      * @param list<Numeral> $threads The thread ids of FOR; none for the session's thread
      */
-    public function __construct(public readonly Name $name, array $threads = [])
+    public function __construct(public readonly ResourceGroupName $name, array $threads = [])
     {
         $this->threads = Check::listOf($threads, Numeral::class, 'FOR lists thread ids.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -50,6 +48,7 @@ final class SetResourceGroup implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $this->name->derive($derivation);
         foreach ($this->threads as $thread) {
             (new NumberChecks())->range($derivation, $thread, 'thread id', '0', null);
         }
@@ -60,7 +59,7 @@ final class SetResourceGroup implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('SET', 'RESOURCE', 'GROUP')->name($this->name, NameUse::Label);
+        $out->keyword('SET', 'RESOURCE', 'GROUP')->node($this->name);
         if ($this->threads !== []) {
             $out->keyword('FOR')->list($this->threads);
         }

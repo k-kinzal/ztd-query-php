@@ -209,6 +209,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RepeatedTlsAttribute": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsAttribute"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\ResourceGroupNameTooLong": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RoleOrPrivilegeMismatch": {
         "item": "string",
         "roleExpected": "bool"
@@ -224,7 +227,7 @@
         "cpus": "array",
         "enabled": "?bool",
         "force": "bool",
-        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
         "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\CpuRange": {
@@ -235,19 +238,23 @@
         "cpus": "array",
         "enabled": "?bool",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupKind",
-        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
         "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\DropResourceGroup": {
         "force": "bool",
-        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupKind": {
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName": {
+        "spelling": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\SetResourceGroup": {
-        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
         "threads": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority": {
@@ -1357,6 +1364,9 @@
         "construct": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecated",
         "text": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NameConversion": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NoticePhase": {
         "name": "string",
         "value": "string"
@@ -1365,6 +1375,9 @@
         "aborts": "bool",
         "phase": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NoticePhase",
         "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\TrimmedName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\AllPartitions": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\LessThan": {

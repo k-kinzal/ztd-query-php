@@ -109,7 +109,9 @@ final class ItemNaming
     public function name(SelectExpression $item): Name|MissingInput
     {
         if ($item->alias !== null) {
-            return $this->identifier($item->alias);
+            $text = ltrim($item->alias->value, "\x00..\x20\x7F");
+
+            return $this->identifier($text === $item->alias->value ? $item->alias : new Name($text));
         }
         $own = $this->own($item->expression);
         Check::input($item->layout === null || ($own === null && $item->layout->text() !== $this->canonical($item->expression)), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
@@ -131,6 +133,7 @@ final class ItemNaming
      */
     public function identifier(Name $name): Name
     {
+        $name = str_contains($name->value, "\0") ? new Name(explode("\0", $name->value, 2)[0]) : $name;
         if ($this->client?->name !== 'latin1' || preg_match('/[\x80-\xFF]/', $name->value) !== 1) {
             return $name;
         }
@@ -253,9 +256,10 @@ final class ItemNaming
             $charset = strtolower($this->client->name);
         }
         if (in_array($charset, self::WIDE, true)) {
-            return $this->narrowed(ltrim($this->wide($text, $charset), "\x00..\x20"));
+            return $this->narrowed(explode("\0", ltrim($this->wide($charset === 'ucs2' ? ltrim($text, "\x00..\x20") : $text, $charset), "\x00..\x20"), 2)[0]);
         }
         $text = ltrim($text, $charset === 'binary' ? "\x00..\x20\x7F..\xFF" : "\x00..\x20\x7F");
+        $text = explode("\0", $text, 2)[0];
         $ascii = preg_match('/[\x80-\xFF]/', $text) !== 1;
         if ($charset === 'client' && (!$ascii || strlen($text) > self::LIMITS['convert'])) {
             return new SessionState('character_set_client');

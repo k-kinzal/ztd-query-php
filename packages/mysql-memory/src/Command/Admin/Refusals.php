@@ -52,7 +52,7 @@ final class Refusals
      */
     public static function handles(Diagnostic $diagnostic): bool
     {
-        return $diagnostic instanceof StorageProblem || $diagnostic instanceof SpatialProblem || $diagnostic instanceof PriorityOutOfRange || $diagnostic instanceof RefusedSetting || $diagnostic instanceof NumberOutOfRange || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong || $diagnostic instanceof StorageProblem || $diagnostic instanceof SpatialProblem || $diagnostic instanceof PriorityOutOfRange || $diagnostic instanceof RefusedSetting || $diagnostic instanceof NumberOutOfRange || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
     }
 
     /**
@@ -61,6 +61,7 @@ final class Refusals
     public function error(Diagnostic $diagnostic, ?Node $statement, string $text, bool $legacy = false): SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong => SchemaError::TooLongIdentifier->error(\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName::decoded($diagnostic->name)),
             $diagnostic instanceof StorageProblem => match ($diagnostic->rule) {
                 StorageRule::RepeatedOption => SchemaError::FilegroupOptionOnlyOnce->error($diagnostic->option === 'ENGINE' ? 'STORAGE ENGINE' : $diagnostic->option),
                 StorageRule::WrongSize => SchemaError::WrongSizeNumber->error(),

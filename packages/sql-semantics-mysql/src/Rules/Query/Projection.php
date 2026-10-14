@@ -59,6 +59,9 @@ final class Projection
         foreach ($items as $position => $item) {
             if ($item instanceof SelectExpression) {
                 $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
+                if ($item->alias !== null && ltrim($item->alias->value, "\x00..\x20\x7F") !== $item->alias->value) {
+                    $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName($item->alias), $item);
+                }
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
                 $name = (new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client))->name($item);
                 $slot = $name instanceof Name ? new OutputSlot($name, $fact->type, $fact->nullability, null, $origin) : new OutputSlot(null, $fact->type, $fact->nullability, null, $origin, [$name]);

@@ -6,7 +6,6 @@ namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AdministrationError;
-use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\ResourceGroup;
@@ -88,9 +87,6 @@ final class ResourceGroupCommand implements Command
     public function create(CreateResourceGroup $statement, ResourceGroups $groups): void
     {
         $name = $statement->name->value;
-        if (mb_strlen($name) > 64) {
-            throw SchemaError::TooLongIdentifier->error($name);
-        }
         $cpus = $this->cpus($statement->cpus, $groups->processors);
         if ($groups->find($name) !== null) {
             throw AdministrationError::ResourceGroupExists->error($name);

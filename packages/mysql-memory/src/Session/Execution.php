@@ -86,7 +86,7 @@ final class Execution
         $this->access($operation->statement, $context);
         $hints->report($session);
         foreach ($session->replayed || $this->undeclared($operation) ? [] : $late as $warning) {
-            $session->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
+            $session->diagnostics->warning(($warning instanceof Deprecation || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName) ? $warning->code() : 1105, $warning->message());
         }
         (new \MySqlMemory\System\Guard())->check($operation->statement, $session);
         (new \MySqlMemory\Concurrency\Access())->check($operation->statement, $session);
@@ -225,7 +225,7 @@ final class Execution
                 }
                 continue;
             }
-            $session->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
+            $session->diagnostics->warning(($warning instanceof Deprecation || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName) ? $warning->code() : 1105, $warning->message());
             if ($warning instanceof Deprecation && $warning->aborts) {
                 break;
             }
@@ -294,7 +294,8 @@ final class Execution
         }
 
         return ($command instanceof \MySqlMemory\Command\QueryCommand || $command instanceof \MySqlMemory\Command\SetCommand || $command instanceof \MySqlMemory\Command\DoCommand || $command instanceof \MySqlMemory\Command\Explain\ExplainCommand)
-            && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) === [];
+            && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) === []
+            && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable::class) === [];
     }
 
     /**
