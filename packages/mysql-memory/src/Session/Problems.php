@@ -100,7 +100,7 @@ final class Problems
             throw (new Errors())->located($first[0], $first[1][0], isset($matched[spl_object_id($first[0])]), $session, $operation->statement);
         }
         foreach ($calls as $call) {
-            throw (new Errors())->routine($call, $session);
+            throw (new \MySqlMemory\Command\Replication\PurgeErrors())->prepared((new Errors())->routine($call, $session), $operation->statement, $call->schema !== null || $session->variables->database !== '');
         }
         foreach ($diagnostics as $diagnostic) {
             throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);

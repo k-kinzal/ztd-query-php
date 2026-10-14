@@ -87,7 +87,11 @@ final class BinaryLogCommand implements Command
             $log->purge($number);
         } elseif ($statement instanceof PurgeLogsBefore) {
             $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
-            $moment = $planner->compiler->compile($statement->moment, new Scope());
+            try {
+                $moment = $planner->compiler->compile($statement->moment, new Scope());
+            } catch (\MySqlMemory\Error\SqlError $error) {
+                throw (new PurgeErrors())->prepared($error, $statement);
+            }
             $value = $moment->evaluate(new Frame($context));
             if ($value !== null && !(is_int($value) && $value === 0)) {
                 (new Moments())->convert($value, $moment->domain(), new Domain(Kind::DateTime, Field::DateTime, 19, 0, false), $context);

@@ -74,7 +74,7 @@ final class Locations
         $located = $this->wildcards($locator, $diagnostics, $located);
         $located = $this->stars($operation, $locator, $diagnostics, $located);
         $located = $this->windows($locator, $diagnostics, $located);
-        $located = $this->misplaced($locator, $located);
+        $located = $this->misplaced($locator, $located, $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore);
         $located = $this->sets($operation, $locator, $diagnostics, $located);
         $common = (new IndexHints())->common($operation->statement);
         foreach ($locator->hinted as [$reference, $order]) {
@@ -241,9 +241,10 @@ final class Locations
      * (verified on a live 8.4 server).
      *
      * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
+     * @param bool $ungrouped Whether the expression has no query block to supply groups or windows
      * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
      */
-    public function misplaced(Locator $locator, array $located): array
+    public function misplaced(Locator $locator, array $located, bool $ungrouped = false): array
     {
         $walker = new Walker();
         $nested = [];
@@ -256,6 +257,11 @@ final class Locations
             }
         }
         foreach ($locator->functions as [$call, $clause, $at]) {
+            if ($ungrouped) {
+                $refusal = Windowing::windowed($call) ? QueryError::WindowFunctionMisplaced->error(Resolution::named($call)) : QueryError::InvalidGroupFunctionUse->error();
+                $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];
+                continue;
+            }
             if (Windowing::windowed($call) && (isset($nested[spl_object_id($call)]) || !in_array($clause, ['field list', 'order clause', 'window partition by', 'window order by'], true))) {
                 $refusal = QueryError::WindowFunctionMisplaced->error(Resolution::named($call));
                 $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];

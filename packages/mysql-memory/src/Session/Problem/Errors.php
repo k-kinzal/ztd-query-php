@@ -120,7 +120,9 @@ final class Errors
             default => $this->error($problem, $session, $clause, $statement),
         };
 
-        return $matched ? new SqlError($error->error, $error->getMessage(), null, [[StatementError::WrongArguments->value, StatementError::WrongArguments->message('AGAINST')]]) : $error;
+        $error = $matched ? new SqlError($error->error, $error->getMessage(), null, [[StatementError::WrongArguments->value, StatementError::WrongArguments->message('AGAINST')]]) : $error;
+
+        return (new \MySqlMemory\Command\Replication\PurgeErrors())->prepared($error, $statement, $problem instanceof FunctionCall && ($problem->schema !== null || $session->variables->database !== ''));
     }
 
     /**

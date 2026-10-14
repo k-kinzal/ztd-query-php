@@ -42,7 +42,7 @@ final class PurgeLogsBefore implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->scalar($this->moment, $derivation->environment());
+        (new \SqlSemantics\Platform\MySql\Rules\Call\Arguments())->one($this->moment, $derivation, $derivation->environment());
     }
 
     /**

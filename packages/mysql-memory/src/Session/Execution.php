@@ -93,6 +93,7 @@ final class Execution
         try {
             (new Problems())->raise($operation, $session);
         } catch (SqlError $error) {
+            $error = (new \MySqlMemory\Command\Replication\PurgeErrors())->prepared($error, $operation->statement);
             throw (new Problem\Precision())->legacy(\MySqlMemory\Command\Admin\KillCommand::preparation((new Problem\ValueRows())->extended($error, $operation->statement, $session->settings()->release()), $operation->statement), $session->settings()->release());
         }
         if ($session->locks !== []) {
