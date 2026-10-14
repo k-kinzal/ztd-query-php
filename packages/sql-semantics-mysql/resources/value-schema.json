@@ -2172,6 +2172,14 @@
         "ifExists": "bool",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\CharsetConflict": {
+        "earlier": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "later": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\InvalidEncryption": {
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\ReadOnlyConflict": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\UpgradeDatabaseName": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },

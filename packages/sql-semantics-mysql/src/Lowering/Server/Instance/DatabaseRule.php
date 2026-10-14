@@ -87,6 +87,7 @@ final class DatabaseRule
      * Lowers an option list: a node of `opt_create_database_options`, `create_database_options` or `alter_database_options`.
      *
      * @return list<DatabaseOption>
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a READ ONLY operand is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function options(Node $list): array
@@ -108,6 +109,7 @@ final class DatabaseRule
     /**
      * Lowers one option: a node of `create_database_option` or `alter_database_option`.
      *
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a READ ONLY operand is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function option(Node $option): DatabaseOption

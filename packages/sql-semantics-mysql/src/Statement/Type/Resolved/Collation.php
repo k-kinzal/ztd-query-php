@@ -40,6 +40,23 @@ final class Collation
     }
 
     /**
+     * Resolves an input name under a release's lookup rules and availability.
+     *
+     * MySQL 9.1 recognizes the utf8_ alias prefix only in lowercase, while
+     * canonical collation names remain case-insensitive. Observed through SQL
+     * on native servers; the catalog identity remains independent of spelling.
+     */
+    public static function forName(string $name, GrammarRelease $release): ?self
+    {
+        if ($release === GrammarRelease::MySql910 && str_starts_with(strtolower($name), 'utf8_') && !str_starts_with($name, 'utf8_')) {
+            return null;
+        }
+        $collation = self::named($name);
+
+        return $collation !== null && $collation->availableIn($release) ? $collation : null;
+    }
+
+    /**
      * Finds a collation the server is known to have.
      *
      * @throws InvariantViolation When the catalog lacks the name

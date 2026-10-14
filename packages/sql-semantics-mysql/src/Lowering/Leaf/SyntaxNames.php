@@ -38,7 +38,7 @@ final class SyntaxNames
             }
             $name = $lowering->names->identifier($form->node(2))->value;
 
-            return $name !== '' && Collation::named($name) === null ? new ParseFailure(new UnknownCollation($name)) : null;
+            return $name !== '' && Collation::forName($name, $lowering->profile->grammar) === null ? new ParseFailure(new UnknownCollation($name)) : null;
         }
         if (!in_array($node->name, ['collation_name', 'charset_name', 'old_or_new_charset_name'], true)) {
             return null;
@@ -48,7 +48,7 @@ final class SyntaxNames
             return null;
         }
         if ($node->name === 'collation_name') {
-            return Collation::named($name) === null ? new ParseFailure(new UnknownCollation($name), true) : null;
+            return Collation::forName($name, $lowering->profile->grammar) === null ? new ParseFailure(new UnknownCollation($name), true) : null;
         }
 
         return Charset::named($name) === null ? new ParseFailure(new UnknownCharset($name), true) : null;

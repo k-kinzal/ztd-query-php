@@ -57,6 +57,8 @@ enum Deprecated: string
     case IntoInsideQuery = 'The INTO clause is deprecated inside query blocks of query expressions and will be removed in a future release. Please move the INTO clause to the end of statement instead.';
     case Utf8Alias = "'utf8' is currently an alias for the character set UTF8MB3, but will be an alias for UTF8MB4 in a future release. Please consider using UTF8MB4 in order to be unambiguous.";
     case Utf8mb3 = "'utf8mb3' is deprecated and will be removed in a future release. Please use utf8mb4 instead";
+    case Utf8Collation = "'%s' is a collation of the deprecated character set UTF8MB3. Please consider using UTF8MB4 with an appropriate collation instead.";
+    case Ucs2Collation = "'%s' is a collation of the deprecated character set ucs2. Please consider using utf8mb4 with an appropriate collation instead.";
     case Ucs2 = "'ucs2' is deprecated and will be removed in a future release. Please use utf8mb4 instead";
     case DisableOnSlave = "'<CREATE|ALTER> EVENT ... DISABLE ON SLAVE' is deprecated and will be removed in a future release. Please use <CREATE|ALTER> EVENT ... DISABLE ON REPLICA instead";
     case BinaryAttribute = "'BINARY as attribute of a type' is deprecated and will be removed in a future release. Please use a CHARACTER SET clause with _bin collation instead";
@@ -91,6 +93,8 @@ enum Deprecated: string
             self::UnquotedFull => 4119,
             self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
             self::Utf8Alias => 3719,
+            self::Utf8Collation => 3778,
+            self::Ucs2Collation => 4079,
             self::National => 3720,
             self::IntoInsideQuery => 3962,
             self::BinaryAttribute, self::AsciiCharset, self::UnicodeCharset, self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3, self::Ucs2, self::DisableOnSlave, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::MasterPosWait, self::WaitUntilSqlThreadAfterGtids, self::JsonMerge, self::JsonTableResponseOrder, self::SpatialFunction, self::SystemVariable, self::LowPriorityWrite => 1287,

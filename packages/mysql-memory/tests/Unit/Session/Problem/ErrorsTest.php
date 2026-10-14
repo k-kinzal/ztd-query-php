@@ -75,6 +75,22 @@ final class ErrorsTest extends TestCase
         self::assertSame([1791, "Unknown EXPLAIN format name: 'YaML'"], [$error->getCode(), $error->getMessage()]);
     }
 
+    public function testDatabaseFormatsTypedConflictsAndBoundsEncryptionDisplay(): void
+    {
+        $errors = new Errors();
+        $value = new \SqlSemantics\Platform\MySql\Statement\Literal\Text(str_repeat('x', 140));
+        $invalid = new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption($value);
+        $conflict = new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\CharsetConflict(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'));
+
+        self::assertSame(1302, $errors->database(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\ReadOnlyConflict())?->getCode());
+        self::assertSame($conflict->message(), $errors->database($conflict)?->getMessage());
+        $legacy = new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\CharsetConflict(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb3'), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        self::assertSame("Conflicting declarations: 'CHARACTER SET utf8' and 'CHARACTER SET latin1'", $errors->database($legacy, GrammarRelease::MySql5744)?->getMessage());
+        self::assertSame("Incorrect argument (should be Y or N) value: '" . str_repeat('x', 128) . "'", $errors->database($invalid)?->getMessage());
+        self::assertSame(140, strlen($invalid->value->value));
+        self::assertNull($errors->database(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat(new Name('yaml'))));
+    }
+
     public function testTypeSizePreservesTheKindAndTheColumnName(): void
     {
         $diagnostic = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Length, 'a', 256, 255);

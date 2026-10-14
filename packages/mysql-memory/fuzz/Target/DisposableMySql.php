@@ -23,6 +23,10 @@ final class DisposableMySql extends MySqlContainer
     {
         $definition = MySqlRelease::container($version);
         parent::__construct((new $definition())->image());
+        $port = filter_var(getenv('MYSQL_MEMORY_CONTAINER_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
+        if (is_int($port)) {
+            $this->withPortStrategy(new \Testcontainers\Containers\PortStrategy\StaticPortStrategy($port));
+        }
         if ($this->supervised()) {
             $this->withCommands(['bash', '-c', <<<'SH'
                 export MYSQLD_PARENT_PID=$$

@@ -98,6 +98,7 @@ final class Errors
             ?? $this->names($diagnostic, $database, $clause, $statement)
             ?? $this->query($diagnostic, $clause)
             ?? $this->call($diagnostic)
+            ?? $this->database($diagnostic, $session->settings()->release())
             ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
             ?? $this->manipulation($diagnostic, $statement)
             ?? $this->expression($diagnostic, $session->settings()->legacy())
@@ -249,6 +250,19 @@ final class Errors
             $diagnostic instanceof UnknownAlterChoice => ($diagnostic->lock ? SchemaError::UnknownAlterLock : SchemaError::UnknownAlterAlgorithm)->error($diagnostic->name->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind => (new \MySqlMemory\Error\ProgramErrors())->relation($diagnostic, $database, $legacy),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount => SchemaError::ViewWrongList->error(),
+            default => null,
+        };
+    }
+
+    /**
+     * Formats a database-option diagnostic retained by semantic derivation.
+     */
+    public function database(Diagnostic $diagnostic, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): ?SqlError
+    {
+        return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\ReadOnlyConflict => SchemaError::ConflictingDeclarations->error('READ ONLY=', '0', 'READ ONLY=', '1'),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\CharsetConflict => SchemaError::ConflictingDeclarations->error('CHARACTER SET ', $diagnostic->earlier->nameIn($release), 'CHARACTER SET ', $diagnostic->later->nameIn($release)),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption => DataError::WrongValue->error('argument (should be Y or N)', (new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $diagnostic->value->value, 2)[0], 128)),
             default => null,
         };
     }

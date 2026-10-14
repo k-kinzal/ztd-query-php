@@ -17,7 +17,6 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
@@ -104,7 +103,7 @@ final class AlterDatabaseCommand implements Command
 
     /**
      * Answers the character set a CHARACTER SET option names, given the one an earlier option
-     * named, and warns of utf8 as an alias of utf8mb3.
+     * named. Semantic derivation supplies charset deprecation notices.
      *
      * @throws \MySqlMemory\Error\SqlError When the character set is unknown or differs from the earlier one
      */
@@ -118,10 +117,6 @@ final class AlterDatabaseCommand implements Command
         if ($earlier !== null && $earlier->name !== $named->name) {
             throw SchemaError::ConflictingDeclarations->error('CHARACTER SET ', $earlier->name, 'CHARACTER SET ', $named->name);
         }
-        if (strcasecmp($name, 'utf8') === 0) {
-            $context->diagnostics->warning(Deprecated::Utf8Alias->code(), Deprecated::Utf8Alias->value);
-        }
-
         return $named;
     }
 

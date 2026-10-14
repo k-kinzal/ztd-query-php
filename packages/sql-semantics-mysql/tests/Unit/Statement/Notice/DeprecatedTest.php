@@ -17,6 +17,8 @@ final class DeprecatedTest extends TestCase
     public function testCodeNamesTheErrorOfEachKindOfWarning(): void
     {
         self::assertSame(1287, Deprecated::PipesOr->code());
+        self::assertSame(3778, Deprecated::Utf8Collation->code());
+        self::assertSame(4079, Deprecated::Ucs2Collation->code());
         self::assertSame(3005, Deprecated::ReplaceDelayed->code());
         self::assertSame(1681, Deprecated::Zerofill->code());
         self::assertSame(1681, Deprecated::UpgradeDatabaseName->code());

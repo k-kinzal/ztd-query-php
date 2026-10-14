@@ -21,6 +21,16 @@ final class CollationTest extends TestCase
         self::assertNull(Collation::named('klingon_ci'));
     }
 
+    public function testForNameChecksReleaseAvailabilityAndAliasPrefixSpelling(): void
+    {
+        self::assertSame(33, Collation::forName('UTF8_GENERAL_CI', GrammarRelease::MySql847)?->id);
+        self::assertSame(33, Collation::forName('UTF8_GENERAL_CI', GrammarRelease::MySql901)?->id);
+        self::assertNull(Collation::forName('UTF8_GENERAL_CI', GrammarRelease::MySql910));
+        self::assertSame(33, Collation::forName('utf8_general_ci', GrammarRelease::MySql910)?->id);
+        self::assertSame(33, Collation::forName('UTF8MB3_GENERAL_CI', GrammarRelease::MySql910)?->id);
+        self::assertNull(Collation::forName('utf8mb4_0900_ai_ci', GrammarRelease::MySql5744));
+    }
+
     public function testKnownFindsANameTheCatalogHas(): void
     {
         self::assertSame(255, Collation::known('utf8mb4_0900_ai_ci')->id);
