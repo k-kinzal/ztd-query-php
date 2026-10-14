@@ -74,4 +74,47 @@ final class ParameterTest extends TestCase
         self::assertSame('a BIGINT', (new Lexical())->join($plain->pieces()));
         self::assertSame('INOUT b VARCHAR(3) COLLATE utf8mb4_bin', (new Lexical())->join($full->pieces()));
     }
+    public function testKeyUsesTheParametersUnicodeIdentity(): void
+    {
+        $first = new Parameter(new Name('É'), new Integral(IntegralKind::Int));
+        $second = new Parameter(new Name('e'), new Integral(IntegralKind::Int));
+
+        self::assertSame($first->key(), $second->key());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerInvalidNames(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'trailing space' => ['x '];
+        yield 'long ASCII' => [str_repeat('a', 65)];
+        yield 'long multibyte' => [str_repeat('猫', 65)];
+    }
+
+    #[DataProvider('providerInvalidNames')]
+    public function testLegacyNamesRemainRepresentable(string $name): void
+    {
+        $parameter = new Parameter(new Name($name), new Integral(IntegralKind::Int));
+
+        self::assertSame($name, $parameter->name->value);
+        self::assertNotNull(Parameter::nameProblem($parameter->name));
+    }
+
+    public function testNameExcludesNul(): void
+    {
+        $this->expectExceptionMessage('A routine parameter name cannot contain NUL.');
+
+        new Parameter(new Name("x\0y"), new Integral(IntegralKind::Int));
+    }
+
+    public function testNameProblemUsesCharacterLengthAndOnlyTheSpaceSuffix(): void
+    {
+        self::assertNull(Parameter::nameProblem(new Name(str_repeat('猫', 64))));
+        self::assertNull(Parameter::nameProblem(new Name(" x\t")));
+        self::assertSame("Incorrect routine name 'x '", Parameter::nameProblem(new Name('x '))?->message());
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::NameTooLong, Parameter::nameProblem(new Name(str_repeat('a', 65)))?->rule);
+    }
+
 }

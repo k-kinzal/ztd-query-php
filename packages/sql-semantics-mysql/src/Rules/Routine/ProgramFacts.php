@@ -29,8 +29,8 @@ use SqlSemantics\Statement\Node;
  *
  * Rule: MYSQL-ROUTINE-001, MYSQL-TRIGGER-001, MYSQL-EVENT-001. A routine
  * body is derived in a scope whose outermost level holds the parameters as
- * one row (MYSQL-ROUTINE-PARAMETERS-001); a parameter name written twice is
- * reported (ER_SP_DUP_PARAM) and keeps its first meaning. A stored function
+ * one row (MYSQL-ROUTINE-PARAMETERS-001), with distinct identities enforced
+ * by ParameterList. A stored function
  * whose SQL body holds no RETURN is reported (ER_SP_NORETURN). A trigger
  * body is derived in a scope where NEW and OLD denote the row of the
  * trigger table (MYSQL-TRIGGER-ROWS-001) and SET assigns to the NEW row
@@ -74,20 +74,10 @@ final class ProgramFacts
             $derivation->report($problem);
             $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
         }
-        $scope = new ProgramScope($derivation->environment(), $kind);
-        $hidden = [];
-        $seen = [];
-        foreach ($parameters->parameters as $position => $parameter) {
-            if ($scope->holds($seen, $parameter->name)) {
-                $derivation->report(new ProgramProblem(ProgramRule::DuplicateParameter, $parameter->name->value));
-                $hidden[] = $position;
-            }
-            $seen[] = $parameter->name;
-        }
         if ($body instanceof ExternalBody) {
             return;
         }
-        $environment = new Environment($derivation->context, null, [new VisibleRelation($parameters, $fact->shape, null, null, $hidden)]);
+        $environment = new Environment($derivation->context, null, [new VisibleRelation($parameters, $fact->shape)]);
         (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, $kind));
         if ($kind === ProgramKind::Function && !(new ReturnSearch())->found($body)) {
             $derivation->report(new ProgramProblem(ProgramRule::MissingReturn, $name->name->value));

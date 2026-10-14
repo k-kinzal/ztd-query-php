@@ -17,6 +17,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Problem;
  */
 enum ProgramRule: string
 {
+    case IncorrectName = "Incorrect routine name '%s'";
+    case NameTooLong = "Identifier name '%s' is too long";
     case DuplicateParameter = 'Duplicate parameter: %s';
     case DuplicateVariable = 'Duplicate variable: %s';
     case DuplicateCondition = 'Duplicate condition: %s';

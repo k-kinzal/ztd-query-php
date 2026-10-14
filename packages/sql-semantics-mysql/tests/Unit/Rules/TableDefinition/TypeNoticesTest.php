@@ -24,6 +24,13 @@ use SqlSemantics\Statement\Fact\Warning;
 #[Medium]
 final class TypeNoticesTest extends TestCase
 {
+    public function testNumericWarningsPreservesTheNumericAttributeOrder(): void
+    {
+        $type = new Floating(FloatingKind::Double, '5', '2', [NumericModifier::Unsigned, NumericModifier::Zerofill]);
+
+        self::assertSame([Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction], (new TypeNotices())->numericWarnings($type));
+    }
+
     public function testCharsetWarningsPreservesTheTypedAttributeOrder(): void
     {
         $attribute = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Unicode, mark: \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Leading);

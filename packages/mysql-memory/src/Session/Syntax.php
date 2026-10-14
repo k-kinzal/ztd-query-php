@@ -119,9 +119,9 @@ final class Syntax
      *
      * @param string $following The statements written after this one in the same text
      */
-    public function near(int $offset, string $statement, string $following, Throwable $failure, bool $legacy = false): SqlError
+    public function near(int $offset, string $statement, string $following, Throwable $failure, bool $legacy = false, ?\SqlParser\Parser\SqlParser $parser = null): SqlError
     {
-        $line = substr_count(ltrim(substr($statement, 0, $offset)), "\n") + 1;
+        $line = (new Parse\DiagnosticLine())->at($statement, $offset, $legacy, $parser);
 
         return new SqlError(StatementError::ParseError, StatementError::ParseError->message(\MySqlMemory\Value\Diagnostic\Encoding::prefix(rtrim(substr($statement, $offset) . $following, " \t\n\r\f\v"), $this->client ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'), $legacy), $line), $failure);
     }
@@ -147,7 +147,7 @@ final class Syntax
                 return null;
             }
             if ($token->name === 'PARAM_MARKER') {
-                return $this->near($token->offset, $statement, $following, new SyntaxException($token, [], ''), $legacy);
+                return $this->near($token->offset, $statement, $following, new SyntaxException($token, [], ''), $legacy, $parser);
             }
         }
 
@@ -303,18 +303,18 @@ final class Syntax
                     $parser->parse(substr($statement, 0, $lexical->offset));
                 } catch (\SqlParser\Lexer\SourceException $prefix) {
                     if ($prefix instanceof SyntaxException && $prefix->token->offset < $lexical->offset) {
-                        return $this->error($prefix, $statement, $release, $following);
+                        return $this->error($prefix, $statement, $release, $following, $parser);
                     }
                 }
             }
 
-            return $this->near($lexical instanceof LexicalException ? $lexical->offset : strlen($statement), $statement, $following, $failure, in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
+            return $this->near($lexical instanceof LexicalException ? $lexical->offset : strlen($statement), $statement, $following, $failure, in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true), $parser);
         }
         $offset = $cause->token->offset;
         if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && in_array($cause->token->name, ['WITH', 'WITH_CUBE_SYM', 'WITH_ROLLUP_SYM'], true)) {
             $offset += 4 + strspn($statement, " \t\n\r\f\v", $offset + 4);
         }
 
-        return $this->near($offset, $statement, $following, $failure, in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
+        return $this->near($offset, $statement, $following, $failure, in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true), $parser);
     }
 }

@@ -65,6 +65,7 @@ enum ProgramError: int implements ErrorCode
     case UsedTableInProgram = 1442;
     case VariableShadow = 1453;
     case RecursionLimit = 1456;
+    case IncorrectName = 1458;
     case EventExists = 1537;
     case EventMissing = 1539;
     case IntervalNotPositive = 1542;

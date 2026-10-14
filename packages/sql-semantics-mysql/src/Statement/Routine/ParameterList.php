@@ -44,10 +44,17 @@ final class ParameterList implements Relation
 
     /**
      * @param list<Parameter> $parameters The parameters in order
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When two parameters denote the same name
      */
     public function __construct(array $parameters)
     {
         $this->parameters = Check::listOf($parameters, Parameter::class, 'A parameter list holds parameters.');
+        $seen = [];
+        foreach ($this->parameters as $parameter) {
+            $key = $parameter->key();
+            Check::input(!isset($seen[$key]), 'A routine parameter list has distinct case- and accent-insensitive names.');
+            $seen[$key] = true;
+        }
     }
 
     /**
@@ -58,6 +65,11 @@ final class ParameterList implements Relation
         $slots = [];
         foreach ($this->parameters as $parameter) {
             (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($parameter->type, $derivation);
+            $problem = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? null : Parameter::nameProblem($parameter->name);
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $parameter);
+            }
             (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($parameter->type, '', $derivation);
             $slots[] = new OutputSlot($parameter->name, new Known($parameter->type), Nullability::Nullable);
         }

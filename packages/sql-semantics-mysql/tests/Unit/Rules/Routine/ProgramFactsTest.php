@@ -105,14 +105,10 @@ final class ProgramFactsTest extends TestCase
      */
     public static function providerRoutineReportsTheBrokenRule(): iterable
     {
-        yield 'a duplicate parameter of a procedure' => ['CREATE PROCEDURE p(x INT, X INT) SELECT x', ['Duplicate parameter: X']];
-        yield 'a duplicate parameter of a function' => ['CREATE FUNCTION f(x INT, x INT) RETURNS INT RETURN x', ['Duplicate parameter: x']];
-        yield 'a parameter written three times' => ['CREATE PROCEDURE p(x INT, x INT, X INT) SELECT x', ['Duplicate parameter: x', 'Duplicate parameter: X']];
         yield 'an unknown name in a procedure body' => ['CREATE PROCEDURE p(x INT) SELECT zz', ['Column zz does not exist.']];
         yield 'a function without RETURN' => ['CREATE FUNCTION f() RETURNS INT BEGIN END', ['No RETURN found in FUNCTION f']];
         yield 'a qualified function without RETURN' => ['CREATE FUNCTION db.g() RETURNS INT SET @a = 1', ['No RETURN found in FUNCTION g']];
         yield 'a function whose loop holds no RETURN' => ['CREATE FUNCTION f(x INT) RETURNS INT BEGIN WHILE x > 0 DO SET x = x - 1; END WHILE; END', ['No RETURN found in FUNCTION f']];
-        yield 'a function reported after its body' => ['CREATE FUNCTION f(x INT, x INT) RETURNS INT SELECT zz INTO @a', ['Duplicate parameter: x', 'Column zz does not exist.', 'No RETURN found in FUNCTION f']];
         yield 'a RETURN in a procedure' => ['CREATE PROCEDURE p() RETURN 1', ['RETURN is only allowed in a FUNCTION']];
     }
 
@@ -154,7 +150,6 @@ final class ProgramFactsTest extends TestCase
     public static function providerRoutineDerivesNothingFromExternalCode(): iterable
     {
         yield 'a function without RETURN in SQL' => ['CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS $$ zz $$', []];
-        yield 'a duplicate parameter' => ['CREATE FUNCTION f(x INT, x INT) RETURNS INT LANGUAGE JAVASCRIPT AS $$ return x $$', ['Duplicate parameter: x']];
     }
 
     public function testRoutineReportsAProgramProblem(): void

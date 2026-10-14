@@ -16,6 +16,7 @@ final class ProgramRuleTest extends TestCase
     public function testCasesHoldTheirMessagePatterns(): void
     {
         self::assertSame([
+            "Incorrect routine name '%s'", "Identifier name '%s' is too long",
             'Duplicate parameter: %s',
             'Duplicate variable: %s',
             'Duplicate condition: %s',
@@ -52,7 +53,7 @@ final class ProgramRuleTest extends TestCase
     public function testCasesNameTheCasesOfTheServerErrors(): void
     {
         self::assertSame([
-            'DuplicateParameter',
+            'IncorrectName', 'NameTooLong', 'DuplicateParameter',
             'DuplicateVariable',
             'DuplicateCondition',
             'DuplicateCursor',

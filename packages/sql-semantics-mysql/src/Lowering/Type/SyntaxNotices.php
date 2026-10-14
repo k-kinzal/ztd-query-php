@@ -8,9 +8,12 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
+use SqlSemantics\Platform\MySql\Statement\Type\Floating;
+use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 
 /**
- * Interprets completed character-type attributes before later malformed input.
+ * Interprets completed numeric and character-type attributes before later malformed input.
  *
  * The attribute is lowered to its ordinary typed value. Full derivation and
  * prefix lowering then use the same ordered warning rule. Unknown charset
@@ -27,6 +30,12 @@ final class SyntaxNotices
      */
     public function completed(Node $node, Lowering $lowering): array
     {
+        if ($node->name === 'type') {
+            $type = $lowering->types->type($node);
+            $notices = $type instanceof Integral || $type instanceof Decimal || $type instanceof Floating ? (new TypeNotices())->numericWarnings($type) : [];
+
+            return array_values(array_filter($notices, static fn (Deprecated $notice): bool => $notice->warnedIn($lowering->profile->grammar)));
+        }
         if ($node->name === 'default_charset') {
             $name = $lowering->charsets->charset($node)->name;
             $attribute = $name === null ? null : new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named, $name);

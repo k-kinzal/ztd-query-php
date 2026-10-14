@@ -24,6 +24,9 @@ final class SyntaxNoticesTest extends TestCase
      */
     public static function providerAttributes(): iterable
     {
+        yield 'numeric digits' => ['FLOAT(3,1)', [Deprecated::FloatingDigits]];
+        yield 'integer display width' => ['INT(3)', [Deprecated::DisplayWidth]];
+        yield 'numeric attributes' => ['DOUBLE(3,1) UNSIGNED ZEROFILL', [Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction]];
         yield 'binary attribute' => ['TEXT BINARY', [Deprecated::BinaryAttribute]];
         yield 'leading binary' => ['TEXT BINARY ASCII', [Deprecated::BinaryAttribute, Deprecated::AsciiCharset]];
         yield 'trailing binary' => ['TEXT UNICODE BINARY', [Deprecated::UnicodeCharset, Deprecated::BinaryAttribute]];

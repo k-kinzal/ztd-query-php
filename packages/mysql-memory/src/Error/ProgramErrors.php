@@ -29,6 +29,8 @@ final class ProgramErrors
      * It holds every case of ProgramRule.
      */
     public const CODES = [
+        'IncorrectName' => ProgramError::IncorrectName,
+        'NameTooLong' => SchemaError::TooLongIdentifier,
         'DuplicateParameter' => ProgramError::DuplicateParameter,
         'DuplicateVariable' => ProgramError::DuplicateVariable,
         'DuplicateCondition' => ProgramError::DuplicateCondition,
@@ -73,6 +75,11 @@ final class ProgramErrors
                 $subject = preg_split('/[\xF0-\xF4][\x80-\xBF]{3}/', $subject)[0] ?? $subject;
             }
             $message = str_replace('%s', $subject, $problem->rule->value);
+        }
+
+        if ($problem->rule === ProgramRule::NameTooLong) {
+            $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            $message = str_replace('%s', (new DiagnosticText())->bytes($problem->subject ?? '', 100, $legacy), $problem->rule->value);
         }
 
         return new SqlError($this->code($problem->rule), $message);

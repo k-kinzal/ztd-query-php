@@ -68,12 +68,9 @@ final class InputPrefix
             }
             $completed = $range[1] < $end;
             if ($completed && in_array($node->name, ['sp_decl', 'sp_proc_stmt', 'ev_sql_stmt_inner', 'sp_pdparam_list', 'sp_fdparam_list'], true)) {
-                if ($node->name === 'sp_decl') {
-                    $frame->declarations[] = (new BlockRule($this->lowering))->declaration($node);
-                } elseif (in_array($node->name, ['sp_pdparam_list', 'sp_fdparam_list'], true)) {
-                    $parameters = (new ParameterRule($this->lowering))->parameters($node);
-                } else {
-                    $frame->statements[] = (new StatementRule($this->lowering))->statement($node);
+                $parameters = $this->completed($node, $frame, $parameters);
+                if ($parameters instanceof RejectedInput) {
+                    return $parameters;
                 }
                 $problem = $this->diagnostic($frame->body(), $parameters);
                 if ($problem !== null) {
@@ -93,6 +90,27 @@ final class InputPrefix
         }
 
         return null;
+    }
+
+    /**
+     * Adds a completed declaration or statement, preserving a parameter-list refusal.
+     */
+    public function completed(Node $node, PrefixFrame $frame, ParameterList $parameters): ParameterList|RejectedInput
+    {
+        if (in_array($node->name, ['sp_pdparam_list', 'sp_fdparam_list'], true)) {
+            try {
+                return (new ParameterRule($this->lowering))->parameters($node);
+            } catch (RejectedInput $failure) {
+                return $failure;
+            }
+        }
+        if ($node->name === 'sp_decl') {
+            $frame->declarations[] = (new BlockRule($this->lowering))->declaration($node);
+        } else {
+            $frame->statements[] = (new StatementRule($this->lowering))->statement($node);
+        }
+
+        return $parameters;
     }
 
     /**

@@ -69,4 +69,13 @@ final class InputPrefixTest extends TestCase
 
         self::assertNull($rule->before((new MySqlParser('mysql-8.4.7'))->parse($sql), $end + 7));
     }
+    public function testCompletedRetainsAParameterRefusalBeforeALaterCondition(): void
+    {
+        $sql = "CREATE PROCEDURE p(a INT, A INT) BEGIN SIGNAL SQLSTATE '00000'; END";
+        $rule = new InputPrefix(new Lowering(Productions::load(__DIR__ . '/../../../../../resources/productions/mysql-8.4.7.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql847)));
+        $failure = $rule->before((new MySqlParser('mysql-8.4.7'))->parse($sql), strlen($sql));
+
+        self::assertSame('Duplicate parameter: A', $failure?->problem->message());
+    }
+
 }

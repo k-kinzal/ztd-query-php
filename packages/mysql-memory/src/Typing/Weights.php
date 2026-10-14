@@ -22,11 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 final class Weights
 {
     /**
-     * @var array<int, string>|null The nonidentity pages of general_ci code-point weights
-     */
-    private static ?array $general = null;
-
-    /**
      * Weighs a string, limiting or padding its character count when one is requested.
      *
      * @throws \MySqlMemory\Error\SqlError When the collation's weights are not emulated
@@ -99,16 +94,6 @@ final class Weights
      */
     public function general(int $point): string
     {
-        if ($point > 65535) {
-            return "\xff\xfd";
-        }
-        if (self::$general === null) {
-            /** @var array<int, string> $pages */
-            $pages = require dirname(__DIR__, 2) . '/resources/general-ci-weights.php';
-            self::$general = array_map(static fn (string $hex): string => (string) hex2bin($hex), $pages);
-        }
-        $page = self::$general[$point >> 8] ?? null;
-
-        return $page === null ? pack('n', $point) : substr($page, ($point & 255) * 2, 2);
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Ordering\GeneralWeights())->point($point);
     }
 }

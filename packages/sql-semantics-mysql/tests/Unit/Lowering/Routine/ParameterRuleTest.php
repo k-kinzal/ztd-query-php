@@ -171,4 +171,27 @@ final class ParameterRuleTest extends TestCase
 
         $rule->declared(new Node('sp_name', 1, []), null);
     }
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRepeatedParameters(): iterable
+    {
+        yield 'procedure' => ['CREATE PROCEDURE p(x INT, X INT) SELECT x', 'Duplicate parameter: X'];
+        yield 'function' => ['CREATE FUNCTION f(x INT, x INT) RETURNS INT RETURN x', 'Duplicate parameter: x'];
+        yield 'three occurrences' => ['CREATE PROCEDURE p(x INT, x INT, X INT) SELECT x', 'Duplicate parameter: x'];
+        yield 'body errors' => ['CREATE FUNCTION f(x INT, x INT) RETURNS INT SELECT zz INTO @a', 'Duplicate parameter: x'];
+        yield 'external body' => ['CREATE FUNCTION f(x INT, x INT) RETURNS INT LANGUAGE JAVASCRIPT AS $$ return x $$', 'Duplicate parameter: x'];
+        yield 'direction' => ['CREATE PROCEDURE p(IN x INT, x INT) SELECT 1', 'Duplicate parameter: x'];
+        yield 'accent' => ['CREATE PROCEDURE p(`é` INT, e INT) SELECT 1', 'Duplicate parameter: e'];
+    }
+
+    #[DataProvider('providerRepeatedParameters')]
+    public function testParametersRefuseTheFirstDuplicateBeforePublishingAList(string $sql, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+
+        (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
+    }
+
 }

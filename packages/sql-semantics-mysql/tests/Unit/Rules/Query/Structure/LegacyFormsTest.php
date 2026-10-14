@@ -67,4 +67,15 @@ final class LegacyFormsTest extends TestCase
         self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning()));
     }
 
+    public function testDefinitionRecognizesParameterNamesAcceptedOnlyBeforeEight(): void
+    {
+        $forms = new LegacyForms();
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int);
+
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name(''), $type)));
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name('x '), $type)));
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name(str_repeat('猫', 65)), $type)));
+        self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name(" x\t"), $type)));
+    }
+
 }

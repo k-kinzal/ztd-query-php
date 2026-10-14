@@ -71,6 +71,12 @@ retains the binary/national classification and known character-set attribute,
 but cannot be used as a column, parameter, variable or return declaration.
 A fully resolved expression carries `Statement\Type\Resolved\Domain`.
 
+Stored-routine `ParameterList` values require distinct case- and accent-insensitive
+parameter names, and `Parameter` excludes NUL. Empty names, names longer than 64
+characters and names ending in an ASCII space require MySQL 5.6 or 5.7. They
+cannot be composed with modern-only syntax. Modern SQL lowering refuses those
+names with a typed `Construction\RejectedInput` before publishing a list.
+
 ### Releases
 
 Each release is read with its own grammar and keywords, and version comments are read as that release reads them:

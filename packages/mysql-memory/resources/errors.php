@@ -231,6 +231,7 @@ return [
     1442 => ['HY000', "Can't update table '%s' in stored function/trigger because it is already used by statement which invoked this stored function/trigger."],
     1449 => ['HY000', "The user specified as a definer ('%s'@'%s') does not exist"],
     1456 => ['HY000', 'Recursive limit %d (as set by the max_sp_recursion_depth variable) was exceeded for routine %s'],
+    1458 => ['42000', "Incorrect routine name '%s'"],
     1463 => ['42000', "Non-grouping field '%s' is used in %s clause"],
     1470 => ['HY000', "String '%s' is too long for %s (should be no longer than %d)"],
     1471 => ['HY000', 'The target table %s of the %s is not insertable-into'],

@@ -56,4 +56,21 @@ final class ProgramErrorsTest extends TestCase
 
         self::assertSame([ProgramError::BadSqlState, ProgramError::DuplicateSignalItem, ProgramError::LabelMissing, ProgramError::TriggerRowChange], [$errors->code(ProgramRule::BadSqlState), $errors->code(ProgramRule::DuplicateSignalItem), $errors->code(ProgramRule::IterateWithoutLabel), $errors->code(ProgramRule::AfterRowUpdate)]);
     }
+    public function testErrorBoundsLongParameterNamesWithoutChangingTheirOperands(): void
+    {
+        $problem = new ProgramProblem(ProgramRule::NameTooLong, str_repeat('猫', 65));
+        $errors = new ProgramErrors();
+
+        self::assertSame("Identifier name '" . str_repeat('猫', 33) . "?' is too long", $errors->error($problem)->getMessage());
+        self::assertSame("Identifier name '" . str_repeat('猫', 33) . "' is too long", $errors->error($problem, \SqlSemantics\Contract\GrammarRelease::MySql5651)->getMessage());
+        self::assertSame(str_repeat('猫', 65), $problem->subject);
+    }
+
+    public function testErrorReportsTheSqlStateOfAnIncorrectParameterName(): void
+    {
+        $error = (new ProgramErrors())->error(new ProgramProblem(ProgramRule::IncorrectName, 'x '));
+
+        self::assertSame([1458, '42000', "Incorrect routine name 'x '"], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
+    }
+
 }

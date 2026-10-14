@@ -83,7 +83,6 @@ final class ParameterListTest extends TestCase
         yield 'MySQL 5.6 empty' => ['mysql-5.6.51', 'create procedure p() select 1', 'CREATE PROCEDURE p() SELECT 1'];
         yield 'MySQL 5.7 two parameters' => ['mysql-5.7.44', 'create procedure p(a int,b int) select 1', 'CREATE PROCEDURE p(a INT, b INT) SELECT 1'];
         yield 'MySQL 8.0 function' => ['mysql-8.0.44', 'create function f(a int, b char(2)) returns int return 1', 'CREATE FUNCTION f(a INT, b CHAR(2)) RETURNS INT RETURN 1'];
-        yield 'MySQL 9.1 duplicate kept' => ['mysql-9.1.0', 'create procedure p(in x int, x int) select 1', 'CREATE PROCEDURE p(IN x INT, x INT) SELECT 1'];
     }
 
     #[DataProvider('providerRenderWritesTheParentheses')]
@@ -103,4 +102,43 @@ final class ParameterListTest extends TestCase
         self::assertSame('()', (new Lexical())->join($empty->pieces()));
         self::assertSame('(a INT, OUT b INT)', (new Lexical())->join($two->pieces()));
     }
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRepeatedNames(): iterable
+    {
+        yield 'identical' => ['x', 'x'];
+        yield 'ASCII case' => ['x', 'X'];
+        yield 'Unicode case' => ['é', 'É'];
+        yield 'accent' => ['é', 'e'];
+    }
+
+    #[DataProvider('providerRepeatedNames')]
+    public function testParametersHaveDistinctIdentities(string $first, string $second): void
+    {
+        $this->expectExceptionMessage('A routine parameter list has distinct case- and accent-insensitive names.');
+
+        new ParameterList([new Parameter(new Name($first), new Integral(IntegralKind::Int)), new Parameter(new Name($second), new Integral(IntegralKind::Int))]);
+    }
+
+    public function testLegacyNamesCannotAccompanyModernQuerySyntax(): void
+    {
+        $parameters = new ParameterList([new Parameter(new Name(''), new Integral(IntegralKind::Int))]);
+        $body = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]));
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+
+        new CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('p')), $parameters, $body);
+    }
+
+    public function testDeriveRelationReportsANameWhenTheSessionUsesAModernRelease(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $derivation = new Derivation($semantics->context([]));
+        $parameters = new ParameterList([new Parameter(new Name('x '), new Integral(IntegralKind::Int))]);
+
+        $derivation->relation($parameters, $derivation->environment());
+
+        self::assertSame(["Incorrect routine name 'x '"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics));
+    }
+
 }

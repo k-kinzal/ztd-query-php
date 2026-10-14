@@ -13,8 +13,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -67,15 +65,12 @@ final class CreateProcedureTest extends TestCase
         self::assertSame([], $create->facts->diagnostics);
     }
 
-    public function testDeriveStatementReportsADuplicateParameterWhateverItsCase(): void
+    public function testDuplicateParametersAreRefusedBeforeTheStatementIsPublished(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Duplicate parameter: X');
 
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::DuplicateParameter, $problem->rule);
-        self::assertSame('Duplicate parameter: X', $problem->message());
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
     }
 
     /**

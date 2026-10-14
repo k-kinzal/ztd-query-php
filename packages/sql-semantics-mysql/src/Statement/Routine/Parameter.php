@@ -35,9 +35,33 @@ final class Parameter implements Node
      * @param DeclaredName $type The declared type
      * @param CollationName|null $collation The COLLATE clause of the type
      * @param ParameterMode|null $mode The direction keyword, when written
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the name contains NUL
      */
     public function __construct(public readonly Name $name, public readonly DeclaredName $type, public readonly ?CollationName $collation = null, public readonly ?ParameterMode $mode = null)
     {
+        \SqlSemantics\Diagnostic\Check::input(!str_contains($name->value, "\0"), 'A routine parameter name cannot contain NUL.');
+    }
+
+    /**
+     * Describes a name refused by MySQL 8.0 and later; legacy releases accept it.
+     */
+    public static function nameProblem(Name $name): ?Problem\ProgramProblem
+    {
+        $rule = match (true) {
+            $name->value === '', str_ends_with($name->value, ' ') => Problem\ProgramRule::IncorrectName,
+            mb_strlen($name->value, 'UTF-8') > 64 => Problem\ProgramRule::NameTooLong,
+            default => null,
+        };
+
+        return $rule === null ? null : new Problem\ProgramProblem($rule, $name->value);
+    }
+
+    /**
+     * Answers the parameter's case- and accent-insensitive identity.
+     */
+    public function key(): string
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Ordering\GeneralWeights())->key($this->name->value);
     }
 
     /**

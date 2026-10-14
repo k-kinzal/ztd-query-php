@@ -60,19 +60,34 @@ final class TypeNotices
      */
     public function numeric(Integral|Decimal|Floating $type, Derivation $derivation): void
     {
+        foreach ($this->numericWarnings($type) as $notice) {
+            Deprecation::raise($notice, $derivation, $type);
+        }
+    }
+
+    /**
+     * Lists numeric-type notices before applying a release profile.
+     *
+     * @return list<Deprecated>
+     */
+    public function numericWarnings(Integral|Decimal|Floating $type): array
+    {
+        $notices = [];
         $modifiers = $type->modifiers;
         if ($type instanceof Integral && $type->width !== null && !($type->kind === IntegralKind::TinyInt && $type->width === '1') && !in_array(NumericModifier::Zerofill, $modifiers, true)) {
-            Deprecation::raise(Deprecated::DisplayWidth, $derivation, $type);
+            $notices[] = Deprecated::DisplayWidth;
         }
         if (in_array(NumericModifier::Zerofill, $modifiers, true)) {
-            Deprecation::raise(Deprecated::Zerofill, $derivation, $type);
+            $notices[] = Deprecated::Zerofill;
         }
         if ($type instanceof Floating && $type->scale !== null) {
-            Deprecation::raise(Deprecated::FloatingDigits, $derivation, $type);
+            $notices[] = Deprecated::FloatingDigits;
         }
         if (($type instanceof Decimal || $type instanceof Floating) && in_array(NumericModifier::Unsigned, $modifiers, true)) {
-            Deprecation::raise(Deprecated::UnsignedFraction, $derivation, $type);
+            $notices[] = Deprecated::UnsignedFraction;
         }
+
+        return $notices;
     }
 
     /**

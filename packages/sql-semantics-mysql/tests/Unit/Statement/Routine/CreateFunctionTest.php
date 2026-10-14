@@ -48,15 +48,12 @@ final class CreateFunctionTest extends TestCase
         self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
 
-    public function testDeriveStatementReportsADuplicateParameter(): void
+    public function testDuplicateParametersAreRefusedBeforeTheStatementIsPublished(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Duplicate parameter: x');
 
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::DuplicateParameter, $problem->rule);
-        self::assertSame('Duplicate parameter: x', $problem->message());
+        (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x');
     }
 
     public function testDeriveStatementReportsAMissingReturn(): void
