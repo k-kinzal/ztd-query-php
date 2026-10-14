@@ -258,11 +258,11 @@ final class ProgramProblems
      */
     public function account(AccountName $account): void
     {
-        if (mb_strlen($account->user->value) > 32) {
-            throw DataError::WrongStringLength->error($account->user->value, 'user name', 32);
+        if (mb_strlen($account->username()) > 32) {
+            throw DataError::WrongStringLength->error($account->username(), 'user name', 32);
         }
-        if ($account->host !== null && mb_strlen($account->host->value) > 255) {
-            throw DataError::WrongStringLength->error($account->host->value, 'host name', 255);
+        if (mb_strlen($account->hostname() ?? '') > 255) {
+            throw DataError::WrongStringLength->error($account->hostname(), 'host name', 255);
         }
     }
 

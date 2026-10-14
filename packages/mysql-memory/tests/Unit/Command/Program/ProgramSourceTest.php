@@ -59,6 +59,14 @@ final class ProgramSourceTest extends TestCase
         self::assertSame([['Note', 1449, "The user specified as a definer ('bob'@'%') does not exist"]], $session->diagnostics->conditions);
     }
 
+    public function testDefinerUsesTheNormalizedAccountOperands(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid SQL';
+
+        self::assertSame(['bob', 'host'], ProgramSource::definer(new AccountName(new Name("\rbob\t"), new Name(' HOST ')), $session));
+    }
+
     public function testEnabledReadsABooleanVariable(): void
     {
         self::assertSame([true, true, false, false], [ProgramSource::enabled('ON'), ProgramSource::enabled(1), ProgramSource::enabled('OFF'), ProgramSource::enabled(null)]);

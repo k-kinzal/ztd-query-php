@@ -99,12 +99,13 @@ final class ProgramSource
     public static function definer(?Account $definer, Session $session, ?\MySqlMemory\Evaluation\Context $context = null): array
     {
         if ($definer instanceof AccountName) {
-            $host = $definer->host->value ?? '%';
-            if ($context !== null && $session->instance->accounts->find(new \MySqlMemory\Account\Identity($definer->user->value, $host)) === null) {
-                $context->note(AccountError::NoSuchUser, $definer->user->value, $host);
+            $identity = \MySqlMemory\Account\Identity::of($definer->username(), $definer->hostname());
+            $host = $identity->host;
+            if ($context !== null && $session->instance->accounts->find($identity) === null) {
+                $context->note(AccountError::NoSuchUser, $identity->user, $host);
             }
 
-            return [$definer->user->value, $host];
+            return [$identity->user, $host];
         }
         $account = $session->variables->definer;
         return [$account->user, $account->host];

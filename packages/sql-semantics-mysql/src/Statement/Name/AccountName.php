@@ -13,7 +13,10 @@ use SqlSemantics\Statement\Snapshot;
  * A user or role account name: the user part and the optional host part.
  *
  * An account written without a host part denotes the host `%`; the host is
- * kept absent, as written. Role names have the same two parts.
+ * kept absent, as written. Role names have the same two parts. The decoded
+ * operands retain their spelling for rendering; username() and hostname()
+ * remove surrounding ASCII whitespace for account resolution. This behavior
+ * was verified on MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/account-names.html,
  * https://dev.mysql.com/doc/refman/8.4/en/role-names.html.
  *
@@ -32,6 +35,26 @@ final class AccountName implements Account
      */
     public function __construct(public readonly Name $user, public readonly ?Name $host = null)
     {
+    }
+
+    /**
+     * Answers the user operand without surrounding ASCII whitespace.
+     *
+     * NUL, other control bytes and Unicode spaces remain part of the operand.
+     */
+    public function username(): string
+    {
+        return trim($this->user->value, " \t\n\r\v\f");
+    }
+
+    /**
+     * Answers the host operand without surrounding ASCII whitespace, or null when omitted.
+     *
+     * Host case is preserved here, including for diagnostics before account lookup.
+     */
+    public function hostname(): ?string
+    {
+        return $this->host === null ? null : trim($this->host->value, " \t\n\r\v\f");
     }
 
     /**

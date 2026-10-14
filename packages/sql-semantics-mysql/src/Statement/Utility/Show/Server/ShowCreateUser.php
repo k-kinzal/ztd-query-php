@@ -52,7 +52,7 @@ final class ShowCreateUser implements Statement
 
             return;
         }
-        $name = 'CREATE USER for ' . $this->user->user->value . '@' . ($this->user->host->value ?? '%');
+        $name = 'CREATE USER for ' . $this->user->username() . '@' . ($this->user->hostname() ?? '%');
         $derivation->output($facts->query($facts->shape($derivation, Report::CreateUser, $name), $derivation->context->columnNames));
     }
 

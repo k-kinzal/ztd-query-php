@@ -95,6 +95,9 @@ final class Names
     /**
      * Checks the names of a statement, in the order written.
      *
+     * MySQL 5.6 checks both original operands before trimming when the host is
+     * explicit; with no host it checks the trimmed user (verified on 5.6.51).
+     *
      * @param list<Account|SessionUser|null> $names
      *
      * @throws SqlError When a name is too long or its host is malformed
@@ -105,12 +108,13 @@ final class Names
             if (!$name instanceof AccountName) {
                 continue;
             }
-            $user = $name->user->value;
+            $original = $this->release === GrammarRelease::MySql5651 && $name->host !== null;
+            $user = $original ? $name->user->value : $name->username();
             [$users, $hosts] = $this->limits();
             if (mb_strlen($user, 'UTF-8') > $users) {
                 throw DataError::WrongStringLength->error($this->cut($user), 'user name', $users);
             }
-            $host = $name->host->value ?? '%';
+            $host = ($original ? $name->host->value : $name->hostname()) ?? '%';
             if (strlen($host) > $hosts) {
                 throw DataError::WrongStringLength->error($this->cut($host), 'host name', $hosts);
             }
@@ -153,7 +157,7 @@ final class Names
     public function identity(Account|SessionUser $name, Session $session): Identity
     {
         if ($name instanceof AccountName) {
-            return Identity::of($name->user->value, $name->host?->value);
+            return Identity::of($name->username(), $name->hostname());
         }
 
         return $session->variables->definer;

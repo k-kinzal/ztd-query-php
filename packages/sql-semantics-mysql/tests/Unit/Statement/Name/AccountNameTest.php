@@ -23,6 +23,22 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class AccountNameTest extends TestCase
 {
+    public function testUsernameRemovesOnlySurroundingAsciiWhitespace(): void
+    {
+        $account = new AccountName(new Name(" \t\n\r\v\fbo b\f\v\r\n\t "));
+
+        self::assertSame('bo b', $account->username());
+        self::assertSame(" \t\n\r\v\fbo b\f\v\r\n\t ", $account->user->value);
+        self::assertSame("\0\x1f\x7f\u{a0}\u{3000}bob\u{3000}\u{a0}\x7f\x1f\0", (new AccountName(new Name("\0\x1f\x7f\u{a0}\u{3000}bob\u{3000}\u{a0}\x7f\x1f\0")))->username());
+    }
+
+    public function testHostnamePreservesCaseAndAnOmittedHost(): void
+    {
+        self::assertSame('HOST', (new AccountName(new Name('bob'), new Name(" \t\n\r\v\fHOST\f\v\r\n\t ")))->hostname());
+        self::assertSame('', (new AccountName(new Name('bob'), new Name(' ')))->hostname());
+        self::assertNull((new AccountName(new Name('bob')))->hostname());
+    }
+
     public function testRenderWritesTheUserAndTheHostJoinedByAtWithoutSpaces(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));

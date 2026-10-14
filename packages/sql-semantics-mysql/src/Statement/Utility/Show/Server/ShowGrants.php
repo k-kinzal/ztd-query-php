@@ -63,7 +63,7 @@ final class ShowGrants implements Statement
 
             return;
         }
-        $name = 'Grants for ' . $this->user->user->value . '@' . ($this->user->host->value ?? '%');
+        $name = 'Grants for ' . $this->user->username() . '@' . ($this->user->hostname() ?? '%');
         $derivation->output($facts->query($facts->shape($derivation, Report::Grants, $name), $derivation->context->columnNames));
     }
 

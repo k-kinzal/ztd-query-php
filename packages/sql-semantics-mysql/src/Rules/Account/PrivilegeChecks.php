@@ -202,7 +202,7 @@ final class PrivilegeChecks
             return $item->name->value;
         }
         if ($item instanceof GrantedRole) {
-            return $item->role->user->value . ($item->role->host === null ? '' : '@' . $item->role->host->value);
+            return $item->role->username() . ($item->role->host === null ? '' : '@' . $item->role->hostname());
         }
 
         return 'ALL';

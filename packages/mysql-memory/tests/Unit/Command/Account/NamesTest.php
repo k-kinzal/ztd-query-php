@@ -55,6 +55,40 @@ final class NamesTest extends TestCase
         (new Names())->check([null, new AccountName(new Name('a'), new Name('a@b')), new AccountName(new Name(str_repeat('u', 40)))]);
     }
 
+    public function testCheckMeasuresTheTrimmedOperands(): void
+    {
+        $name = new AccountName(new Name("\r" . str_repeat('u', 32) . "\t"), new Name("\n" . str_repeat('H', 255) . "\v"));
+        $names = new Names();
+
+        $names->check([$name]);
+
+        self::assertSame(str_repeat('u', 32) . "\0" . str_repeat('h', 255), $names->identity($name, (new Instance())->connect())->key());
+    }
+
+    public function testCheckQuotesTheTrimmedLongOperand(): void
+    {
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("String '" . str_repeat('X', 70) . "' is too long for user name (should be no longer than 32)");
+
+        (new Names())->check([new AccountName(new Name("\r" . str_repeat('X', 80)))]);
+    }
+
+    public function testCheckMeasuresTheOriginalQualifiedUserInMySql56(): void
+    {
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("String ' " . str_repeat('u', 16) . " ' is too long for user name (should be no longer than 16)");
+
+        (new Names(GrammarRelease::MySql5651))->check([new AccountName(new Name(' ' . str_repeat('u', 16) . ' '), new Name('%'))]);
+    }
+
+    public function testCheckMeasuresTheOriginalExplicitHostInMySql56(): void
+    {
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("String ' " . str_repeat('H', 60) . " ' is too long for host name (should be no longer than 60)");
+
+        (new Names(GrammarRelease::MySql5651))->check([new AccountName(new Name('u'), new Name(' ' . str_repeat('H', 60) . ' '))]);
+    }
+
     public function testCutKeepsSeventyBytes(): void
     {
         self::assertSame([str_repeat('h', 70), 'short'], [(new Names())->cut(str_repeat('h', 300)), (new Names())->cut('short')]);
