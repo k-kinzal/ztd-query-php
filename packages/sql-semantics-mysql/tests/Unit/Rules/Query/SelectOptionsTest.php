@@ -17,6 +17,16 @@ use SqlSemantics\Statement\Fact\Warning;
 #[Medium]
 final class SelectOptionsTest extends TestCase
 {
+    public function testNoticesStopsAtAConflictingCacheModifier(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()]);
+        $notices = (new SelectOptions())->notices($query, \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertCount(3, $notices);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[2]);
+        self::assertTrue($notices[2]->aborts);
+    }
+
     public function testRaiseWarnsOfTheQueryCacheModifiersIn57AndRefusesTwoInARow(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_CACHE SQL_CACHE SQL_NO_CACHE 1');

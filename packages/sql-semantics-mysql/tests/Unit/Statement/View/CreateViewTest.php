@@ -24,7 +24,7 @@ final class CreateViewTest extends TestCase
         $table = $create->declarations()[0];
 
         self::assertSame(['a', 'b'], [$table->columns[0]->name->value, $table->columns[1]->name->value]);
-        self::assertEquals(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::null(), $table->columns[1]->type);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), [], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Ignorable), $table->columns[1]->type);
         self::assertTrue($table->complete);
     }
 

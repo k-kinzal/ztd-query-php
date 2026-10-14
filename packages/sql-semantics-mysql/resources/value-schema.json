@@ -3082,6 +3082,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\TableOrView": {
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\UnknownExplainFormat": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\UtilityMisuse": {
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\UtilityRule",
         "subject": "?SqlSemantics\\Statement\\Node"

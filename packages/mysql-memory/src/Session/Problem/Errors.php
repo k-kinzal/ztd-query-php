@@ -100,7 +100,7 @@ final class Errors
             ?? $this->call($diagnostic)
             ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
             ?? $this->manipulation($diagnostic, $statement)
-            ?? $this->expression($diagnostic)
+            ?? $this->expression($diagnostic, $session->settings()->legacy())
             ?? $this->server($diagnostic, $session, $statement)
             ?? new SqlError(StatementError::UnknownError, $diagnostic->message());
     }
@@ -274,7 +274,7 @@ final class Errors
      *
      * An unknown collation is named by its first 64 characters.
      */
-    public function expression(Diagnostic $diagnostic): ?SqlError
+    public function expression(Diagnostic $diagnostic, bool $legacy = false): ?SqlError
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize => $this->typeSize($diagnostic),
@@ -285,7 +285,7 @@ final class Errors
                 3 => DataError::CantAggregateThreeCollations,
                 default => DataError::CantAggregateCollations,
             }, $diagnostic->message()),
-            $diagnostic instanceof UnknownCollation => SchemaError::UnknownCollation->error(strlen(mb_strcut($diagnostic->name, 0, 64, 'UTF-8')) < min(64, strlen($diagnostic->name)) ? mb_strcut($diagnostic->name, 0, 64, 'UTF-8') . '?' : substr($diagnostic->name, 0, 64)),
+            $diagnostic instanceof UnknownCollation => SchemaError::UnknownCollation->error((new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $diagnostic->name, 2)[0], 64, $legacy)),
             $diagnostic instanceof TooBigPrecision => SchemaError::TooBigPrecision->error($diagnostic->precision, $diagnostic->function, $diagnostic->maximum),
             $diagnostic instanceof UnknownCharset => SchemaError::UnknownCharacterSet->error($diagnostic->name),
             $diagnostic instanceof CollationMismatch => SchemaError::CollationCharsetMismatch->error($diagnostic->collation, $diagnostic->charset),
@@ -317,6 +317,7 @@ final class Errors
     public function server(Diagnostic $diagnostic, Session $session, ?Node $statement): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat => StatementError::UnknownExplainFormat->error($diagnostic->name->value),
             $diagnostic instanceof BucketCountOutOfRange => DataError::DataOutOfRange->error('Number of buckets', 'ANALYZE TABLE'),
             $diagnostic instanceof UnknownSystemVariable => new SqlError(AdministrationError::UnknownSystemVariable, $diagnostic->message(), following: $diagnostic->assigned && !$diagnostic->structured && $session->settings()->legacy() ? [[AdministrationError::UnknownSystemVariable->value, $diagnostic->message()]] : []),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable => AdministrationError::VariableIsNotStruct->error($diagnostic->name),

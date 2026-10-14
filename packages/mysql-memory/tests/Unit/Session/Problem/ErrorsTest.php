@@ -33,6 +33,24 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Small]
 final class ErrorsTest extends TestCase
 {
+    public function testExpressionBoundsCollationNamesForBothDiagnosticEncodings(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation(str_repeat('é', 31) . '€');
+        $errors = new Errors();
+
+        self::assertSame("Unknown collation: '" . str_repeat('é', 31) . "??'", $errors->expression($problem)?->getMessage());
+        self::assertSame("Unknown collation: '" . str_repeat('é', 31) . "'", $errors->expression($problem, true)?->getMessage());
+        self::assertSame("Unknown collation: 'a'", $errors->expression(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation("a\0b"))?->getMessage());
+    }
+
+    public function testErrorUsesTheRetainedExplainFormat(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat(new Name('YaML'));
+        $error = (new Errors())->error($problem, (new Instance())->connect());
+
+        self::assertSame([1791, "Unknown EXPLAIN format name: 'YaML'"], [$error->getCode(), $error->getMessage()]);
+    }
+
     public function testTypeSizePreservesTheKindAndTheColumnName(): void
     {
         $diagnostic = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Length, 'a', 256, 255);

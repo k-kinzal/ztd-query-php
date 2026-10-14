@@ -16,6 +16,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ShowRoutinesCommandTest extends TestCase
 {
+    public function testExecuteKeepsDirectTemporalMetadataForAConstantFalseCondition(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SHOW PROCEDURE STATUS WHERE (((USER())))')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertSame(76, $result->columns[5]->length);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ShowRoutinesCommand())->clearsDiagnostics());

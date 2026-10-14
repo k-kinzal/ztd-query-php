@@ -19,8 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
  *
  * Outside a prepared statement a parameter marker is refused where the parser meets it, and
  * MySQL 5.6 refuses a table named twice before it; a temporal literal is checked as it is read,
- * except in SIGNAL and RESIGNAL, whose literals are checked with their other problems; and SHOW
- * PARSE_TREE is refused last. MySQL 5.6 and 5.7 find an INTO variable no stored program
+ * except in SIGNAL and RESIGNAL, whose literals are checked with their other problems. Debug-only
+ * statements are refused after their semantic operands are available. MySQL 5.6 and 5.7 find an INTO variable no stored program
  * declares, and a table named twice in a nested join, while they parse a statement SQL Semantics
  * refuses later (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/prepare.html.
@@ -57,7 +57,6 @@ final class Reader
         $session->dots = $session->settings()->release() === GrammarRelease::MySql5744 ? (new Syntax())->dots($tree) : [];
         $session->hinted = (new \MySqlMemory\Hint\Hints())->syntax($tree, $statement, $session);
         $session->commented = str_contains($statement, '/*+');
-        (new Syntax())->debugOnly($tree, $statement);
 
         return $tree;
     }

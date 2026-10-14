@@ -75,6 +75,7 @@ final class LegacyForms
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy => $this->grant($value),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset => $value->charset->name === null,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable => $value->ignore,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable => $value->temporaryWords > 1,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Parameter,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,

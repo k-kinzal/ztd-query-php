@@ -92,7 +92,6 @@ final class LoadTable implements Statement
         public readonly ?BulkOptions $bulk = null,
     ) {
         Check::input($charset === null || $charset->name !== null, 'A LOAD character set names a character set, not DEFAULT.');
-        Check::input($rowTag === null || $rowTag->radix === null, 'A LOAD XML row tag is quoted text.');
         Check::input($table->alias === null, 'The table of LOAD has no correlation name.');
         Check::input($compression === null || $compression->radix === null, 'A LOAD compression algorithm is quoted text.');
         Check::input($ignored === null || $ignored->isIntegerToken(), 'A LOAD ignored-row count is a decimal integer token no greater than 2147483647.');

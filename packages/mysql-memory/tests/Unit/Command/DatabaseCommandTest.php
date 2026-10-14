@@ -18,6 +18,15 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 #[Small]
 final class DatabaseCommandTest extends TestCase
 {
+    public function testExecuteBoundsEncryptionDiagnosticText(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1525);
+        $this->expectExceptionMessage("Incorrect argument (should be Y or N) value: '" . str_repeat('a', 128) . "'");
+
+        $session->query("CREATE DATABASE d ENCRYPTION = '" . str_repeat('a', 160) . "'");
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new DatabaseCommand())->clearsDiagnostics());

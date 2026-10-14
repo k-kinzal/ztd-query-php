@@ -72,11 +72,11 @@ final class Views
         $view->query = $query;
         $view->tables = PlannedViews::tables($operation, $query, $view->database);
         $view->positions = $positions;
-        $projection = $operation->facts->query($query)->projection;
+        $declarations = $operation->declarations()[0]->columns;
         $columns = [];
         foreach ($view->declaration->columns as $index => $column) {
-            $field = $projection[$positions[$index]] ?? null;
-            $columns[] = $field instanceof \SqlSemantics\Statement\Shape\Field && $field->type instanceof \SqlSemantics\Statement\Type\Known ? new \SqlSemantics\Statement\Declaration\Column($column->name, $field->type->descriptor, $field->nullability) : $column;
+            $field = $declarations[$positions[$index]] ?? null;
+            $columns[] = $field !== null ? new \SqlSemantics\Statement\Declaration\Column($column->name, $field->type, $field->nullability) : $column;
         }
         $old = $view->declaration;
         $view->declaration = new Table($old->name, $old->profile, $columns, $old->implicit, $old->complete, $old->kind, $old->keys, $old->partitions);

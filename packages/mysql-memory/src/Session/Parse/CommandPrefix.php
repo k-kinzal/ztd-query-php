@@ -33,6 +33,9 @@ final class CommandPrefix
     public function before(array $tokens, string $statement, int $end, Session $session): ?SqlError
     {
         $command = strtoupper($tokens[0]->text ?? '');
+        if (in_array($command, ['DESC', 'DESCRIBE', 'EXPLAIN'], true)) {
+            return $this->format($statement, $end, $session);
+        }
         if (!$session->settings()->legacy() || !in_array($command, ['LOAD', 'CREATE', 'REVOKE', 'SET'], true)) {
             return null;
         }
@@ -63,6 +66,23 @@ final class CommandPrefix
             $earlier = $this->completed($operation->statement, $tokens[$index + 1] ?? null, $statement, $session);
             if ($earlier !== null) {
                 return $earlier;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Interprets completed format notices before the legacy statement's refusal.
+     */
+    public function format(string $statement, int $end, Session $session): ?SqlError
+    {
+        $semantics = $session->semantics();
+        $parser = $semantics->parser();
+        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $semantics->profile()) as [$offset, $notice]) {
+            if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat) {
+                return (new \MySqlMemory\Session\Problem\Errors())->error($notice->problem, $session);
             }
         }
 

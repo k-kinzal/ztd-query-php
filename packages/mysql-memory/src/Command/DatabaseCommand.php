@@ -61,7 +61,7 @@ final class DatabaseCommand implements Command
             $name = $statement->name->value;
             foreach ($statement->options as $option) {
                 if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption && !in_array(strtoupper($option->encryption->value), ['Y', 'N'], true)) {
-                    throw \MySqlMemory\Error\Family\DataError::WrongValue->error('argument (should be Y or N)', $option->encryption->value);
+                    throw \MySqlMemory\Error\Family\DataError::WrongValue->error('argument (should be Y or N)', (new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $option->encryption->value, 2)[0], 128));
                 }
             }
             if ($dictionary->schema($name) !== null) {

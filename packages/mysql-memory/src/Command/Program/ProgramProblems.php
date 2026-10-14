@@ -39,7 +39,7 @@ use SqlSemantics\Statement\Reference\Column\MissingColumn;
  * Raises the problems the server finds in a statement that stores a program, while it parses the body.
  *
  * A DEFINER account with a user name longer than 32 characters is refused first, for views too;
- * the query of a view is resolved before its name is looked up.
+ * the tables read by a view are opened before its name is looked up; columns and functions follow.
  * The schedule of an event may read no table and call no stored function (verified on a live
  * 8.4 server).
  * The server parses the body of a routine, trigger or event when it stores it, but resolves its
@@ -142,7 +142,7 @@ final class ProgramProblems
     }
 
     /**
-     * Raises the problems of the query of a view the server finds before it looks up the name of the view: a variable or a parameter in the query, and a problem of the query besides the name and the columns of the view.
+     * Checks view query syntax and referenced tables before the target view, leaving column and function resolution until after its database and name exist.
      *
      * @throws SqlError When the query has such a problem
      */
@@ -155,36 +155,32 @@ final class ProgramProblems
             && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName));
         $this->clause($statement, $session);
         $this->variables($statement);
-        if ($others !== [] && count($others) !== count($operation->facts->diagnostics) && array_filter($operation->facts->diagnostics, $named) !== []) {
-            $query = ProgramSource::of($session)->text('query_expression_with_opt_locking_clauses');
-            $problems->raise($session->analyze($query), $session);
-
-            throw (new Errors())->error($others[0], $session, 'field list', $statement);
+        (new \MySqlMemory\Session\Problem\Reading())->read($operation, $session);
+        $problems->paths($operation, $session, $others);
+        $problems->opened($operation, $session, $others);
+        $database = ProgramSource::database($name->schema, $session);
+        $schema = $session->instance->dictionary->schema($database);
+        if ($schema === null) {
+            throw QueryError::BadDatabase->error($database);
         }
+        \MySqlMemory\Command\View\ViewCommand::checkName($statement, $schema, $database, $name->name->value);
     }
 
     /**
-     * Refuses INTO in the query of a view of MySQL 5.6 or 5.7 (ER_VIEW_SELECT_CLAUSE), which they find where they parse INTO, keeping the warnings and the refusals of modifiers written before it, and after a variable written before it (ER_VIEW_SELECT_VARIABLE; verified on live 5.6.51 and 5.7.44 servers).
+     * Refuses a legacy view INTO using its typed clause positions and preceding modifiers.
      *
-     * @throws SqlError When the query of a view writes INTO
+     * @throws SqlError When the view redirects its query result
      */
     public function clause(CreateView|AlterView $statement, Session $session): void
     {
-        if (!$session->settings()->legacy() || array_filter((new Walker())->find($statement->definition->query, \SqlSemantics\Platform\MySql\Statement\Query\Select::class), static fn (\SqlSemantics\Platform\MySql\Statement\Query\Select $select): bool => $select->into !== null) === []) {
+        $prefix = $session->settings()->legacy() ? (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewClauses())->before($statement->definition->query, $session->settings()->release()) : null;
+        if ($prefix === null) {
             return;
         }
-        $source = ProgramSource::of($session);
-        $clauses = new \MySqlMemory\Session\Parse\Clauses();
-        $tokens = $source->tree->tokens();
-        $into = $clauses->viewed($tokens);
-        if ($into === null) {
-            return;
-        }
-        if ($clauses->marked($tokens, $into)) {
-            throw SchemaError::ViewSelectVariable->error();
-        }
+        [$variable, $notices] = $prefix;
+        $error = $variable ? SchemaError::ViewSelectVariable->error() : SchemaError::ViewSelectClause->error('INTO');
 
-        throw (new \MySqlMemory\Session\CacheOptions())->literal(SchemaError::ViewSelectClause->error('INTO'), $into, $source->text, $session);
+        throw (new \MySqlMemory\Session\Parse\ModernWarnings())->recorded($notices, $error, $session);
     }
 
     /**

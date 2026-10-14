@@ -86,7 +86,7 @@ final class Reading
     }
 
     /**
-     * Raises the refusals MySQL 5.6 and 5.7 find while they parse a query block: WITH CUBE, WITH ROLLUP with DISTINCT or ORDER BY, and INTO in the query of a view.
+     * Raises the refusals MySQL 5.6 and 5.7 find while they parse a query block: WITH CUBE, WITH ROLLUP with DISTINCT or ORDER BY.
      *
      * @throws SqlError When the operation has such a problem
      */

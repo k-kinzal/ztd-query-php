@@ -54,6 +54,30 @@ use SqlSemantics\Statement\Node;
 #[Small]
 final class GenerationsTest extends TestCase
 {
+    public function testTransitionDistinguishesTheLegacyMinorReleaseBoundary(): void
+    {
+        $rules = new Generations();
+        $alter = new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new QualifiedName(new Name('t')), [], true);
+
+        self::assertSame(1, $rules->transition($alter));
+        self::assertSame(2, $rules->transition(new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(true)));
+        self::assertSame(0, $rules->transition(new NumberLiteral('1')));
+    }
+
+    public function testCheckRejectsIgnoreWithValidation(): void
+    {
+        $this->expectExceptionMessage('A structure cannot combine MySQL 5.6-only forms with forms introduced in MySQL 5.7 or later.');
+
+        new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new QualifiedName(new Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(true)], true);
+    }
+
+    public function testCheckRejectsIndexVisibilityWithRemovedPartitionUpgrade(): void
+    {
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+
+        new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new QualifiedName(new Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Alter\Command\IndexVisibility(new Name('i'), true), new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning()]);
+    }
+
     /**
      * @return iterable<string, array{object, int}>
      */

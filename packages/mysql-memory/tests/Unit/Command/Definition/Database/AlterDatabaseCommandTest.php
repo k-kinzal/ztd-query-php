@@ -22,6 +22,25 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 #[Small]
 final class AlterDatabaseCommandTest extends TestCase
 {
+    public function testCollationBoundsTheDiagnosticNameWithoutChangingItsValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $this->expectExceptionCode(1273);
+        $this->expectExceptionMessage("Unknown collation: '" . str_repeat('x', 64) . "'");
+
+        $session->query("ALTER DATABASE COLLATE '" . str_repeat('x', 100) . "'");
+    }
+
+    public function testExecuteEndsEncryptionDiagnosticTextAtNul(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1525);
+        $this->expectExceptionMessage("Incorrect argument (should be Y or N) value: 'a'");
+
+        $session->query("ALTER DATABASE d ENCRYPTION = 'a\\0b'");
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new AlterDatabaseCommand())->clearsDiagnostics());

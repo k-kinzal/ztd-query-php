@@ -108,7 +108,10 @@ final class CacheOptions
     public function bounds(array $tokens, ?SyntaxException $cause, ?SqlError $usage, bool $parsed, int $length, GrammarRelease $release): array
     {
         $clauses = new Parse\Clauses();
-        $into = $usage === null ? null : $clauses->viewed($tokens);
+        $into = $clauses->viewed($tokens);
+        if ($cause !== null && $into !== null && $cause->token->offset <= $into) {
+            $into = null;
+        }
         $union = $usage === null || !str_starts_with($usage->getMessage(), 'Incorrect usage of UNION and ') ? null : $clauses->united($tokens, str_ends_with($usage->getMessage(), 'and INTO') ? 'INTO' : 'LIMIT');
         $end = $cause !== null && (!$parsed || $release === GrammarRelease::MySql5651) ? $cause->token->offset : $length;
         $end = $into ?? ($release === GrammarRelease::MySql5651 && $union !== null ? $union : $end);

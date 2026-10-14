@@ -41,6 +41,25 @@ final class InternalCommandTest extends TestCase
         yield 'debug tree' => [new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new ColumnUse(new Name('missing')))]))), '8.4.7', "near 'PARSE_TREE SELECT missing' at line 1"];
     }
 
+    public function testOperandsCheckConstructedAccountNamesBeforeTheDebugOnlyRefusal(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Account\DropUser(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 33)))]));
+        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        $this->expectExceptionCode(1470);
+        $this->expectExceptionMessage('is too long for user name');
+
+        (new InternalCommand())->operands($operation);
+    }
+
+    public function testDirectExecutionChecksAnAccountBeforeRefusingTheDebugCommand(): void
+    {
+        $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Account\DropUser(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 33)))]));
+        $this->expectExceptionCode(1470);
+
+        (new Execution())->run($statement);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new InternalCommand())->clearsDiagnostics());

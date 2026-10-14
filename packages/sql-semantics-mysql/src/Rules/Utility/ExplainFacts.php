@@ -48,7 +48,7 @@ final class ExplainFacts
         }
         $refused = $this->refusal($derivation->context->profile->grammar, $named, $analyze, $into !== null);
         if ($refused !== null) {
-            $derivation->report(new UtilityMisuse($refused));
+            $derivation->report($refused === UtilityRule::UnknownExplainFormat && $format !== null ? new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat($format) : new UtilityMisuse($refused));
 
             return;
         }

@@ -442,3 +442,11 @@ Differences:
 ## Performance
 
 The emulator is meant for the small tables of tests. It has no optimizer and does not use indexes to find rows: every table is scanned, every join reads its inner table once for each row of the outer one, and every sort, grouping and `DISTINCT` reads its whole input. A query over two tables of n rows each costs on the order of n² row reads.
+
+### Status observations on independent servers
+
+Two fresh MySQL 8.4.7 containers given the same database, table, insert, select and session-variable history produce different values in unfiltered SHOW STATUS results. Observed differences include InnoDB buffer, log and I/O measurements, generated public keys, TLS certificate dates, server uptime and the instant of the connection high-water mark. SHOW ENGINE ALL STATUS also differs. These observations explain why an unfiltered result can be recorded as volatile; they do not justify excluding all its columns from comparison.
+
+The same experiment distinguishes server initialization from the submitted SQL history. Global command counters and connection totals include the container's initialization and health checks. Comparing those counters with an emulator started from different initial totals would conflate fixture state and command behavior. Existing counter histories test command changes and reset behavior separately. The general differential campaign continues to report uncontracted volatile results separately from matches.
+
+Database collation errors display at most 64 bytes and stop at a NUL byte. Legacy releases retain complete characters at the boundary; modern releases replace each incomplete byte with `?`. Encryption diagnostics use a 128-byte bound. SQL Semantics keeps the full decoded operands. Native comparisons use explicitly matched connection character sets when observing multibyte diagnostics.

@@ -88,11 +88,11 @@ final class AlterDatabaseCommand implements Command
             if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
                 $collation = Collation::named($option->collation->name->value);
                 if ($collation === null) {
-                    throw SchemaError::UnknownCollation->error($option->collation->name->value);
+                    throw SchemaError::UnknownCollation->error((new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $option->collation->name->value, 2)[0], 64, in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
                 }
             }
             if ($option instanceof DatabaseEncryption && !in_array(strtoupper($option->encryption->value), ['Y', 'N'], true)) {
-                throw DataError::WrongValue->error('argument (should be Y or N)', $option->encryption->value);
+                throw DataError::WrongValue->error('argument (should be Y or N)', (new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $option->encryption->value, 2)[0], 128));
             }
         }
         if ($charset !== null && $collation !== null && $collation->charset->name !== $charset->name) {

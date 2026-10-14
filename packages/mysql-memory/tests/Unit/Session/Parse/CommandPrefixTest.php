@@ -41,6 +41,16 @@ final class CommandPrefixTest extends TestCase
         yield 'unrelated command' => ['5.6.51', 'SELECT 1 FROM t (', null];
     }
 
+    public function testFormatRetainsLegacyUnknownNamesBeforeLaterInput(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $error = (new CommandPrefix())->format("EXPLAIN FORMAT = 'yaml' SELECT ?", 30, $session);
+
+        self::assertNotNull($error);
+        self::assertSame([1791, "Unknown EXPLAIN format name: 'yaml'"], [$error->getCode(), $error->getMessage()]);
+        self::assertNull((new CommandPrefix())->format('EXPLAIN FORMAT = JSON SELECT ?', 29, $session));
+    }
+
     #[DataProvider('providerPrefixes')]
     public function testBeforeResolvesOnlyCompletedLegacyLoadTargets(string $release, string $sql, ?int $code): void
     {

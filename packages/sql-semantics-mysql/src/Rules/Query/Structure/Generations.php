@@ -42,6 +42,7 @@ final class Generations
         $pending = [$root];
         $seen = new SplObjectStorage();
         $requirements = 0;
+        $transition = 0;
         $modes = 0;
         $spelling = null;
         $namedParameters = false;
@@ -62,6 +63,8 @@ final class Generations
                 }
                 $namedParameters = $namedParameters || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter && $value->marker !== '?');
                 $requirements |= $this->requirement($value);
+                $transition |= $this->transition($value);
+                Check::input($transition !== 3, 'A structure cannot combine MySQL 5.6-only forms with forms introduced in MySQL 5.7 or later.');
                 $modes |= $lexical->requirement($value);
                 $lexical->check($modes);
                 Check::input($requirements !== 3, 'A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
@@ -82,6 +85,21 @@ final class Generations
             return in_array($value->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 1 : 2;
         }
         return ((new LegacyForms())->requires($value) ? 1 : 0) | ((new ModernForms())->requires($value) ? 2 : 0);
+    }
+
+    /**
+     * Identifies the incompatible sides of the 5.6-to-5.7 grammar transition.
+     */
+    public function transition(object $value): int
+    {
+        return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $value->ignore => 1,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn,
+            $value === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Json => 2,
+            $value instanceof LanguageProfile => $value->grammar === GrammarRelease::MySql5651 ? 1 : 2,
+            default => 0,
+        };
     }
 
 }

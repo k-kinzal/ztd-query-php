@@ -36,7 +36,22 @@ final class SelectOptions
      */
     public function raise(Select $select, Derivation $derivation): void
     {
-        $grammar = $derivation->context->profile->grammar;
+        foreach ($this->notices($select, $derivation->context->profile->grammar) as $notice) {
+            if ($notice instanceof ParseFailure) {
+                $derivation->report($notice->problem);
+            }
+            $derivation->warn($notice, $select, false);
+        }
+    }
+
+    /**
+     * Returns the ordered conditions of a block's modifiers without deriving its operands.
+     *
+     * @return list<Deprecation|ParseFailure> Conditions through the first aborting conflict
+     */
+    public function notices(Select $select, GrammarRelease $grammar): array
+    {
+        $notices = [];
         $previous = null;
         $first = null;
         foreach ($select->options as $option) {
@@ -46,20 +61,21 @@ final class SelectOptions
                 SelectOption::Cache => Deprecated::Cache,
                 SelectOption::All, SelectOption::Distinct, SelectOption::StraightJoin, SelectOption::HighPriority, SelectOption::SmallResult, SelectOption::BigResult, SelectOption::BufferResult => null,
             };
-            if ($construct !== null) {
-                Deprecation::raise($construct, $derivation, $select, false);
+            if ($construct !== null && $construct->warnedIn($grammar)) {
+                $notices[] = new Deprecation($construct);
             }
             $cache = $option === SelectOption::Cache || $option === SelectOption::NoCache;
             $earlier = $grammar === GrammarRelease::MySql5651 ? $first : ($grammar === GrammarRelease::MySql5744 ? $previous : null);
             if ($cache && $earlier !== null) {
                 $problem = new CacheOptionConflict($earlier, $option);
-                $derivation->report($problem);
-                $derivation->warn(new ParseFailure($problem, true));
+                $notices[] = new ParseFailure($problem, true);
 
-                return;
+                return $notices;
             }
             $previous = $cache ? $option : null;
             $first ??= $cache ? $option : null;
         }
+
+        return $notices;
     }
 }

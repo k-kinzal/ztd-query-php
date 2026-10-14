@@ -29,6 +29,14 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class LoadTableTest extends TestCase
 {
+    public function testRenderKeepsARadixLiteralAsARowTag(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t ROWS IDENTIFIED BY 0x0f");
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, $operation->statement->rowTag?->radix);
+        self::assertStringContainsString('ROWS IDENTIFIED BY', $operation->toString());
+    }
+
     public function testRejectsARadixLiteralAsACompressionAlgorithm(): void
     {
         $this->expectExceptionMessage('A LOAD compression algorithm is quoted text.');

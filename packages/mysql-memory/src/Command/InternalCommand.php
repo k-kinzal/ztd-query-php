@@ -54,10 +54,24 @@ final class InternalCommand implements Command
     }
 
     /**
+     * Checks account operands read before a release build refuses SHOW PARSE_TREE.
+     * These checks consume typed account names without resolving or executing the wrapped command.
+     *
+     * @throws SqlError When a wrapped account name is too long or malformed
+     */
+    public function operands(Operation $operation): void
+    {
+        if ($operation->statement instanceof ShowParseTree) {
+            (new Account\Names($operation->profile()->grammar))->check((new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement->statement, \SqlSemantics\Platform\MySql\Statement\Name\AccountName::class));
+        }
+    }
+
+    /**
      * Answers the same rejection before unrelated binding diagnostics can win.
      */
     public function error(Operation $operation): SqlError
     {
+        $this->operands($operation);
         $statement = $operation->statement;
         assert($statement instanceof PartitionEntry || $statement instanceof ParseGeneratedColumn || $statement instanceof ShowParseTree);
         $text = $operation->toString();

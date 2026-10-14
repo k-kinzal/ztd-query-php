@@ -56,7 +56,10 @@ final class ShowRoutinesCommand implements Command
         }
         usort($rows, static fn (array $left, array $right): int => [$left[0], strtolower($left[1])] <=> [$right[0], strtolower($right[1])]);
 
-        return (new Listing($this->headings($language, $session->settings()->release(), RoutineLookup::single($statement->filter, $operation->facts))))->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
+        $listing = new Listing($this->headings($language, $session->settings()->release(), RoutineLookup::single($statement->filter, $operation->facts)));
+        $result = $listing->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
+
+        return $listing->constantEmpty ? (new Listing($this->headings($language, $session->settings()->release(), true)))->sent([], $context) : $result;
     }
 
     /**

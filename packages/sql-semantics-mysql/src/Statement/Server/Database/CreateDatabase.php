@@ -53,10 +53,11 @@ final class CreateDatabase implements Statement
     }
 
     /**
-     * Has nothing to derive: a database is no relation.
+     * Resolves the character set and collation names without changing database state.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->derive($this->options, $derivation);
     }
 
     /**
