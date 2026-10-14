@@ -49,7 +49,7 @@
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * The place, among the warnings of a statement, of a problem the server finds while it parses the statement.</span></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * The ordered place of a problem found while reading or contextualizing a statement.</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * Rule: MYSQL-PARSE-FAILURE-001. The server looks up the collation of</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * COLLATE and refuses CAST ... AT LOCAL when it parses the construct: it</span></span>
@@ -76,20 +76,21 @@
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * @param Diagnostic $problem The problem the server finds while it parses</span></span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @param bool $aborts Whether the server stops parsing at the problem, so the constructs it would parse later raise no warning</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Diagnostic</span> <span class="tok-var">$problem</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$aborts</span> = <span class="tok-id">false</span>)</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    {</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * Answers the text of the problem.</span></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    {</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span>-&gt;<span class="tok-id">message</span>();</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    }</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>}</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     * @param NoticePhase $phase Whether grammar interpretation or subsequent contextualization raises the problem</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Diagnostic</span> <span class="tok-var">$problem</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$aborts</span> = <span class="tok-id">false</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">NoticePhase</span> <span class="tok-var">$phase</span> = <span class="tok-id">NoticePhase</span>::<span class="tok-id">Syntax</span>)</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    {</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    }</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     * Answers the text of the problem.</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    {</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span>-&gt;<span class="tok-id">message</span>();</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    }</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>}</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
