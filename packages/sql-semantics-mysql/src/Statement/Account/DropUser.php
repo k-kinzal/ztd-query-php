@@ -27,7 +27,7 @@ final class DropUser implements Statement
     use Snapshot;
 
     /**
-     * @var list<Account> The accounts in order
+     * @var non-empty-list<Account> The accounts in order
      */
     public readonly array $users;
 

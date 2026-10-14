@@ -29,7 +29,7 @@ final class FactorChange implements UserAlteration
     use Snapshot;
 
     /**
-     * @var list<FactorStep> The changed factors in order; one or two
+     * @var non-empty-list<FactorStep> The changed factors in order; one or two
      */
     public readonly array $steps;
 

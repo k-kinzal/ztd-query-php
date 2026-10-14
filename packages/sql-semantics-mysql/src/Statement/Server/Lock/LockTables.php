@@ -33,7 +33,7 @@ final class LockTables implements Statement
     use Snapshot;
 
     /**
-     * @var list<TableLock> The locked tables in written order; at least one
+     * @var non-empty-list<TableLock> The locked tables in written order; at least one
      */
     public readonly array $locks;
 

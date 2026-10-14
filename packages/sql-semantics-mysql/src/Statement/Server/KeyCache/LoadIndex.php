@@ -35,7 +35,7 @@ final class LoadIndex implements Statement
     use Snapshot;
 
     /**
-     * @var list<PreloadedTable> The tables in written order; at least one
+     * @var non-empty-list<PreloadedTable> The tables in written order; at least one
      */
     public readonly array $tables;
 

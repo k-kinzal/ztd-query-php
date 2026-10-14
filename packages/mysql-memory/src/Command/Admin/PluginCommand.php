@@ -87,7 +87,7 @@ final class PluginCommand implements Command
             foreach ($urns as $urn) {
                 $session->diagnostics->warning(AdministrationError::ComponentNotPersisted, AdministrationError::ComponentNotPersisted->message($urn));
             }
-            throw AdministrationError::ComponentNotLoaded->error($urns[0] ?? '');
+            throw AdministrationError::ComponentNotLoaded->error($urns[0]);
         }
         throw StatementError::NotSupportedYet->error('this plugin statement');
     }

@@ -26,7 +26,7 @@ final class CreateRole implements Statement
     use Snapshot;
 
     /**
-     * @var list<AccountName> The roles in order
+     * @var non-empty-list<AccountName> The roles in order
      */
     public readonly array $roles;
 

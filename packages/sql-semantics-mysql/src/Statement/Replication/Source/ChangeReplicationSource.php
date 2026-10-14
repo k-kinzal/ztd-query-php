@@ -41,7 +41,7 @@ final class ChangeReplicationSource implements Statement
     use Snapshot;
 
     /**
-     * @var list<SourceOption> The options in written order; at least one
+     * @var non-empty-list<SourceOption> The options in written order; at least one
      */
     public readonly array $options;
 

@@ -42,6 +42,7 @@ final class ModernForms
             || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\IndexVisibility::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConstraintEnforcement::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption::class, \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, CastAtLocal::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
             || match (true) {
                 $value instanceof Select => $this->query($value),
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain, $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection => $this->explain($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint => !$value->name()->available(\SqlSemantics\Contract\GrammarRelease::MySql5744),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification => $this->authentication($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot => (new StatementQuery())->requiresModern($value->query),
@@ -53,6 +54,13 @@ final class ModernForms
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,
                 default => in_array($value, [SetOperator::Intersect, SetOperator::Except], true),
             };
+    }
+    /**
+     * Identifies EXPLAIN features that cannot accompany removed query or DML forms.
+     */
+    public function explain(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain|\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection $value): bool
+    {
+        return $value->analyze || $value->into !== null || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain && $value->database !== null);
     }
     /**
      * Identifies clauses that require modern grammar in every query position.

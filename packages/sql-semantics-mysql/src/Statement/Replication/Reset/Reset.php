@@ -29,7 +29,7 @@ final class Reset implements Statement
     use Snapshot;
 
     /**
-     * @var list<ResetTarget> The items in written order; at least one
+     * @var non-empty-list<ResetTarget> The items in written order; at least one
      */
     public readonly array $targets;
 

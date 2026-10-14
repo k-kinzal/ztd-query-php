@@ -27,7 +27,7 @@ final class RevokeProxy implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserSpecification> The proxy accounts
+     * @var non-empty-list<UserSpecification> The proxy accounts
      */
     public readonly array $users;
 

@@ -55,7 +55,7 @@ final class GroupConcat implements SetFunction
     use Snapshot;
 
     /**
-     * @var list<Scalar> The concatenated expressions in order
+     * @var non-empty-list<Scalar> The concatenated expressions in order
      */
     public readonly array $arguments;
 

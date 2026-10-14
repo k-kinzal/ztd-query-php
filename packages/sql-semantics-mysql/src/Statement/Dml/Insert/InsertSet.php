@@ -30,7 +30,7 @@ final class InsertSet implements Explainable
     use Snapshot;
 
     /**
-     * @var list<Assignment> The assignments in written order
+     * @var non-empty-list<Assignment> The assignments in written order
      */
     public readonly array $assignments;
 

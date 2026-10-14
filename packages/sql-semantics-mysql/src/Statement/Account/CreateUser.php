@@ -37,7 +37,7 @@ final class CreateUser implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserSpecification> The accounts in order
+     * @var non-empty-list<UserSpecification> The accounts in order
      */
     public readonly array $users;
 

@@ -32,7 +32,7 @@ final class ValueRows
             return $error;
         }
         $first = $error->error === QueryError::BadField || ($error->error === QueryError::WrongValueCountOnRow && $error->getMessage() === QueryError::WrongValueCountOnRow->message(1));
-        if (!$first || $statement->rows === []) {
+        if (!$first) {
             return $error;
         }
         $width = count($statement->rows[0]->values);

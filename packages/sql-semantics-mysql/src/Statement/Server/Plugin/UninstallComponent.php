@@ -29,7 +29,7 @@ final class UninstallComponent implements Statement
     use Snapshot;
 
     /**
-     * @var list<Text> The component URNs in written order; at least one
+     * @var non-empty-list<Text> The component URNs in written order; at least one
      */
     public readonly array $components;
 

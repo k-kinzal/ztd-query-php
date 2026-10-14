@@ -30,7 +30,7 @@ final class InsertRows implements Explainable
     use Snapshot;
 
     /**
-     * @var list<InsertedRow> The rows in written order
+     * @var non-empty-list<InsertedRow> The rows in written order
      */
     public readonly array $rows;
 

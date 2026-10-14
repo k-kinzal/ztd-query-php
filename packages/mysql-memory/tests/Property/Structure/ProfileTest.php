@@ -40,6 +40,8 @@ final class ProfileTest extends TestCase
         yield 'create table options' => ['e91a273aff1ba87d6d5a79bfff108f6d', 298];
         yield 'late subquery limit' => ['6a7d1bc45f092c61dc9b56b4d0676cd1', 121];
         yield 'relay log position' => ['6a7d1bc45f092c61dc9b56b4d0676cd1', 609];
+        yield 'explain modern options' => ['0a00fd08a150854e056cde648d20c202', 129];
+        yield 'replication option list' => ['0a00fd08a150854e056cde648d20c202', 605];
     }
 
     /**

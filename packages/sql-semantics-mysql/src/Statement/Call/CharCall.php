@@ -41,7 +41,7 @@ final class CharCall implements Scalar
     use Snapshot;
 
     /**
-     * @var list<Scalar> The character codes in order
+     * @var non-empty-list<Scalar> The character codes in order
      */
     public readonly array $arguments;
 

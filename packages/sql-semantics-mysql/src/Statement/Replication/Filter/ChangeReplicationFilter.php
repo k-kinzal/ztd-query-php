@@ -37,7 +37,7 @@ final class ChangeReplicationFilter implements Statement
     use Snapshot;
 
     /**
-     * @var list<ReplicationFilter> The filters in written order; at least one
+     * @var non-empty-list<ReplicationFilter> The filters in written order; at least one
      */
     public readonly array $filters;
 

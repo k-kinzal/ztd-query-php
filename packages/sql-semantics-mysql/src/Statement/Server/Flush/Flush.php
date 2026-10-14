@@ -31,7 +31,7 @@ final class Flush implements Statement
     use Snapshot;
 
     /**
-     * @var list<FlushItem> The items in written order; at least one
+     * @var non-empty-list<FlushItem> The items in written order; at least one
      */
     public readonly array $items;
 

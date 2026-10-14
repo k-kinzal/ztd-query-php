@@ -316,6 +316,7 @@ Applied contracts appear in the input report's `contracts` list. Other unstable 
 | `MYSQL_VERSION` | The release to compare, `8.4.7` by default; both servers run it |
 | `MYSQL_MEMORY_NATIVE_DSN` | The PDO DSN of a running MySQL server to compare with; without it a container of the release is started with Testcontainers, which needs Docker |
 | `MYSQL_MEMORY_NATIVE_USER`, `MYSQL_MEMORY_NATIVE_PASSWORD` | The account of that server, `root`/`root` by default |
+| `MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT` | Optional host port (1–65535) for the separate disposable SHUTDOWN/RESTART container; useful when Docker's automatic port selection includes unavailable ports. Concurrent campaigns must use different ports. |
 | `MYSQL_MEMORY_FOUND_ROWS` | `1` requests CLIENT_FOUND_ROWS on both connections |
 | `MYSQL_MEMORY_REPORT` | Optional JSON report path for a campaign |
 | `MYSQL_MEMORY_EMULATE` | `0` makes the campaign use server-side prepared statements instead of PDO's emulated ones |

@@ -38,7 +38,7 @@ final class CacheIndex implements Statement
     use Snapshot;
 
     /**
-     * @var list<CachedTable> The tables in written order; at least one
+     * @var non-empty-list<CachedTable> The tables in written order; at least one
      */
     public readonly array $tables;
 

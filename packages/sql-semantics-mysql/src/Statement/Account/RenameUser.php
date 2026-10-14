@@ -27,7 +27,7 @@ final class RenameUser implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserRenaming> The renamings in order
+     * @var non-empty-list<UserRenaming> The renamings in order
      */
     public readonly array $renamings;
 

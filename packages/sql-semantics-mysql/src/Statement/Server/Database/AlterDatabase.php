@@ -32,7 +32,7 @@ final class AlterDatabase implements Statement
     use Snapshot;
 
     /**
-     * @var list<DatabaseOption> The options in written order; at least one
+     * @var non-empty-list<DatabaseOption> The options in written order; at least one
      */
     public readonly array $options;
 

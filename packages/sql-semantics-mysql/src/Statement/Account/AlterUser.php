@@ -44,7 +44,7 @@ final class AlterUser implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserAlteration> The account entries in order
+     * @var non-empty-list<UserAlteration> The account entries in order
      */
     public readonly array $users;
 

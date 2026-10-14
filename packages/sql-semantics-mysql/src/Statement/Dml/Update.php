@@ -48,7 +48,7 @@ final class Update implements Explainable
     public readonly array $tables;
 
     /**
-     * @var list<Assignment> The assignments in written order
+     * @var non-empty-list<Assignment> The assignments in written order
      */
     public readonly array $assignments;
 

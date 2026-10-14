@@ -30,7 +30,7 @@ final class SetDefaultRole implements Statement
     use Snapshot;
 
     /**
-     * @var list<AccountName> The accounts in order
+     * @var non-empty-list<AccountName> The accounts in order
      */
     public readonly array $users;
 

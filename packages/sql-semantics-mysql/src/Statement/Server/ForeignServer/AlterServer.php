@@ -30,7 +30,7 @@ final class AlterServer implements Statement
     use Snapshot;
 
     /**
-     * @var list<ServerOption> The options in written order; at least one
+     * @var non-empty-list<ServerOption> The options in written order; at least one
      */
     public readonly array $options;
 

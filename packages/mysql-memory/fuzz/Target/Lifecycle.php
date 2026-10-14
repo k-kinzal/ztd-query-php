@@ -36,6 +36,10 @@ final class Lifecycle
     public function compare(string $sql, string $version): Comparison
     {
         $definition = new DisposableMySql($version);
+        $port = filter_var(getenv('MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
+        if (is_int($port)) {
+            $definition->withPortStrategy(new \Testcontainers\Containers\PortStrategy\StaticPortStrategy($port));
+        }
         $container = Testcontainers::run($definition);
         try {
             $endpoint = $container->getData(Endpoint::class);

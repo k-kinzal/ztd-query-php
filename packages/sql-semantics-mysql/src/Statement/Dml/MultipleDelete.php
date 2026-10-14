@@ -47,12 +47,12 @@ final class MultipleDelete implements Explainable
     public readonly array $options;
 
     /**
-     * @var list<QualifiedName> The tables rows are deleted from, in written order
+     * @var non-empty-list<QualifiedName> The tables rows are deleted from, in written order
      */
     public readonly array $targets;
 
     /**
-     * @var list<Relation> The table references in written order
+     * @var non-empty-list<Relation> The table references in written order
      */
     public readonly array $tables;
 

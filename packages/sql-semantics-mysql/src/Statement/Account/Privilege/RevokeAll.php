@@ -29,7 +29,7 @@ final class RevokeAll implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserSpecification> The accounts
+     * @var non-empty-list<UserSpecification> The accounts
      */
     public readonly array $users;
 

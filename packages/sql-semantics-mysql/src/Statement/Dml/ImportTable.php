@@ -30,7 +30,7 @@ final class ImportTable implements Statement
     use Snapshot;
 
     /**
-     * @var list<Text> The file name patterns in written order
+     * @var non-empty-list<Text> The file name patterns in written order
      */
     public readonly array $files;
 

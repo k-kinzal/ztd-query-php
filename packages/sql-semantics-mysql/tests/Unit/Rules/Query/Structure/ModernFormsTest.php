@@ -73,4 +73,23 @@ final class ModernFormsTest extends TestCase
         self::assertTrue($forms->locking(new LockingClause(LockStrength::Share)));
     }
 
+    public function testExplainDistinguishesModernOptionsFromAnOrdinaryRequest(): void
+    {
+        $forms = new ModernForms();
+        $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))]));
+
+        self::assertFalse($forms->explain(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query)));
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, database: new \SqlSemantics\Statement\Identifier\Name('d'))));
+        self::assertTrue($forms->explain(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'), analyze: true)));
+        self::assertTrue($forms->explain(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, into: new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('plan')))));
+    }
+
+    public function testExplainModernOptionsRejectLegacyOperands(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))]));
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0');
+
+        new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, database: new \SqlSemantics\Statement\Identifier\Name('d'));
+    }
+
 }
