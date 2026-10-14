@@ -146,7 +146,7 @@
 <span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>        <span class="tok-kw">if</span> (<span class="tok-var">$signalled</span> !== <span class="tok-id">null</span>) {</span>
 <span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">signalled</span>[<span class="tok-id">count</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>)] = <span class="tok-var">$signalled</span>;</span>
 <span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>        }</span>
-<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>[] = [<span class="tok-str">&#039;Error&#039;</span>, <span class="tok-var">$code</span>, <span class="tok-var">$message</span>];</span>
+<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>[] = [<span class="tok-str">&#039;Error&#039;</span>, <span class="tok-var">$code</span>, <span class="tok-id">\MySqlMemory\Value\Diagnostic\Encoding</span>::<span class="tok-id">repair</span>(<span class="tok-var">$message</span>)];</span>
 <span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>    }</span>
 <span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a></span>
 <span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a>    <span class="tok-com">/**</span></span>
