@@ -196,7 +196,7 @@
 <span class="src-line" id="L156" data-diff="added"><a class="ln" href="#L156">156</a>            <span class="tok-kw">return</span> <span class="tok-id">Identity</span>::<span class="tok-id">of</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">user</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$name</span>-&gt;<span class="tok-id">host</span>?-&gt;<span class="tok-id">value</span>);</span>
 <span class="src-line" id="L157" data-diff="added"><a class="ln" href="#L157">157</a>        }</span>
 <span class="src-line" id="L158" data-diff="added"><a class="ln" href="#L158">158</a></span>
-<span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Identity</span>(<span class="tok-var">$session</span>-&gt;<span class="tok-id">user</span>, <span class="tok-str">&#039;%&#039;</span>);</span>
+<span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a>        <span class="tok-kw">return</span> <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">definer</span>;</span>
 <span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>    }</span>
 <span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a></span>
 <span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a>    <span class="tok-com">/**</span></span>
