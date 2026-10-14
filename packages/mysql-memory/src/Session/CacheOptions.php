@@ -90,12 +90,16 @@ final class CacheOptions
         $cause = $this->cause($error);
         $parser = $session->semantics()->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        $temporal = (new Parse\TemporalInput())->before($statement, $cause?->token->offset ?? strlen($statement), $session);
         foreach ((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $cause?->token->offset ?? strlen($statement), $session->semantics()->profile()) as [$offset, $notice]) {
             if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->aborts) {
+                if ($temporal !== null && $temporal[0] < $offset) {
+                    break;
+                }
                 return (new Parse\Reader())->rejection(new \SqlSemantics\Construction\RejectedInput($notice->problem, $offset), $statement, $session);
             }
         }
-        return null;
+        return $temporal === null ? null : $this->literal($temporal[1], $temporal[0], $statement, $session);
     }
 
     /**

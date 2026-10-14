@@ -59,7 +59,7 @@ final class Reader
         $tokens = $tree->tokens();
         $inspected = ($tokens[0]->name ?? '') === 'SHOW' && ($tokens[1]->name ?? '') === 'PARSE_TREE_SYM';
         if (!$inspected && !(new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
-            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->temporals($tree, $session->modes(), $session, $statement, $rejection->end ?? PHP_INT_MAX);
+            (new TemporalInput())->check($tree, $statement, $rejection->end ?? PHP_INT_MAX, $session);
         }
         if ($rejection !== null) {
             throw $this->rejection($rejection, $statement, $session);
