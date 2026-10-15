@@ -2426,6 +2426,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\NonUniqueTable": {
         "alias": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\RefusedXaIdentifier": {
+        "following": "bool",
+        "offset": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialProblem": {
         "attribute": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\SpatialAttributeKind",
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialRule",
