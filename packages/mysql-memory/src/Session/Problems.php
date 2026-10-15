@@ -61,9 +61,7 @@ final class Problems
      */
     public function raise(Operation $operation, Session $session): void
     {
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal && ($session->program === null || $session->program->stacked === [])) {
-            throw ProgramError::ResignalWithoutHandler->error();
-        }
+        $this->signals($operation, $session);
         if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
             (new Problem\Reading())->into($operation->statement, $session);
 
@@ -327,5 +325,18 @@ final class Problems
         }
 
         return array_values(array_filter((new Walker())->find($statement, Node::class), static fn (Node $node): bool => !isset($skipped[spl_object_id($node)])));
+    }
+
+    /**
+     * Resolves condition names and information items before checking the active handler.
+     *
+     * @throws SqlError When a condition is invalid or RESIGNAL has no active handler
+     */
+    public function signals(Operation $operation, Session $session): void
+    {
+        (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $session);
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal && ($session->program === null || $session->program->stacked === [])) {
+            throw ProgramError::ResignalWithoutHandler->error();
+        }
     }
 }

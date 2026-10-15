@@ -44,6 +44,18 @@ final class InvocationTest extends TestCase
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'zz'"], ['Warning', 1292, "Truncated incorrect DOUBLE value: 'a'"]], $session->diagnostics->conditions);
     }
 
+    public function testContainedDiscardsStaleConditionsAfterAHandledSignal(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('CREATE DATABASE d');
+        $session->run("CREATE PROCEDURE d.p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '45000' BEGIN END; SIGNAL SQLSTATE '45000'; END");
+        $session->run('RESIGNAL missing');
+        $session->run('CALL d.p()');
+
+        self::assertSame([], $session->diagnostics->conditions);
+        self::assertSame(1, $session->diagnostics->signalCount);
+    }
+
     public function testContainedLeavesRowCountAsItWas(): void
     {
         $session = (new Instance())->connect();

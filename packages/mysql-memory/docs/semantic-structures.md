@@ -438,3 +438,11 @@ before observing a constructed value. Statement clocks therefore read identical
 SQL-controlled state despite separate container startup and observation times.
 This fixture does not normalize returned clock values or exempt `SYSDATE`, which
 has a different contract from statement clocks.
+
+Condition lookup precedes runtime handler checks for directly constructed SIGNAL
+and RESIGNAL statements, just as it does on the SQL-input path. A transition test
+reuses one RESIGNAL object outside a declaration scope, inside a declared procedure
+and inside an active handler. Native comparisons distinguish an undefined name,
+an inactive handler and the explicitly signalled SQLSTATE. A handled SIGNAL also
+invalidates stale diagnostics across the routine boundary without removing notices
+raised for the current routine load.
