@@ -89,6 +89,31 @@ final class ElementFactsTest extends TestCase
         self::assertTrue($warnings[1]->aborts);
     }
 
+    public function testEncodingRejectsACollationBeforeItsFirstReleaseWithoutSql(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4_0900_ai_ci'));
+        (new ElementFacts())->encoding($name, $derivation, $name);
+        $warnings = $derivation->facts()->warnings;
+
+        self::assertCount(1, $warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $warnings[0]->problem);
+        self::assertTrue($warnings[0]->aborts);
+    }
+
+    public function testEncodingLeavesDefaultToTheDatabaseContext(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null);
+        (new ElementFacts())->encoding($name, $derivation, $name);
+
+        self::assertSame([], $derivation->facts()->diagnostics);
+        self::assertSame([], $derivation->facts()->warnings);
+    }
+
     public function testReferencesAnswersTheInlineReference(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT REFERENCES p (x))');

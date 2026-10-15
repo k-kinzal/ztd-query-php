@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
+use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
@@ -18,6 +20,7 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Node;
 
 /**
  * Derives the facts inside table elements, column specifications and table options, for CREATE TABLE and ALTER TABLE.
@@ -74,15 +77,33 @@ final class ElementFacts
     {
         Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
         foreach ($options as $option) {
-            $problem = match (true) {
-                $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption && $option->collation->name !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($option->collation->name->value)?->availableIn($derivation->context->profile->grammar) ?? false) => new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($option->collation->name->value),
-                $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption && $option->charset->name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($option->charset->name->value) === null => new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($option->charset->name->value),
+            $name = match (true) {
+                $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption => $option->collation,
+                $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption => $option->charset,
                 default => null,
             };
-            if ($problem !== null) {
-                $derivation->report($problem);
-                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
+            if ($name !== null) {
+                $this->encoding($name, $derivation, $option);
             }
+        }
+    }
+
+    /**
+     * Resolves a retained character set or collation at its enclosing table action.
+     *
+     * An unknown name aborts before table resolution, including for CONVERT TO
+     * CHARACTER SET. DEFAULT depends on the database and is resolved later.
+     */
+    public function encoding(CharsetName|CollationName $name, Derivation $derivation, Node $owner): void
+    {
+        $problem = match (true) {
+            $name instanceof CollationName && $name->name !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($name->name->value)?->availableIn($derivation->context->profile->grammar) ?? false) => new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($name->name->value),
+            $name instanceof CharsetName && $name->name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($name->name->value) === null => new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($name->name->value),
+            default => null,
+        };
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $owner);
         }
     }
 

@@ -120,6 +120,13 @@ final class AlterTable implements Statement, Relation
                 }
             }
         }
+        if (!in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            foreach ($this->commands as $command) {
+                if ($command instanceof Command\ConvertCharset) {
+                    $command->deriveCollation($derivation, $this);
+                }
+            }
+        }
     }
 
     /**

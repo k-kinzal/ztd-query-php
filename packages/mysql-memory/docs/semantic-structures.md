@@ -340,3 +340,13 @@ releases refuse the operand while parsing; modern releases finish grammar
 interpretation first. Native histories include unfinished input, prepared
 statements, untaken procedure branches, earlier temporal errors and valid empty
 aliases.
+
+Character-set conversion derives encoding-name failures and incompatible known
+encodings from the retained `ConvertCharset` operands. The notices distinguish
+name lookup during grammar interpretation from comparison during modern
+contextualization; the latter belongs to the completed ALTER TABLE action list.
+Memory consumes these facts before opening the table, while preserving the
+legacy requirement for a selected database. Direct constructions are checked
+against native outcomes before and after creating and populating the same target
+table. Unknown-name agreement remains diagnostic evidence, not a certificate that
+arbitrary encoding names satisfy the constructible-structure gate.

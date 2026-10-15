@@ -230,8 +230,20 @@ final class TableChangeTest extends TestCase
 
         $change->convert($command);
 
-        self::assertSame('CREATE TABLE d.t (a VARCHAR(5) COLLATE latin1_swedish_ci, b INT) CHARSET latin1', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
-        self::assertTrue($change->copies);
+        self::assertSame('CREATE TABLE d.t (a VARCHAR(5) COLLATE latin1_swedish_ci, b INT) COLLATE latin1_swedish_ci', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
+        self::assertFalse($change->copies);
+    }
+
+    public function testConvertResolvesDefaultBeforePublishingTheNewDefinition(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d COLLATE latin1_bin; USE d; CREATE TABLE t(a VARCHAR(4)) CHARACTER SET utf8mb4');
+        $session->query('ALTER TABLE t CONVERT TO CHARACTER SET DEFAULT');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertSame('latin1_bin', $table->definition->collation);
+        self::assertSame('latin1_bin', $table->definition->columns[0]->domain->collation->name);
     }
 
     public function testActRefusesToHideThePrimaryKey(): void

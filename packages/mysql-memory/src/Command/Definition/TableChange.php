@@ -91,7 +91,7 @@ final class TableChange
     public bool $changes = false;
 
     /**
-     * Whether an action asks for the table to be copied, as CONVERT TO CHARACTER SET and ORDER BY do.
+     * Whether an action itself requires copying, independently of changes to column types.
      */
     public bool $copies = false;
 
@@ -135,8 +135,9 @@ final class TableChange
      * @param string $table The name of the table, for messages
      * @param string $database The current database, which a new name without a database names
      * @param GrammarRelease $release The release whose default collations apply
+     * @param string|null $defaultCollation The database default used by CONVERT TO CHARACTER SET DEFAULT
      */
-    public function __construct(public readonly TableLayout $layout, public readonly string $table, public readonly string $database, public readonly GrammarRelease $release)
+    public function __construct(public readonly TableLayout $layout, public readonly string $table, public readonly string $database, public readonly GrammarRelease $release, public readonly ?string $defaultCollation = null)
     {
         $this->columns = new ColumnChange($layout, $table, $release);
     }
@@ -410,17 +411,25 @@ final class TableChange
     /**
      * Converts the table and its character columns to a character set: the default of the table and each column that is not binary.
      *
+     * DEFAULT is resolved before the replacement definition is published. Modern
+     * releases can change only the collation in place; column type changes are
+     * checked by AlterTableCommand after the new definition has been derived.
+     *
      * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-character-set.
      */
     public function convert(ConvertCharset $command): void
     {
-        $this->copies = true;
-        $charset = $command->charset->name === null ? null : Charset::named($command->charset->name->value);
+        $this->copies = $this->copies || in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $default = Collation::forName($this->defaultCollation ?? '', $this->release) ?? Charset::named('utf8mb4')?->defaultCollation($this->release);
+        $charset = $command->charset->name === null ? $default?->charset : Charset::named($command->charset->name->value);
         $collation = $command->collation?->name === null ? $charset?->defaultCollation($this->release) : Collation::named($command->collation->name->value);
-        $this->options([new CharsetOption($command->charset), ...($command->collation === null ? [] : [new CollationOption($command->collation)])]);
+        if ($command->charset->name === null && $command->collation?->name === null) {
+            $collation = $default;
+        }
         if ($collation === null) {
             return;
         }
+        $this->options([new CollationOption(new CollationName(new Name($collation->name)))]);
         foreach ($this->layout->columns as $index => [$element, $origin]) {
             $specification = $element->specification;
             if (!$specification instanceof OrdinaryColumn || !$specification->type instanceof Character) {

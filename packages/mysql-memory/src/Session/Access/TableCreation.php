@@ -31,15 +31,21 @@ final class TableCreation
     /**
      * Checks the legacy default database before conditions from later definition clauses.
      *
-     * MySQL 5.6 and 5.7 resolve an unqualified CREATE TABLE target before reading its
+     * MySQL 5.6 and 5.7 resolve an unqualified CREATE TABLE or ALTER TABLE target before reading its
      * options and query. Modern releases report those conditions first. Observed on
      * isolated 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers.
      *
      * @throws SqlError When the legacy table target has no default database
+     * @param bool $contextualizing Whether grammar interpretation has finished and a table action is being contextualized
      */
-    public function database(Statement $statement, Session $session): void
+    public function database(Statement $statement, Session $session, bool $contextualizing = false): void
     {
-        if ($session->settings()->legacy() && $statement instanceof CreateTable && $statement->name->schema === null && $session->variables->database === '') {
+        $name = match (true) {
+            $statement instanceof CreateTable => $statement->name,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable => $statement->table,
+            default => null,
+        };
+        if (($session->settings()->legacy() || $contextualizing) && $name !== null && $name->schema === null && $session->variables->database === '') {
             throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
         }
     }
