@@ -15,8 +15,8 @@ use SqlSemantics\Statement\Node;
  * Checks and writes the statement lists of stored programs.
  *
  * Rule: MYSQL-PROGRAM-SEQUENCE-001. A member of a statement list is a
- * statement of the stored program language or any SQL statement; every
- * member is written followed by a semicolon, as the grammar requires
+ * statement of the stored program language or an SQL statement with a
+ * stored-program form; every member is followed by a semicolon, as required
  * inside compound statements. Terminates: one pass over the list.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/begin-end.html.
  * Status: Implemented.
@@ -40,10 +40,11 @@ final class StatementSequence
     /**
      * Narrows a node to a program statement or an SQL statement.
      *
-     * @throws InvalidConstruction When the node is neither
+     * @throws InvalidConstruction When the node has no stored-program form
      */
     public function member(Node $statement): ProgramStatement|Statement
     {
+        Check::input(!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection, 'EXPLAIN FOR CONNECTION is a standalone client statement.');
         Check::input(!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin, 'BEGIN in a stored program introduces a block; use START TRANSACTION for a transaction.');
         Check::input(!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent, 'BINLOG is a top-level client statement, not a stored program member.');
         if ($statement instanceof ProgramStatement || $statement instanceof Statement) {

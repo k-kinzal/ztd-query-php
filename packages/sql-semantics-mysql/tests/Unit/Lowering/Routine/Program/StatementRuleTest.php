@@ -52,6 +52,12 @@ final class StatementRuleTest extends TestCase
         yield 'mysql 9.1' => ['mysql-9.1.0'];
     }
 
+    public function testSqlRefusesConnectionExplanationsAsProgramMembers(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() EXPLAIN FOR CONNECTION 0');
+    }
+
     #[DataProvider('providerStatementRoutesEveryKindOfProgramStatement')]
     public function testStatementRoutesEveryKindOfProgramStatement(string $release): void
     {

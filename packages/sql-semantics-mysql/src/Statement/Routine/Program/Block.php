@@ -23,6 +23,8 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/begin-end.html.
  *
  * @visibility public
+ * @example Refusing a connection explanation as a program member
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(statements: [new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading a labeled block
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() work: BEGIN DECLARE a INT; SELECT a; END work');
  *     $block = $create->statement->body;

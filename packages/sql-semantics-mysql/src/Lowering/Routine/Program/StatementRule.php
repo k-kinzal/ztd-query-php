@@ -80,7 +80,7 @@ final class StatementRule
         $blocks = new BlockRule($this->lowering);
 
         return match ($inner->signature) {
-            'sp_proc_stmt_statement: statement', 'sp_proc_stmt_statement: simple_statement' => $this->lowering->statement($inner->node(0)),
+            'sp_proc_stmt_statement: statement', 'sp_proc_stmt_statement: simple_statement' => $this->sql($inner->node(0)),
             'sp_proc_stmt_unlabeled: sp_unlabeled_control' => $flow->loop($inner->node(0), null, null),
             default => match ($inner->node->name) {
                 'sp_proc_stmt_return', 'sp_proc_stmt_leave', 'sp_proc_stmt_iterate' => $flow->jump($inner),
@@ -92,6 +92,20 @@ final class StatementRule
                 default => throw ImplementationGap::production($inner),
             },
         };
+    }
+
+    /**
+     * Lowers an SQL program member, refusing client-only connection explanations.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the statement has no stored-program form
+     */
+    public function sql(Node $node): Statement
+    {
+        $statement = $this->lowering->statement($node);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
+        }
+        return $statement;
     }
 
     /**
