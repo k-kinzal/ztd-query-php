@@ -38,13 +38,20 @@ final class HandlerFacts
         $base = $derivation->environment();
         $fact = $derivation->relation($handler, $base);
         foreach ($values as $position => $value) {
-            $column = new \SqlSemantics\Statement\Shape\Field($position, new \SqlSemantics\Statement\Shape\OutputSlot(null, new \SqlSemantics\Statement\Type\Dependent($fact->shape->missing), \SqlSemantics\Statement\Type\Nullability::Dependent));
+            $column = new \SqlSemantics\Statement\Shape\Field($position, new \SqlSemantics\Statement\Shape\OutputSlot(null, new \SqlSemantics\Statement\Type\Dependent([new \SqlSemantics\Statement\Reference\Missing\SessionState('handler index key')]), \SqlSemantics\Statement\Type\Nullability::Dependent));
             (new WriteScope())->value($value, $column, $derivation, $base);
         }
         if ($where !== null) {
-            $derivation->scalar($where, new Environment($derivation->context, $base, [new VisibleRelation($handler, $fact->shape, $handler->name)]));
+            $derivation->scalar($where, new Environment($derivation->context, $base, [new VisibleRelation($handler, $fact->shape, $handler->name, implicit: (new \SqlSemantics\Platform\MySql\Rules\Query\TableShapes())->implicit($fact))]));
         }
         (new TailFacts())->limit($limit, $derivation, $base);
-        $derivation->output(new QueryFact([new OpenStar($fact->shape->missing)], $derivation->context->columnNames));
+        $fields = [];
+        foreach ($fact->shape->slots as $position => $slot) {
+            $fields[] = new \SqlSemantics\Statement\Shape\Field($position, $slot, resolution: new \SqlSemantics\Statement\Reference\Column\ResolvedColumn($handler, $slot));
+        }
+        if (!$fact->shape->complete()) {
+            $fields[] = new OpenStar($fact->shape->missing);
+        }
+        $derivation->output(new QueryFact($fields, $derivation->context->columnNames));
     }
 }

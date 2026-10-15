@@ -31,6 +31,7 @@ final class ColumnFlagTest extends TestCase
                 'Set' => 2048,
                 'NoDefaultValue' => 4096,
                 'OnUpdateNow' => 8192,
+                'PartKey' => 16384,
                 'Numeric' => 32768,
             ],
             array_combine(array_map(static fn (ColumnFlag $flag): string => $flag->name, ColumnFlag::cases()), array_map(static fn (ColumnFlag $flag): int => $flag->value, ColumnFlag::cases())),

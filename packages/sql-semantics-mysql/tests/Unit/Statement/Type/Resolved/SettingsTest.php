@@ -18,6 +18,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class SettingsTest extends TestCase
 {
+    public function testHandlerResolvesAliasesWithoutChangingTableNames(): void
+    {
+        $table = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('T'), new \SqlSemantics\Statement\Identifier\Name('D'));
+        $settings = new Settings(Collation::known('utf8mb4_bin'), handlers: ['H' => $table]);
+
+        self::assertSame($table, $settings->handler('h'));
+        self::assertSame($table, $settings->handler('H'));
+        self::assertNull($settings->handler('missing'));
+    }
+
     public function testDefaultsFollowTheRelease(): void
     {
         self::assertTrue(Settings::defaults(GrammarRelease::MySql847)->noZeroDate);

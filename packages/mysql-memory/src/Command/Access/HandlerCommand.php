@@ -36,8 +36,14 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Scalar;
 
 /**
  * Executes HANDLER: opens a table for reading row by row, reads it in its natural order or the order of an index, and closes it.
@@ -111,22 +117,21 @@ final class HandlerCommand implements Command
         if ($statement instanceof HandlerIndexSeek && $key !== null && count($statement->values) > count($key->columns)) {
             throw SchemaError::TooManyKeyParts->error(count($key->columns));
         }
-        $select = $session->analyze($this->select($handler, $statement->where === null ? null : $this->condition($operation->toString(), $statement->limit !== null)));
-        $root = $select->statement;
-        assert($root instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot);
-        $query = $root->query;
-        foreach ($select->facts->diagnostics as $diagnostic) {
-            throw (new Errors())->error($diagnostic, $session, 'field list', $query);
+        $query = $this->select($handler, null);
+        $select = new Operation($operation->context, new QueryRoot($query));
+        foreach ([...$operation->facts->diagnostics, ...$select->facts->diagnostics] as $diagnostic) {
+            throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
         }
-        assert($query instanceof Select && $query->from !== null);
+        assert($query->from !== null);
         $planner = new Planner($query, $select->facts, $session->settings(), $connection, $session->instance->dictionary);
         $plan = $planner->query($query, null);
-        $condition = $this->filter($planner, $query, $table);
+        $reading = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $condition = $this->filter($reading, $statement, $table);
         $rows = (new TimestampZones())->rows($table, (new ClusterOrder())->rows($table), $context);
         $cursor = new HandlerCursor();
         $numbers = $cursor->ordered($rows, $key, $table);
         $values = $statement instanceof HandlerIndexSeek ? $this->values($statement, $operation, $session, $context, $connection) : [];
-        $limit = $planner->blocks->limit(new SingleRow(), $statement->limit, null);
+        $limit = $reading->blocks->limit(new SingleRow(), $statement->limit, null);
         $count = $limit instanceof Limit ? $limit->count : 1;
         $order = $key === null ? null : strtolower($key->name);
         [$start, $step] = $cursor->start($statement, $numbers, $rows, $key, $table, $values, $handler->placed && $handler->order === $order ? $handler->position : null);
@@ -142,29 +147,28 @@ final class HandlerCommand implements Command
     /**
      * Answers the SELECT a read evaluates its condition and its columns with: every column of the table under the name of the handler.
      *
-     * @param string|null $condition The WHERE condition of the read, or null when it has none
+     * The original predicate is retained as a semantic value; no SQL is rendered or parsed.
      */
-    public function select(Handler $handler, ?string $condition): string
+    public function select(Handler $handler, ?Scalar $condition): Select
     {
-        $from = '`' . str_replace('`', '``', $handler->schema) . '`.`' . str_replace('`', '``', $handler->table) . '` AS `' . str_replace('`', '``', $handler->name) . '`';
+        $from = new TableReference(new QualifiedName(new Name($handler->table), new Name($handler->schema)), new Name($handler->name));
 
-        return 'SELECT * FROM ' . $from . ($condition === null ? '' : ' WHERE ' . $condition);
+        return new Select([], [new Star()], $from, $condition);
     }
 
     /**
-     * Answers the WHERE condition of the SELECT of a read, compiled against the columns of the table, or null when it has none.
+     * Compiles the original handler predicate against its resolved table columns.
      */
-    public function filter(Planner $planner, Select $query, StoredTable $table): ?Evaluable
+    public function filter(Planner $planner, HandlerScan|HandlerIndexRead|HandlerIndexSeek $statement, StoredTable $table): ?Evaluable
     {
-        if ($query->where === null) {
+        if ($statement->where === null) {
             return null;
         }
-        assert($query->from !== null);
         $definition = $table->definition;
         $scope = new Scope();
-        $scope->place($query->from, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
+        $scope->place($statement->handler, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
 
-        return $planner->compiler->compile($query->where, $scope);
+        return $planner->compiler->compile($statement->where, $scope);
     }
 
     /**
@@ -289,17 +293,6 @@ final class HandlerCommand implements Command
     }
 
     /**
-     * Answers the WHERE condition of the SQL of a read: the text between WHERE and the LIMIT of the read.
-     */
-    public function condition(string $sql, bool $limited): string
-    {
-        $condition = substr($sql, (int) strpos($sql, ' WHERE ') + 7);
-        $end = strrpos($condition, ' LIMIT ');
-
-        return $limited && $end !== false ? substr($condition, 0, $end) : $condition;
-    }
-
-    /**
      * Answers the rows read as SELECT * answers them: the visible columns, each value in its text.
      *
      * @param list<list<int|float|string|null>> $rows
@@ -321,7 +314,9 @@ final class HandlerCommand implements Command
         }
 
         $columns = $output->columns($plan, $charset, $session->settings()->release(), $session->variables->resultCollation());
-        $columns = array_map(static fn (ResultColumn $column): ResultColumn => new ResultColumn($column->name, $column->type, $column->length, $column->decimals, $column->flags, $column->charset, $column->originalName, $column->table, $column->originalTable, $session->settings()->legacy() ? $column->schema : '*any*'), $columns);
+        $keys = array_merge(...array_map(static fn (Key $key): array => $key->columns, $table->definition->keys));
+        $legacy = $session->settings()->legacy();
+        $columns = array_map(static fn (ResultColumn $column, int $position): ResultColumn => new ResultColumn($column->name, $column->type, $column->length, $column->decimals, $column->flags | (in_array($position, $keys, true) ? ColumnFlag::PartKey->value : 0), $column->charset, $column->originalName, $column->table, $legacy ? $column->originalTable : $column->table, $legacy ? $column->schema : '*any*'), $columns, $visible);
 
         return new ResultSet($columns, $sent, $context->diagnostics->raised());
     }

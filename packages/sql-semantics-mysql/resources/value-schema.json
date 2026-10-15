@@ -3091,6 +3091,7 @@
         "explicitDefaultsForTimestamp": "?bool",
         "functions": "array",
         "groupConcatMaxLen": "int",
+        "handlers": "array",
         "noZeroDate": "bool",
         "noZeroInDate": "bool",
         "parameters": "array",

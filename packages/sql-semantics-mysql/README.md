@@ -237,6 +237,15 @@ and collation. A typed NULL changes the value type; MySQL 5.6 also replaces its
 assignment collation, while later releases retain it. Legacy decimal and double
 variable metadata also expands by the retained assignment character width.
 
+`Settings::$handlers` maps each open HANDLER alias to its qualified table name.
+Supply the corresponding table declaration in the analysis context. The same
+`HandlerScan`, `HandlerIndexRead` or `HandlerIndexSeek` then resolves its predicate
+columns and output fields against that declaration, including invisible columns
+used explicitly in a predicate. Without a supplied handler, its row shape remains
+dependent on session state. Analysis does not open, advance or close a handler;
+the consumer supplies a new snapshot after those operations. Key values, predicate
+parameters and LIMIT parameters retain their positions in the original statement.
+
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With
 the setting disabled they are NOT NULL; with it enabled they are nullable.

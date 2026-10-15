@@ -10,6 +10,7 @@ use SqlSemantics\Contract\Session;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -53,6 +54,11 @@ final class Settings implements Session
     public readonly array $functions;
 
     /**
+     * @var array<array-key, QualifiedName> The table of each open handler, by lowercase alias
+     */
+    public readonly array $handlers;
+
+    /**
      * @param Collation $connection The collation of string literals (collation_connection)
      * @param int $divPrecisionIncrement The digits a division adds to the scale of its dividend (div_precision_increment)
      * @param Collation|null $server The default collation of a schema the settings do not list (collation_server); the connection collation when null
@@ -72,6 +78,7 @@ final class Settings implements Session
      * @param bool $noZeroInDate Whether temporal literals reject zero months and days
      * @param bool $allowInvalidDates Whether bounded dates need not exist in the calendar
      * @param bool|null $explicitDefaultsForTimestamp Whether unqualified TIMESTAMP columns are nullable; null when the session does not say
+     * @param array<array-key, QualifiedName> $handlers The table names behind open handler aliases
      */
     public function __construct(
         public readonly Collation $connection,
@@ -93,6 +100,7 @@ final class Settings implements Session
         public readonly bool $noZeroDate = true,
         public readonly bool $noZeroInDate = true,
         public readonly bool $allowInvalidDates = false,
+        array $handlers = [],
     ) {
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
         $routines = [];
@@ -100,6 +108,12 @@ final class Settings implements Session
             $routines[strtolower((string) $name)] = $domain;
         }
         $this->functions = $routines;
+        Check::listOf(array_values($handlers), QualifiedName::class, 'An open handler identifies a table.');
+        $opened = [];
+        foreach ($handlers as $name => $table) {
+            $opened[mb_strtolower((string) $name)] = $table;
+        }
+        $this->handlers = $opened;
         $lower = [];
         foreach ($schemas as $name => $collation) {
             $lower[strtolower((string) $name)] = $collation;
@@ -186,5 +200,13 @@ final class Settings implements Session
     public function function(string $schema, string $name): ?Domain
     {
         return $this->functions[strtolower($schema . '.' . $name)] ?? null;
+    }
+
+    /**
+     * Answers the table behind an open handler alias, or null when the session does not supply it.
+     */
+    public function handler(string $name): ?QualifiedName
+    {
+        return $this->handlers[mb_strtolower($name)] ?? null;
     }
 }

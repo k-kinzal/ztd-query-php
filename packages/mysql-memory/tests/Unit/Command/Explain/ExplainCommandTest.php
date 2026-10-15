@@ -52,16 +52,15 @@ final class ExplainCommandTest extends TestCase
         $session->query('EXPLAIN ANALYZE FORMAT=json SELECT 1');
     }
 
-    public function testCheckRefusesIntoWithoutTheJsonFormat(): void
+    public function testInputRefusesIntoWithoutTheJsonFormatBeforePublishingAStatement(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('EXPLAIN INTO @v SELECT 1')->statement;
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(6006);
         $this->expectExceptionMessage('EXPLAIN INTO does not support implicit FORMAT.');
 
-        (new ExplainCommand())->check($statement, $session);
+        $session->analyze('EXPLAIN INTO @v SELECT 1');
     }
 
     public function testCheckRefusesAnUnknownSchemaBeforeAMissingTable(): void

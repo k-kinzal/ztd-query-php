@@ -22,6 +22,7 @@ use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operation;
 use WeakReference;
 
@@ -377,7 +378,7 @@ final class Session
         $client = $this->variables->read('character_set_client');
         $timestamps = $this->variables->read('explicit_defaults_for_timestamp');
 
-        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null, program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')), derivedMerge: !str_contains((string) $this->variables->read('optimizer_switch'), 'derived_merge=off'), strict: $this->modes()->strict(), explicitDefaultsForTimestamp: $timestamps === null ? null : in_array($timestamps, ['ON', '1', 1], true), noZeroDate: $this->modes()->has('NO_ZERO_DATE'), noZeroInDate: $this->modes()->has('NO_ZERO_IN_DATE'), allowInvalidDates: $this->modes()->has('ALLOW_INVALID_DATES'));
+        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null, program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')), derivedMerge: !str_contains((string) $this->variables->read('optimizer_switch'), 'derived_merge=off'), strict: $this->modes()->strict(), explicitDefaultsForTimestamp: $timestamps === null ? null : in_array($timestamps, ['ON', '1', 1], true), noZeroDate: $this->modes()->has('NO_ZERO_DATE'), noZeroInDate: $this->modes()->has('NO_ZERO_IN_DATE'), allowInvalidDates: $this->modes()->has('ALLOW_INVALID_DATES'), handlers: array_map(static fn (\MySqlMemory\Command\Access\Handler $handler): \SqlSemantics\Statement\Identifier\QualifiedName => new \SqlSemantics\Statement\Identifier\QualifiedName(new Name($handler->table), new Name($handler->schema)), $this->handlers));
     }
 
     /**

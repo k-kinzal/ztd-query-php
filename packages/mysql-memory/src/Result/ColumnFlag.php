@@ -29,5 +29,6 @@ enum ColumnFlag: int
     case Set = 2048;
     case NoDefaultValue = 4096;
     case OnUpdateNow = 8192;
+    case PartKey = 16384;
     case Numeric = 32768;
 }

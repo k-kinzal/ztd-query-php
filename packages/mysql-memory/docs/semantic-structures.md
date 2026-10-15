@@ -438,3 +438,12 @@ before observing a constructed value. Statement clocks therefore read identical
 SQL-controlled state despite separate container startup and observation times.
 This fixture does not normalize returned clock values or exempt `SYSDATE`, which
 has a different contract from statement clocks.
+
+HANDLER reads use the original semantic predicate and parameter bindings. The
+session supplies the handler-to-table mapping through semantic settings, so column
+resolution happens in SQL Semantics against the current declaration snapshot.
+The consumer builds a typed projection for result metadata without rendering or
+parsing SQL. Native transition tests reuse the same read before OPEN, after OPEN,
+after CLOSE and after reopening, with populated rows, qualified aliases, index
+seeks and missing predicate columns. Native metadata also retains key membership
+and the release-specific original table name.
