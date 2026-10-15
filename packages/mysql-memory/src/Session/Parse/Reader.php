@@ -227,7 +227,9 @@ final class Reader
                 continue;
             }
             if (isset($parameters[$index])) {
-                $bound[$index] = ($session->preparation->domains[$index] ?? $parameters[$index][1])->resolved();
+                $bound[$index] = $prepared && $session->settings()->legacy() && $parameters[$index][0] === null
+                    ? new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible)
+                    : ($session->preparation->domains[$index] ?? $parameters[$index][1])->resolved();
             } elseif ($prepared) {
                 $bound[$index] = $unbound;
             }

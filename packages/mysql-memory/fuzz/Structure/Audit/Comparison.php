@@ -67,7 +67,8 @@ final class Comparison
 
     /**
      * Supplies NULL values in the types assigned before native statement execution.
-     * Modern preparation defaults unbound markers to VARCHAR(16383); legacy
+     * Modern preparation derives context types from SQL Semantics and defaults
+     * other markers to VARCHAR(16383); legacy
      * preparation exposes a zero-length binary VAR_STRING for NULL. This fixture never reads native output.
      *
      * @return list<array{null, \MySqlMemory\Typing\Domain}>
@@ -75,14 +76,22 @@ final class Comparison
     public function parameters(Statement|Scalar $node, \MySqlMemory\Session\Session $session): array
     {
         $values = (new Bindings())->nulls($node);
+        if ($values === []) {
+            return [];
+        }
         if (str_starts_with($session->instance->version, '5.')) {
-            $domain = new \MySqlMemory\Typing\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString);
+            $domain = new \MySqlMemory\Typing\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
 
             return array_map(static fn (array $value): array => [null, $domain], $values);
         }
         $collation = $session->resolution()->connection;
         $domain = \MySqlMemory\Typing\Domain::string(16383, $collation)->withCollation($collation, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
 
-        return array_map(static fn (array $value): array => [null, $domain], $values);
+        $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($node)]));
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-' . $session->instance->version, \SqlSemantics\Platform\MySql\Mode::fromString((string) $session->variables->read('sql_mode')), (new \Fuzz\Structure\Execution())->parameters($node));
+        $context = $semantics->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution(array_fill(0, count($values), $domain->resolved())));
+        $types = \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer(new \SqlSemantics\Statement\Operation($context, $statement));
+
+        return array_values(array_map(static fn (array $entry): array => [null, \MySqlMemory\Typing\Domain::of($entry[0], true)], $types));
     }
 }

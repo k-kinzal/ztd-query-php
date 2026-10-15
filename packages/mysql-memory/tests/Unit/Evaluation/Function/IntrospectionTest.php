@@ -24,6 +24,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class IntrospectionTest extends TestCase
 {
+    public function testCoercibilityRetainsNullMarkerStrengthSeparatelyFromLiteralNull(): void
+    {
+        $marker = new Constant(new Domain(Kind::Null, Field::VarString, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible), null);
+
+        self::assertSame(4, (new Introspection())->coercibility($marker));
+        self::assertSame(6, (new Introspection())->coercibility(new Constant(Domain::null(), null)));
+    }
+
     public function testTextualIncludesComputedTemporalDomains(): void
     {
         $connection = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin');

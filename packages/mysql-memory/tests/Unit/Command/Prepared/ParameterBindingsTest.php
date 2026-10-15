@@ -37,7 +37,7 @@ final class ParameterBindingsTest extends TestCase
         self::assertSame([[Kind::String, false], [Kind::String, true]], array_map(static fn (array $entry): array => [$entry[0]->kind, $entry[1]], $types->types));
     }
 
-    public function testOperandUsesTheResolvedSiblingType(): void
+    public function testCaptureUsesSemanticParameterDomains(): void
     {
         $operation = (new Instance())->connect()->analyze('SELECT ?+1, ?=1.5', true);
         $types = ParameterBindings::capture($operation);

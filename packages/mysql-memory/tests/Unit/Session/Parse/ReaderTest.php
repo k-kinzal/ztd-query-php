@@ -58,6 +58,15 @@ final class ReaderTest extends TestCase
         self::assertEquals([0 => $unbound, 1 => $unbound], (new Reader())->bound($tree, [], true, $session));
     }
 
+    public function testBoundRetainsTheLegacyNullMarkerDomain(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $tree = $session->semantics()->parser()->parse('SELECT ?');
+        $types = (new Reader())->bound($tree, [[null, Domain::null()]], true, $session);
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null, Field::VarString, Coercibility::Coercible], [$types[0]->kind, $types[0]->field, $types[0]->coercibility]);
+    }
+
     public function testBoundTypesAMarkerByItsValue(): void
     {
         $session = (new Instance())->connect();

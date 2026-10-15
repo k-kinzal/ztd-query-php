@@ -168,7 +168,7 @@ final class PreparedCommand implements Command
     public function legacyParameter(int|float|string|null $value, \MySqlMemory\Typing\Domain $domain): array
     {
         if ($value === null) {
-            return [null, new \MySqlMemory\Typing\Domain(Kind::Null, Field::VarString)];
+            return [null, new \MySqlMemory\Typing\Domain(Kind::Null, Field::VarString, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible)];
         }
         $length = match ($domain->kind) {
             Kind::Integer => 21,

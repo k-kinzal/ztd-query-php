@@ -151,9 +151,6 @@ final class Numbers
      */
     public function floating(ArithmeticOperator $operator, Domain $left, Domain $right): Domain
     {
-        if ($left->kind === Kind::Null || $right->kind === Kind::Null) {
-            return Domain::double(2, 0);
-        }
         $fraction = static fn (Domain $domain): int => $domain->displayDecimals ?? ($domain->kind === Kind::Json || ($domain->kind === Kind::String && ($domain->coercibility !== Coercibility::Ignorable || $domain->length !== 0)) ? Domain::NOT_FIXED : $domain->decimals);
         $leftScale = $fraction($left);
         $rightScale = $fraction($right);
@@ -165,7 +162,7 @@ final class Numbers
         if ($operator === ArithmeticOperator::Divide) {
             $scale = min(Domain::NOT_FIXED, $scale + $this->divPrecisionIncrement);
 
-            return Domain::double($integral + $scale, $scale);
+            return Domain::double(($left->kind === Kind::Null ? 0 : $integral) + $scale, $scale);
         }
 
         return Domain::double(($this->legacyRemainders || $this->legacyFloating ? 17 : $integral) + $scale, $scale);
@@ -175,23 +172,31 @@ final class Numbers
      * Resolves an integer division (DIV): a BIGINT as long as its dividend written without its fraction.
      *
      * A temporal dividend counts its width, unless remainders count it by its length as MySQL 5.6
-     * and 5.7 do. A divisor that is not an integer adds one character; the result is unsigned
+     * and 5.7 do. The divisor contributes its decimal scale (the length for strings); NULL
+     * contributes zero scale. A NULL dividend starts at one character. The result is unsigned
      * when either operand is. The result width is bounded by 22 characters (21
      * unsigned) from MySQL 8.0; a floating-point operand takes that full bound.
      * MySQL 5.6 and 5.7 retain the dividend width, add nothing for the divisor,
-     * and cap every result at 21. Verified through PDO and Testcontainers.
+     * and cap every result at 21. Legacy decimal dividends omit their fractional
+     * digits but retain the decimal point in this width; NULL retains width zero.
+     * Verified through PDO and Testcontainers.
      */
     public function quotient(Domain $left, Domain $right): Domain
     {
-        $fraction = $left->displayDecimals !== null && $this->operand($left) === Kind::Integer ? 1 : ($left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0);
+        $fraction = $left->displayDecimals !== null && $this->operand($left) === Kind::Integer ? 1 : ($left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + ($this->legacyRemainders ? 0 : 1) : 0);
         $length = $this->legacyRemainders || !$left->kind->temporal() ? $left->length - $fraction : $this->width($left) - $left->decimals;
         $unsigned = $left->unsigned || $right->unsigned;
         $bound = $this->legacyRemainders || $unsigned ? 21 : 22;
-        if (!$this->legacyRemainders && ($left->kind === Kind::Double || $right->kind === Kind::Double)) {
+        if ($this->legacyRemainders) {
+            return Domain::integer(Field::LongLong, min($bound, max(0, $length)), $unsigned);
+        }
+        if ($left->kind === Kind::Double || $right->kind === Kind::Double) {
             return Domain::integer(Field::LongLong, $bound, $unsigned);
         }
+        $length = $left->kind === Kind::Null ? 1 : $length + ($left->kind === Kind::String ? 1 : 0);
+        $scale = $right->kind === Kind::String ? $right->length : ($right->kind === Kind::Null ? 0 : min(30, $right->decimals));
 
-        return Domain::integer(Field::LongLong, min($bound, max(1, $length + ($left->kind === Kind::String && !$this->legacyRemainders ? 1 : 0) + (!$this->legacyRemainders && $this->operand($right) !== Kind::Integer ? 1 : 0))), $unsigned);
+        return Domain::integer(Field::LongLong, min($bound, max(1, $length + $scale)), $unsigned);
     }
 
     /**

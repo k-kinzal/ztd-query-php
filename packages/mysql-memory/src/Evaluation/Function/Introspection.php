@@ -80,7 +80,7 @@ final class Introspection
         return match (true) {
             $origin instanceof \MySqlMemory\Evaluation\Leaf\UserVariableRead => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Implicit->value,
             $origin instanceof \MySqlMemory\Evaluation\Leaf\Assignment => $domain->coercibility->value,
-            $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Ignorable->value,
+            $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null => $domain->coercibility->value,
             $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit || $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Bit => $domain->coercibility->value,
             $domain->kind->temporal() => $domain->coercibility === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible ? 4 : 5,
             $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Year => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric->value,

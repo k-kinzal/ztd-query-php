@@ -4,18 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Prepared;
 
-use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as ResolvedDomain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Remembers parameter types between prepared executions to identify automatic repreparation.
@@ -43,41 +36,7 @@ final class ParameterBindings
      */
     public static function capture(Operation $operation): self
     {
-        $types = new self([]);
-        $nodes = (new Walker())->find($operation->statement, Scalar::class);
-        foreach ($nodes as $node) {
-            if ($node instanceof Parameter) {
-                $type = $operation->facts->scalar($node)->type;
-                $domain = $type instanceof Known && $type->descriptor instanceof ResolvedDomain ? Domain::of($type->descriptor, true) : Domain::string(16383, Collation::binary());
-                $types->types[self::position($operation, $node)] = [$domain, false];
-            }
-        }
-        foreach ($nodes as $node) {
-            if ($node instanceof Arithmetic || $node instanceof Comparison) {
-                $types->operand($node->left, $node->right, $operation);
-                $types->operand($node->right, $node->left, $operation);
-            }
-            if ($node instanceof Cast && $node->operand instanceof Parameter) {
-                $types->types[self::position($operation, $node->operand)][1] = true;
-            }
-        }
-
-        return $types;
-    }
-
-    /**
-     * Derives a direct marker operand from the resolved type of its sibling.
-     */
-    public function operand(Scalar $operand, Scalar $other, Operation $operation): void
-    {
-        if (!$operand instanceof Parameter || $other instanceof Parameter || !$operation->facts->covers($other)) {
-            return;
-        }
-        $type = $operation->facts->scalar($other)->type;
-        if ($type instanceof Known && $type->descriptor instanceof ResolvedDomain) {
-            $domain = Domain::of($type->descriptor, true);
-            $this->types[self::position($operation, $operand)] = [$domain->kind === Kind::Integer ? Domain::integer(unsigned: $domain->unsigned) : $domain, false];
-        }
+        return new self(array_map(static fn (array $entry): array => [Domain::of($entry[0], true), $entry[1]], \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation)));
     }
 
     /**

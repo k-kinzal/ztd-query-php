@@ -177,7 +177,7 @@ final class NumbersTest extends TestCase
         self::assertEquals(Domain::integer(Field::LongLong, 5), $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 4), Domain::integer(Field::LongLong, 2)));
         self::assertEquals(Domain::decimal(5, 4), $numbers->binary(ArithmeticOperator::Divide, Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 2)));
         self::assertEquals(Domain::double(23), $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::string(1, Collation::binary())));
-        self::assertEquals(Domain::double(2, 0), $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::null()));
+        self::assertEquals(Domain::double(21, 0), $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::null()));
         self::assertEquals(Domain::integer(Field::LongLong, 2), $numbers->binary(ArithmeticOperator::IntegerDivide, Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 2)));
     }
 
@@ -228,6 +228,18 @@ final class NumbersTest extends TestCase
         self::assertSame(66, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 61), Domain::integer())->length);
         self::assertSame(22, $numbers->binary(ArithmeticOperator::Modulo, Domain::integer(Field::LongLong, 21, true), Domain::integer(Field::LongLong, 2))->length);
         self::assertSame(22, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::integer(Field::LongLong, 2))->length);
+    }
+
+    public function testQuotientUsesTheDivisorScaleAndRetainsLegacyZeroWidthNull(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(1, $numbers->quotient(Domain::null(), Domain::integer(length: 7))->length);
+        self::assertSame(4, $numbers->quotient(Domain::null(), Domain::decimal(6, 3))->length);
+        self::assertSame(7, $numbers->quotient(Domain::null(), Domain::string(6, Collation::binary()))->length);
+        self::assertSame(5, $numbers->quotient(Domain::decimal(4, 2), Domain::decimal(3, 2))->length);
+        self::assertSame(0, (new Numbers(legacyRemainders: true))->quotient(Domain::null(), Domain::decimal(4, 2))->length);
+        self::assertSame(4, (new Numbers(legacyRemainders: true))->quotient(Domain::decimal(4, 2), Domain::null())->length);
     }
 
     public function testQuotientIsAsLongAsTheDividendWithoutItsFraction(): void
