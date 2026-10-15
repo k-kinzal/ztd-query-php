@@ -25,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceAccess;
@@ -50,7 +51,7 @@ final class LegacyForms
             || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment
             || $value === \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash
             || ($value instanceof DatabaseCollation && $value->collation->name === null)
-            || ($value instanceof ResetReplica && $value->terminology === Terminology::Legacy)
+            || (($value instanceof ResetReplica || $value instanceof SourceOption) && $value->terminology === Terminology::Legacy)
             || $this->definition($value)
             || ($value instanceof \SqlSemantics\Statement\Query && $this->query($value));
     }

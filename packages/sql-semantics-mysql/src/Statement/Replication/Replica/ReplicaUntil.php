@@ -15,7 +15,9 @@ use SqlSemantics\Statement\Snapshot;
  * The UNTIL clause of START REPLICA: an optional GTID or gap condition first, then log positions, in written order.
  *
  * The grammar admits a GTID or gap condition only as the first item, so the
- * two parts keep the written order exactly. Which combinations the server
+ * two parts keep the written order exactly. All positions use the same
+ * release vocabulary; legacy MASTER options and modern SOURCE synonyms
+ * cannot belong to the same structure. Which combinations the server
  * accepts is checked when the statement is derived (MYSQL-REPLICA-UNTIL-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html.
  *
@@ -47,6 +49,7 @@ final class ReplicaUntil implements Node
         foreach ($this->positions as $position) {
             Check::input($position->kind->position(), 'UNTIL lists only log file and position options.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

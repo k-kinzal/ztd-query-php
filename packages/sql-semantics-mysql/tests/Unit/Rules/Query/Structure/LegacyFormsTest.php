@@ -44,6 +44,16 @@ final class LegacyFormsTest extends TestCase
         self::assertTrue($forms->requires(ExplainModifier::Partitions));
         self::assertFalse($forms->requires(SelectOption::NoCache));
     }
+
+    public function testRequiresDistinguishesLegacyReplicationOperandsFromCurrentSynonyms(): void
+    {
+        $forms = new LegacyForms();
+        $legacy = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::LogPosition, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'));
+        $synonym = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::LogPosition, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'), true);
+
+        self::assertTrue($forms->requires($legacy));
+        self::assertFalse($forms->requires($synonym));
+    }
     public function testQueryDistinguishesLegacyOrderingFromPlainBlocks(): void
     {
         $body = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));

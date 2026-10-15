@@ -61,7 +61,7 @@ final class MultipleDelete implements Explainable
      * @param list<DeleteOption> $options The modifiers
      * @param list<QualifiedName> $targets The tables rows are deleted from; at least one
      * @param MultipleDeleteForm $form Where the tables to delete from are written
-     * @param list<Relation> $tables The table references; at least one
+     * @param list<Relation> $tables The table references; at least one; unparenthesized comma lists are flattened
      * @param Scalar|null $where The row predicate
      * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
      * @throws InvalidConstruction When there is no table to delete from or no table reference
@@ -81,7 +81,11 @@ final class MultipleDelete implements Explainable
         foreach ($this->targets as $target) {
             Check::input($target->catalog === null, 'A table is qualified by at most a database.');
         }
-        $this->tables = Check::listOf($tables, Relation::class, 'A multiple-table DELETE names at least one table reference.', 1);
+        $members = [];
+        foreach (Check::listOf($tables, Relation::class, 'A multiple-table DELETE names at least one table reference.', 1) as $table) {
+            array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));
+        }
+        $this->tables = $members;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

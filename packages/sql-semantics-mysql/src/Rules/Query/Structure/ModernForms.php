@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
@@ -48,7 +49,8 @@ final class ModernForms
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement => count($value->locking) > 1,
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause => $this->locking($value),
                 $value instanceof ResetBinaryLogs => $value->terminology === Terminology::Current || $value->first !== null,
-                $value instanceof ResetReplica => $value->terminology === Terminology::Current,
+                $value instanceof ResetReplica, $value instanceof SourceOption,
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica => $value->terminology === Terminology::Current,
                 $value instanceof DerivedTable => $value->lateral || $value->columns !== [],
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,
                 default => in_array($value, [SetOperator::Intersect, SetOperator::Except], true),

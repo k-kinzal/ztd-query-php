@@ -80,6 +80,34 @@ final class ProfileTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{class-string, int}>
+     */
+    public static function providerCompositionModels(): iterable
+    {
+        yield 'delete comma lists' => [\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, 302];
+        yield 'replica position vocabulary' => [\SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica::class, 601];
+    }
+
+    /**
+     * Replays the selected root type even when a new invariant rejects an intermediate candidate.
+     *
+     * @param class-string $class The root selected by the original whole-model campaign
+     * @throws JsonException When a semantic inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    #[DataProvider('providerCompositionModels')]
+    public function testSelectPreservesConstructedListComposition(string $class, int $index): void
+    {
+        $catalogue = new \Fuzz\Structure\Catalogue();
+        $choices = new Choices('entry-20261015:' . $index);
+        $choices->one($catalogue->roots());
+        $node = (new \Fuzz\Structure\Construction($choices, $catalogue, new \Fuzz\Structure\Metadata()))->object($class, 6);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $node);
+
+        self::assertSame('mysql', (new Profiles())->select($node)->grammar->database());
+    }
+
+    /**
      * @return iterable<string, array{string, string}>
      */
     public static function providerOperands(): iterable

@@ -63,4 +63,18 @@ final class MultipleDeleteTest extends TestCase
     {
         self::assertSame('DELETE /*+ BKA(`u`) */ t FROM t, u', (new Semantics(Dialect::MySql))->analyze('DELETE /*+ BKA(u) */ t FROM t, u')->toString());
     }
+
+    public function testTablesFlattenOnlyUnparenthesizedCommaLists(): void
+    {
+        $first = new TableReference(new QualifiedName(new Name('a')));
+        $second = new TableReference(new QualifiedName(new Name('b')));
+        $third = new \SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation(new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([
+            new TableReference(new QualifiedName(new Name('c'))),
+            new TableReference(new QualifiedName(new Name('d'))),
+        ]));
+        $delete = new MultipleDelete(null, [], [new QualifiedName(new Name('a'))], MultipleDeleteForm::BeforeFrom, [$first, new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([$second, $third])]);
+
+        self::assertSame([$first, $second, $third], $delete->tables);
+        self::assertSame('DELETE a FROM a, b, (c, d)', (new \SqlSemantics\Statement\Operation((new Semantics(Dialect::MySql))->context([]), $delete))->toString());
+    }
 }

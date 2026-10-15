@@ -42,6 +42,16 @@ final class ModernFormsTest extends TestCase
         self::assertTrue($forms->requires($query));
     }
 
+    public function testRequiresRecognizesCurrentReplicationOperands(): void
+    {
+        $forms = new ModernForms();
+        $current = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::RelayLogPosition, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'));
+
+        self::assertTrue($forms->requires($current));
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current)));
+        self::assertFalse($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy)));
+    }
+
     public function testQueryLeavesNoFromFilteringToTheStatementPosition(): void
     {
         $forms = new ModernForms();
