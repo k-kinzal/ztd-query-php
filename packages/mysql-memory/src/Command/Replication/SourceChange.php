@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\AnonymousGtids;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
+use SqlSemantics\Statement\Node;
 
 /**
  * Checks replication source settings against the server's GTID mode, accounts and network timeout.
@@ -44,10 +45,7 @@ final class SourceChange
             $options[$option->kind->value] = $option;
         }
         $channel = $statement->channel === null ? '' : strtolower((new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($statement->channel));
-        $heartbeat = $options[SourceOptionKind::HeartbeatPeriod->value]->value ?? null;
-        if ($heartbeat instanceof NumberLiteral) {
-            $this->heartbeat((float) $heartbeat->text, $session, $context);
-        }
+        $this->heartbeatSettings($statement, $session);
         $this->channel($channel, $session);
         $this->gtids($options, $session);
         (new SourceSwitches())->check($options, $session, $channel);
@@ -109,17 +107,33 @@ final class SourceChange
     }
 
     /**
+     * Reports heartbeat notices independently of connection initialization, using the last setting.
+     */
+    public function heartbeatSettings(Node $statement, Session $session): void
+    {
+        $heartbeat = null;
+        foreach ($statement instanceof ChangeReplicationSource ? $statement->options : [] as $option) {
+            if ($option->kind === SourceOptionKind::HeartbeatPeriod) {
+                $heartbeat = $option->value;
+            }
+        }
+        if ($heartbeat instanceof NumberLiteral) {
+            $this->heartbeat((float) $heartbeat->text, $session);
+        }
+    }
+
+    /**
      * Warns about a positive sub-millisecond heartbeat or one exceeding the global timeout.
      */
-    public function heartbeat(float $period, Session $session, Context $context): void
+    public function heartbeat(float $period, Session $session): void
     {
         if ($period > 0 && $period < 0.001) {
-            $context->warning(AdministrationError::HeartbeatBelowMinimum);
+            $session->diagnostics->warning(AdministrationError::HeartbeatBelowMinimum, AdministrationError::HeartbeatBelowMinimum->message());
         }
         $legacy = in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $name = $legacy ? 'slave_net_timeout' : 'replica_net_timeout';
         if ($period > (float) $session->variables->read($name)) {
-            $context->warning(AdministrationError::HeartbeatAboveTimeout, $name);
+            $session->diagnostics->warning(AdministrationError::HeartbeatAboveTimeout, AdministrationError::HeartbeatAboveTimeout->message($name));
         }
     }
 

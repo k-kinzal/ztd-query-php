@@ -32,4 +32,12 @@ final class SourceOptionRuleTest extends TestCase
             (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze("change replication source to get_master_public_key = 1, get_source_public_key = 0, master_compression_algorithms = 'zstd'")->toString(),
         );
     }
+    public function testOptionRefusesAnUnconstructibleHeartbeatBeforePublication(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('The heartbeat period is greater than 4294967 seconds');
+
+        (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('CHANGE MASTER TO MASTER_HEARTBEAT_PERIOD=4294967.5');
+    }
+
 }

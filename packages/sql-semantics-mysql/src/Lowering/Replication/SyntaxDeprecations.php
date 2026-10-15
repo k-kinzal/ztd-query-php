@@ -45,8 +45,8 @@ final class SyntaxDeprecations
             $replacement = 'START REPLICA';
         } elseif ((str_starts_with($node->name, 'change_replication_source_') || in_array($node->name, ['source_log_file', 'source_log_pos'], true)) && (str_starts_with($first->name, 'MASTER_') || $first->name === 'GET_MASTER_PUBLIC_KEY_SYM')) {
             $kind = (new SourceOptionRule($lowering))->keyword($node);
-            $old = $kind->keyword(Terminology::Legacy);
-            $replacement = $kind->value;
+            $old = $kind->warningName(Terminology::Legacy);
+            $replacement = $kind->warningName(Terminology::Current);
         } else {
             return null;
         }

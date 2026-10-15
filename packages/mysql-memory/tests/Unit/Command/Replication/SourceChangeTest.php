@@ -66,6 +66,18 @@ final class SourceChangeTest extends TestCase
         self::assertSame([true, true], [$replication->initialized, $replication->missing]);
     }
 
+    public function testHeartbeatSettingsUsesTheFinalValueBeforeLegacyInitialization(): void
+    {
+        $session = (new Instance('5.7.44', ['server_id' => '0']))->connect();
+        $session->run('CHANGE MASTER TO MASTER_HEARTBEAT_PERIOD=4294967, MASTER_HEARTBEAT_PERIOD=0');
+
+        self::assertSame([1794], array_column($session->diagnostics->conditions, 1));
+
+        $session->run('CHANGE MASTER TO MASTER_HEARTBEAT_PERIOD=0, MASTER_HEARTBEAT_PERIOD=4294967');
+
+        self::assertSame([1704, 1794], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testHeartbeatUsesTheGlobalTimeout(): void
     {
         $session = (new Instance())->connect();

@@ -185,7 +185,7 @@ final class ReplicaCommand implements Command
         if ($statement instanceof ChangeReplicationSource) {
             foreach ($statement->options as $option) {
                 if ($option->synonym) {
-                    $context->warning(StatementError::DeprecatedSyntax, $option->kind->keyword(Terminology::Legacy), $option->kind->value);
+                    $context->warning(StatementError::DeprecatedSyntax, $option->kind->warningName(Terminology::Legacy), $option->kind->warningName(Terminology::Current));
                 }
             }
         }

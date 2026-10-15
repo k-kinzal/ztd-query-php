@@ -223,6 +223,10 @@ final class SourceOptionRule
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber($kind, $value, $range[0] ?? 0), $range[1] ?? 0, $kind !== SourceOptionKind::RequireRowFormat);
         }
 
+        if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral && ($error = (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->heartbeat($value)) !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting($error), (new \SqlSemantics\Construction\SourceRanges())->span($option)[1] ?? 0);
+        }
+
         return new SourceOption($terminology, $kind, $value, $synonym);
     }
 

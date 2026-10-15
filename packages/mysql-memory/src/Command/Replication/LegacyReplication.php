@@ -63,6 +63,7 @@ final class LegacyReplication
             (new ReplicaCommand())->channel($statement->channel, true);
         }
         if ($replica && (int) $session->variables->read('server_id') === 0) {
+            (new SourceChange())->heartbeatSettings($statement, $session);
             if ($master && $release === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 throw new SqlError(AdministrationError::BinlogClosed, AdministrationError::BinlogClosed->message('RESET MASTER'), null, [[AdministrationError::ReplicaNotInitialized->number(), self::UNCONFIGURED]]);
             }

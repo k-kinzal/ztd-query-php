@@ -26,7 +26,7 @@ final class SyntaxSettings
     public function rejected(Node $node, Lowering $lowering): ?\SqlSemantics\Construction\RejectedInput
     {
         $setting = $this->completed($node, $lowering);
-        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber || ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && $setting->problem->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid)) {
+        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber || ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && in_array($setting->problem->error, [\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::HeartbeatOutOfRange], true))) {
             return new \SqlSemantics\Construction\RejectedInput($setting->problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
         }
 
@@ -54,7 +54,7 @@ final class SyntaxSettings
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
-        if ($node->name === 'source_def') {
+        if (in_array($node->name, ['source_def', 'master_def'], true)) {
             try {
                 $option = (new SourceOptionRule($lowering))->option($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
                 $error = (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->error($option, $lowering->profile->grammar);

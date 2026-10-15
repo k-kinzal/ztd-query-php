@@ -102,7 +102,7 @@ enum SourceOptionKind: string
             self::RelayLogPosition => $value instanceof Numeral,
             self::RequireRowFormat, self::ConnectionAutoFailover, self::GtidOnly => $value instanceof Numeral && (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->number($this, $value) === null,
             self::LogPosition => $value instanceof Numeral && !$value->hexadecimal,
-            self::HeartbeatPeriod => $value instanceof NumberLiteral,
+            self::HeartbeatPeriod => $value instanceof NumberLiteral && (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->heartbeat($value) === null,
             self::IgnoreServerIds => $value instanceof ServerIds,
             self::PrivilegeChecksUser => $value === null || $value instanceof AccountName,
             self::TlsCiphersuites => $value === null || $value instanceof Text,
@@ -118,4 +118,14 @@ enum SourceOptionKind: string
     {
         return $this === self::LogFile || $this === self::LogPosition || $this === self::RelayLogFile || $this === self::RelayLogPosition;
     }
+    /**
+     * Names the option in deprecation diagnostics, preserving the server's singular compression wording.
+     */
+    public function warningName(Terminology $terminology): string
+    {
+        $keyword = $this->keyword($terminology);
+
+        return $this === self::CompressionAlgorithms ? substr($keyword, 0, -1) : $keyword;
+    }
+
 }

@@ -77,4 +77,13 @@ final class SourceOptionKindTest extends TestCase
         self::assertFalse(SourceOptionKind::ConnectionAutoFailover->accepts(new Numeral('2')));
     }
 
+    public function testWarningNamePreservesTheSingularDiagnosticWithoutChangingSql(): void
+    {
+        $kind = SourceOptionKind::CompressionAlgorithms;
+
+        self::assertSame('MASTER_COMPRESSION_ALGORITHM', $kind->warningName(Terminology::Legacy));
+        self::assertSame('SOURCE_COMPRESSION_ALGORITHM', $kind->warningName(Terminology::Current));
+        self::assertSame('SOURCE_COMPRESSION_ALGORITHMS', $kind->keyword(Terminology::Current));
+    }
+
 }

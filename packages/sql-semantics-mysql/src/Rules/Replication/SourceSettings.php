@@ -96,10 +96,18 @@ final class SourceSettings
             return $this->number($option->kind, $value);
         }
         if ($value instanceof NumberLiteral) {
-            return (float) $value->text > self::HEARTBEAT ? ReplicationError::HeartbeatOutOfRange : null;
+            return $this->heartbeat($value);
         }
 
         return null;
+    }
+
+    /**
+     * Refuses a heartbeat literal outside the protocol's supported interval.
+     */
+    public function heartbeat(NumberLiteral $value): ?ReplicationError
+    {
+        return (float) $value->text > self::HEARTBEAT ? ReplicationError::HeartbeatOutOfRange : null;
     }
 
     /**

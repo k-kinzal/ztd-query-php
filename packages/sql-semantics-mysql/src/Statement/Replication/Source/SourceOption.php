@@ -27,6 +27,8 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility public
+ * @example Refusing a heartbeat that every supported release rejects
+ *     new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::HeartbeatPeriod, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('4294967.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding a typed option value
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3306'));
  *     $option->kind->value // => 'SOURCE_PORT'

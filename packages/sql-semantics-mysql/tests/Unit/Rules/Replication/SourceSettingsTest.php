@@ -49,7 +49,7 @@ final class SourceSettingsTest extends TestCase
     {
         $settings = new SourceSettings();
 
-        self::assertSame(ReplicationError::HeartbeatOutOfRange, $settings->error(new SourceOption(Terminology::Current, SourceOptionKind::HeartbeatPeriod, new NumberLiteral('4294967.5')), GrammarRelease::MySql847));
+        self::assertNull($settings->error(new SourceOption(Terminology::Current, SourceOptionKind::HeartbeatPeriod, new NumberLiteral('4294967')), GrammarRelease::MySql847));
         self::assertNull($settings->error(new SourceOption(Terminology::Current, SourceOptionKind::PrivilegeChecksUser, null), GrammarRelease::MySql847));
     }
 
@@ -79,4 +79,14 @@ final class SourceSettingsTest extends TestCase
 
         self::assertCount(1, $derivation->facts()->diagnostics);
     }
+    public function testHeartbeatDistinguishesTheInclusiveUpperBoundary(): void
+    {
+        $rule = new SourceSettings();
+
+        self::assertNull($rule->heartbeat(new NumberLiteral('0')));
+        self::assertNull($rule->heartbeat(new NumberLiteral('4294967')));
+        self::assertSame(ReplicationError::HeartbeatOutOfRange, $rule->heartbeat(new NumberLiteral('4294967.5')));
+        self::assertSame(ReplicationError::HeartbeatOutOfRange, $rule->heartbeat(new NumberLiteral('1e300')));
+    }
+
 }
