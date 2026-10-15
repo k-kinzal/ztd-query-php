@@ -39,6 +39,22 @@ final class LoadDataCommandTest extends TestCase
         $session->query($sql);
     }
 
+    public function testBulkConditionsFollowTargetAndPrimaryKeyChanges(): void
+    {
+        $session = (new Instance('8.2.0'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $operation = $session->analyze("LOAD DATA INFILE 'text' INTO TABLE t ALGORITHM=BULK");
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        $command = new LoadDataCommand();
+
+        self::assertSame([[1146, "Table 'd.t' doesn't exist"]], $command->bulkConditions($operation->statement, $session));
+        $session->query('CREATE TABLE t(a INT)');
+        self::assertSame([[4130, "Table 'd/t' has no primary key."]], $command->bulkConditions($operation->statement, $session));
+        $session->query('ALTER TABLE t ADD PRIMARY KEY(a)');
+        self::assertSame([[1290, 'The MySQL server is running with the --secure-file-priv option so it cannot execute this statement']], $command->bulkConditions($operation->statement, $session));
+        self::assertSame([], $command->bulkConditions($operation->statement, (new Instance())->connect()));
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new LoadDataCommand())->clearsDiagnostics());

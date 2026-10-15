@@ -27,7 +27,9 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
  *
  * The server runs with --secure-file-priv=/var/lib/mysql-files/ and local loading disabled.
  * Several files and a URL need the bulk algorithm, which this server does not support, and
- * local loading is refused; these are checked while the statement is read. Then the table and
+ * local loading is refused; these are checked while the statement is read. MySQL
+ * 8.0 and 8.1 ignore the bulk annotations and follow ordinary file loading,
+ * including table, column and secure-file checks (verified through Testcontainers). Then the table and
  * its columns must exist, and a PARTITION clause needs a partitioned table. A file outside the
  * secure directory is refused, and the secure directory holds no files. Every rule was verified
  * on a live 8.4 server. An ENCLOSED BY or ESCAPED BY of more than one byte is refused next,
@@ -105,6 +107,9 @@ final class LoadDataCommand implements Command
      */
     public function algorithm(Operation $operation, Session $session): void
     {
+        if (version_compare($session->instance->version, '8.2.0', '<')) {
+            return;
+        }
         $statement = $operation->statement;
         assert($statement instanceof LoadTable);
         foreach ($operation->facts->diagnostics as $diagnostic) {
@@ -113,8 +118,36 @@ final class LoadDataCommand implements Command
             }
         }
         if ($statement->bulk->bulk ?? false) {
-            throw StatementError::NotSupportedYet->error('Bulk Load');
+            $error = StatementError::NotSupportedYet->error('Bulk Load');
+            throw new \MySqlMemory\Error\SqlError($error->error, $error->getMessage(), following: $this->bulkConditions($statement, $session));
         }
+    }
+
+    /**
+     * Retains the target/file conditions MySQL 8.2 and 8.3 append after refusing BULK.
+     * Later releases stop at the unsupported algorithm. Observed through SQL and
+     * SHOW WARNINGS with absent tables, tables without a primary key and keyed tables.
+     *
+     * @return list<array{int, string}> Additional error conditions, in native order
+     */
+    public function bulkConditions(LoadTable $statement, Session $session): array
+    {
+        if (!in_array($session->instance->version, ['8.2.0', '8.3.0'], true)) {
+            return [];
+        }
+        $schema = $statement->table->name->schema->value ?? $session->variables->database;
+        $name = $statement->table->name->name->value;
+        $table = $session->instance->dictionary->table($schema, $name);
+        if ($table === null) {
+            return [[1146, QueryError::NoSuchTable->message($schema, $name)]];
+        }
+        if ($table->definition->primaryKey() === null) {
+            return [[4130, "Table '" . $schema . '/' . $name . "' has no primary key."]];
+        }
+        $file = $statement->input->file->value;
+        $error = str_starts_with($file, self::SECURE_DIRECTORY) ? AdministrationError::FileStat->error($file, 2, 'No such file or directory') : StatementError::OptionPreventsStatement->error('--secure-file-priv');
+
+        return [[$error->getCode(), $error->getMessage()]];
     }
 
     /**

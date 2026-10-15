@@ -68,6 +68,13 @@ final class LoadFactsTest extends TestCase
         self::assertSame(LoadRule::XmlBulk, $operation->facts->diagnostics[0]->rule);
     }
 
+    public function testDeriveKeepsBulkAnnotationsInTheEarlierLanguageWithoutAConflict(): void
+    {
+        $facts = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK")->facts;
+
+        self::assertSame([], array_values(array_filter($facts->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof LoadConflict)));
+    }
+
     public function testDeriveReportsAnUnknownColumn(): void
     {
         $semantics = new Semantics(Dialect::MySql);

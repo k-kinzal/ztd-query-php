@@ -38,7 +38,7 @@ final class LoadFacts
      */
     public function derive(LoadTable $load, Derivation $derivation): void
     {
-        $conflict = $this->algorithm($load);
+        $conflict = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true) ? null : $this->algorithm($load);
         if ($conflict !== null) {
             $derivation->report($conflict);
         }
