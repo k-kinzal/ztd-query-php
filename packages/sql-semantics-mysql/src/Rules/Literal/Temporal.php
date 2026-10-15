@@ -95,8 +95,8 @@ final class Temporal
      */
     public static function scanTime(string $text): ?array
     {
-        $text = trim($text, " \t\n\r");
-        if (preg_match('/\A(-)?(?:([0-9]+) +)?([0-9]+):([0-9]{1,2})(?::([0-9]{1,2}))?(?:\.([0-9]*))?/', $text, $match) === 1) {
+        $text = trim($text, " \t\n\r\v\f");
+        if (preg_match('/\A(-)?\s*(?:([0-9]+)\s+)?([0-9]+):([0-9]{1,2})(?::([0-9]{1,2}))?(?:\.([0-9]*))?/', $text, $match) === 1) {
             $hours = (int) ($match[2] === '' ? 0 : $match[2]) * 24 + (int) $match[3];
 
             return [$match[1] === '-', $hours, (int) $match[4], (int) ($match[5] ?? 0), $match[6] ?? '', substr($text, strlen($match[0]))];
@@ -177,6 +177,9 @@ final class Temporal
      */
     public static function timeLiteral(string $text, int $decimals): ?string
     {
+        if (preg_match('/\A-?[0-9]{12,}(?:\.[0-9]*)?\z/', trim($text, " \t\n\r\v\f")) === 1) {
+            return null;
+        }
         $time = self::scanTime($text);
         if ($time === null || $time[5] !== '' || $time[2] > 59 || $time[3] > 59) {
             return null;

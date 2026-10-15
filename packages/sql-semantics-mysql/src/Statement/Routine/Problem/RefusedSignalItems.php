@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Problem;
 
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Retaining a condition-information prefix
  *     $prefix = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal(null);
- *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems($prefix, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral('bad')))->message() // => 'Incorrect DATE value.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems($prefix, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral('bad')))->message() // => 'Incorrect DATE value.'
  */
 final class RefusedSignalItems implements Diagnostic
 {
@@ -26,9 +26,9 @@ final class RefusedSignalItems implements Diagnostic
 
     /**
      * @param Resignal $prefix The optional condition and completed information items
-     * @param RefusedDateLiteral $problem The invalid value following that prefix
+     * @param RefusedTemporalLiteral $problem The invalid value following that prefix
      */
-    public function __construct(public readonly Resignal $prefix, public readonly RefusedDateLiteral $problem)
+    public function __construct(public readonly Resignal $prefix, public readonly RefusedTemporalLiteral $problem)
     {
     }
 

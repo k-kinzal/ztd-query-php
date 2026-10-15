@@ -46,8 +46,8 @@ final class TemporalLiteralTest extends TestCase
 
         self::assertSame(TemporalKind::DateTime, $type->kind);
         self::assertSame('2', $type->precision);
-        self::assertSame(TemporalKind::Time, (new TemporalLiteral(TemporalForm::Time, '10:11:12.123-01:00'))->type()->kind);
-        self::assertSame('3', (new TemporalLiteral(TemporalForm::Time, '10:11:12.123-01:00'))->type()->precision);
+        self::assertSame(TemporalKind::Time, (new TemporalLiteral(TemporalForm::Time, '10:11:12.123'))->type()->kind);
+        self::assertSame('3', (new TemporalLiteral(TemporalForm::Time, '10:11:12.123'))->type()->precision);
     }
 
     public function testDeriveScalarAnswersTheTemporalTypeThatIsNeverNull(): void
@@ -102,7 +102,7 @@ final class TemporalLiteralTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame("SELECT DATE '2024-01-02' AS v", $semantics->analyze("select date '2024-01-02' as v")->toString());
-        self::assertSame("SELECT TIME 'a''b' AS v", $semantics->analyze("SELECT TIME 'a\\'b' AS v")->toString());
+        self::assertSame("SELECT TIME '01:02:03' AS v", $semantics->analyze('SELECT TIME "01:02:03" AS v')->toString());
         self::assertSame("SELECT TIMESTAMP '2024-01-02 03:04:05' AS v", $semantics->analyze('SELECT TIMESTAMP "2024-01-02 03:04:05" AS v')->toString());
         self::assertSame("SELECT date '2024-01-02'", $semantics->analyze("SELECT date '2024-01-02'")->toString());
     }

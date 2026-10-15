@@ -125,7 +125,7 @@ final class Reader
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
             $failure = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->before($tree, $failure->end + 1, $session->semantics()->profile()) ?? $failure;
         }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {
             (new Syntax())->debugOnly($tree, $statement);
         }
 

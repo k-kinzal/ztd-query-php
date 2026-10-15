@@ -83,6 +83,16 @@ final class TemporalTest extends TestCase
         self::assertSame(['-00:00:00', '00:00:01.5', null, null], [Temporal::timeLiteral('-0', 0), Temporal::timeLiteral('1.5', 1), Temporal::timeLiteral('838:59:59.1', 1), Temporal::timeLiteral('1:60:00', 0)]);
     }
 
+    public function testTimeLiteralDistinguishesCompactDigitsFromDelimitedHours(): void
+    {
+        self::assertSame([null, '00:00:01', '00:00:01'], [Temporal::timeLiteral('000000000001', 0), Temporal::timeLiteral('00000000001', 0), Temporal::timeLiteral('000000000000:00:01', 0)]);
+    }
+
+    public function testScanTimeAcceptsWhitespaceSeparatorsAndSpacedNegativeClocks(): void
+    {
+        self::assertSame([[false, 25, 2, 3, '', ''], [true, 0, 0, 1, '', ''], [false, 1, 2, 3, '', '']], [Temporal::scanTime("1\t01:02:03"), Temporal::scanTime('- 00:00:01'), Temporal::scanTime("1:02:03\v\f")]);
+    }
+
     public function testLiteralAnswersTheValueOfEachForm(): void
     {
         self::assertSame(['2024-02-29', '-34:00:00.0', '2025-01-01 00:00:00.000000', '10:00:00.123457'], [Temporal::literal('DATE', '2024-02-29', 0, true, true), Temporal::literal('TIME', '-1 10:00:00.0', 1, true, true), Temporal::literal('DATETIME', '2024-12-31 23:59:59.9999995', 6, true, true), Temporal::literal('TIME', '10:00:00.1234567', 6, true, true)]);

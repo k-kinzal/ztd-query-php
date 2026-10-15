@@ -141,7 +141,7 @@ final class SignalRule
             try {
                 $items[] = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral) {
+                if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {
                     throw $failure;
                 }
                 throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems(new Resignal($condition, $items), $failure->problem), $failure->end);

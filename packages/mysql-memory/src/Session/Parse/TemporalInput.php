@@ -44,7 +44,7 @@ final class TemporalInput
             Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
             $notices = $this->notices($parser, $statement, $end, $session);
             foreach ($notices as [, $notice]) {
-                if ($notice instanceof ParseFailure && !$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral && !$session->settings()->legacy()) {
+                if ($notice instanceof ParseFailure && !$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral && !$session->settings()->legacy()) {
                     throw (new ModernWarnings())->recorded(array_column($notices, 1), $failure, $session, false);
                 }
             }
