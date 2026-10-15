@@ -211,7 +211,7 @@ return [
     ['Innodb_buffer_pool_pages_flushed', 'Global', '0', true],
     ['Innodb_buffer_pool_pages_free', 'Global', '0', true],
     ['Innodb_buffer_pool_pages_misc', 'Global', '0', true],
-    ['Innodb_buffer_pool_pages_total', 'Global', '8191', true],
+    ['Innodb_buffer_pool_pages_total', 'Global', '0', true],
     ['Innodb_buffer_pool_read_ahead_rnd', 'Global', '0', true],
     ['Innodb_buffer_pool_read_ahead', 'Global', '0', true],
     ['Innodb_buffer_pool_read_ahead_evicted', 'Global', '0', true],

@@ -256,12 +256,14 @@ final class Differential
             Process\Listing::prepare($pdo);
         }
         $processes = Process\Listing::handles($sql) ? Process\Listing::capture($pdo, $dsn === $this->native ? $this->guard() : $this->memoryGuard()) : null;
+        $status = Status\Listing::handles($sql) ? Status\Listing::capture($pdo, $sql) : null;
         $observer = new Observer();
         $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
         $observation = $observer->observe($pdo, $sql, $ordered);
         $observation = EngineReports::handles($sql) ? (new EngineReports())->comparable($observation, $dsn === $this->memory) : $observation;
         $observation = $identities?->comparable($pdo, $observation) ?? $observation;
         $observation = $processes?->comparable($pdo, $observation) ?? $observation;
+        $observation = $status?->comparable($observation, $dsn === $this->memory) ?? $observation;
         $observation['tables'] = $observer->tables($pdo, self::DATABASE);
         $observation = $passwords?->comparable($pdo, $observation) ?? $observation;
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
