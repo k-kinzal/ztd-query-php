@@ -258,7 +258,8 @@ final class AlterTableCommand implements Command
      * Checks whether WITH or WITHOUT VALIDATION accompanies an operation that accepts it.
      *
      * Column additions, changes and renames accept validation. Tablespace operations,
-     * partition maintenance other than REBUILD, and partition exchange ignore or own it.
+     * partition maintenance other than REBUILD, partition exchange and secondary-engine
+     * loading ignore or own it.
      * Other operations refuse it before opening their table. Verified on MySQL 8.4.7.
      *
      * @param list<AlterCommand> $commands
@@ -270,6 +271,7 @@ final class AlterTableCommand implements Command
         $accepted = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumn || $command instanceof AddColumns
             || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Column\ChangeColumn || $command instanceof ExchangePartition
             || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\TablespaceCommand
+            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\SecondaryLoad
             || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement && $command->kind === ElementKind::Column
             || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions && $command->kind !== \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild) !== [];
         if ($validated && !$accepted) {

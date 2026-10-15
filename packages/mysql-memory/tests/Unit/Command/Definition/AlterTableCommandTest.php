@@ -178,6 +178,18 @@ final class AlterTableCommandTest extends TestCase
         (new AlterTableCommand())->validation($statement->commands);
     }
 
+    public function testExecuteOpensTheTableBeforeSecondaryValidation(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1146);
+        $this->expectExceptionMessage("Table 'd.t' doesn't exist");
+
+        $session->query('ALTER TABLE t WITH VALIDATION, SECONDARY_LOAD');
+    }
+
     public function testRequestAnswersDropIndexAsAnAction(): void
     {
         $session = (new Instance())->connect();
