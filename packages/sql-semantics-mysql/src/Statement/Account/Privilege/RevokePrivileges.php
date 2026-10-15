@@ -8,8 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
@@ -37,7 +36,7 @@ final class RevokePrivileges implements Statement
     use Snapshot;
 
     /**
-     * @var non-empty-list<Grantable> The revoked privileges in order; ALL stands alone
+     * @var non-empty-list<Privilege> The revoked privileges in order; ALL stands alone
      */
     public readonly array $privileges;
 
@@ -48,7 +47,7 @@ final class RevokePrivileges implements Statement
 
     /**
      * @param bool $ifExists Whether IF EXISTS is written
-     * @param list<Grantable> $privileges The revoked privileges in order; ALL stands alone
+     * @param list<Privilege> $privileges The revoked privileges in order; ALL stands alone
      * @param ObjectKind $kind The kind of object the level names
      * @param PrivilegeLevel $level The privilege level
      * @param list<UserSpecification> $users The accounts privileges are revoked from; at least one
@@ -62,11 +61,10 @@ final class RevokePrivileges implements Statement
         array $users,
         public readonly bool $ignoreUnknownUser = false,
     ) {
-        $this->privileges = Check::listOf($privileges, Grantable::class, 'REVOKE names at least one privilege.', 1);
+        $this->privileges = Check::listOf($privileges, Privilege::class, 'REVOKE names at least one privilege.', 1);
         $this->users = Check::listOf($users, UserSpecification::class, 'REVOKE names at least one account.', 1);
         foreach ($this->privileges as $privilege) {
             Check::input(!$privilege instanceof AllPrivileges || count($this->privileges) === 1, 'ALL is the only item of its list.');
-            Check::input(!$privilege instanceof GrantedRole || $privilege->role->host !== null, 'A role without a host in a privilege list reads as a dynamic privilege.');
         }
         foreach ($this->users as $user) {
             Check::input($user->granted(), 'A REVOKE account is a named account with at most one authentication method.');

@@ -96,6 +96,17 @@ final class ComparisonTest extends TestCase
         self::assertSame('the declaration of relation t', $left->type->missing[0]->describe());
     }
 
+    public function testDeriveScalarLocatesTheOperandWidthDiagnostic(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 WHERE (1,2)=(3,4,5)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $diagnostic = $operation->facts->diagnostics[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $diagnostic);
+        self::assertSame($operation->statement->query->where, $diagnostic->expression);
+        self::assertSame([2, 3], [$diagnostic->expected, $diagnostic->actual]);
+    }
+
     public function testRenderWritesTheOperandsAroundTheOperatorInTheOrderWritten(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('select a from t where 10 <= a');

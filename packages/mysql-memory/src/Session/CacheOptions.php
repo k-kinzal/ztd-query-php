@@ -103,7 +103,7 @@ final class CacheOptions
     {
         $cause = $this->cause($error);
         $end ??= $cause?->token->offset ?? strlen($statement);
-        $database = (new Parse\RoutinePrefix())->database($statement, $end, $session);
+        $database = (new Parse\RoutinePrefix())->database($statement, $end, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $end, $session);
         if ($database !== null) {
             return $database;
         }

@@ -65,7 +65,7 @@ final class GrantRule
                 $this->admin($form->node(4)),
             ),
             'grant: GRANT role_or_privilege_list ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => new GrantPrivileges(
-                $privileges->items($form->node(1), false),
+                $privileges->granted($form->node(1), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
                 $privileges->kind($form->node(3)),
                 $privileges->level($form->node(4)),
                 $this->specifications($form->node(6)),
@@ -123,7 +123,7 @@ final class GrantRule
             ),
             'revoke: REVOKE if_exists role_or_privilege_list ON_SYM opt_acl_type grant_ident FROM user_list opt_ignore_unknown_user' => new RevokePrivileges(
                 $ifExists,
-                $privileges->items($form->node(2), false),
+                $privileges->granted($form->node(2), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
                 $privileges->kind($form->node(4)),
                 $privileges->level($form->node(5)),
                 $this->specifications($form->node(7)),

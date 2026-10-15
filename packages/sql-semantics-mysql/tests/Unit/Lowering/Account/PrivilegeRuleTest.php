@@ -25,6 +25,14 @@ final class PrivilegeRuleTest extends TestCase
         (new Semantics(Dialect::MySql))->analyze('GRANT r, UPDATE TO u');
     }
 
+    public function testGrantedRefusesARoleBeforePublishingTheStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('r@h is not a privilege');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT, r@h ON *.* TO u');
+    }
+
     public function testItemsLowersTheList(): void
     {
         self::assertSame('GRANT SELECT, INSERT (a), CREATE ROLE, DROP ROLE ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select, insert (a), create role, drop role on *.* to u')->toString());

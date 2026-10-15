@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $privilege = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT (a, b) ON t TO u')->statement->privileges[0];
  *     [$privilege->kind, count($privilege->columns)] // => [\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, 2]
  */
-final class StaticPrivilege implements Grantable
+final class StaticPrivilege implements Privilege
 {
     use Snapshot;
 

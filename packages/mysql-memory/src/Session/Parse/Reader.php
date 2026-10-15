@@ -52,7 +52,7 @@ final class Reader
             }
             (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy(), $rejection?->aborts === true ? $rejection->end : PHP_INT_MAX);
         }
-        $databaseError = $rejection === null ? null : (new RoutinePrefix())->database($statement, $rejection->end, $session);
+        $databaseError = $rejection === null ? null : ((new RoutinePrefix())->database($statement, $rejection->end, $session) ?? (new Entry\PrivilegeInput())->database($statement, $rejection->end, $session));
         if ($databaseError !== null) {
             throw $databaseError;
         }

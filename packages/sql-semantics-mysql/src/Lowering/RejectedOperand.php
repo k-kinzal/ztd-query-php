@@ -24,6 +24,10 @@ final class RejectedOperand
      */
     public function of(Node $node, Lowering $lowering): ?RejectedInput
     {
+        $privileges = (new Account\SyntaxPrivileges())->completed($node, $lowering);
+        if ($privileges !== null) {
+            return new RejectedInput($privileges->problem, (new SourceRanges())->span($node)[1] ?? 0, true);
+        }
         $roles = (new Account\SyntaxRoles())->completed($node, $lowering);
         if ($roles !== []) {
             return new RejectedInput($roles[0]->problem, (new SourceRanges())->span($node)[1] ?? 0, $roles[0]->aborts);

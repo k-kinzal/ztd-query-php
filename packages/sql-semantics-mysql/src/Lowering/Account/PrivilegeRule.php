@@ -173,6 +173,29 @@ final class PrivilegeRule
     }
 
     /**
+     * Publishes privilege operands, rejecting a role with a host at the input boundary.
+     *
+     * @return non-empty-list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege>
+     * @throws \SqlSemantics\Construction\RejectedInput When a role is used as a privilege
+     */
+    public function granted(Node $list, int $end): array
+    {
+        $privileges = [];
+        foreach ($this->spine($list) as $node) {
+            $item = $this->item($node, false);
+            if ($item instanceof GrantedRole) {
+                $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch((new \SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks())->describe($item), false, (new \SqlSemantics\Construction\SourceRanges())->span($node)[0] ?? 0);
+                throw new \SqlSemantics\Construction\RejectedInput($problem, $end, true);
+            }
+            Check::invariant($item instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege, 'A non-role item is a privilege.');
+            $privileges[] = $item;
+        }
+        Check::invariant($privileges !== [], 'A privilege list holds at least one privilege.');
+
+        return $privileges;
+    }
+
+    /**
      * Lowers one role_or_privilege or object_privilege.
      *
      * @throws ImplementationGap When the production has no rule
@@ -215,7 +238,7 @@ final class PrivilegeRule
     /**
      * Lowers a MySQL 5.x grant_privileges: ALL [PRIVILEGES] or a list of privileges.
      *
-     * @return non-empty-list<Grantable>
+     * @return non-empty-list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege>
      * @throws ImplementationGap When a production has no rule
      */
     public function privileges(Node $privileges): array
@@ -230,7 +253,7 @@ final class PrivilegeRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->items($form->node(0), false);
+        return $this->granted($form->node(0), (new \SqlSemantics\Construction\SourceRanges())->span($privileges)[1] ?? 0);
     }
 
     /**
