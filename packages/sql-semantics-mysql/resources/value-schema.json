@@ -3066,6 +3066,7 @@
         "shortMonths": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Settings": {
+        "allowInvalidDates": "bool",
         "blockEncryptionMode": "string",
         "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
         "connection": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
@@ -3074,6 +3075,8 @@
         "explicitDefaultsForTimestamp": "?bool",
         "functions": "array",
         "groupConcatMaxLen": "int",
+        "noZeroDate": "bool",
+        "noZeroInDate": "bool",
         "parameters": "array",
         "program": "array",
         "schemas": "array",

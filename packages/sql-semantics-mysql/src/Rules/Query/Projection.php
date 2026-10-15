@@ -63,7 +63,7 @@ final class Projection
                     $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName($item->alias), $item);
                 }
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
-                $name = (new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client))->name($item, $environment);
+                $name = (new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client, Settings::of($derivation->context)))->name($item, $environment);
                 $slot = $name instanceof Name ? new OutputSlot($name, $fact->type, $fact->nullability, null, $origin) : new OutputSlot(null, $fact->type, $fact->nullability, null, $origin, [$name]);
                 $field = new Field(count($fields), $slot, $item->expression, $fact->resolution);
                 $fields[] = $field;
@@ -86,7 +86,7 @@ final class Projection
     public function scope(array $items, Derivation $derivation, ?Environment $environment = null): ProjectionScope
     {
         $declared = [];
-        $naming = new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client);
+        $naming = new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client, Settings::of($derivation->context));
         foreach ($items as $position => $item) {
             if ($item instanceof SelectExpression) {
                 $declared[$position] = [$naming->name($item, $environment), $item->expression];

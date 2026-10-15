@@ -412,6 +412,28 @@ final class AssignerTest extends TestCase
         self::assertSame([['1', '1']], $result->rows);
     }
 
+    public function testDeprecatedWarnsOfIndividualModesInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("SET sql_mode='NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO'");
+
+        self::assertSame([
+            ['Warning', 1681, "'ERROR_FOR_DIVISION_BY_ZERO' is deprecated and will be removed in a future release."],
+            ['Warning', 1681, "'NO_ZERO_DATE' is deprecated and will be removed in a future release."],
+            ['Warning', 1681, "'NO_ZERO_IN_DATE' is deprecated and will be removed in a future release."],
+        ], $session->diagnostics->conditions);
+    }
+
+    public function testDeprecatedWarnsOfIncompleteStrictFlagsInModernMySql(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query("SET sql_mode = 'STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE'");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(['3135'], array_column($warnings->rows, 1));
+    }
+
     public function testDeprecatedWarnsOfTheModesOfMySql57(): void
     {
         $session = (new Instance('5.7.44'))->connect();

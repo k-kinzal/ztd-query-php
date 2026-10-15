@@ -37,6 +37,18 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Medium]
 final class ItemNamingTest extends TestCase
 {
+    public function testOwnResolvesCalendarDependentOdbcNamesWithoutNarrowingLayouts(): void
+    {
+        $profile = (new Semantics(Dialect::MySql))->profile();
+        $settings = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::defaults($profile->grammar);
+        $naming = new ItemNaming($profile, null, $settings);
+        $escape = new OdbcEscape(new Name('d'), new StringLiteral(['2024-02-31']));
+
+        self::assertSame(['2024-02-31', 'client'], $naming->own($escape));
+        self::assertTrue($naming->keeps($escape));
+        self::assertNull((new ItemNaming($profile))->own($escape));
+    }
+
     public function testNameAnswersTheAliasTheColumnNameOrTheText(): void
     {
         $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);

@@ -20,6 +20,10 @@ final class SettingsTest extends TestCase
 {
     public function testDefaultsFollowTheRelease(): void
     {
+        self::assertTrue(Settings::defaults(GrammarRelease::MySql847)->noZeroDate);
+        self::assertTrue(Settings::defaults(GrammarRelease::MySql5744)->noZeroInDate);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql5651)->noZeroDate);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql847)->allowInvalidDates);
         self::assertSame('utf8mb4_0900_ai_ci', Settings::defaults(GrammarRelease::MySql847)->connection->name);
         self::assertSame('latin1_swedish_ci', Settings::defaults(GrammarRelease::MySql5744)->connection->name);
         self::assertSame(4, Settings::defaults(GrammarRelease::MySql847)->divPrecisionIncrement);

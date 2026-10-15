@@ -20,7 +20,8 @@ use SqlSemantics\Statement\Snapshot;
  * GROUP_CONCAT; character_set_client names the select items named after their text. A statement
  * of a running stored program sees the parameters and local variables in scope there, and the
  * type each stored function returns types its calls; block_encryption_mode sizes the result of
- * AES_ENCRYPT. A context without settings resolves as a
+ * AES_ENCRYPT. Calendar mode flags determine whether an ODBC escape denotes a
+ * temporal literal or its string operand, including its output type and name. A context without settings resolves as a
  * new session with the server defaults.
  *
  * @visibility public
@@ -67,6 +68,9 @@ final class Settings implements Session
      * @param Locale|null $timeNames The locale of the names of months and days (lc_time_names); en_US when null
      * @param string $blockEncryptionMode The mode of AES_ENCRYPT and AES_DECRYPT (block_encryption_mode), whose stream modes do not pad
      * @param bool $strict Whether STRICT_TRANS_TABLES or STRICT_ALL_TABLES is enabled; string calls are reported as nullable in either mode
+     * @param bool $noZeroDate Whether temporal literals reject the all-zero date
+     * @param bool $noZeroInDate Whether temporal literals reject zero months and days
+     * @param bool $allowInvalidDates Whether bounded dates need not exist in the calendar
      * @param bool|null $explicitDefaultsForTimestamp Whether unqualified TIMESTAMP columns are nullable; null when the session does not say
      */
     public function __construct(
@@ -86,6 +90,9 @@ final class Settings implements Session
         public readonly bool $derivedMerge = true,
         public readonly bool $strict = true,
         public readonly ?bool $explicitDefaultsForTimestamp = null,
+        public readonly bool $noZeroDate = true,
+        public readonly bool $noZeroInDate = true,
+        public readonly bool $allowInvalidDates = false,
     ) {
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
         $routines = [];
@@ -112,7 +119,7 @@ final class Settings implements Session
     {
         $old = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
 
-        return new self(Charset::known($old ? 'latin1' : 'utf8mb4')->defaultCollation($release), strict: $release !== GrammarRelease::MySql5651, explicitDefaultsForTimestamp: !$old);
+        return new self(Charset::known($old ? 'latin1' : 'utf8mb4')->defaultCollation($release), strict: $release !== GrammarRelease::MySql5651, explicitDefaultsForTimestamp: !$old, noZeroDate: $release !== GrammarRelease::MySql5651, noZeroInDate: $release !== GrammarRelease::MySql5651);
     }
 
     /**

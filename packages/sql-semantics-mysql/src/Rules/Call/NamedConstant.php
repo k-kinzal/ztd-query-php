@@ -45,11 +45,11 @@ final class NamedConstant
         if ($call->schema !== null || count($call->arguments) !== 2 || $call->named() || strcasecmp($call->name->value, 'NAME_CONST') !== 0) {
             return null;
         }
-        $name = $this->unwrapped($call->arguments[0]->expression);
-        $value = $this->unwrapped($call->arguments[1]->expression);
+        $name = $this->unwrapped($call->arguments[0]->expression, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context));
+        $value = $this->unwrapped($call->arguments[1]->expression, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context));
         $modified = $value instanceof Collated || ($value instanceof Unary && $value->operator === UnaryOperator::Minus);
         if ($modified) {
-            $value = $this->unwrapped($value->operand);
+            $value = $this->unwrapped($value->operand, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context));
         }
         $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $validName = $this->literal($name) || $name instanceof BooleanLiteral || $name instanceof TemporalLiteral;
@@ -74,10 +74,10 @@ final class NamedConstant
     /**
      * Removes wrappers which preserve a literal's identity, including ODBC escapes.
      */
-    public function unwrapped(Scalar $node): Scalar
+    public function unwrapped(Scalar $node, ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings $settings = null): Scalar
     {
         while ($node instanceof Grouped || ($node instanceof Unary && $node->operator === UnaryOperator::Plus) || $node instanceof OdbcEscape) {
-            $node = $node instanceof OdbcEscape ? ($node->literal() ?? $node->operand) : $node->operand;
+            $node = $node instanceof OdbcEscape ? ($node->literal($settings) ?? $node->operand) : $node->operand;
         }
 
         return $node;

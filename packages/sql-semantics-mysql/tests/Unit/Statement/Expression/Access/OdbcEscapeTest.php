@@ -57,6 +57,13 @@ final class OdbcEscapeTest extends TestCase
         self::assertNull((new OdbcEscape(new Name('d'), new NumberLiteral('1')))->literal());
     }
 
+    public function testLiteralKeepsUnrepresentableTemporalTextAsAString(): void
+    {
+        self::assertNull((new OdbcEscape(new Name('d'), new StringLiteral(['bad'])))->literal());
+        self::assertNull((new OdbcEscape(new Name('t'), new StringLiteral(['839:00:00'])))->literal());
+        self::assertNull((new OdbcEscape(new Name('ts'), new StringLiteral(['2024-13-01 00:00:00'])))->literal());
+    }
+
     public function testRenderWritesTheBraces(): void
     {
         $platform = new Platform();

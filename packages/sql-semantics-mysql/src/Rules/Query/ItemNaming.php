@@ -92,9 +92,10 @@ final class ItemNaming
 
     /**
      * @param LanguageProfile $profile The profile whose release and codec the name follows
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings|null $settings Session-dependent interpretation of ODBC temporal escapes
      * @param Charset|null $client The character set of the session's character_set_client; null when it is not known
      */
-    public function __construct(private readonly LanguageProfile $profile, private readonly ?Charset $client = null)
+    public function __construct(private readonly LanguageProfile $profile, private readonly ?Charset $client = null, private readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings $settings = null)
     {
     }
 
@@ -138,7 +139,7 @@ final class ItemNaming
      */
     public function keeps(Scalar $expression): bool
     {
-        $own = $this->own($expression);
+        $own = $this->own($expression, false);
 
         return $own === null || ($own instanceof ColumnUse && $own->qualifier === null);
     }
@@ -167,9 +168,9 @@ final class ItemNaming
      *
      * @return ColumnUse|Name|array{string, string}|null
      */
-    public function own(Scalar $expression): ColumnUse|Name|array|null
+    public function own(Scalar $expression, bool $resolved = true): ColumnUse|Name|array|null
     {
-        $expression = $this->unwrapped($expression);
+        $expression = $this->unwrapped($expression, $resolved);
 
         return match (true) {
             $expression instanceof ColumnUse => $expression,
@@ -187,9 +188,9 @@ final class ItemNaming
      * Answers the expression an item is named by: the operand of the parentheses, unary plus and
      * ODBC escapes that stand for their operand around it, which create no item in the server.
      */
-    public function unwrapped(Scalar $expression): Scalar
+    public function unwrapped(Scalar $expression, bool $resolved = true): Scalar
     {
-        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus) || ($expression instanceof OdbcEscape && $expression->literal() === null)) {
+        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus) || ($expression instanceof OdbcEscape && $expression->literal($resolved ? $this->settings : null) === null)) {
             $expression = $expression->operand;
         }
 
@@ -204,7 +205,7 @@ final class ItemNaming
      */
     public function constant(Scalar $argument): string
     {
-        $argument = (new \SqlSemantics\Platform\MySql\Rules\Call\NamedConstant())->unwrapped($argument);
+        $argument = (new \SqlSemantics\Platform\MySql\Rules\Call\NamedConstant())->unwrapped($argument, $this->settings);
         if ($argument instanceof StringLiteral) {
             return $argument->value();
         }

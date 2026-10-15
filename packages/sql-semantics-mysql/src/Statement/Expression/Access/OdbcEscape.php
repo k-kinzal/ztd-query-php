@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * server reads a DATE, TIME or TIMESTAMP literal; with any other kind or
  * operand the escape stands for its operand, and names its column as the
  * operand does. A string that is no value of the kind stands for itself too,
- * which these facts do not tell (verified on a live 8.4 server).
+ * which is checked before constructing a temporal value (verified on a live 8.4 server).
  *
  * Rule: MYSQL-ODBC-ESCAPE-001. Facts: the type of the temporal literal and
  * never NULL for the temporal kinds over a string literal; otherwise the
@@ -59,15 +59,24 @@ final class OdbcEscape implements Scalar
 
     /**
      * Answers the temporal literal the escape reads, or null when it stands for its operand.
+     * Without settings this answers potential interpretation under a permissive calendar mode.
+     *
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings|null $settings Calendar settings when resolving in a known session
      *
      * @example A date escape
      *     (new \SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape(new \SqlSemantics\Statement\Identifier\Name('d'), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['2024-01-31'])))->literal()?->form // => \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date
      */
-    public function literal(): ?TemporalLiteral
+    public function literal(?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings $settings = null): ?TemporalLiteral
     {
         $form = self::FORMS[$this->kind->value] ?? null;
 
-        return $form !== null && $this->operand instanceof StringLiteral ? new TemporalLiteral($form, $this->operand->value()) : null;
+        if ($form === null || !$this->operand instanceof StringLiteral) {
+            return null;
+        }
+        $text = $this->operand->value();
+        $kind = $form === TemporalForm::Timestamp ? 'DATETIME' : $form->value;
+
+        return \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($kind, $text, 6, $settings->noZeroDate ?? false, $settings->noZeroInDate ?? false, $settings->allowInvalidDates ?? true) === null ? null : new TemporalLiteral($form, $text);
     }
 
     /**
@@ -76,7 +85,7 @@ final class OdbcEscape implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->operand, $environment);
-        $literal = $this->literal();
+        $literal = $this->literal(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context));
         if ($literal !== null) {
             return new ScalarFact(new Known(Literals::of($derivation->context)->temporal($literal)), Nullability::NotNull);
         }

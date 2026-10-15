@@ -267,11 +267,17 @@ final class Assigner
     }
 
     /**
-     * Records the warnings MySQL 5.7 raises for a new sql_mode: that NO_ZERO_DATE, NO_ZERO_IN_DATE and ERROR_FOR_DIVISION_BY_ZERO belong with a strict mode, unless the modes hold all of them with a strict mode or none of them, then that changing NO_AUTO_CREATE_USER from the mode of the session is deprecated (verified on a live 5.7.44 server).
+     * Records individual deprecated mode warnings in MySQL 5.6 and the warnings MySQL 5.7 and later raise for a new sql_mode: that NO_ZERO_DATE, NO_ZERO_IN_DATE and ERROR_FOR_DIVISION_BY_ZERO belong with a strict mode, unless the modes hold all of them with a strict mode or none of them, then, in MySQL 5.7, that changing NO_AUTO_CREATE_USER from the mode of the session is deprecated (verified on a live 5.7.44 server).
      */
     public function deprecated(SqlModes $modes): void
     {
-        if ($modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+        if ($modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            foreach (['ERROR_FOR_DIVISION_BY_ZERO', 'NO_ZERO_DATE', 'NO_ZERO_IN_DATE'] as $name) {
+                if ($modes->has($name)) {
+                    $this->context->diagnostics->warning(1681, "'" . $name . "' is deprecated and will be removed in a future release.");
+                }
+            }
+
             return;
         }
         $held = count(array_filter(['NO_ZERO_DATE', 'NO_ZERO_IN_DATE', 'ERROR_FOR_DIVISION_BY_ZERO'], $modes->has(...)));
@@ -279,7 +285,7 @@ final class Assigner
         if (!($strict && $held === 3) && !(!$strict && $held === 0)) {
             $this->context->diagnostics->warning(3135, "'NO_ZERO_DATE', 'NO_ZERO_IN_DATE' and 'ERROR_FOR_DIVISION_BY_ZERO' sql modes should be used with strict mode. They will be merged with strict mode in a future release.");
         }
-        if ($modes->has('NO_AUTO_CREATE_USER') !== $this->context->modes->has('NO_AUTO_CREATE_USER')) {
+        if ($modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $modes->has('NO_AUTO_CREATE_USER') !== $this->context->modes->has('NO_AUTO_CREATE_USER')) {
             $this->context->diagnostics->warning(3090, "Changing sql mode 'NO_AUTO_CREATE_USER' is deprecated. It will be removed in a future release.");
         }
     }
