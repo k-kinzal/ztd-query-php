@@ -16,6 +16,7 @@ use SqlSemantics\Contract\GrammarRelease;
 
 /**
  * Shares installation inputs before a generated structure is observed.
+ * The remote root fixture has no PROXY grants on either server, independently of image defaults.
  * No target SQL, target response, implementation, or stored routine body is imported.
  */
 final class Fixture
@@ -27,6 +28,8 @@ final class Fixture
     public function session(Endpoint $endpoint, mysqli $native, string $release, bool $supervised): Session
     {
         $bootstrap = new PDO('mysql:host=' . $endpoint->host . ';port=' . $endpoint->port, $endpoint->username, $endpoint->password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $bootstrap->exec('DELETE FROM mysql.proxies_priv WHERE User = ' . $bootstrap->quote($endpoint->username) . " AND Host = '%'");
+        $bootstrap->exec('FLUSH PRIVILEGES');
         $servers = new Servers();
         $identity = $servers->rows($bootstrap, 'SELECT USER()')[0][0];
         $host = substr($identity, (int) strrpos($identity, '@') + 1);

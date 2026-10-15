@@ -50,7 +50,8 @@ final class ShowDatabasesCommand implements Command
             $names = ['information_schema', ...array_values(array_diff($names, ['information_schema']))];
         }
         $heading = 'Database' . ($statement->filter instanceof ShowLike ? ' (' . $statement->filter->pattern->value . ')' : '');
-        $headings = [Heading::text($heading, Field::VarString, 64, 4225, 0, $heading, 'SCHEMATA', 'schemata')];
+        $legacy = $session->settings()->legacy();
+        $headings = [Heading::text($heading, Field::VarString, 64, $legacy ? 1 : 4225, 0, $legacy ? 'SCHEMA_NAME' : $heading, 'SCHEMATA', $legacy ? 'SCHEMATA' : 'schemata', $legacy ? 'information_schema' : '')];
 
         return (new Listing($headings))->result(array_map(static fn (string $name): array => [$name], $names), $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
     }

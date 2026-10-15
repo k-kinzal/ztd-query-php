@@ -100,4 +100,17 @@ final class ShowGrantsCommandTest extends TestCase
         self::assertSame(1024, $grants->columns[0]->length);
         self::assertSame([["GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION"], ["GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION"]], $grants->rows);
     }
+    public function testExecuteConvertsGrantColumnCapacityToTheResultsCharset(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('SET character_set_results = utf8mb4');
+        $grants = $session->query('SHOW GRANTS')[0];
+        self::assertInstanceOf(ResultSet::class, $grants);
+        self::assertSame([4096, 45], [$grants->columns[0]->length, $grants->columns[0]->charset]);
+        $session->query('SET character_set_results = NULL');
+        $original = $session->query('SHOW GRANTS')[0];
+        self::assertInstanceOf(ResultSet::class, $original);
+        self::assertSame([1024, 8], [$original->columns[0]->length, $original->columns[0]->charset]);
+    }
+
 }

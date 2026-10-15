@@ -50,6 +50,9 @@ final class Comparison
                 $actual = (new Memory())->observe($session, $node, $this->parameters($node, $session));
                 $expected = (new Native())->observe($native, $sql, count((new Bindings())->nulls($node)));
 
+                $actual = (new CatalogRows())->comparable($node, $actual);
+                $expected = (new CatalogRows())->comparable($node, $expected);
+
                 return ['sql' => $sql, 'profile' => $profile->grammar->value, 'mode' => $mode, 'native' => $expected, 'memory' => $actual, 'matches' => $expected === $actual];
             } finally {
                 $native->close();
