@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Lowering\Routine\Program;
+
+use SqlParser\Parser\Node;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
+
+/**
+ * Retains system-variable lookup at completion of a stored-program statement.
+ *
+ * The existing prefix derivation supplies the lookup. Local-variable and
+ * condition references cannot be judged without enclosing scopes and are
+ * left to complete-program analysis. No statement is executed here.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class SyntaxStatements
+{
+    /**
+     * Answers a completed statement's global variable-name refusal.
+     */
+    public function completed(Node $node, Lowering $lowering): ?ParseFailure
+    {
+        if (!in_array($node->name, ['sp_proc_stmt', 'ev_sql_stmt_inner'], true)) {
+            return null;
+        }
+        $prefix = new InputPrefix($lowering);
+        $frame = new PrefixFrame();
+        $parameters = $prefix->completed($node, $frame, new ParameterList([]));
+        if ($parameters instanceof RejectedInput) {
+            return new ParseFailure($parameters->problem, $parameters->aborts);
+        }
+        $problem = $prefix->diagnostic($frame->body(), $parameters);
+
+        return $problem instanceof UnknownSystemVariable ? new ParseFailure($problem, true) : null;
+    }
+}

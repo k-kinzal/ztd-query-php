@@ -41,11 +41,25 @@ final class CacheOptions
      */
     public function reported(SqlError $error, string $statement, Session $session): SqlError
     {
+        for ($refusal = $error->getPrevious(); $refusal !== null; $refusal = $refusal->getPrevious()) {
+            if ($refusal instanceof \SqlSemantics\Construction\RejectedInput && $refusal->aborts) {
+                return $error;
+            }
+        }
         $release = $session->settings()->release();
-        $cause = $this->cause($error);
         if ($error->error !== StatementError::ParseError || ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744)) {
             return (new Parse\ModernWarnings())->reported($error, $statement, $session);
         }
+        return $this->legacy($error, $statement, $session);
+    }
+
+    /**
+     * Records unfinished legacy input diagnostics before a later parse error.
+     */
+    public function legacy(SqlError $error, string $statement, Session $session): SqlError
+    {
+        $release = $session->settings()->release();
+        $cause = $this->cause($error);
         try {
             $tokens = $session->semantics()->parser()->tokenize($statement);
         } catch (LexicalException) {
@@ -85,13 +99,18 @@ final class CacheOptions
     /**
      * Answers a typed condition refusal completed before a later syntax error.
      */
-    public function condition(SqlError $error, string $statement, Session $session): ?SqlError
+    public function condition(SqlError $error, string $statement, Session $session, ?int $end = null): ?SqlError
     {
         $cause = $this->cause($error);
+        $end ??= $cause?->token->offset ?? strlen($statement);
+        $database = (new Parse\RoutinePrefix())->database($statement, $end, $session);
+        if ($database !== null) {
+            return $database;
+        }
         $parser = $session->semantics()->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
-        $temporal = (new Parse\TemporalInput())->before($statement, $cause?->token->offset ?? strlen($statement), $session);
-        foreach ((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $cause?->token->offset ?? strlen($statement), $session->semantics()->profile()) as [$offset, $notice]) {
+        $temporal = (new Parse\TemporalInput())->before($statement, $end, $session);
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile()) as [$offset, $notice]) {
             if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->aborts) {
                 if ($temporal !== null && $temporal[0] < $offset) {
                     break;
@@ -99,7 +118,7 @@ final class CacheOptions
                 return (new Parse\Reader())->rejection(new \SqlSemantics\Construction\RejectedInput($notice->problem, $offset), $statement, $session);
             }
         }
-        return $temporal === null ? null : $this->literal($temporal[1], $temporal[0], $statement, $session);
+        return $temporal === null ? null : ($temporal[1]->recorded ? $temporal[1] : $this->literal($temporal[1], $temporal[0], $statement, $session));
     }
 
     /**

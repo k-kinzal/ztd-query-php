@@ -33,7 +33,13 @@ final class RoutinePrefix
         }
         $parser = $session->semantics()->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
-        if (strtoupper($parser->tokenize($statement)[0]->text ?? '') !== 'CREATE') {
+        try {
+            $tokens = $parser->tokenize($statement);
+        } catch (SourceException $failure) {
+            $statement = substr($statement, 0, $failure->offset);
+            $tokens = $parser->tokenize($statement);
+        }
+        if (strtoupper($tokens[0]->text ?? '') !== 'CREATE') {
             return null;
         }
         $missing = false;

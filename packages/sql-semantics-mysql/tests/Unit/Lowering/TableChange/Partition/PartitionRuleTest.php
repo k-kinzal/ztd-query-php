@@ -25,9 +25,16 @@ final class PartitionRuleTest extends TestCase
         self::assertSame('ALTER TABLE t FORCE PARTITION BY HASH (a)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t FORCE PARTITION BY HASH (a)')->toString());
     }
 
-    public function testEntryLowersThePartitionEntry(): void
+    public function testEntryRejectsThePartitionEntry(): void
     {
-        self::assertSame('PARTITION BY KEY ()', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('PARTITION BY KEY ()')->toString());
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('A partitioning clause is not a statement a client can send.');
+
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $entry = $semantics->parser()->parse('PARTITION BY KEY ()')->find('partition_entry')[0];
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering(\SqlSemantics\Lowering\Productions::load(dirname(__DIR__, 5) . '/resources/productions/mysql-5.7.44.php'), new \SqlSemantics\Lowering\Leaves(), $semantics->profile());
+
+        (new PartitionRule($lowering))->entry($entry);
     }
 
     public function testClauseLowersEveryPart(): void

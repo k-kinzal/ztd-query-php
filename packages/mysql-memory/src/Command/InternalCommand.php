@@ -11,7 +11,6 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry;
 use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Operation;
@@ -33,7 +32,7 @@ final class InternalCommand implements Command
     /**
      * @var list<class-string<Statement>> The structures rejected before their operands are evaluated
      */
-    public const STATEMENTS = [PartitionEntry::class, ParseGeneratedColumn::class, ShowParseTree::class];
+    public const STATEMENTS = [ParseGeneratedColumn::class, ShowParseTree::class];
 
     /**
      * Answers true.
@@ -73,12 +72,10 @@ final class InternalCommand implements Command
     {
         $this->operands($operation);
         $statement = $operation->statement;
-        assert($statement instanceof PartitionEntry || $statement instanceof ParseGeneratedColumn || $statement instanceof ShowParseTree);
+        assert($statement instanceof ParseGeneratedColumn || $statement instanceof ShowParseTree);
         $text = $operation->toString();
         $near = mb_strcut($statement instanceof ShowParseTree ? substr($text, 5) : $text, 0, 80, 'UTF-8');
 
-        return new SqlError(StatementError::ParseError, $statement instanceof PartitionEntry
-            ? "Partitioning can not be used stand-alone in query near '" . $near . "' at line 1"
-            : StatementError::ParseError->message($near, 1));
+        return new SqlError(StatementError::ParseError, StatementError::ParseError->message($near, 1));
     }
 }

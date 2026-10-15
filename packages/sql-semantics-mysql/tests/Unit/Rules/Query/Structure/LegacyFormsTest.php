@@ -15,6 +15,15 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
 #[Small]
 final class LegacyFormsTest extends TestCase
 {
+    public function testDefinitionDistinguishesLegacyInsertWildcardsFromColumnNames(): void
+    {
+        $forms = new LegacyForms();
+        $name = new \SqlSemantics\Statement\Identifier\Name('t');
+
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList([new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard(new \SqlSemantics\Statement\Identifier\QualifiedName($name))])));
+        self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList([new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($name)])));
+    }
+
     public function testGrantDistinguishesProxyAuthenticationFromPlainAccounts(): void
     {
         $forms = new LegacyForms();

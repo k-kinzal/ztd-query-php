@@ -60,4 +60,15 @@ final class TemporalInputTest extends TestCase
         self::assertSame([7, 1525], [$found[0], $found[1]->getCode()]);
         self::assertNull((new TemporalInput())->before("SELECT DATE 'bad'", 7, $session));
     }
+
+    public function testBeforeInterpretsACompletedProgramStatementBeforeLaterInvalidSyntax(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $sql = "CREATE PROCEDURE d.p() BEGIN SELECT DATE 'bad'; PARTITION BROKEN; END";
+        $found = (new TemporalInput())->before($sql, strlen($sql), $session);
+
+        self::assertNotNull($found);
+        self::assertSame(1525, $found[1]->getCode());
+        self::assertNull((new TemporalInput())->before("SELECT DATE 'bad', broken syntax", 1000, $session));
+    }
 }

@@ -22,5 +22,6 @@ final class RoutinePrefixTest extends TestCase
         self::assertSame(1046, (new RoutinePrefix())->database($sql, strlen($sql), $session)?->getCode());
         self::assertNull((new RoutinePrefix())->database($sql, 10, $session));
         self::assertNull((new RoutinePrefix())->database("CREATE PROCEDURE d.p() BEGIN CALL q(); SIGNAL SQLSTATE '00000'; END", 1000, $session));
+        self::assertSame(1046, (new RoutinePrefix())->database("CREATE PROCEDURE p() SELECT 'unclosed", 1000, $session)?->getCode());
     }
 }

@@ -61,17 +61,14 @@ final class Syntax
     }
 
     /**
-     * Refuses PARSE_GCOL_EXPR, which the 5.7 grammar holds for the server to read generated columns with, as a syntax error at its start when a client sends it, and a partitioning clause sent alone, which the 5.6 and 5.7 grammars hold for the server to read the partitioning of a table with, as a syntax error that tells so (verified on live 5.6.51 and 5.7.44 servers).
+     * Refuses PARSE_GCOL_EXPR, which the 5.7 grammar holds for the server to read generated columns with, as a syntax error at its start when a client sends it (verified on a live 5.7.44 server).
      *
-     * @throws SqlError When the statement is PARSE_GCOL_EXPR or a partitioning clause
+     * @throws SqlError When the statement is PARSE_GCOL_EXPR
      */
     public function internal(\SqlSemantics\Statement\Statement $statement, string $text): void
     {
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn) {
             throw new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(ltrim($text), 0, 80, 'UTF-8'), 1));
-        }
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry) {
-            throw new SqlError(StatementError::ParseError, "Partitioning can not be used stand-alone in query near '" . mb_strcut(ltrim($text), 0, 80, 'UTF-8') . "' at line 1");
         }
     }
 
@@ -105,10 +102,10 @@ final class Syntax
      * @param string $following The statements written after this one in the same text, which the error quotes too
      * @throws SqlError When the statement holds a parameter marker
      */
-    public function markers(Node $tree, string $statement, string $following = '', bool $legacy = false): void
+    public function markers(Node $tree, string $statement, string $following = '', bool $legacy = false, int $end = PHP_INT_MAX): void
     {
         foreach ($tree->tokens() as $token) {
-            if ($token->text === '?' && $token->name === 'PARAM_MARKER') {
+            if ($token->offset < $end && $token->text === '?' && $token->name === 'PARAM_MARKER') {
                 throw $this->near($token->offset, $statement, $following, new SyntaxException($token, [], ''), $legacy);
             }
         }

@@ -86,6 +86,10 @@ final class SyntaxWarnings
      */
     public function rejected(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
     {
+        $entry = (new ClientEntry())->partition($tree->tokens()[0] ?? null, $profile);
+        if ($entry !== null) {
+            return $entry;
+        }
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
         $pending = [$tree];
         while ($pending !== []) {

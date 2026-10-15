@@ -39,19 +39,15 @@ final class Reader
     public function read(string $statement, bool $prepared, Session $session): Node
     {
         $semantics = $session->semantics();
-        try {
-            $tree = $semantics->parser()->parse($statement);
-        } catch (SourceException $error) {
-            throw (!$prepared ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->premature($error, $statement, $semantics->parser(), $session->following, $session->settings()->legacy()) : null) ?? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->error($error, $statement, $session->settings()->release(), $session->following, $semantics->parser());
-        }
+        $tree = $this->tree($statement, $prepared, $session);
+        $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
         if (!$prepared) {
             $listed = $session->settings()->release() === GrammarRelease::MySql5651 ? (new Clashes())->listed($tree, $session->variables->database) : null;
             if ($listed !== null) {
                 throw (new CacheOptions())->clashed($listed[0], $listed[1], $statement, $session);
             }
-            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy());
+            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy(), $rejection?->aborts === true ? $rejection->end : PHP_INT_MAX);
         }
-        $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
         $databaseError = $rejection === null ? null : (new RoutinePrefix())->database($statement, $rejection->end, $session);
         if ($databaseError !== null) {
             throw $databaseError;
@@ -67,6 +63,35 @@ final class Reader
         $session->dots = $session->settings()->release() === GrammarRelease::MySql5744 ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->dots($tree) : [];
         $session->hinted = (new \MySqlMemory\Hint\Hints())->syntax($tree, $statement, $session);
         $session->commented = str_contains($statement, '/*+');
+
+        return $tree;
+    }
+
+    /**
+     * Reads the parser tree, rejecting non-client entries before inspecting their operands.
+     *
+     * @throws SqlError When parsing or the client entry is refused
+     */
+    public function tree(string $statement, bool $prepared, Session $session): Node
+    {
+        $semantics = $session->semantics();
+        try {
+            $tree = $semantics->parser()->parse($statement);
+        } catch (SourceException $error) {
+            $tree = $error;
+        }
+        if ($tree instanceof SourceException) {
+            $entry = (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($semantics->parser(), $statement, $semantics->profile())
+                ?? (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->nested($semantics->parser(), $statement, $semantics->profile());
+            if ($entry !== null) {
+                throw (new Entry\PartitionInput())->refused($entry, $statement, $session);
+            }
+            throw (!$prepared ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->premature($tree, $statement, $semantics->parser(), $session->following, $session->settings()->legacy()) : null) ?? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->error($tree, $statement, $session->settings()->release(), $session->following, $semantics->parser());
+        }
+        $entry = (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->partition($tree->tokens()[0] ?? null, $semantics->profile());
+        if ($entry !== null) {
+            throw $this->rejection($entry, $statement, $session);
+        }
 
         return $tree;
     }
@@ -91,6 +116,11 @@ final class Reader
      */
     public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
+        $parser = $session->semantics()->parser();
+        $partition = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
+        if ($partition && (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($parser, $statement, $session->semantics()->profile()) !== null) {
+            return (new Entry\PartitionInput())->error($failure, $statement, $session);
+        }
         $earlier = (new RoutinePrefix())->database($statement, $failure->end, $session);
         if ($earlier !== null) {
             return $earlier;
@@ -98,12 +128,17 @@ final class Reader
         if (!$failure->aborts) {
             return (new ContinuingRefusal())->error($failure, $statement, $session);
         }
-        $error = (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
-        $parser = $session->semantics()->parser();
+        $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        try {
+            $tokens = $parser->tokenize($statement);
+        } catch (SourceException $lexical) {
+            $statement = substr($statement, 0, $lexical->offset);
+            $tokens = $parser->tokenize($statement);
+        }
         $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $failure->end, $session->semantics()->profile());
         if ($session->settings()->legacy()) {
-            [$warnings, $conflict] = (new Modifiers($parser->tokenize($statement), $session->settings()->release()))->scan($failure->end, $failure->end);
+            [$warnings, $conflict] = (new Modifiers($tokens, $session->settings()->release()))->scan($failure->end, $failure->end);
             if ($conflict !== null) {
                 return (new CacheOptions())->recorded($warnings, $conflict, $error, $session);
             }
@@ -111,7 +146,7 @@ final class Reader
                 $notices[] = [$offset, $notice];
             }
         } else {
-            foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, $failure->end, $parser) as $offset => $notice) {
+            foreach ((new ModernWarnings())->before($tokens, $statement, $failure->end, $parser) as $offset => $notice) {
                 $notices[] = [$offset, $notice];
             }
         }
@@ -129,7 +164,12 @@ final class Reader
     public function refused(SqlError $error, string $sql, bool $prepared, Session $session): SqlError
     {
         $session->diagnostics->clear();
-        $error = (!$prepared ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->premature($error, $sql, $session->semantics()->parser(), '', $session->settings()->legacy()) : null) ?? $error;
+        $entry = (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($session->semantics()->parser(), $sql, $session->semantics()->profile())
+            ?? (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->nested($session->semantics()->parser(), $sql, $session->semantics()->profile());
+        if ($entry !== null) {
+            $error = (new Entry\PartitionInput())->refused($entry, $sql, $session);
+        }
+        $error = $entry === null ? (!$prepared ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->premature($error, $sql, $session->semantics()->parser(), '', $session->settings()->legacy()) : null) ?? $error : $error;
         $error = (new CacheOptions())->reported($error, $sql, $session);
         if (!$error->recorded) {
             $session->diagnostics->error($error->getCode(), $error->getMessage());

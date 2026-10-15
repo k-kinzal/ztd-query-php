@@ -42,6 +42,28 @@ final class DatabaseOptionTest extends TestCase
     }
 
     /**
+     * Generated encryption operands must have a spelling admitted by the language profile.
+     *
+     * @throws JsonException When the reviewed inventory is invalid
+     * @throws ReflectionException When a constructor cannot be inspected
+     */
+    #[DataProvider('providerInputs')]
+    public function testGeneratedEncryptionOptionsCorrespondToTheProfile(string $release, string $seed): void
+    {
+        $option = (new Construction(new Choices('database-encryption:' . $seed), new Catalogue(), new Metadata()))->object(\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption::class, 6);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption::class, $option);
+        $statement = new AlterDatabase(new Name('d'), [$option]);
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::from('mysql-' . $release));
+        $platform = \SqlSemantics\Contract\Platforms::of('mysql');
+        $out = new \SqlSemantics\Rendering\Output($platform->codec($profile));
+        $statement->render($out);
+        $sql = (new \SqlSemantics\Rendering\Lexical())->join($out->pieces());
+        $lowered = $platform->lower($platform->parser($profile)->parse($sql), $profile, new \SqlSemantics\Lowering\Leaves());
+
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($statement, (new \SqlSemantics\Validation\Publication())->root($lowered)));
+    }
+
+    /**
      * The option's public constructor supplies its invariant before execution.
      *
      * @throws JsonException When the reviewed inventory is invalid

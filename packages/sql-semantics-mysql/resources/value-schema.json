@@ -1437,9 +1437,6 @@
         "subpartitions": "array",
         "values": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\PartitionBound"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionEntry": {
-        "partitioning": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionClause"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOption": {
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOptionKind",
         "name": "?SqlSemantics\\Statement\\Identifier\\Name",

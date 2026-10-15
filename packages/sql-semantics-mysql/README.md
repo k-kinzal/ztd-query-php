@@ -399,10 +399,16 @@ of the rejected input, including a stored-program statement's stopping boundary.
 
 See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/docs/guarantees.md) for the limits that apply to every database.
 
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
-
 `Statement\Routine\Condition\SqlState` accepts quoted values containing five uppercase letters or digits, excluding success class `00`. Invalid PHP construction raises `InvalidConstruction`. An invalid SQL operand such as `SIGNAL SQLSTATE '00000'` instead raises `SqlSemantics\Construction\RejectedInput`; its `problem` is a typed `ProgramProblem`, and `end` is the exclusive byte offset of the operand. No operation containing that invalid value is returned.
 
 Additional authentication factors use `Statement\Account\User\Factor`, whose cases are `Second` and `Third`. Registration and factor-change constructors accept this enum; factor changes also reject duplicates and adding the third factor before the second. Invalid SQL operands produce a typed input refusal during lowering instead of a statement that is intrinsically invalid. Account existence and installed authentication plugins remain execution-state concerns.
+
+A standalone `PARTITION` entry in the MySQL 5.6 and 5.7 grammars is rejected during input lowering. It is not a public `Statement` type. Partition clauses remain available inside table definitions and alterations; removing the client entry does not remove table partitioning. The input refusal carries a typed reason and keyword offset, without retaining SQL or parser nodes.
+
+Database encryption operands accept quoted text. Hexadecimal and bit spellings are rejected by the constructor because the database-option grammar does not admit them.
+
+Legacy INSERT statements retain their optimizer hints in the semantic head. Qualified wildcards in an INSERT column list require a legacy grammar and cannot compose with modern-only hints.
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.

@@ -63,6 +63,23 @@ final class ProfileTest extends TestCase
     }
 
     /**
+     * Replays a family-selected trial whose modern hints contradicted its legacy column list.
+     *
+     * @throws JsonException When a semantic inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testSelectPreservesAConstructedInsertWithHints(): void
+    {
+        $catalogue = new \Fuzz\Structure\Catalogue();
+        $choices = new Choices('partition-20261015:300');
+        $choices->one($catalogue->roots());
+        $node = (new \Fuzz\Structure\Construction($choices, $catalogue, new \Fuzz\Structure\Metadata()))->object(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, 6);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $node);
+
+        self::assertSame('mysql', (new Profiles())->select($node)->grammar->database());
+    }
+
+    /**
      * @return iterable<string, array{string, string}>
      */
     public static function providerOperands(): iterable

@@ -15,9 +15,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Statement;
@@ -36,8 +33,6 @@ final class InternalCommandTest extends TestCase
     public static function providerStatements(): iterable
     {
         yield 'generated column' => [new ParseGeneratedColumn(new ColumnUse(new Name('missing'))), '5.7.44', "near 'PARSE_GCOL_EXPR(missing)' at line 1"];
-        yield 'partition 56' => [new PartitionEntry(new PartitionClause(new HashMethod(false, new ColumnUse(new Name('missing'))), null, null, [])), '5.6.51', "Partitioning can not be used stand-alone in query near 'PARTITION BY HASH (missing)' at line 1"];
-        yield 'partition 57' => [new PartitionEntry(new PartitionClause(new HashMethod(false, new ColumnUse(new Name('missing'))), null, null, [])), '5.7.44', "Partitioning can not be used stand-alone in query near 'PARTITION BY HASH (missing)' at line 1"];
         yield 'debug tree' => [new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new ColumnUse(new Name('missing')))]))), '8.4.7', "near 'PARSE_TREE SELECT missing' at line 1"];
     }
 

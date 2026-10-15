@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry;
 use SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
@@ -35,7 +34,7 @@ use SqlSemantics\Statement\Scalar;
  * over an expression or over columns become the method classes of
  * PT_part_type_def; the parenthesized function of 5.6 and 5.7 is the bit
  * expression it encloses. Constructs: PartitionClause, Subpartitioning,
- * KeyMethod, HashMethod, ExpressionMethod, ColumnsMethod, PartitionEntry.
+ * KeyMethod, HashMethod, ExpressionMethod, ColumnsMethod. Standalone partitioning is rejected during lowering.
  * Terminates: lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
  * Status: Implemented.
@@ -130,18 +129,20 @@ final class PartitionRule
     }
 
     /**
-     * Lowers the statement that is only a partitioning clause: a node of `partition_entry`.
+     * Refuses a standalone partitioning entry before constructing any semantic statement.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput Always: this entry cannot denote a client statement
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function entry(Node $entry): PartitionEntry
+    public function entry(Node $entry): never
     {
         $form = $this->lowering->form($entry);
         if ($form->signature !== 'partition_entry: PARTITION_SYM partition') {
             throw ImplementationGap::production($form);
         }
 
-        return new PartitionEntry($this->clause($form->node(1)));
+        throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused(), $form->token(0)->end());
     }
 
     /**

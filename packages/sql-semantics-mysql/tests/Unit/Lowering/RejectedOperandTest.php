@@ -18,6 +18,17 @@ use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 #[Medium]
 final class RejectedOperandTest extends TestCase
 {
+    public function testOfRefusesNestedPartitioningAfterEarlierProgramDeclarations(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $sql = 'CREATE PROCEDURE d.p() BEGIN DECLARE x INT; DECLARE x INT; PARTITION BY HASH(a); END';
+        $failure = (new SyntaxWarnings())->rejected($semantics->parser()->parse($sql), $semantics->profile());
+
+        self::assertInstanceOf(RejectedInput::class, $failure);
+        self::assertSame('Duplicate variable: x', $failure->problem->message());
+        self::assertLessThan(strpos($sql, 'PARTITION'), $failure->end);
+    }
+
     public function testOfKeepsTheFactorBoundaryBeforeItsAuthenticationClause(): void
     {
         $semantics = new Semantics(Dialect::MySql);

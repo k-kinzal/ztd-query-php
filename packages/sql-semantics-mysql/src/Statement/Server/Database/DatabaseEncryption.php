@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
@@ -31,6 +32,7 @@ final class DatabaseEncryption implements DatabaseOption
      */
     public function __construct(public readonly Text $encryption)
     {
+        Check::input($encryption->radix === null, 'A database encryption value is quoted text.');
     }
 
     /**

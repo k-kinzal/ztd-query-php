@@ -28,6 +28,9 @@ final class RejectedOperand
             return new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($node)[1] ?? 0, false);
         }
         try {
+            if ($node->name === 'partition_entry') {
+                return (new ClientEntry())->partition($node->tokens()[0] ?? null, $lowering->profile);
+            }
             if (in_array($node->name, ['sp_cond', 'sqlstate'], true)) {
                 (new Routine\Condition\ConditionRule($lowering))->value($node);
             } elseif ($node->name === 'factor') {

@@ -89,6 +89,7 @@ final class BlockRule
      * Lowers one DECLARE: a node of `sp_decl`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a condition or handler operand is outside its intrinsic domain
      */
     public function declaration(Node $declaration): Declaration
     {

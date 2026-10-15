@@ -20,6 +20,26 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class CacheOptionsTest extends TestCase
 {
+    public function testLegacyKeepsAParseErrorWhenNoEarlierConditionExists(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $error = new SqlError(StatementError::ParseError, 'unfinished');
+
+        self::assertSame($error, (new CacheOptions())->legacy($error, 'SELECT', $session));
+    }
+
+    public function testReportedDoesNotReadBeyondAnAbortingSemanticInputRefusal(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $failure = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused(), 9);
+        $error = (new \MySqlMemory\Session\Parse\Entry\PartitionInput())->error($failure, "PARTITION BY HASH(DATE 'bad')", $session);
+
+        self::assertSame($error, (new CacheOptions())->reported($error, "PARTITION BY HASH(DATE 'bad')", $session));
+        $wrapped = new SqlError($error->error, $error->getMessage(), $error, recorded: true);
+        self::assertSame($wrapped, (new CacheOptions())->reported($wrapped, "PARTITION BY HASH(DATE 'bad')", $session));
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testPrefixResolvesAssignmentsAndLoadTargetsWithoutExecution(): void
     {
         $session = (new Instance('5.6.51'))->connect();

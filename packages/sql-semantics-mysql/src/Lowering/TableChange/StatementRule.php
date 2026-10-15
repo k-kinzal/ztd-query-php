@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
  * MYSQL-ALTER-STATEMENT-001. TABLE and TABLES are synonyms; the TABLE of
  * TRUNCATE is optional. RENAME USER belongs to the account family, which
  * lowers its list. Constructs: DropTable, DropIndex, RenameTable,
- * TableRenaming, TruncateTable, TargetTable, PartitionEntry. Terminates:
+ * TableRenaming, TruncateTable, TargetTable. Standalone partitioning is refused. Terminates:
  * lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/drop-index.html,

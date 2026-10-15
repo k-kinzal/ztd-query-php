@@ -21,6 +21,24 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ReaderTest extends TestCase
 {
+    public function testTreeRefusesAStandalonePartitionBeforeItsParameterMarker(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $this->expectExceptionMessage("Partitioning can not be used stand-alone in query near 'PARTITION BY HASH(?)' at line 1");
+
+        (new Reader())->tree('PARTITION BY HASH(?)', false, $session);
+    }
+
+    public function testRefusedPreservesThePartitionEntryBeforeALaterLexicalFailure(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $sql = "PARTITION BY HASH('unclosed";
+        $error = (new Reader())->refused(new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, 'later failure'), $sql, false, $session);
+
+        self::assertSame("Partitioning can not be used stand-alone in query near '" . $sql . "' at line 1", $error->getMessage());
+        self::assertSame([['Error', 1064, $error->getMessage()]], $session->diagnostics->conditions);
+    }
+
     public function testBoundTypesAMarkerOfAPreparedStatementAsAVarchar(): void
     {
         $session = (new Instance())->connect();

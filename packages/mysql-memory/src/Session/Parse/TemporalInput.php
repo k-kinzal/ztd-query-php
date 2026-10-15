@@ -67,27 +67,32 @@ final class TemporalInput
     }
 
     /**
-     * Finds a 5.6 literal refusal completed before a later syntax failure.
+     * Finds a literal refusal interpreted before a later syntax failure.
      *
-     * @return array{int, SqlError}|null The literal start and its value error
+     * MySQL 5.6 interprets individual literals during parsing. Later releases
+     * interpret a stored-program statement when that whole statement completes.
+     *
+     * @return array{int, SqlError}|null The interpretation boundary and its value error
      */
     public function before(string $statement, int $end, Session $session): ?array
     {
-        if ($session->settings()->release() !== GrammarRelease::MySql5651) {
-            return null;
-        }
+        $legacy = $session->settings()->release() === GrammarRelease::MySql5651;
         $parser = $session->semantics()->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
         $found = null;
         try {
-            $parser->parse($statement, static function (Node $node, \SqlParser\Lexer\Token $lookahead) use ($end, $session, &$found): void {
-                if ($found !== null || $node->name !== 'temporal_literal' || $lookahead->offset > $end) {
+            $parser->parse($statement, static function (Node $node, \SqlParser\Lexer\Token $lookahead) use ($end, $session, $legacy, $statement, &$found): void {
+                if ($found !== null || !in_array($node->name, $legacy ? ['temporal_literal'] : ['sp_proc_stmt', 'ev_sql_stmt_inner'], true) || $lookahead->offset > $end) {
                     return;
                 }
                 try {
-                    (new Syntax(Charset::named((string) $session->variables->read('character_set_client'))))->temporals($node, $session->modes());
+                    if ($legacy) {
+                        (new Syntax(Charset::named((string) $session->variables->read('character_set_client'))))->temporals($node, $session->modes());
+                    } else {
+                        (new self())->check($node, $statement, $lookahead->offset, $session);
+                    }
                 } catch (SqlError $failure) {
-                    $found = [$node->tokens()[0]->offset, $failure];
+                    $found = [$legacy ? $node->tokens()[0]->offset : $lookahead->offset, $failure];
                 }
             });
         } catch (\SqlParser\Lexer\SourceException) {

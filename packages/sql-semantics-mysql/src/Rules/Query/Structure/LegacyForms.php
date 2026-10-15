@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevelRange;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -44,7 +43,7 @@ final class LegacyForms
      */
     public function requires(object $value): bool
     {
-        return in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, ParseGeneratedColumn::class, PartitionEntry::class, AlterTablespaceAccess::class, ResetQueryCache::class, \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning::class], true)
+        return in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, ParseGeneratedColumn::class, AlterTablespaceAccess::class, ResetQueryCache::class, \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning::class], true)
             || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Redo, SelectOption::Cache, KeywordFunction::Password, KeywordFunction::OldPassword, PasswordFunction::Password, PasswordFunction::OldPassword, AliasMark::Equals], true)
             || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)
             || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)
@@ -71,6 +70,7 @@ final class LegacyForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList => array_filter($value->columns, static fn ($column): bool => $column instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard) !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping => array_filter($value->items, static fn (\SqlSemantics\Platform\MySql\Statement\Query\OrderItem $item): bool => $item->direction !== null) !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy => $this->grant($value),

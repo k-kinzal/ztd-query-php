@@ -29,13 +29,13 @@ php fuzz/structures.php 1 example-seed - 8.4.7 22
 The arguments are `COUNT [SEED] [CLASS|-|@each] [RELEASE] [START]`. Omitting the seed chooses a random seed and prints it before the first trial. An explicit class selects a root from the same discovered inventory. `@each` visits the sorted root inventory in order, wrapping after its end; the initial record reports the number of root types. Use at least that many trials to exercise construction of every root type. This enumerates model types and does not measure SQL Faker grammar coverage. Reproduction requires the same revision because changes to types and constructors change deterministic choices.
 
 ```sh
-composer fuzz:structures -- 248 all-model-roots @each
+composer fuzz:structures -- 246 all-model-roots @each
 ```
 
 The default `auto` release selects a compatible test environment before execution. To state that selection explicitly:
 
 ```sh
-composer fuzz:structures -- 248 all-model-roots @each auto
+composer fuzz:structures -- 246 all-model-roots @each auto
 ```
 
 This mode renders the already constructed model under candidate grammar releases and lexical modes, parses and lowers that rendering, and checks structural correspondence. It does not derive facts or execute statements while selecting a profile. A retained observable spelling fixes the candidate profile; otherwise the candidate modes cover the interpretations of `NOT` and `||`. Named parameter markers select the named-parameter extension. If no candidate preserves the structure, the trial fails in the `profile` phase and the failure records each candidate's reason. Inputs are never regenerated because of this result. Once selected, the profile is used for one execution; an execution error does not cause another profile to be tried. The memory executor receives the constructed structure directly, without parsing the rendered SQL. An explicit release keeps the previous fixed-environment behavior.
@@ -185,3 +185,9 @@ Parameter and local-variable references use the same case- and accent-insensitiv
 `INTO` and `LIMIT` variable operands also resolve against their enclosing declarations during program definition. Their facts retain the declaration and type, so memory no longer suppresses an erroneous undeclared-parameter diagnostic. MySQL 5.6's observable leading comments use a validated layout gap; constructor checks reject a gap that adds expression tokens. Other releases keep their existing leading-trivia rule.
 
 The direct factor regression varies account state while reusing the same constructed factor change, with unrelated session text. A missing account and an existing account without an additional factor produce their respective plugin/account errors. Native histories confirm these state-dependent outcomes and the refusal order for invalid factors across MySQL 8.0, 8.4 and 9.1. This bounded regression does not turn the unrestricted campaign's other SQL errors into successful trials.
+
+A standalone `PARTITION` entry in the MySQL 5.6 and 5.7 grammars is rejected during input lowering. It is not a public `Statement` type. Partition clauses remain available inside table definitions and alterations; removing the client entry does not remove table partitioning. The input refusal carries a typed reason and keyword offset, without retaining SQL or parser nodes. An unfinished program is checked at the input boundary, preserving earlier declaration conflicts, system-variable lookups, temporal errors and warnings. Completed declarations are checked in their own block scope; references to outer scopes are left to complete-program analysis. Differential histories cover both valid partition clauses and rejected entries across five releases.
+
+Database encryption operands reject hexadecimal and bit spellings. The direct generator still chooses the underlying `Text` operands freely; the constructor enforces the quoting invariant. Generated options are rendered and lowered under each modern profile to check structural correspondence separately from execution.
+
+Legacy INSERT lowering retains optimizer hints in the semantic head. A qualified wildcard in its column list requires a legacy profile, so construction rejects combinations with modern-only hints. Profile selection checks the rendered structure against the selected grammar before direct execution; the executor still receives the constructed objects.
