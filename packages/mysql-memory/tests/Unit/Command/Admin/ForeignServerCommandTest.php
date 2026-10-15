@@ -31,6 +31,14 @@ final class ForeignServerCommandTest extends TestCase
         self::assertSame([1, 1, 1, 1], array_map(static fn ($reply): int => $reply instanceof Completion ? $reply->affectedRows : -1, $replies));
     }
 
+    public function testExecuteReportsZeroForAnAbsentConditionalDropInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $replies = $session->query("DROP SERVER IF EXISTS s; CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'h'); DROP SERVER IF EXISTS s; DROP SERVER IF EXISTS s");
+
+        self::assertSame([0, 1, 1, 0], array_map(static fn ($reply): int => $reply instanceof Completion ? $reply->affectedRows : -1, $replies));
+    }
+
     public function testExecuteComparesNamesWithoutRegardToCaseAndAccents(): void
     {
         $session = (new Instance())->connect();

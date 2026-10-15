@@ -25,8 +25,11 @@ use SqlSemantics\Statement\Operation;
  * Executes CREATE SERVER, ALTER SERVER and DROP SERVER.
  *
  * Each commits the open transaction and reports one affected row, DROP SERVER IF EXISTS even
- * when the server does not exist. Server names compare without regard to letter case and
- * accents; they are kept, and named in messages, to their first 64 bytes. A server that
+ * when the server does not exist from MySQL 5.7 onward; MySQL 5.6 reports zero
+ * for that absent conditional drop. Server names compare without regard to letter case and
+ * accents. Storage keeps 64 characters; missing-server diagnostics display 64 bytes.
+ * Creation keeps the original lookup name until ALTER SERVER refreshes names from storage.
+ * Duplicate creation reports the original operand, bounded by the diagnostic buffer. A server that
  * exists is ER_FOREIGN_SERVER_EXISTS; one that does not is ER_FOREIGN_SERVER_DOESNT_EXIST, whose
  * message names it after two spaces (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-server.html,
@@ -54,25 +57,36 @@ final class ForeignServerCommand implements Command
     {
         $statement = $operation->statement;
         $registry = $session->instance->registry;
+        $affected = 1;
         $session->transaction->commit();
-        $name = $statement instanceof CreateServer || $statement instanceof AlterServer || $statement instanceof DropServer ? mb_strcut($statement->name->value, 0, 64, 'UTF-8') : '';
+        $original = $statement instanceof CreateServer || $statement instanceof AlterServer || $statement instanceof DropServer ? $statement->name->value : '';
+        $name = mb_substr($original, 0, 64, 'UTF-8');
+        $cached = array_key_first(array_filter($registry->servers, static fn (ForeignServer $server): bool => Registry::key($server->lookupName) === Registry::key($original)));
+        $text = new \MySqlMemory\Error\DiagnosticText();
+        $missing = $text->bytes($original, 64, $session->settings()->legacy());
         if ($statement instanceof CreateServer) {
             if (isset($registry->servers[Registry::key($name)])) {
-                throw AdministrationError::ForeignServerExists->error($name);
+                throw new \MySqlMemory\Error\SqlError(AdministrationError::ForeignServerExists, $text->bytes(AdministrationError::ForeignServerExists->error($original)->getMessage(), 511, $session->settings()->legacy()));
             }
-            $registry->servers[Registry::key($name)] = new ForeignServer($name, $statement->wrapper->value, $this->options($statement->options));
+            $registry->servers[Registry::key($name)] = new ForeignServer($original, $statement->wrapper->value, $this->options($statement->options));
         } elseif ($statement instanceof AlterServer) {
-            $server = $registry->servers[Registry::key($name)] ?? throw AdministrationError::ForeignServerMissing->error($name);
+            $server = $cached === null ? throw AdministrationError::ForeignServerMissing->error($missing) : $registry->servers[$cached];
             $server->options = [...$server->options, ...$this->options($statement->options)];
+            foreach ($registry->servers as $stored) {
+                $stored->lookupName = $stored->name;
+            }
         } elseif ($statement instanceof DropServer) {
             $key = Registry::key($name);
-            if (!isset($registry->servers[$key]) && !$statement->ifExists) {
-                throw AdministrationError::ForeignServerMissing->error($name);
+            if ($cached === null && !$statement->ifExists) {
+                throw AdministrationError::ForeignServerMissing->error($missing);
             }
-            unset($registry->servers[$key]);
+            $affected = $cached === null && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? 0 : 1;
+            if ($affected !== 0) {
+                unset($registry->servers[$key]);
+            }
         }
 
-        return new Completion(1);
+        return new Completion($affected);
     }
 
     /**

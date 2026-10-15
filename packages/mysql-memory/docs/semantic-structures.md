@@ -550,3 +550,14 @@ their unsupported operation. A separate input regression replays the 36
 previously differing SQL Faker storage inputs with substitution both enabled
 and disabled (74 wire observations, including setup). These checks establish
 engine-selection behavior; they do not claim NDB Cluster support.
+
+
+Foreign-server histories retain the same `CreateServer`, `AlterServer` and
+`DropServer` objects across absent, present and removed states. The checks include
+result counts, diagnostics and names containing multibyte characters or more than
+64 characters. MySQL 5.6 retains earlier conditions until a new condition replaces
+them and reports zero for an absent conditional drop. Later versions report one.
+Memory preserves the original semantic name; its server registry distinguishes the
+original lookup name from the 64-character stored name refreshed by `ALTER SERVER`.
+Missing-server diagnostics have a separate 64-byte display limit. These state
+transitions are verified by 300 direct observations across five native releases.
