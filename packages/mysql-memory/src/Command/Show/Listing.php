@@ -168,6 +168,6 @@ final class Listing
 
         $release = GrammarRelease::from('mysql-' . $context->variables->instance->version);
 
-        return new ResultSet(array_map(static fn (Heading $heading) => $heading->column($charset, $release), $this->headings), $sent, $context->diagnostics->raised());
+        return new ResultSet(array_map(static fn (Heading $heading) => $heading->column($charset, $release, $context->variables->resultCollation()), $this->headings), $sent, $context->diagnostics->raised());
     }
 }

@@ -369,3 +369,18 @@ value identifies the transaction. Input comparisons include following syntax
 errors and routine declarations. A direct state-transition test preserves the
 same `XaCommit` object before and after preparing its transaction; both native
 and memory change from the unknown-transaction error to successful completion.
+
+Database-state properties reuse constructed view, cache and privilege requests
+before and after creating their fixtures. An unqualified name requires a current
+database before key-cache or privilege compatibility checks. A missing qualified
+view reports a missing table on 5.6 and 5.7 and a missing database on later releases.
+The successful transitions include view inspection, the default key cache and
+routine grants. Separate comparisons retain IMPORT's later file-access failures
+and invalid privilege-level errors; agreement with those errors does not establish
+their construction validity or physical file support.
+
+Result encoding retains the collation chosen by `SET NAMES`, independently of
+later changes to `collation_connection`. Direct `character_set_results` assignment
+resets that choice. Result construction uses the retained encoding for queries,
+listings, maintenance, handlers and diagnostics, including individual result sets
+within a routine. Native histories check metadata and values on five releases.

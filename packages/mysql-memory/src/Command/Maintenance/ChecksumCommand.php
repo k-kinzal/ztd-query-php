@@ -15,7 +15,6 @@ use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use Override;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
@@ -81,7 +80,7 @@ final class ChecksumCommand implements Command
         $results = $session->variables->read('character_set_results');
         $charset = (is_string($results) ? Charset::named($results) : null) ?? Charset::known('utf8mb3');
         $columns = [
-            new ResultColumn('Table', Field::VarString, 384 * $charset->maxLength, 31, 0, $charset->defaultCollation(GrammarRelease::MySql847)->id),
+            new ResultColumn('Table', Field::VarString, 384 * $charset->maxLength, 31, 0, ($session->variables->resultCollation() ?? $charset->defaultCollation($session->settings()->release()))->id),
             new ResultColumn('Checksum', Field::LongLong, $session->settings()->legacy() ? 21 : 22, 0, ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63),
         ];
 

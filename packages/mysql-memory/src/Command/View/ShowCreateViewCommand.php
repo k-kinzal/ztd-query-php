@@ -25,7 +25,8 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes SHOW CREATE VIEW: the statement that creates a view, with its query as the server stores it.
  *
- * A database that does not exist is ER_BAD_DB_ERROR, a missing view ER_NO_SUCH_TABLE and a base
+ * A database that does not exist is ER_BAD_DB_ERROR in modern releases and ER_NO_SUCH_TABLE
+ * in MySQL 5.6 and 5.7. A missing view is ER_NO_SUCH_TABLE and a base
  * table ER_WRONG_OBJECT. The view and the tables of its query are qualified by their database
  * when it is not the current one. A view whose tables have changed so that it no longer
  * resolves is shown with the warning ER_VIEW_INVALID. The statement column is at least 1024
@@ -57,6 +58,9 @@ final class ShowCreateViewCommand implements Command
         $database = ProgramSource::database($name->schema, $session);
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {
+            if ($session->settings()->legacy()) {
+                throw QueryError::NoSuchTable->error($database, $name->name->value);
+            }
             throw QueryError::BadDatabase->error($database);
         }
         if ($schema->table($name->name->value) !== null) {

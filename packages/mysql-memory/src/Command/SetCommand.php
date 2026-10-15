@@ -174,13 +174,16 @@ final class SetCommand implements Command
             $collation = $session->variables->read('collation_database');
         }
 
-        return static function () use ($assigner, $charset, $collation, $connection): void {
+        return static function () use ($assigner, $charset, $collation, $connection, $item, $session): void {
             $text = Domain::string(64, Collation::known('utf8mb4_0900_ai_ci'));
             foreach (['character_set_client', 'character_set_results'] as $name) {
                 $assigner->assign($name, VariableScope::Session, $charset, $text);
             }
             $assigner->assign('collation_connection', VariableScope::Session, $collation, $text);
             $assigner->assign('character_set_connection', VariableScope::Session, $connection, $text);
+            if ($item instanceof SetNames) {
+                $session->variables->resultsCollation = Collation::named($collation);
+            }
         };
     }
 

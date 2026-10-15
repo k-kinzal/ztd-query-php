@@ -28,6 +28,20 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 #[Small]
 final class VariablesTest extends TestCase
 {
+    public function testResultCollationRetainsNamesUntilTheResultCharacterSetChanges(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET NAMES utf8mb4 COLLATE utf8mb4_bin');
+        $session->query("SET collation_connection='utf8mb4_general_ci'");
+        self::assertSame('utf8mb4_bin', $session->variables->resultCollation()?->name);
+
+        $session->query("SET character_set_results='utf8mb4'");
+        self::assertSame('utf8mb4_0900_ai_ci', $session->variables->resultCollation()->name);
+
+        $session->query('SET character_set_results=NULL');
+        self::assertNull($session->variables->resultCollation());
+    }
+
     /**
      * @return iterable<string, array{string, string}>
      */

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Access;
 
 use MySqlMemory\Command\Command;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
@@ -18,7 +19,8 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes IMPORT TABLE on a server that reads no files: it refuses each request as the server does.
  *
- * The patterns are read in order. A pattern outside the secure directory is refused by
+ * The current database is required before file access. The patterns are read in order.
+ * A pattern outside the secure directory is refused by
  * --secure-file-priv, and a pattern inside it matches no serialized dictionary file, since the
  * directory holds none (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/import-table.html.
@@ -44,6 +46,9 @@ final class ImportTableCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof ImportTable);
+        if ($session->variables->database === '') {
+            throw QueryError::NoDatabase->error();
+        }
         $file = $statement->files[0]->value;
         if (str_starts_with($file, LoadDataCommand::SECURE_DIRECTORY)) {
             throw SchemaError::NoSdiFiles->error(substr($file, strlen(LoadDataCommand::SECURE_DIRECTORY)));

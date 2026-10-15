@@ -209,14 +209,14 @@ final class AdministrationCommandTest extends TestCase
         self::assertSame([['d.v', 'repair', 'Error', "'d.v' is not BASE TABLE"], ['d.v', 'repair', 'status', 'Operation failed']], $repair->rows);
     }
 
-    public function testValidateRefusesAnUnknownKeyCacheBeforeAMissingDatabase(): void
+    public function testValidateRequiresADatabaseBeforeLookingUpTheKeyCache(): void
     {
         $session = (new Instance())->connect();
         $statement = $session->analyze('CACHE INDEX t IN other')->statement;
         self::assertInstanceOf(CacheIndex::class, $statement);
 
         $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1284);
+        $this->expectExceptionCode(1046);
 
         (new AdministrationCommand())->validate($statement, (new AdministrationCommand())->names($statement), $session);
     }

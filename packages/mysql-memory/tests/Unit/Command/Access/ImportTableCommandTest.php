@@ -23,6 +23,7 @@ final class ImportTableCommandTest extends TestCase
     public function testExecuteRefusesAFileOutsideTheSecureDirectory(): void
     {
         $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1290);
@@ -34,6 +35,7 @@ final class ImportTableCommandTest extends TestCase
     public function testExecuteFindsNoFileInTheSecureDirectory(): void
     {
         $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3608);

@@ -98,8 +98,8 @@ final class RevokeCommand implements Command
         $names = new Names($session->settings()->release());
         $names->check($names->users($statement->users));
         $levels = new Levels($session->settings()->release());
-        $levels->parsed($operation, $session);
         $target = $levels->target($statement->kind, $statement->level, $session);
+        $levels->parsed($operation, $session);
         $levels->dynamic($statement->privileges, $target, $session, $statement->ifExists);
         (new Recipients())->run($statement, $operation, $target, $session);
     }
