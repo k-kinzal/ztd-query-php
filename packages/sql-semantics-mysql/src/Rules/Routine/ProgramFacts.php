@@ -62,11 +62,12 @@ final class ProgramFacts
     /**
      * Derives the parameters and the body of a stored procedure or function.
      */
-    public function routine(ParameterList $parameters, ExternalBody|ProgramStatement|Statement $body, ProgramKind $kind, QualifiedName $name, Derivation $derivation, ?\SqlSemantics\Platform\MySql\Statement\Type\TypeName $returns = null): void
+    public function routine(ParameterList $parameters, ExternalBody|ProgramStatement|Statement $body, ProgramKind $kind, QualifiedName $name, Derivation $derivation, ?\SqlSemantics\Platform\MySql\Statement\Type\TypeName $returns = null, ?\SqlSemantics\Platform\MySql\Statement\Name\CollationName $collation = null): void
     {
         $fact = $derivation->relation($parameters, $derivation->environment());
         if ($returns !== null) {
             (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($returns, $derivation);
+            (new Declaration\DeclaredCollation())->warn($collation, $derivation);
             (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($returns, '', $derivation);
         }
         if (($returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Character && (!$returns->national || in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) || $returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) && $returns->charset?->form === \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary) {

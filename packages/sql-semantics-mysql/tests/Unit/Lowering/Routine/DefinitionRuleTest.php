@@ -77,7 +77,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerRoutineLowersAFunctionWithItsReturnCollation')]
     public function testRoutineLowersAFunctionWithItsReturnCollation(string $release): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f(a int) returns varchar(5) collate utf8mb4_bin deterministic return a');
+        $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f(a int) returns varchar(5) character set utf8mb4 collate utf8mb4_bin deterministic return a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame('f', $statement->name->name->value);
@@ -86,7 +86,7 @@ final class DefinitionRuleTest extends TestCase
         self::assertInstanceOf(ReturnStatement::class, $statement->body);
         self::assertNull($statement->definer);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame('CREATE FUNCTION f(a INT) RETURNS VARCHAR(5) COLLATE utf8mb4_bin DETERMINISTIC RETURN a', $create->toString());
+        self::assertSame('CREATE FUNCTION f(a INT) RETURNS VARCHAR(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DETERMINISTIC RETURN a', $create->toString());
     }
 
     /**

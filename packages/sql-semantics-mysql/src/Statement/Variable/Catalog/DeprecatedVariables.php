@@ -7,12 +7,13 @@ namespace SqlSemantics\Platform\MySql\Statement\Variable\Catalog;
 use SqlSemantics\Contract\GrammarRelease;
 
 /**
- * The system variables MySQL 5.6 and 5.7 deprecate, which the server warns about each time a statement reads or assigns one.
+ * System variables whose reads and assignments produce a deprecation warning.
  *
  * Each variable maps to the text the warning ends with: the variable to use instead, or nothing.
  * The warning names the variable without its scope (verified on live 5.6.51 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/5.7/en/added-deprecated-removed.html,
- * https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html.
+ * https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html,
+ * https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-34.html.
  *
  * @visibility public
  * @example The warning of tx_isolation in MySQL 5.7
@@ -49,7 +50,7 @@ final class DeprecatedVariables
      */
     public function warning(string $name, GrammarRelease $release): ?string
     {
-        $variables = $release === GrammarRelease::MySql5651 ? self::MYSQL_56 : ($release === GrammarRelease::MySql5744 ? self::MYSQL_57 : []);
+        $variables = $release === GrammarRelease::MySql5651 ? self::MYSQL_56 : ($release === GrammarRelease::MySql5744 ? self::MYSQL_57 : ['log_bin_trust_function_creators' => '']);
         $variable = strtolower($name);
         if (!isset($variables[$variable])) {
             return null;

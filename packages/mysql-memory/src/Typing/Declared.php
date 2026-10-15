@@ -102,7 +102,7 @@ final class Declared
      */
     public function character(Character $type, ?Collation $collation): Domain
     {
-        $collation = $this->charset($type->charset, $type->national ? Collation::known('utf8mb3_general_ci') : ($collation ?? $this->collation));
+        $collation ??= $this->charset($type->charset, $type->national ? Collation::known('utf8mb3_general_ci') : $this->collation);
         [$field, $length] = match ($type->kind) {
             CharacterKind::Char => [Field::String, $type->length === null ? 1 : (int) $type->length],
             CharacterKind::VarChar, CharacterKind::CharVarying => [Field::VarString, (int) $type->length],

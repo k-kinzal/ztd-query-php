@@ -49,9 +49,14 @@ final class SyntaxWarnings
         $aborted = false;
         $failed = false;
         $names = new Utility\Set\SyntaxNames();
+        $types = new Routine\DeclarationPrefix();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, &$failed, $ranges, $end, $lowering, $parser, $statement, $names): void {
-                if ($aborted || $lookahead->offset > $end) {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, &$failed, $ranges, $end, $lowering, $parser, $statement, $names, $types, $tokens): void {
+                if ($aborted) {
+                    return;
+                }
+                $warnings = [...$warnings, ...(new Type\SyntaxNotices())->collation($node, $lowering, $end)];
+                if ($lookahead->offset > $end) {
                     return;
                 }
                 $log = (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
@@ -65,7 +70,7 @@ final class SyntaxWarnings
                     $aborted = true;
                     return;
                 }
-                $notice = ($failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
+                $notice = $types->following($node, $lowering, $tokens) ?? ($failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
                 $conditions = $notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice];
                 foreach ($conditions as $condition) {
                     $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];

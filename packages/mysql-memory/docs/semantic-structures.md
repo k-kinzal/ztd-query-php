@@ -384,3 +384,28 @@ later changes to `collation_connection`. Direct `character_set_results` assignme
 resets that choice. Result construction uses the retained encoding for queries,
 listings, maintenance, handlers and diagnostics, including individual result sets
 within a routine. Native histories check metadata and values on five releases.
+
+Routine parameters, function return declarations and local variables share a
+type/collation invariant. A named `COLLATE` requires a character set carried by
+the declaration itself. Explicit character-set attributes, national strings and
+binary types can supply it; an ordinary character type without such an attribute
+cannot. Known character sets and collations must agree. The legacy `COLLATE
+DEFAULT` form remains an absent override. Unknown names still require lookup;
+their diagnostic agreement alone does not certify a valid declaration.
+
+Lowering checks this domain before publishing a declaration, including completed
+parameters and return types before an unfinished body. Only a typed refusal and
+its position escape the input stage. Accepted explicit collations participate in
+the semantic types of parameter and local-variable references. Directly
+constructed procedures, local declarations and function return types are created
+and invoked with unrelated input text, comparing result values, metadata and
+conditions against five native releases. Separate input histories check competing
+syntax errors and warnings. These domain tests supplement the whole-model
+construction campaign; they do not replace it.
+
+Explicit deprecated collation names also supply semantic notices. Input processing
+retains those notices before a later declaration refusal. Routine execution keeps
+notices from loading the definition across statements in the body. Repeated calls,
+routine alteration and separate sessions check the lifetime of that loaded state;
+table flushes do not reload the definition. This state uses the retained typed
+declaration rather than parsing the routine's display text.
