@@ -108,7 +108,7 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'SHOW in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SHOW VARIABLES; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'SHOW in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SHOW TABLES', ['Not allowed to return a result set from a trigger']];
         yield 'EXPLAIN in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW EXPLAIN SELECT 1', ['Not allowed to return a result set from a trigger']];
-        yield 'EXPLAIN FOR CONNECTION in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN EXPLAIN FOR CONNECTION 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
+        yield 'EXPLAIN in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN EXPLAIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'DESCRIBE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN DESCRIBE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'HELP in a trigger' => ["CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW HELP 'x'", ['Not allowed to return a result set from a trigger']];
         yield 'CHECK TABLE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN CHECK TABLE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
