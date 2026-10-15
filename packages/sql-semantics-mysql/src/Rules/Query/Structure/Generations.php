@@ -112,6 +112,8 @@ final class Generations
     public function transition(object $value): int
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $value->ignore => 1,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn,

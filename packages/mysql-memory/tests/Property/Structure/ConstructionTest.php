@@ -50,6 +50,33 @@ final class ConstructionTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerAssignmentProfiles(): iterable
+    {
+        yield 'standalone password in a variable list' => [197];
+        yield 'legacy expiration with a modern account name' => [982];
+    }
+
+    /**
+     * Replays whole-model counterexamples through the unchanged type-driven generator.
+     *
+     * @throws JsonException When the value inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    #[DataProvider('providerAssignmentProfiles')]
+    public function testAssignmentConstructorDomainsHaveALanguageInterpretation(int $index): void
+    {
+        $catalogue = new Catalogue();
+        $choices = new Choices('signatures-20261016:' . $index);
+        $class = $choices->one($catalogue->roots());
+        $node = (new Construction($choices, $catalogue, new Metadata()))->object($class, 6);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $node);
+        self::assertSame('mysql', (new \Fuzz\Structure\Profiles())->select($node)->grammar->database());
+    }
+
+    /**
      * @return iterable<string, array{class-string, string}>
      */
     public static function providerOperands(): iterable

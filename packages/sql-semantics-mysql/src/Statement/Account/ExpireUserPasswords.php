@@ -19,6 +19,9 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/5.6/en/alter-user.html. Status: Implemented.
  *
  * @visibility public
+ * @example Requiring account names from the same release as the expiration form
+ *     $user = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('seventeen_letters'));
+ *     new \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords([$user]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Expiring two passwords
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('alter user a password expire, b password expire')->toString() // => 'ALTER USER a PASSWORD EXPIRE, b PASSWORD EXPIRE'
  */

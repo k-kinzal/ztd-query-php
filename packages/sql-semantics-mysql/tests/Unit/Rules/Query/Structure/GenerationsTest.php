@@ -59,6 +59,8 @@ final class GenerationsTest extends TestCase
         $alter = new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new QualifiedName(new Name('t')), [], true);
 
         self::assertSame(1, $rules->transition($alter));
+        self::assertSame(1, $rules->transition(new \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords([new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser()])));
+        self::assertSame(1, $rules->transition(new PasswordAssignment(new Password(new Text('pw')))));
         self::assertSame(2, $rules->transition(new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(true)));
         self::assertSame(0, $rules->transition(new NumberLiteral('1')));
         self::assertSame(0, $rules->transition(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 16)))));
