@@ -26,6 +26,8 @@ use SqlSemantics\Statement\Snapshot;
  * Status: Implemented.
  *
  * @visibility public
+ * @example Refusing a format outside the public format domain
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'), new \SqlSemantics\Statement\Identifier\Name('XML')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * Connection identifiers are integer tokens: decimal digits within the unsigned 64-bit
  * range or a hexadecimal literal. Fractional and exponent forms have no connection operand.
  *
@@ -61,6 +63,7 @@ final class ExplainConnection implements Statement
         public readonly ?UserVariable $into = null,
     ) {
         $this->connectionId = (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->connection($connection);
+        Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null), 'EXTENDED and PARTITIONS are written alone.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

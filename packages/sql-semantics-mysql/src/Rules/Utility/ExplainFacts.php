@@ -38,6 +38,14 @@ use SqlSemantics\Statement\Reference\Missing\SessionState;
 final class ExplainFacts
 {
     /**
+     * Identifies the finite format domain across all supported releases.
+     */
+    public function known(?Name $format): bool
+    {
+        return $format === null || in_array(strtoupper($format->value), ['TRADITIONAL', 'JSON', 'TREE'], true);
+    }
+
+    /**
      * Records the rows of an EXPLAIN, or reports why the server refuses it.
      */
     public function derive(Derivation $derivation, ?Name $format, bool $analyze, ?ExplainModifier $modifier, ?UserVariable $into): void

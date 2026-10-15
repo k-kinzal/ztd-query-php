@@ -25,6 +25,12 @@ final class ExplainFormatTest extends TestCase
     public static function providerReleases(): iterable
     {
         $statements = [
+            'CREATE DATABASE d',
+            "EXPLAIN FORMAT='XML' SELECT 1",
+            "EXPLAIN FORMAT='XML' FOR CONNECTION 0",
+            "CREATE PROCEDURE d.p() EXPLAIN FORMAT='XML' SELECT 1",
+            "CREATE PROCEDURE d.p() BEGIN DECLARE x INT; DECLARE x INT; EXPLAIN FORMAT='XML' SELECT 1; END",
+            "SHOW PARSE_TREE EXPLAIN FORMAT='XML' SELECT 1",
             "EXPLAIN FORMAT = 'text' SELECT ?",
             'DESC FORMAT = `YaML` REPLACE DELAYED t SET a=?',
             "EXPLAIN FORMAT = 'text' SELECT BINARY 1,?",

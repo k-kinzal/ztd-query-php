@@ -17,6 +17,22 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
 #[Medium]
 final class ExplainFactsTest extends TestCase
 {
+    public function testKnownAcceptsOnlyTheFiniteFormatDomain(): void
+    {
+        $facts = new ExplainFacts();
+        self::assertTrue($facts->known(null));
+        self::assertTrue($facts->known(new \SqlSemantics\Statement\Identifier\Name('jSoN')));
+        self::assertTrue($facts->known(new \SqlSemantics\Statement\Identifier\Name('TREE')));
+        self::assertFalse($facts->known(new \SqlSemantics\Statement\Identifier\Name('XML')));
+    }
+
+    public function testRefusalRejectsUnavailableInputBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Unknown EXPLAIN format name');
+        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = TREE SELECT 1');
+    }
+
     public function testRefusalAnswersTheBrokenRule(): void
     {
         $facts = new ExplainFacts();
@@ -41,7 +57,6 @@ final class ExplainFactsTest extends TestCase
         self::assertCount(10, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('EXPLAIN SELECT 1')->fields() ?? []);
         self::assertCount(12, (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT = TRADITIONAL SELECT 1')->fields() ?? []);
         self::assertFalse((new Semantics(Dialect::MySql))->analyze('EXPLAIN SELECT 1')->shape()?->complete());
-        self::assertSame('Unknown EXPLAIN format name', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = TREE SELECT 1')->facts->diagnostics[0]->message());
         self::assertSame('EXPLAIN INTO requires FORMAT=JSON', (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @v SELECT 1')->facts->diagnostics[0]->message());
     }
 }
