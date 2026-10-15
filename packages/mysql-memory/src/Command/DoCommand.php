@@ -14,7 +14,6 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Evaluation;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Statement\Operation;
 
 /**
@@ -46,9 +45,7 @@ final class DoCommand implements Command
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $frame = new Frame($context);
         foreach ($statement->items as $item) {
-            if ($item instanceof SelectExpression) {
-                $planner->compiler->compile($item->expression, new Scope())->evaluate($frame);
-            }
+            $planner->compiler->compile($item->expression, new Scope())->evaluate($frame);
         }
         $session->variables->foundRows = 1;
 

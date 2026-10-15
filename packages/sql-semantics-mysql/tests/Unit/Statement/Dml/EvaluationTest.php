@@ -24,13 +24,6 @@ final class EvaluationTest extends TestCase
         self::assertNull($operation->facts->output);
     }
 
-    public function testDeriveStatementReportsAStarWithoutTables(): void
-    {
-        $operation = (new Semantics(Dialect::MySql))->analyze('DO *');
-
-        self::assertSame('No tables used', $operation->facts->diagnostics[0]->message());
-    }
-
     public function testRenderWritesTheItems(): void
     {
         self::assertSame('DO 1, 2', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('do 1, 2')->toString());
@@ -39,7 +32,7 @@ final class EvaluationTest extends TestCase
 
     public function testRenderRejectsAnEmptyList(): void
     {
-        $this->expectExceptionMessage('DO evaluates at least one expression.');
+        $this->expectExceptionMessage('DO evaluates one or more expressions, not table wildcards.');
 
         new Evaluation([]);
     }

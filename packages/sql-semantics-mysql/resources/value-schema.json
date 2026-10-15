@@ -935,6 +935,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\EvaluationWildcard": {
+        "requiresDatabase": "bool",
+        "table": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\GeneratedColumnWrite": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
         "table": "SqlSemantics\\Statement\\Identifier\\Name"
@@ -2110,6 +2114,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\OpenCursor": {
         "cursor": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredEvaluation": {
+        "items": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\ConditionalBranch": {
         "condition": "SqlSemantics\\Statement\\Scalar",

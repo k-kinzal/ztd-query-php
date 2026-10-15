@@ -106,6 +106,9 @@ final class ModernWarnings
         }
         if (!$aborted && $append) {
             $session->diagnostics->error($syntax->getCode(), $syntax->getMessage());
+            foreach ($syntax->following as [$code, $message]) {
+                $session->diagnostics->error($code, $message);
+            }
         }
         $first ??= $syntax;
 

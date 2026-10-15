@@ -57,9 +57,9 @@ final class InvocationRule
             case 'do_stmt: DO_SYM empty_select_options select_item_list':
                 $this->lowering->options->skip($form->node(1));
 
-                return new Evaluation($this->lowering->queries->selectItems($form->node(2)));
+                return new Evaluation((new EvaluationItems($this->lowering))->read($form->node(2)));
             case 'do_stmt: DO_SYM select_item_list':
-                return new Evaluation($this->lowering->queries->selectItems($form->node(1)));
+                return new Evaluation((new EvaluationItems($this->lowering))->read($form->node(1)));
             default:
                 throw ImplementationGap::production($form);
         }

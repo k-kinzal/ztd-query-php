@@ -9,11 +9,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems;
-use SqlSemantics\Platform\MySql\Statement\Dml\Evaluation;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation;
 use SqlSemantics\Statement\Node;
 
 #[CoversClass(SelectItems::class)]
@@ -60,10 +60,10 @@ final class SelectItemsTest extends TestCase
      * @param list<SelectExpression|Star> $items
      */
     #[DataProvider('providerEvaluation')]
-    public function testCheckedRefusesMisplacedStarsInDo(array $items): void
+    public function testCheckedRefusesMisplacedStarsInDeferredDo(array $items): void
     {
         $this->expectExceptionMessage('A select list item is an expression or a qualified star, and an unqualified star comes first.');
 
-        new Evaluation($items);
+        new DeferredEvaluation($items);
     }
 }

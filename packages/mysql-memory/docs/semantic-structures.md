@@ -656,3 +656,25 @@ table, view, dropped view and temporary table. All 96 observations matched on
 8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7 and 9.1.0. The package checks passed, including
 14,989 unit/property/doctests and 48,470 assertions. This establishes those
 histogram histories, not the outstanding whole-model construction property.
+
+
+Immediate `DO` statements now expose a nonempty list of `SelectExpression`.
+A wildcard cannot inhabit that operand domain. SQL lowering reports a typed
+`EvaluationWildcard` refusal and retains only the qualified name and the
+requirement for a default database. Input-boundary tests preserve competing
+stored-function lookup conditions and subsequent deprecation notices.
+
+Stored programs have a distinct `DeferredEvaluation` member because native
+MySQL accepts `CREATE PROCEDURE p() DO *` and raises the condition only when
+that instruction is reached. This member implements `ProgramStatement`, never
+the top-level `Statement` interface. Its retained schema contains only its typed
+items. Execution routes the deferred condition through the program's handlers.
+A constructor-driven property samples forty such members in each of four
+releases and checks successful definition followed by the declared invocation
+condition with unrelated session text: 160 trials and 800 assertions passed.
+The input differential history passed 43 observations on each of MySQL 5.7.44,
+8.0.44, 8.4.7 and 9.1.0, including CONTINUE HANDLER processing. The previously
+failing whole-model DO root at index 46 now constructs an ordinary expression
+list and completes identically on both engines. No root was removed from the
+245-type inventory. This repair does not resolve the other intrinsic-expression
+defects or the remaining whole-model differences.

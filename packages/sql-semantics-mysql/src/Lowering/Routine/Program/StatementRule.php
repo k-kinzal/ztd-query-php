@@ -99,8 +99,12 @@ final class StatementRule
      *
      * @throws \SqlSemantics\Construction\RejectedInput When the statement has no stored-program form
      */
-    public function sql(Node $node): Statement
+    public function sql(Node $node): ProgramStatement|Statement
     {
+        $evaluation = (new \SqlSemantics\Platform\MySql\Lowering\Dml\EvaluationItems($this->lowering))->program($node);
+        if ($evaluation !== null) {
+            return $evaluation;
+        }
         $statement = $this->lowering->statement($node);
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);

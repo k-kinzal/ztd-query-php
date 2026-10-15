@@ -104,6 +104,7 @@ final class Interpreter
     public function statement(Node $statement): ?Jump
     {
         return match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation => $this->deferredEvaluation($statement),
             $statement instanceof Block => $this->block($statement),
             $statement instanceof IfStatement => $this->branches($statement->branches, $statement->otherwise, null, false),
             $statement instanceof SearchedCase => $this->branches($statement->branches, $statement->otherwise, null, true),
@@ -118,6 +119,16 @@ final class Interpreter
             $statement instanceof Statement => $this->sql($statement),
             default => throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('the stored program statement ' . $statement::class),
         };
+    }
+
+    /**
+     * Raises the deferred DO expansion condition through the program's handlers.
+     */
+    public function deferredEvaluation(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation $statement): ?Jump
+    {
+        $jump = $this->instruction(fn () => throw (new \MySqlMemory\Session\Problem\Errors())->error($statement->problem(), $this->session));
+
+        return $jump?->flow === Flow::Resume ? null : $jump;
     }
 
     /**

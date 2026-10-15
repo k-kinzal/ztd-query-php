@@ -20,6 +20,18 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 #[Small]
 final class InterpreterTest extends TestCase
 {
+    public function testDeferredEvaluationPassesItsConditionToAContinueHandler(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->query('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1096 SET @handled=1; DO *; END');
+        $session->query('CALL p()');
+        $result = $session->query('SELECT @handled')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
     public function testSequenceRunsTheStatementsOfABodyInOrder(): void
     {
         $session = (new Instance())->connect();
