@@ -54,33 +54,38 @@
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reading the refused value of a statement</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;CHANGE REPLICATION SOURCE TO GTID_ONLY = 2&#039;);</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $change-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &#039;SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY accept only 0 or 1 (ER_PARSE_ERROR).&#039;</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RefusedSetting</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>{</span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com">     * @param ReplicationError $error The check the value fails</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null $number The refused binary log index, including when only a statement prefix was read</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-com"> * @example Reading the refused value of a statement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-com"> *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;CHANGE REPLICATION SOURCE TO GTID_ONLY = 2&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> *     $change-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &#039;SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY accept only 0 or 1 (ER_PARSE_ERROR).&#039;</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Describing a refused password</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::PasswordTooLong))-&gt;message() // =&gt; &#039;A replication password is longer than 32 characters (ER_CHANGE_SOURCE_PASSWORD_LENGTH).&#039;</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RefusedSetting</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>{</span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a></span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com">     * @param ReplicationError $error The check the value fails</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null $number The refused binary log index, including when only a statement prefix was read</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Text|null $text The decoded operand containing a forbidden line feed</span></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">29</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">ReplicationError</span> <span class="tok-var">$error</span>)</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">ReplicationError</span> <span class="tok-var">$error</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Literal\Numeral</span> <span class="tok-var">$number</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">ReplicationError</span> <span class="tok-var">$error</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Literal\Numeral</span> <span class="tok-var">$number</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Literal\Text</span> <span class="tok-var">$text</span> = <span class="tok-id">null</span>)</span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    {</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-id">\SqlSemantics\Diagnostic\Check</span>::<span class="tok-id">input</span>((<span class="tok-var">$error</span> === <span class="tok-id">ReplicationError</span>::<span class="tok-id">FileNumberOutOfRange</span>) === (<span class="tok-var">$number</span> !== <span class="tok-id">null</span>), <span class="tok-str">&#039;A refused binary log index retains its numeric operand.&#039;</span>);</span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    }</span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a></span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com">     * Describes the problem.</span></span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    {</span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">error</span>-&gt;<span class="tok-id">value</span>;</span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    }</span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>}</span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-id">\SqlSemantics\Diagnostic\Check</span>::<span class="tok-id">input</span>((<span class="tok-var">$error</span> === <span class="tok-id">ReplicationError</span>::<span class="tok-id">LineFeed</span>) === (<span class="tok-var">$text</span> !== <span class="tok-id">null</span>), <span class="tok-str">&#039;A line-feed refusal retains its decoded text operand.&#039;</span>);</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-id">\SqlSemantics\Diagnostic\Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$text</span> === <span class="tok-id">null</span> || <span class="tok-id">str_contains</span>(<span class="tok-var">$text</span>-&gt;<span class="tok-id">value</span>, <span class="tok-str">&quot;\n&quot;</span>), <span class="tok-str">&#039;A refused line-feed operand contains a line feed.&#039;</span>);</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-id">\SqlSemantics\Diagnostic\Check</span>::<span class="tok-id">input</span>((<span class="tok-var">$error</span> === <span class="tok-id">ReplicationError</span>::<span class="tok-id">FileNumberOutOfRange</span>) === (<span class="tok-var">$number</span> !== <span class="tok-id">null</span>), <span class="tok-str">&#039;A refused binary log index retains its numeric operand.&#039;</span>);</span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    }</span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-com">     * Describes the problem.</span></span>
+<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    {</span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">error</span>-&gt;<span class="tok-id">value</span>;</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    }</span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>}</span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
