@@ -156,6 +156,9 @@ final class Execution
      */
     public function access(\SqlSemantics\Statement\Statement $statement, Context $context): void
     {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction) {
+            (new \MySqlMemory\Command\Program\RoutineCommand())->types($statement, $this->session, $context);
+        }
         (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($statement, $this->session, $context);
         (new Access\PasswordAccess())->check($statement, $this->session);
         (new Access\TableCreation())->check($statement, $this->session);

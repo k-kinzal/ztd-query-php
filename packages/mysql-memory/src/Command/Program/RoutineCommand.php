@@ -74,7 +74,6 @@ final class RoutineCommand implements Command
             return $this->alter($statement, $session, $context->started);
         }
         assert($statement instanceof CreateProcedure || $statement instanceof CreateFunction);
-        $this->types($statement, $session, $context);
         if ($statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody) {
             $context->warning(ProgramError::LanguageComponentUnavailable);
         }
@@ -113,14 +112,15 @@ final class RoutineCommand implements Command
     }
 
     /**
-     * Checks routine ENUM and SET definitions before testing the language component or binary log.
+     * Resolves the routine database and checks ENUM and SET before the body conditions.
      *
      * @throws \MySqlMemory\Error\SqlError When an enumeration repeats a member under strict mode
      */
     public function types(CreateProcedure|CreateFunction $statement, Session $session, Context $context): void
     {
         $settings = $session->settings();
-        $declared = new Declared($settings->resolution()->schema($statement->name->schema->value ?? $session->variables->database), $settings->release());
+        $database = ProgramSource::database($statement->name->schema, $session);
+        $declared = new Declared($settings->resolution()->schema($database), $settings->release());
         $types = array_map(static fn ($parameter): array => [$parameter->type, $parameter->collation], $statement->parameters->parameters);
         if ($statement instanceof CreateFunction) {
             $types[] = [$statement->returns, $statement->collation];

@@ -44,6 +44,22 @@ final class RoutineCommandTest extends TestCase
         self::assertSame([['Error', 1291, "Column '' has duplicated value '\x0f' in ENUM"]], $session->diagnostics->conditions);
     }
 
+    public function testTypesPrecedesTheMissingReturnCondition(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run("CREATE FUNCTION f() RETURNS ENUM('a','a') DO 1");
+
+        self::assertSame([['Error', 1291, "Column '' has duplicated value 'a' in ENUM"]], $session->diagnostics->conditions);
+        $session->query("SET sql_mode=''");
+        $session->run("CREATE FUNCTION f() RETURNS ENUM('a','a') DO 1");
+
+        self::assertSame([
+            ['Note', 1291, "Column '' has duplicated value 'a' in ENUM"],
+            ['Error', 1320, 'No RETURN found in FUNCTION d.f'],
+        ], $session->diagnostics->conditions);
+    }
+
     public function testTypesUsesAnExplicitCaseSensitiveParameterCollation(): void
     {
         $session = (new Instance())->connect();
