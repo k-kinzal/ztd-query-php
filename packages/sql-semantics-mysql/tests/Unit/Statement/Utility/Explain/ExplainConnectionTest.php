@@ -32,9 +32,10 @@ final class ExplainConnectionTest extends TestCase
 
     public function testDeriveStatementRejectsAnOversizedDecimalConnection(): void
     {
-        $explain = (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616');
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Only integers are allowed');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $explain->facts->diagnostics[0]);
+        (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616');
     }
 
     public function testRefusesAModifierWithOptions(): void

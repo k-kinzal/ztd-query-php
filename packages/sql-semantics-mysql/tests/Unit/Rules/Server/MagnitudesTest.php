@@ -80,4 +80,16 @@ final class MagnitudesTest extends TestCase
 
         (new Magnitudes())->identifier($xid, GrammarRelease::MySql847);
     }
+    public function testConnectionNarrowsAfterTheTokenSpecificConversion(): void
+    {
+        $numbers = new Magnitudes();
+
+        self::assertSame(255, $numbers->connection(new Numeral('000255')));
+        self::assertSame(255, $numbers->connection(new Numeral('FF', true)));
+        self::assertSame(0, $numbers->connection(new Numeral('9223372036854775808')));
+        self::assertSame(4294967295, $numbers->connection(new Numeral('8000000000000000', true)));
+        self::assertSame(4294967295, $numbers->connection(new Numeral('18446744073709551615')));
+        self::assertSame(1, $numbers->connection(new Numeral('4294967297')));
+    }
+
 }

@@ -3104,6 +3104,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainConnection": {
         "analyze": "bool",
         "connection": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "connectionId": "int",
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier"

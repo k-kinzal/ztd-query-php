@@ -161,13 +161,13 @@ final class ExplainCommand implements Command
      */
     public function connection(ExplainConnection $statement, Session $session, Context $context): Reply
     {
-        $id = $statement->connection->hexadecimal ? (int) hexdec($statement->connection->text) : (int) $statement->connection->text;
+        $id = $statement->connectionId;
         if ($id === $session->id) {
             throw StatementError::ExplainNotSupported->error();
         }
         $target = ($session->instance->sessions[$id] ?? null)?->get();
         if ($target === null || $target->released) {
-            throw AdministrationError::NoSuchThread->error($statement->connection->text);
+            throw AdministrationError::NoSuchThread->error($id);
         }
 
         return new Completion(0, 0, $context->diagnostics->raised());

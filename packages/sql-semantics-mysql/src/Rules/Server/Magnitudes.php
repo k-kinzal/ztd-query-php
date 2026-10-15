@@ -63,6 +63,28 @@ final class Magnitudes
     }
 
     /**
+     * Resolves an EXPLAIN connection operand to the unsigned 32-bit thread identity.
+     *
+     * Decimal tokens retain their full unsigned range before narrowing. Hexadecimal tokens
+     * first saturate at the signed 64-bit limit. Verified through native SQL observations.
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the operand is not an integer token
+     */
+    public function connection(Numeral $number): int
+    {
+        Check::input($this->integral($number), 'An EXPLAIN connection identifier is an integer token.');
+        $digits = ltrim($number->hexadecimal ? $this->decimal($number->text) : $number->text, '0');
+        if ($number->hexadecimal && (strlen($digits) > 19 || strlen($digits) === 19 && strcmp($digits, self::LARGEST) > 0)) {
+            $digits = self::LARGEST;
+        }
+        $identity = 0;
+        foreach (str_split($digits) as $digit) {
+            $identity = ($identity * 10 + (int) $digit) % 4294967296;
+        }
+
+        return $identity;
+    }
+
+    /**
      * Reports a decimal or floating number at a position that reads it through dec_num_error.
      */
     public function integer(Derivation $derivation, Numeral $number): bool

@@ -26,6 +26,13 @@ use SqlSemantics\Statement\Snapshot;
  * Status: Implemented.
  *
  * @visibility public
+ * Connection identifiers are integer tokens: decimal digits within the unsigned 64-bit
+ * range or a hexadecimal literal. Fractional and exponent forms have no connection operand.
+ *
+ * @example Refusing a fractional connection identifier
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a decimal connection identifier beyond the token range
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('18446744073709551616')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the connection
  *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = JSON FOR CONNECTION 42');
  *     [$explain->statement->connection->text, $explain->field(0)->name?->value, $explain->toString()] // => ['42', 'EXPLAIN', 'EXPLAIN FORMAT = `JSON` FOR CONNECTION 42']
@@ -33,6 +40,11 @@ use SqlSemantics\Statement\Snapshot;
 final class ExplainConnection implements Statement
 {
     use Snapshot;
+
+    /**
+     * The resolved unsigned 32-bit thread identity, independent of its numeric spelling.
+     */
+    public readonly int $connectionId;
 
     /**
      * @param Numeral $connection The connection identifier
@@ -48,6 +60,7 @@ final class ExplainConnection implements Statement
         public readonly ?ExplainModifier $modifier = null,
         public readonly ?UserVariable $into = null,
     ) {
+        $this->connectionId = (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->connection($connection);
         Check::input($modifier === null || ($format === null && !$analyze && $into === null), 'EXTENDED and PARTITIONS are written alone.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -58,7 +71,6 @@ final class ExplainConnection implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
-        (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->connection);
     }
 
     /**

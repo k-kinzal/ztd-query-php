@@ -6,12 +6,16 @@ namespace SqlSemantics\Platform\MySql\Lowering\Leaf;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
+use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
 
 /**
  * Lowers the number productions of positions that are not expressions.
@@ -72,6 +76,30 @@ final class NumberRule
         $text = $form->token(0)->text;
 
         return $this->lowering->leaves->record(new Numeral($hexadecimal ? (new RadixSpelling())->digits($text) : $text, $hexadecimal));
+    }
+
+    /**
+     * Preserves the grammar's integer-token refusal before any later malformed input.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        return $node->name === 'dec_num_error' ? new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new FractionalNumber($this->numeral($node)), true) : null;
+    }
+
+    /**
+     * Lowers a required integer token, refusing dec_num_error before constructing its owner.
+     *
+     * @throws RejectedInput When the operand is fractional or exceeds the integer token domain
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function integral(Node $number): Numeral
+    {
+        $value = $this->numeral($number);
+        if (!(new Magnitudes())->integral($value)) {
+            throw new RejectedInput(new FractionalNumber($value), (new SourceRanges())->span($number)[1] ?? 0);
+        }
+
+        return $value;
     }
 
     /**
