@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 /**
  * Preserves completed binary log index and line-feed checks before later input errors.
  *
- * The notice retains the numeric operand needed to format its error. No SQL,
+ * The notice retains the decoded operand needed to format its error. No SQL,
  * parser node or execution state survives the lowering call.
  * Observed through isolated MySQL 8.0, 8.4 and 9.1 servers.
  *
@@ -25,6 +25,13 @@ final class SyntaxSettings
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
+        if ($node->name === 'source_def') {
+            try {
+                (new SourceOptionRule($lowering))->option($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return new ParseFailure($failure->problem, $failure->aborts);
+            }
+        }
         if ($node->name === 'TEXT_STRING_sys_nonewline') {
             $text = $lowering->literals->text($node);
 

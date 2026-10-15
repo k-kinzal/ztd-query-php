@@ -15,9 +15,8 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility public
- * @example Reading the refused value of a statement
- *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO GTID_ONLY = 2');
- *     $change->facts->diagnostics[0]->message() // => 'SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY accept only 0 or 1 (ER_PARSE_ERROR).'
+ * @example Describing a refused password
+ *     (new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::PasswordTooLong))->message() // => 'A replication password is longer than 32 characters (ER_CHANGE_SOURCE_PASSWORD_LENGTH).'
  */
 final class RefusedSetting implements Diagnostic
 {

@@ -65,7 +65,8 @@ final class Reset implements Statement
      *
      * An omitted TO keeps the last explicit index. An omitted channel or ALL
      * replaces the preceding replica option. Written targets remain available
-     * for diagnostics, including invalid options overridden by a later target.
+     * for release diagnostics and deprecation notices. Invalid input operands
+     * are refused before publication, even when a later target would replace them.
      * Observed through SQL on MySQL 8.0.44, 8.4.7 and 9.1.0.
      *
      * @return list<ResetTarget> At most one target of each kind

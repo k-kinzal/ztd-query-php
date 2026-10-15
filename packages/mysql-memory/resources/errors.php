@@ -593,4 +593,9 @@ return [
     1416 => ['22003', 'Cannot get geometry object from data you send to the GEOMETRY field'],
     3643 => ['HY000', "The SRID of the geometry does not match the SRID of the column '%s'. The SRID of the geometry is %d, but the SRID of the column is %d. Consider changing the SRID of the geometry or the SRID property of the column."],
     3673 => ['23000', "Column '%s' cannot be null"],
+    3990 => ['HY000', 'Failed to enable Asynchronous Replication Connection Failover feature. The CHANGE REPLICATION SOURCE TO SOURCE_CONNECTION_AUTO_FAILOVER = 1 can only be set when @@GLOBAL.GTID_MODE = ON.'],
+    3991 => ['HY000', 'Failed to enable Asynchronous Replication Connection Failover feature. The CHANGE REPLICATION SOURCE TO SOURCE_CONNECTION_AUTO_FAILOVER = 1 can only be set when SOURCE_AUTO_POSITION option of CHANGE REPLICATION SOURCE TO is enabled.'],
+    4065 => ['HY000', "GTID_ONLY cannot be enabled for replication channel '%s'. You need GTID_MODE = ON, SOURCE_AUTO_POSITION = 1 and REQUIRE_ROW_FORMAT = 1."],
+    4066 => ['HY000', "REQUIRE_ROW_FORMAT cannot be disabled for replication channel '%s' when GTID_ONLY=1."],
+    4067 => ['HY000', "SOURCE_AUTO_POSITION cannot be disabled for replication channel '%s' when GTID_ONLY=1."],
 ];

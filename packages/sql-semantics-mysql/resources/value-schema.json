@@ -1789,6 +1789,11 @@
         "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "text": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedSourceNumber": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\SourceOptionKind",
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "offset": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\ReplicationError": {
         "name": "string",
         "value": "string"

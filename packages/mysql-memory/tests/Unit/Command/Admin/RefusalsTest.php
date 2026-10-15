@@ -134,8 +134,7 @@ final class RefusalsTest extends TestCase
     public function testSwitchQuotesTheStatementFromTheValue(): void
     {
         $text = "CHANGE REPLICATION SOURCE TO GTID_ONLY = 2 FOR CHANNEL 'c'";
-        $statement = (new Instance())->connect()->analyze($text)->statement;
-        $error = (new Refusals())->switch($statement, $text);
+        $error = (new Refusals())->switch(null, $text);
 
         self::assertSame([1064, "You have an error in your CHANGE REPLICATION SOURCE syntax; GTID_ONLY only accepts values 0 or 1 near '2 FOR CHANNEL 'c'' at line 1"], [$error->getCode(), $error->getMessage()]);
     }
@@ -188,4 +187,14 @@ final class RefusalsTest extends TestCase
 
         self::assertSame([1525, 'HY000', "Incorrect argument contains not-allowed LF value: 'a\nb'"], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
     }
+    public function testSettingFormatsRetainedOperandsWithoutSqlOrAStatement(): void
+    {
+        $line = new RefusedSetting(ReplicationError::LineFeed, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb"));
+        $index = new RefusedSetting(ReplicationError::FileNumberOutOfRange, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2000000001'));
+        $refusals = new Refusals();
+
+        self::assertSame("Incorrect argument contains not-allowed LF value: 'a\nb'", $refusals->setting($line, null, 'unrelated invalid input')->getMessage());
+        self::assertSame("The requested value '2000000001' for the next binary log index is out of range. Please use a value between '1' and '2000000000'.", $refusals->setting($index, null, 'unrelated invalid input')->getMessage());
+    }
+
 }

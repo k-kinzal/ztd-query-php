@@ -39,10 +39,36 @@ final class Replication
     public bool $missing = false;
 
     /**
+     * Whether GTID auto-positioning is configured.
+     */
+    public bool $autoPosition = false;
+
+    /**
+     * Whether the channel requires row events.
+     */
+    public bool $requireRowFormat = false;
+
+    /**
+     * Whether the channel persists only GTID positions.
+     */
+    public bool $gtidOnly = false;
+
+    /**
+     * Whether automatic source failover is enabled.
+     */
+    public bool $autoFailover = false;
+
+    /**
      * Closes the repositories and retains the closed relay log until a change replaces it.
      */
-    public function reset(): void
+    public function reset(bool $all = false): void
     {
+        if ($all) {
+            $this->autoPosition = false;
+            $this->requireRowFormat = false;
+            $this->gtidOnly = false;
+            $this->autoFailover = false;
+        }
         $this->initialized = false;
         $this->applying = false;
         $this->closed = true;

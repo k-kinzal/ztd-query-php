@@ -24,6 +24,10 @@ final class RejectedOperand
      */
     public function of(Node $node, Lowering $lowering): ?RejectedInput
     {
+        $setting = (new Replication\SyntaxSettings())->completed($node, $lowering);
+        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber) {
+            return new RejectedInput($setting->problem, (new SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
+        }
         $privileges = (new Account\SyntaxPrivileges())->completed($node, $lowering);
         if ($privileges !== null) {
             return new RejectedInput($privileges->problem, (new SourceRanges())->span($node)[1] ?? 0, true);

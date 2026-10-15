@@ -189,4 +189,18 @@ final class ConstructionTest extends TestCase
         self::assertLessThanOrEqual(2000, $construction->attempts);
     }
 
+    /**
+     * @throws JsonException When the value inventory is invalid
+     * @throws ReflectionException When constructor types cannot be inspected
+     */
+    public function testObjectUsesTheAllocatedBudgetForDependentConstructorOperands(): void
+    {
+        $construction = new Construction(new Choices('source-switch:3'), new Catalogue(), new Metadata());
+        $option = $construction->object(\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption::class, 4);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption::class, $option);
+        self::assertGreaterThan(47, $construction->attempts);
+        self::assertLessThanOrEqual(384, $construction->attempts);
+    }
+
 }

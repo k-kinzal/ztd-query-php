@@ -59,10 +59,7 @@ final class Construction
         $implementations = interface_exists($class) ? $this->catalogue->implementations($class) : [$class];
         $depths = array_values(array_filter(range(0, $depth), fn (int $remaining): bool => $this->depth->object($class, $remaining)));
         $deadline = min(2000, $this->attempts + 24 * 2 ** $depth);
-        for ($attempt = 0; $attempt < 24 && $this->attempts < 2000; $attempt++) {
-            if ($this->attempts >= $deadline) {
-                throw new Exhausted('The subtree construction budget was exhausted at ' . $class);
-            }
+        while ($this->attempts < $deadline) {
             $this->attempts++;
             $remaining = interface_exists($class) || !$this->depth->object($class, 0) ? $this->choices->one($depths) : $depth;
             $concrete = $this->choices->one(array_values(array_filter($implementations, fn (string $candidate): bool => $this->depth->object($candidate, $remaining))));

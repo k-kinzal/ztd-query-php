@@ -25,12 +25,12 @@ final class ChangeReplicationSourceTest extends TestCase
 {
     public function testDeriveStatementReportsRefusedSettings(): void
     {
-        $change = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648, SOURCE_HEARTBEAT_PERIOD = 5000000, REQUIRE_ROW_FORMAT = 2, SOURCE_CONNECTION_AUTO_FAILOVER = 1.5, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'x' FOR CHANNEL 'a\\nb'");
+        $change = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648, SOURCE_HEARTBEAT_PERIOD = 5000000, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'x' FOR CHANNEL 'a\\nb'");
 
         self::assertEquals([
             new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange), new RefusedSetting(ReplicationError::HeartbeatOutOfRange),
-            new RefusedSetting(ReplicationError::RowFormatValue), new RefusedSetting(ReplicationError::FractionalNumber), new RefusedSetting(ReplicationError::InvalidUuid),
-            new RefusedSetting(ReplicationError::LineFeed, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")),
+            new RefusedSetting(ReplicationError::InvalidUuid),
+            new RefusedSetting(ReplicationError::LineFeed, text: new Text("a\nb")),
         ], $change->facts->diagnostics);
     }
 

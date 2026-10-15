@@ -95,7 +95,7 @@ final class ResetRule
     /**
      * Lowers one item of RESET.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When a binary log index is outside its domain
+     * @throws \SqlSemantics\Construction\RejectedInput When a binary log index or channel is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function target(Form $form): ResetTarget

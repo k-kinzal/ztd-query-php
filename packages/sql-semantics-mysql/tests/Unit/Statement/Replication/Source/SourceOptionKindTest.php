@@ -56,4 +56,14 @@ final class SourceOptionKindTest extends TestCase
         self::assertTrue(SourceOptionKind::LogPosition->accepts(new Numeral('1.5')));
         self::assertTrue(SourceOptionKind::LogPosition->accepts(new Numeral('2147483648')));
     }
+    public function testAcceptsRestrictsSourceSwitchesToTheirBooleanNumericDomain(): void
+    {
+        self::assertTrue(SourceOptionKind::GtidOnly->accepts(new Numeral('01')));
+        self::assertTrue(SourceOptionKind::RequireRowFormat->accepts(new Numeral('1.9')));
+        self::assertTrue(SourceOptionKind::ConnectionAutoFailover->accepts(new Numeral('1', true)));
+        self::assertFalse(SourceOptionKind::GtidOnly->accepts(new Numeral('1.0')));
+        self::assertFalse(SourceOptionKind::RequireRowFormat->accepts(new Numeral('2')));
+        self::assertFalse(SourceOptionKind::ConnectionAutoFailover->accepts(new Numeral('2')));
+    }
+
 }

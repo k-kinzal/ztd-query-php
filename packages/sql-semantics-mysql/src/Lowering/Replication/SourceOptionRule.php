@@ -203,6 +203,7 @@ final class SourceOptionRule
      * Lowers one option in the vocabulary of its statement.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a source switch is outside its numeric domain
      */
     public function option(Node $option, Terminology $terminology): SourceOption
     {
@@ -216,7 +217,13 @@ final class SourceOptionRule
         $kind = self::OPTIONS[$form->signature] ?? $this->keyword($form->node(0));
         $synonym = $terminology === Terminology::Current && !isset(self::OPTIONS[$form->signature]) && str_contains($this->lowering->form($form->node(0))->signature, 'MASTER_');
 
-        return new SourceOption($terminology, $kind, (new SourceValueRule($this->lowering))->value($form), $synonym);
+        $value = (new SourceValueRule($this->lowering))->value($form);
+        if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Numeral && in_array($kind, [SourceOptionKind::ConnectionAutoFailover, SourceOptionKind::GtidOnly, SourceOptionKind::RequireRowFormat], true) && !$kind->accepts($value)) {
+            $range = (new \SqlSemantics\Construction\SourceRanges())->span($form->node(2));
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber($kind, $value, $range[0] ?? 0), $range[1] ?? 0, $kind !== SourceOptionKind::RequireRowFormat);
+        }
+
+        return new SourceOption($terminology, $kind, $value, $synonym);
     }
 
     /**

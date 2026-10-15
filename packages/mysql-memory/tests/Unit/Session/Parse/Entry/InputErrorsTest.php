@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Session\Parse\Entry;
+
+use MySqlMemory\Instance;
+use MySqlMemory\Session\Parse\Entry\InputErrors;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
+
+#[CoversClass(InputErrors::class)]
+#[Small]
+final class InputErrorsTest extends TestCase
+{
+    public function testErrorFormatsARefusedSourceNumber(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = '2 TRAILING';
+        $problem = new RefusedSourceNumber(SourceOptionKind::GtidOnly, new Numeral('2'), 0);
+
+        self::assertStringContainsString("near '2 TRAILING' at line 1", (new InputErrors())->error($problem, $session)?->getMessage() ?? '');
+    }
+
+    public function testErrorFormatsARefusedRole(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'SELECT TO user';
+        $problem = new RoleOrPrivilegeMismatch('SELECT', true, 0);
+
+        self::assertStringContainsString('Illegal authorization identifier', (new InputErrors())->error($problem, $session)?->getMessage() ?? '');
+    }
+
+    public function testErrorLeavesOtherDiagnosticsToTheirFamily(): void
+    {
+        self::assertNull((new InputErrors())->error(new NotSupportedYet('feature'), (new Instance())->connect()));
+    }
+}

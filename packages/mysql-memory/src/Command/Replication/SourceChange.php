@@ -48,6 +48,7 @@ final class SourceChange
             $this->heartbeat((float) $heartbeat->text, $session, $context);
         }
         $this->gtids($options, $session);
+        (new SourceSwitches())->check($options, $session, $channel);
         $session->instance->registry->replication->initialized = true;
         $user = $options[SourceOptionKind::PrivilegeChecksUser->value]->value ?? null;
         if ($user instanceof AccountName) {
@@ -62,6 +63,7 @@ final class SourceChange
             $this->compression((new Literals())->bytes($compression), $channel);
         }
         $this->relay($options, $session);
+        (new SourceSwitches())->apply($options, $session);
     }
 
     /**

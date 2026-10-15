@@ -206,7 +206,7 @@ final class ReplicaCommand implements Command
             if ($registry->replication->applying) {
                 throw AdministrationError::ReplicaChannelRunning->error('');
             }
-            $registry->replication->reset();
+            $registry->replication->reset($target->all);
         }
     }
 

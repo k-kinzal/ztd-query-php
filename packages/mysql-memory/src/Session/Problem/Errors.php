@@ -93,11 +93,9 @@ final class Errors
     public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list', ?Node $statement = null): SqlError
     {
         $database = $session->variables->database;
-        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch) {
-            return (new \MySqlMemory\Session\Parse\Entry\RoleInput())->error($diagnostic, $session->text);
-        }
 
-        return $this->unopened($diagnostic, $session, $statement)
+        return (new \MySqlMemory\Session\Parse\Entry\InputErrors())->error($diagnostic, $session)
+            ?? $this->unopened($diagnostic, $session, $statement)
             ?? $this->names($diagnostic, $database, $clause, $statement)
             ?? $this->query($diagnostic, $clause)
             ?? $this->call($diagnostic)

@@ -17,11 +17,12 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * One `option = value` of CHANGE REPLICATION SOURCE TO, or one log position of the UNTIL condition of START REPLICA.
  *
- * Mirrors one field of the server's LEX_SOURCE_INFO. The value is typed by
+ * The value is typed by
  * the option (SourceOptionKind::accepts); NULL is the value null, accepted by
  * PRIVILEGE_CHECKS_USER and SOURCE_TLS_CIPHERSUITES. The option is written in
  * the vocabulary of its statement; in 8.0 to 8.3 an option of the current
- * vocabulary may be spelled with MASTER, its synonym ($synonym).
+ * vocabulary may be spelled with MASTER, its synonym ($synonym). The three
+ * Boolean switch options exclude numerals outside their 0/1 domain.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility public
