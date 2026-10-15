@@ -27,7 +27,7 @@ final class CompletedNotice
      */
     public function of(Node $node, Lowering $lowering, ReductionParser $parser, string $statement): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
     {
-        $entry = (new ClientEntry())->generated($node);
+        $entry = (new ClientEntry())->generated($node) ?? (new Replication\SyntaxLogMoment())->rejected($node, $lowering->profile->grammar);
         if ($entry !== null) {
             return new ParseFailure($entry->problem, true);
         }

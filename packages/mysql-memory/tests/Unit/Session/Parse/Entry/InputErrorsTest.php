@@ -37,6 +37,15 @@ final class InputErrorsTest extends TestCase
         self::assertStringContainsString("near '2 TRAILING' at line 1", (new InputErrors())->error($problem, $session)?->getMessage() ?? '');
     }
 
+    public function testErrorLocatesTheRefusedSubqueryWithoutKeepingItsText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = "PURGE BINARY LOGS BEFORE\n(SELECT 1)";
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedLogSubquery(25);
+
+        self::assertStringContainsString("near '(SELECT 1)' at line 2", (new InputErrors())->error($problem, $session)?->getMessage() ?? '');
+    }
+
     public function testErrorFormatsARefusedRole(): void
     {
         $session = (new Instance())->connect();

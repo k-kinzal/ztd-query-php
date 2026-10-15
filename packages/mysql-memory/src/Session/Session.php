@@ -348,7 +348,6 @@ final class Session
             } catch (SqlError $error) {
                 throw (new Parse\DebugRequest())->refusal($operation, $error, $this);
             }
-            (new Syntax())->purged($tree, $operation->statement, $statement, $this->settings()->release());
             if ((new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
                 (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $this);
             }

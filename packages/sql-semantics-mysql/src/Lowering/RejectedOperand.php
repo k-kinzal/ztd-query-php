@@ -28,7 +28,7 @@ final class RejectedOperand
         if ($names !== null) {
             return $names;
         }
-        $entry = (new ClientEntry())->generated($node);
+        $entry = (new ClientEntry())->generated($node) ?? (new Replication\SyntaxLogMoment())->rejected($node, $lowering->profile->grammar);
         if ($entry !== null) {
             return $entry;
         }

@@ -1789,6 +1789,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Log\\PurgeLogsTo": {
         "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedLogSubquery": {
+        "offset": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedSetting": {
         "error": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\ReplicationError",
         "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",

@@ -233,27 +233,6 @@ final class SyntaxTest extends TestCase
         $session->query('PARTITION BY HASH (a) PARTITIONS 2');
     }
 
-    public function testPurgedRefusesASubqueryInTheMomentOfPurgeInMySql57(): void
-    {
-        $session = (new Instance('5.7.44'))->connect();
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1064);
-        $this->expectExceptionMessage("near '  SELECT 1)' at line 1");
-
-        $session->query('PURGE BINARY LOGS BEFORE 1 + (  SELECT 1)');
-    }
-
-    public function testPurgedRefusesASubqueryNearItsParenthesisAfterAllInMySql56(): void
-    {
-        $session = (new Instance('5.6.51'))->connect();
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionMessage("near '( SELECT 1) )' at line 1");
-
-        $session->query('PURGE MASTER LOGS BEFORE (1 = ALL ( SELECT 1) )');
-    }
-
     public function testIdentifierRemovesTheBackquotes(): void
     {
         self::assertSame(['a`b', 'c'], [(new Syntax())->identifier('`a``b`'), (new Syntax())->identifier('c')]);
