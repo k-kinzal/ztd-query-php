@@ -16,6 +16,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PluginCommandTest extends TestCase
 {
+    public function testUrnBoundsDiagnosticBytesAndTerminatesAtNul(): void
+    {
+        $command = new PluginCommand();
+
+        self::assertSame(str_repeat('x', 192), $command->urn(str_repeat('x', 193)));
+        self::assertSame(str_repeat('x', 191) . substr('猫', 0, 1), $command->urn(str_repeat('x', 191) . '猫'));
+        self::assertSame('first', $command->urn("first\0tail"));
+    }
+
     public function testLoadableReportsTheLibraryWithoutAQualifiedName(): void
     {
         $session = (new Instance())->connect();

@@ -83,9 +83,9 @@ final class PluginCommand implements Command
             }
         }
         if ($statement instanceof UninstallComponent) {
-            $urns = array_map(static fn ($component): string => (new Literals())->bytes($component), $statement->components);
+            $urns = array_map(fn ($component): string => $this->urn((new Literals())->bytes($component)), $statement->components);
             foreach ($urns as $urn) {
-                $session->diagnostics->warning(AdministrationError::ComponentNotPersisted, AdministrationError::ComponentNotPersisted->message($urn));
+                $session->diagnostics->warning(AdministrationError::ComponentNotPersisted, \MySqlMemory\Value\Diagnostic\Encoding::repair(AdministrationError::ComponentNotPersisted->message($urn)));
             }
             throw AdministrationError::ComponentNotLoaded->error($urns[0]);
         }
@@ -135,21 +135,32 @@ final class PluginCommand implements Command
      */
     public function load(string $urn, string $directory): void
     {
+        $urn = explode("\0", $urn, 2)[0];
+        $display = $this->urn($urn);
         $separator = strpos($urn, '://');
         if ($separator === false) {
-            throw AdministrationError::ComponentSchemeMissing->error($urn);
+            throw AdministrationError::ComponentSchemeMissing->error($display);
         }
         $scheme = substr($urn, 0, $separator);
         if ($scheme !== 'file') {
-            throw AdministrationError::ComponentSchemeUnserviced->error($scheme, $urn);
+            throw AdministrationError::ComponentSchemeUnserviced->error($this->urn($scheme), $display);
         }
         $path = substr($urn, $separator + 3);
         if (str_contains($path, '/')) {
-            throw AdministrationError::ComponentCantLoad->error($urn);
+            throw AdministrationError::ComponentCantLoad->error($display);
         }
         $unopened = $this->unopened($directory, $path . '.so');
 
-        throw new SqlError($unopened->error, $unopened->getMessage(), null, [[AdministrationError::ComponentCantLoad->value, AdministrationError::ComponentCantLoad->message($urn)]]);
+        throw new SqlError($unopened->error, $unopened->getMessage(), null, [[AdministrationError::ComponentCantLoad->value, AdministrationError::ComponentCantLoad->message($display)]]);
+    }
+
+    /**
+     * Bounds a displayed component URN to 192 bytes and stops at its first NUL.
+     * The full semantic operand remains available for library lookup.
+     */
+    public function urn(string $urn): string
+    {
+        return substr(explode("\0", $urn, 2)[0], 0, 192);
     }
 
     /**
