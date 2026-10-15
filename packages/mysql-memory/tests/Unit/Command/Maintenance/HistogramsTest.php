@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Histograms::class)]
 #[Small]
@@ -29,6 +30,16 @@ final class HistogramsTest extends TestCase
         $this->expectExceptionMessage("Duplicate column name 'E'");
 
         (new Histograms())->check($statement->histogram);
+    }
+
+    public function testReportDistinguishesDictionaryRemovalFromTableAccess(): void
+    {
+        $request = new DropHistogram([new Name('a')]);
+        $histograms = new Histograms();
+
+        self::assertSame([['Error', "No histogram statistics found for column 'a'."]], $histograms->report($request, null, 'missing table', false, '8.0.44'));
+        self::assertSame([['Error', 'missing table']], $histograms->report($request, null, 'missing table', false, '8.1.0'));
+        self::assertSame([['Error', 'Cannot create histogram statistics for a view.']], $histograms->report($request, null, 'missing table', true, '8.1.0'));
     }
 
     public function testRowsCreatesHistogramsInTheBinaryOrderOfTheColumns(): void
@@ -92,6 +103,14 @@ final class HistogramsTest extends TestCase
 
         self::assertSame([['Error', "No histogram statistics found for column 'a'."], ['status', "Histogram statistics removed for column 'y'."]], (new Histograms())->drop($statement->histogram->columns, $table));
         self::assertSame([], $table->histograms);
+    }
+
+    public function testDropReportsMissingStatisticsWithoutATable(): void
+    {
+        self::assertSame([
+            ['Error', "No histogram statistics found for column 'a'."],
+            ['Error', "No histogram statistics found for column 'z'."],
+        ], (new Histograms())->drop([new Name('z'), new Name('a')], null));
     }
 
     public function testProblemAnswersASinglePartUniqueIndex(): void

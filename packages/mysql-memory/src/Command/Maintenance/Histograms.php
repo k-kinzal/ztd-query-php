@@ -50,6 +50,29 @@ final class Histograms
     }
 
     /**
+     * Reports the request against the available table or catalog entry.
+     *
+     * MySQL 8.0 removes dictionary statistics without first opening a base table.
+     * Later releases require that table even when only removing statistics.
+     *
+     * @return list<array{string, string}>
+     */
+    public function report(Histogram $histogram, ?StoredTable $table, ?string $failure, bool $view, string $release): array
+    {
+        if ($histogram instanceof DropHistogram && $table === null && version_compare($release, '8.1.0', '<')) {
+            return $this->drop($histogram->columns, null);
+        }
+        if ($view) {
+            return [['Error', 'Cannot create histogram statistics for a view.']];
+        }
+        if ($failure !== null || $table === null) {
+            return [['Error', $failure ?? '']];
+        }
+
+        return $this->rows($histogram, $table);
+    }
+
+    /**
      * Changes the histograms of a table and answers the Msg_type and Msg_text of each row.
      *
      * @return list<array{string, string}>
@@ -90,16 +113,18 @@ final class Histograms
     /**
      * Removes the histograms of columns and answers a row for each.
      *
+     * MySQL 8.0 also permits this dictionary operation when the table is absent.
+     *
      * @param list<Name> $columns
      * @return list<array{string, string}>
      */
-    public function drop(array $columns, StoredTable $table): array
+    public function drop(array $columns, ?StoredTable $table): array
     {
         $names = array_map(static fn (Name $column): string => $column->value, $columns);
         sort($names, SORT_STRING);
         $rows = [];
         foreach ($names as $name) {
-            if (isset($table->histograms[strtolower($name)])) {
+            if ($table !== null && isset($table->histograms[strtolower($name)])) {
                 unset($table->histograms[strtolower($name)]);
                 $rows[] = ['status', "Histogram statistics removed for column '" . $name . "'."];
             } else {

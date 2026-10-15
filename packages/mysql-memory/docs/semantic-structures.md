@@ -645,3 +645,14 @@ still need the explanations and witnesses required by the acceptance contract.
 After the NULL and LOAD repairs at `2e58a4016d5`, replay of the original 16 failing
 MySQL 8.0 supplied seeds gives 11 matches and five remaining differences. These
 focused replays do not replace the final whole-model and differential campaigns.
+
+
+Histogram removal preserves its release-specific catalog behavior. MySQL 8.0.44
+reports absent statistics for missing tables and views; 8.1 and later require a
+base table. The consumer uses the typed histogram request and dictionary state.
+A direct native comparison reuses two constructed requests across eight states:
+missing table, present table, populated histograms, removed histograms, dropped
+table, view, dropped view and temporary table. All 96 observations matched on
+8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7 and 9.1.0. The package checks passed, including
+14,989 unit/property/doctests and 48,470 assertions. This establishes those
+histogram histories, not the outstanding whole-model construction property.

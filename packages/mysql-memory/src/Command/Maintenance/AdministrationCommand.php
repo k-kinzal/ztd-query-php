@@ -149,11 +149,12 @@ final class AdministrationCommand implements Command
         $label = $schema . '.' . $name->name->value;
         $table = $session->instance->dictionary->table($schema, $name->name->value);
         $failure = $this->failure($session, $schema, $name, $table);
-        if ($table === null && isset($session->instance->dictionary->schema($schema)?->views[$name->name->value])) {
-            return $this->rows($label, $histogram !== null ? 'histogram' : $operation, $this->view($operation, $label, $histogram !== null, $partitioned !== false));
-        }
+        $view = $table === null && isset($session->instance->dictionary->schema($schema)?->views[$name->name->value]);
         if ($histogram !== null) {
-            return $this->rows($label, 'histogram', $failure === null && $table !== null ? (new Histograms())->rows($histogram, $table) : [['Error', $failure ?? '']]);
+            return $this->rows($label, 'histogram', (new Histograms())->report($histogram, $table, $failure, $view, $session->instance->version));
+        }
+        if ($view) {
+            return $this->rows($label, $operation, $this->view($operation, $label, false, $partitioned !== false));
         }
         if ($failure === null && $partitioned !== false && $table !== null) {
             $failure = $table->definition->partitioning === null ? 'Partition management on a not partitioned table is not possible' : null;
