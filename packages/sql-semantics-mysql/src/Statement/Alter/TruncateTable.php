@@ -40,6 +40,7 @@ final class TruncateTable implements Statement
      */
     public function __construct(public readonly QualifiedName $table)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -49,7 +49,7 @@ final class ContinuingRefusal
             $notices[] = [$offset, $notice];
         }
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
-        $append = false;
+        $append = array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure) === [];
         try {
             (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($parser->parse($statement), $statement);
         } catch (SqlError $debug) {

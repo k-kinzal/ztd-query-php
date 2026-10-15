@@ -32,6 +32,7 @@ final class TargetTable implements Node
      */
     public function __construct(public readonly QualifiedName $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($name->catalog === null, 'A table is qualified by at most a database.');
     }
 

@@ -84,6 +84,7 @@ final class CreateIndex implements Statement, Relation
         array $options = [],
         array $alterOptions = [],
     ) {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table name has at most a database qualifier.');
         Check::input($kind !== IndexKind::Primary, 'CREATE INDEX does not create a primary key.');
         Check::input($algorithm === null || $kind === IndexKind::Index || $kind === IndexKind::Unique, 'A full-text or spatial index has no USING clause before ON.');

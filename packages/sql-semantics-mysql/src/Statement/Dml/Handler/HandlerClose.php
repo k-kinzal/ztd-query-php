@@ -32,6 +32,7 @@ final class HandlerClose implements Statement
      */
     public function __construct(public readonly Name $handler)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check(new \SqlSemantics\Statement\Identifier\QualifiedName($handler));
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

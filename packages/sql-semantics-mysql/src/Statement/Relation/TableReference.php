@@ -66,6 +66,7 @@ final class TableReference implements NamedRelation, TableSource
      */
     public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], array $indexHints = [], public readonly ?TableSample $sample = null, public readonly AliasMark $mark = AliasMark::As, public readonly OptionalWords $dot = OptionalWords::Omitted)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($dot === OptionalWords::Omitted || $name->schema === null, 'Only a table name without database is written after a leading dot.');
         Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');
         Check::input($name->catalog === null, 'A table is qualified by at most a database.');

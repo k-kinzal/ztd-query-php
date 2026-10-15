@@ -42,6 +42,7 @@ final class HandlerOpen implements Statement
      */
     public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

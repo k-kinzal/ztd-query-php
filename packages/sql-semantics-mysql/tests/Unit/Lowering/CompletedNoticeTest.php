@@ -23,6 +23,21 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class CompletedNoticeTest extends TestCase
 {
+    public function testOperandsReadsThePrimitiveNameRefusal(): void
+    {
+        $parser = new MySqlParser('mysql-5.7.44');
+        $lowering = new Lowering(Productions::load(__DIR__ . '/../../../resources/productions/mysql-5.7.44.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql5744));
+        $notices = [];
+        $parser->parse('ALTER TABLE `` ADD a INT', static function (\SqlParser\Parser\Node $node) use ($lowering, &$notices): void {
+            $notice = (new CompletedNotice())->operands($node, $lowering);
+            if ($notice !== null) {
+                $notices[] = $notice;
+            }
+        });
+
+        self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Table), true)], $notices);
+    }
+
     public function testOfDispatchesInnerRefusalBeforeBinaryCompletion(): void
     {
         $parser = new MySqlParser('mysql-8.4.7');

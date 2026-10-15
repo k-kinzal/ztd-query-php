@@ -47,6 +47,7 @@ final class DropIndex implements Statement
      */
     public function __construct(public readonly Name $index, public readonly QualifiedName $table, array $options = [])
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
         $this->options = (new \SqlSemantics\Platform\MySql\Rules\TableChange\IndexOptions())->checked($options);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

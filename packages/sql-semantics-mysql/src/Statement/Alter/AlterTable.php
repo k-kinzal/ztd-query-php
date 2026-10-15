@@ -70,6 +70,7 @@ final class AlterTable implements Statement, Relation
      */
     public function __construct(public readonly QualifiedName $table, array $commands, public readonly bool $ignore = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
         $this->commands = Check::listOf($commands, AlterCommand::class, 'ALTER TABLE holds a list of actions.');
         $last = count($this->commands) - 1;

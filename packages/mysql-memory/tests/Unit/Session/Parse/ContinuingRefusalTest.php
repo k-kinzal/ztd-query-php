@@ -46,4 +46,15 @@ final class ContinuingRefusalTest extends TestCase
         self::assertSame($codes[0], $reply->getCode());
         self::assertSame($codes, array_column($session->diagnostics->conditions, 1));
     }
+
+    public function testErrorRecordsAContextualRefusalAbsentFromGrammarNotices(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->run('SELECT BINARY 1 FROM ``')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1103, $reply->getCode());
+        self::assertSame([1287, 1103], array_column($session->diagnostics->conditions, 1));
+    }
+
 }

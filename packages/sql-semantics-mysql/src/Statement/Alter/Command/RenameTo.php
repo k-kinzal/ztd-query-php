@@ -39,6 +39,7 @@ final class RenameTo implements AlterCommand
      */
     public function __construct(public readonly QualifiedName $table)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
     }
 

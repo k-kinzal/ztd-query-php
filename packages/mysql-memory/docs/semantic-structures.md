@@ -330,3 +330,13 @@ conditions and warning order. No invalid statement is published for a later
 AST check. Native histories exercise complete and unfinished expressions,
 stored programs and prepared input across five releases; constructor tests
 exercise scalar, EXISTS, IN and quantified queries through nested expressions.
+
+Table identities exclude empty table names and explicitly empty database
+qualifiers in their constructors. This is a role constraint: an absent database
+qualifier remains session dependent, and empty correlation names, DELETE aliases,
+CTE declarations and listing filters retain their own domains. Input lowering
+reports a typed name-role refusal without retaining an invalid statement. Legacy
+releases refuse the operand while parsing; modern releases finish grammar
+interpretation first. Native histories include unfinished input, prepared
+statements, untaken procedure branches, earlier temporal errors and valid empty
+aliases.
