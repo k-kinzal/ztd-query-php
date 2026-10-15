@@ -89,9 +89,21 @@ final class LiteralsTest extends TestCase
     {
         $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
-        self::assertEquals(new Domain(Kind::String, Field::VarString, 2, 0, false, Collation::binary(), [], Coercibility::Coercible), $literals->radix(new RadixLiteral(Radix::Hexadecimal, 'ABC')));
+        self::assertEquals(new Domain(Kind::String, Field::VarString, 2, 0, true, Collation::binary(), [], Coercibility::Coercible), $literals->radix(new RadixLiteral(Radix::Hexadecimal, 'ABC')));
         self::assertSame(2, $literals->radix(new RadixLiteral(Radix::Bit, '100000000'))->length);
         self::assertSame('latin1_swedish_ci', $literals->radix(new RadixLiteral(Radix::Bit, '1', new Name('latin1')))->collation->name);
+    }
+
+    public function testRadixRetainsReleaseSpecificUnsignedMetadataOnlyWithoutIntroducers(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_bin'));
+        $legacy = new Literals($settings, GrammarRelease::MySql5651);
+        $modern = new Literals($settings, GrammarRelease::MySql847);
+        $bit = new RadixLiteral(Radix::Bit, '1');
+        $hex = new RadixLiteral(Radix::Hexadecimal, '01');
+        $introduced = new RadixLiteral(Radix::Hexadecimal, '01', new Name('binary'));
+
+        self::assertSame([true, false, true, true, false, false], [$legacy->radix($bit)->unsigned, $modern->radix($bit)->unsigned, $legacy->radix($hex)->unsigned, $modern->radix($hex)->unsigned, $legacy->radix($introduced)->unsigned, $modern->radix($introduced)->unsigned]);
     }
 
     public function testRadixCountsIntroducedCharactersInsteadOfEncodedBytes(): void

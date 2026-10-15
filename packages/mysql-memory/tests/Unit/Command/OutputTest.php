@@ -147,7 +147,7 @@ final class OutputTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame(
             [
-                ['a', Field::Long, 11, 0, 32896, 63, 'a', 'x', 't', 'd'],
+                ['a', Field::Long, 11, 0, 32768, 63, 'a', 'x', 't', 'd'],
                 ['c', Field::VarString, 20, 0, 0, 255, 'b', 'x', 't', 'd'],
             ],
             [
@@ -272,6 +272,16 @@ final class OutputTest extends TestCase
         self::assertSame('123', $output->text(123, Domain::integer(Field::Long, 10, true)->withDisplay(2), true));
         self::assertSame('00007.25', $output->text('7.25', Domain::decimal(7, 2, true), true));
         self::assertSame('0000000000.5', $output->text(0.5, new Domain(Kind::Double, Field::Float, 12, 31), true));
+    }
+
+    public function testColumnDistinguishesStoredNumericFieldsFromNumericExpressions(): void
+    {
+        $output = new Output();
+        $origin = new ColumnOrigin('d', '', 't', 'n');
+        $domains = [Domain::integer(Field::Long, 11), Domain::decimal(5, 2), Domain::double(), new Domain(Kind::Bit, Field::Bit, 1, unsigned: true)];
+
+        self::assertSame([32769, 1, 32769, 32], array_map(static fn (Domain $domain): int => $output->column('n', $domain, $origin)->flags, $domains));
+        self::assertSame(32897, $output->column('n', $domains[0], null)->flags);
     }
 
     public function testColumnDropsTheBinaryFlagOfAZerofillColumn(): void

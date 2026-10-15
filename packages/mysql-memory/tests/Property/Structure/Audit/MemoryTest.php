@@ -71,4 +71,18 @@ final class MemoryTest extends TestCase
 
         self::assertSame(['name' => 'a', 'orgname' => 'original', 'table' => 't', 'orgtable' => 'base', 'db' => 'd', 'charsetnr' => 63, 'length' => 11, 'type' => 3, 'flags' => 32897, 'decimals' => 0], (new Memory())->column($column));
     }
+
+    /**
+     * BIT observations use unsigned decimal text while binary strings keep every byte.
+     */
+    public function testValueConvertsOnlyBitFieldsAsMysqliDoes(): void
+    {
+        $observer = new Memory();
+        $bit = new ResultColumn('b', Field::Bit, 64, 0, 32, 63);
+        $binary = new ResultColumn('b', Field::VarString, 8, 0, 128, 63);
+
+        self::assertSame(['0', '1', '9223372036854775808', '18446744073709551615', null], array_map(static fn (?string $value): ?string => $observer->value($value, $bit), ["\0", "\x01", "\x80\0\0\0\0\0\0\0", str_repeat("\xFF", 8), null]));
+        self::assertSame("\0\xFF", $observer->value("\0\xFF", $binary));
+    }
+
 }

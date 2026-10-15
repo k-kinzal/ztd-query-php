@@ -60,7 +60,7 @@ final class Memory
                 $observation['results'][] = ['affected' => $reply->affectedRows, 'lastInsertId' => (string) $reply->lastInsertId];
             } elseif ($reply instanceof ResultSet) {
                 if ($reply->complete) {
-                    $observation['results'][] = ['columns' => array_map($this->column(...), $reply->columns), 'rows' => $reply->rows];
+                    $observation['results'][] = ['columns' => array_map($this->column(...), $reply->columns), 'rows' => array_map(fn (array $row): array => array_map($this->value(...), $row, $reply->columns), $reply->rows)];
                 }
             } else {
                 throw new LogicException('No direct observation for ' . $reply::class);
@@ -68,6 +68,23 @@ final class Memory
         }
 
         return $observation;
+    }
+
+    /**
+     * Mirrors mysqli's BIT-to-unsigned-decimal conversion without changing stored row bytes.
+     * Binary string fields retain their bytes, including NUL and high-bit octets.
+     */
+    public function value(?string $value, ResultColumn $column): ?string
+    {
+        if ($value === null || $column->type !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Bit) {
+            return $value;
+        }
+        $number = '0';
+        foreach (str_split($value) as $byte) {
+            $number = bcadd(bcmul($number, '256', 0), (string) ord($byte), 0);
+        }
+
+        return $number;
     }
 
     /**

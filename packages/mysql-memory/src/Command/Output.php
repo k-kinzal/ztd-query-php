@@ -117,7 +117,8 @@ final class Output
      * A TEXT/BLOB byte bound is divided by its source character set's minimum width
      * before conversion, including UCS-2 and UTF-16. A
      * temporal value in a character set, as a rollup item is, is sent as such a string. A
-     * ZEROFILL column carries no BINARY flag. A column of a system table carries the flags the
+     * ZEROFILL column carries no BINARY flag. A numeric stored column also carries no BINARY flag; standalone numeric
+     * expressions retain it. A column of a system table carries the flags the
      * server reports for it, and NOT NULL when its type is.
      */
     public function column(string $name, Domain $domain, ?ColumnOrigin $origin, ?Charset $results = null, GrammarRelease $release = GrammarRelease::MySql847): ResultColumn
@@ -130,7 +131,7 @@ final class Output
         $length = $text && $results !== null ? $this->converted($characters, $results->maxLength, $blob) : $domain->byteLength();
 
         $flags = $origin !== null && $origin->exact ? $origin->flags | ($domain->flags() & ColumnFlag::NotNull->value) : $domain->flags() | ($origin->flags ?? 0);
-        if (($flags & ColumnFlag::ZeroFill->value) !== 0) {
+        if (($flags & ColumnFlag::ZeroFill->value) !== 0 || ($origin !== null && !$origin->exact && $domain->kind->numeric())) {
             $flags &= ~ColumnFlag::Binary->value;
         }
 
