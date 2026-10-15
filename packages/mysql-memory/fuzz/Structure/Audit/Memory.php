@@ -1,0 +1,80 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Fuzz\Structure\Audit;
+
+use Fuzz\Structure\Bindings;
+use Fuzz\Structure\Execution;
+use LogicException;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Result\Batch;
+use MySqlMemory\Result\Completion;
+use MySqlMemory\Result\Reply;
+use MySqlMemory\Result\ResultColumn;
+use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\Session;
+use MySqlMemory\Typing\Domain;
+use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Statement\Scalar;
+
+/**
+ * Observes direct construction without submitting rendered SQL to memory.
+ * Only SQL errors are outcomes; internal exceptions escape to the campaign.
+ */
+final class Memory
+{
+    /**
+     * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<array{string, string, string}>|null, disconnected: bool} All result sets, the terminal error and stored conditions
+     * @param list<array{int|float|string|null, Domain}>|null $parameters Bindings selected before execution, or the local NULL fixture
+     */
+    public function observe(Session $session, Statement|Scalar $node, ?array $parameters = null): array
+    {
+        try {
+            $replies = [(new Execution())->runIn($session, $node, $parameters ?? (new Bindings())->nulls($node))];
+        } catch (SqlError $error) {
+            $replies = (new \MySqlMemory\Session\Execution($session))->failed($error);
+        }
+        $observation = $this->replies($replies);
+        $observation['warnings'] = $session->released ? null : array_map(static fn (array $condition): array => [$condition[0], (string) $condition[1], $condition[2]], $session->diagnostics->conditions);
+        $observation['disconnected'] = $session->released;
+
+        return $observation;
+    }
+
+    /**
+     * @param list<Reply|SqlError> $replies The replies, including results before an error
+     * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}}
+     * @throws LogicException When a reply has no observation rule
+     */
+    public function replies(array $replies): array
+    {
+        $observation = ['results' => []];
+        foreach ($replies as $reply) {
+            if ($reply instanceof Batch) {
+                $batch = $this->replies($reply->replies);
+                $observation['results'] = [...$observation['results'], ...$batch['results']];
+            } elseif ($reply instanceof SqlError) {
+                $observation['error'] = [$reply->getCode(), $reply->sqlState(), $reply->getMessage()];
+            } elseif ($reply instanceof Completion) {
+                $observation['results'][] = ['affected' => $reply->affectedRows, 'lastInsertId' => (string) $reply->lastInsertId];
+            } elseif ($reply instanceof ResultSet) {
+                if ($reply->complete) {
+                    $observation['results'][] = ['columns' => array_map($this->column(...), $reply->columns), 'rows' => $reply->rows];
+                }
+            } else {
+                throw new LogicException('No direct observation for ' . $reply::class);
+            }
+        }
+
+        return $observation;
+    }
+
+    /**
+     * @return array<string, int|string> The metadata visible through mysqli
+     */
+    public function column(ResultColumn $column): array
+    {
+        return ['name' => $column->name, 'orgname' => $column->originalName, 'table' => $column->table, 'orgtable' => $column->originalTable, 'db' => $column->schema, 'charsetnr' => $column->charset, 'length' => min($column->length, 0xFFFFFFFF), 'type' => $column->type->value, 'flags' => $column->flags & 0xFFFF, 'decimals' => $column->decimals];
+    }
+}

@@ -400,7 +400,7 @@ final class Texts
             $reverse = $reverse || $level->reverse;
         }
 
-        return new Weight($this->compiler->compile($node->subject, $scope), $node->cast, $node->length === null ? null : (int) $node->length->text, $this->compiler->domain($node), descending: $descending, reverse: $reverse);
+        return new Weight($this->compiler->compile($node->subject, $scope), $node->cast, $node->castLength(), $this->compiler->domain($node), descending: $descending, reverse: $reverse);
     }
 
     /**

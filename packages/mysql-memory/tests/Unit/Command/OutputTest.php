@@ -192,6 +192,13 @@ final class OutputTest extends TestCase
         self::assertSame([20, 255], [$column->length, $column->charset]);
     }
 
+    public function testColumnUsesTheReleaseWhenConvertingResultMetadata(): void
+    {
+        $column = (new Output())->column('a', Domain::string(5, Collation::known('utf8mb4_bin')), null, Charset::known('utf8mb4'), \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertSame([20, 45, 129], [$column->length, $column->charset, $column->flags]);
+    }
+
     public function testColumnSendsABinaryStringAndANumberInTheBinaryCharacterSet(): void
     {
         $output = new Output();

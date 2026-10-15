@@ -17,6 +17,7 @@ use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Encoding;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
@@ -165,6 +166,8 @@ final class Listing
             $sent[] = $values;
         }
 
-        return new ResultSet(array_map(static fn (Heading $heading) => $heading->column($charset), $this->headings), $sent, $context->diagnostics->raised());
+        $release = GrammarRelease::from('mysql-' . $context->variables->instance->version);
+
+        return new ResultSet(array_map(static fn (Heading $heading) => $heading->column($charset, $release), $this->headings), $sent, $context->diagnostics->raised());
     }
 }

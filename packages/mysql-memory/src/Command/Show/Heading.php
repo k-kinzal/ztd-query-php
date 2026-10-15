@@ -68,14 +68,14 @@ final class Heading
      *
      * A session without a character set of the results sends the text in the character set it is held in.
      */
-    public function column(?Charset $results): ResultColumn
+    public function column(?Charset $results, GrammarRelease $release = GrammarRelease::MySql847): ResultColumn
     {
         if (!$this->text) {
             return new ResultColumn($this->name, $this->field, $this->length, $this->decimals, $this->flags, 63, $this->originalName, $this->table, $this->originalTable, $this->schema);
         }
         $blob = in_array($this->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
         $held = Collation::known($this->collation);
-        $charset = $results === null ? $held->id : $results->defaultCollation(GrammarRelease::MySql847)->id;
+        $charset = $results === null ? $held->id : $results->defaultCollation($release)->id;
         $length = (new Output())->converted($this->length, ($results ?? $held->charset)->maxLength, $blob);
 
         return new ResultColumn($this->name, $this->field, $length, $this->decimals, $this->flags, $charset, $this->originalName, $this->table, $this->originalTable, $this->schema);

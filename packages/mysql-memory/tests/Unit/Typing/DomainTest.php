@@ -161,6 +161,14 @@ final class DomainTest extends TestCase
         self::assertSame([32897, 32929, 1, 129, 256, 2048], [Domain::integer(Field::Long, 11)->flags(), Domain::integer(Field::LongLong, 20, true)->flags(), Domain::string(10, $collation)->flags(), Domain::string(10, Collation::binary())->flags(), (new Domain(Kind::String, Field::Enum, 1, Domain::NOT_FIXED, false, $collation, true, ['a']))->flags(), (new Domain(Kind::String, Field::Set, 1, Domain::NOT_FIXED, false, $collation, true, ['a']))->flags()]);
     }
 
+    public function testFlagsRetainBinaryOrderingOfACharacterCollation(): void
+    {
+        self::assertSame(129, Domain::string(3, Collation::known('utf8mb4_bin'))->flags());
+        self::assertSame(129, Domain::string(3, Collation::known('latin1_bin'))->flags());
+        self::assertSame(1, Domain::string(3, Collation::known('utf8mb4_general_ci'))->flags());
+        self::assertSame(32896, Domain::null()->flags());
+    }
+
     public function testWithQuietKeepsTheQuietnessThroughOtherChanges(): void
     {
         $quiet = Domain::string(3, Collation::known('latin1_swedish_ci'))->withQuiet();

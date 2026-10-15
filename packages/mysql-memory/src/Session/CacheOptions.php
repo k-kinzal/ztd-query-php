@@ -47,6 +47,9 @@ final class CacheOptions
             }
         }
         $release = $session->settings()->release();
+        if (!$error->recorded && $error->error === StatementError::ParseError) {
+            $error = (new Parse\Entry\WeightInput())->before($statement, $this->cause($error)?->token->offset ?? strlen($statement), $session) ?? $error;
+        }
         if ($error->error !== StatementError::ParseError || ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744)) {
             return (new Parse\ModernWarnings())->reported($error, $statement, $session);
         }

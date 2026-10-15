@@ -26,31 +26,75 @@ Every failure record includes its seed index, concrete root class, exception, an
 php fuzz/structures.php 1 example-seed - 8.4.7 22
 ```
 
-The arguments are `COUNT [SEED] [CLASS|-|@each] [RELEASE] [START]`. Omitting the seed chooses a random seed and prints it before the first trial. An explicit class selects a root from the same discovered inventory. `@each` visits the sorted root inventory in order, wrapping after its end; the initial record reports the number of root types. Use at least that many trials to exercise construction of every root type. This enumerates model types and does not measure SQL Faker grammar coverage. Reproduction requires the same revision because changes to types and constructors change deterministic choices.
+The arguments are `COUNT [SEED] [CLASS|-|@each] [RELEASE] [START] [native|compare]`. Omitting the seed chooses a random seed and prints it before the first trial. An explicit class selects a root from the same discovered inventory. `@each` visits the sorted root inventory in order, wrapping after its end; the initial record reports the number of root types. Use at least that many trials to exercise construction of every root type. This enumerates model types and does not measure SQL Faker grammar coverage. Reproduction requires the same revision because changes to types and constructors change deterministic choices.
 
 ```sh
-composer fuzz:structures -- 246 all-model-roots @each
+composer fuzz:structures -- 245 all-model-roots @each
 ```
 
 The default `auto` release selects a compatible test environment before execution. To state that selection explicitly:
 
 ```sh
-composer fuzz:structures -- 246 all-model-roots @each auto
+composer fuzz:structures -- 245 all-model-roots @each auto
 ```
 
 This mode renders the already constructed model under candidate grammar releases and lexical modes, parses and lowers that rendering, and checks structural correspondence. It does not derive facts or execute statements while selecting a profile. A retained observable spelling fixes the candidate profile; otherwise the candidate modes cover the interpretations of `NOT` and `||`. Named parameter markers select the named-parameter extension. If no candidate preserves the structure, the trial fails in the `profile` phase and the failure records each candidate's reason. Inputs are never regenerated because of this result. Once selected, the profile is used for one execution; an execution error does not cause another profile to be tried. The memory executor receives the constructed structure directly, without parsing the rendered SQL. An explicit release keeps the previous fixed-environment behavior.
 
-Exit status 0 requires every trial to execute successfully. Status 1 reports an execution or structural failure. Status 2 reports an incomplete generation campaign, including an exhausted budget or unsupported constructor metadata. SQL errors are recorded separately, but currently also prevent success: the runner does not yet establish whether an individual error depends on execution state. A missing table and a state-independent model defect must not silently become the same successful outcome.
+The acceptance criteria are stated in the [acceptance contract](acceptance.md).
+A local run reports SQL errors as unresolved, separately from profile failures,
+generation failures and internal exceptions. It cannot establish agreement with a
+native database. Exit status 2 means incomplete generation; status 1 means an
+unresolved trial; status 0 requires every local trial to return a completion or
+rows.
 
-An optional final `native` argument audits each SQL rejection against an isolated Testcontainers MySQL server of the selected release:
+Use `compare` to check **every** generated structure against an isolated
+Testcontainers MySQL server, including structures that return successful results:
 
 ```sh
-php fuzz/structures.php 248 all-model-roots @each auto 0 native
+php fuzz/structures.php 245 all-model-roots @each auto 0 compare
 ```
 
-Every rejected trial gets a fresh server, so partial effects of an earlier rejected statement cannot influence the reference. The audit renders the generated structure only for the reference and replaces its typed parameter occurrences with the same NULL inputs supplied to direct execution. Quoted marker-like strings and names remain intact. The memory side still consumes the original constructed object. `MYSQL_MEMORY_STRUCTURE_NATIVE_PORT` optionally fixes the published port for environments that require it; otherwise Testcontainers chooses the port.
+This mode requires `mysqli`. It compares buffered rows, column names and origins, protocol
+types, lengths, flags, character sets, decimals, affected rows, insert IDs, errors
+and stored warnings. Memory receives the original constructed object with
+unrelated invalid session text. Only the native side receives rendered SQL.
+Parameter occurrences become native prepared markers and receive explicit NULL
+values; their fixture types follow the release's preparation rules. Quoted text
+that resembles a marker remains unchanged. Both connections use UTF-8 and the
+same connection collation and SQL mode.
+Completed earlier rowsets survive a later failure; an incomplete rowset is not
+published by a buffered client. Connection termination is compared explicitly.
+After termination, neither side can expose its stored warnings through that
+connection, so the observation records them as unavailable rather than empty.
 
-Each audit records the reference SQL, profile, native observation, memory error and exact equality of the error number, SQLSTATE and message. A native success does not confirm an emulator's unsupported-feature error. Infrastructure failures are reported separately. The summary separates `matchingError`, `different` and `failed`; none changes a rejected trial into a successful trial or changes its nonzero exit status. This audit does not yet establish state dependence, and error-message differences can include missing source locations on directly constructed objects. Its purpose is to expose which rejections require further work, rather than discard them.
+The initial fixture also shares container configuration, the initial `test`
+database, login password, client host and thread identity, installed help data,
+routine installation dates and resource-group capabilities. Discovery uses a
+separate administrative connection before the generated statement runs. It
+never imports that statement's response or any routine implementation.
+
+The summary distinguishes `matchedSuccess`, `matchedError`, `different` and
+`failed`. Exit status 0 requires exactly one complete native match for every
+requested trial. A SQL error is accepted only with that native evidence. For
+example, `SIGNAL SQLSTATE '45000'` is a valid structure whose intended outcome is
+an error; treating it as an implementation failure would make the property
+impossible. A native success, different error, missing warning or metadata
+difference still fails. No exception is accepted solely by error number or class.
+Generation, profile and infrastructure failures cannot count as matches.
+
+Each trial has a fresh native server so partial effects cannot leak into another
+trial. `MYSQL_MEMORY_STRUCTURE_NATIVE_PORT` optionally fixes its published port;
+otherwise Testcontainers chooses it. Every comparison record includes the SQL,
+profile and both observations. Instance-specific observations still need explicit
+contracts; this runner currently reports their differences without normalizing
+them. Separate state-transition properties use the same constructed object under
+changed session modes, declarations or stored-program scopes. A single matching
+rejection is not evidence that every part of its structure was reached.
+
+The older `native` mode remains an error-only diagnostic audit. It compares error
+number, SQLSTATE and message after local rejection, records `matchingError`,
+`different` and `failed`, and does not change the local run's nonzero exit status.
+It is useful for investigation but does not replace the complete `compare` gate.
 
 The unrestricted campaign currently finds counterexamples. The `property` test suite contains bounded regression properties for repaired model domains, including positional and named parameter binding across nested scopes, decoded strings across SQL escape modes, and system-variable assignments followed by reads in the same session. `SystemTarget` is an assignment operand; only `SystemVariable` is a general read expression, and its scope excludes `PERSIST` and `PERSIST_ONLY`. Query and composite-expression constructors also reject known combinations of features that cannot coexist in any supported grammar generation, including WITH combined with PROCEDURE ANALYSE anywhere in its operand graph.
 
@@ -234,4 +278,20 @@ TIME literal construction excludes arbitrary text, out-of-range durations and co
 
 Key prefix lengths are decimal integer tokens rather than arbitrary numerals; their spelling must fit the NUM token domain, independently of column-dependent prefix limits. The shared composition invariant also recognizes VECTOR, table engine attributes and automatic tablespace extension as modern features, and table `COLLATE DEFAULT` as a legacy feature. This excludes combinations for which no supported language profile exists while retaining each independently meaningful option. An expression subquery cannot wrap a query-expression INTO destination. Constructor examples and the type-driven `time-20261015` regressions exercise these boundaries. Its 1,225-trial campaign now has no generation, profile or internal failures, but 756 SQL-error trials still require structural repairs or demonstrated state dependence; those trials are not successes.
 
-Unsupported aggregate-window diagnostics retain the semantic expression that owns the problem. Memory resolves names and windows within each query block before reporting its owned diagnostic; Plan also consumes the same association when compiling a call directly. Neither consumer infers ownership from SQL text or a parser tree. This preserves missing-column and missing-window precedence for GROUP_CONCAT and DISTINCT aggregates. Native routine histories also show why unconditional constructor rejection would be incorrect: creating a procedure with an unsupported window expression succeeds, and a branch that is not taken does not execute it. The scalar-root construction property remains unresolved for such expressions. The owner association preserves information needed for correct execution and diagnostics without treating these unresolved scalar trials as successes.
+Unsupported aggregate-window diagnostics retain the semantic expression that owns the problem. Memory resolves names and windows within each query block before reporting its owned diagnostic; Plan also consumes the same association when compiling a call directly. Neither consumer infers ownership from SQL text or a parser tree. This preserves missing-column and missing-window precedence for GROUP_CONCAT and DISTINCT aggregates. Native routine histories also show why unconditional constructor rejection would be incorrect: creating a procedure with an unsupported window expression succeeds, and a branch that is not taken does not execute it. The complete comparison checks the resulting SQL refusal for scalar roots; local error-only trials remain unresolved without that comparison.
+
+`WEIGHT_STRING` cast lengths admit positive integer tokens, including hexadecimal
+spellings. Zero and fractional tokens are refused before a structure is
+published. The semantic value exposes the resolved unsigned 32-bit cast length;
+derivation and compilation consume that meaning instead of casting token text
+independently. Positive tokens that narrow to zero remain valid. Direct
+properties include leading zeros, hexadecimal digits, wraparound and the maximum
+unsigned decimal token. Native histories check constructor refusals, warning
+order and numeric spellings across five releases. Large-result packet limits and
+weight metadata are not established by the NULL-operand construction property.
+
+The same directly constructed `DROP TABLE IF EXISTS` request is also checked
+before and after selecting a database. Both native and memory return 1046 when
+the unqualified name has no current database, then complete with a missing-table
+note after `USE`. The structure remains unchanged; this is a state-transition
+witness rather than a classification inferred from one error.

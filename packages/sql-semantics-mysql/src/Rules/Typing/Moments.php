@@ -86,9 +86,9 @@ final class Moments
     /**
      * Resolves EXTRACT of a unit.
      */
-    public function extract(IntervalUnit $unit): Domain
+    public function extract(IntervalUnit $unit, bool $legacy = false): Domain
     {
-        return Domain::integer(Field::LongLong, self::PARTS[$unit->value] + 1);
+        return Domain::integer(Field::LongLong, $legacy && $unit === IntervalUnit::Microsecond ? 2 : self::PARTS[$unit->value] + 1);
     }
 
     /**

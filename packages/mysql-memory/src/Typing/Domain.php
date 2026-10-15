@@ -203,10 +203,10 @@ final class Domain
         if ($this->unsigned) {
             $flags |= ColumnFlag::Unsigned->value;
         }
-        if ($this->collation === Collation::binary() && $this->kind !== Kind::Null) {
+        if ($this->collation->binaryOrder()) {
             $flags |= ColumnFlag::Binary->value;
         }
-        if ($this->kind->numeric() && $this->field !== Field::Year) {
+        if (($this->kind->numeric() && $this->field !== Field::Year) || $this->field === Field::Null) {
             $flags |= ColumnFlag::Numeric->value;
         }
         if ($this->field === Field::Enum) {

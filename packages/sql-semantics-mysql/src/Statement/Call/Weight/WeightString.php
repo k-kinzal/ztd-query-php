@@ -37,6 +37,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $query->field(0)->type->descriptor->name() // => 'VARBINARY'
  * @example Refusing levels after a binary cast
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast::Binary, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'), [new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a zero cast length before execution
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast::Binary, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('00000')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a fractional cast length before execution
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast::Char, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.0')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class WeightString implements Scalar
 {
@@ -63,6 +67,8 @@ final class WeightString implements Scalar
     ) {
         $this->levels = Check::listOf($levels, WeightLevel::class, 'A LEVEL clause is a list of levels.');
         Check::input(($cast === null) === ($length === null), 'A cast of WEIGHT_STRING has a length, and only a cast has one.');
+        $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();
+        Check::input($length === null || ($magnitudes->integral($length) && !$magnitudes->atMost($length, '0')), 'A WEIGHT_STRING cast length is a positive integer token.');
         Check::input($levels === [] || $range === null, 'A LEVEL clause is a list or a range.');
         Check::input($cast !== WeightCast::Binary || ($levels === [] && $range === null), 'WEIGHT_STRING takes no LEVEL clause after a binary cast.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -74,7 +80,16 @@ final class WeightString implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Arguments())->one($this->subject, $derivation, $environment);
-        return (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->fact($fact, $derivation, $this->cast, $this->length === null ? null : (int) $this->length->text);
+        return (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->fact($fact, $derivation, $this->cast, $this->castLength());
+    }
+
+    /**
+     * Answers the cast's unsigned 32-bit length, or null without a cast.
+     * A positive token can narrow to zero; its spelling remains available for rendering.
+     */
+    public function castLength(): ?int
+    {
+        return $this->length === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->unsigned32($this->length);
     }
 
     /**

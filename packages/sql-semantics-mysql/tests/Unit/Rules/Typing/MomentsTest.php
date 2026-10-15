@@ -57,6 +57,8 @@ final class MomentsTest extends TestCase
 
         self::assertEquals(Domain::integer(Field::LongLong, 7), $moments->extract(IntervalUnit::YearMonth));
         self::assertEquals(Domain::integer(Field::LongLong, 5), $moments->extract(IntervalUnit::Year));
+        self::assertEquals(Domain::integer(Field::LongLong, 2), $moments->extract(IntervalUnit::Microsecond, true));
+        self::assertEquals(Domain::integer(Field::LongLong, 7), $moments->extract(IntervalUnit::Microsecond));
     }
 
     public function testClockKeepsThePrecision(): void

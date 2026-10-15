@@ -45,6 +45,14 @@ final class HeadingTest extends TestCase
         self::assertSame([20, 63, 1], [$column->length, $column->charset, $column->flags]);
     }
 
+    public function testColumnUsesTheReleaseDefaultResultCollation(): void
+    {
+        $heading = Heading::text('Name', Field::VarString, 64);
+        $column = $heading->column(Charset::known('utf8mb4'), \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertSame([256, 45], [$column->length, $column->charset]);
+    }
+
     public function testDomainReadsTextAndNumbers(): void
     {
         $text = Heading::text('Field', Field::VarString, 64)->domain();

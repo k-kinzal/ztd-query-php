@@ -65,7 +65,7 @@ final class Reference
      * Renders only for the reference, binding each parameter occurrence to the fixture's NULL.
      * Quoted text and identifiers that resemble parameter markers remain unchanged.
      */
-    public function sql(Statement|Scalar $node, LanguageProfile $profile): string
+    public function sql(Statement|Scalar $node, LanguageProfile $profile, string $binding = 'NULL'): string
     {
         $statement = $node instanceof Statement ? $node : new QueryRoot(new Select([], [new SelectExpression($node)]));
         $out = new Output(Platforms::of('mysql')->codec($profile));
@@ -81,7 +81,7 @@ final class Reference
         foreach ($out->pieces() as $index => $piece) {
             $original = $canonical[$index];
             $pieces[] = $original->kind === PieceKind::Literal && in_array($original->text, $markers, true)
-                ? new Piece(PieceKind::Keyword, 'NULL', $piece->glued, $piece->gap) : $piece;
+                ? new Piece($binding === '?' ? PieceKind::Literal : PieceKind::Keyword, $binding, $piece->glued, $piece->gap) : $piece;
         }
 
         return (new Lexical())->join($pieces) . $out->trailing();

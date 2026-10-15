@@ -47,4 +47,15 @@ final class ReferenceTest extends TestCase
 
         self::assertSame("SELECT '\\'", (new Reference())->sql($node, $profile));
     }
+
+    /**
+     * Native preparation receives markers rather than replacing their inferred types with literal NULL.
+     */
+    public function testSqlRetainsPreparedMarkerOccurrences(): void
+    {
+        $node = new QueryRoot(new Select([], [new SelectExpression(new Parameter(':value')), new SelectExpression(new StringLiteral([':value?']))]));
+        $profile = new LanguageProfile(GrammarRelease::MySql847, parameters: ParameterStyle::Named);
+
+        self::assertSame("SELECT ?, ':value?'", (new Reference())->sql($node, $profile, '?'));
+    }
 }

@@ -66,6 +66,9 @@ final class DropTableCommand implements Command
         foreach ($statement->tables as $target) {
             $name = $target->name;
             $schema = $name->schema->value ?? $database;
+            if ($name->schema === null && $database === '') {
+                throw QueryError::NoDatabase->error();
+            }
             $table = $statement->temporary ? ($dictionary->schema($schema) === null ? null : $session->temporaries->table($schema, $name->name->value)) : $dictionary->table($schema, $name->name->value);
             if ($table === null) {
                 $missing[] = $schema . '.' . $name->name->value;

@@ -72,6 +72,19 @@ final class Magnitudes
     public function connection(Numeral $number): int
     {
         Check::input($this->integral($number), 'An EXPLAIN connection identifier is an integer token.');
+
+        return $this->unsigned32($number);
+    }
+
+    /**
+     * Resolves an integer operand narrowed to 32 unsigned bits, including hexadecimal saturation.
+     * Verified through EXPLAIN identities and WEIGHT_STRING cast lengths on native releases.
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the operand is not an integer token
+     */
+    public function unsigned32(Numeral $number): int
+    {
+        Check::input($this->integral($number), 'An unsigned integer operand is an integer token.');
         $digits = ltrim($number->hexadecimal ? $this->decimal($number->text) : $number->text, '0');
         if ($number->hexadecimal && (strlen($digits) > 19 || strlen($digits) === 19 && strcmp($digits, self::LARGEST) > 0)) {
             $digits = self::LARGEST;

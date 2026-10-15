@@ -51,7 +51,9 @@ final class Extract implements Scalar
     {
         $fact = (new ResultTyping())->fact('IY', [(new Arguments())->one($this->source, $derivation, $environment)]);
 
-        return new ScalarFact(new Known((new Moments(Settings::of($derivation->context)))->extract($this->unit)), $fact->nullability);
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+
+        return new ScalarFact(new Known((new Moments(Settings::of($derivation->context)))->extract($this->unit, $legacy)), $fact->nullability);
     }
 
     /**

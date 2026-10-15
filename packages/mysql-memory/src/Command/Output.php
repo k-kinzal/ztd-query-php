@@ -51,6 +51,7 @@ final class Output
         $width = count($plan->domains);
         $results = $context->variables->read('character_set_results');
         $charset = is_string($results) ? Charset::named($results) : null;
+        $release = GrammarRelease::from('mysql-' . $context->variables->instance->version);
         $rows = [];
         $found = 0;
         $frame = new Frame($context);
@@ -70,13 +71,13 @@ final class Output
             }
         } catch (SqlError $error) {
             if ($failed !== null) {
-                $failed(new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->raised(), false));
+                $failed(new ResultSet($this->columns($plan, $charset, $release), $rows, $context->diagnostics->raised(), false));
             }
             throw $error;
         }
         $context->variables->foundRows = $frame->foundBeforeProjection ?? $found;
 
-        return new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->raised());
+        return new ResultSet($this->columns($plan, $charset, $release), $rows, $context->diagnostics->raised());
     }
 
     /**
@@ -96,13 +97,13 @@ final class Output
      *
      * @return list<ResultColumn>
      */
-    public function columns(QueryPlan $plan, ?Charset $results = null): array
+    public function columns(QueryPlan $plan, ?Charset $results = null, GrammarRelease $release = GrammarRelease::MySql847): array
     {
         $columns = [];
         foreach ($plan->domains as $position => $domain) {
             $origin = $plan->origins[$position] ?? null;
             $name = $plan->names[$position] ?? '';
-            $columns[] = $this->column($results === null || Encoding::utf8($results) ? $name : Encoding::convert($name, Charset::known('utf8mb4'), $results), $domain, $origin, $results);
+            $columns[] = $this->column($results === null || Encoding::utf8($results) ? $name : Encoding::convert($name, Charset::known('utf8mb4'), $results), $domain, $origin, $results, $release);
         }
 
         return $columns;
@@ -119,10 +120,10 @@ final class Output
      * ZEROFILL column carries no BINARY flag. A column of a system table carries the flags the
      * server reports for it, and NOT NULL when its type is.
      */
-    public function column(string $name, Domain $domain, ?ColumnOrigin $origin, ?Charset $results = null): ResultColumn
+    public function column(string $name, Domain $domain, ?ColumnOrigin $origin, ?Charset $results = null, GrammarRelease $release = GrammarRelease::MySql847): ResultColumn
     {
         $text = in_array($domain->kind, [Kind::String, Kind::Json, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year], true) && !$domain->collation->bytes();
-        $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation(GrammarRelease::MySql847)->id) : 63;
+        $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation($release)->id) : 63;
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
         $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
         $characters = $this->characters($domain, $blob);

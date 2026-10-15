@@ -28,6 +28,17 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class WeightStringTest extends TestCase
 {
+    public function testCastLengthRetainsNumericMeaningIndependentlyOfSpelling(): void
+    {
+        $subject = new StringLiteral(['x']);
+
+        self::assertSame(10, (new WeightString($subject, WeightCast::Binary, new Numeral('a', true)))->castLength());
+        self::assertSame(10, (new WeightString($subject, WeightCast::Char, new Numeral('00010')))->castLength());
+        self::assertSame(0, (new WeightString($subject, WeightCast::Char, new Numeral('4294967296')))->castLength());
+        self::assertSame(4294967295, (new WeightString($subject, WeightCast::Binary, new Numeral('18446744073709551615')))->castLength());
+        self::assertNull((new WeightString($subject))->castLength());
+    }
+
     public function testDeriveScalarAnswersABinaryString(): void
     {
         $platform = new Platform();
