@@ -40,8 +40,8 @@ final class ModernForms
             || $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction
             || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Row, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::System, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword, \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect, \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Rollup, \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Cube], true)
             || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\IndexVisibility::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConstraintEnforcement::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption::class, \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
+            || $this->definition($value)
             || match (true) {
-                $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption => strtoupper($value->algorithm->value ?? '') === 'INSTANT',
                 $value instanceof Select => $this->query($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain, $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection => $this->explain($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint => !$value->name()->available(\SqlSemantics\Contract\GrammarRelease::MySql5744),
@@ -52,11 +52,22 @@ final class ModernForms
                 $value instanceof ResetBinaryLogs => $value->terminology === Terminology::Current || $value->first !== null,
                 $value instanceof ResetReplica, $value instanceof SourceOption,
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica => $value->terminology === Terminology::Current,
-                $value instanceof DerivedTable => $value->lateral || $value->columns !== [],
-                $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,
                 default => in_array($value, [SetOperator::Intersect, SetOperator::Except], true),
             };
     }
+    /**
+     * Identifies modern table and routine declaration features.
+     */
+    public function definition(object $value): bool
+    {
+        return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption => strtoupper($value->algorithm->value ?? '') === 'INSTANT',
+            $value instanceof DerivedTable => $value->lateral || $value->columns !== [],
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,
+            default => false,
+        };
+    }
+
     /**
      * Identifies EXPLAIN features that cannot accompany removed query or DML forms.
      */
