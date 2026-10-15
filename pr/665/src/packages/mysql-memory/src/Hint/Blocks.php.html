@@ -306,7 +306,7 @@
 <span class="src-line" id="L266" data-diff="added"><a class="ln" href="#L266">266</a>            <span class="tok-kw">return</span> [<span class="tok-var">$sequence</span>, []];</span>
 <span class="src-line" id="L267" data-diff="added"><a class="ln" href="#L267">267</a>        }</span>
 <span class="src-line" id="L268" data-diff="added"><a class="ln" href="#L268">268</a>        <span class="tok-kw">if</span> (<span class="tok-var">$relation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DerivedTable</span>) {</span>
-<span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a>            <span class="tok-var">$block</span>-&gt;<span class="tok-id">tables</span>[] = [<span class="tok-var">$relation</span>-&gt;<span class="tok-id">alias</span>-&gt;<span class="tok-id">value</span> ?? <span class="tok-str">&#039;&#039;</span>, []];</span>
+<span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a>            <span class="tok-var">$block</span>-&gt;<span class="tok-id">tables</span>[] = [<span class="tok-var">$relation</span>-&gt;<span class="tok-id">alias</span>-&gt;<span class="tok-id">value</span>, []];</span>
 <span class="src-line" id="L270" data-diff="added"><a class="ln" href="#L270">270</a></span>
 <span class="src-line" id="L271" data-diff="added"><a class="ln" href="#L271">271</a>            <span class="tok-kw">return</span> [<span class="tok-var">$this</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$relation</span>-&gt;<span class="tok-id">query</span>, <span class="tok-id">false</span>), []];</span>
 <span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a>        }</span>
