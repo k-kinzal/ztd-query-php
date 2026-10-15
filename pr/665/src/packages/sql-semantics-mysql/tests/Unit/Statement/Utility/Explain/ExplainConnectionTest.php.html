@@ -71,18 +71,19 @@
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveStatementRejectsAnOversizedDecimalConnection</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$explain</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616&#039;</span>);</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber</span>::<span class="tok-kw">class</span>, <span class="tok-var">$explain</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>[<span class="tok-num">0</span>]);</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    }</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRefusesAModifierWithOptions</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    {</span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;EXTENDED and PARTITIONS are written alone.&#039;</span>);</span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>        <span class="tok-kw">new</span> <span class="tok-id">ExplainConnection</span>(<span class="tok-kw">new</span> <span class="tok-id">Numeral</span>(<span class="tok-str">&#039;1&#039;</span>), <span class="tok-kw">new</span> <span class="tok-id">Name</span>(<span class="tok-str">&#039;JSON&#039;</span>), <span class="tok-id">false</span>, <span class="tok-id">ExplainModifier</span>::<span class="tok-id">Extended</span>);</span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    }</span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>}</span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">\SqlSemantics\Construction\RejectedInput</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Only integers are allowed&#039;</span>);</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616&#039;</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRefusesAModifierWithOptions</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    {</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;EXTENDED and PARTITIONS are written alone.&#039;</span>);</span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>        <span class="tok-kw">new</span> <span class="tok-id">ExplainConnection</span>(<span class="tok-kw">new</span> <span class="tok-id">Numeral</span>(<span class="tok-str">&#039;1&#039;</span>), <span class="tok-kw">new</span> <span class="tok-id">Name</span>(<span class="tok-str">&#039;JSON&#039;</span>), <span class="tok-id">false</span>, <span class="tok-id">ExplainModifier</span>::<span class="tok-id">Extended</span>);</span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>    }</span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>}</span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
