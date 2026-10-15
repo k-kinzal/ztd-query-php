@@ -19,6 +19,8 @@ use Testcontainers\Testcontainers;
 /**
  * Compares the complete outcome of the original structure with its native rendering.
  * A fresh server isolates even statements that partly change state before failing.
+ * Both sessions receive the same explicit timestamp, so statement clocks compare
+ * SQL-controlled state independently of container startup and observation delays.
  */
 final class Comparison
 {
@@ -40,10 +42,11 @@ final class Comparison
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, port: $endpoint->port);
             try {
                 $native->set_charset('utf8mb4');
-                $native->query("SET SESSION sql_mode = '" . $native->real_escape_string($mode) . "', collation_connection = 'utf8mb4_bin'");
+                $native->query("SET SESSION sql_mode = '" . $native->real_escape_string($mode) . "', collation_connection = 'utf8mb4_bin', timestamp = 1700000000");
                 $session = (new Fixture())->session($endpoint, $native, $release, $definition->supervised());
                 $session->text = 'unrelated invalid input';
                 $session->variables->session['sql_mode'] = $mode;
+                $session->variables->session['timestamp'] = 1700000000;
                 foreach (['character_set_client' => 'utf8mb4', 'character_set_connection' => 'utf8mb4', 'character_set_results' => 'utf8mb4', 'collation_connection' => 'utf8mb4_bin'] as $key => $value) {
                     $session->variables->session[$key] = $value;
                 }

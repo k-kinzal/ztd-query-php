@@ -423,3 +423,18 @@ and after creating their stored definitions. It compares rows, column metadata
 and notices across five MySQL releases, including an unqualified native `ABS`
 call alongside a qualified stored `ABS` call. Wire histories also exercise repeated
 loads, dictionary invalidation and stored functions evaluated for each outer row.
+
+`Explain` and `ExplainConnection` require an explicit JSON format when they carry
+an INTO variable. This relationship is a constructor invariant. SQL input that
+violates it produces a typed `RefusedExplainInto` diagnostic instead of publishing
+a contradictory statement. The diagnostic keeps the decoded format and the
+release-specific ANALYZE refusal, with no SQL or parser node. MySQL 8.1 reads the
+explained operand's notices before its INTO refusal; later releases reject the
+completed options first. The input comparison checks both orders, including debug
+wrappers, unfinished operands and untaken procedure branches.
+
+The whole-model comparison fixture sets `timestamp = 1700000000` in both sessions
+before observing a constructed value. Statement clocks therefore read identical
+SQL-controlled state despite separate container startup and observation times.
+This fixture does not normalize returned clock values or exempt `SYSDATE`, which
+has a different contract from statement clocks.

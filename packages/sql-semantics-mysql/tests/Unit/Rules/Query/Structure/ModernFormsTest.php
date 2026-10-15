@@ -92,7 +92,7 @@ final class ModernFormsTest extends TestCase
         self::assertTrue($forms->explain(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, new \SqlSemantics\Statement\Identifier\Name('tReE'))));
         self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, database: new \SqlSemantics\Statement\Identifier\Name('d'))));
         self::assertTrue($forms->explain(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'), analyze: true)));
-        self::assertTrue($forms->explain(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, into: new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('plan')))));
+        self::assertTrue($forms->explain(new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, format: new \SqlSemantics\Statement\Identifier\Name('JSON'), into: new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('plan')))));
     }
 
     public function testExplainModernOptionsRejectLegacyOperands(): void

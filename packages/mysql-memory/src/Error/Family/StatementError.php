@@ -54,6 +54,7 @@ enum StatementError: int implements ErrorCode
     case ExplainNotSupported = 3012;
     case IllegalUserVariable = 3061;
     case LocalInfileDisabled = 3948;
+    case ExplainAnalyzeInto = 6005;
     case ExplainIntoImplicitFormat = 6006;
     case ExplainIntoFormat = 6007;
     case ExplainIntoForConnection = 6009;

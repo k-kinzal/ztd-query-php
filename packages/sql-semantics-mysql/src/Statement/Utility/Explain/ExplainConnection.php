@@ -64,6 +64,7 @@ final class ExplainConnection implements Statement
     ) {
         $this->connectionId = (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->connection($connection);
         Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
+        Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null), 'EXTENDED and PARTITIONS are written alone.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

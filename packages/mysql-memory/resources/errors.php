@@ -568,6 +568,7 @@ return [
     3820 => ['HY000', "Check constraint '%s' refers to non-existing column '%s'."],
     3822 => ['HY000', "Duplicate check constraint name '%s'."],
     6125 => ['HY000', "Failed to add the foreign key constraint. Missing unique key for constraint '%s' in the referenced table '%s'"],
+    6005 => ['0A000', 'EXPLAIN ANALYZE does not support the INTO clause.'],
     6006 => ['0A000', 'EXPLAIN INTO does not support implicit FORMAT.'],
     6007 => ['0A000', 'EXPLAIN INTO does not support FORMAT=%s.'],
     6009 => ['0A000', 'EXPLAIN FOR CONNECTION does not support the INTO clause.'],

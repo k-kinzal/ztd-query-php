@@ -3151,6 +3151,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\ProgramVariable": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedExplainInto": {
+        "analyze": "bool",
+        "format": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedNamesAssignment": {
         "end": "int",
         "offset": "int",

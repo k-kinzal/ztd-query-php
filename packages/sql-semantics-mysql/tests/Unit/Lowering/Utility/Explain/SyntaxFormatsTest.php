@@ -41,4 +41,23 @@ final class SyntaxFormatsTest extends TestCase
 
         self::assertEquals($refused ? [new ParseFailure(new UnknownExplainFormat(new Name($name)), true)] : [], array_column($notices, 1));
     }
+    /**
+     * @return iterable<string, array{GrammarRelease, string, ?Name}>
+     */
+    public static function providerInto(): iterable
+    {
+        foreach ([GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910] as $release) {
+            yield $release->value . ': implicit' => [$release, 'EXPLAIN INTO @p SELECT 1', null];
+            yield $release->value . ': tree' => [$release, 'EXPLAIN FORMAT=TREE INTO @p SELECT 1', new Name('TREE')];
+        }
+    }
+
+    #[DataProvider('providerInto')]
+    public function testIntoRetainsTheOptionsWithoutPublishingAnInvalidStructure(GrammarRelease $release, string $sql, ?Name $format): void
+    {
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser($release->value), $sql, strlen($sql), new LanguageProfile($release));
+
+        self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto($format), true)], array_column($notices, 1));
+    }
+
 }

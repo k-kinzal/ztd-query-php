@@ -57,6 +57,13 @@ final class ExplainFactsTest extends TestCase
         self::assertCount(10, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('EXPLAIN SELECT 1')->fields() ?? []);
         self::assertCount(12, (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT = TRADITIONAL SELECT 1')->fields() ?? []);
         self::assertFalse((new Semantics(Dialect::MySql))->analyze('EXPLAIN SELECT 1')->shape()?->complete());
-        self::assertSame('EXPLAIN INTO requires FORMAT=JSON', (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @v SELECT 1')->facts->diagnostics[0]->message());
+        self::assertNull((new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @v SELECT 1')->shape());
     }
+    public function testDeriveRefusesContradictoryIntoOptionsBeforePublication(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('EXPLAIN INTO requires FORMAT=JSON');
+        (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @v SELECT 1');
+    }
+
 }

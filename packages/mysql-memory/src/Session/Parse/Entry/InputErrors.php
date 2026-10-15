@@ -27,6 +27,7 @@ final class InputErrors
     public function error(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto => $diagnostic->analyze ? \MySqlMemory\Error\Family\StatementError::ExplainAnalyzeInto->error() : ($diagnostic->format === null ? \MySqlMemory\Error\Family\StatementError::ExplainIntoImplicitFormat->error() : \MySqlMemory\Error\Family\StatementError::ExplainIntoFormat->error(strtoupper($diagnostic->format->value))),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName => match ($diagnostic->kind) {
                 \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Database => SchemaError::WrongDatabaseName->error(''),
                 \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Table => SchemaError::WrongTableName->error(''),
