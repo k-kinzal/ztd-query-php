@@ -40,6 +40,14 @@ final class TableChangeRules
     }
 
     /**
+     * Returns an aborting notice for a completed option before publishing a statement.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        return (new ModifierRule($this->lowering))->completed($node);
+    }
+
+    /**
      * Lowers a table change statement: a node of one of the statement rules this family owns.
      *
      * @throws ImplementationGap When a production has no rule

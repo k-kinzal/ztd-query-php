@@ -36,9 +36,9 @@ final class RejectedOperand
         if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber) {
             return new RejectedInput($setting->problem, (new SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
         }
-        $privileges = (new Account\SyntaxPrivileges())->completed($node, $lowering);
-        if ($privileges !== null) {
-            return new RejectedInput($privileges->problem, (new SourceRanges())->span($node)[1] ?? 0, true);
+        $aborting = $lowering->tableChanges->completed($node) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
+        if ($aborting !== null) {
+            return new RejectedInput($aborting->problem, (new SourceRanges())->span($node)[1] ?? 0, true);
         }
         $roles = (new Account\SyntaxRoles())->completed($node, $lowering);
         if ($roles !== []) {
@@ -52,9 +52,6 @@ final class RejectedOperand
             return new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($node)[1] ?? 0, false);
         }
         try {
-            if (in_array($node->name, ['alter_algorithm_option', 'alter_lock_option'], true)) {
-                (new TableChange\Alter\ModifierRule($lowering))->option($node);
-            }
             if ($node->name === 'partition_entry') {
                 return (new ClientEntry())->partition($node->tokens()[0] ?? null, $lowering->profile);
             }

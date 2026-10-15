@@ -80,6 +80,7 @@ final class ModifierRule
      * Lowers an ALGORITHM or LOCK option: a node of `alter_algorithm_option` or `alter_lock_option`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When the option name is unknown in this release
      */
     public function option(Node $option): AlgorithmOption|LockOption
     {

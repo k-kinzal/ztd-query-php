@@ -70,8 +70,8 @@ final class LegacyForms
     public function definition(object $value): bool
     {
         return match (true) {
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption => strtoupper($value->algorithm?->value ?? '') === 'DEFAULT',
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption => strtoupper($value->lock?->value ?? '') === 'DEFAULT',
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption => strtoupper($value->algorithm->value ?? '') === 'DEFAULT',
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption => strtoupper($value->lock->value ?? '') === 'DEFAULT',
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList => array_filter($value->columns, static fn ($column): bool => $column instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard) !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping => array_filter($value->items, static fn (\SqlSemantics\Platform\MySql\Statement\Query\OrderItem $item): bool => $item->direction !== null) !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges,
