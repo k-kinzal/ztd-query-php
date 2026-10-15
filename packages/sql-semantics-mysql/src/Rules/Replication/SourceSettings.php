@@ -78,7 +78,7 @@ final class SourceSettings
         }
         $error = $this->error($option, $release);
         if ($error !== null) {
-            $derivation->report(new RefusedSetting($error));
+            $derivation->report(new RefusedSetting($error, text: $error === ReplicationError::LineFeed && $option->value instanceof Text ? $option->value : null));
         }
     }
 
@@ -144,7 +144,7 @@ final class SourceSettings
     public function lineFeed(Derivation $derivation, ?Text $value): void
     {
         if ($value !== null && str_contains($value->value, "\n")) {
-            $derivation->report(new RefusedSetting(ReplicationError::LineFeed));
+            $derivation->report(new RefusedSetting(ReplicationError::LineFeed, text: $value));
         }
     }
 }

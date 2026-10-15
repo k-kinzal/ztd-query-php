@@ -18,13 +18,12 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * `RESET BINARY LOGS AND GTIDS [TO n]`, written RESET MASTER in the legacy vocabulary.
  *
- * Mirrors the REFRESH_SOURCE flag of SQLCOM_RESET with LEX::next_binlog_file_nr.
  * The vocabulary is the one of the release (MYSQL-REPLICATION-RELEASE-001):
  * RESET MASTER up to 8.1, RESET BINARY LOGS AND GTIDS from 8.2, where 8.2 and
  * 8.3 read RESET MASTER as its synonym. TO needs MySQL 8.0 or later. Facts:
  * a TO number with a fraction (ER_ONLY_INTEGERS_ALLOWED), or 0 or greater
- * than 2000000000 (ER_RESET_SOURCE_TO_VALUE_OUT_OF_RANGE), is a RefusedSetting
- * diagnostic.
+ * than 2000000000 (ER_RESET_SOURCE_TO_VALUE_OUT_OF_RANGE), is refused at the
+ * input boundary. A constructed target always has an integral index in range.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/reset-binary-logs-and-gtids.html,
  * https://dev.mysql.com/doc/refman/8.0/en/reset-master.html,
  * https://dev.mysql.com/doc/relnotes/mysql/8.2/en/news-8-2-0.html.
@@ -43,10 +42,11 @@ final class ResetBinaryLogs implements ResetTarget
      */
     public function __construct(public readonly Terminology $terminology, public readonly ?Numeral $first = null)
     {
+        Check::input(self::problem($first) === null, 'A binary log index is an integer between 1 and 2000000000.');
     }
 
     /**
-     * Checks the vocabulary and TO against the release and reports a refused file number.
+     * Checks the vocabulary and availability of TO against the release.
      */
     public function deriveTarget(Derivation $derivation): void
     {
@@ -54,26 +54,22 @@ final class ResetBinaryLogs implements ResetTarget
         $releases = new Releases();
         Check::input($releases->binaryLogs($release) === $this->terminology, 'RESET BINARY LOGS AND GTIDS is written in the vocabulary of the release.');
         Check::input($this->first === null || !$releases->legacy($release), 'RESET MASTER TO needs MySQL 8.0 or later.');
-        $problem = $this->problem();
-        if ($problem !== null) {
-            $derivation->report($problem);
-        }
     }
 
     /**
      * Describes an invalid file index independently of the later RESET items.
      */
-    public function problem(): ?RefusedSetting
+    public static function problem(?Numeral $number): ?RefusedSetting
     {
-        if ($this->first === null) {
+        if ($number === null) {
             return null;
         }
         $magnitudes = new Magnitudes();
-        if ($magnitudes->fractional($this->first)) {
+        if ($magnitudes->fractional($number)) {
             return new RefusedSetting(ReplicationError::FractionalNumber);
         }
 
-        return $magnitudes->integer($this->first) === 0 || $magnitudes->exceeds($this->first, 2000000000) ? new RefusedSetting(ReplicationError::FileNumberOutOfRange, $this->first) : null;
+        return $magnitudes->integer($number) === 0 || $magnitudes->exceeds($number, 2000000000) ? new RefusedSetting(ReplicationError::FileNumberOutOfRange, $number) : null;
     }
 
     /**

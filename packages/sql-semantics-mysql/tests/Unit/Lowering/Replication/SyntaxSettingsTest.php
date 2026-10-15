@@ -31,6 +31,7 @@ final class SyntaxSettingsTest extends TestCase
             $prefix = $release === GrammarRelease::MySql8044 ? 'RESET MASTER' : 'RESET BINARY LOGS AND GTIDS';
             yield $release->value . ': zero' => [$release, $prefix . ' TO 0, QUERY CACHE', [new ParseFailure(new RefusedSetting(ReplicationError::FileNumberOutOfRange, new Numeral('0')), true)]];
             yield $release->value . ': large' => [$release, $prefix . ' TO 2000000001, SELECT', [new ParseFailure(new RefusedSetting(ReplicationError::FileNumberOutOfRange, new Numeral('2000000001')), true)]];
+            yield $release->value . ': earlier line feed' => [$release, "RESET REPLICA FOR CHANNEL 'a\nb', " . ($release === GrammarRelease::MySql8044 ? 'MASTER' : 'BINARY LOGS AND GTIDS') . ' TO 0', [new ParseFailure(new RefusedSetting(ReplicationError::LineFeed, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")), true)]];
             yield $release->value . ': accepted' => [$release, $prefix . ' TO 2000000000, SELECT', []];
         }
     }

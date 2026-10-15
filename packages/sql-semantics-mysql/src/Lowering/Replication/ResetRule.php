@@ -95,6 +95,7 @@ final class ResetRule
     /**
      * Lowers one item of RESET.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a binary log index is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function target(Form $form): ResetTarget
@@ -106,6 +107,9 @@ final class ResetRule
         if ($replica !== null) {
             $all = $this->lowering->form($form->node(1));
             $channel = count($form->node->children) === 3 ? $this->lowering->replication->channel($form->node(2)) : null;
+            if ($channel !== null && str_contains($channel->value, "\n")) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed, text: $channel), (new \SqlSemantics\Construction\SourceRanges())->span($form->node(2))[1] ?? 0);
+            }
 
             return new ResetReplica($replica, self::ALL[$all->signature] ?? throw ImplementationGap::production($all), $channel, $form->signature === 'reset_option: SLAVE opt_replica_reset_options opt_channel');
         }
@@ -119,7 +123,13 @@ final class ResetRule
         $children = $form->node->children;
         $last = $children[count($children) - 1];
 
-        return new ResetBinaryLogs($terminology, $last instanceof Node ? $this->first($last) : null);
+        $number = $last instanceof Node ? $this->first($last) : null;
+        $problem = ResetBinaryLogs::problem($number);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
+
+        return new ResetBinaryLogs($terminology, $number);
     }
 
     /**

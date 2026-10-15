@@ -30,7 +30,7 @@ final class ChangeReplicationSourceTest extends TestCase
         self::assertEquals([
             new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange), new RefusedSetting(ReplicationError::HeartbeatOutOfRange),
             new RefusedSetting(ReplicationError::RowFormatValue), new RefusedSetting(ReplicationError::FractionalNumber), new RefusedSetting(ReplicationError::InvalidUuid),
-            new RefusedSetting(ReplicationError::LineFeed),
+            new RefusedSetting(ReplicationError::LineFeed, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")),
         ], $change->facts->diagnostics);
     }
 

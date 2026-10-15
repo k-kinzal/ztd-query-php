@@ -112,23 +112,21 @@ final class ReplicaCommand implements Command
     }
 
     /**
-     * Applies RESET targets in order, recording one binary-log table flush per statement.
-     * A failed later target retains the earlier reset and its flush count.
+     * Applies the combined RESET options, recording one binary-log table flush.
+     * Binary logs reset before the replica, including when a replica target was written first.
      *
      * @throws \MySqlMemory\Error\SqlError When binary logging is required or a replica target cannot reset
      */
     public function resetTargets(Reset $statement, Session $session): void
     {
         $registry = $session->instance->registry;
-        $flushed = false;
-        foreach ($statement->targets as $target) {
+        foreach ($statement->effectiveTargets() as $target) {
             if ($target instanceof ResetBinaryLogs && $session->settings()->release() === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 throw AdministrationError::BinlogClosed->error('RESET MASTER');
             }
             $this->reset($target, $registry, $session->settings()->legacy());
-            if ($target instanceof ResetBinaryLogs && !$flushed && \MySqlMemory\Registry\BinaryLog::enabled($session)) {
+            if ($target instanceof ResetBinaryLogs && \MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 $registry->status->add('Flush_commands');
-                $flushed = true;
             }
             if ($target instanceof ResetBinaryLogs && $session->settings()->release() !== GrammarRelease::MySql5651) {
                 $session->instance->dictionary->cache->open('mysql', 'gtid_executed');

@@ -26,9 +26,12 @@ final class RefusedSetting implements Diagnostic
     /**
      * @param ReplicationError $error The check the value fails
      * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null $number The refused binary log index, including when only a statement prefix was read
+     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Text|null $text The decoded operand containing a forbidden line feed
      */
-    public function __construct(public readonly ReplicationError $error, public readonly ?\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number = null)
+    public function __construct(public readonly ReplicationError $error, public readonly ?\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Literal\Text $text = null)
     {
+        \SqlSemantics\Diagnostic\Check::input(($error === ReplicationError::LineFeed) === ($text !== null), 'A line-feed refusal retains its decoded text operand.');
+        \SqlSemantics\Diagnostic\Check::input($text === null || str_contains($text->value, "\n"), 'A refused line-feed operand contains a line feed.');
         \SqlSemantics\Diagnostic\Check::input(($error === ReplicationError::FileNumberOutOfRange) === ($number !== null), 'A refused binary log index retains its numeric operand.');
     }
 

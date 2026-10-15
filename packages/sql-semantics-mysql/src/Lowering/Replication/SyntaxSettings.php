@@ -6,12 +6,11 @@ namespace SqlSemantics\Platform\MySql\Lowering\Replication;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 
 /**
- * Preserves completed binary log index validation before later syntax errors.
+ * Preserves completed binary log index and line-feed checks before later input errors.
  *
  * The notice retains the numeric operand needed to format its error. No SQL,
  * parser node or execution state survives the lowering call.
@@ -22,16 +21,20 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 final class SyntaxSettings
 {
     /**
-     * Returns the aborting condition of a completed RESET TO operand.
+     * Returns the aborting condition of a completed index or newline-free text operand.
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
+        if ($node->name === 'TEXT_STRING_sys_nonewline') {
+            $text = $lowering->literals->text($node);
+
+            return str_contains($text->value, "\n") ? new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed, text: $text), true) : null;
+        }
         if ($node->name !== 'source_reset_options') {
             return null;
         }
         $number = (new ResetRule($lowering))->first($node);
-        $target = new ResetBinaryLogs((new Releases())->binaryLogs($lowering->profile->grammar), $number);
-        $problem = $target->problem();
+        $problem = ResetBinaryLogs::problem($number);
 
         return $problem === null ? null : new ParseFailure($problem, true);
     }

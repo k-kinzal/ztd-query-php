@@ -72,6 +72,7 @@ final class Refusals
             $diagnostic instanceof SpatialProblem => $this->spatial($diagnostic, $statement),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber => new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number->text, '/') . '/') . "' at line 1"),
             $diagnostic instanceof PriorityOutOfRange => $this->priority($diagnostic),
+            $diagnostic instanceof RefusedSetting && $diagnostic->text !== null => DataError::WrongValue->error('argument contains not-allowed LF', (new DiagnosticText())->bytes((new Literals())->bytes($diagnostic->text), 128, $legacy)),
             $diagnostic instanceof RefusedSetting => $diagnostic->number !== null ? AdministrationError::BinlogIndexOutOfRange->error((new Literals())->number($diagnostic->number)) : $this->replication($diagnostic->error, $statement, $text, $legacy),
             $diagnostic instanceof NumberOutOfRange => $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number, '/') . '/') . "' at line 1"),
             default => new SqlError(StatementError::UnknownError, $diagnostic->message()),

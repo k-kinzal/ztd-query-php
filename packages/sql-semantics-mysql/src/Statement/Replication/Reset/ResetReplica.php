@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
-use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Rendering\Output;
@@ -21,8 +20,8 @@ use SqlSemantics\Statement\Snapshot;
  * The vocabulary is the one of the release (MYSQL-REPLICATION-RELEASE-001):
  * RESET SLAVE of 8.0 to 8.3 is read as its synonym RESET REPLICA, keeping the
  * spelling it is written in (ResetReplica::$synonym). A channel
- * needs MySQL 5.7 or later. Facts: a line feed in the channel name is a
- * RefusedSetting diagnostic.
+ * needs MySQL 5.7 or later. A channel name cannot contain a line feed;
+ * lowering refuses such an input before constructing a target.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/reset-replica.html,
  * https://dev.mysql.com/doc/refman/8.0/en/reset-slave.html.
  *
@@ -45,6 +44,7 @@ final class ResetReplica implements ResetTarget
     {
         Check::input(!$synonym || $terminology === Terminology::Current, 'The SLAVE synonym applies to current replication terminology.');
         Check::input($channel === null || $channel->radix === null, 'A replication channel is quoted text.');
+        Check::input($channel === null || !str_contains($channel->value, "\n"), 'A replication channel cannot contain a line feed.');
     }
 
     /**
@@ -55,7 +55,6 @@ final class ResetReplica implements ResetTarget
         $release = $derivation->context->profile->grammar;
         Check::input((new Releases())->source($release) === $this->terminology, 'RESET REPLICA is written in the vocabulary of the release.');
         Check::input($this->channel === null || $release !== GrammarRelease::MySql5651, 'A replication channel needs MySQL 5.7 or later.');
-        (new SourceSettings())->lineFeed($derivation, $this->channel);
     }
 
     /**
