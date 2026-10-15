@@ -102,4 +102,9 @@ final class ModernFormsTest extends TestCase
         new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, database: new \SqlSemantics\Statement\Identifier\Name('d'));
     }
 
+    public function testRequiresRecognizesInstantAlter(): void
+    {
+        self::assertTrue((new ModernForms())->requires(new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(new \SqlSemantics\Statement\Identifier\Name('INSTANT'))));
+    }
+
 }

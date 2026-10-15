@@ -15,15 +15,15 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption;
 #[Medium]
 final class AlgorithmOptionTest extends TestCase
 {
-    public function testDeriveOptionReportsAnAlgorithmTheReleaseDoesNotKnow(): void
+    public function testDeriveOptionAcceptsTheKnownAlgorithm(): void
     {
-        self::assertSame('INSTANT is not an ALGORITHM the server knows.', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP INDEX i ON t ALGORITHM = INSTANT')->facts->diagnostics[0]->message());
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP INDEX i ON t ALGORITHM = COPY')->facts->diagnostics);
         self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t ALGORITHM = instant')->facts->diagnostics);
     }
 
     public function testDeriveCommandChecksTheAlgorithm(): void
     {
-        self::assertSame('NOCOPY is not an ALGORITHM the server knows.', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM = NOCOPY')->facts->diagnostics[0]->message());
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM = INPLACE')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAlgorithmOrDefault(): void

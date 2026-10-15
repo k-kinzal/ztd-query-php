@@ -97,4 +97,10 @@ final class LegacyFormsTest extends TestCase
         self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name(" x\t"), $type)));
     }
 
+    public function testDefinitionRecognizesNamedDefaults(): void
+    {
+        self::assertTrue((new LegacyForms())->definition(new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(new \SqlSemantics\Statement\Identifier\Name('DEFAULT'))));
+        self::assertTrue((new LegacyForms())->definition(new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption(new \SqlSemantics\Statement\Identifier\Name('DEFAULT'))));
+    }
+
 }
