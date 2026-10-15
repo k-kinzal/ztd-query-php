@@ -279,6 +279,7 @@ final class Problems
     public function prepared(Operation $operation, Session $session): void
     {
         (new Problem\Definition\CheckQueries())->prepare($operation, $session, $this);
+        (new Problem\Definition\FunctionalQueries())->prepare($operation, $session, $this);
         (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
         $special = static fn (Node $node): bool => $node instanceof Select && ($node->groupBy?->modifier === GroupingModifier::Cube || $node->qualify !== null);
         if (array_filter((new Walker())->find($operation->statement, Select::class), $special) === []) {

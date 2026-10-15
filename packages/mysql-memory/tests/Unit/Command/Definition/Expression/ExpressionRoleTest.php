@@ -23,12 +23,12 @@ final class ExpressionRoleTest extends TestCase
 
     public function testSubqueryAnswersTheErrorOfEachRole(): void
     {
-        self::assertSame([3102, 3769, 3815], [ExpressionRole::Generated->subquery('b')->getCode(), ExpressionRole::Default->subquery('b')->getCode(), ExpressionRole::Check->subquery('c')->getCode()]);
+        self::assertSame([3102, 3769, 3815, 3758], [ExpressionRole::Generated->subquery('b')->getCode(), ExpressionRole::Default->subquery('b')->getCode(), ExpressionRole::Check->subquery('c')->getCode(), ExpressionRole::Functional->subquery('i')->getCode()]);
     }
 
     public function testVariableAnswersTheErrorOfEachRole(): void
     {
-        self::assertSame([3772, 3772, 3816], [ExpressionRole::Generated->variable('b')->getCode(), ExpressionRole::Default->variable('b')->getCode(), ExpressionRole::Check->variable('c')->getCode()]);
+        self::assertSame([3772, 3772, 3816, 3772], [ExpressionRole::Generated->variable('b')->getCode(), ExpressionRole::Default->variable('b')->getCode(), ExpressionRole::Check->variable('c')->getCode(), ExpressionRole::Functional->variable('i')->getCode()]);
     }
 
     public function testRefusedAnswersTheFunctionsEachRoleRefuses(): void

@@ -8,7 +8,7 @@ use MySqlMemory\Error\Family\ConstraintError;
 use MySqlMemory\Error\SqlError;
 
 /**
- * The role an expression of a table definition plays: a generated column, an expression default, or a CHECK constraint.
+ * The role an expression of a table definition plays: a generated column, an expression default, a CHECK constraint, or a functional index.
  *
  * Each role refuses what the server refuses in it with its own errors.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html,
@@ -22,6 +22,7 @@ enum ExpressionRole
     case Generated;
     case Default;
     case Check;
+    case Functional;
 
     /**
      * Answers the error of a function the role refuses, named as the server names it.
@@ -32,6 +33,7 @@ enum ExpressionRole
             self::Generated => ConstraintError::GeneratedFunction->error($owner, $function),
             self::Default => ConstraintError::DefaultFunction->error($owner, $function),
             self::Check => ConstraintError::CheckFunction->error($owner, $function),
+            self::Functional => ConstraintError::FunctionalIndexFunction->error($owner),
         };
     }
 
@@ -44,6 +46,7 @@ enum ExpressionRole
             self::Generated => ConstraintError::GeneratedSubquery->error($owner),
             self::Default => ConstraintError::DefaultSubquery->error($owner),
             self::Check => ConstraintError::CheckSubquery->error($owner),
+            self::Functional => ConstraintError::FunctionalIndexFunction->error($owner),
         };
     }
 
@@ -53,7 +56,7 @@ enum ExpressionRole
     public function variable(string $owner): SqlError
     {
         return match ($this) {
-            self::Generated, self::Default => ConstraintError::DefaultVariable->error($owner),
+            self::Generated, self::Default, self::Functional => ConstraintError::DefaultVariable->error($owner),
             self::Check => ConstraintError::CheckVariable->error($owner),
         };
     }
@@ -74,7 +77,7 @@ enum ExpressionRole
         $session = ['connection_id' => 'connection_id', 'current_user' => 'current_user', 'user' => 'user', 'session_user' => 'user', 'system_user' => 'user', 'database' => 'database', 'schema' => 'database', 'now' => 'now', 'current_timestamp' => 'now', 'localtime' => 'now', 'localtimestamp' => 'now', 'curdate' => 'curdate', 'current_date' => 'curdate', 'curtime' => 'curtime', 'current_time' => 'curtime', 'utc_date' => 'utc_date', 'utc_time' => 'utc_time', 'utc_timestamp' => 'utc_timestamp', 'unix_timestamp' => 'unix_timestamp', 'rand' => 'rand', 'uuid' => 'uuid', 'uuid_short' => 'uuid_short', 'current_role' => 'current_role'];
 
         return match ($this) {
-            self::Generated => [...$always, ...$session, 'sysdate' => 'sysdate', 'statement_digest' => 'statement_digest', 'random_bytes' => 'random_bytes'],
+            self::Generated, self::Functional => [...$always, ...$session, 'sysdate' => 'sysdate', 'statement_digest' => 'statement_digest', 'random_bytes' => 'random_bytes'],
             self::Default => $always,
             self::Check => [...$always, ...$session],
         };

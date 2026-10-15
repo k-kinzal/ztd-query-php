@@ -180,10 +180,8 @@ final class Stages
      */
     public static function tableDefinition(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $statement, Diagnostic $diagnostic): bool
     {
-        $empty = array_filter($statement->elements, static fn ($element): bool => $element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition) === [];
-
         return $diagnostic instanceof MissingColumn || $diagnostic instanceof MissingTable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns
-            || ($empty && $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn);
+            || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
     }
 
     /**

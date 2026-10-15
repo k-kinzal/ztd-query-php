@@ -75,6 +75,7 @@ final class CreateTableCommand implements Command
 
             return new Completion(0, 0, $context->diagnostics->raised());
         }
+        (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->forbidden($create);
         (new StorageOptions())->check($create, $session, $context);
         if ($create->temporaryWords > 0 && $session->transaction->open) {
             $session->transaction->temporaries['created'] = true;

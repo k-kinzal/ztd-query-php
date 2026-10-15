@@ -553,6 +553,7 @@ return [
     3593 => ['HY000', "You cannot use the window function '%s' in this context.'"],
     3730 => ['HY000', "Cannot drop table '%s' referenced by a foreign key constraint '%s' on table '%s'."],
     3734 => ['HY000', "Failed to add the foreign key constraint. Missing column '%s' for constraint '%s' in the referenced table '%s'"],
+    3758 => ['HY000', "Expression of functional index '%s' contains a disallowed function."],
     3763 => ['HY000', "Expression of generated column '%s' contains a disallowed function: %s."],
     3767 => ['HY000', "Default value expression of column '%s' cannot refer to a column defined after it if that column is a generated column or has an expression as default value."],
     3768 => ['HY000', "Default value expression of column '%s' cannot refer to an auto-increment column."],

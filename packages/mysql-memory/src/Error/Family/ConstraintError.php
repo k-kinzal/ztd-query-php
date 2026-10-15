@@ -44,6 +44,7 @@ enum ConstraintError: int implements ErrorCode
     case WindowFunctionContext = 3593;
     case DropReferencedTable = 3730;
     case ForeignColumnMissing = 3734;
+    case FunctionalIndexFunction = 3758;
     case GeneratedFunction = 3763;
     case DefaultNotPrior = 3767;
     case DefaultAutoIncrement = 3768;
