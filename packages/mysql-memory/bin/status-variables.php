@@ -36,7 +36,7 @@ try {
 } catch (PDOException) {
     $listed = array_fill_keys(array_keys($session + $global), true);
 }
-$kept = ['Innodb_page_size', 'Innodb_buffer_pool_pages_total', 'Mysqlx_port', 'Ssl_session_cache_size', 'Ssl_session_cache_timeout'];
+$kept = ['Innodb_page_size', 'Mysqlx_port', 'Ssl_session_cache_size', 'Ssl_session_cache_timeout'];
 $blank = '/(rsa_public_key|_not_after|_not_before|Max_used_connections_time|Innodb_buffer_pool_load_status|Current_tls_|Mysqlx_address|Mysqlx_socket|Tls_library_version)/i';
 $entries = [];
 foreach ($session + $global as $name => $value) {
