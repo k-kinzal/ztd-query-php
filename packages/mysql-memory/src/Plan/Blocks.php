@@ -287,7 +287,9 @@ final class Blocks
         $recheck = null;
         foreach ($this->conjuncts($where) as $conjunct) {
             $compiled = $compiler->compile($conjunct, $scope);
-            if ($compiler->constancy($conjunct)->constant()) {
+            if ((new \MySqlMemory\Evaluation\Compile\Family\UnsignedBounds($compiler))->impossible($conjunct)) {
+                $constant = new Constant($compiler->operators->truth(false), 0);
+            } elseif ($compiler->constancy($conjunct)->constant()) {
                 $constant = $constant === null ? $compiled : new Logic(LogicalOperator::And, $constant, $compiled, $compiler->operators->truth($constant->domain()->nullable || $compiled->domain()->nullable));
             } else {
                 $varying = $varying === null ? $compiled : new Logic(LogicalOperator::And, $varying, $compiled, $compiler->operators->truth($varying->domain()->nullable || $compiled->domain()->nullable));
@@ -331,7 +333,7 @@ final class Blocks
         $system = $this->planner->dictionary->system;
         $read = $stored === null ? $system?->find($schema, $table->table->name->value) : null;
         if ($system !== null && $read !== null) {
-            $stored = $system->read($read, $this->planner->compiler->connection);
+            $stored = $system->deferred($read, $this->planner->compiler->connection);
         }
         if ($stored === null) {
             throw QueryError::NoSuchTable->error($schema, $table->table->name->value);

@@ -107,4 +107,16 @@ final class StatusVariablesTest extends TestCase
         $first->query('SET GLOBAL event_scheduler=ON');
         self::assertSame('2', $catalog->connections($instance, 1, \MySqlMemory\Value\Zone::utc())['Threads_running']);
     }
+
+    public function testValuesReadsLifetimeProcesslistHistoryInBothShowScopes(): void
+    {
+        $instance = new Instance();
+        $instance->registry->status->processlist(1700000000.25);
+        $catalog = new StatusVariables([['Deprecated_use_i_s_processlist_count', 'Global', '0', true], ['Deprecated_use_i_s_processlist_last_timestamp', 'Global', '0', true]]);
+        $expected = [['Deprecated_use_i_s_processlist_count', '1'], ['Deprecated_use_i_s_processlist_last_timestamp', '1700000000250000']];
+        self::assertSame($expected, $catalog->values($instance, true, false, 1));
+        self::assertSame($expected, $catalog->values($instance, false, false, 1, connection: 1));
+        self::assertSame([], $catalog->values($instance, false, true, 1, connection: 1));
+    }
+
 }

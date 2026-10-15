@@ -84,4 +84,18 @@ final class StatusCountersTest extends TestCase
 
         self::assertSame([2, 0, 0], [$counters->read('Questions'), $counters->read('Questions', 1), $counters->read('Questions', 2)]);
     }
+
+    public function testProcesslistKeepsLifetimeCountsAndTheMostRecentServerClock(): void
+    {
+        $status = new StatusCounters();
+        $status->processlist(1700000000.125);
+        $status->clear();
+        $status->processlist(1700000001.5);
+        self::assertSame(2, $status->read('Deprecated_use_i_s_processlist_count'));
+        self::assertSame(1700000001500000, $status->read('Deprecated_use_i_s_processlist_last_timestamp'));
+        $status->reset();
+        self::assertSame(0, $status->read('Deprecated_use_i_s_processlist_count'));
+        self::assertSame(0, $status->read('Deprecated_use_i_s_processlist_last_timestamp'));
+    }
+
 }

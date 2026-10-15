@@ -136,4 +136,22 @@ final class ContractTest extends TestCase
         self::assertSame($observation['results'][0]['columns'], $normalized['results'][0]['columns']);
         self::assertSame($observation['warnings'], $normalized['warnings']);
     }
+
+    /**
+     * A lifetime event clock cannot change during a status listing or precede its first read.
+     */
+    public function testEventTimeRequiresUnchangedHistoryAndAClockAfterTheFirstRead(): void
+    {
+        $policy = new Policy();
+        $empty = new Snapshot(['Deprecated_use_i_s_processlist_count' => '0', 'Deprecated_use_i_s_processlist_last_timestamp' => '0'], [], '0', '0', 0);
+        $before = new Snapshot(['Deprecated_use_i_s_processlist_count' => '2', 'Deprecated_use_i_s_processlist_last_timestamp' => '1700000000000000'], [], '0', '0', 0);
+        self::assertSame('<unchanged-server-event-time>', $policy->value('Deprecated_use_i_s_processlist_last_timestamp', '0', false, true, $empty, 'SHOW STATUS', 0));
+        self::assertSame('<unchanged-server-event-time>', $policy->value('Deprecated_use_i_s_processlist_last_timestamp', '1700000000000000', false, true, $before, 'SHOW STATUS', 0));
+        self::assertSame('1', $policy->value('Deprecated_use_i_s_processlist_count', '3', false, true, $before, 'SHOW STATUS', 0));
+        self::assertNull($policy->value('Deprecated_use_i_s_processlist_last_timestamp', '1700000000000001', false, true, $before, 'SHOW STATUS', 0));
+        self::assertNull($policy->value('Deprecated_use_i_s_processlist_last_timestamp', '18446744073709551616', true, true, $before, 'SHOW STATUS', 0));
+        self::assertNull($policy->eventTime('0', '0', $before));
+        self::assertNull($policy->eventTime('1700000000000000', '1700000000000000', $empty));
+    }
+
 }

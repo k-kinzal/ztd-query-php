@@ -156,4 +156,23 @@ final class TableScanIteratorTest extends TestCase
         self::assertNull($iterator->read());
         self::assertNull($builder->scans[spl_object_id($scan)]->current);
     }
+
+    public function testSnapshotDefersSystemRowsUntilTheFirstRead(): void
+    {
+        $session = (new Instance())->connect();
+        $system = $session->instance->dictionary->system;
+        self::assertNotNull($system);
+        $table = $system->find('information_schema', 'processlist');
+        self::assertNotNull($table);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $stored = $system->deferred($table, new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context));
+        $iterator = new TableScanIterator(new TableScan($stored));
+        $iterator->init(new Frame($context));
+        self::assertSame(0, $session->instance->registry->status->read('Deprecated_use_i_s_processlist_count'));
+        self::assertNotNull($iterator->read());
+        $iterator->init(new Frame($context));
+        self::assertNotNull($iterator->read());
+        self::assertSame(1, $session->instance->registry->status->read('Deprecated_use_i_s_processlist_count'));
+    }
+
 }

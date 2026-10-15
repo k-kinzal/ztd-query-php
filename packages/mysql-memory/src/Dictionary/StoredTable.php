@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Dictionary;
 
+use Closure;
 use MySqlMemory\Storage\Heap;
 
 /**
@@ -48,11 +49,23 @@ final class StoredTable
      * @param array<string, string> $histograms The columns that have histogram statistics, by lowercase name
      * @param int|null $created The creation time; the actual clock when no statement clock is supplied
      * @param int|null $clock The server-clock second at creation, including simulated elapsed time
+     * @param Closure(): Heap|null $loader Deferred system rows, loaded once per table occurrence
      */
-    public function __construct(public TableDefinition $definition, public Heap $data, public array $histograms = [], ?int $created = null, ?int $clock = null)
+    public function __construct(public TableDefinition $definition, public Heap $data, public array $histograms = [], ?int $created = null, ?int $clock = null, public ?Closure $loader = null)
     {
         $clock ??= time();
         $this->created = $created ?? $clock;
         $this->updated = strcasecmp($definition->engine, 'MyISAM') === 0 ? $clock : null;
+    }
+
+    /**
+     * Materializes deferred system rows once, leaving ordinary stored tables unchanged.
+     */
+    public function materialize(): void
+    {
+        if ($this->loader !== null) {
+            $this->data = ($this->loader)();
+            $this->loader = null;
+        }
     }
 }

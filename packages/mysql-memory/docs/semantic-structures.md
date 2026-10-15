@@ -466,3 +466,23 @@ include ASCII, two-, three- and four-byte characters and both MySQL 5.7 reposito
 modes. The channel-size error is evaluated when the command runs: MySQL accepts a
 procedure containing that command and raises the error when it is called. This
 regression does not close the broader construction or named-channel history gates.
+
+INFORMATION_SCHEMA.PROCESSLIST usage is lifetime SQL history. Its counter increases
+for each materialized table occurrence; its last-use timestamp records the memory
+server's own clock in microseconds. Neither SET timestamp nor FLUSH STATUS rewrites
+that event history. System table definitions remain available while planning, but
+their rows are materialized only when an iterator needs them. Constant false
+predicates, impossible unsigned equalities, zero limits and constant false inner
+joins therefore leave the history and deprecation notices untouched. Rewinding a
+materialized occurrence does not count another access. Native histories also check
+preparation versus repeated execution, self joins, UNION and failed resolution.
+
+The complete STATUS comparison retains the exact change of that lifetime counter
+from each instance's independent baseline. The event timestamp must remain unchanged
+during the listing, and zero is permitted exactly when there has been no access.
+Independent native instances and memory additionally validate each event timestamp
+against the observing server's own SYSDATE(6) bounds. One instance starts with an
+extra prior access to exercise unequal baselines. All four listing forms retain
+metadata, warnings and every row. The release catalogs now include separate 8.1,
+8.2, 8.3 and 9.0 inventories rather than borrowing a later release's names. The
+combined native checks pass 12 tests and 1,953 assertions across nine releases.

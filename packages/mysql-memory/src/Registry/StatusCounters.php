@@ -44,6 +44,16 @@ final class StatusCounters
     }
 
     /**
+     * Records a materialized INFORMATION_SCHEMA.PROCESSLIST occurrence on the server clock.
+     * Neither a session reset nor FLUSH STATUS clears this lifetime history.
+     */
+    public function processlist(float $instant): void
+    {
+        $this->add('Deprecated_use_i_s_processlist_count');
+        $this->global['Deprecated_use_i_s_processlist_last_timestamp'] = (int) ($instant * 1000000);
+    }
+
+    /**
      * Reads a global or session total, initially zero.
      */
     public function read(string $name, ?int $connection = null): int

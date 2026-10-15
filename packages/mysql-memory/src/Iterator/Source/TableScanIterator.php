@@ -35,6 +35,8 @@ final class TableScanIterator implements RowIterator
 
     private bool $found = false;
 
+    private bool $loaded = false;
+
     /**
      * @var list<int> The row numbers, in the order of the rows
      */
@@ -65,6 +67,24 @@ final class TableScanIterator implements RowIterator
     public function init(Frame $frame): void
     {
         $this->frame = $frame;
+        $this->next = 0;
+        $this->found = false;
+        $this->current = null;
+        $this->loaded = false;
+        if ($this->path->table->loader === null) {
+            $this->snapshot();
+        }
+    }
+
+    /**
+     * Takes the occurrence's stored snapshot when its rows are first required.
+     *
+     * @throws \MySqlMemory\Error\SqlError When deferred system rows cannot be read
+     */
+    public function snapshot(): void
+    {
+        $this->path->table->materialize();
+        $frame = $this->frame;
         $variables = $frame->context->variables;
         $ordered = (new ClusterOrder())->rows($this->path->table, $variables->instance->transactions->of($variables->connection)?->access->rows($this->path->table, $this->locking));
         $partitioning = $this->path->table->definition->partitioning;
@@ -75,9 +95,7 @@ final class TableScanIterator implements RowIterator
         $rows = (new TimestampZones())->rows($this->path->table, $ordered, $frame->context);
         $this->numbers = array_keys($rows);
         $this->rows = array_values($rows);
-        $this->next = 0;
-        $this->found = false;
-        $this->current = null;
+        $this->loaded = true;
     }
 
     /**
@@ -86,6 +104,9 @@ final class TableScanIterator implements RowIterator
     #[Override]
     public function read(): ?array
     {
+        if (!$this->loaded) {
+            $this->snapshot();
+        }
         while (($row = $this->rows[$this->next] ?? null) !== null) {
             $this->current = $this->numbers[$this->next++];
             if ($this->lookup === null || $this->matches($row)) {

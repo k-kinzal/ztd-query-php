@@ -71,4 +71,22 @@ final class StoredTableTest extends TestCase
 
         self::assertSame([], $session->instance->dictionary->table('d', 't')?->histograms);
     }
+
+    public function testMaterializeReadsDeferredRowsOnceAndKeepsThemAfterRewinds(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('CREATE DATABASE d; CREATE TABLE d.t(a INT)');
+        $stored = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($stored);
+        $rows = new \MySqlMemory\Storage\Heap([1 => [7]], 2);
+        $table = new StoredTable($stored->definition, new \MySqlMemory\Storage\Heap(), loader: static fn (): \MySqlMemory\Storage\Heap => $rows);
+        self::assertSame([], $table->data->rows);
+        $table->materialize();
+        self::assertSame([1 => [7]], $table->data->rows);
+        self::assertNull($table->loader);
+        $table->data->insert([9]);
+        $table->materialize();
+        self::assertSame([1 => [7], 2 => [9]], $table->data->rows);
+    }
+
 }

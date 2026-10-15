@@ -22,7 +22,7 @@ final class Policy
         if (str_starts_with($name, 'Com_') || $name === 'Questions') {
             return $global ? 'history' : 'exact';
         }
-        if (in_array($name, ['Connections', 'Queries', 'Flush_commands', 'Aborted_clients'], true)) {
+        if (in_array($name, ['Connections', 'Queries', 'Flush_commands', 'Aborted_clients', 'Deprecated_use_i_s_processlist_count'], true)) {
             return 'history';
         }
         if (in_array($name, ['Bytes_received', 'Bytes_sent'], true)) {
@@ -30,6 +30,9 @@ final class Policy
         }
         if (in_array($name, ['Uptime', 'Uptime_since_flush_status'], true)) {
             return 'clock';
+        }
+        if ($name === 'Deprecated_use_i_s_processlist_last_timestamp') {
+            return 'event-time';
         }
         if ($name === 'Max_used_connections_time') {
             return 'connection-time';
@@ -71,6 +74,9 @@ final class Policy
         if ($base === null || !ctype_digit($base) || !ctype_digit($value) || bccomp($base, '18446744073709551615') > 0 || bccomp($value, '18446744073709551615') > 0) {
             return null;
         }
+        if ($kind === 'event-time') {
+            return $this->eventTime($value, $base, $before);
+        }
         $difference = bcsub($value, $base);
         if ($kind === 'clock') {
             $seconds = bcmod(bcadd($difference, '18446744073709551616'), '18446744073709551616');
@@ -84,5 +90,19 @@ final class Policy
         }
 
         return bccomp($difference, '0') >= 0 ? $difference : null;
+    }
+
+    /**
+     * A status listing cannot move a process-list event's clock. Zero means no read since startup.
+     * Different instance histories may have different clocks, but must obey that relationship.
+     */
+    public function eventTime(string $value, string $base, Snapshot $before): ?string
+    {
+        $count = $before->global['Deprecated_use_i_s_processlist_count'] ?? null;
+        if (!ctype_digit($value) || $value !== $base || $count === null || !ctype_digit($count) || bccomp($count, '18446744073709551615') > 0) {
+            return null;
+        }
+
+        return (bccomp($count, '0') === 0) === (bccomp($value, '0') === 0) ? '<unchanged-server-event-time>' : null;
     }
 }

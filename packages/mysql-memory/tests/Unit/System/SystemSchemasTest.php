@@ -129,4 +129,22 @@ final class SystemSchemasTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result2);
         self::assertSame(['SCHEMA_NAME', 'schema_name'], [$result1->columns[0]->name, $result2->columns[0]->name]);
     }
+
+    public function testDeferredRetainsTheDefinitionWithoutReadingTheSystemTable(): void
+    {
+        $session = (new Instance())->connect();
+        $system = $session->instance->dictionary->system;
+        self::assertNotNull($system);
+        $table = $system->find('information_schema', 'processlist');
+        self::assertNotNull($table);
+        $connection = new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $stored = $system->deferred($table, $connection);
+        self::assertSame($system->definition($table), $stored->definition);
+        self::assertSame([], $stored->data->rows);
+        self::assertSame(0, $session->instance->registry->status->read('Deprecated_use_i_s_processlist_count'));
+        $stored->materialize();
+        self::assertNotEmpty($stored->data->rows);
+        self::assertSame(1, $session->instance->registry->status->read('Deprecated_use_i_s_processlist_count'));
+    }
+
 }

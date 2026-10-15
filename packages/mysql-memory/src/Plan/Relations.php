@@ -112,7 +112,7 @@ final class Relations
         }
         $system = $this->planner->dictionary->system;
         $read = $system?->table($resolution->table);
-        $stored = $system !== null && $read !== null ? $system->read($read, $this->planner->compiler->connection) : $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value);
+        $stored = $system !== null && $read !== null ? $system->deferred($read, $this->planner->compiler->connection) : $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         if ($stored === null) {
             throw QueryError::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         }
@@ -346,7 +346,12 @@ final class Relations
             $condition = $this->equalities($scope, $leftIds, $rightIds, $names);
         }
 
-        return new NestedLoopJoin($left, $right, $kind, $condition, $this->lateral($join->right));
+        $path = new NestedLoopJoin($left, $right, $kind, $condition, $this->lateral($join->right));
+        if ($kind === JoinKind::Inner && $join->on !== null && $this->planner->compiler->constancy($join->on)->constant()) {
+            return new Path\Transform\Filter($path, new \MySqlMemory\Evaluation\Leaf\Constant($this->planner->compiler->operators->truth(false), 1), $condition);
+        }
+
+        return $path;
     }
 
     /**

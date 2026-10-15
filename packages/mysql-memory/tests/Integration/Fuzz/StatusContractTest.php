@@ -26,7 +26,7 @@ final class StatusContractTest extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $release) {
             $first = new DisposableMySql($release);
             $second = new DisposableMySql($release);
             $port = filter_var(getenv('MYSQL_MEMORY_STATUS_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65534]]);

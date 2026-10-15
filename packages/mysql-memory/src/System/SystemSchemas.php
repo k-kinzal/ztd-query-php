@@ -165,6 +165,15 @@ final class SystemSchemas
     }
 
     /**
+     * Retains a system table's definition and defers materialization until its first row read.
+     * Planning, false constant predicates and zero limits do not read the table.
+     */
+    public function deferred(SystemTable $table, Connection $connection): StoredTable
+    {
+        return new StoredTable($this->definition($table), new Heap(), loader: fn (): Heap => $this->read($table, $connection)->data);
+    }
+
+    /**
      * Answers a system table with the rows it holds now, as the connection reads them.
      *
      * Reading INFORMATION_SCHEMA.PROCESSLIST in MySQL 8.0 and later warns that it is deprecated
@@ -175,6 +184,7 @@ final class SystemSchemas
     public function read(SystemTable $table, Connection $connection): StoredTable
     {
         if ($this->release !== GrammarRelease::MySql5651 && $this->release !== GrammarRelease::MySql5744 && SystemTables::key($table->schema, $table->name) === 'information_schema.processlist') {
+            $this->instance->registry->status->processlist($this->instance->registry->threads->now());
             $connection->context->warning(StatementError::DeprecatedSyntax, 'INFORMATION_SCHEMA.PROCESSLIST', 'performance_schema.processlist');
         }
         $definition = $this->definition($table);
