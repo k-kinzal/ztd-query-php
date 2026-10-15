@@ -7,9 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Conversion;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -29,8 +27,8 @@ use SqlSemantics\Statement\Type\Known;
  * is accepted.
  *
  * Rule: MYSQL-AT-TIME-ZONE-001. Facts: a DATETIME of the given precision;
- * NULL when the operand is. A precision above 6 is a problem the server
- * finds while it parses the cast. Terminates: the operand is a strict part.
+ * NULL when the operand is. Precision is between zero and six; input lowering
+ * reports a larger precision before publishing a scalar. Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast.
  * Status: Implemented.
  *
@@ -38,6 +36,8 @@ use SqlSemantics\Statement\Type\Known;
  * @example Reading the zone
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CAST(a AT TIME ZONE 'UTC' AS DATETIME(6))");
  *     [$query->statement->query->where->zone->value, $query->statement->query->where->precision] // => ['UTC', '6']
+ * @example Refusing an impossible fractional precision
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'), precision: '7') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class AtTimeZone implements Scalar
 {
@@ -53,6 +53,7 @@ final class AtTimeZone implements Scalar
     {
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
+        Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -62,12 +63,7 @@ final class AtTimeZone implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
-        if ((int) ($this->precision ?? '0') > 6) {
-            $problem = new TooBigPrecision((int) $this->precision, 'CAST');
-            $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, $derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql8044));
-        }
-        $decimals = min(6, (int) ($this->precision ?? '0'));
+        $decimals = (int) ($this->precision ?? '0');
 
         return new ScalarFact(new Known(new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, null, [], Coercibility::Numeric)), $fact->nullability);
     }

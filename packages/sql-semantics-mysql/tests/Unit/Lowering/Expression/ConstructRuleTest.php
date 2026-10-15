@@ -68,6 +68,32 @@ final class ConstructRuleTest extends TestCase
         self::assertSame(['+00:00', true, '2'], [$zone->zone->value, $zone->interval, $zone->precision]);
     }
 
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerPrecisionRefusals(): iterable
+    {
+        yield 'continuing 8.0' => ['mysql-8.0.44', false];
+        yield 'continuing 8.1' => ['mysql-8.1.0', false];
+        yield 'aborting 8.4' => ['mysql-8.4.7', true];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPrecisionRefusals')]
+    public function testZoneRefusesAnExcessivePrecisionBeforePublishingAnExpression(string $release, bool $aborts): void
+    {
+        $failure = null;
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7)), BINARY 1");
+        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
+            $failure = $caught;
+        }
+
+        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(7, 'CAST'), $failure->problem);
+        self::assertSame($aborts, $failure->aborts);
+        self::assertSame(strlen("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7))"), $failure->end);
+    }
+
     public function testOptionalLowersTheOperandAndTheElseOfCase(): void
     {
         $platform = new Platform();

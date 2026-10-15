@@ -678,3 +678,14 @@ failing whole-model DO root at index 46 now constructs an ordinary expression
 list and completes identically on both engines. No root was removed from the
 245-type inventory. This repair does not resolve the other intrinsic-expression
 defects or the remaining whole-model differences.
+
+A zoned timestamp cast now enforces its zero-to-six fractional precision in the
+public `AtTimeZone` constructor, before derivation or `Operation` construction.
+SQL lowering reports an excessive precision as a typed `RejectedInput` with the
+operand's end position; the consumer no longer scans accepted zoned casts to
+rediscover this invariant. MySQL 8.0 and 8.1 continue collecting later conditions,
+while 8.2 onward stop at the precision refusal. Input tests compare 44 observations
+on each of six releases, including stored definitions, leading and trailing
+warnings, further cast errors and unprepared markers. All 264 observations match.
+This closes the precision domain; it does not certify every zoned operand or the
+remaining whole-model construction property.

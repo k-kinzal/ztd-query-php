@@ -77,7 +77,7 @@ final class Cast implements Scalar
         $problem = $this->precisionProblem();
         if ($problem !== null) {
             $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, $grammar !== GrammarRelease::MySql8044));
+            $derivation->warn(new ParseFailure($problem, !in_array($grammar, [GrammarRelease::MySql8044, GrammarRelease::MySql810], true)));
         }
         if ($this->target->charset?->charset !== null) {
             Deprecation::charset($this->target->charset->charset->value, $derivation);

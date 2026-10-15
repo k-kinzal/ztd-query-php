@@ -80,10 +80,18 @@ final class ConstructRule
      * Lowers CAST … AT TIME ZONE.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When the fractional precision exceeds six
      */
     public function zone(Form $form): AtTimeZone
     {
-        return new AtTimeZone($this->lowering->expressions->expression($form->node(2)), $this->lowering->literals->text($form->node(7)), $this->flag($form->node(6)), $this->lowering->types->precision($form->node(10)));
+        $operand = $this->lowering->expressions->expression($form->node(2));
+        $zone = $this->lowering->literals->text($form->node(7));
+        $precision = $this->lowering->types->precision($form->node(10));
+        if ((int) ($precision ?? '0') > 6) {
+            throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision((int) $precision, 'CAST'), (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
+        }
+
+        return new AtTimeZone($operand, $zone, $this->flag($form->node(6)), $precision);
     }
 
     /**

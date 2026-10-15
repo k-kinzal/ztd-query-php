@@ -6,16 +6,16 @@ namespace MySqlMemory\Session\Problem;
 
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Walker;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Statement\Node;
 
 /**
- * Refuses an excessive CAST precision or an AT TIME ZONE fraction while the statement is read.
+ * Refuses an excessive CAST precision while the statement is read.
  *
  * SQL Semantics supplies each cast's precision problem: at most 53 bits for FLOAT and 6 digits
  * for temporal fractions. The error is ER_TOO_BIG_PRECISION, named for CAST in each case;
- * the casts are checked in their order, and AT TIME ZONE after them.
+ * the casts are checked in their order. AT TIME ZONE enforces its fractional
+ * precision in its semantic constructor, before this consumer is reached.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html.
  *
  * @visibility MySqlMemory
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Node;
 final class Precision
 {
     /**
-     * Raises cast precision problems, followed by AT TIME ZONE precision problems.
+     * Raises cast precision problems.
      *
      * @throws \MySqlMemory\Error\SqlError When such a precision is found
      */
@@ -33,11 +33,6 @@ final class Precision
             $problem = $cast->precisionProblem();
             if ($problem !== null) {
                 throw SchemaError::TooBigPrecision->error($problem->precision, $problem->function, $problem->maximum);
-            }
-        }
-        foreach ((new Walker())->find($statement, AtTimeZone::class) as $zoned) {
-            if ($zoned->precision !== null && (int) $zoned->precision > 6) {
-                throw SchemaError::TooBigPrecision->error((int) $zoned->precision, 'CAST', 6);
             }
         }
     }

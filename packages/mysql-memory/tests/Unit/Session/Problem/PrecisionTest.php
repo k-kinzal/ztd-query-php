@@ -27,17 +27,6 @@ final class PrecisionTest extends TestCase
         (new Precision())->check($session->analyze('SELECT CAST(1 AS TIME(7))')->statement);
     }
 
-    public function testCheckRefusesAPrecisionAboveSixAtTimeZone(): void
-    {
-        $session = (new Instance())->connect();
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1426);
-        $this->expectExceptionMessage("Too-big precision 7 specified for 'CAST'. Maximum is 6.");
-
-        (new Precision())->check($session->analyze("SELECT CAST(TIMESTAMP '2020-01-01 00:00:00' AT TIME ZONE '+00:00' AS DATETIME(7))")->statement);
-    }
-
     public function testLegacyWritesTheMessageOfMySql56(): void
     {
         $error = \MySqlMemory\Error\Family\SchemaError::TooBigPrecision->error(9, 'CAST', 6);
