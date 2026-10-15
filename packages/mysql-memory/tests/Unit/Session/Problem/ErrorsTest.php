@@ -597,6 +597,16 @@ final class ErrorsTest extends TestCase
         self::assertSame(1046, (new Errors())->routine(new FunctionCall(new Name('f')), (new Instance())->connect())->getCode());
     }
 
+    public function testRoutineKeepsTheKeywordCollisionDistinctFromAnOrdinaryMissingName(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $errors = new Errors();
+
+        self::assertSame(1630, $errors->routine(new FunctionCall(new Name('COLLATION')), $session)->getCode());
+        self::assertSame(1630, $errors->routine(new FunctionCall(new Name('COLLATION'), schema: new Name('d')), $session)->getCode());
+        self::assertSame(1305, $errors->routine(new FunctionCall(new Name('_utf8mb4')), $session)->getCode());
+    }
+
     public function testRoutineCountsTheArgumentsOfAStoredFunction(): void
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');

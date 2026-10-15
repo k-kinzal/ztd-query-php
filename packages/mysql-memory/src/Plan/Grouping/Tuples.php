@@ -90,7 +90,7 @@ final class Tuples
      */
     public function constant(Operand $argument): bool
     {
-        return Constancy::of($argument, $this->planner->compiler->facts, assignmentsVary: false, legacy: $this->planner->settings->legacy())->constant();
+        return Constancy::of($argument, $this->planner->compiler->facts, assignmentsVary: false, legacy: $this->planner->settings->legacy(), release: $this->planner->settings->release())->constant();
     }
 
     /**

@@ -106,7 +106,7 @@ final class FunctionCall implements Scalar
         }
 
         $fact = $invalid ?? (new RoutineCalls())->result($this, $facts, $derivation);
-        if ($fact->type instanceof \SqlSemantics\Statement\Type\Invalid || $this->schema !== null || !(new NativeFunctions())->exists($derivation->context->profile->grammar, $this->name->value)) {
+        if ($fact->type instanceof \SqlSemantics\Statement\Type\Invalid || !$this->native($derivation->context->profile->grammar)) {
             return $fact;
         }
 
@@ -122,5 +122,31 @@ final class FunctionCall implements Scalar
             $out->name($this->schema, NameUse::Qualifier)->symbol('.');
         }
         $out->name($this->name, NameUse::Routine)->glue()->symbol('(')->list($this->arguments)->symbol(')');
+    }
+
+    /**
+     * Tells whether a generic call names a keyword of its release.
+     * An absent stored function then has the keyword-collision diagnostic; the name
+     * remains valid for an existing stored function and is not rejected by construction.
+     *
+     * @example Distinguishing a keyword name from an ordinary function name
+     *     (new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('COLLATION')))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql847) // => true
+     */
+    public function keywordName(\SqlSemantics\Contract\GrammarRelease $release): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rendering\Keywords($release))->contains($this->name->value);
+    }
+
+    /**
+     * Tells whether generic-call resolution selects a native function before stored routines.
+     * Keyword-call syntax has a separate type; a generic call with that keyword name
+     * still resolves as a stored function. A database qualifier always selects a routine.
+     *
+     * @example Resolving an ordinary native function
+     *     (new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ABS')))->native(\SqlSemantics\Contract\GrammarRelease::MySql847) // => true
+     */
+    public function native(\SqlSemantics\Contract\GrammarRelease $release): bool
+    {
+        return $this->schema === null && (new NativeFunctions())->exists($release, $this->name->value);
     }
 }

@@ -220,7 +220,9 @@ final class Origins
     {
         $replacement = $field->expression === null ? null : $this->planner->compiler->facts->scalar($field->expression)->replacement;
         if ($replacement !== null) {
-            return $this->origin(new Field($field->position, $field->slot, $replacement), $scope);
+            $inner = $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery ? ($this->planner->compiler->facts->query($field->expression->query)->projection[0] ?? null) : null;
+
+            return $this->origin($inner instanceof Field ? $inner : new Field($field->position, $field->slot, $replacement), $scope);
         }
         $resolution = $field->resolution;
         if ($field->expression instanceof ColumnUse) {

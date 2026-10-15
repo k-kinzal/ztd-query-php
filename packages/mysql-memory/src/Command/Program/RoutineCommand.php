@@ -81,6 +81,9 @@ final class RoutineCommand implements Command
         $function = $statement instanceof CreateFunction;
         $kind = $function ? 'FUNCTION' : 'PROCEDURE';
         $database = ProgramSource::database($statement->name->schema, $session);
+        if ($statement instanceof CreateFunction && $statement->nameCollision($session->settings()->release())) {
+            $context->note(\MySqlMemory\Error\Family\AdministrationError::NativeFunctionName, $statement->name->name->value);
+        }
         $key = strtolower($statement->name->name->value);
         $schema = $session->instance->dictionary->schema($database);
         if ($schema !== null && isset(self::routines($schema, $function)[$key])) {

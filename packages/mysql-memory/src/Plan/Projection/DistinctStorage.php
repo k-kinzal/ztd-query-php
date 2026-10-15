@@ -118,7 +118,7 @@ final class DistinctStorage
             return $input;
         }
         foreach ($fields as $field) {
-            if ($field->expression === null || !Constancy::of($field->expression, $this->planner->compiler->facts, assignmentsVary: false, legacy: true)->constant()) {
+            if ($field->expression === null || !Constancy::of($field->expression, $this->planner->compiler->facts, assignmentsVary: false, legacy: true, release: $this->planner->settings->release())->constant()) {
                 return $input;
             }
         }

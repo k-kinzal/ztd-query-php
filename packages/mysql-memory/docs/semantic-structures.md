@@ -409,3 +409,17 @@ notices from loading the definition across statements in the body. Repeated call
 routine alteration and separate sessions check the lifetime of that loaded state;
 table flushes do not reload the definition. This state uses the retained typed
 declaration rather than parsing the routine's display text.
+
+Generic function calls expose their native-function classification through
+`FunctionCall::native($release)`. A generic call whose name is a grammar keyword
+is distinct from `KeywordCall`: it can bind to a stored function, and reports the
+native name-collision diagnostic while that function is absent. Qualified calls
+always resolve in the named database. Compilation, output metadata and expression
+lifetime decisions use this semantic classification. They do not infer the role
+from which built-in evaluators happen to be installed.
+
+The function-resolution transition test retains the original call objects before
+and after creating their stored definitions. It compares rows, column metadata
+and notices across five MySQL releases, including an unqualified native `ABS`
+call alongside a qualified stored `ABS` call. Wire histories also exercise repeated
+loads, dictionary invalidation and stored functions evaluated for each outer row.

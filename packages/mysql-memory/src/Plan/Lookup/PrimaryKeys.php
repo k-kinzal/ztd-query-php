@@ -111,7 +111,7 @@ final class PrimaryKeys
     public function preparable(Scalar $condition): bool
     {
         foreach ((new \MySqlMemory\Evaluation\Compile\Walker())->find($condition, \SqlSemantics\Statement\Node::class, false) as $node) {
-            if ($node instanceof \SqlSemantics\Statement\Query || (($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall) && \MySqlMemory\Evaluation\Compile\Constancy::uncacheable($node))) {
+            if ($node instanceof \SqlSemantics\Statement\Query || (($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall) && \MySqlMemory\Evaluation\Compile\Constancy::uncacheable($node, release: $this->planner->settings->release()))) {
                 return false;
             }
         }

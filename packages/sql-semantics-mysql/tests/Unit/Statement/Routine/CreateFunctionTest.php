@@ -28,6 +28,21 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class CreateFunctionTest extends TestCase
 {
+    public function testNameCollisionIncludesKeywordsAndNativeFunctions(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $keyword = $semantics->analyze('CREATE FUNCTION d.`ORDER`() RETURNS INT RETURN 1')->statement;
+        $native = $semantics->analyze('CREATE FUNCTION d.ABS() RETURNS INT RETURN 1')->statement;
+        $plain = $semantics->analyze('CREATE FUNCTION d.f() RETURNS INT RETURN 1')->statement;
+
+        self::assertInstanceOf(CreateFunction::class, $keyword);
+        self::assertInstanceOf(CreateFunction::class, $native);
+        self::assertInstanceOf(CreateFunction::class, $plain);
+        self::assertTrue($keyword->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertTrue($native->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse($plain->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testDeriveStatementResolvesParametersAndLocalVariablesInEveryBodyStatement(): void
     {
         $semantics = new Semantics(Dialect::MySql);

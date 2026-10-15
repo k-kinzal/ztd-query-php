@@ -183,7 +183,7 @@ final class Compiler
             $this->assigned = array_values(array_unique(array_map(static fn (VariableAssignment $assignment): string => strtolower($assignment->target->name->value), (new Walker())->find($this->planner->statement, VariableAssignment::class))));
         }
 
-        return Constancy::of($node, $this->facts, $correlation, $this->assigned, $assignmentsVary, $this->settings->legacy());
+        return Constancy::of($node, $this->facts, $correlation, $this->assigned, $assignmentsVary, $this->settings->legacy(), release: $this->settings->release());
     }
 
     /**

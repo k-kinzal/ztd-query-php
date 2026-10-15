@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
@@ -72,9 +73,9 @@ enum Constancy: int
      * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true): self
+    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
     {
-        return self::within($node instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? $node->query : $node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
+        return self::within($node instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? $node->query : $node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary, $release);
     }
 
     /**
@@ -88,7 +89,7 @@ enum Constancy: int
      * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true): self
+    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
     {
         if ($node instanceof ColumnUse) {
             return self::column($node, $facts, $level);
@@ -97,19 +98,19 @@ enum Constancy: int
             $level--;
         }
         if ($level > 0) {
-            return $effects && self::uncacheable($node, $variableReadsVary) ? self::Row : self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
+            return $effects && self::uncacheable($node, $variableReadsVary, $release ?? ($legacy ? GrammarRelease::MySql5744 : GrammarRelease::MySql847)) ? self::Row : self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary, $release);
         }
         $merged = $node instanceof Scalar && $facts->covers($node) ? $facts->scalar($node)->replacement : null;
         if ($merged !== null) {
-            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
+            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary, $release);
         }
         if ($node instanceof Query) {
-            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
+            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary, $release);
 
             return $inner === self::Row && $correlation ? self::Row : self::Statement;
         }
 
-        return self::form($node, $facts, $correlation, $assigned, $assignmentsVary, $legacy);
+        return self::form($node, $facts, $correlation, $assigned, $assignmentsVary, $legacy, $release);
     }
 
     /**
@@ -117,13 +118,13 @@ enum Constancy: int
      * This is independent of column correlation: RAND(seed), for example, advances on each read.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/explain-output.html.
      */
-    public static function uncacheable(Node $node, bool $variableReadsVary = true): bool
+    public static function uncacheable(Node $node, bool $variableReadsVary = true, GrammarRelease $release = GrammarRelease::MySql847): bool
     {
         return match (true) {
             $node instanceof VariableAssignment => true,
             $node instanceof UserVariable => $variableReadsVary,
             $node instanceof ClockCall => $node->clock === Clock::SystemDate,
-            $node instanceof FunctionCall => $node->schema !== null || \MySqlMemory\Evaluation\Function\Library::instance()->find($node->name->value) === null || self::function(strtoupper($node->name->value), count($node->arguments)) === self::Row,
+            $node instanceof FunctionCall => !$node->native($release) || self::function(strtoupper($node->name->value), count($node->arguments)) === self::Row,
             default => false,
         };
     }
@@ -135,17 +136,17 @@ enum Constancy: int
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
      * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
      */
-    public static function form(Node $node, Facts $facts, bool $correlation, array $assigned, bool $assignmentsVary, bool $legacy = false): self
+    public static function form(Node $node, Facts $facts, bool $correlation, array $assigned, bool $assignmentsVary, bool $legacy = false, ?GrammarRelease $release = null): self
     {
         return match (true) {
-            $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
+            $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
             $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof WindowFunction, $node instanceof JsonObjectAggregate, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn, $node instanceof InsertedColumn => self::Row,
             $node instanceof UserVariable => in_array(strtolower($node->name->value), $assigned, true) ? self::Row : self::Statement,
             $node instanceof SystemVariable, $node instanceof Parameter => self::Statement,
             $node instanceof ClockCall => $node->clock === Clock::SystemDate ? self::Row : self::Statement,
-            $node instanceof FunctionCall => ($node->schema !== null || \MySqlMemory\Evaluation\Function\Library::instance()->find($node->name->value) === null ? self::Row : ($legacy && in_array(strtoupper($node->name->value), self::ACCOUNT_FUNCTIONS, true) ? self::Resolved : self::function(strtoupper($node->name->value), count($node->arguments))))->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
-            $node instanceof KeywordCall => (!$legacy && ($node->function === KeywordFunction::User || $node->function === KeywordFunction::CurrentUser) ? self::Statement : self::Resolved)->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
-            default => self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy),
+            $node instanceof FunctionCall => (!$node->native($release ?? ($legacy ? GrammarRelease::MySql5744 : GrammarRelease::MySql847)) ? self::Row : ($legacy && in_array(strtoupper($node->name->value), self::ACCOUNT_FUNCTIONS, true) ? self::Resolved : self::function(strtoupper($node->name->value), count($node->arguments))))->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
+            $node instanceof KeywordCall => (!$legacy && ($node->function === KeywordFunction::User || $node->function === KeywordFunction::CurrentUser) ? self::Statement : self::Resolved)->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
+            default => self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release),
         };
     }
 
@@ -183,7 +184,7 @@ enum Constancy: int
      * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true): self
+    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
     {
         $children = [];
         $properties = get_object_vars($node);
@@ -194,7 +195,7 @@ enum Constancy: int
         });
         $constancy = self::Resolved;
         foreach ($children as $child) {
-            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary));
+            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary, $release));
             if ($constancy === self::Row) {
                 break;
             }

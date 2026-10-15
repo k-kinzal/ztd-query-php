@@ -67,7 +67,7 @@ final class Calls
         if (isset($this->random[$call])) {
             return $this->random[$call];
         }
-        $stored = $call->schema !== null || Library::instance()->find($call->name->value) === null ? $this->stored($call, $scope) : null;
+        $stored = $call->native($this->compiler->settings->release()) ? null : $this->stored($call, $scope);
         if ($stored !== null) {
             return $stored;
         }

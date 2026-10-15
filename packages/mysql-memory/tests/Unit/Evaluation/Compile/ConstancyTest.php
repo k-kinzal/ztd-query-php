@@ -21,6 +21,18 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ConstancyTest extends TestCase
 {
+    public function testOfUsesSemanticNativeClassificationForKeywordNamedStoredFunctions(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT `COLLATION`(3), ABS(3), d.ABS(3)');
+        $lifetimes = array_map(static function ($field) use ($operation): Constancy {
+            self::assertNotNull($field->expression);
+
+            return Constancy::of($field->expression, $operation->facts);
+        }, [$operation->field(0), $operation->field(1), $operation->field(2)]);
+
+        self::assertSame([Constancy::Row, Constancy::Resolved, Constancy::Row], $lifetimes);
+    }
+
     public function testColumnKeepsComputedOuterAliasesDependentOnEachRow(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

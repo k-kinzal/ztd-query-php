@@ -33,6 +33,25 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class FunctionCallTest extends TestCase
 {
+    public function testNativeDistinguishesGenericBuiltinsFromKeywordAndQualifiedCalls(): void
+    {
+        $release = \SqlSemantics\Contract\GrammarRelease::MySql847;
+
+        self::assertTrue((new FunctionCall(new Name('ABS')))->native($release));
+        self::assertFalse((new FunctionCall(new Name('COLLATION')))->native($release));
+        self::assertFalse((new FunctionCall(new Name('ABS'), schema: new Name('d')))->native($release));
+    }
+
+    public function testKeywordNameRetainsReleaseAndQualificationMeaning(): void
+    {
+        $name = new Name('window');
+
+        self::assertFalse((new FunctionCall($name))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertTrue((new FunctionCall($name))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertTrue((new FunctionCall($name, schema: new Name('d')))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse((new FunctionCall(new Name('_utf8mb4')))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testNamedTellsWhetherAnArgumentHasAnAlias(): void
     {
         self::assertTrue((new FunctionCall(new Name('f'), [new CallArgument(new NumberLiteral('1'), new Name('x'))]))->named());

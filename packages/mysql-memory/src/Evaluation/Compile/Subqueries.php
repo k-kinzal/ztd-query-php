@@ -55,7 +55,7 @@ final class Subqueries
             throw QueryError::OperandColumns->error(1);
         }
 
-        $once = Constancy::of($node->query, $this->compiler->facts) !== Constancy::Row && !$this->substituted($node->query) && (new Walker())->find($node->query, VariableAssignment::class) === [];
+        $once = Constancy::of($node->query, $this->compiler->facts, release: $this->compiler->settings->release()) !== Constancy::Row && !$this->substituted($node->query) && (new Walker())->find($node->query, VariableAssignment::class) === [];
 
         return new ScalarRead(new Rows($plan), $this->compiler->resolved($node) ?? $plan->domains[0]->withNullable(true), $once);
     }
@@ -66,7 +66,7 @@ final class Subqueries
     public function row(ScalarSubquery $node, Scope $scope): \MySqlMemory\Evaluation\Subquery\SingleRow
     {
         $plan = $this->compiler->planner->query($node->query, $scope);
-        $once = Constancy::of($node->query, $this->compiler->facts, variableReadsVary: $this->compiler->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) !== Constancy::Row && (new Walker())->find($node->query, VariableAssignment::class) === [];
+        $once = Constancy::of($node->query, $this->compiler->facts, variableReadsVary: $this->compiler->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651, release: $this->compiler->settings->release()) !== Constancy::Row && (new Walker())->find($node->query, VariableAssignment::class) === [];
 
         $projection = new EmptyProjection($this->compiler);
 
@@ -189,7 +189,7 @@ final class Subqueries
     public function membershipConstant(\SqlSemantics\Statement\Scalar $operand, \SqlSemantics\Statement\Query $query): bool
     {
         return $this->compiler->constancy($operand)->constant()
-            && Constancy::of($query, $this->compiler->facts) !== Constancy::Row
+            && Constancy::of($query, $this->compiler->facts, release: $this->compiler->settings->release()) !== Constancy::Row
             && (new Walker())->find($query, VariableAssignment::class) === []
             && (new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class) === []
             && (new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Call\ClockCall::class) === []

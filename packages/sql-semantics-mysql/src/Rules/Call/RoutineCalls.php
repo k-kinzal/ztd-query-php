@@ -49,7 +49,7 @@ final class RoutineCalls
     {
         $release = $derivation->context->profile->grammar;
         $natives = new NativeFunctions();
-        if ($call->schema !== null || !$natives->exists($release, $call->name->value)) {
+        if (!$call->native($release)) {
             $returns = Settings::of($derivation->context)->function(($call->schema ?? $derivation->context->searchPath[0])->value, $call->name->value);
 
             return $returns === null || $call->named()

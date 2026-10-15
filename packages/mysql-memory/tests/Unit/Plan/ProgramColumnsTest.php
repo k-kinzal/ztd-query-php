@@ -29,6 +29,21 @@ final class ProgramColumnsTest extends TestCase
         self::assertSame([16, 0], [$result->columns[0]->flags, $result->columns[1]->flags]);
     }
 
+    public function testCalledUsesSemanticFunctionClassificationAndPreservesOutputNames(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE FUNCTION d.`COLLATION`(x INT) RETURNS INT DETERMINISTIC RETURN x');
+        $session->query('CREATE FUNCTION d.ABS(x INT) RETURNS INT DETERMINISTIC RETURN x');
+
+        $result = $session->query('SELECT `COLLATION`(3) AS alias, (d.ABS(3)) AS parens, ABS(3), d.ABS(3) + 1 AS expr, (SELECT d.ABS(3) AS inner_name) AS outer_name')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['alias', 'parens', '', '', 'inner_name'], array_column($result->columns, 'originalName'));
+        self::assertSame([32768, 32768, 32897, 32896, 32768], array_column($result->columns, 'flags'));
+    }
+
     public function testFlaggedGivesAVariableTheFlagsOfAColumnWithoutBinary(): void
     {
         $session = (new Instance())->connect();

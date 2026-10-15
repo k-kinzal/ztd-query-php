@@ -80,7 +80,7 @@ final class Emission
             if ($resolved !== $node && !$this->independent($resolved)) {
                 return false;
             }
-            if (!$node instanceof VariableAssignment && !in_array($node, $targets, true) && Constancy::uncacheable($node) && (!$node instanceof UserVariable || !$this->planner->compiler->constancy($node)->constant())) {
+            if (!$node instanceof VariableAssignment && !in_array($node, $targets, true) && Constancy::uncacheable($node, release: $this->planner->settings->release()) && (!$node instanceof UserVariable || !$this->planner->compiler->constancy($node)->constant())) {
                 return false;
             }
         }

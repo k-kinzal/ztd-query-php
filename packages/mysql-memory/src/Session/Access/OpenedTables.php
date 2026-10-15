@@ -117,6 +117,7 @@ final class OpenedTables
         }
         $dictionary->cache->open('mysql', 'proc');
         if ($routine !== null) {
+            (new \MySqlMemory\Program\Routine\LoadNotices())->record($routine, $session);
             $prepared->routines[spl_object_id($routine)] = true;
         }
     }

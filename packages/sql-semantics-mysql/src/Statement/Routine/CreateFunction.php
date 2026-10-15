@@ -86,6 +86,21 @@ final class CreateFunction implements Statement
     }
 
     /**
+     * Tells whether defining this function produces the native-name collision note.
+     * Both keyword names and names resolved by the native function catalog collide.
+     * Qualification permits the definition without removing that name relationship.
+     *
+     * @example Reading the name relationship of a function definition
+     *     $definition = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION d.`ORDER`() RETURNS INT RETURN 1')->statement;
+     *     $definition->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847) // => true
+     */
+    public function nameCollision(\SqlSemantics\Contract\GrammarRelease $release): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rendering\Keywords($release))->contains($this->name->name->value)
+            || (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->exists($release, $this->name->name->value);
+    }
+
+    /**
      * Writes the statement.
      */
     public function render(Output $out): void

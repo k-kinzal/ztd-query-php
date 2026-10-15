@@ -480,6 +480,6 @@ final class Errors
             return $count === count($call->arguments) ? StatementError::NotSupportedYet->error('calls of stored functions') : ProgramError::RoutineArgumentCount->error('FUNCTION', $function->schema . '.' . $function->name, $count, count($call->arguments));
         }
 
-        return ProgramError::RoutineMissing->error('FUNCTION', ($call->schema->value ?? $database) . '.' . $call->name->value);
+        return $call->keywordName($session->settings()->release()) ? ProgramError::FunctionNameCollision->error(($call->schema->value ?? $database) . '.' . $call->name->value) : ProgramError::RoutineMissing->error('FUNCTION', ($call->schema->value ?? $database) . '.' . $call->name->value);
     }
 }

@@ -11,7 +11,9 @@ use SqlSemantics\Statement\Shape\Field;
  *
  * A column that reads a variable carries the flags of a column of its type, without BINARY
  * unless it is a string, and BLOB for a BLOB or TEXT type; a column a stored function returns
- * is flagged BLOB for a BLOB or TEXT type (verified on a live 8.4 server).
+ * is flagged BLOB for a BLOB or TEXT type, without BINARY for numeric returns.
+ * Stored function outputs report the output name as their original name, including aliases
+ * (verified through mysqli on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1).
  * Source: https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_query_response_text_resultset_column_definition.html.
  *
  * @visibility MySqlMemory
@@ -30,9 +32,9 @@ final class ProgramColumns
      */
     public function called(Field $field): bool
     {
-        $call = $field->expression;
+        $call = $field->expression === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching())->unwrap($field->expression);
 
-        return $call instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall && ($call->schema !== null || \MySqlMemory\Evaluation\Function\Library::instance()->find($call->name->value) === null);
+        return $call instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall && !$call->native($this->planner->settings->release());
     }
 
     /**
@@ -46,7 +48,7 @@ final class ProgramColumns
         }
         $blob = $domain->field->blob() ? \MySqlMemory\Result\ColumnFlag::Blob->value : 0;
         if (!$variable) {
-            return $blob === 0 ? null : new ColumnOrigin('', '', '', '', $blob);
+            return new ColumnOrigin('', '', '', $field->name->value ?? '', $blob);
         }
         $flags = $domain->flags() | $blob;
 
