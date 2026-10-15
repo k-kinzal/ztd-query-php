@@ -31,6 +31,10 @@ final class SyntaxNames
      */
     public function completed(Node $node, Lowering $lowering): ParseFailure|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|null
     {
+        $deprecated = $this->unquoted($node, $lowering->profile->grammar);
+        if ($deprecated !== null) {
+            return $deprecated;
+        }
         $first = $node->children[0] ?? null;
         if ($lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $first instanceof \SqlParser\Lexer\Token && $first->text === '.') {
             return match ($node->name) {
@@ -61,4 +65,16 @@ final class SyntaxNames
 
         return Charset::named($name) === null ? new ParseFailure(new UnknownCharset($name), true) : null;
     }
+    /**
+     * Answers the warning of the keyword-as-identifier production itself.
+     * Quoted and qualified identifier tokens never use this production.
+     */
+    public function unquoted(Node $node, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        $token = $node->children[0] ?? null;
+        $deprecated = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull;
+
+        return $node->name === 'ident_keywords_unambiguous' && $token instanceof \SqlParser\Lexer\Token && $token->name === 'FULL' && $deprecated->warnedIn($release) ? $deprecated : null;
+    }
+
 }

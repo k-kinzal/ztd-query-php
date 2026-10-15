@@ -132,8 +132,8 @@ final class NameRule
         $text = $form->token(0)->text;
 
         $value = $this->lowering->leaves->record(new Name($kind === 'identifier' ? (new Identifiers())->decode($text) : $text));
-        $deprecated = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull;
-        if ($form->signature === 'ident_keywords_unambiguous: FULL' && $deprecated->warnedIn($this->lowering->profile->grammar)) {
+        $deprecated = (new SyntaxNames())->unquoted($form->node, $this->lowering->profile->grammar);
+        if ($deprecated !== null) {
             $this->lowering->origins->notice($value, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $form->node);
         }
 

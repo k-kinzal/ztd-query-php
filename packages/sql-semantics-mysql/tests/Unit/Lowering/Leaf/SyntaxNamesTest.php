@@ -59,4 +59,26 @@ final class SyntaxNamesTest extends TestCase
 
         self::assertEquals($expected, (new SyntaxNames())->completed(new Node($rule, 0, [$text]), $lowering));
     }
+    public function testUnquotedUsesTheIdentifierProductionAndRelease(): void
+    {
+        $names = new SyntaxNames();
+        $unquoted = new Node('ident_keywords_unambiguous', 0, [new Token(0, 'FULL', 'full', 0)]);
+        $quoted = new Node('IDENT_sys', 0, [new Token(0, 'IDENT_QUOTED', '`FULL`', 0)]);
+        $qualified = new Node('IDENT_sys', 0, [new Token(0, 'IDENT', 'FULL', 0)]);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull, $names->unquoted($unquoted, GrammarRelease::MySql847));
+        self::assertNull($names->unquoted($unquoted, GrammarRelease::MySql5744));
+        self::assertNull($names->unquoted($quoted, GrammarRelease::MySql847));
+        self::assertNull($names->unquoted($qualified, GrammarRelease::MySql847));
+    }
+
+    public function testCompletedRetainsIdentifierWarningsBeforeInputRefusals(): void
+    {
+        $sql = 'SHOW COLLATION WHERE FULL .x COLLATE missing = CAST(1 AT LOCAL AS DATETIME)';
+        $profile = new LanguageProfile(GrammarRelease::MySql847);
+        $warnings = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser($profile->grammar->value), $sql, strlen($sql), $profile);
+
+        self::assertEquals([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull, new ParseFailure(new UnknownCollation('missing')), new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'))], array_column($warnings, 1));
+    }
+
 }
