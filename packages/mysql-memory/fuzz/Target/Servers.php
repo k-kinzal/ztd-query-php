@@ -83,11 +83,29 @@ final class Servers
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
-        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version), resourceProcessors: $this->resourceProcessors($native, $version));
+        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version), resourceProcessors: $this->resourceProcessors($native, $version), help: $this->help($native));
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
         return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server, $reference), 'mysql-' . $version, $server];
+    }
+
+    /**
+     * Captures installed help data as an initial fixture, before any generated SQL runs.
+     *
+     * HELP output is not imported or exempted from comparison. Search, precedence, sorting
+     * and result metadata are computed independently over these rows by the memory server.
+     * Text is read as UTF-8 bytes independently of the initial client character set.
+     * @return array<string, list<list<string>>>
+     */
+    public function help(PDO $native): array
+    {
+        return [
+            'topics' => $this->rows($native, 'SELECT help_topic_id, CAST(CONVERT(name USING utf8mb4) AS BINARY), help_category_id, CAST(CONVERT(description USING utf8mb4) AS BINARY), CAST(CONVERT(example USING utf8mb4) AS BINARY) FROM mysql.help_topic'),
+            'categories' => $this->rows($native, 'SELECT help_category_id, CAST(CONVERT(name USING utf8mb4) AS BINARY), parent_category_id FROM mysql.help_category'),
+            'keywords' => $this->rows($native, 'SELECT help_keyword_id, CAST(CONVERT(name USING utf8mb4) AS BINARY) FROM mysql.help_keyword'),
+            'relations' => $this->rows($native, 'SELECT help_topic_id, help_keyword_id FROM mysql.help_relation'),
+        ];
     }
 
     /**

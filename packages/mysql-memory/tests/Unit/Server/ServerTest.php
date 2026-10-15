@@ -90,4 +90,19 @@ final class ServerTest extends TestCase
         }
     }
 
+    public function testStartTransfersHelpDataBeyondCommandLineLimits(): void
+    {
+        $description = str_repeat('fixture ', 25000);
+        $server = Server::start(help: ['topics' => [['1', 'Topic', '1', $description, 'Example']]]);
+        try {
+            $client = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $result = $client->query('HELP Topic');
+
+            self::assertNotFalse($result);
+            self::assertSame([['Topic', $description, 'Example']], $result->fetchAll(PDO::FETCH_NUM));
+        } finally {
+            $server->stop();
+        }
+    }
+
 }

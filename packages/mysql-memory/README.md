@@ -334,3 +334,40 @@ mysql-memory starts with the global variables of the MySQL server it is compared
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+### Help table fixtures
+
+`HELP` searches initial help data supplied to `Instance` or `Server::start()` through the
+`help` named argument. Without data it returns the empty search result of an unpopulated
+help installation. This package does not distribute the MySQL reference manual.
+
+```php
+$server = \MySqlMemory\Server\Server::start(help: [
+    'topics' => [['1', 'Example', '1', 'A description supplied by the test.', 'An example.']],
+    'categories' => [['1', 'Contents', '']],
+    'keywords' => [['1', 'Alias']],
+    'relations' => [['1', '1']],
+]);
+$pdo = new \PDO($server->dsn(), 'root', '');
+$rows = $pdo->query('HELP Alias')->fetchAll(\PDO::FETCH_NUM);
+$server->stop();
+```
+
+Each row contains strings in these column orders:
+
+| Key | Columns |
+| --- | --- |
+| `topics` | topic ID, name, category ID, description, example |
+| `categories` | category ID, name, parent category ID (empty for no parent) |
+| `keywords` | keyword ID, name |
+| `relations` | topic ID, keyword ID |
+
+Searches use case-insensitive LIKE patterns, resolve topic and keyword precedence, and return
+topic details, candidate names or the immediate contents of a category. The result columns
+and their metadata follow that response shape. The initial fixture is retained across RESTART;
+it is currently a help catalog, not writable `mysql.help_*` tables.
+
+The differential runner reads the reference server's installed help rows before generating
+SQL and initializes memory with the same data. It compares `HELP` output normally, including
+column metadata and row order; it neither imports expected `HELP` results nor exempts them.
+Independent custom-data tests check the search rules across the five supported release profiles.

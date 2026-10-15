@@ -95,10 +95,11 @@ final class Instance
      * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      * @param bool $supervised Whether a supervisor permits SQL RESTART
      * @param bool $resourcePriorities Whether the emulated platform applies resource-group thread priorities
+     * @param array<string, list<list<string>>> $help The initial help tables: topics, categories, keywords and relations; see the README for their column order
      * @param positive-int $resourceProcessors The number of logical processors visible to resource groups
      * @param array<string, array{int, int}> $routineTimestamps Installation creation and modification epochs, keyed by FUNCTION:name or PROCEDURE:name
      */
-    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8)
+    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8, public readonly array $help = [])
     {
         $release = GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847;
         $this->catalog = SystemVariables::of($release);
