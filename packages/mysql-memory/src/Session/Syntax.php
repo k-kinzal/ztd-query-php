@@ -61,30 +61,6 @@ final class Syntax
     }
 
     /**
-     * Refuses a subquery in the moment of PURGE BINARY LOGS BEFORE, which MySQL 5.6 and 5.7 take no subquery in, as a syntax error: 5.7 near the text right after the parenthesis that opens the first subquery, 5.6 near its SELECT, or near the parenthesis after EXISTS, ALL, ANY or SOME (verified on live 5.6.51 and 5.7.44 servers).
-     *
-     * @throws SqlError When the moment holds a subquery
-     */
-    public function purged(Node $tree, \SqlSemantics\Statement\Statement $statement, string $text, \SqlSemantics\Contract\GrammarRelease $release): void
-    {
-        $legacy = $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $release === \SqlSemantics\Contract\GrammarRelease::MySql5744;
-        $subquery = $tree->find('subselect')[0] ?? null;
-        $first = $subquery?->tokens()[0] ?? null;
-        if (!$legacy || !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore || $first === null) {
-            return;
-        }
-        $parenthesis = (int) strrpos(substr($text, 0, $first->offset), '(');
-        $before = rtrim(substr($text, 0, $parenthesis));
-        $at = match (true) {
-            $release === \SqlSemantics\Contract\GrammarRelease::MySql5744 => $parenthesis + 1,
-            preg_match('/\b(EXISTS|ALL|ANY|SOME)\z/i', $before) === 1 => $parenthesis,
-            default => $first->offset,
-        };
-
-        throw new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(substr($text, $at), 0, 80, 'UTF-8'), substr_count(substr($text, 0, $at), "\n") + 1));
-    }
-
-    /**
      * Refuses a parameter marker outside a prepared statement, as the parser of the server does.
      *
      * @param string $following The statements written after this one in the same text, which the error quotes too

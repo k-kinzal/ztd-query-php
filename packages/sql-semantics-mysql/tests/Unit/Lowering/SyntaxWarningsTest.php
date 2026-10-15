@@ -23,6 +23,14 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class SyntaxWarningsTest extends TestCase
 {
+    public function testOrderedDiscardsOnlyNoticesAfterTheFirstStoppingCondition(): void
+    {
+        $stop = \SqlSemantics\Platform\MySql\Statement\Notice\ParseStop::ProgramStatement;
+        $notices = [[30, Deprecated::BinaryOperator], [20, $stop], [10, Deprecated::BinaryOperator]];
+
+        self::assertSame([[10, Deprecated::BinaryOperator], [20, $stop]], (new SyntaxWarnings())->ordered($notices));
+    }
+
     public function testBeforeRetainsEarlierDuplicateDeclarations(): void
     {
         $sql = "CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE x INT; SELECT DATE 'bad'; END";

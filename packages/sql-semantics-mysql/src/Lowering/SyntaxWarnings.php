@@ -54,6 +54,12 @@ final class SyntaxWarnings
                 if ($aborted || $lookahead->offset > $end) {
                     return;
                 }
+                $log = (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
+                if ($log !== null && $log->end <= $end) {
+                    $warnings[] = [$log->end, new ParseFailure($log->problem, true)];
+                    $aborted = true;
+                    return;
+                }
                 if ($failed && in_array($node->name, ['sp_proc_stmt', 'ev_sql_stmt_inner'], true)) {
                     $warnings[] = [($ranges->span($node, true)[1] ?? 0), ParseStop::ProgramStatement];
                     $aborted = true;
@@ -74,6 +80,17 @@ final class SyntaxWarnings
             // Completed reductions precede the original refusal; the caller owns that error.
         }
 
+        return $this->ordered($warnings);
+    }
+
+    /**
+     * Orders completed notices and retains only those through the first stopping condition.
+     *
+     * @param list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop}> $warnings Completed input notices
+     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop}> Ordered notices up to the stopping boundary
+     */
+    public function ordered(array $warnings): array
+    {
         usort($warnings, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
         foreach ($warnings as $index => [, $notice]) {

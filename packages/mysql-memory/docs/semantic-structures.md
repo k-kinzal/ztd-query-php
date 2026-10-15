@@ -319,3 +319,14 @@ non-lateral derived table also has this tableless scope even when its surroundin
 query lists the named table. Direct constructions of column uses, `VALUES`,
 `DEFAULT` and `PURGE` operands are checked against five native releases, including
 MySQL 9.1's table-only diagnostic spelling for database-qualified references.
+
+`PurgeLogsBefore` excludes queries anywhere in its moment expression, including
+an unselected CASE arm. This is a composition constraint: native servers also
+reject such operands while defining a procedure, even in a branch that would
+never execute. Ordinary column references retain their deferred resolution.
+SQL lowering produces a typed `RefusedLogSubquery` with a diagnostic position,
+and input processing preserves the release-specific refusal boundary, earlier
+conditions and warning order. No invalid statement is published for a later
+AST check. Native histories exercise complete and unfinished expressions,
+stored programs and prepared input across five releases; constructor tests
+exercise scalar, EXISTS, IN and quantified queries through nested expressions.

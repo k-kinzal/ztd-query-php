@@ -79,6 +79,10 @@ final class LogRule
             throw ImplementationGap::production($options);
         }
         $option = $this->lowering->form($options->node(2));
+        $rejected = (new SyntaxLogMoment())->rejected($option->node, $this->lowering->profile->grammar);
+        if ($rejected !== null) {
+            throw $rejected;
+        }
 
         return match ($option->signature) {
             'purge_option: TO_SYM TEXT_STRING_sys' => new PurgeLogsTo($this->lowering->literals->text($option->node(1))),

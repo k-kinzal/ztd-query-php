@@ -143,6 +143,7 @@ final class Reader
             return (new Entry\PartitionInput())->error($failure, $statement, $session);
         }
         $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
+        $error = new SqlError($error->error, $error->getMessage(), $failure, $error->following, $error->signalled, $error->getCode(), $error->recorded);
         $earlier = $failure->end === 0 ? null : (new CacheOptions())->condition($error, $statement, $session, $failure->end - 1);
         if ($earlier !== null) {
             return $earlier;
