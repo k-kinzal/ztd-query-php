@@ -18,6 +18,16 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
 #[Medium]
 final class ClientEntryTest extends TestCase
 {
+    public function testUnparsedInspectsEntriesBeforeSeveralInvalidBytes(): void
+    {
+        $parser = new MySqlParser('mysql-5.7.44');
+        $profile = new LanguageProfile(GrammarRelease::MySql5744);
+
+        self::assertNull((new ClientEntry())->unparsed($parser, "abc]\x1e", $profile));
+        self::assertSame(9, (new ClientEntry())->unparsed($parser, "PARTITION ]\x1e", $profile)?->end);
+        self::assertSame(38, (new ClientEntry())->nested($parser, "CREATE PROCEDURE d.p() BEGIN PARTITION ]\x1e", $profile)?->end);
+    }
+
     public function testGeneratedKeepsOnlyTheCompletedEntryPositions(): void
     {
         $parser = new MySqlParser('mysql-5.7.44');

@@ -122,11 +122,10 @@ final class Syntax
         while ($cause !== null && !$cause instanceof SyntaxException) {
             $cause = $cause->getPrevious();
         }
-        try {
-            $tokens = $parser->tokenize($statement);
-        } catch (LexicalException $error) {
-            $tokens = $parser->tokenize(substr($statement, 0, $error->offset));
+        if ($failure instanceof LexicalException) {
+            $cause = $this->preceding($failure, $statement, $parser);
         }
+        $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
         foreach ($tokens as $token) {
             if ($cause instanceof SyntaxException && $token->offset >= $cause->token->offset) {
                 return null;
@@ -270,6 +269,28 @@ final class Syntax
     }
 
     /**
+     * Finds the first parser refusal even when several invalid bytes interrupted tokenization.
+     * Each retry ends before the previous lexical boundary, so the input strictly decreases.
+     */
+    public function preceding(LexicalException $failure, string $statement, \SqlParser\Parser\SqlParser $parser): \SqlParser\Lexer\SourceException
+    {
+        $boundary = $failure;
+        while ($boundary instanceof LexicalException && $boundary->offset > 0) {
+            try {
+                $parser->parse(substr($statement, 0, $boundary->offset));
+            } catch (\SqlParser\Lexer\SourceException $prefix) {
+                if ($prefix->offset < $boundary->offset) {
+                    $boundary = $prefix;
+                    continue;
+                }
+            }
+            break;
+        }
+
+        return $boundary;
+    }
+
+    /**
      * Earlier refused tokens take precedence over later lexical failures when a parser is supplied.
      * Answers the parse error of a failure to read a statement; an attribute a generated column cannot have is ER_WRONG_USAGE, as the parser of the server refuses it (verified on a live 8.4 server). MySQL 5.6 and 5.7, whose lexer reads the word after WITH to tell WITH ROLLUP and WITH CUBE apart, report an error at WITH from the text after it (verified on live 5.6.51 and 5.7.44 servers).
      */
@@ -288,12 +309,9 @@ final class Syntax
                 $lexical = $lexical->getPrevious();
             }
             if ($lexical instanceof LexicalException && $parser !== null && $lexical->offset > 0) {
-                try {
-                    $parser->parse(substr($statement, 0, $lexical->offset));
-                } catch (\SqlParser\Lexer\SourceException $prefix) {
-                    if ($prefix instanceof SyntaxException && $prefix->token->offset < $lexical->offset) {
-                        return $this->error($prefix, $statement, $release, $following, $parser);
-                    }
+                $prefix = $this->preceding($lexical, $statement, $parser);
+                if ($prefix !== $lexical) {
+                    return $this->error($prefix, $statement, $release, $following, $parser);
                 }
             }
 

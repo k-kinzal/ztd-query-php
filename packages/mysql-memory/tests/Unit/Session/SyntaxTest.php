@@ -19,6 +19,17 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class SyntaxTest extends TestCase
 {
+    public function testPrecedingFindsAnEarlierSyntaxErrorAcrossLexicalFailures(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');
+        $sql = "abc]\x1e";
+        $failure = new \SqlParser\Lexer\LexicalException('Invalid byte', 4, \SqlParser\Lexer\SourcePosition::at($sql, 4));
+        $first = (new Syntax())->preceding($failure, $sql, $parser);
+
+        self::assertInstanceOf(\SqlParser\Parser\SyntaxException::class, $first);
+        self::assertSame(0, $first->offset);
+    }
+
     public function testErrorReportsTheEarlierRefusedTokenBeforeAnUnterminatedString(): void
     {
         $session = (new Instance())->connect();

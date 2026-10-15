@@ -45,13 +45,8 @@ final class ModernWarnings
         $parser = $session->semantics()->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
         $end = (new CacheOptions())->cause($error)?->token->offset ?? strlen($statement);
-        try {
-            $tokens = $parser->tokenize($statement);
-        } catch (SourceException $failure) {
-            $end = min($end, $failure->offset);
-            $tokens = $parser->tokenize(substr($statement, 0, $end));
-            $statement = substr($statement, 0, $end);
-        }
+        $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
+        $end = min($end, $tokens[count($tokens) - 1]->offset);
         if (strtoupper($tokens[0]->text ?? '') === 'ALTER') {
             $error = (new CommandPrefix())->before($tokens, $statement, $end, $session) ?? $error;
             $end = (new CacheOptions())->cause($error)?->token->offset ?? $end;

@@ -62,11 +62,7 @@ final class ClientEntry
         if (!in_array($profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return null;
         }
-        try {
-            $tokens = $parser->tokenize($sql);
-        } catch (SourceException $error) {
-            $tokens = $parser->tokenize(substr($sql, 0, $error->offset));
-        }
+        $tokens = (new InputTokens())->prefix($parser, $sql);
 
         return $this->partition($tokens[0] ?? null, $profile);
     }
@@ -84,11 +80,7 @@ final class ClientEntry
         if (!$parser instanceof ReductionParser || !in_array($profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return null;
         }
-        try {
-            $tokens = $parser->tokenize($sql);
-        } catch (SourceException $error) {
-            $tokens = $parser->tokenize(substr($sql, 0, $error->offset));
-        }
+        $tokens = (new InputTokens())->prefix($parser, $sql);
         foreach ($tokens as $token) {
             if ($token->name !== 'PARTITION_SYM') {
                 continue;

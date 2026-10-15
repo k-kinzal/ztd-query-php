@@ -30,11 +30,7 @@ final class NamesInput
         $offset = $problem->offset;
         if ($session->settings()->release() === GrammarRelease::MySql5651) {
             $offset = strlen($session->text);
-            try {
-                $tokens = $session->semantics()->parser()->tokenize($session->text);
-            } catch (\SqlParser\Lexer\SourceException $failure) {
-                $tokens = $session->semantics()->parser()->tokenize(substr($session->text, 0, $failure->offset));
-            }
+            $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($session->semantics()->parser(), $session->text);
             foreach ($tokens as $token) {
                 if ($token->offset >= $problem->end) {
                     $offset = $token->name === ',' ? $token->end() : $token->offset;

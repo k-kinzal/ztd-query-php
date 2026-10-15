@@ -14,6 +14,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class RoutinePrefixTest extends TestCase
 {
+    public function testDatabaseCanInspectThePrefixBeforeSeveralInvalidBytes(): void
+    {
+        $session = (new Instance())->connect();
+
+        self::assertNull((new RoutinePrefix())->database("abc]\x1e", 0, $session));
+        self::assertSame(1046, (new RoutinePrefix())->database("CREATE PROCEDURE p() SELECT ]\x1e", 1000, $session)?->getCode());
+    }
+
     public function testDatabaseChecksTheNameBeforeTheRefusedBody(): void
     {
         $session = (new Instance())->connect();

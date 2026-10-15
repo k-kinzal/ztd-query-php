@@ -15,6 +15,14 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment
 #[Small]
 final class NamesInputTest extends TestCase
 {
+    public function testErrorStopsAtTheFirstOfSeveralInvalidBytes(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->text = "SET NAMES = 1 ]\x1e";
+
+        self::assertStringEndsWith("near ']\x1e' at line 1", (new NamesInput())->error(new RefusedNamesAssignment(10, 13), $session)->getMessage());
+    }
+
     public function testErrorLocatesTheOperatorFromItsRetainedOffset(): void
     {
         $session = (new Instance())->connect();
