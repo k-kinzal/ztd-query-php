@@ -42,13 +42,12 @@ final class DatabaseOptionsTest extends TestCase
         self::assertEquals([new ParseFailure($problems[1], true)], $operation->facts->warnings);
     }
 
-    public function testInvalidRetainsAnEncryptionValueWithoutItsDisplayLimit(): void
+    public function testInvalidAcceptsConvertedEncryptionAndReadOnlyOptions(): void
     {
-        $value = new \SqlSemantics\Platform\MySql\Statement\Literal\Text(str_repeat('a', 200));
         $options = new DatabaseOptions();
-        $problem = $options->invalid(new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption($value), \SqlSemantics\Contract\GrammarRelease::MySql847);
+        $problem = $options->invalid(new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled), \SqlSemantics\Contract\GrammarRelease::MySql847);
 
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption($value), $problem);
+        self::assertNull($problem);
         self::assertNull($options->invalid(new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly(null), \SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 

@@ -13,11 +13,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset;
-use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -50,7 +48,7 @@ final class DatabaseConflictTest extends TestCase
         $first = $choices->one([false, true]);
         $options = array_map(static fn (int $index): DatabaseReadOnly => new DatabaseReadOnly(new Numeral(str_repeat('0', $index) . ($first ? '1' : '0'))), range(0, $choices->integer(1, 5)));
         $options[] = new DatabaseReadOnly($first ? null : new Numeral('1e0'));
-        $invalid = new DatabaseEncryption(new Text('bad'));
+        $invalid = new DatabaseCharset(new CharsetName(new Name('missing_charset')));
         $earlier = $seed % 2 === 0;
         $options = $earlier ? [$invalid, ...$options] : [...$options, $invalid];
         $options = [new DatabaseCharset(new CharsetName(new Name('utf8'))), ...$options];
@@ -63,8 +61,8 @@ final class DatabaseConflictTest extends TestCase
             $error = $caught;
         }
 
-        self::assertSame($earlier ? 1525 : 1302, $error?->getCode());
-        self::assertSame($earlier ? "Incorrect argument (should be Y or N) value: 'bad'" : "Conflicting declarations: 'READ ONLY=0' and 'READ ONLY=1'", $error->getMessage());
-        self::assertSame([3719, $earlier ? 1525 : 1302], array_column($session->diagnostics->conditions, 1));
+        self::assertSame($earlier ? 1115 : 1302, $error?->getCode());
+        self::assertSame($earlier ? "Unknown character set: 'missing_charset'" : "Conflicting declarations: 'READ ONLY=0' and 'READ ONLY=1'", $error->getMessage());
+        self::assertSame([3719, $earlier ? 1115 : 1302], array_column($session->diagnostics->conditions, 1));
     }
 }

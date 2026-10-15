@@ -22,6 +22,28 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 final class SyntaxOptions
 {
     /**
+     * Refuses an option operand before publishing a database option.
+     *
+     * @throws AnalysisException When an earlier READ ONLY operand is outside its domain
+     */
+    public function rejected(Node $node, Lowering $lowering): ?\SqlSemantics\Construction\RejectedInput
+    {
+        if ($node->name === 'alter_database_option' && $lowering->form($node)->signature === 'alter_database_option: READ_SYM ONLY_SYM opt_equal ternary_option') {
+            (new DatabaseRule($lowering))->readOnly($lowering->form($node));
+        }
+        if ($node->name !== 'default_encryption') {
+            return null;
+        }
+        try {
+            (new DatabaseRule($lowering))->encryption($node);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return $failure;
+        }
+
+        return null;
+    }
+
+    /**
      * Answers a failure at the newly completed option of a database option list.
      */
     public function completed(Node $node, Lowering $lowering): ParseFailure|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|null
@@ -36,6 +58,8 @@ final class SyntaxOptions
         }
         try {
             $options = (new DatabaseRule($lowering))->options($node);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new ParseFailure($failure->problem, $failure->aborts);
         } catch (AnalysisException) {
             // The input boundary reports a refused operand before this list can complete.
             return null;

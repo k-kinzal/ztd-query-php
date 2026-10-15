@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
  * MySQL 8.4 and 9.1 list the databases by name, 8.0 in the order they were created, the
  * system databases first; 5.6 and 5.7 list INFORMATION_SCHEMA first, then the others by name
  * (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers). No database has
- * an SQL path, and none is encrypted by default.
+ * an SQL path. DEFAULT_ENCRYPTION reflects each database's stored setting.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-schema-schemata-table.html.
  *
  * @visibility MySqlMemory
@@ -40,7 +40,7 @@ final class Schemata implements SystemRows
                 'DEFAULT_CHARACTER_SET_NAME' => $collation->charset->nameIn($reading->release),
                 'DEFAULT_COLLATION_NAME' => $collation->nameIn($reading->release),
                 'SQL_PATH' => null,
-                'DEFAULT_ENCRYPTION' => 'NO',
+                'DEFAULT_ENCRYPTION' => $schema->encryption === \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled ? 'YES' : 'NO',
             ];
         }
 

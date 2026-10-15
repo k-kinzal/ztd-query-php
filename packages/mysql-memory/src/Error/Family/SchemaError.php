@@ -105,6 +105,7 @@ enum SchemaError: int implements ErrorCode
     case WrongTablespaceName = 3119;
     case TablespaceNotEmpty = 3120;
     case WrongFileName = 3121;
+    case TablespaceCannotEncrypt = 3183;
     case InvalidEncryption = 3184;
     case SchemaMissing = 3503;
     case TablespaceMissing = 3510;
@@ -126,6 +127,8 @@ enum SchemaError: int implements ErrorCode
     case SrsInvalidCharacter = 3717;
     case SrsAttributeTooLong = 3718;
     case CheckConstraintNotFound = 3821;
+    case UnencryptedTable = 3824;
+    case TemporaryTableEncryption = 3833;
     case SecondaryEngineFailed = 3889;
     case ConstraintNotFound = 3940;
     case AutoextendMultiple = 4023;

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Dictionary;
 
+use SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption;
+
 /**
- * A database: its name, default collation and tables.
+ * A database: its name, default collation, encryption setting and tables.
  *
  * Table names are compared exactly, as the server compares them with lower_case_table_names=0.
  *
@@ -42,8 +44,9 @@ final class Schema
      * @param string $name The database name
      * @param string $collation The default collation of its tables
      * @param array<string, StoredTable> $tables The tables, by name
+     * @param Encryption $encryption The default encryption of new persistent tables
      */
-    public function __construct(public readonly string $name, public string $collation = 'utf8mb4_0900_ai_ci', public array $tables = [])
+    public function __construct(public readonly string $name, public string $collation = 'utf8mb4_0900_ai_ci', public array $tables = [], public Encryption $encryption = Encryption::Disabled)
     {
     }
 

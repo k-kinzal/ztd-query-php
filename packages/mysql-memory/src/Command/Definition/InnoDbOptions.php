@@ -60,7 +60,7 @@ final class InnoDbOptions
             $context->diagnostics->warning(SchemaError::UnsupportedExtension, "InnoDB: Unsupported compression algorithm '{$compression}'");
             $refused = true;
         }
-        $this->encryption($text[TextOptionKind::Encryption->value] ?? 'N', $name);
+        $this->tableEncryption($create, $session);
         if ($size !== null) {
             $bytes = (new \MySqlMemory\Command\Admin\Literals())->size($size);
             if ($bytes !== '0' && (bccomp($bytes, '4194304') < 0 || bccomp($bytes, '4294967296') > 0)) {
@@ -73,17 +73,38 @@ final class InnoDbOptions
     }
 
     /**
+     * Applies the table's effective setting and release-specific temporary-table limits.
+     *
+     * @throws SqlError When the table cannot use the requested encryption
+     */
+    public function tableEncryption(CreateTable $create, Session $session): void
+    {
+        $name = $create->name->name->value;
+        $value = (new Database\TableEncryption())->value($create, $session);
+        if ($create->temporaryWords > 0 && $value === '' && !$session->settings()->legacy()) {
+            throw new SqlError(SchemaError::InvalidEncryption, SchemaError::InvalidEncryption->message(), null, [[SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)]]);
+        }
+        if ($create->temporaryWords > 0 && strtoupper($value) === 'Y' && $session->settings()->legacy()) {
+            throw new SqlError(SchemaError::TablespaceCannotEncrypt, SchemaError::TablespaceCannotEncrypt->message(), null, [[SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)]]);
+        }
+        $this->encryption($value, $name, $session->settings()->legacy());
+    }
+
+    /**
      * Checks the encryption flag against the absence of an installed keyring.
+     *
+     * @param bool $legacy Whether the server reports the pre-8.0 keyring plugin wording
      *
      * @throws SqlError When the flag is invalid or requests encryption
      */
-    public function encryption(string $value, string $table): void
+    public function encryption(string $value, string $table, bool $legacy = false): void
     {
         if (!in_array(strtoupper($value), ['', 'N', 'Y'], true)) {
             throw new SqlError(SchemaError::InvalidEncryption, SchemaError::InvalidEncryption->message(), null, [[SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($table)]]);
         }
         if (strtoupper($value) === 'Y') {
-            throw new SqlError(AdministrationError::KeyringMissing, AdministrationError::KeyringMissing->message(), null, [[SchemaError::UnsupportedExtension->value, SchemaError::UnsupportedExtension->message($table)]]);
+            $message = AdministrationError::KeyringMissing->message();
+            throw new SqlError(AdministrationError::KeyringMissing, $legacy ? str_replace('a keyring is', 'a keyring plugin is', $message) : $message, null, [[SchemaError::UnsupportedExtension->value, SchemaError::UnsupportedExtension->message($table)]]);
         }
     }
 }

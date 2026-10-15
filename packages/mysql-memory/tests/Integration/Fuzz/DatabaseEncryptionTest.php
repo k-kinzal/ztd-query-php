@@ -30,6 +30,35 @@ final class DatabaseEncryptionTest extends TestCase
             $statements[] = 'ALTER DATABASE DEFAULT ENCRYPTION ' . $literal;
             $statements[] = 'CREATE DATABASE refused ENCRYPTION = ' . $literal;
         }
+        foreach (['Y', 'N', 'y', 'n', 'yes', 'no', ' Y', 'Y ', "N\0", "n\0ignored", "Y\0bad", '', "\nY", 'Ｙ', 'ñ'] as $value) {
+            $literal = "'" . str_replace("\0", '\\0', $value) . "'";
+            $statements[] = 'ALTER DATABASE encryption_values ENCRYPTION ' . $literal;
+            $statements[] = 'SHOW CREATE DATABASE encryption_values';
+            $statements[] = "SELECT DEFAULT_ENCRYPTION FROM information_schema.schemata WHERE schema_name='encryption_values'";
+            $statements[] = 'CREATE DATABASE encryption_created ENCRYPTION ' . $literal;
+            $statements[] = 'SHOW CREATE DATABASE encryption_created';
+            $statements[] = 'DROP DATABASE IF EXISTS encryption_created';
+        }
+        array_push(
+            $statements,
+            "ALTER DATABASE encryption_values READ ONLY 2 DEFAULT ENCRYPTION 't'",
+            "ALTER DATABASE encryption_values READ ONLY 2 CHARACTER SET nope ENCRYPTION 't'",
+            "ALTER DATABASE encryption_values CHARACTER SET nope READ ONLY 2 ENCRYPTION 't'",
+            "ALTER DATABASE encryption_values ENCRYPTION 'bad' +",
+            "ALTER DATABASE encryption_values ENCRYPTION 'bad' CHARACTER SET nope",
+            "ALTER DATABASE encryption_values CHARACTER SET nope ENCRYPTION 'bad'",
+            "ALTER DATABASE encryption_values CHARACTER SET utf8 ENCRYPTION 'bad'",
+            "ALTER DATABASE encryption_values ENCRYPTION 'bad' CHARACTER SET utf8",
+            "ALTER DATABASE encryption_values CHARACTER SET latin1 CHARACTER SET utf8mb4 ENCRYPTION 'bad'",
+            "ALTER DATABASE `` ENCRYPTION 'bad'",
+            "CREATE DATABASE encryption_values ENCRYPTION 'bad'",
+            "CREATE DATABASE `` ENCRYPTION 'bad'",
+            "CREATE DATABASE missing ENCRYPTION 'bad' ENCRYPTION 'N'",
+            "SHOW PARSE_TREE CREATE DATABASE missing ENCRYPTION 'bad'",
+            "SHOW PARSE_TREE ALTER DATABASE encryption_values ENCRYPTION 'bad'",
+            "CREATE PROCEDURE encryption_values.p() BEGIN DECLARE x INT; DECLARE x INT; ALTER DATABASE encryption_values ENCRYPTION 'bad'; END",
+            "CREATE PROCEDURE encryption_values.p() BEGIN SELECT DATE 'bad'; ALTER DATABASE encryption_values ENCRYPTION 'bad'; END",
+        );
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

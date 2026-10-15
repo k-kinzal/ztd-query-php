@@ -7,7 +7,6 @@ namespace MySqlMemory\Command\Definition\Database;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Error\Family\AccountError;
-use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
@@ -20,7 +19,6 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
-use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Statement\Operation;
@@ -30,12 +28,13 @@ use SqlSemantics\Statement\Operation;
  *
  * Without a name it changes the current database. The options are checked first: an unknown
  * character set or collation, two different character sets, a collation of another character
- * set, and an ENCRYPTION other than Y or N are refused; utf8 is warned of as an alias of utf8mb3. Then the name: an empty name is
+ * set are refused; utf8 is warned of as an alias of utf8mb3. Encryption is
+ * already a two-case semantic setting. Then the name: an empty name is
  * ER_WRONG_DB_NAME, a system database cannot be changed, and a database that does not exist is
  * error 3503. A character set alone takes its default collation. The
- * statement commits the open transaction and affects one row. READ ONLY and ENCRYPTION are
- * accepted and have no effect on the emulator's databases. Every rule was verified on a live 8.4
- * server.
+ * statement commits the open transaction and affects one row. Encryption changes
+ * the default for new persistent tables. READ ONLY is retained by the semantic
+ * model but is not yet enforced by the emulator. Verified on a live 8.4 server.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-database.html.
  *
  * @visibility MySqlMemory
@@ -66,6 +65,12 @@ final class AlterDatabaseCommand implements Command
             $schema->collation = $chosen->name;
         }
 
+        foreach ($statement->options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption) {
+                $schema->encryption = $option->encryption;
+            }
+        }
+
         return new Completion(1, 0, $context->diagnostics->raised());
     }
 
@@ -74,7 +79,7 @@ final class AlterDatabaseCommand implements Command
      * neither a character set nor a collation. A character set alone takes its default collation
      * in the release.
      *
-     * @throws \MySqlMemory\Error\SqlError When an option is unknown, two options conflict, or the encryption is not Y or N
+     * @throws \MySqlMemory\Error\SqlError When an option is unknown or two options conflict
      */
     public function collation(AlterDatabase $statement, GrammarRelease $release, Context $context): ?Collation
     {
@@ -89,9 +94,6 @@ final class AlterDatabaseCommand implements Command
                 if ($collation === null) {
                     throw SchemaError::UnknownCollation->error((new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $option->collation->name->value, 2)[0], 64, in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
                 }
-            }
-            if ($option instanceof DatabaseEncryption && !in_array(strtoupper($option->encryption->value), ['Y', 'N'], true)) {
-                throw DataError::WrongValue->error('argument (should be Y or N)', (new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $option->encryption->value, 2)[0], 128));
             }
         }
         if ($charset !== null && $collation !== null && $collation->charset->name !== $charset->name) {

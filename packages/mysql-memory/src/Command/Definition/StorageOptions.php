@@ -102,6 +102,7 @@ final class StorageOptions
     public function check(CreateTable $create, Session $session, Context $context): void
     {
         $engine = $this->engine($create, $session->variables);
+        (new Database\TableEncryption())->check($create, $engine, $session, $context);
         $this->attributes($create, $engine);
         foreach ($create->options as $option) {
             if ($option instanceof TextOption && in_array($option->kind, [TextOptionKind::DataDirectory, TextOptionKind::IndexDirectory], true) && !str_starts_with($option->value->bytes(), '/')) {

@@ -46,5 +46,18 @@ final class DatabaseRuleTest extends TestCase
     public function testEncryptionLowersTheValue(): void
     {
         self::assertSame("CREATE DATABASE d DEFAULT ENCRYPTION 'Y'", (new Semantics(Dialect::MySql))->analyze("create database d encryption 'Y'")->toString());
+        $operation = (new Semantics(Dialect::MySql))->analyze("ALTER DATABASE d ENCRYPTION 'n\\0ignored'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption::class, $operation->statement->options[0]);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled, $operation->statement->options[0]->encryption);
+        self::assertSame("n\0ignored", $operation->statement->options[0]->spelling?->value);
+    }
+
+    public function testEncryptionRefusesAnInvalidValueBeforePublishingAnOption(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect argument (should be Y or N) value: 'bad'");
+
+        (new Semantics(Dialect::MySql))->analyze("ALTER DATABASE d ENCRYPTION 'bad'");
     }
 }

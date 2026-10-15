@@ -260,7 +260,7 @@ final class Origins
         }
         $definition = $scope->tables[$id];
         $position = $this->planner->compiler->names->position($scope, $resolution);
-        $alias = $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $resolution->relation->alias !== null ? $resolution->relation->alias->value : $definition->name;
+        $alias = $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference ? ($resolution->relation->alias ?? $resolution->relation->name->name)->value : $definition->name;
         $system = $this->planner->dictionary->system?->origin($definition, $position, $alias);
         if ($system !== null) {
             return $system;

@@ -42,8 +42,7 @@ final class DatabaseCommand implements Command
     /**
      * Executes the statement.
      *
-     * CREATE DATABASE refuses an ENCRYPTION other than Y or N before it finds that the database
-     * exists (verified on a live 8.4 server).
+     * SQL Semantics supplies the converted encryption setting before database lookup.
      *
      * @throws \MySqlMemory\Error\SqlError When the statement fails
      */
@@ -59,11 +58,6 @@ final class DatabaseCommand implements Command
         }
         if ($statement instanceof CreateDatabase) {
             $name = $statement->name->value;
-            foreach ($statement->options as $option) {
-                if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption && !in_array(strtoupper($option->encryption->value), ['Y', 'N'], true)) {
-                    throw \MySqlMemory\Error\Family\DataError::WrongValue->error('argument (should be Y or N)', (new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $option->encryption->value, 2)[0], 128));
-                }
-            }
             if ($dictionary->schema($name) !== null) {
                 if (!$statement->ifNotExists) {
                     throw SchemaError::DatabaseExists->error($name);
@@ -72,7 +66,7 @@ final class DatabaseCommand implements Command
 
                 return new Completion(0, 0, 1);
             }
-            $dictionary->schemas[$name] = new Schema($name, $this->collation($statement, $session));
+            $dictionary->schemas[$name] = new Schema($name, $this->collation($statement, $session), encryption: $this->encryption($statement, $session));
 
             return new Completion(1);
         }
@@ -95,6 +89,22 @@ final class DatabaseCommand implements Command
         }
 
         return new Completion(count($schema->tables));
+    }
+
+    /**
+     * Resolves the new database's encryption from the session default and its last explicit option.
+     */
+    public function encryption(CreateDatabase $statement, Session $session): \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption
+    {
+        $chosen = Program\ProgramSource::enabled($session->variables->read('default_table_encryption'))
+            ? \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled : \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Disabled;
+        foreach ($statement->options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption) {
+                $chosen = $option->encryption;
+            }
+        }
+
+        return $chosen;
     }
 
     /**

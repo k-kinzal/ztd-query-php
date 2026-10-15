@@ -60,7 +60,7 @@ final class ShowCreateDatabaseCommand implements Command
         $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
         $default = ($legacy || $charset->name !== 'utf8mb4') && $charset->defaultCollation($legacy ? $release : GrammarRelease::MySql847)->name === $collation->name;
         $text = 'CREATE DATABASE ' . ($statement->ifNotExists ? '/*!32312 IF NOT EXISTS*/ ' : '') . '`' . str_replace('`', '``', $name) . '`'
-            . ' /*!40100 DEFAULT CHARACTER SET ' . $charset->name . ($default ? '' : ' COLLATE ' . $collation->name) . ' */' . ($legacy ? '' : " /*!80016 DEFAULT ENCRYPTION='N' */");
+            . ' /*!40100 DEFAULT CHARACTER SET ' . $charset->name . ($default ? '' : ' COLLATE ' . $collation->name) . ' */' . ($legacy ? '' : " /*!80016 DEFAULT ENCRYPTION='" . $schema->encryption->value . "' */");
         $headings = [
             Heading::text('Database', Field::VarString, 64, ColumnFlag::NotNull->value, 31),
             Heading::text('Create Database', Field::VarString, 1024, ColumnFlag::NotNull->value, 31),

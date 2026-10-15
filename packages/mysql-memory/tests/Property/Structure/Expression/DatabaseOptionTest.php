@@ -42,13 +42,13 @@ final class DatabaseOptionTest extends TestCase
     }
 
     /**
-     * Generated encryption operands must have a spelling admitted by the language profile.
+     * Generated encryption settings execute directly and retain their rendering correspondence.
      *
      * @throws JsonException When the reviewed inventory is invalid
      * @throws ReflectionException When a constructor cannot be inspected
      */
     #[DataProvider('providerInputs')]
-    public function testGeneratedEncryptionOptionsCorrespondToTheProfile(string $release, string $seed): void
+    public function testGeneratedEncryptionOptionsExecuteAndCorrespondToTheProfile(string $release, string $seed): void
     {
         $option = (new Construction(new Choices('database-encryption:' . $seed), new Catalogue(), new Metadata()))->object(\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption::class, 6);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption::class, $option);
@@ -61,6 +61,24 @@ final class DatabaseOptionTest extends TestCase
         $lowered = $platform->lower($platform->parser($profile)->parse($sql), $profile, new \SqlSemantics\Lowering\Leaves());
 
         self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($statement, (new \SqlSemantics\Validation\Publication())->root($lowered)));
+        $session = (new Instance($release))->connect();
+        $session->text = 'unrelated invalid SQL';
+        $execution = new Execution();
+        $execution->runIn($session, new CreateDatabase(false, new Name('d'), [$option]));
+        self::assertNotNull($session->instance->dictionary->schema('d'));
+        self::assertSame($option->encryption, $session->instance->dictionary->schema('d')->encryption);
+        $opposite = $option->encryption === \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled ? \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Disabled : \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled;
+        $execution->runIn($session, new AlterDatabase(new Name('d'), [new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption($opposite)]));
+        self::assertSame($opposite, $session->instance->dictionary->schema('d')->encryption);
+        $result = $execution->runIn($session, $statement);
+
+        self::assertInstanceOf(Completion::class, $result);
+        self::assertSame(1, $result->affectedRows);
+        self::assertSame([], $session->diagnostics->conditions);
+        self::assertSame($option->encryption, $session->instance->dictionary->schema('d')->encryption);
+        $shown = $execution->runIn($session, new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateDatabase(new Name('d')));
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $shown);
+        self::assertSame("CREATE DATABASE `d` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='" . $option->encryption->value . "' */", $shown->rows[0][1]);
     }
 
     /**

@@ -32,6 +32,15 @@ final class InnoDbOptionsTest extends TestCase
         self::assertNotNull($session->instance->dictionary->table('d', 't'));
     }
 
+    public function testTableEncryptionAcceptsAnEmptyTemporarySettingInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("CREATE DATABASE d; CREATE TEMPORARY TABLE d.t(a INT) ENCRYPTION=''");
+
+        self::assertSame([], $session->diagnostics->conditions);
+        self::assertCount(1, $session->query('SELECT * FROM d.t'));
+    }
+
     public function testEncryptionReportsTheSpecificErrorBeforeTheEngineFailure(): void
     {
         $session = (new Instance())->connect();

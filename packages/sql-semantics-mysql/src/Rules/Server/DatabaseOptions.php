@@ -12,11 +12,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
-use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\CharsetConflict;
-use SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\ReadOnlyConflict;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -135,7 +133,6 @@ final class DatabaseOptions
         return match (true) {
             $option instanceof DatabaseCollation && $option->collation->name !== null && Collation::forName($option->collation->name->value, $release) === null => new UnknownCollation($option->collation->name->value),
             $option instanceof DatabaseCharset && $option->charset->name !== null && Charset::named($option->charset->name->value) === null => new UnknownCharset($option->charset->name->value),
-            $option instanceof DatabaseEncryption && !in_array(strtoupper($option->encryption->value), ['Y', 'N'], true) => new InvalidEncryption($option->encryption),
             default => null,
         };
     }

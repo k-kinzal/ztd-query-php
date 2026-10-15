@@ -26,6 +26,20 @@ final class SchemataTest extends TestCase
         self::assertSame([['d', 'utf8mb4', 'utf8mb4_0900_ai_ci', null, 'NO'], ['information_schema', 'utf8mb3', 'utf8mb3_general_ci', null, 'NO'], ['mysql', 'utf8mb4', 'utf8mb4_0900_ai_ci', null, 'NO'], ['performance_schema', 'utf8mb4', 'utf8mb4_0900_ai_ci', null, 'NO'], ['sys', 'utf8mb4', 'utf8mb4_0900_ai_ci', null, 'NO']], $result1->rows);
     }
 
+    public function testRowsRetainsEncryptionThroughUnrelatedDatabaseChanges(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d ENCRYPTION 'y'; ALTER DATABASE d CHARACTER SET latin1");
+        $enabled = $session->query("SELECT DEFAULT_ENCRYPTION FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='d'")[0];
+        $session->query("ALTER DATABASE d ENCRYPTION 'n'");
+        $disabled = $session->query("SELECT DEFAULT_ENCRYPTION FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='d'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $enabled);
+        self::assertInstanceOf(ResultSet::class, $disabled);
+        self::assertSame([['YES']], $enabled->rows);
+        self::assertSame([['NO']], $disabled->rows);
+    }
+
     public function testRowsListsInformationSchemaFirstInMySql57(): void
     {
         $s = (new Instance('5.7.44'))->connect();

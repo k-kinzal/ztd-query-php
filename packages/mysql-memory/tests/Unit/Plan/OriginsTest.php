@@ -68,6 +68,15 @@ final class OriginsTest extends TestCase
         self::assertSame(3, $result->columns[1]->flags & 3);
     }
 
+    public function testResolvedPreservesTheWrittenSystemTableName(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT DEFAULT_ENCRYPTION FROM information_schema.schemata')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+
+        self::assertSame('schemata', $result->columns[0]->table);
+    }
+
     public function testOriginKeepsTheColumnOfAReducedScalarSubquery(): void
     {
         $session = (new Instance())->connect();

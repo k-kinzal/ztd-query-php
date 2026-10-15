@@ -88,6 +88,7 @@ final class DatabaseRule
      *
      * @return list<DatabaseOption>
      * @throws \SqlSemantics\Diagnostic\AnalysisException When a READ ONLY operand is outside its domain
+     * @throws \SqlSemantics\Construction\RejectedInput When an encryption operand is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function options(Node $list): array
@@ -110,6 +111,7 @@ final class DatabaseRule
      * Lowers one option: a node of `create_database_option` or `alter_database_option`.
      *
      * @throws \SqlSemantics\Diagnostic\AnalysisException When a READ ONLY operand is outside its domain
+     * @throws \SqlSemantics\Construction\RejectedInput When an encryption operand is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function option(Node $option): DatabaseOption
@@ -148,6 +150,7 @@ final class DatabaseRule
      * Lowers ENCRYPTION: a node of `default_encryption`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the input does not denote Y or N
      */
     public function encryption(Node $encryption): DatabaseEncryption
     {
@@ -158,6 +161,14 @@ final class DatabaseRule
         $this->lowering->options->present($form->node(0));
         $this->lowering->options->present($form->node(2));
 
-        return new DatabaseEncryption($this->lowering->literals->text($form->node(3)));
+        $text = $this->lowering->literals->bytes($form->node(3));
+        $value = \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::fromOperand($text);
+        if ($value === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), (new \SqlSemantics\Construction\SourceRanges())->span($encryption)[1] ?? 0);
+        }
+
+        $spelling = $text === $value->value ? null : $this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text));
+
+        return new DatabaseEncryption($this->lowering->leaves->record($value), $spelling);
     }
 }

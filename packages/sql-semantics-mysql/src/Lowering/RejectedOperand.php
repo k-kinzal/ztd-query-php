@@ -24,6 +24,10 @@ final class RejectedOperand
      */
     public function of(Node $node, Lowering $lowering): ?RejectedInput
     {
+        $database = (new Server\Instance\SyntaxOptions())->rejected($node, $lowering);
+        if ($database !== null) {
+            return $database;
+        }
         if ($node->name === 'simple_expr' && $lowering->form($node)->signature === 'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )') {
             return new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($node)[1] ?? 0, false);
         }

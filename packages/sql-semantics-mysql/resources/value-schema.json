@@ -2186,7 +2186,8 @@
         "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseEncryption": {
-        "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+        "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Encryption",
+        "spelling": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseReadOnly": {
         "value": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
@@ -2194,6 +2195,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DropDatabase": {
         "ifExists": "bool",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Encryption": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\CharsetConflict": {
         "earlier": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",

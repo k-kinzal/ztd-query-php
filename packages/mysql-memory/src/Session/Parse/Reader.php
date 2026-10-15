@@ -40,7 +40,11 @@ final class Reader
     {
         $semantics = $session->semantics();
         $tree = $this->tree($statement, $prepared, $session);
-        $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
+        try {
+            $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
+        } catch (AnalysisException $failure) {
+            throw $this->refusal($tree, $failure, $statement, $session->variables->database, $session);
+        }
         if (!$prepared) {
             $listed = $session->settings()->release() === GrammarRelease::MySql5651 ? (new Clashes())->listed($tree, $session->variables->database) : null;
             if ($listed !== null) {
@@ -121,14 +125,14 @@ final class Reader
         if ($partition && (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($parser, $statement, $session->semantics()->profile()) !== null) {
             return (new Entry\PartitionInput())->error($failure, $statement, $session);
         }
-        $earlier = (new RoutinePrefix())->database($statement, $failure->end, $session);
+        $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
+        $earlier = $failure->end === 0 ? null : (new CacheOptions())->condition($error, $statement, $session, $failure->end - 1);
         if ($earlier !== null) {
             return $earlier;
         }
         if (!$failure->aborts) {
             return (new ContinuingRefusal())->error($failure, $statement, $session);
         }
-        $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
         try {
             $tokens = $parser->tokenize($statement);

@@ -415,6 +415,16 @@ Differences:
 - **The table cache does not model every internal access.** Internal dictionary handles opened by server startup and metadata-changing statements, capacity-driven eviction, pending lock requests and transient name locks are not fully represented. The differential fixture disables background statistics recalculation, analyzes the fixture tables synchronously and flushes both caches before each input; populated-cache regressions separately check the modeled transitions.
 - **`CHECKSUM TABLE`** answers a stable checksum of the rows, which is not the server's.
 
+## Database encryption defaults
+
+`CREATE DATABASE` takes its encryption default from `default_table_encryption`,
+unless an explicit option overrides it. `ALTER DATABASE` updates the stored
+setting. `SHOW CREATE DATABASE` and `INFORMATION_SCHEMA.SCHEMATA` report it.
+Persistent tables inherit that setting; temporary tables do not. Explicitly
+creating an unencrypted persistent table under an encrypted database warns.
+The emulator has no keyring: an InnoDB table requiring encryption fails with
+the corresponding keyring error. Unsupported storage engines reject encryption.
+
 ## System tables
 
 The databases `information_schema`, `mysql` and `performance_schema` hold every table a server of the emulated release has, with its columns and the column metadata a result reports: names, types, lengths, collations, flags, and the base table and database each column is read from. Their names are found as on the server: the name of `INFORMATION_SCHEMA` and of its tables in any case, the others as written. In MySQL 8.0 and later a column of an `INFORMATION_SCHEMA` view is named as the view names it, in any case the statement writes it. The rows are computed from the state of the server each time a statement reads a table, so the tables can be joined, filtered, sorted, grouped and read in subqueries and views like any other. `SHOW TABLES`, `SHOW COLUMNS` and `DESCRIBE` list them.

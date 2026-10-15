@@ -61,6 +61,18 @@ final class DatabaseCommandTest extends TestCase
         self::assertSame(['latin1_swedish_ci', 'latin1_bin'], [$session->instance->dictionary->schema('l')?->collation, $session->instance->dictionary->schema('b')?->collation]);
     }
 
+    public function testEncryptionUsesTheSessionDefaultAndLastExplicitSetting(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET default_table_encryption=ON');
+        $command = new DatabaseCommand();
+        $plain = new CreateDatabase(false, new \SqlSemantics\Statement\Identifier\Name('d'));
+        $explicit = new CreateDatabase(false, new \SqlSemantics\Statement\Identifier\Name('d'), [new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled), new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Disabled)]);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled, $command->encryption($plain, $session));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Disabled, $command->encryption($explicit, $session));
+    }
+
     public function testCollationPrefersTheCollationItNamesToTheCharacterSet(): void
     {
         $session = (new Instance())->connect();
