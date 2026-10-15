@@ -143,8 +143,9 @@ final class SourceSettings
      */
     public function lineFeed(Derivation $derivation, ?Text $value): void
     {
-        if ($value !== null && str_contains($value->value, "\n")) {
-            $derivation->report(new RefusedSetting(ReplicationError::LineFeed, text: $value));
+        $problem = (new ChannelName())->problem($value);
+        if ($problem !== null) {
+            $derivation->report($problem);
         }
     }
 }

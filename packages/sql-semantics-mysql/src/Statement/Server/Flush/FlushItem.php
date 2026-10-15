@@ -33,6 +33,7 @@ final class FlushItem implements Node
     public function __construct(public readonly FlushOption $option, public readonly ?Text $channel = null)
     {
         Check::input($channel === null || $option === FlushOption::RelayLogs, 'FOR CHANNEL follows RELAY LOGS only.');
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
     }
 
     /**

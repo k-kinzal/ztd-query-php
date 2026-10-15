@@ -65,15 +65,13 @@ final class SyntaxWarnings
                     $aborted = true;
                     return;
                 }
-                $notice = ($failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement);
+                $notice = ($failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
                 $conditions = $notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice];
                 foreach ($conditions as $condition) {
-                    $range = $ranges->span($node, true);
-                    if ($range !== null) {
-                        $warnings[] = [$range[1], $condition];
-                        $failed = $failed || ($condition instanceof ParseFailure && $condition->endsProgramStatement);
-                        $aborted = ($condition instanceof ParseFailure || $condition instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) && $condition->aborts;
-                    }
+                    $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
+                    $warnings[] = [$range[1], $condition];
+                    $failed = $failed || ($condition instanceof ParseFailure && $condition->endsProgramStatement);
+                    $aborted = ($condition instanceof ParseFailure || $condition instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) && $condition->aborts;
                 }
             });
         } catch (SourceException) {

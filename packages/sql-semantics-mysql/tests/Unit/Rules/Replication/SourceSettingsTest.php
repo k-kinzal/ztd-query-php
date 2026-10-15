@@ -74,6 +74,9 @@ final class SourceSettingsTest extends TestCase
 
     public function testLineFeedReportsALineFeed(): void
     {
-        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze("STOP REPLICA FOR CHANNEL 'a\\nb'")->facts->diagnostics);
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        (new SourceSettings())->lineFeed($derivation, new Text("a\nb"));
+
+        self::assertCount(1, $derivation->facts()->diagnostics);
     }
 }

@@ -59,6 +59,9 @@ final class LegacyReplication
                 $session->diagnostics->warning(1681, "'RESET QUERY CACHE' is deprecated and will be removed in a future release.");
             }
         }
+        if ($statement instanceof ShowRelaylogEvents) {
+            (new ReplicaCommand())->channel($statement->channel, true);
+        }
         if ($replica && (int) $session->variables->read('server_id') === 0) {
             if ($master && $release === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 throw new SqlError(AdministrationError::BinlogClosed, AdministrationError::BinlogClosed->message('RESET MASTER'), null, [[AdministrationError::ReplicaNotInitialized->number(), self::UNCONFIGURED]]);

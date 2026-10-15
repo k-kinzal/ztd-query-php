@@ -132,7 +132,9 @@ final class ReplicationShowCommand implements Command
         (new ReplicaCommand())->deprecated($statement, $session, $context);
         (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof ShowReplicaStatus) {
-            (new ReplicaCommand())->channel($statement->channel, $session->settings()->legacy());
+            if (!$session->settings()->legacy()) {
+                (new ReplicaCommand())->channel($statement->channel);
+            }
 
             $columns = $this->statusColumns($version);
 

@@ -146,7 +146,7 @@ final class RefusalsTest extends TestCase
 
     public function testLineFeedFindsTheTextWithALineFeed(): void
     {
-        $statement = (new Instance())->connect()->analyze("CHANGE REPLICATION FILTER REPLICATE_DO_DB = (a) FOR CHANNEL 'a\nb'")->statement;
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb");
 
         self::assertSame("a\nb", (new Refusals())->lineFeed($statement));
     }

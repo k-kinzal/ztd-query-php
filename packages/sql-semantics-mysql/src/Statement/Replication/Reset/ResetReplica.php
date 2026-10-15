@@ -43,8 +43,7 @@ final class ResetReplica implements ResetTarget
     public function __construct(public readonly Terminology $terminology, public readonly bool $all = false, public readonly ?Text $channel = null, public readonly bool $synonym = false)
     {
         Check::input(!$synonym || $terminology === Terminology::Current, 'The SLAVE synonym applies to current replication terminology.');
-        Check::input($channel === null || $channel->radix === null, 'A replication channel is quoted text.');
-        Check::input($channel === null || !str_contains($channel->value, "\n"), 'A replication channel cannot contain a line feed.');
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
     }
 
     /**

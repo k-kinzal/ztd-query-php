@@ -40,7 +40,7 @@ final class ShowReplicaStatus implements Statement
      */
     public function __construct(public readonly Terminology $terminology, public readonly ?Text $channel = null)
     {
-        \SqlSemantics\Diagnostic\Check::input($channel === null || $channel->radix === null, 'A replication channel is quoted text.');
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
