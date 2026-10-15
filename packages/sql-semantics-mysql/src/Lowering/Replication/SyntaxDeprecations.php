@@ -28,7 +28,13 @@ final class SyntaxDeprecations
     public function completed(Node $node, Lowering $lowering, ?Token $preceding = null): ?Deprecation
     {
         $first = $node->children[0] ?? null;
-        if (!Deprecated::ReplicationSpelling->warnedIn($lowering->profile->grammar) || !$first instanceof Token) {
+        if (!Deprecated::ReplicationSpelling->warnedIn($lowering->profile->grammar)) {
+            return null;
+        }
+        if ($node->name === 'opt_replica_reset_options' && $preceding?->name === 'SLAVE') {
+            return new Deprecation(Deprecated::ReplicationSpelling, "'RESET SLAVE' is deprecated and will be removed in a future release. Please use RESET REPLICA instead");
+        }
+        if (!$first instanceof Token) {
             return null;
         }
         if ($node->name === 'change_replication_source' && $first->name === 'MASTER_SYM') {
@@ -51,14 +57,15 @@ final class SyntaxDeprecations
     /**
      * Reads the preceding accepted keyword while the syntax tree is still transient.
      */
-    public function preceding(Node $node, \SqlParser\Parser\SqlParser $parser, string $sql): ?Token
+    public function preceding(Node $node, \SqlParser\Parser\SqlParser $parser, string $sql, ?Token $lookahead = null): ?Token
     {
-        if ($node->name !== 'replica') {
+        if (!in_array($node->name, ['replica', 'opt_replica_reset_options'], true)) {
             return null;
         }
         $range = (new \SqlSemantics\Construction\SourceRanges())->span($node, true);
+        $offset = $range[0] ?? $lookahead?->offset;
         $preceding = null;
-        foreach ($range === null ? [] : $parser->tokenize(substr($sql, 0, $range[0])) as $token) {
+        foreach ($offset === null ? [] : $parser->tokenize(substr($sql, 0, $offset)) as $token) {
             if ($token->text !== '') {
                 $preceding = $token;
             }

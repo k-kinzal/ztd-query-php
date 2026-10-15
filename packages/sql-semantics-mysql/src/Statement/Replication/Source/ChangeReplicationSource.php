@@ -54,7 +54,7 @@ final class ChangeReplicationSource implements Statement
     public function __construct(public readonly Terminology $terminology, array $options, public readonly ?Text $channel = null, public readonly bool $synonym = false)
     {
         Check::input(!$synonym || $terminology === Terminology::Current, 'CHANGE MASTER is a synonym only in the current replication vocabulary.');
-        Check::input($channel === null || $channel->radix === null, 'A replication channel is quoted text.');
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         $this->options = Check::listOf($options, SourceOption::class, 'CHANGE REPLICATION SOURCE sets a list of options.', 1);
         foreach ($this->options as $option) {
             Check::input($option->terminology === $terminology, 'An option is written in the vocabulary of its statement.');

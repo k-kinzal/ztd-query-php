@@ -95,6 +95,8 @@ final class FlushCommand implements Command
      * Applies status resets and log flushes in written order.
      * MySQL 5.6 clears only the requesting session; newer releases clear all active sessions.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/performance-schema-status-variable-tables.html.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the requested relay channel does not exist
      */
     public function options(Flush $statement, Session $session): void
     {
@@ -105,8 +107,12 @@ final class FlushCommand implements Command
             if ($item->option === FlushOption::Status) {
                 $this->status($session);
             }
-            if ($item->option === FlushOption::RelayLogs && $item->channel !== null && $item->channel->value !== '') {
-                throw AdministrationError::ReplicaChannelMissing->error($item->channel->value);
+            $channel = $item->channel === null ? '' : (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($item->channel);
+            if ($item->option === FlushOption::RelayLogs && $item->channel !== null) {
+                (new \MySqlMemory\Command\Replication\ReplicaCommand())->channel($item->channel, $session->settings()->legacy());
+                if ($session->settings()->legacy() && (int) $session->variables->read('server_id') === 0) {
+                    throw new \MySqlMemory\Error\SqlError(AdministrationError::ReplicaChannelMissing, "Slave channel '" . $channel . "' does not exist.");
+                }
             }
             if ($item->option === FlushOption::BinaryLogs || $item->option === FlushOption::Logs) {
                 $session->instance->registry->binaryLog->rotate();

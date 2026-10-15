@@ -61,16 +61,23 @@ final class ReplicationRules
      * Lowers a FOR CHANNEL clause: a node of `opt_channel`; an absent clause is null.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the decoded channel name contains LF
      */
     public function channel(Node $channel): ?Text
     {
         $form = $this->lowering->form($channel);
 
-        return match ($form->signature) {
+        $text = match ($form->signature) {
             'opt_channel:' => null,
             'opt_channel: FOR_SYM CHANNEL_SYM TEXT_STRING_sys_nonewline' => $this->lowering->literals->text($form->node(2)),
             default => throw ImplementationGap::production($form),
         };
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->problem($text);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
+
+        return $text;
     }
 
     /**

@@ -220,12 +220,12 @@ final class ReplicaCommand implements Command
         if ($channel === null) {
             return;
         }
-        $name = (new Literals())->bytes($channel);
+        $name = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($channel);
         if (str_contains($name, "\n")) {
             throw DataError::WrongValue->error('argument contains not-allowed LF', (new DiagnosticText())->bytes($name, 128, $legacy));
         }
         if ($name !== '') {
-            throw AdministrationError::ReplicaChannelMissing->error(strtolower($name));
+            throw $legacy ? new \MySqlMemory\Error\SqlError(AdministrationError::ReplicaChannelMissing, "Slave channel '" . strtolower($name) . "' does not exist.") : AdministrationError::ReplicaChannelMissing->error(strtolower($name));
         }
     }
 }

@@ -350,3 +350,14 @@ legacy requirement for a selected database. Direct constructions are checked
 against native outcomes before and after creating and populating the same target
 table. Unknown-name agreement remains diagnostic evidence, not a certificate that
 arbitrary encoding names satisfy the constructible-structure gate.
+
+Replication channel operands share a semantic name domain. The effective name
+ends at its first NUL; an LF within that name is refused by every public channel
+constructor. An LF after NUL, an empty default-channel name and CR remain valid.
+The retained text supplies rendering, while consumers use the semantic name for
+lookup. Input lowering reports the same typed refusal before publishing an
+invalid statement, including inside an untaken stored-program branch or a debug
+wrapper. Native comparisons check complete results and preceding deprecation
+warnings across five releases. Direct construction tests submit the original
+objects with unrelated session text. These name-domain checks do not establish
+that all configured replication-channel histories are implemented.

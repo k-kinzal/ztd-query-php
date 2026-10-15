@@ -42,7 +42,7 @@ final class SourceChange
         foreach ($statement->options as $option) {
             $options[$option->kind->value] = $option;
         }
-        $channel = $statement->channel === null ? '' : strtolower((new Literals())->bytes($statement->channel));
+        $channel = $statement->channel === null ? '' : strtolower((new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($statement->channel));
         $heartbeat = $options[SourceOptionKind::HeartbeatPeriod->value]->value ?? null;
         if ($heartbeat instanceof NumberLiteral) {
             $this->heartbeat((float) $heartbeat->text, $session, $context);

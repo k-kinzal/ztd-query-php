@@ -107,10 +107,6 @@ final class ResetRule
         if ($replica !== null) {
             $all = $this->lowering->form($form->node(1));
             $channel = count($form->node->children) === 3 ? $this->lowering->replication->channel($form->node(2)) : null;
-            if ($channel !== null && str_contains($channel->value, "\n")) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed, text: $channel), (new \SqlSemantics\Construction\SourceRanges())->span($form->node(2))[1] ?? 0);
-            }
-
             return new ResetReplica($replica, self::ALL[$all->signature] ?? throw ImplementationGap::production($all), $channel, $form->signature === 'reset_option: SLAVE opt_replica_reset_options opt_channel');
         }
         $terminology = self::BINARY_LOGS[$form->signature] ?? throw ImplementationGap::production($form);

@@ -35,7 +35,9 @@ final class SyntaxSettings
         if ($node->name === 'TEXT_STRING_sys_nonewline') {
             $text = $lowering->literals->text($node);
 
-            return str_contains($text->value, "\n") ? new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed, text: $text), true) : null;
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->problem($text);
+
+            return $problem === null ? null : new ParseFailure($problem, true);
         }
         if ($node->name !== 'source_reset_options') {
             return null;

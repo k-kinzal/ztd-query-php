@@ -47,6 +47,10 @@ final class SyntaxDeprecationsTest extends TestCase
         $start = new Deprecation(Deprecated::ReplicationSpelling, "'START SLAVE' is deprecated and will be removed in a future release. Please use START REPLICA instead");
         yield 'start before credentials' => [GrammarRelease::MySql8044, 'START SLAVE USER = 0x41', [$start]];
         yield 'start before gtid set' => [GrammarRelease::MySql8044, 'START SLAVE UNTIL SQL_BEFORE_GTIDS = 0x41', [$start]];
+        $reset = new Deprecation(Deprecated::ReplicationSpelling, "'RESET SLAVE' is deprecated and will be removed in a future release. Please use RESET REPLICA instead");
+        yield 'reset before channel' => [GrammarRelease::MySql8044, 'RESET SLAVE FOR CHANNEL 0x41', [$reset]];
+        yield 'reset all before channel' => [GrammarRelease::MySql8044, 'RESET SLAVE ALL FOR CHANNEL 0x41', [$reset]];
+        yield 'current reset' => [GrammarRelease::MySql8044, 'RESET REPLICA FOR CHANNEL 0x41', []];
         yield 'stop waits for completion' => [GrammarRelease::MySql8044, 'STOP SLAVE FOR CHANNEL 0x41', []];
         yield 'show waits for completion' => [GrammarRelease::MySql8044, 'SHOW SLAVE STATUS FOR CHANNEL 0x41', []];
     }
