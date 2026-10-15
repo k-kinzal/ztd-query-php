@@ -311,7 +311,7 @@
 <span class="src-line" id="L271" data-diff="added"><a class="ln" href="#L271">271</a>            <span class="tok-kw">return</span> [<span class="tok-var">$this</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$relation</span>-&gt;<span class="tok-id">query</span>, <span class="tok-id">false</span>), []];</span>
 <span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a>        }</span>
 <span class="src-line" id="L273" data-diff="added"><a class="ln" href="#L273">273</a>        <span class="tok-kw">if</span> (<span class="tok-var">$relation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">JsonTable</span>) {</span>
-<span class="src-line" id="L274" data-diff="added"><a class="ln" href="#L274">274</a>            <span class="tok-var">$block</span>-&gt;<span class="tok-id">tables</span>[] = [<span class="tok-var">$relation</span>-&gt;<span class="tok-id">alias</span>-&gt;<span class="tok-id">value</span> ?? <span class="tok-str">&#039;&#039;</span>, []];</span>
+<span class="src-line" id="L274" data-diff="added"><a class="ln" href="#L274">274</a>            <span class="tok-var">$block</span>-&gt;<span class="tok-id">tables</span>[] = [<span class="tok-var">$relation</span>-&gt;<span class="tok-id">alias</span>-&gt;<span class="tok-id">value</span>, []];</span>
 <span class="src-line" id="L275" data-diff="added"><a class="ln" href="#L275">275</a></span>
 <span class="src-line" id="L276" data-diff="added"><a class="ln" href="#L276">276</a>            <span class="tok-kw">return</span> [[], []];</span>
 <span class="src-line" id="L277" data-diff="added"><a class="ln" href="#L277">277</a>        }</span>

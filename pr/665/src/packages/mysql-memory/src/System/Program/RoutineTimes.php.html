@@ -60,9 +60,9 @@
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RoutineTimes</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>{</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * Formats a UTC dictionary timestamp in the reading session&#039;s time zone.</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * Formats a UTC dictionary timestamp in the reading session&#039;s time zone, retaining the requested fractional precision.</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">local</span>(<span class="tok-id">string</span> <span class="tok-var">$utc</span>, <span class="tok-id">Context</span> <span class="tok-var">$context</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">local</span>(<span class="tok-id">string</span> <span class="tok-var">$utc</span>, <span class="tok-id">Context</span> <span class="tok-var">$context</span>, <span class="tok-id">int</span> <span class="tok-var">$decimals</span> = <span class="tok-num">0</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    {</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-var">$parts</span> = <span class="tok-id">Temporal</span>::<span class="tok-id">parseDateTime</span>(<span class="tok-var">$utc</span>);</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">if</span> (<span class="tok-var">$parts</span> === <span class="tok-id">null</span>) {</span>
@@ -70,10 +70,13 @@
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        }</span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-var">$instant</span> = <span class="tok-id">Calendar</span>::<span class="tok-id">epoch</span>(<span class="tok-var">$parts</span>[<span class="tok-num">0</span>], <span class="tok-var">$parts</span>[<span class="tok-num">1</span>], <span class="tok-var">$parts</span>[<span class="tok-num">2</span>], <span class="tok-var">$parts</span>[<span class="tok-num">3</span>], <span class="tok-var">$parts</span>[<span class="tok-num">4</span>], <span class="tok-var">$parts</span>[<span class="tok-num">5</span>]);</span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-kw">return</span> <span class="tok-id">Temporal</span>::<span class="tok-id">dateTime</span>(...[...<span class="tok-var">$context</span>-&gt;<span class="tok-id">local</span>((float) <span class="tok-var">$instant</span>), <span class="tok-num">0</span>]);</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    }</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>}</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-var">$local</span> = <span class="tok-var">$context</span>-&gt;<span class="tok-id">local</span>((float) <span class="tok-var">$instant</span>);</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-var">$local</span>[<span class="tok-num">6</span>] = <span class="tok-var">$parts</span>[<span class="tok-num">6</span>];</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">return</span> <span class="tok-id">Temporal</span>::<span class="tok-id">dateTime</span>(...[...<span class="tok-var">$local</span>, <span class="tok-var">$decimals</span>]);</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    }</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>}</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
