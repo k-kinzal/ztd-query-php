@@ -55,9 +55,9 @@ final class Dates
     ];
 
     /**
-     * The units of EXTRACT that read only the time of a value.
+     * The units of EXTRACT that accept clock values, including composite day-clock units.
      */
-    public const TIME_UNITS = [IntervalUnit::Hour, IntervalUnit::Minute, IntervalUnit::Second, IntervalUnit::Microsecond, IntervalUnit::HourMinute, IntervalUnit::HourSecond, IntervalUnit::MinuteSecond, IntervalUnit::HourMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::SecondMicrosecond];
+    public const TIME_UNITS = [IntervalUnit::Hour, IntervalUnit::Minute, IntervalUnit::Second, IntervalUnit::Microsecond, IntervalUnit::HourMinute, IntervalUnit::HourSecond, IntervalUnit::MinuteSecond, IntervalUnit::HourMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::SecondMicrosecond, IntervalUnit::DayHour, IntervalUnit::DayMinute, IntervalUnit::DaySecond, IntervalUnit::DayMicrosecond];
 
     /**
      * Answers the functions of the family.
@@ -143,8 +143,9 @@ final class Dates
     /**
      * Reads the parts of a unit of the date or time of an argument, written together as one integer: EXTRACT(unit FROM value).
      *
-     * A TIME, and a string that holds no datetime read for a unit of the time alone, is read as a
-     * time, its parts negative when the time is.
+     * Clock units accept numeric and string times, preserving the day of a datetime when present.
+     * A date-only numeric representation remains a clock operand in those units. Calendar units
+     * convert a typed TIME relative to the statement date. Time signs apply to the entire unit.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_extract.
      */
     public function extract(Frame $frame, Evaluable $argument, IntervalUnit $unit): ?int
@@ -154,7 +155,8 @@ final class Dates
             return null;
         }
         $domain = $argument->domain();
-        if ($domain->kind === Kind::Time || (in_array($unit, self::TIME_UNITS, true) && $domain->kind === Kind::String && Temporal::parseDateTime((string) $value) === null)) {
+        $moment = Temporal::scanDateTime((string) $value, true);
+        if (in_array($unit, self::TIME_UNITS, true) && (in_array($domain->kind, [Kind::Time, Kind::Date], true) || (!$domain->kind->temporal() && !($moment[7] ?? false)))) {
             $time = (new Moments())->time($value, $domain, 6, $frame->context);
             $parts = $time === null ? null : Temporal::parseTime($time);
 
@@ -176,7 +178,7 @@ final class Dates
             return intdiv($parts[1] + 2, 3);
         }
         if ($unit === IntervalUnit::Week) {
-            return (int) gmdate('W', (int) gmmktime(0, 0, 0, max(1, $parts[1]), max(1, $parts[2]), max(1970, $parts[0])));
+            return (new Time\Weeks())->week($parts[0], $parts[1], $parts[2], 0)[0];
         }
         $value = 0;
         foreach (self::UNIT_PARTS[$unit->value] as $index) {

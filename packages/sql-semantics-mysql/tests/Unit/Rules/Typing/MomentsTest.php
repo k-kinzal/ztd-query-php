@@ -61,6 +61,17 @@ final class MomentsTest extends TestCase
         self::assertEquals(Domain::integer(Field::LongLong, 7), $moments->extract(IntervalUnit::Microsecond));
     }
 
+    public function testExtractRetainsTheVersionedHourAndCompositeDayWidths(): void
+    {
+        $moments = new Moments(new Settings(Collation::known('utf8mb4_0900_ai_ci')));
+
+        self::assertSame(4, $moments->extract(IntervalUnit::Hour)->length);
+        self::assertSame(2, $moments->extract(IntervalUnit::Hour, true)->length);
+        self::assertSame(11, $moments->extract(IntervalUnit::DayMinute)->length);
+        self::assertSame(11, $moments->extract(IntervalUnit::DayMinute, true)->length);
+        self::assertSame(20, $moments->extract(IntervalUnit::DayMicrosecond)->length);
+    }
+
     public function testClockKeepsThePrecision(): void
     {
         $moments = new Moments(new Settings(Collation::known('utf8mb4_0900_ai_ci')));

@@ -33,7 +33,7 @@ final class ExtractTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new Extract(IntervalUnit::DayHour, new StringLiteral(['x'])), $derivation->environment());
 
-        self::assertEquals(new Known(Domain::integer(Field::LongLong, 5)), $fact->type);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 9)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 

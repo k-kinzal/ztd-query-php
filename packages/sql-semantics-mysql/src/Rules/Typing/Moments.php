@@ -30,10 +30,22 @@ final class Moments
 
     private const MICRO = [IntervalUnit::Microsecond, IntervalUnit::SecondMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::HourMicrosecond, IntervalUnit::DayMicrosecond];
 
-    private const PARTS = [
-        'YEAR' => 4, 'MONTH' => 2, 'DAY' => 2, 'HOUR' => 2, 'MINUTE' => 2, 'SECOND' => 2, 'MICROSECOND' => 6, 'WEEK' => 2, 'QUARTER' => 1,
-        'YEAR_MONTH' => 6, 'DAY_HOUR' => 4, 'DAY_MINUTE' => 6, 'DAY_SECOND' => 8, 'HOUR_MINUTE' => 4, 'HOUR_SECOND' => 6, 'MINUTE_SECOND' => 4,
-        'DAY_MICROSECOND' => 14, 'HOUR_MICROSECOND' => 12, 'MINUTE_MICROSECOND' => 10, 'SECOND_MICROSECOND' => 8,
+    /**
+     * EXTRACT field widths measured through the native MySQL 8.x and 9.x protocol.
+     * Composite day-clock fields reserve more digits than a calendar day requires.
+     */
+    private const EXTRACT_LENGTHS = [
+        'YEAR' => 5, 'MONTH' => 3, 'DAY' => 3, 'HOUR' => 4, 'MINUTE' => 3, 'SECOND' => 3, 'MICROSECOND' => 7, 'WEEK' => 3, 'QUARTER' => 2,
+        'YEAR_MONTH' => 7, 'DAY_HOUR' => 9, 'DAY_MINUTE' => 11, 'DAY_SECOND' => 13, 'HOUR_MINUTE' => 6, 'HOUR_SECOND' => 8, 'MINUTE_SECOND' => 5,
+        'DAY_MICROSECOND' => 20, 'HOUR_MICROSECOND' => 14, 'MINUTE_MICROSECOND' => 11, 'SECOND_MICROSECOND' => 9,
+    ];
+
+    /**
+     * MySQL 5.6 and 5.7 report these narrower fields, independently of the returned value.
+     */
+    private const LEGACY_EXTRACT_LENGTHS = [
+        'YEAR' => 4, 'MONTH' => 2, 'DAY' => 2, 'HOUR' => 2, 'MINUTE' => 2, 'SECOND' => 2, 'MICROSECOND' => 2, 'WEEK' => 2,
+        'YEAR_MONTH' => 6, 'HOUR_MINUTE' => 4, 'HOUR_SECOND' => 6, 'MINUTE_SECOND' => 4, 'HOUR_MICROSECOND' => 13,
     ];
 
     /**
@@ -88,7 +100,7 @@ final class Moments
      */
     public function extract(IntervalUnit $unit, bool $legacy = false): Domain
     {
-        return Domain::integer(Field::LongLong, $legacy && $unit === IntervalUnit::Microsecond ? 2 : self::PARTS[$unit->value] + 1);
+        return Domain::integer(Field::LongLong, ($legacy ? self::LEGACY_EXTRACT_LENGTHS[$unit->value] ?? null : null) ?? self::EXTRACT_LENGTHS[$unit->value]);
     }
 
     /**
