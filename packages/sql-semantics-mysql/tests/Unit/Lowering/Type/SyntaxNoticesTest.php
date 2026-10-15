@@ -19,6 +19,16 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Medium]
 final class SyntaxNoticesTest extends TestCase
 {
+    public function testCollationCompletesBeforeADeclarationMismatch(): void
+    {
+        $sql = 'CREATE PROCEDURE p(x INT COLLATE ucs2_bin) BEGIN END';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $notices[0][1]);
+        self::assertSame(4079, $notices[0][1]->code());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[1][1]);
+    }
+
     /**
      * @return iterable<string, array{string, list<Deprecated>}>
      */

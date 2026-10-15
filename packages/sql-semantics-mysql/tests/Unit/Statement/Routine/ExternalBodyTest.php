@@ -46,8 +46,8 @@ final class ExternalBodyTest extends TestCase
         ];
         yield 'MySQL 9.1 quoted with parameters' => [
             'mysql-9.1.0',
-            "create procedure p(in a int, out b varchar(3) collate utf8mb4_bin, inout c bigint) language javascript as 'x'",
-            "CREATE PROCEDURE p(IN a INT, OUT b VARCHAR(3) COLLATE utf8mb4_bin, INOUT c BIGINT) LANGUAGE javascript AS 'x'",
+            "create procedure p(in a int, out b varchar(3) character set utf8mb4 collate utf8mb4_bin, inout c bigint) language javascript as 'x'",
+            "CREATE PROCEDURE p(IN a INT, OUT b VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, INOUT c BIGINT) LANGUAGE javascript AS 'x'",
         ];
         yield 'MySQL 9.1 function' => ['mysql-9.1.0', "create function f() returns int language javascript as 'return 1'", "CREATE FUNCTION f() RETURNS INT LANGUAGE javascript AS 'return 1'"];
     }

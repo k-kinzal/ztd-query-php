@@ -67,7 +67,7 @@ final class LegacyFormsTest extends TestCase
     public function testDefinitionRecognizesOnlyDefaultRoutineCollation(): void
     {
         $forms = new LegacyForms();
-        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char);
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Ascii));
         $name = new \SqlSemantics\Statement\Identifier\Name('arg');
         $default = new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter($name, $type, new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null));
         $named = new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter($name, $type, new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('latin1_bin')));

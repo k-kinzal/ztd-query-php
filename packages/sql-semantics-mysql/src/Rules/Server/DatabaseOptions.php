@@ -114,15 +114,7 @@ final class DatabaseOptions
      */
     public function collationNotice(DatabaseOption $option, GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation
     {
-        $named = $option instanceof DatabaseCollation && $option->collation->name !== null ? Collation::forName($option->collation->name->value, $release) : null;
-        $construct = match ($named?->charset->name) {
-            'utf8mb3' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Collation,
-            'ucs2' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Ucs2Collation,
-            default => null,
-        };
-
-        return $named !== null && $construct !== null && $construct->warnedIn($release)
-            ? new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($construct, sprintf($construct->value, $named->nameIn($release))) : null;
+        return $option instanceof DatabaseCollation ? $option->collation->deprecation($release) : null;
     }
 
     /**

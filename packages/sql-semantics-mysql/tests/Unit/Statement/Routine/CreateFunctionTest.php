@@ -157,8 +157,8 @@ final class CreateFunctionTest extends TestCase
         ];
         yield 'MySQL 8.0 IF NOT EXISTS and COLLATE' => [
             'mysql-8.0.44',
-            "create function if not exists f(a int) returns char(3) collate utf8mb4_bin no sql begin return 'x'; end",
-            "CREATE FUNCTION IF NOT EXISTS f(a INT) RETURNS CHAR(3) COLLATE utf8mb4_bin NO SQL BEGIN RETURN 'x'; END",
+            "create function if not exists f(a int) returns char(3) character set utf8mb4 collate utf8mb4_bin no sql begin return 'x'; end",
+            "CREATE FUNCTION IF NOT EXISTS f(a INT) RETURNS CHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NO SQL BEGIN RETURN 'x'; END",
         ];
         yield 'MySQL 9.1 external body' => [
             'mysql-9.1.0',

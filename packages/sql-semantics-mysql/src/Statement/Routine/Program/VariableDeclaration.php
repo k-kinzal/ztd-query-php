@@ -54,12 +54,13 @@ final class VariableDeclaration implements Declaration, Relation
     /**
      * @param list<Name> $names The variable names; at least one
      * @param DeclaredName $type The declared type
-     * @param CollationName|null $collation The COLLATE clause of the type
+     * @param CollationName|null $collation The COLLATE clause; a named override requires a character set carried by the type, and known names must be compatible
      * @param Scalar|null $default The DEFAULT value
      */
     public function __construct(array $names, public readonly DeclaredName $type, public readonly ?CollationName $collation = null, public readonly ?Scalar $default = null)
     {
         $this->names = Check::listOf($names, Name::class, 'DECLARE names at least one variable.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->check($type, $collation);
     }
 
     /**
@@ -68,13 +69,14 @@ final class VariableDeclaration implements Declaration, Relation
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($this->type, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->warn($this->collation, $derivation);
         if ($this->default !== null) {
             $derivation->scalar($this->default, $environment);
         }
         (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($this->type, '', $derivation);
         $slots = [];
         foreach ($this->names as $name) {
-            $slots[] = new OutputSlot($name, new Known($this->type), Nullability::Nullable);
+            $slots[] = new OutputSlot($name, new Known((new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->type($this->type, $this->collation, $derivation->context)), Nullability::Nullable);
         }
 
         return new RelationFact(new RowShape($slots));

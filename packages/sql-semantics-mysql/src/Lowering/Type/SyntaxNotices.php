@@ -24,6 +24,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 final class SyntaxNotices
 {
     /**
+     * Reads the explicit COLLATE notice before declaration compatibility is checked.
+     *
+     * @return list<array{int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation}> Completed notices before the refusal boundary
+     */
+    public function collation(Node $node, Lowering $lowering, int $end): array
+    {
+        $notice = in_array($node->name, ['opt_collate', 'opt_collate_explicit'], true)
+            ? $lowering->charsets->collation($node)?->deprecation($lowering->profile->grammar) : null;
+        $range = (new \SqlSemantics\Construction\SourceRanges())->span($node, true);
+
+        return $notice !== null && $range !== null && $range[1] <= $end ? [[$range[1], $notice]] : [];
+    }
+
+    /**
      * Returns warnings from the first completed occurrence of an attribute.
      *
      * @return list<Deprecated> The warnings supported by the input release
@@ -33,6 +47,9 @@ final class SyntaxNotices
         if ($node->name === 'type') {
             $type = $lowering->types->type($node);
             $notices = $type instanceof Integral || $type instanceof Decimal || $type instanceof Floating ? (new TypeNotices())->numericWarnings($type) : [];
+            if ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Character && $type->national) {
+                $notices[] = Deprecated::National;
+            }
 
             return array_values(array_filter($notices, static fn (Deprecated $notice): bool => $notice->warnedIn($lowering->profile->grammar)));
         }

@@ -108,14 +108,16 @@ final class Invocation
     }
 
     /**
-     * Runs a stored function or a trigger inside the statement that invokes it: with a diagnostics area of its own, whose conditions are added to that of the statement once it ends, and leaving ROW_COUNT() as it was.
+     * Runs a program with its own diagnostics area, retaining preceding conditions.
+     * Functions and triggers also preserve ROW_COUNT(); procedures publish their final count.
      *
      * @template T
      *
      * @param Closure(): T $run
+     * @param bool $preserveRowCount Whether the caller's row count survives the invocation
      * @return T
      */
-    public function contained(Closure $run): mixed
+    public function contained(Closure $run, bool $preserveRowCount = true): mixed
     {
         $session = $this->session;
         $diagnostics = $session->diagnostics;
@@ -125,7 +127,10 @@ final class Invocation
             return $run();
         } finally {
             $own = [$diagnostics->conditions, $diagnostics->signalled];
-            [$diagnostics->conditions, $diagnostics->signalled, $session->variables->rowCount] = [$conditions, $signalled, $count];
+            [$diagnostics->conditions, $diagnostics->signalled] = [$conditions, $signalled];
+            if ($preserveRowCount) {
+                $session->variables->rowCount = $count;
+            }
             foreach ($own[0] as $position => [$level, $number, $message]) {
                 if (isset($own[1][$position])) {
                     $diagnostics->signalled[count($diagnostics->conditions)] = $own[1][$position];

@@ -25,4 +25,10 @@ final class DeprecatedVariablesTest extends TestCase
     {
         self::assertSame([null, null], [(new DeprecatedVariables())->warning('tx_isolation', GrammarRelease::MySql5651), (new DeprecatedVariables())->warning('tx_isolation', GrammarRelease::MySql847)]);
     }
+
+    public function testWarningIncludesTheModernFunctionCreatorSetting(): void
+    {
+        self::assertSame("'@@log_bin_trust_function_creators' is deprecated and will be removed in a future release.", (new DeprecatedVariables())->warning('LOG_BIN_TRUST_FUNCTION_CREATORS', GrammarRelease::MySql8044));
+        self::assertNull((new DeprecatedVariables())->warning('log_bin_trust_function_creators', GrammarRelease::MySql5744));
+    }
 }

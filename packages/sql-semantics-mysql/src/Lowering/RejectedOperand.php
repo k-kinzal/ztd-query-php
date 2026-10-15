@@ -28,7 +28,7 @@ final class RejectedOperand
         if ($names !== null) {
             return $names;
         }
-        $entry = (new ClientEntry())->generated($node) ?? (new Replication\SyntaxLogMoment())->rejected($node, $lowering->profile->grammar) ?? (new Leaf\SyntaxTableNames())->rejected($node, $lowering) ?? (new Server\Transaction\SyntaxXids())->rejected($node, $lowering);
+        $entry = (new ClientEntry())->generated($node) ?? (new Replication\SyntaxLogMoment())->rejected($node, $lowering->profile->grammar) ?? (new Leaf\SyntaxTableNames())->rejected($node, $lowering) ?? (new Server\Transaction\SyntaxXids())->rejected($node, $lowering) ?? (new Routine\DeclarationPrefix())->rejected($node, $lowering);
         if ($entry !== null) {
             return $entry;
         }

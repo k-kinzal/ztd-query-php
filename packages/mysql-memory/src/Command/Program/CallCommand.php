@@ -83,7 +83,7 @@ final class CallCommand implements Command
         $invocation = new Invocation($session);
         $activation->scope[] = $parameters = $invocation->parameters($routine, $bound, $routine->mode);
         try {
-            $invocation->run($activation, \MySqlMemory\Program\Routine\Body::of($routine)->body, $routine->schema, $routine->mode);
+            $invocation->contained(static fn () => $invocation->run($activation, \MySqlMemory\Program\Routine\Body::of($routine)->body, $routine->schema, $routine->mode), false);
         } catch (SqlError $error) {
             if ($caller === null) {
                 $session->running->replies = $activation->results;

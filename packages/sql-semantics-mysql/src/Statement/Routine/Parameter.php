@@ -33,13 +33,14 @@ final class Parameter implements Node
     /**
      * @param Name $name The parameter name
      * @param DeclaredName $type The declared type
-     * @param CollationName|null $collation The COLLATE clause of the type
+     * @param CollationName|null $collation The COLLATE clause; a named override requires a character set carried by the type, and known names must be compatible
      * @param ParameterMode|null $mode The direction keyword, when written
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the name contains NUL
      */
     public function __construct(public readonly Name $name, public readonly DeclaredName $type, public readonly ?CollationName $collation = null, public readonly ?ParameterMode $mode = null)
     {
         \SqlSemantics\Diagnostic\Check::input(!str_contains($name->value, "\0"), 'A routine parameter name cannot contain NUL.');
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->check($type, $collation);
     }
 
     /**

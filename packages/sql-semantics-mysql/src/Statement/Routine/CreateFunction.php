@@ -51,7 +51,7 @@ final class CreateFunction implements Statement
      * @param ParameterList $parameters The parameters; none has a direction
      * @param DeclaredName $returns The return type
      * @param Node $body The body: a program statement, an SQL statement, or external code
-     * @param CollationName|null $collation The COLLATE clause of the return type
+     * @param CollationName|null $collation The COLLATE clause; a named override requires a character set carried by the return type, and known names must be compatible
      * @param list<Characteristic> $characteristics The characteristics in written order
      * @param Account|null $definer The DEFINER clause, when written
      * @param bool $ifNotExists Whether IF NOT EXISTS is written (MySQL 8.0.29 and later)
@@ -68,6 +68,7 @@ final class CreateFunction implements Statement
         public readonly bool $ifNotExists = false,
     ) {
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->check($returns, $collation);
         foreach ($parameters->parameters as $parameter) {
             Check::input($parameter->mode === null, 'A function parameter has no direction.');
         }
@@ -81,7 +82,7 @@ final class CreateFunction implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new ProgramFacts())->routine($this->parameters, $this->body, ProgramKind::Function, $this->name, $derivation, $this->returns);
+        (new ProgramFacts())->routine($this->parameters, $this->body, ProgramKind::Function, $this->name, $derivation, $this->returns, $this->collation);
     }
 
     /**

@@ -126,6 +126,7 @@ final class ParameterRule
      *
      * @return array{DeclaredName, CollationName|null}
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When a named collation has no compatible declared character set
      */
     public function declared(Node $type, ?Node $collation): array
     {
@@ -137,6 +138,13 @@ final class ParameterRule
             [$type, $collation] = [$form->node(0), $form->node(1)];
         }
 
-        return [$this->lowering->types->type($type), $this->lowering->charsets->collation($collation)];
+        $declared = $this->lowering->types->type($type);
+        $collate = $this->lowering->charsets->collation($collation);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->problem($declared, $collate, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            throw new RejectedInput($problem, (new SourceRanges())->span($collation)[1] ?? 0);
+        }
+
+        return [$declared, $collate];
     }
 }

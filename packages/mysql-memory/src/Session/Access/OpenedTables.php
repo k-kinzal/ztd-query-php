@@ -92,6 +92,9 @@ final class OpenedTables
     {
         $dictionary = $session->instance->dictionary;
         if (!$session->settings()->legacy()) {
+            if ($routine !== null) {
+                (new \MySqlMemory\Program\Routine\LoadNotices())->record($routine, $session);
+            }
             if ($routine?->metadataLoaded === true) {
                 return;
             }

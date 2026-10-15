@@ -65,13 +65,14 @@ final class ParameterList implements Relation
         $slots = [];
         foreach ($this->parameters as $parameter) {
             (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($parameter->type, $derivation);
+            (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->warn($parameter->collation, $derivation);
             $problem = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? null : Parameter::nameProblem($parameter->name);
             if ($problem !== null) {
                 $derivation->report($problem);
                 $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $parameter);
             }
             (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($parameter->type, '', $derivation);
-            $slots[] = new OutputSlot($parameter->name, new Known($parameter->type), Nullability::Nullable);
+            $slots[] = new OutputSlot($parameter->name, new Known((new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->type($parameter->type, $parameter->collation, $derivation->context)), Nullability::Nullable);
         }
 
         return new RelationFact(new RowShape($slots));

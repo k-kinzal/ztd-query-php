@@ -29,12 +29,12 @@ final class ParameterTest extends TestCase
 {
     public function testRenderKeepsTheDirectionTheNameTheTypeAndTheCollation(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT, OUT b VARCHAR(3) COLLATE utf8mb4_bin) SELECT 1')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT, OUT b VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin) SELECT 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
         self::assertEquals([
             new Parameter(new Name('a'), new Integral(IntegralKind::Int)),
-            new Parameter(new Name('b'), new Character(CharacterKind::VarChar, '3'), new CollationName(new Name('utf8mb4_bin')), ParameterMode::Out),
+            new Parameter(new Name('b'), new Character(CharacterKind::VarChar, '3', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), ParameterMode::Out),
         ], $statement->parameters->parameters);
     }
 
@@ -53,7 +53,7 @@ final class ParameterTest extends TestCase
             'create procedure p(in a int, out b bigint, inout c int) select 1',
             'CREATE PROCEDURE p(IN a INT, OUT b BIGINT, INOUT c INT) SELECT 1',
         ];
-        yield 'MySQL 8.0 COLLATE' => ['mysql-8.0.44', 'create procedure p(out a int collate utf8mb4_bin) select 1', 'CREATE PROCEDURE p(OUT a INT COLLATE utf8mb4_bin) SELECT 1'];
+        yield 'MySQL 8.0 COLLATE' => ['mysql-8.0.44', 'create procedure p(out a varchar(3) character set utf8mb4 collate utf8mb4_bin) select 1', 'CREATE PROCEDURE p(OUT a VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin) SELECT 1'];
         yield 'MySQL 9.1 function parameter' => ['mysql-9.1.0', 'create function f(a decimal(10, 2)) returns int return 1', 'CREATE FUNCTION f(a DECIMAL(10, 2)) RETURNS INT RETURN 1'];
     }
 
@@ -69,10 +69,10 @@ final class ParameterTest extends TestCase
         $plain = new Output(new Codec($semantics->profile()->grammar));
         (new Parameter(new Name('a'), new Integral(IntegralKind::BigInt)))->render($plain);
         $full = new Output(new Codec($semantics->profile()->grammar));
-        (new Parameter(new Name('b'), new Character(CharacterKind::VarChar, '3'), new CollationName(new Name('utf8mb4_bin')), ParameterMode::InOut))->render($full);
+        (new Parameter(new Name('b'), new Character(CharacterKind::VarChar, '3', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), ParameterMode::InOut))->render($full);
 
         self::assertSame('a BIGINT', (new Lexical())->join($plain->pieces()));
-        self::assertSame('INOUT b VARCHAR(3) COLLATE utf8mb4_bin', (new Lexical())->join($full->pieces()));
+        self::assertSame('INOUT b VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin', (new Lexical())->join($full->pieces()));
     }
     public function testKeyUsesTheParametersUnicodeIdentity(): void
     {
