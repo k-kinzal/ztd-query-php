@@ -125,6 +125,8 @@ final class Literals
 
     /**
      * Resolves a hexadecimal or bit literal.
+     * Unintroduced hexadecimal values report UNSIGNED; MySQL 5.6 also reports
+     * it for bit literals. Introduced character strings carry neither flag.
      */
     public function radix(RadixLiteral $literal): Domain
     {
@@ -132,8 +134,9 @@ final class Literals
         $collation = $literal->introducer === null ? Collation::binary() : $this->introduced($literal->introducer->value);
 
         $bytes = intdiv($bits + 7, 8);
+        $unsigned = $literal->radix === Radix::Hexadecimal || $this->release === GrammarRelease::MySql5651;
 
-        return $literal->introducer === null ? new Domain(Kind::String, Field::VarString, $bytes, 0, false, $collation, [], Coercibility::Coercible) : Domain::string($collation->charset->length($literal->bytes()), $collation, Field::VarString, Coercibility::Coercible);
+        return $literal->introducer === null ? new Domain(Kind::String, Field::VarString, $bytes, 0, $unsigned, $collation, [], Coercibility::Coercible) : Domain::string($collation->charset->length($literal->bytes()), $collation, Field::VarString, Coercibility::Coercible);
     }
 
     /**

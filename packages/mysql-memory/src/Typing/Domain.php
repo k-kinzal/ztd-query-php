@@ -196,6 +196,8 @@ final class Domain
 
     /**
      * Answers the column definition flags of the domain.
+     * The client numeric flag follows protocol field codes; DECIMAL and BIT
+     * values do not acquire it merely because arithmetic accepts them.
      */
     public function flags(): int
     {
@@ -206,7 +208,7 @@ final class Domain
         if ($this->collation->binaryOrder()) {
             $flags |= ColumnFlag::Binary->value;
         }
-        if (($this->kind->numeric() && $this->field !== Field::Year) || $this->field === Field::Null) {
+        if ($this->field->integral() || in_array($this->field, [Field::Decimal, Field::Float, Field::Double, Field::Null], true)) {
             $flags |= ColumnFlag::Numeric->value;
         }
         if ($this->field === Field::Enum) {

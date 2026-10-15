@@ -161,6 +161,13 @@ final class DomainTest extends TestCase
         self::assertSame([32897, 32929, 1, 129, 256, 2048], [Domain::integer(Field::Long, 11)->flags(), Domain::integer(Field::LongLong, 20, true)->flags(), Domain::string(10, $collation)->flags(), Domain::string(10, Collation::binary())->flags(), (new Domain(Kind::String, Field::Enum, 1, Domain::NOT_FIXED, false, $collation, true, ['a']))->flags(), (new Domain(Kind::String, Field::Set, 1, Domain::NOT_FIXED, false, $collation, true, ['a']))->flags()]);
     }
 
+    public function testFlagsFollowProtocolNumericTypesRatherThanArithmeticCoercion(): void
+    {
+        $domains = [Domain::decimal(5, 2), new Domain(Kind::Bit, Field::Bit, 1, unsigned: true), new Domain(Kind::Year, Field::Year, 4, unsigned: true)];
+
+        self::assertSame([129, 160, 32928], array_map(static fn (Domain $domain): int => $domain->flags(), $domains));
+    }
+
     public function testFlagsRetainBinaryOrderingOfACharacterCollation(): void
     {
         self::assertSame(129, Domain::string(3, Collation::known('utf8mb4_bin'))->flags());
