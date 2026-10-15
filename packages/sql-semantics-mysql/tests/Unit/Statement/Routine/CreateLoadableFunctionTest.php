@@ -23,6 +23,18 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class CreateLoadableFunctionTest extends TestCase
 {
+    public function testNameCollisionIncludesKeywordsAndReleaseSpecificFunctions(): void
+    {
+        $keyword = new CreateLoadableFunction(new Name('begin'), LoadableResult::Integer, new Text('./missing.so'));
+        $function = new CreateLoadableFunction(new Name('JSON_ARRAY'), LoadableResult::Integer, new Text('./missing.so'));
+        $ordinary = new CreateLoadableFunction(new Name('library'), LoadableResult::Integer, new Text('./missing.so'));
+
+        self::assertTrue($keyword->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertFalse($function->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertTrue($function->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse($ordinary->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testDeriveStatementChangesNoContext(): void
     {
         $semantics = new Semantics(Dialect::MySql);

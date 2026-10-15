@@ -34,6 +34,15 @@ final class PluginCommandTest extends TestCase
         $session->query("CREATE FUNCTION ABS RETURNS STRING SONAME '/tmp/text'");
     }
 
+    public function testLoadableRefusesKeywordNamesBeforeReadingTheLibrary(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1585);
+        $this->expectExceptionMessage("This function 'BEGIN' has the same name as a native function");
+
+        $session->query("CREATE FUNCTION BEGIN RETURNS INT4 SONAME 'a''b'");
+    }
+
     public function testLoadableRefusesPaths(): void
     {
         $session = (new Instance())->connect();

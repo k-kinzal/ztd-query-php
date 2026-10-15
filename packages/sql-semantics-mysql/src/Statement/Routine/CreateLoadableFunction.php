@@ -57,6 +57,18 @@ final class CreateLoadableFunction implements Statement
     }
 
     /**
+     * Tells whether the name collides with a keyword or built-in function in this release.
+     *
+     * A loadable function reports this collision before examining the library path.
+     * Observed with quoted and unquoted names on native MySQL 5.6 through 9.1.
+     */
+    public function nameCollision(\SqlSemantics\Contract\GrammarRelease $release): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rendering\Keywords($release))->contains($this->name->value)
+            || (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->exists($release, $this->name->value);
+    }
+
+    /**
      * Writes the statement.
      */
     public function render(Output $out): void
