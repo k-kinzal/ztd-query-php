@@ -15,9 +15,7 @@ use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(SyntaxFactors::class)]
 #[Medium]
@@ -41,11 +39,4 @@ final class SyntaxFactorsTest extends TestCase
         self::assertEquals([new ParseFailure($problem, true)], array_column($notices, 1));
     }
 
-    public function testAccountRetainsTheWholeOperandAndItsLimit(): void
-    {
-        $checks = new SyntaxFactors();
-        self::assertNull($checks->account(new AccountName(new Name('u'), new Name('example.com'))));
-        self::assertEquals(new ParseFailure(new AccountNameFailure(str_repeat('あ', 33), false, 32), true), $checks->account(new AccountName(new Name(str_repeat('あ', 33)))));
-        self::assertEquals(new ParseFailure(new AccountNameFailure(str_repeat('h', 256), true, 255), true), $checks->account(new AccountName(new Name('u'), new Name(str_repeat('h', 256)))));
-    }
 }

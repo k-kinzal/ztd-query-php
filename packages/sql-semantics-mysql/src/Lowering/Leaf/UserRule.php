@@ -40,6 +40,7 @@ final class UserRule
      * Lowers one account.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an account operand exceeds its release's domain
      */
     public function account(Node $account): Account
     {
@@ -50,11 +51,26 @@ final class UserRule
         $names = $this->lowering->names;
 
         return $this->lowering->leaves->record(match ($form->signature) {
-            'user: ident_or_text', 'user_ident_or_text: ident_or_text', 'role: role_ident_or_text' => new AccountName($names->identifier($form->node(0))),
-            'user: ident_or_text @ ident_or_text', 'user_ident_or_text: ident_or_text @ ident_or_text', 'role: role_ident_or_text @ ident_or_text' => new AccountName($names->identifier($form->node(0)), $names->identifier($form->node(2))),
+            'user: ident_or_text', 'user_ident_or_text: ident_or_text', 'role: role_ident_or_text' => $this->named($names->identifier($form->node(0)), null, $form->node),
+            'user: ident_or_text @ ident_or_text', 'user_ident_or_text: ident_or_text @ ident_or_text', 'role: role_ident_or_text @ ident_or_text' => $this->named($names->identifier($form->node(0)), $names->identifier($form->node(2)), $form->node),
             'user: CURRENT_USER optional_braces' => new CurrentUser($this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted),
             default => throw ImplementationGap::production($form),
         });
+    }
+
+    /**
+     * Publishes an account only after checking the current language's operand limits.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When an account operand exceeds its release's domain
+     */
+    public function named(\SqlSemantics\Statement\Identifier\Name $user, ?\SqlSemantics\Statement\Identifier\Name $host, ?Node $source = null): AccountName
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($user, $host, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, $source === null ? 0 : ((new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0));
+        }
+
+        return new AccountName($user, $host);
     }
 
     /**
@@ -62,6 +78,7 @@ final class UserRule
      *
      * @return list<Account>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a decoded account exceeds the language's limits
      */
     public function accounts(Node $list): array
     {

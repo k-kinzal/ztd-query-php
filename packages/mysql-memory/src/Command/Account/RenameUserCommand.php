@@ -87,7 +87,7 @@ final class RenameUserCommand implements Command
             if (!$session->settings()->legacy()) {
                 $accounts->restore($saved);
             }
-            throw AccountError::CannotUser->error('RENAME USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
+            throw (new Names($session->settings()->release()))->failure('RENAME USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
 
         return new Completion(0, 0, $context->diagnostics->raised());

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Parse;
 
-use MySqlMemory\Command\InternalCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
@@ -30,7 +29,6 @@ final class DebugRequest
      */
     public function refusal(Operation $operation, SqlError $syntax, Session $session): SqlError
     {
-        (new InternalCommand())->operands($operation);
         $notices = array_values(array_filter($operation->facts->warnings, static fn (Warning $warning): bool => ($warning instanceof Deprecation || ($warning instanceof ParseFailure && $warning->phase === NoticePhase::Syntax)) && !Stages::afterReading($warning)));
 
         return (new ModernWarnings())->recorded($notices, $syntax, $session);

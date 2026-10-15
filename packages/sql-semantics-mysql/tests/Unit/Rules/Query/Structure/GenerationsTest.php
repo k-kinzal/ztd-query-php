@@ -61,6 +61,8 @@ final class GenerationsTest extends TestCase
         self::assertSame(1, $rules->transition($alter));
         self::assertSame(2, $rules->transition(new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(true)));
         self::assertSame(0, $rules->transition(new NumberLiteral('1')));
+        self::assertSame(0, $rules->transition(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 16)))));
+        self::assertSame(2, $rules->transition(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 17)))));
     }
 
     public function testCheckRejectsIgnoreWithValidation(): void

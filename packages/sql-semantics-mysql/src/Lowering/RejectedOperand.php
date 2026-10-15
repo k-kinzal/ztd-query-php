@@ -63,7 +63,9 @@ final class RejectedOperand
             if ($node->name === 'partition_entry') {
                 return (new ClientEntry())->partition($node->tokens()[0] ?? null, $lowering->profile);
             }
-            if (in_array($node->name, ['sp_cond', 'sqlstate'], true)) {
+            if (in_array($node->name, ['user', 'role'], true)) {
+                $lowering->users->account($node);
+            } elseif (in_array($node->name, ['sp_cond', 'sqlstate'], true)) {
                 (new Routine\Condition\ConditionRule($lowering))->value($node);
             } elseif ($node->name === 'factor') {
                 (new Account\IdentificationRule($lowering))->factor($node);

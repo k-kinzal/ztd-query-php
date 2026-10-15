@@ -119,7 +119,7 @@ final class AlterUserCommand implements Command
                 (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
             }
         }
-        throw AccountError::CannotUser->error('ALTER USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
+        throw (new Names($session->settings()->release()))->failure('ALTER USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
     }
 
     /**
@@ -167,7 +167,7 @@ final class AlterUserCommand implements Command
             }
         }
         if ($missing !== []) {
-            throw AccountError::CannotUser->error('ALTER USER', implode(',', $missing));
+            throw (new Names($session->settings()->release()))->failure('ALTER USER', implode(',', $missing));
         }
 
         return new Completion(0, 0, $context->diagnostics->raised());

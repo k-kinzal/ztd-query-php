@@ -34,7 +34,7 @@ final class NamesTest extends TestCase
         $this->expectExceptionCode(1470);
         $this->expectExceptionMessage("String '" . str_repeat('u', 33) . "' is too long for user name (should be no longer than 32)");
 
-        (new Names())->check([new AccountName(new Name(str_repeat('u', 33)))]);
+        (new Instance())->connect()->query("CREATE USER '" . str_repeat('u', 33) . "'");
     }
 
     public function testCheckRefusesAHostOfMoreThan255Bytes(): void
@@ -43,7 +43,7 @@ final class NamesTest extends TestCase
         $this->expectExceptionCode(1470);
         $this->expectExceptionMessage("String 'x" . str_repeat('é', 34) . "?' is too long for host name (should be no longer than 255)");
 
-        (new Names())->check([new AccountName(new Name('a'), new Name('x' . str_repeat('é', 128)))]);
+        (new Instance())->connect()->query("CREATE USER 'a'@'x" . str_repeat('é', 128) . "'");
     }
 
     public function testCheckRefusesAHostWithAnAtSign(): void
@@ -52,7 +52,7 @@ final class NamesTest extends TestCase
         $this->expectExceptionCode(1105);
         $this->expectExceptionMessage("Malformed hostname (illegal symbol: '@')");
 
-        (new Names())->check([null, new AccountName(new Name('a'), new Name('a@b')), new AccountName(new Name(str_repeat('u', 40)))]);
+        (new Instance())->connect()->query("CREATE USER 'a'@'a@b', '" . str_repeat('u', 40) . "'");
     }
 
     public function testCheckMeasuresTheTrimmedOperands(): void
@@ -70,7 +70,7 @@ final class NamesTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage("String '" . str_repeat('X', 70) . "' is too long for user name (should be no longer than 32)");
 
-        (new Names())->check([new AccountName(new Name("\r" . str_repeat('X', 80)))]);
+        (new Instance())->connect()->query("CREATE USER '\r" . str_repeat('X', 80) . "'");
     }
 
     public function testCheckMeasuresTheOriginalQualifiedUserInMySql56(): void
@@ -122,6 +122,33 @@ final class NamesTest extends TestCase
         (new Names())->ascii(new Identity('u', 'a`a`éé "\' \\\\00'), 2, $diagnostics);
 
         self::assertSame([['Warning', 1366, "Incorrect string value: '\\xC3\\xA9\\xC3\\xA9 \"...' for column 'Host' at row 1"], ['Warning', 1366, "Incorrect string value: '\\xC3\\xA9\\xC3\\xA9 \"...' for column 'Host' at row 1"]], $diagnostics->conditions);
+    }
+
+    public function testAsciiPreservesLegacyUnicodeHostsWithoutWarnings(): void
+    {
+        $diagnostics = new Diagnostics();
+        (new Names(GrammarRelease::MySql5651))->ascii(new Identity('u', '猫'), 7, $diagnostics);
+        (new Names(GrammarRelease::MySql5744))->ascii(new Identity('u', '猫'), 7, $diagnostics);
+
+        self::assertSame([], $diagnostics->conditions);
+    }
+
+    public function testFailureBoundsTheDisplayedAccountList(): void
+    {
+        $error = (new Names())->failure('DROP USER', "'u'@'" . str_repeat('h', 255) . "'");
+
+        self::assertSame(1396, $error->getCode());
+        self::assertSame("Operation DROP USER failed for 'u'@'" . str_repeat('h', 251), $error->getMessage());
+    }
+
+    public function testRefusalKeepsTheTypedLimitAndDecodedDiagnosticOperand(): void
+    {
+        $names = new Names(GrammarRelease::MySql5651);
+        $length = $names->refusal(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure("user\0rest", false, 16));
+        $host = $names->refusal(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure('a@b', true));
+
+        self::assertSame([1470, "String 'user' is too long for user name (should be no longer than 16)"], [$length->getCode(), $length->getMessage()]);
+        self::assertSame([1105, "Malformed hostname (illegal symbol: '@')"], [$host->getCode(), $host->getMessage()]);
     }
 
     public function testResolveWarnsOfAHostName(): void

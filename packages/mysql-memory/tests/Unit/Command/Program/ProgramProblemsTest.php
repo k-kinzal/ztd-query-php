@@ -109,12 +109,13 @@ final class ProgramProblemsTest extends TestCase
         self::assertFalse((new ProgramProblems())->raise($session->analyze('SELECT 1'), $session, new Problems()));
     }
 
-    public function testAccountRefusesAUserNameOfMoreThan32Characters(): void
+    public function testDefinerAppliesTheSelectedLanguageLimitToAConstructibleAccount(): void
     {
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new QualifiedName(new Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new ShowTriggers(false), definer: new AccountName(new Name(str_repeat('a', 17))));
         $this->expectExceptionCode(1470);
-        $this->expectExceptionMessage("String '" . str_repeat('a', 33) . "' is too long for user name (should be no longer than 32)");
+        $this->expectExceptionMessage("String '" . str_repeat('a', 17) . "' is too long for user name (should be no longer than 16)");
 
-        (new ProgramProblems())->account(new AccountName(new Name(str_repeat('a', 33))));
+        (new ProgramProblems())->definer($statement, \SqlSemantics\Contract\GrammarRelease::MySql5651);
     }
 
     public function testParsedKeepsTheRulesAndTheRowColumnsOfATrigger(): void
@@ -146,15 +147,13 @@ final class ProgramProblemsTest extends TestCase
         self::assertSame([], $result->rows);
     }
 
-    public function testDefinerRefusesAHostNameOfMoreThan255CharactersOfAView(): void
+    public function testInputRefusesAHostNameOfMoreThan255BytesOfAView(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze("CREATE DEFINER = 'u'@'" . str_repeat('h', 256) . "' VIEW v AS SELECT 1")->statement;
-
         $this->expectExceptionCode(1470);
-        $this->expectExceptionMessage("String '" . str_repeat('h', 256) . "' is too long for host name (should be no longer than 255)");
+        $this->expectExceptionMessage("String '" . str_repeat('h', 70) . "' is too long for host name (should be no longer than 255)");
 
-        (new ProgramProblems())->definer($statement);
+        $session->query("CREATE DEFINER = 'u'@'" . str_repeat('h', 256) . "' VIEW v AS SELECT 1");
     }
 
     public function testViewRefusesAParameterInTheQuery(): void

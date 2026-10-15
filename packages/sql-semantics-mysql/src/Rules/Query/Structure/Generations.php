@@ -105,6 +105,7 @@ final class Generations
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn,
             $value === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Json => 2,
             $value instanceof LanguageProfile => $value->grammar === GrammarRelease::MySql5651 ? 1 : 2,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName => (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($value->user, $value->host, GrammarRelease::MySql5651) === null ? 0 : 2,
             default => 0,
         };
     }

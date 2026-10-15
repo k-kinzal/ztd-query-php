@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Program;
 
-use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
@@ -80,7 +79,7 @@ final class ProgramProblems
 
             return false;
         }
-        $this->definer($statement);
+        $this->definer($statement, $session->settings()->release());
         if ($statement instanceof CreateView || $statement instanceof AlterView) {
             $this->view($statement, $operation, $session, $problems);
         }
@@ -113,7 +112,7 @@ final class ProgramProblems
      *
      * @throws SqlError When a name of the account is too long
      */
-    public function definer(\SqlSemantics\Statement\Statement $statement): void
+    public function definer(\SqlSemantics\Statement\Statement $statement, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): void
     {
         $definer = match (true) {
             $statement instanceof CreateView, $statement instanceof AlterView => $statement->definition->definer,
@@ -121,7 +120,7 @@ final class ProgramProblems
             default => null,
         };
         if ($definer instanceof AccountName) {
-            $this->account($definer);
+            (new \MySqlMemory\Command\Account\Names($release))->check([$definer]);
         }
     }
 
@@ -232,21 +231,6 @@ final class ProgramProblems
             }
 
             throw $diagnostic instanceof ProgramProblem ? (new ProgramErrors())->error($diagnostic) : (new Errors())->error($diagnostic, $session, 'field list', $statement);
-        }
-    }
-
-    /**
-     * Refuses a DEFINER account whose user name is longer than 32 characters or whose host name is longer than 255 (ER_WRONG_STRING_LENGTH).
-     *
-     * @throws SqlError When a name is too long
-     */
-    public function account(AccountName $account): void
-    {
-        if (mb_strlen($account->username()) > 32) {
-            throw DataError::WrongStringLength->error($account->username(), 'user name', 32);
-        }
-        if (mb_strlen($account->hostname() ?? '') > 255) {
-            throw DataError::WrongStringLength->error($account->hostname(), 'host name', 255);
         }
     }
 

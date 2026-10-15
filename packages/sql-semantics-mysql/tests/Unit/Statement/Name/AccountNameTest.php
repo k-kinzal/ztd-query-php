@@ -66,6 +66,21 @@ final class AccountNameTest extends TestCase
         self::assertSame('bob', (new Lexical())->join($out->pieces()));
     }
 
+    public function testRenderUsesStringOperandsToPreserveEmbeddedNuls(): void
+    {
+        $out = new Output(new Codec(GrammarRelease::MySql847));
+        (new AccountName(new Name("a\0b"), new Name("h\0tail")))->render($out);
+        $sql = (new Lexical())->join($out->pieces());
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $name = $lowering->users->account($platform->parser($profile)->parse('DROP USER ' . $sql)->find('user')[0]);
+
+        self::assertSame("'a\\0b'@'h\\0tail'", $sql);
+        self::assertInstanceOf(AccountName::class, $name);
+        self::assertSame(["a\0b", "h\0tail"], [$name->user->value, $name->host?->value]);
+    }
+
     public function testLoweredAccountHoldsTheDecodedParts(): void
     {
         $platform = new Platform();

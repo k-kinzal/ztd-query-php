@@ -34,23 +34,20 @@ final class InternalCommandTest extends TestCase
         yield 'debug tree' => [new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new ColumnUse(new Name('missing')))]))), '8.4.7', "near 'PARSE_TREE SELECT missing' at line 1"];
     }
 
-    public function testOperandsCheckConstructedAccountNamesBeforeTheDebugOnlyRefusal(): void
+    public function testInputRefusesALongAccountBeforeTheDebugCommand(): void
     {
-        $session = (new Instance())->connect();
-        $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Account\DropUser(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 33)))]));
-        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
         $this->expectExceptionCode(1470);
         $this->expectExceptionMessage('is too long for user name');
 
-        (new InternalCommand())->operands($operation);
+        (new Instance())->connect()->query("SHOW PARSE_TREE DROP USER '" . str_repeat('u', 33) . "'");
     }
 
-    public function testDirectExecutionChecksAnAccountBeforeRefusingTheDebugCommand(): void
+    public function testInputRefusesAnInvalidHostBeforeTheDebugCommand(): void
     {
-        $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Account\DropUser(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 33)))]));
-        $this->expectExceptionCode(1470);
+        $this->expectExceptionCode(1105);
+        $this->expectExceptionMessage("Malformed hostname (illegal symbol: '@')");
 
-        (new Execution())->run($statement);
+        (new Instance())->connect()->query("SHOW PARSE_TREE DROP USER 'u'@'a@b'");
     }
 
     public function testClearsDiagnosticsAnswersTrue(): void

@@ -106,18 +106,25 @@ final class CacheOptions
     {
         $cause = $this->cause($error);
         $end ??= $cause?->token->offset ?? strlen($statement);
-        $database = (new Parse\RoutinePrefix())->database($statement, $end, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $end, $session);
+        $parser = $session->semantics()->parser();
+        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
+        $boundary = $end;
+        foreach ($notices as [$offset, $notice]) {
+            if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->aborts) {
+                $boundary = min($boundary, $offset);
+            }
+        }
+        $database = (new Parse\RoutinePrefix())->database($statement, $boundary, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $boundary, $session);
         if ($database !== null) {
             return $database;
         }
-        $parser = $session->semantics()->parser();
-        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
         $plugin = (new Parse\Entry\ParserInput())->before($statement, $end, $session);
         if ($plugin !== null) {
             return $plugin;
         }
         $temporal = (new Parse\TemporalInput())->before($statement, $end, $session);
-        foreach ((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile()) as [$offset, $notice]) {
+        foreach ($notices as [$offset, $notice]) {
             if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->aborts) {
                 if ($temporal !== null && $temporal[0] < $offset) {
                     break;

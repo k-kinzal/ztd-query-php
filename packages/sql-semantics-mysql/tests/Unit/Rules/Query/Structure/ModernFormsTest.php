@@ -19,6 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ModernFormsTest extends TestCase
 {
+    public function testDefinitionDistinguishesAccountHostLimits(): void
+    {
+        $forms = new ModernForms();
+        $user = new \SqlSemantics\Statement\Identifier\Name('u');
+
+        self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName($user, new \SqlSemantics\Statement\Identifier\Name(str_repeat('h', 60)))));
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName($user, new \SqlSemantics\Statement\Identifier\Name(str_repeat('h', 61)))));
+    }
+
     public function testAuthenticationDistinguishesPasswordManagementFromAnOrdinaryAccount(): void
     {
         $forms = new ModernForms();

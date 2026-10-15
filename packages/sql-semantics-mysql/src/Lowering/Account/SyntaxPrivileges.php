@@ -15,7 +15,6 @@ use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 
 /**
@@ -46,13 +45,8 @@ final class SyntaxPrivileges
         if ($indices === null) {
             return null;
         }
-        foreach ($lowering->users->accounts($form->node($indices[1])) as $account) {
-            $failure = $account instanceof AccountName ? (new SyntaxFactors())->account($account) : null;
-            if ($failure !== null) {
-                return $failure;
-            }
-        }
         try {
+            $lowering->users->accounts($form->node($indices[1]));
             (new PrivilegeRule($lowering))->granted($form->node($indices[0]), (new SourceRanges())->span($node)[1] ?? 0);
         } catch (RejectedInput $failure) {
             return new ParseFailure($failure->problem, true);

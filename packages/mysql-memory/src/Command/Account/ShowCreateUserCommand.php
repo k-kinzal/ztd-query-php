@@ -6,7 +6,6 @@ namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\CreateText;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -58,7 +57,7 @@ final class ShowCreateUserCommand implements Command
         $accounts = $session->instance->accounts;
         $account = $accounts->find($identity);
         if ($account === null) {
-            throw AccountError::CannotUser->error('SHOW CREATE USER', $identity->quoted());
+            throw (new Names($session->settings()->release()))->failure('SHOW CREATE USER', $identity->quoted());
         }
         $legacy = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744;
         $column = new ResultColumn('CREATE USER for ' . $identity->text(), Field::VarString, $legacy ? 256 : 1024, 31, ColumnFlag::NotNull->value, 255);

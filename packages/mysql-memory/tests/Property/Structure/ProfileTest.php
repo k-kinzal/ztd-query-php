@@ -32,6 +32,19 @@ use SqlSemantics\Statement\Identifier\Name;
 final class ProfileTest extends TestCase
 {
     /**
+     * Language-dependent limits select a corresponding profile without discarding the object.
+     */
+    public function testSelectRetainsAccountNamesThatNeedLaterLanguageLimits(): void
+    {
+        $profiles = new Profiles();
+        $legacy = new \SqlSemantics\Platform\MySql\Statement\Account\DropUser(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 17)))]);
+        $modern = new \SqlSemantics\Platform\MySql\Statement\Account\DropUser(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name('u'), new Name(str_repeat('h', 61)))]);
+
+        self::assertSame(\SqlSemantics\Contract\GrammarRelease::MySql5744, $profiles->select($legacy)->grammar);
+        self::assertSame(\SqlSemantics\Contract\GrammarRelease::MySql8044, $profiles->select($modern)->grammar);
+    }
+
+    /**
      * @return iterable<string, array{string, int}>
      */
     public static function providerRepairedModels(): iterable

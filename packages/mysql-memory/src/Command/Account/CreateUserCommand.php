@@ -144,7 +144,7 @@ final class CreateUserCommand implements Command
             throw new SqlError($first->error, $first->getMessage(), $first, recorded: true);
         }
         if ($failed !== []) {
-            throw AccountError::CannotUser->error('CREATE USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
+            throw (new Names($session->settings()->release()))->failure('CREATE USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
 
         return array_values($created);
@@ -210,7 +210,7 @@ final class CreateUserCommand implements Command
             throw new SqlError($refusal->error, $refusal->getMessage(), $refusal, [[AccountError::CannotUser->value, AccountError::CannotUser->message('CREATE USER', $listed)]], null, null, true);
         }
         if ($failed !== []) {
-            throw AccountError::CannotUser->error('CREATE USER', implode(',', array_map($quoted, $failed)));
+            throw (new Names($session->settings()->release()))->failure('CREATE USER', implode(',', array_map($quoted, $failed)));
         }
 
         return new Completion(0, 0, $context->diagnostics->raised());
@@ -261,7 +261,7 @@ final class CreateUserCommand implements Command
             $password = $user->identification === null ? null : $options->identify($account, $user->identification, false, (int) $session->variables->read('generated_random_password_length'));
             $options->apply($account, $statement->tls, $statement->resources, $statement->options, $statement->comment);
             $accounts->add($account);
-            (new Names())->ascii($identity, 8, $context->diagnostics);
+            (new Names($session->settings()->release()))->ascii($identity, 8, $context->diagnostics);
             foreach ($defaults as $role) {
                 $accounts->grant($role, $identity, false);
                 $accounts->defaults[$identity->key()][$role->key()] = $role;
@@ -288,7 +288,7 @@ final class CreateUserCommand implements Command
         $created = [];
         foreach ($roles as $role) {
             if ($role->user === '') {
-                throw AccountError::CannotUser->error('CREATE ROLE', 'anonymous user');
+                throw (new Names($session->settings()->release()))->failure('CREATE ROLE', 'anonymous user');
             }
             (new Names())->ascii($role, 1, $context->diagnostics);
             if ($accounts->find($role) !== null || isset($created[$role->key()])) {
@@ -298,7 +298,7 @@ final class CreateUserCommand implements Command
             $created[$role->key()] = $role;
         }
         if ($failed !== [] && !$ifNotExists) {
-            throw AccountError::CannotUser->error('CREATE ROLE', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
+            throw (new Names($session->settings()->release()))->failure('CREATE ROLE', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
         foreach ($failed as $identity) {
             $context->diagnostics->note(AccountError::UserAlreadyExists, AccountError::UserAlreadyExists->message($identity->quoted()));

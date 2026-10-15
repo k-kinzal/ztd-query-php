@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 
@@ -199,6 +198,7 @@ final class PrivilegeRule
      * Lowers one role_or_privilege or object_privilege.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a role name exceeds the language's account limits
      */
     public function item(Node $item, bool $roles): Grantable
     {
@@ -219,8 +219,8 @@ final class PrivilegeRule
         $names = $this->lowering->names;
 
         return match ($form->signature) {
-            'role_or_privilege: role_ident_or_text @ ident_or_text' => new GrantedRole($this->lowering->leaves->record(new AccountName($names->identifier($form->node(0)), $names->identifier($form->node(2))))),
-            'role_or_privilege: role_ident_or_text opt_column_list' => $this->named($names->identifier($form->node(0)), $this->columns($form->node(1)), $roles),
+            'role_or_privilege: role_ident_or_text @ ident_or_text' => new GrantedRole($this->lowering->leaves->record($this->lowering->users->named($names->identifier($form->node(0)), $names->identifier($form->node(2)), $form->node))),
+            'role_or_privilege: role_ident_or_text opt_column_list' => $this->named($names->identifier($form->node(0)), $this->columns($form->node(1)), $roles, $form->node),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -230,9 +230,9 @@ final class PrivilegeRule
      *
      * @param list<Name> $columns
      */
-    public function named(Name $name, array $columns, bool $roles): Grantable
+    public function named(Name $name, array $columns, bool $roles, ?Node $source = null): Grantable
     {
-        return $roles && $columns === [] ? new GrantedRole($this->lowering->leaves->record(new AccountName($name))) : new DynamicPrivilege($name, $columns);
+        return $roles && $columns === [] ? new GrantedRole($this->lowering->leaves->record($this->lowering->users->named($name, null, $source))) : new DynamicPrivilege($name, $columns);
     }
 
     /**

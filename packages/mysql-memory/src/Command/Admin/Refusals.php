@@ -62,7 +62,7 @@ final class Refusals
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair => $diagnostic->identical ? \MySqlMemory\Error\Family\AccountError::FactorIdentical->error() : \MySqlMemory\Error\Family\AccountError::FactorOrder->error(2, 3),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure => $diagnostic->limit === null ? new SqlError(StatementError::UnknownError, "Malformed hostname (illegal symbol: '@')") : DataError::WrongStringLength->error((new \MySqlMemory\Command\Account\Names())->cut($diagnostic->operand), $diagnostic->host ? 'host name' : 'user name', $diagnostic->limit),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure => (new \MySqlMemory\Command\Account\Names($legacy ? \SqlSemantics\Contract\GrammarRelease::MySql5651 : \SqlSemantics\Contract\GrammarRelease::MySql847))->refusal($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong => SchemaError::TooLongIdentifier->error(\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName::decoded($diagnostic->name)),
             $diagnostic instanceof StorageProblem => match ($diagnostic->rule) {
                 StorageRule::RepeatedOption => SchemaError::FilegroupOptionOnlyOnce->error($diagnostic->option === 'ENGINE' ? 'STORAGE ENGINE' : $diagnostic->option),

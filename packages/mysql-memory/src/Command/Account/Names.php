@@ -85,11 +85,7 @@ final class Names
      */
     public function limits(): array
     {
-        return match (true) {
-            $this->release === GrammarRelease::MySql5651 => [16, 60],
-            $this->release === GrammarRelease::MySql5744 => [32, 60],
-            default => [32, 255],
-        };
+        return (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->limits($this->release);
     }
 
     /**
@@ -108,20 +104,22 @@ final class Names
             if (!$name instanceof AccountName) {
                 continue;
             }
-            $original = $this->release === GrammarRelease::MySql5651 && $name->host !== null;
-            $user = $original ? $name->user->value : $name->username();
-            [$users, $hosts] = $this->limits();
-            if (mb_strlen($user, 'UTF-8') > $users) {
-                throw DataError::WrongStringLength->error($this->cut($user), 'user name', $users);
-            }
-            $host = ($original ? $name->host->value : $name->hostname()) ?? '%';
-            if (strlen($host) > $hosts) {
-                throw DataError::WrongStringLength->error($this->cut($host), 'host name', $hosts);
-            }
-            if (str_contains($host, '@')) {
-                throw new SqlError(StatementError::UnknownError, "Malformed hostname (illegal symbol: '@')");
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($name->user, $name->host, $this->release);
+            if ($problem !== null) {
+                throw $this->refusal($problem);
             }
         }
+    }
+
+    /**
+     * Formats a typed account-name refusal from input lowering or profile interpretation.
+     */
+    public function refusal(\SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure $problem): SqlError
+    {
+        if ($problem->limit === null) {
+            return new SqlError(StatementError::UnknownError, "Malformed hostname (illegal symbol: '@')");
+        }
+        return DataError::WrongStringLength->error($this->cut($problem->operand), $problem->host ? 'host name' : 'user name', $problem->limit);
     }
 
     /**
@@ -132,9 +130,16 @@ final class Names
      */
     public function cut(string $name): string
     {
-        $cut = mb_strcut($name, 0, 70, 'UTF-8');
+        return (new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $name, 2)[0], 70, in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true));
+    }
 
-        return strlen($name) > 70 && strlen($cut) < 70 ? $cut . '?' : $cut;
+    /**
+     * Formats the bounded account list of ER_CANNOT_USER.
+     * Native observations retain at most 256 bytes of the displayed operand.
+     */
+    public function failure(string $operation, string $names): SqlError
+    {
+        return AccountError::CannotUser->error($operation, (new \MySqlMemory\Error\DiagnosticText())->bytes($names, 256, in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
     }
 
     /**
@@ -164,13 +169,14 @@ final class Names
     }
 
     /**
-     * Records the ER_TRUNCATED_WRONG_VALUE_FOR_FIELD warnings of a host with a character the grant tables cannot hold.
+     * Records the ER_TRUNCATED_WRONG_VALUE_FOR_FIELD warnings of a host with a character the modern grant tables cannot hold.
+     * MySQL 5.6 and 5.7 retain Unicode hosts without ASCII conversion warnings.
      *
      * @param int $tables The number of grant tables the statement writes or reads
      */
     public function ascii(Identity $identity, int $tables, Diagnostics $diagnostics): void
     {
-        if (preg_match('/[\x80-\xFF]/', $identity->host, $match, PREG_OFFSET_CAPTURE) !== 1) {
+        if (in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) || preg_match('/[\x80-\xFF]/', $identity->host, $match, PREG_OFFSET_CAPTURE) !== 1) {
             return;
         }
         $rest = substr($identity->host, $match[0][1]);

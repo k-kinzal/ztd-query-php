@@ -70,7 +70,7 @@ final class DropUserCommand implements Command
         }
         if ($missing !== [] && !$statement->ifExists) {
             $operation = $statement instanceof DropUser ? 'DROP USER' : 'DROP ROLE';
-            throw AccountError::CannotUser->error($operation, implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
+            throw (new Names($session->settings()->release()))->failure($operation, implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
         }
         foreach ($dropped as $identity) {
             $accounts->drop($identity);

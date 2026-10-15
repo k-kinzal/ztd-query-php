@@ -53,7 +53,7 @@ final class Profiles
                     return $profile;
                 }
                 $failure = $difference;
-            } catch (SourceException|AnalysisException $error) {
+            } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput $error) {
                 $failure = $error::class . ': ' . $error->getMessage();
             }
             $failures[] = $profile->grammar->value . '/' . $this->mode($profile) . ': ' . $failure;
