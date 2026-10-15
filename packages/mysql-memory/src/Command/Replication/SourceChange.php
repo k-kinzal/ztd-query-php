@@ -38,6 +38,7 @@ final class SourceChange
      */
     public function check(ChangeReplicationSource $statement, Session $session, Context $context): void
     {
+        (new SourceRepository())->open($session->instance->registry->replication);
         $options = [];
         foreach ($statement->options as $option) {
             $options[$option->kind->value] = $option;
@@ -58,11 +59,13 @@ final class SourceChange
                 throw AdministrationError::ReplicationUserMissing->error($channel, $identity->user, $identity->host);
             }
         }
+        (new SourceRepository())->update($options, $session->instance->registry->replication);
         $this->warnings($options, $session, $context);
         $compression = $options[SourceOptionKind::CompressionAlgorithms->value]->value ?? null;
         if ($compression instanceof Text) {
             $this->compression((new Literals())->bytes($compression), $channel);
         }
+        (new SourceRepository())->check($session->instance->registry->replication);
         $this->relay($options, $session);
         (new SourceSwitches())->apply($options, $session);
     }

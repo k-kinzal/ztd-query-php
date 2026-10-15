@@ -207,6 +207,9 @@ final class ReplicaCommand implements Command
                 throw AdministrationError::ReplicaChannelRunning->error('');
             }
             $registry->replication->reset($target->all);
+            if (!$legacy && !$target->all) {
+                (new SourceRepository())->check($registry->replication, true);
+            }
         }
     }
 

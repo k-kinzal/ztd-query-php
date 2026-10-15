@@ -59,11 +59,23 @@ final class Replication
     public bool $autoFailover = false;
 
     /**
+     * The unsigned connection port, including a value retained after repository storage fails.
+     */
+    public int $port = 3306;
+
+    /**
+     * Whether a failed reset prevents opening connection metadata for another change.
+     */
+    public bool $connectionFailure = false;
+
+    /**
      * Closes the repositories and retains the closed relay log until a change replaces it.
      */
     public function reset(bool $all = false): void
     {
         if ($all) {
+            $this->port = 3306;
+            $this->connectionFailure = false;
             $this->autoPosition = false;
             $this->requireRowFormat = false;
             $this->gtidOnly = false;

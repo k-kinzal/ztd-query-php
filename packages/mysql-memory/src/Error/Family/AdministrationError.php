@@ -32,6 +32,7 @@ enum AdministrationError: int implements ErrorCode
     case BinlogClosed = 1186;
     case UnknownSystemVariable = 1193;
     case ReplicaNotConfigured = 1200;
+    case ReplicaConnectionInitialization = 1201;
     case CommandFailed = 1220;
     case LocalVariable = 1228;
     case GlobalVariable = 1229;
@@ -57,6 +58,7 @@ enum AdministrationError: int implements ErrorCode
     case UnknownLocale = 1649;
     case SourceDelayOutOfRange = 1729;
     case BinlogEventRefused = 1730;
+    case ReplicationDataTooLong = 1742;
     case SqlThreadWithCredentials = 1763;
     case ReplicaNotInitialized = 1794;
     case ActiveLogNotPurged = 1868;

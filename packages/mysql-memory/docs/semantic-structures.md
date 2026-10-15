@@ -579,3 +579,11 @@ Their containing structure is rejected by its constructor. Compatible stored
 calls retain their state dependence: native transition tests reuse the identical
 call object before function creation, after creation and after removal, comparing
 complete outcomes while memory's session text contains unrelated invalid input.
+
+Replication connection settings survive a metadata write failure. Source ports
+are read as unsigned 64-bit magnitudes, narrowed to 32 bits, and preserve the old
+setting when the resulting port is zero. The TABLE repository rejects values
+above its signed range. A failed ordinary reset then prevents subsequent changes
+from opening the connection metadata; `RESET REPLICA ALL` clears that state.
+Native histories compare the leading error, following conditions, competing
+GTID/compression/relay errors and recovery on three modern releases.
