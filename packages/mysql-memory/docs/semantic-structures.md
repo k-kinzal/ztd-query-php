@@ -604,3 +604,19 @@ whole-model generation seeds. Native histories reuse each original request befor
 account creation, after creation and after removal; memory receives no SQL input
 for those requests. These repairs do not certify all generated SQL errors as
 state-dependent.
+
+Replication vocabulary notices now belong to semantic derivation. Statements,
+source options and each RESET target retain their own occurrence warning, including
+legacy options under a current-vocabulary header. A later UNTIL condition error
+therefore keeps the preceding notices. Execution no longer interprets those
+spellings to reconstruct warnings. Native checks compare 64 input histories across
+MySQL 8.0 through 8.3, including completed statements and input refusals.
+
+EXTRACT resolves its version-specific field width in SQL Semantics. Calendar
+units convert a typed TIME relative to the statement date; clock and composite
+day-clock units accept numeric and textual clock values, retaining date components
+only when the value represents a datetime. Week extraction uses Sunday-based
+week numbering. Direct comparisons exercise all 20 units with 13 operand forms
+on five releases, comparing 1,300 complete observations without submitting the
+rendered SQL to memory. Result-column widths remain available in the semantic
+facts rather than being inferred again by the consumer.
