@@ -23,6 +23,9 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\AutoextendSizeOption;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 
 /**
  * Identifies language features introduced in MySQL 8.0 or later.
@@ -61,6 +64,8 @@ final class ModernForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value === ElementaryKind::Vector, $value === TextOptionKind::EngineAttribute,
+            $value === TextOptionKind::SecondaryEngineAttribute, $value instanceof AutoextendSizeOption => true,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption => strtoupper($value->algorithm->value ?? '') === 'INSTANT',
             $value instanceof DerivedTable => $value->lateral || $value->columns !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,

@@ -37,6 +37,10 @@ use SqlSemantics\Statement\Snapshot;
  * @example Comparing with a scalar subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = (SELECT 1)');
  *     $query->statement->query->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery // => true
+ * @example Refusing an INTO destination after an expression subquery
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]);
+ *     $destination = new \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDumpfile(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('file'));
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement($query, into: $destination, intoPosition: \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition::AfterQuery)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ScalarSubquery implements Scalar
 {

@@ -135,6 +135,36 @@ final class ProfileTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerTimeCampaignModels(): iterable
+    {
+        yield 'legacy parameter with vector type' => [369];
+        yield 'hexadecimal key prefix' => [429];
+        yield 'legacy alter with engine attributes' => [513];
+        yield 'default collation with transactional create' => [675];
+        yield 'query destination inside scalar subquery' => [829];
+    }
+
+    /**
+     * Every accepted constructor result retains a language interpretation after retrying rejected combinations.
+     *
+     * @throws JsonException When a semantic inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    #[DataProvider('providerTimeCampaignModels')]
+    public function testSelectPreservesConstructorDomainsFromTheTimeCampaign(int $index): void
+    {
+        $catalogue = new \Fuzz\Structure\Catalogue();
+        $roots = $catalogue->roots();
+        $choices = new Choices('time-20261015:' . $index);
+        $choices->one($roots);
+        $node = (new \Fuzz\Structure\Construction($choices, $catalogue, new \Fuzz\Structure\Metadata()))->object($roots[$index % count($roots)], 6);
+        self::assertTrue($node instanceof \SqlSemantics\Platform\MySql\Statement\Statement || $node instanceof \SqlSemantics\Statement\Scalar);
+        self::assertSame('mysql', (new Profiles())->select($node)->grammar->database());
+    }
+
+    /**
      * @return iterable<string, array{string, string}>
      */
     public static function providerOperands(): iterable
