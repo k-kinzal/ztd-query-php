@@ -340,6 +340,8 @@ return [
     3067 => ['HY000', "Supplied filter list contains a value which is not in the required format 'db_pattern.table_pattern'"],
     3064 => ['HY000', 'Incorrect type for argument %s in function %s.'],
     3074 => ['HY000', "Replica channel '%s' does not exist."],
+    3076 => ['HY000', "Couldn't create channel: Channel name is either invalid or too long."],
+    3077 => ['HY000', 'To have multiple channels, repository cannot be of type FILE; Please check the repository configuration and convert them to TABLE.'],
     3081 => ['HY000', "This operation cannot be performed with running replication threads; run STOP REPLICA FOR CHANNEL '%s' first"],
     3084 => ['HY000', "Replication thread(s) for channel '%s' are already stopped."],
     3092 => ['HY000', 'The server is not configured properly to be an active member of the group. Please see more details on error log.'],

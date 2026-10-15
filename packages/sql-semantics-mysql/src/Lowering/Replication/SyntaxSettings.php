@@ -21,6 +21,21 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 final class SyntaxSettings
 {
     /**
+     * Retains system-string conversion before a later input or channel refusal.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion>
+     */
+    public function converted(Node $node, Lowering $lowering): array
+    {
+        if ($node->name !== 'TEXT_STRING_sys_nonewline') {
+            return [];
+        }
+        $notice = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->conversion($lowering->literals->text($node), $lowering->profile->grammar);
+
+        return $notice === null ? [] : [$notice];
+    }
+
+    /**
      * Returns the aborting condition of a completed index or newline-free text operand.
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure

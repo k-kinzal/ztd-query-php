@@ -1383,6 +1383,7 @@
         "text": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NameConversion": {
+        "legacy": "bool",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NoticePhase": {

@@ -22,6 +22,15 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 #[Medium]
 final class SyntaxSettingsTest extends TestCase
 {
+    public function testConvertedRetainsAChannelConversionBeforeALaterSyntaxError(): void
+    {
+        $sql = "CHANGE REPLICATION SOURCE TO SOURCE_LOG_POS=4 FOR CHANNEL '😀' trailing";
+        $release = GrammarRelease::MySql847;
+        $warnings = (new SyntaxWarnings())->completed(new MySqlParser($release->value), $sql, strlen($sql), new LanguageProfile($release));
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion(new \SqlSemantics\Statement\Identifier\Name('😀'))], array_column($warnings, 1));
+    }
+
     /**
      * @return iterable<string, array{GrammarRelease, string, list<ParseFailure>}>
      */

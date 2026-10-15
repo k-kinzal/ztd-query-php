@@ -143,6 +143,10 @@ final class SourceSettings
      */
     public function lineFeed(Derivation $derivation, ?Text $value): void
     {
+        $conversion = $value === null ? null : (new ChannelName())->conversion($value, $derivation->context->profile->grammar);
+        if ($conversion !== null) {
+            $derivation->warn($conversion, $value);
+        }
         $problem = (new ChannelName())->problem($value);
         if ($problem !== null) {
             $derivation->report($problem);

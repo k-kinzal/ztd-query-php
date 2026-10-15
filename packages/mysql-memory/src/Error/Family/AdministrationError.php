@@ -65,6 +65,8 @@ enum AdministrationError: int implements ErrorCode
     case UserLockWrongName = 3057;
     case WildTableFilterPattern = 3067;
     case ReplicaChannelMissing = 3074;
+    case InvalidReplicaChannel = 3076;
+    case ReplicaChannelRepository = 3077;
     case ReplicaChannelRunning = 3081;
     case ReplicaThreadsStopped = 3084;
     case GroupReplicationNotConfigured = 3092;

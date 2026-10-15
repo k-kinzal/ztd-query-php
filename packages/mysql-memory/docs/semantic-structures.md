@@ -455,3 +455,14 @@ and inside an active handler. Native comparisons distinguish an undefined name,
 an inactive handler and the explicitly signalled SQLSTATE. A handled SIGNAL also
 invalidates stale diagnostics across the routine boundary without removing notices
 raised for the current routine load.
+
+Replication channel lookup converts supplementary Unicode characters to the
+system character set and terminates names at NUL. The semantic conversion warning
+retains the full decoded operand and the release-specific message. Completed input
+also retains the warning before a later syntax refusal. Channel creation counts
+characters rather than bytes, checks FILE repository restrictions before the
+64-character limit, and preserves earlier heartbeat notices. Native comparisons
+include ASCII, two-, three- and four-byte characters and both MySQL 5.7 repository
+modes. The channel-size error is evaluated when the command runs: MySQL accepts a
+procedure containing that command and raises the error when it is called. This
+regression does not close the broader construction or named-channel history gates.

@@ -47,6 +47,7 @@ final class SourceChange
         if ($heartbeat instanceof NumberLiteral) {
             $this->heartbeat((float) $heartbeat->text, $session, $context);
         }
+        $this->channel($channel, $session);
         $this->gtids($options, $session);
         (new SourceSwitches())->check($options, $session, $channel);
         $session->instance->registry->replication->initialized = true;
@@ -85,6 +86,22 @@ final class SourceChange
         if ($file === null && !isset($options[SourceOptionKind::RelayLogPosition->value]) && !$replication->applying) {
             $replication->closed = false;
             $replication->missing = false;
+        }
+    }
+
+    /**
+     * Validates a new channel after heartbeat notices and before GTID or credential checks.
+     * Named channels require TABLE repositories; names contain at most 64 characters.
+     *
+     * @throws \MySqlMemory\Error\SqlError When repository settings or the name prevent creation
+     */
+    public function channel(string $channel, Session $session): void
+    {
+        if ($channel !== '' && in_array('FILE', [$session->variables->read('master_info_repository'), $session->variables->read('relay_log_info_repository')], true)) {
+            throw AdministrationError::ReplicaChannelRepository->error();
+        }
+        if (mb_strlen($channel, 'UTF-8') > 64) {
+            throw AdministrationError::InvalidReplicaChannel->error();
         }
     }
 

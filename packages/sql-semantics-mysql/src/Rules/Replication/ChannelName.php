@@ -45,6 +45,18 @@ final class ChannelName
      */
     public function value(Text $channel): string
     {
-        return explode("\0", $channel->value, 2)[0];
+        $converted = preg_replace('/[\xF0-\xF4][\x80-\xBF]{3}/', '?', $channel->value) ?? $channel->value;
+
+        return explode("\0", $converted, 2)[0];
+    }
+
+    /**
+     * Describes supplementary Unicode conversion into the system character set.
+     */
+    public function conversion(Text $channel, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion
+    {
+        return preg_match('/[\xF0-\xF4][\x80-\xBF]{3}/', $channel->value) === 1
+            ? new \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion(new \SqlSemantics\Statement\Identifier\Name($channel->value), in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true))
+            : null;
     }
 }

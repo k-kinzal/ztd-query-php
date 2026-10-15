@@ -27,4 +27,9 @@ final class NameConversionTest extends TestCase
         self::assertSame("Cannot convert string 'ab\\xF0\\x9F\\x98\\x80...' from utf8mb4 to utf8mb3", $warning->message());
         self::assertSame($name, $warning->name);
     }
+
+    public function testMessageUsesTheLegacyCharacterStringDiagnostic(): void
+    {
+        self::assertSame("Invalid utf8mb4 character string: '\\xF0\\x9F\\x98\\x80'", (new NameConversion(new Name('😀'), true))->message());
+    }
 }

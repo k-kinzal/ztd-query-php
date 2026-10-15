@@ -24,8 +24,9 @@ final class NameConversion implements Warning
 
     /**
      * @param Name $name The decoded identifier before character conversion
+     * @param bool $legacy Whether the release reports an invalid character string instead of naming the conversion
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, public readonly bool $legacy = false)
     {
     }
 
@@ -47,6 +48,8 @@ final class NameConversion implements Warning
             $excerpt .= ord($byte) >= 32 && ord($byte) <= 126 ? $byte : '\\x' . strtoupper(bin2hex($byte));
         }
 
-        return "Cannot convert string '" . $excerpt . (strlen($this->name->value) > 6 ? '...' : '') . "' from utf8mb4 to utf8mb3";
+        $excerpt .= strlen($this->name->value) > 6 ? '...' : '';
+
+        return $this->legacy ? "Invalid utf8mb4 character string: '" . $excerpt . "'" : "Cannot convert string '" . $excerpt . "' from utf8mb4 to utf8mb3";
     }
 }

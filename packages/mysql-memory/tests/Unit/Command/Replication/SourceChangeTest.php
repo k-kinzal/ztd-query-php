@@ -15,6 +15,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class SourceChangeTest extends TestCase
 {
+    public function testChannelRejectsOverlongChannelsBeforeGtidChecksWithoutInitializingState(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("CHANGE REPLICATION SOURCE TO SOURCE_AUTO_POSITION=1 FOR CHANNEL '" . str_repeat('猫', 65) . "'");
+
+        self::assertSame([['Error', 3076, "Couldn't create channel: Channel name is either invalid or too long."]], $session->diagnostics->conditions);
+        self::assertFalse($session->instance->registry->replication->initialized);
+    }
+
     public function testCheckRequiresAnExistingPrivilegeChecksUser(): void
     {
         $session = (new Instance())->connect();

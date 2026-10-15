@@ -18,6 +18,20 @@ use SqlSemantics\Statement\Node;
 #[Small]
 final class ChannelNameTest extends TestCase
 {
+    public function testConversionRetainsTheFullOperandAndUsesTheReleaseMessage(): void
+    {
+        $text = new Text('ab😀cd');
+        $domain = new ChannelName();
+        $modern = $domain->conversion($text, \SqlSemantics\Contract\GrammarRelease::MySql847);
+        $legacy = $domain->conversion($text, \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertSame('ab?cd', $domain->value($text));
+        self::assertSame($text->value, $modern?->name->value);
+        self::assertSame("Cannot convert string 'ab\\xF0\\x9F\\x98\\x80...' from utf8mb4 to utf8mb3", $modern->message());
+        self::assertSame("Invalid utf8mb4 character string: 'ab\\xF0\\x9F\\x98\\x80...'", $legacy?->message());
+        self::assertNull($domain->conversion(new Text('猫'), \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     /**
      * @return iterable<string, array{Closure(Text): Node}>
      */
