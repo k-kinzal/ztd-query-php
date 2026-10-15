@@ -154,7 +154,7 @@ final class AlterTableCommandTest extends TestCase
     public function testReadRefusesAParserThatIsNotInstalledFirst(): void
     {
         $session = (new Instance())->connect();
-        $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t (a DESC) WITH PARSER zz ALGORITHM = bogus');
+        $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t (a DESC) WITH PARSER zz ALGORITHM = DEFAULT');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateIndex::class, $statement);
 
