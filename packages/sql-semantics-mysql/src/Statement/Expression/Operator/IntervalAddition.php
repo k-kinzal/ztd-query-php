@@ -35,6 +35,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * Status: Implemented.
  *
  * @visibility public
+ * @example Refusing the ambiguous unmarked row immediately after INTERVAL
+ *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval($row, \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Day), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Adding an interval written first
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE INTERVAL 1 DAY + DATE '2024-01-31'");
  *     $query->facts->scalar($query->statement->query->where)->type->descriptor->name() // => 'DATE'
@@ -49,6 +52,7 @@ final class IntervalAddition implements Scalar
      */
     public function __construct(public readonly Interval $interval, public readonly Scalar $operand)
     {
+        Check::input(!$interval->quantity instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Row || $interval->quantity->keyword === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written, 'A row immediately after a leading INTERVAL needs the ROW keyword or an explicit grouping.');
         Check::input((new Precedence())->opening($operand) >= Precedence::NEGATION, 'The operand of a leading interval needs a grouping to keep its place.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

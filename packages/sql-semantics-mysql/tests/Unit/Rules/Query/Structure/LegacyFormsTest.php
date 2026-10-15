@@ -39,6 +39,7 @@ final class LegacyFormsTest extends TestCase
     {
         $forms = new LegacyForms();
 
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(new \SqlSemantics\Statement\Identifier\Name('d'))));
         self::assertTrue($forms->requires(SelectOption::Cache));
         self::assertTrue($forms->requires(\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Redo));
         self::assertTrue($forms->requires(ExplainModifier::Partitions));

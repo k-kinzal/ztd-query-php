@@ -108,6 +108,33 @@ final class ProfileTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{class-string, int}>
+     */
+    public static function providerIntervalAndUpgradeModels(): iterable
+    {
+        yield 'legacy database upgrade in a modern request' => [\SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree::class, 483];
+        yield 'unmarked row in a leading interval' => [\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat::class, 519];
+    }
+
+    /**
+     * Constructor rejection excludes impossible syntax composition before profile selection.
+     *
+     * @param class-string $class The selected root type
+     * @throws JsonException When a semantic inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    #[DataProvider('providerIntervalAndUpgradeModels')]
+    public function testSelectPreservesIntervalAndUpgradeComposition(string $class, int $index): void
+    {
+        $catalogue = new \Fuzz\Structure\Catalogue();
+        $choices = new Choices('alter-20261015:' . $index);
+        $choices->one($catalogue->roots());
+        $node = (new \Fuzz\Structure\Construction($choices, $catalogue, new \Fuzz\Structure\Metadata()))->object($class, 6);
+        self::assertTrue($node instanceof \SqlSemantics\Platform\MySql\Statement\Statement || $node instanceof \SqlSemantics\Statement\Scalar);
+        self::assertSame('mysql', (new Profiles())->select($node)->grammar->database());
+    }
+
+    /**
      * @return iterable<string, array{string, string}>
      */
     public static function providerOperands(): iterable
