@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
@@ -45,7 +44,7 @@ use SqlSemantics\Statement\Scalar;
  * usage of DEFAULT and generated column"; sql/parse_tree_column_attrs.h
  * `PT_default_column_attr::do_contextualize` and its siblings,
  * `PT_generated_field_def_base`); 5.7 has no grammar for them. Constructs: OrdinaryColumn,
- * GeneratedColumn, ParseGeneratedColumn. Terminates: lists are flattened
+ * GeneratedColumn. Terminates: lists are flattened
  * iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html. Status: Implemented.
@@ -220,17 +219,18 @@ final class ColumnRule
     }
 
     /**
-     * Lowers the internal 5.7 statement PARSE_GCOL_EXPR: a node of `parse_gcol_expr`.
+     * Refuses the internal 5.7 PARSE_GCOL_EXPR entry before publishing a statement.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the internal entry is submitted as SQL
      */
-    public function parse(Node $statement): ParseGeneratedColumn
+    public function parse(Node $statement): never
     {
         $form = $this->lowering->productions->form($statement);
         if ($form->signature !== 'parse_gcol_expr: PARSE_GCOL_EXPR_SYM ( generated_column_func )') {
             throw ImplementationGap::production($form);
         }
 
-        return new ParseGeneratedColumn($this->expression($form->node(2)));
+        throw (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->generated($statement) ?? ImplementationGap::production($form);
     }
 }

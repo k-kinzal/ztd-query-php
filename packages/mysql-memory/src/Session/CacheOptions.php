@@ -62,8 +62,8 @@ final class CacheOptions
         $cause = $this->cause($error);
         try {
             $tokens = $session->semantics()->parser()->tokenize($statement);
-        } catch (LexicalException) {
-            return $error;
+        } catch (LexicalException $lexical) {
+            return $this->condition($error, $statement, $session, $lexical->offset) ?? $error;
         }
         $target = $this->prefix($tokens, $statement, $cause, $session);
         if ($target !== null) {

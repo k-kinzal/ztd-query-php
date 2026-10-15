@@ -2869,9 +2869,6 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\UnionOption": {
         "tables": "array"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\ParseGeneratedColumn": {
-        "expression": "SqlSemantics\\Statement\\Scalar"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -3120,6 +3117,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\UseDatabase": {
         "database": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\GeneratedColumnEntry": {
+        "offset": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\ProgramVariable": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"

@@ -24,6 +24,17 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class SyntaxNamesTest extends TestCase
 {
+    public function testCompletedRetainsLegacyLeadingDotWarnings(): void
+    {
+        $platform = new Platform();
+        $profile = new LanguageProfile(GrammarRelease::MySql5744);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('SELECT .t.a FROM .t');
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotColumn, (new SyntaxNames())->completed($tree->find('simple_ident_q')[0], $lowering));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable, (new SyntaxNames())->completed($tree->find('table_ident')[0], $lowering));
+    }
+
     /**
      * @return iterable<string, array{string, string, ParseFailure|null}>
      */

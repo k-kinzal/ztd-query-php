@@ -6,6 +6,7 @@ namespace MySqlMemory\Session\Parse\Entry;
 
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
+use RuntimeException;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -27,6 +28,7 @@ final class InputErrors
         return match (true) {
             $diagnostic instanceof RefusedSourceNumber => (new SourceNumberInput())->error($diagnostic, $session->text),
             $diagnostic instanceof RoleOrPrivilegeMismatch => (new RoleInput())->error($diagnostic, $session->text),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry => (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($diagnostic->offset, $session->text, $session->following, new RuntimeException($diagnostic->message()), true, $session->semantics()->parser()),
             default => null,
         };
     }

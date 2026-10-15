@@ -19,6 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
  *
  * MySQL 5.6 and 5.7 refuse a leading PARTITION before inspecting its body.
  * The refusal retains only its typed reason and the keyword's end offset.
+ * MySQL 5.7 refuses PARSE_GCOL_EXPR after its operands complete, retaining
+ * the keyword offset separately from that completion boundary.
  * Observed on native 5.6.51 and 5.7.44 servers.
  *
  * @visibility public
@@ -29,6 +31,19 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
  */
 final class ClientEntry
 {
+    /**
+     * Refuses a completed internal generated-column entry after its operands were read.
+     */
+    public function generated(Node $node): ?RejectedInput
+    {
+        if ($node->name !== 'parse_gcol_expr') {
+            return null;
+        }
+        $tokens = $node->tokens();
+
+        return new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry($tokens[0]->offset), $tokens[count($tokens) - 1]->end());
+    }
+
     /**
      * Answers the refusal attached to the first token, independently of later operands.
      */

@@ -27,6 +27,10 @@ final class CompletedNotice
      */
     public function of(Node $node, Lowering $lowering, ReductionParser $parser, string $statement): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
     {
+        $entry = (new ClientEntry())->generated($node);
+        if ($entry !== null) {
+            return new ParseFailure($entry->problem, true);
+        }
         $replication = new Replication\SyntaxDeprecations();
         return (new Account\SyntaxRoles())->deprecation($node, $lowering->profile->grammar) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering) ?? (new Account\SyntaxFactors())->completed($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
     }

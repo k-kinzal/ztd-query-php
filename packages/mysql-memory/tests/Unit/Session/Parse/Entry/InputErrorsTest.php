@@ -19,6 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testErrorLocatesACompletedInternalEntry(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->text = "/* prefix */\nPARSE_GCOL_EXPR(missing)";
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry(13);
+
+        self::assertStringContainsString("near 'PARSE_GCOL_EXPR(missing)' at line 2", (new InputErrors())->error($problem, $session)?->getMessage() ?? '');
+    }
+
     public function testErrorFormatsARefusedSourceNumber(): void
     {
         $session = (new Instance())->connect();

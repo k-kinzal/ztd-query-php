@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Statement;
-use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operation;
@@ -32,7 +31,6 @@ final class InternalCommandTest extends TestCase
      */
     public static function providerStatements(): iterable
     {
-        yield 'generated column' => [new ParseGeneratedColumn(new ColumnUse(new Name('missing'))), '5.7.44', "near 'PARSE_GCOL_EXPR(missing)' at line 1"];
         yield 'debug tree' => [new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new ColumnUse(new Name('missing')))]))), '8.4.7', "near 'PARSE_TREE SELECT missing' at line 1"];
     }
 

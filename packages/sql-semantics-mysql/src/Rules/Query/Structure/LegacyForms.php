@@ -28,7 +28,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceAccess;
-use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
 
 /**
@@ -43,7 +42,7 @@ final class LegacyForms
      */
     public function requires(object $value): bool
     {
-        return in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, ParseGeneratedColumn::class, AlterTablespaceAccess::class, ResetQueryCache::class, \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning::class], true)
+        return in_array($value::class, [ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, AlterTablespaceAccess::class, ResetQueryCache::class, \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning::class], true)
             || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Redo, SelectOption::Cache, KeywordFunction::Password, KeywordFunction::OldPassword, PasswordFunction::Password, PasswordFunction::OldPassword, AliasMark::Equals], true)
             || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)
             || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)

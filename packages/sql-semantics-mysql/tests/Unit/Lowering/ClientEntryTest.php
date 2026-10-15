@@ -18,6 +18,20 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
 #[Medium]
 final class ClientEntryTest extends TestCase
 {
+    public function testGeneratedKeepsOnlyTheCompletedEntryPositions(): void
+    {
+        $parser = new MySqlParser('mysql-5.7.44');
+        $sql = '/* prefix */ PARSE_GCOL_EXPR(missing)';
+        $failure = (new ClientEntry())->generated($parser->parse($sql)->find('parse_gcol_expr')[0]);
+
+        self::assertNotNull($failure);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry::class, $failure->problem);
+        self::assertSame(13, $failure->problem->offset);
+        self::assertSame(strlen($sql), $failure->end);
+        self::assertTrue($failure->aborts);
+        self::assertNull((new ClientEntry())->generated($parser->parse('SELECT 1')));
+    }
+
     /**
      * @return iterable<string, array{GrammarRelease}>
      */

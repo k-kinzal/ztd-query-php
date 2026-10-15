@@ -19,6 +19,26 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class SessionTest extends TestCase
 {
+    public function testAnalyzeRestoresTheEnclosingInputAfterResolution(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'enclosing input';
+        $operation = $session->analyze('SELECT 1');
+
+        self::assertSame('SELECT 1', $operation->toString());
+        self::assertSame('enclosing input', $session->text);
+    }
+
+    public function testRunQuotesThePreparedInputWhenItsInternalEntryIsRefused(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $replies = $session->run("PREPARE p FROM 'PARSE_GCOL_EXPR(1)'");
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertStringEndsWith("near 'PARSE_GCOL_EXPR(1)' at line 1", $replies[0]->getMessage());
+        self::assertSame("PREPARE p FROM 'PARSE_GCOL_EXPR(1)'", $session->text);
+    }
+
     public function testExecuteAllocatesOneNumberForEachPreparedExecution(): void
     {
         $session = (new Instance())->connect();

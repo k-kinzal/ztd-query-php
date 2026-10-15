@@ -61,18 +61,6 @@ final class Syntax
     }
 
     /**
-     * Refuses PARSE_GCOL_EXPR, which the 5.7 grammar holds for the server to read generated columns with, as a syntax error at its start when a client sends it (verified on a live 5.7.44 server).
-     *
-     * @throws SqlError When the statement is PARSE_GCOL_EXPR
-     */
-    public function internal(\SqlSemantics\Statement\Statement $statement, string $text): void
-    {
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn) {
-            throw new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(ltrim($text), 0, 80, 'UTF-8'), 1));
-        }
-    }
-
-    /**
      * Refuses a subquery in the moment of PURGE BINARY LOGS BEFORE, which MySQL 5.6 and 5.7 take no subquery in, as a syntax error: 5.7 near the text right after the parenthesis that opens the first subquery, 5.6 near its SELECT, or near the parenthesis after EXISTS, ALL, ANY or SOME (verified on live 5.6.51 and 5.7.44 servers).
      *
      * @throws SqlError When the moment holds a subquery

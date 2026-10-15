@@ -41,7 +41,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
@@ -121,7 +120,6 @@ final class GenerationsTest extends TestCase
     {
         yield 'upgrade partitioning with check enforcement' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new QualifiedName(new Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning(), new \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConstraintEnforcement(\SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::Check, new Name('c'), false)])];
 
-        yield 'spatial collection in generated column entry' => [static fn (): Node => new ParseGeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect, [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]))];
         yield 'resource group in cache query' => [static fn (): Node => new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))], hints: [new \SqlSemantics\Platform\MySql\Statement\Hint\Form\ResourceGroupHint('batch')])];
         yield 'direction in qualify grouping' => [static fn (): Node => new Select([], [new SelectExpression(new NumberLiteral('1'))], groupBy: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping([new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new NumberLiteral('2.5'), \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending)]), qualify: new NumberLiteral('3'))];
         yield 'legacy hash in additional factor' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Account\CreateUser(false, [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name('u')), new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Password, new Text('pw')), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash, new Text('hash'))])])];
@@ -130,7 +128,6 @@ final class GenerationsTest extends TestCase
         yield 'password list item with system keyword' => [static fn (): Node => new SetVariables([new PasswordAssignment(new Password(new Text('pw'))), new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment(new \SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget(new Name('time_zone')), \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::System)])];
         yield 'cache with repeated locks' => [static fn (): Node => new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))], locking: [new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Update), new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Update)])];
         yield 'legacy grant options with grant as' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name('user')))], new \SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement(\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind::X509), as: new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name('grantor'))))];
-        yield 'generated column and modern table' => [static fn (): Node => new ParseGeneratedColumn(new ScalarSubquery(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])))];
         yield 'weight levels in a modern row' => [static fn (): Node => new ValuesQuery([new ValueRow([new WeightString(new NumberLiteral('1'), levels: [new WeightLevel(new Numeral('1'))])])])];
         yield 'query cache with binary logs reset' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset([new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current), new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache()])];
         yield 'query cache with replica reset' => [static fn (): Node => new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset([new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current), new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache()])];
@@ -291,12 +288,6 @@ final class GenerationsTest extends TestCase
     {
         $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
         new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))])), collation: new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null), ifNotExists: true);
-    }
-
-    public function testCheckRejectsMemberOfInALegacyGeneratedColumn(): void
-    {
-        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
-        new ParseGeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf(new NumberLiteral('1'), new StringLiteral(['[]'])));
     }
 
     public function testCheckRejectsDefaultCharsetWithModernDatabaseOptions(): void

@@ -36,7 +36,6 @@ final class Dispatcher
      */
     public const COMMANDS = [
         MySql\QueryRoot::class => QueryCommand::class,
-        MySql\Table\ParseGeneratedColumn::class => InternalCommand::class,
         MySql\Utility\Show\ShowParseTree::class => InternalCommand::class,
         MySql\Server\Instance\Kill::class => Admin\KillCommand::class,
         MySql\Server\Instance\CloneLocal::class => Admin\InstanceCommand::class,

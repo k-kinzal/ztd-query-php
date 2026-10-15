@@ -11,19 +11,18 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
-use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Statement;
 
 /**
- * Refuses internal and debug-only structures at the ordinary client boundary.
+ * Refuses debug-only structures on the emulated release build.
  *
  * Direct construction has no original SQL text. Its diagnostic quotes the
  * canonical rendering of the semantic structure; rendering only supplies
  * observable error text and is never parsed to choose behavior. The SQL input
  * path retains its earlier rejection and quotes the client's exact spelling.
- * Verified on MySQL 5.7.44 and 8.4.7 release builds.
+ * Verified on a MySQL 8.4.7 release build.
  *
  * @visibility MySqlMemory
  */
@@ -32,7 +31,7 @@ final class InternalCommand implements Command
     /**
      * @var list<class-string<Statement>> The structures rejected before their operands are evaluated
      */
-    public const STATEMENTS = [ParseGeneratedColumn::class, ShowParseTree::class];
+    public const STATEMENTS = [ShowParseTree::class];
 
     /**
      * Answers true.
@@ -71,10 +70,8 @@ final class InternalCommand implements Command
     public function error(Operation $operation): SqlError
     {
         $this->operands($operation);
-        $statement = $operation->statement;
-        assert($statement instanceof ParseGeneratedColumn || $statement instanceof ShowParseTree);
         $text = $operation->toString();
-        $near = mb_strcut($statement instanceof ShowParseTree ? substr($text, 5) : $text, 0, 80, 'UTF-8');
+        $near = mb_strcut(substr($text, 5), 0, 80, 'UTF-8');
 
         return new SqlError(StatementError::ParseError, StatementError::ParseError->message($near, 1));
     }

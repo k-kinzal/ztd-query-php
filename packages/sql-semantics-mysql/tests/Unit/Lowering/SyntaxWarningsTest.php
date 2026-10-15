@@ -23,6 +23,14 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class SyntaxWarningsTest extends TestCase
 {
+    public function testCompletedKeepsAnInternalEntryBeforeALaterLexicalFailure(): void
+    {
+        $sql = "PARSE_GCOL_EXPR((SELECT a FROM .t)) 'unclosed";
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-5.7.44'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql5744));
+
+        self::assertEquals([Deprecated::DotTable, new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry(0), true)], array_column($notices, 1));
+    }
+
     /**
      * @return iterable<string, array{string, string}>
      */

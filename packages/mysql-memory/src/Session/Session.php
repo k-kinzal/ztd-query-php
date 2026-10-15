@@ -321,37 +321,42 @@ final class Session
      */
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): Operation
     {
-        $semantics = $this->semantics();
-        $this->instance->dictionary->temporaries = $this->temporaries;
-        $this->dots = [];
-        $reader = new Parse\Reader();
-        $tree = $reader->read($statement, $prepared, $this);
-        $database = $this->variables->database;
-        \MySqlMemory\Session\Resolution\Views::refreshAll($this->instance->dictionary, $this->settings());
-        $typing = (new \MySqlMemory\Hint\Hints())->typing($tree, $statement, $this);
+        $previousText = $this->text;
+        $this->text = $statement;
         try {
-            $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($reader->bound($tree, $parameters, $prepared, $this))));
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            throw $reader->rejection($failure, $statement, $this);
-        } catch (ImplementationGap $gap) {
-            throw new SqlError(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message($gap->getMessage()), $gap);
-        } catch (AnalysisException $error) {
-            throw $reader->refusal($tree, $error, $statement, $database, $this);
-        } finally {
-            $typing->restore($this);
-        }
-        try {
-            (new Syntax())->debugOnly($tree, $statement);
-        } catch (SqlError $error) {
-            throw (new Parse\DebugRequest())->refusal($operation, $error, $this);
-        }
-        (new Syntax())->internal($operation->statement, $statement);
-        (new Syntax())->purged($tree, $operation->statement, $statement, $this->settings()->release());
-        if ((new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
-            (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $this);
-        }
+            $semantics = $this->semantics();
+            $this->instance->dictionary->temporaries = $this->temporaries;
+            $this->dots = [];
+            $reader = new Parse\Reader();
+            $tree = $reader->read($statement, $prepared, $this);
+            $database = $this->variables->database;
+            \MySqlMemory\Session\Resolution\Views::refreshAll($this->instance->dictionary, $this->settings());
+            $typing = (new \MySqlMemory\Hint\Hints())->typing($tree, $statement, $this);
+            try {
+                $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($reader->bound($tree, $parameters, $prepared, $this))));
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                throw $reader->rejection($failure, $statement, $this);
+            } catch (ImplementationGap $gap) {
+                throw new SqlError(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message($gap->getMessage()), $gap);
+            } catch (AnalysisException $error) {
+                throw $reader->refusal($tree, $error, $statement, $database, $this);
+            } finally {
+                $typing->restore($this);
+            }
+            try {
+                (new Syntax())->debugOnly($tree, $statement);
+            } catch (SqlError $error) {
+                throw (new Parse\DebugRequest())->refusal($operation, $error, $this);
+            }
+            (new Syntax())->purged($tree, $operation->statement, $statement, $this->settings()->release());
+            if ((new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
+                (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $this);
+            }
 
-        return $operation;
+            return $operation;
+        } finally {
+            $this->text = $previousText;
+        }
     }
 
     /**

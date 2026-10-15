@@ -127,13 +127,16 @@ final class ColumnRuleTest extends TestCase
         self::assertInstanceOf(NumberLiteral::class, (new ColumnRule($lowering))->expression($node));
     }
 
-    public function testParseLowersParseGcolExpr(): void
+    public function testParseRefusesAnInternalEntryInsteadOfPublishingAStatement(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('PARSE_GCOL_EXPR(1)')->find('parse_gcol_expr')[0];
 
-        self::assertInstanceOf(NumberLiteral::class, (new ColumnRule($lowering))->parse($node)->expression);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('PARSE_GCOL_EXPR is not a client statement.');
+
+        (new ColumnRule($lowering))->parse($node);
     }
 }

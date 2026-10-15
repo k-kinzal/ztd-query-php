@@ -40,6 +40,11 @@ final class SyntaxWarnings
      */
     public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile): array
     {
+        try {
+            $parser->tokenize($statement);
+        } catch (SourceException $lexical) {
+            $statement = substr($statement, 0, $lexical->offset);
+        }
         $warnings = (new Account\SyntaxResourceNames())->completed($parser, $statement, $end);
         $ranges = new SourceRanges();
         $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');

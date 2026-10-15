@@ -29,8 +29,16 @@ final class SyntaxNames
     /**
      * Answers the diagnostic of a completed charset or collation name.
      */
-    public function completed(Node $node, Lowering $lowering): ?ParseFailure
+    public function completed(Node $node, Lowering $lowering): ParseFailure|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|null
     {
+        $first = $node->children[0] ?? null;
+        if ($lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $first instanceof \SqlParser\Lexer\Token && $first->text === '.') {
+            return match ($node->name) {
+                'table_ident' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable,
+                'simple_ident_q' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotColumn,
+                default => null,
+            };
+        }
         if ($node->name === 'simple_expr') {
             $form = $lowering->productions->form($node);
             if ($form->signature !== 'simple_expr: simple_expr COLLATE_SYM ident_or_text') {
