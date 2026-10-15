@@ -25,12 +25,12 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/explain-for-connection.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Refusing a format outside the public format domain
- *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'), new \SqlSemantics\Statement\Identifier\Name('XML')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * Connection identifiers are integer tokens: decimal digits within the unsigned 64-bit
  * range or a hexadecimal literal. Fractional and exponent forms have no connection operand.
  *
+ * @visibility public
+ * @example Refusing a format outside the public format domain
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'), new \SqlSemantics\Statement\Identifier\Name('XML')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a fractional connection identifier
  *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a decimal connection identifier beyond the token range

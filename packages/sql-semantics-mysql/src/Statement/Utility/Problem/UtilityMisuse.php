@@ -13,8 +13,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the message of a refused format
- *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('EXPLAIN FORMAT = yaml SELECT 1');
- *     $explain->facts->diagnostics[0]->message() // => 'Unknown EXPLAIN format name'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::UnknownExplainFormat))->message() // => 'Unknown EXPLAIN format name'
  */
 final class UtilityMisuse implements Diagnostic
 {
