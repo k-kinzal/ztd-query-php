@@ -51,6 +51,7 @@ final class ResetReplica implements ResetTarget
      */
     public function deriveTarget(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         $release = $derivation->context->profile->grammar;
         Check::input((new Releases())->source($release) === $this->terminology, 'RESET REPLICA is written in the vocabulary of the release.');
         Check::input($this->channel === null || $release !== GrammarRelease::MySql5651, 'A replication channel needs MySQL 5.7 or later.');

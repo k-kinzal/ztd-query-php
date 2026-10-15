@@ -80,6 +80,7 @@ final class StartReplica implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         $release = $derivation->context->profile->grammar;
         $releases = new Releases();
         Check::input($releases->replica($release, $this->terminology), 'START ' . ($this->terminology === Terminology::Legacy ? 'SLAVE' : 'REPLICA') . ' is not a statement of this release.');

@@ -67,6 +67,7 @@ final class ChangeReplicationSource implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         $releases = new Releases();
         $release = $derivation->context->profile->grammar;
         Check::input($releases->source($release) === $this->terminology, 'CHANGE REPLICATION SOURCE is written in the vocabulary of the release.');

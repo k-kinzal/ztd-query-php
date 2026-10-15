@@ -49,6 +49,7 @@ final class ShowReplicaStatus implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         (new ShowFacts())->rows($derivation, $this->terminology === Terminology::Legacy ? Report::SlaveStatus : Report::ReplicaStatus);
     }
 

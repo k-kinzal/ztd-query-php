@@ -72,6 +72,7 @@ final class SourceSettings
      */
     public function option(Derivation $derivation, SourceOption $option): void
     {
+        (new Vocabulary())->derive($option, $derivation);
         $release = $derivation->context->profile->grammar;
         Check::input((new Releases())->option($release, $option->kind), $option->kind->value . ' is not an option of this release.');
         if ($option->value instanceof NumberLiteral) {

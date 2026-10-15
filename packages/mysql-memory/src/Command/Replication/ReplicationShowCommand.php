@@ -129,7 +129,6 @@ final class ReplicationShowCommand implements Command
         $statement = $operation->statement;
         $log = $session->instance->registry->binaryLog;
         $version = $session->instance->version;
-        (new ReplicaCommand())->deprecated($statement, $session, $context);
         (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof ShowReplicaStatus) {
             if (!$session->settings()->legacy()) {

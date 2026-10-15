@@ -56,6 +56,7 @@ final class StopReplica implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         $release = $derivation->context->profile->grammar;
         Check::input((new Releases())->replica($release, $this->terminology), 'STOP ' . ($this->terminology === Terminology::Legacy ? 'SLAVE' : 'REPLICA') . ' is not a statement of this release.');
         Check::input($this->channel === null || $release !== GrammarRelease::MySql5651, 'A replication channel needs MySQL 5.7 or later.');

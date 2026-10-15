@@ -216,7 +216,7 @@ final class ReplicaCommandTest extends TestCase
         $session->query("SHOW REPLICA STATUS FOR CHANNEL 'a\nb'");
     }
 
-    public function testDeprecatedWarnsOfTheLegacySpellingsOfMySql80(): void
+    public function testExecuteRetainsSemanticWarningsOfTheLegacySpellingsOfMySql80(): void
     {
         $session = (new Instance('8.0.44'))->connect();
         $session->query('CHANGE MASTER TO MASTER_HOST = \'h\', SOURCE_PORT = 3307, MASTER_LOG_POS = 4');
@@ -234,7 +234,7 @@ final class ReplicaCommandTest extends TestCase
         self::assertSame(['Warning', '1287', "'STOP SLAVE' is deprecated and will be removed in a future release. Please use STOP REPLICA instead"], $stopped->rows[0]);
     }
 
-    public function testDeprecatedLeavesTheCurrentSpellingsAndMySql57Alone(): void
+    public function testExecuteLeavesTheCurrentSpellingsAndMySql57Alone(): void
     {
         $current = (new Instance('8.0.44'))->connect();
         $current->query('STOP REPLICA');
