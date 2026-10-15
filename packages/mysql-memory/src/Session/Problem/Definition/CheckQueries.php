@@ -46,6 +46,6 @@ final class CheckQueries
             }
         }
         $problems->opened($operation, $session, $operation->facts->diagnostics);
-        CheckDefinitions::forbidden($create, false);
+        CheckDefinitions::forbidden($create, false, release: $session->settings()->release());
     }
 }

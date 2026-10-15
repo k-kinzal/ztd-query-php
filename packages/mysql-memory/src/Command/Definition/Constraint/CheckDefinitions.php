@@ -8,10 +8,16 @@ use MySqlMemory\Command\Definition\Expression\ExpressionRole;
 use MySqlMemory\Command\Definition\Expression\ExpressionRules;
 use MySqlMemory\Error\Family\ConstraintError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Compile\Walker;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
+use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Scalar;
 
 /**
  * Names CHECK constraints and checks their expression forms before compiling them.
@@ -67,7 +73,7 @@ final class CheckDefinitions
      *
      * @throws SqlError When a constraint is refused
      */
-    public static function forbidden(CreateTable $create, bool $legacy, int $checkBase = 0): void
+    public static function forbidden(CreateTable $create, bool $legacy, int $checkBase = 0, GrammarRelease $release = GrammarRelease::MySql847): void
     {
         $seen = [];
         $written = self::written($create, $legacy, $checkBase);
@@ -78,9 +84,35 @@ final class CheckDefinitions
             $seen[mb_strtolower($name)] = true;
         }
         $rules = new ExpressionRules();
-        foreach ($written as [$check, , $name]) {
+        $columns = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof ColumnElement));
+        foreach ($written as [$check, $column, $name]) {
+            self::columnScope($check->condition, $column === null ? null : $columns[$column]->name->column, $name, $release);
             $rules->condition($check->condition, $name);
             $rules->forbidden($check->condition, ExpressionRole::Check, $name);
+        }
+    }
+
+    /**
+     * Checks the column-local reference domain before condition and function rules.
+     *
+     * MySQL 8.0 and 8.1 additionally require at least one reference. A table-level
+     * constraint has no such restriction.
+     *
+     * @throws SqlError When a column constraint does not use only its owning column
+     */
+    public static function columnScope(Scalar $condition, ?Name $column, string $name, GrammarRelease $release): void
+    {
+        if ($column === null) {
+            return;
+        }
+        $references = (new Walker())->find($condition, ColumnUse::class);
+        if ($references === [] && in_array($release, [GrammarRelease::MySql8044, GrammarRelease::MySql810], true)) {
+            throw ConstraintError::CheckOtherColumn->error($name);
+        }
+        foreach ($references as $reference) {
+            if (!Comparison::AsciiInsensitive->equal($reference->name->value, $column->value)) {
+                throw ConstraintError::CheckOtherColumn->error($name);
+            }
         }
     }
 

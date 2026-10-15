@@ -40,6 +40,29 @@ final class CheckDefinitionsTest extends TestCase
         self::assertSame([['0']], $result1->rows);
     }
 
+    public function testForbiddenRequiresAColumnReferenceInMySql80(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3813);
+        $this->expectExceptionMessage("Column check constraint 't_chk_1' references other column.");
+
+        $session->query('CREATE TABLE t(a INT CHECK(TRUE))');
+    }
+
+    public function testColumnScopePrecedesTheBooleanConditionCheck(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3813);
+
+        $session->query('CREATE TABLE t(a INT CHECK(b), b INT)');
+    }
+
     public function testForbiddenRefusesANameUsedTwice(): void
     {
         $session = (new Instance())->connect();

@@ -85,7 +85,7 @@ final class Constraints
      */
     public function forbidden(): void
     {
-        CheckDefinitions::forbidden($this->create, $this->planner->settings->legacy(), $this->checkBase);
+        CheckDefinitions::forbidden($this->create, $this->planner->settings->legacy(), $this->checkBase, $this->planner->settings->release());
     }
 
     /**
