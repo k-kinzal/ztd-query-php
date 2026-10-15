@@ -151,6 +151,28 @@ final class PrivilegeRule
     }
 
     /**
+     * Publishes only role operands, refusing privileges at the input boundary.
+     *
+     * @return non-empty-list<GrantedRole>
+     * @throws \SqlSemantics\Construction\RejectedInput When the input names a privilege
+     */
+    public function roles(Node $list, int $end): array
+    {
+        $roles = [];
+        foreach ($this->spine($list) as $node) {
+            $role = $this->item($node, true);
+            if (!$role instanceof GrantedRole) {
+                $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch((new \SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks())->describe($role), true, (new \SqlSemantics\Construction\SourceRanges())->span($node)[0] ?? 0);
+                throw new \SqlSemantics\Construction\RejectedInput($problem, $end, false);
+            }
+            $roles[] = $role;
+        }
+        Check::invariant($roles !== [], 'A role list holds at least one role.');
+
+        return $roles;
+    }
+
+    /**
      * Lowers one role_or_privilege or object_privilege.
      *
      * @throws ImplementationGap When the production has no rule

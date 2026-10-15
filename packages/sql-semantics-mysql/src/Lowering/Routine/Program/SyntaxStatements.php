@@ -34,6 +34,9 @@ final class SyntaxStatements
         $frame = new PrefixFrame();
         $parameters = $prefix->completed($node, $frame, new ParameterList([]));
         if ($parameters instanceof RejectedInput) {
+            if ($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch) {
+                return null;
+            }
             return new ParseFailure($parameters->problem, $parameters->aborts);
         }
         $problem = $prefix->diagnostic($frame->body(), $parameters);

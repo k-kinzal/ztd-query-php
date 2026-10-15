@@ -412,3 +412,5 @@ Legacy INSERT statements retain their optimizer hints in the semantic head. Qual
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+`Statement\Account\Privilege\GrantRoles` and `RevokeRoles` accept nonempty lists of `GrantedRole` only. A static privilege such as `SELECT`, or a name with a column list, is not a role operand. SQL containing those operands raises `Construction\RejectedInput` during lowering instead of publishing an invalid role statement. Ordered input notices retain recipient-name precedence, each role-list problem, and whether parsing continues into later program statements. Diagnostic positions are integer offsets; no original SQL or parser node is retained.

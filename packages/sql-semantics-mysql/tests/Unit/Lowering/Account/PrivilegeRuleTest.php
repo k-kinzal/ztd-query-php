@@ -17,6 +17,14 @@ use SqlSemantics\Statement\Fact\Warning;
 #[Medium]
 final class PrivilegeRuleTest extends TestCase
 {
+    public function testRolesRefusesAnOperandBeforePublishingTheStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('UPDATE is not a role');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT r, UPDATE TO u');
+    }
+
     public function testItemsLowersTheList(): void
     {
         self::assertSame('GRANT SELECT, INSERT (a), CREATE ROLE, DROP ROLE ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select, insert (a), create role, drop role on *.* to u')->toString());

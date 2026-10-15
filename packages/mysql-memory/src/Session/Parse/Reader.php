@@ -167,6 +167,7 @@ final class Reader
      */
     public function refused(SqlError $error, string $sql, bool $prepared, Session $session): SqlError
     {
+        $session->text = $sql;
         $session->diagnostics->clear();
         $entry = (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($session->semantics()->parser(), $sql, $session->semantics()->profile())
             ?? (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->nested($session->semantics()->parser(), $sql, $session->semantics()->profile());

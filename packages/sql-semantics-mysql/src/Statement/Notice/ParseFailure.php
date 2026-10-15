@@ -18,7 +18,9 @@ use SqlSemantics\Statement\Snapshot;
  * is recorded. A cast to an array of a type no multi-valued index takes,
  * and a cast to TIME or DATETIME with a precision above 6, stop the parse
  * in 8.4 and 9.1: no construct after it raises a warning. In 8.0 those
- * cast errors are recorded and parsing continues. The
+ * cast errors are recorded and parsing continues. Role-list input errors
+ * continue even beyond the enclosing stored-program statement; the
+ * endsProgramStatement flag distinguishes that continuation. The
  * problem is reported as a diagnostic too; this notice keeps its order
  * among the warnings. Terminates: no recursion. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html.
@@ -37,8 +39,9 @@ final class ParseFailure implements Warning
      * @param Diagnostic $problem The problem the server finds while it parses
      * @param bool $aborts Whether the server stops parsing at the problem, so the constructs it would parse later raise no warning
      * @param NoticePhase $phase Whether grammar interpretation or subsequent contextualization raises the problem
+     * @param bool $endsProgramStatement Whether a stored-program statement stops parsing after this continuing error
      */
-    public function __construct(public readonly Diagnostic $problem, public readonly bool $aborts = false, public readonly NoticePhase $phase = NoticePhase::Syntax)
+    public function __construct(public readonly Diagnostic $problem, public readonly bool $aborts = false, public readonly NoticePhase $phase = NoticePhase::Syntax, public readonly bool $endsProgramStatement = true)
     {
     }
 

@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -51,10 +50,6 @@ final class PrivilegeChecksTest extends TestCase
         self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT SELECT (a) ON PROCEDURE p TO u')->facts->diagnostics[0]);
     }
 
-    public function testRolesReportsAPrivilegeInARoleList(): void
-    {
-        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics(Dialect::MySql))->analyze('REVOKE CREATE ROLE FROM u')->facts->diagnostics[0]);
-    }
 
     public function testTargetResolvesTheTable(): void
     {

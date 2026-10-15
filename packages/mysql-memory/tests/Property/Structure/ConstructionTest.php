@@ -144,12 +144,12 @@ final class ConstructionTest extends TestCase
     }
 
     /**
-     * Uses the role-list operand union instead of sampling ALL at an impossible depth.
+     * Uses the role-list element type instead of sampling a general privilege.
      *
      * @throws JsonException When the value inventory is invalid
      * @throws ReflectionException When a constructor cannot be invoked
      */
-    public function testGrantRolesFitsTheBudgetWithItsRetainedOperandUnion(): void
+    public function testGrantRolesFitsTheBudgetWithItsRoleElementType(): void
     {
         $catalogue = new Catalogue();
         $choices = new Choices('e86863ababc9d6721024d56dcde28f5c:697');

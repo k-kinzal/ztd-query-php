@@ -24,6 +24,10 @@ final class RejectedOperand
      */
     public function of(Node $node, Lowering $lowering): ?RejectedInput
     {
+        $roles = (new Account\SyntaxRoles())->completed($node, $lowering);
+        if ($roles !== []) {
+            return new RejectedInput($roles[0]->problem, (new SourceRanges())->span($node)[1] ?? 0, $roles[0]->aborts);
+        }
         $database = (new Server\Instance\SyntaxOptions())->rejected($node, $lowering);
         if ($database !== null) {
             return $database;

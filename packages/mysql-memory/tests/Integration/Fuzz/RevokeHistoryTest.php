@@ -85,6 +85,15 @@ final class RevokeHistoryTest extends TestCase
                 'REVOKE USAGE ON revoke_probe.* FROM target_user',
                 'SHOW GRANTS FOR target_user',
             );
+            array_push($history, 'SET max_error_count = 64', 'SET NAMES utf8mb4', 'CREATE PROCEDURE MiXeD() SELECT 1');
+            foreach (['PROCEDURE', 'FUNCTION'] as $kind) {
+                foreach (['MiXeD', 'missingNAME', 'éÀÇ'] as $name) {
+                    foreach ($legacy ? [''] : ['', 'IF EXISTS '] as $modifier) {
+                        $history[] = 'REVOKE ' . $modifier . 'ALL ON ' . $kind . ' ' . $name . ' FROM empty_user, CURRENT_USER(), empty_user';
+                    }
+                }
+            }
+            array_push($history, 'GRANT EXECUTE ON PROCEDURE MiXeD TO u', 'REVOKE ALTER ROUTINE ON PROCEDURE MiXeD FROM u', 'REVOKE EXECUTE ON PROCEDURE MiXeD FROM u', 'REVOKE EXECUTE ON PROCEDURE MiXeD FROM u');
             yield $release => [$release, $history];
         }
     }

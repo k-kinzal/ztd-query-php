@@ -60,7 +60,7 @@ final class GrantRule
 
         return match ($form->signature) {
             'grant: GRANT role_or_privilege_list TO_SYM user_list opt_with_admin_option' => new GrantRoles(
-                $privileges->items($form->node(1), true),
+                $privileges->roles($form->node(1), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
                 $this->lowering->users->accounts($form->node(3)),
                 $this->admin($form->node(4)),
             ),
@@ -117,7 +117,7 @@ final class GrantRule
         return match ($form->signature) {
             'revoke: REVOKE if_exists role_or_privilege_list FROM user_list opt_ignore_unknown_user' => new RevokeRoles(
                 $ifExists,
-                $privileges->items($form->node(2), true),
+                $privileges->roles($form->node(2), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
                 $this->lowering->users->accounts($form->node(4)),
                 $ignore,
             ),

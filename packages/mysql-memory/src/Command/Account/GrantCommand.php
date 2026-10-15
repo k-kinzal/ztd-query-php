@@ -241,12 +241,12 @@ final class GrantCommand implements Command
     public function roles(GrantRoles $statement, Operation $operation, Session $session): void
     {
         $names = new Names($session->settings()->release());
-        $listed = array_map(static fn ($role): ?AccountName => $role instanceof GrantedRole ? $role->role : null, $statement->roles);
+        $listed = array_map(static fn (GrantedRole $role): AccountName => $role->role, $statement->roles);
         $names->check([...$listed, ...$statement->users]);
         (new Levels($session->settings()->release()))->parsed($operation, $session);
         $accounts = $session->instance->accounts;
         $users = array_map(static fn ($user): Identity => $names->identity($user, $session), $statement->users);
-        $roles = array_map(static fn (AccountName $role): Identity => $names->identity($role, $session), array_values(array_filter($listed, static fn (?AccountName $role): bool => $role !== null)));
+        $roles = array_map(static fn (AccountName $role): Identity => $names->identity($role, $session), $listed);
         foreach ([...$users, ...$roles] as $identity) {
             if ($accounts->find($identity) === null) {
                 throw AccountError::UnknownAuthorizationId->error($identity->backquoted());

@@ -10,15 +10,14 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 
 #[CoversClass(GrantRoles::class)]
 #[Medium]
 final class GrantRolesTest extends TestCase
 {
-    public function testDeriveStatementReportsAPrivilegeInTheRoleList(): void
+    public function testDeriveStatementNeedsNoExpressionBindings(): void
     {
-        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics(Dialect::MySql))->analyze('GRANT r, UPDATE TO u')->facts->diagnostics[0]);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('GRANT r TO u')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAdminOption(): void

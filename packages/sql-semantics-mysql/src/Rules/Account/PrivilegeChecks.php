@@ -43,8 +43,8 @@ use SqlSemantics\Statement\Type\Known;
  * (ER_ILLEGAL_GRANT_FOR_TABLE); a dynamic privilege fits the global level
  * only (ER_ILLEGAL_PRIVILEGE_LEVEL, a warning under REVOKE IF EXISTS). ALL
  * fits every level. In a privilege list a role written with a host is a
- * RoleOrPrivilegeMismatch; in a role list a static privilege or a dynamic
- * privilege written with columns is one. The table of a level resolves by
+ * RoleOrPrivilegeMismatch. Invalid role-list operands are refused during
+ * lowering before a role statement can be constructed. The table of a level resolves by
  * CORE-TABLE-LOOKUP-001 and contributes the slots of its declaration; a
  * name a complete context does not declare is MissingTable for GRANT,
  * except that GRANT of CREATE or ALL without column privileges and every
@@ -147,20 +147,6 @@ final class PrivilegeChecks
         }
         if (!($kind === ObjectKind::Table ? $privilege->kind->table() : $privilege->kind->routine())) {
             $derivation->report(new MisplacedPrivilege($name, $level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE'));
-        }
-    }
-
-    /**
-     * Reports the items of a role list of GRANT … TO or REVOKE … FROM that are no roles.
-     *
-     * @param list<Grantable> $roles
-     */
-    public function roles(Derivation $derivation, array $roles): void
-    {
-        foreach ($roles as $role) {
-            if (!$role instanceof GrantedRole) {
-                $derivation->report(new RoleOrPrivilegeMismatch($this->describe($role), true));
-            }
         }
     }
 

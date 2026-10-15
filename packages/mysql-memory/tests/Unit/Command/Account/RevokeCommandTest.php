@@ -105,10 +105,17 @@ final class RevokeCommandTest extends TestCase
         self::assertSame([true, false], [(new RevokeCommand())->holds(new Privileges([], false, ['a' => ['SELECT' => true]]), ['SELECT'], [], false, false), (new RevokeCommand())->holds(new Privileges(), [], ['UPDATE' => ['a']], false, false)]);
     }
 
+    public function testRequiresHeldDistinguishesRoutineGrantChecks(): void
+    {
+        self::assertTrue((new RevokeCommand())->requiresHeld('TABLE', \SqlSemantics\Contract\GrammarRelease::MySql8044));
+        self::assertFalse((new RevokeCommand())->requiresHeld('PROCEDURE', \SqlSemantics\Contract\GrammarRelease::MySql8044));
+        self::assertTrue((new RevokeCommand())->requiresHeld('PROCEDURE', \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testMissingNamesTheLevel(): void
     {
         self::assertSame(
-            ["There is no such grant defined for user 'u' on host '%' on table 't'", "There is no such grant defined for user 'u' on host '%' on routine 'p'"],
+            ["There is no such grant defined for user 'u' on host '%' on table 't'", "There is no such grant defined for user 'u' on host '%' on routine 'P'"],
             [(new RevokeCommand())->missing(new Identity('u', '%'), ['TABLE', 'd', 't'])->getMessage(), (new RevokeCommand())->missing(new Identity('u', '%'), ['PROCEDURE', 'd', 'P'])->getMessage()],
         );
     }

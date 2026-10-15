@@ -111,6 +111,10 @@ final class RevokeCommand implements Command
      * @param list<string> $static
      * @param array<string, list<string>> $columns
      *
+     * MySQL 5.6, 5.7 and 8.0 accept a missing individual routine privilege when
+     * the account has another grant on that routine. MySQL 8.4 and 9.1 check
+     * the requested privilege. Diagnostic names retain their written case.
+     *
      * @throws SqlError When the account holds no grant at the level
      */
     public function revoke(Account $account, array $target, array $static, array $columns, bool $option, bool $all, bool $ifExists, Session $session): void
@@ -125,7 +129,8 @@ final class RevokeCommand implements Command
             return;
         }
         $privileges = (new Levels($session->settings()->release()))->at($account->grants, $target, false);
-        if ($target[0] !== 'GLOBAL' && ($privileges === null || (!$empty && !$this->holds($privileges, $static, $columns, $option, $all)))) {
+        $checksHeld = $this->requiresHeld($target[0], $release);
+        if ($target[0] !== 'GLOBAL' && ($privileges === null || ($checksHeld && !$empty && !$this->holds($privileges, $static, $columns, $option, $all)))) {
             $session->databaseGrants->refused($target);
             $error = $this->missing($account->identity, $target);
             if (!$ifExists) {
@@ -176,7 +181,15 @@ final class RevokeCommand implements Command
     }
 
     /**
-     * Answers the error of a level an account holds no grant on.
+     * Tells whether this release checks each named privilege of an existing routine grant.
+     */
+    public function requiresHeld(string $kind, GrammarRelease $release): bool
+    {
+        return in_array($release, [GrammarRelease::MySql847, GrammarRelease::MySql910], true) || !in_array($kind, ['PROCEDURE', 'FUNCTION'], true);
+    }
+
+    /**
+     * Answers the error of a level an account holds no grant on, preserving the written object name.
      *
      * @param array{string, string, string} $target
      */
@@ -185,7 +198,7 @@ final class RevokeCommand implements Command
         return match ($target[0]) {
             'DATABASE', 'GLOBAL' => AccountError::NonexistingGrant->error($identity->user, $identity->host),
             'TABLE' => AccountError::NonexistingTableGrant->error($identity->user, $identity->host, $target[2]),
-            default => AccountError::NonexistingRoutineGrant->error($identity->user, $identity->host, mb_strtolower($target[2], 'UTF-8')),
+            default => AccountError::NonexistingRoutineGrant->error($identity->user, $identity->host, $target[2]),
         };
     }
 
@@ -237,7 +250,7 @@ final class RevokeCommand implements Command
     public function roles(RevokeRoles $statement, Operation $operation, Session $session): void
     {
         $names = new Names($session->settings()->release());
-        $listed = array_map(static fn ($role): ?AccountName => $role instanceof GrantedRole ? $role->role : null, $statement->roles);
+        $listed = array_map(static fn (GrantedRole $role): AccountName => $role->role, $statement->roles);
         $names->check([...$listed, ...$statement->users]);
         (new Levels($session->settings()->release()))->parsed($operation, $session);
         $accounts = $session->instance->accounts;
@@ -250,8 +263,8 @@ final class RevokeCommand implements Command
         $roles = [];
         $unknown = [];
         foreach ($listed as $role) {
-            $identity = $role === null ? null : $names->identity($role, $session);
-            if ($identity !== null && $accounts->find($identity) === null) {
+            $identity = $names->identity($role, $session);
+            if ($accounts->find($identity) === null) {
                 if (!$statement->ifExists) {
                     throw AccountError::UnknownAuthorizationId->error($identity->backquoted());
                 }
@@ -275,9 +288,7 @@ final class RevokeCommand implements Command
         $found = $this->found($existing, true, $session, false);
         foreach ($found as $account) {
             foreach ($roles as $role) {
-                if ($role !== null) {
-                    $accounts->revoke($role, $account->identity);
-                }
+                $accounts->revoke($role, $account->identity);
             }
         }
     }

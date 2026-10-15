@@ -220,6 +220,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RoleOrPrivilegeMismatch": {
         "item": "string",
+        "offset": "?int",
         "roleExpected": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\UnknownGrantColumn": {
@@ -1378,6 +1379,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\ParseFailure": {
         "aborts": "bool",
+        "endsProgramStatement": "bool",
         "phase": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NoticePhase",
         "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic"
     },
