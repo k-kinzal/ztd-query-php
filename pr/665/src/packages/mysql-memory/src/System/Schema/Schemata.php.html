@@ -57,7 +57,7 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * MySQL 8.4 and 9.1 list the databases by name, 8.0 in the order they were created, the</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * system databases first; 5.6 and 5.7 list INFORMATION_SCHEMA first, then the others by name</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers). No database has</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * an SQL path, and none is encrypted by default.</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * an SQL path. DEFAULT_ENCRYPTION reflects each database&#039;s stored setting.</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/information-schema-schemata-table.html.</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
@@ -80,7 +80,7 @@
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>                <span class="tok-str">&#039;DEFAULT_CHARACTER_SET_NAME&#039;</span> =&gt; <span class="tok-var">$collation</span>-&gt;<span class="tok-id">charset</span>-&gt;<span class="tok-id">nameIn</span>(<span class="tok-var">$reading</span>-&gt;<span class="tok-id">release</span>),</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>                <span class="tok-str">&#039;DEFAULT_COLLATION_NAME&#039;</span> =&gt; <span class="tok-var">$collation</span>-&gt;<span class="tok-id">nameIn</span>(<span class="tok-var">$reading</span>-&gt;<span class="tok-id">release</span>),</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>                <span class="tok-str">&#039;SQL_PATH&#039;</span> =&gt; <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>                <span class="tok-str">&#039;DEFAULT_ENCRYPTION&#039;</span> =&gt; <span class="tok-str">&#039;NO&#039;</span>,</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>                <span class="tok-str">&#039;DEFAULT_ENCRYPTION&#039;</span> =&gt; <span class="tok-var">$schema</span>-&gt;<span class="tok-id">encryption</span> === <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption</span>::<span class="tok-id">Enabled</span> ? <span class="tok-str">&#039;YES&#039;</span> : <span class="tok-str">&#039;NO&#039;</span>,</span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            ];</span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        }</span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>

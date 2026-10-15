@@ -145,34 +145,37 @@
 <span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>    <span class="tok-kw">case</span> <span class="tok-id">WrongTablespaceName</span> = <span class="tok-num">3119</span>;</span>
 <span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>    <span class="tok-kw">case</span> <span class="tok-id">TablespaceNotEmpty</span> = <span class="tok-num">3120</span>;</span>
 <span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>    <span class="tok-kw">case</span> <span class="tok-id">WrongFileName</span> = <span class="tok-num">3121</span>;</span>
-<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>    <span class="tok-kw">case</span> <span class="tok-id">InvalidEncryption</span> = <span class="tok-num">3184</span>;</span>
-<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>    <span class="tok-kw">case</span> <span class="tok-id">SchemaMissing</span> = <span class="tok-num">3503</span>;</span>
-<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>    <span class="tok-kw">case</span> <span class="tok-id">TablespaceMissing</span> = <span class="tok-num">3510</span>;</span>
-<span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsParseError</span> = <span class="tok-num">3517</span>;</span>
-<span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsNotFoundWarning</span> = <span class="tok-num">3519</span>;</span>
-<span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a>    <span class="tok-kw">case</span> <span class="tok-id">PrimaryKeyInvisible</span> = <span class="tok-num">3522</span>;</span>
-<span class="src-line" id="L114" data-diff="added"><a class="ln" href="#L114">114</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsNotFound</span> = <span class="tok-num">3548</span>;</span>
-<span class="src-line" id="L115" data-diff="added"><a class="ln" href="#L115">115</a>    <span class="tok-kw">case</span> <span class="tok-id">DuplicateTablespaceFile</span> = <span class="tok-num">3606</span>;</span>
-<span class="src-line" id="L116" data-diff="added"><a class="ln" href="#L116">116</a>    <span class="tok-kw">case</span> <span class="tok-id">NoSdiFiles</span> = <span class="tok-num">3608</span>;</span>
-<span class="src-line" id="L117" data-diff="added"><a class="ln" href="#L117">117</a>    <span class="tok-kw">case</span> <span class="tok-id">TablespaceFileMissing</span> = <span class="tok-num">3629</span>;</span>
-<span class="src-line" id="L118" data-diff="added"><a class="ln" href="#L118">118</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsMissingAttribute</span> = <span class="tok-num">3708</span>;</span>
-<span class="src-line" id="L119" data-diff="added"><a class="ln" href="#L119">119</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsRepeatedAttribute</span> = <span class="tok-num">3709</span>;</span>
-<span class="src-line" id="L120" data-diff="added"><a class="ln" href="#L120">120</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsBlankName</span> = <span class="tok-num">3710</span>;</span>
-<span class="src-line" id="L121" data-diff="added"><a class="ln" href="#L121">121</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsBlankOrganization</span> = <span class="tok-num">3711</span>;</span>
-<span class="src-line" id="L122" data-diff="added"><a class="ln" href="#L122">122</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsExists</span> = <span class="tok-num">3712</span>;</span>
-<span class="src-line" id="L123" data-diff="added"><a class="ln" href="#L123">123</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsExistsWarning</span> = <span class="tok-num">3713</span>;</span>
-<span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsZeroUnmodifiable</span> = <span class="tok-num">3714</span>;</span>
-<span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsReservedRange</span> = <span class="tok-num">3715</span>;</span>
-<span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsInvalidCharacter</span> = <span class="tok-num">3717</span>;</span>
-<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsAttributeTooLong</span> = <span class="tok-num">3718</span>;</span>
-<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>    <span class="tok-kw">case</span> <span class="tok-id">CheckConstraintNotFound</span> = <span class="tok-num">3821</span>;</span>
-<span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a>    <span class="tok-kw">case</span> <span class="tok-id">SecondaryEngineFailed</span> = <span class="tok-num">3889</span>;</span>
-<span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a>    <span class="tok-kw">case</span> <span class="tok-id">ConstraintNotFound</span> = <span class="tok-num">3940</span>;</span>
-<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a>    <span class="tok-kw">case</span> <span class="tok-id">AutoextendMultiple</span> = <span class="tok-num">4023</span>;</span>
-<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a>    <span class="tok-kw">case</span> <span class="tok-id">AutoextendSize</span> = <span class="tok-num">4025</span>;</span>
-<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a>    <span class="tok-kw">case</span> <span class="tok-id">NoVisibleColumn</span> = <span class="tok-num">4028</span>;</span>
-<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a>}</span>
-<span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a></span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>    <span class="tok-kw">case</span> <span class="tok-id">TablespaceCannotEncrypt</span> = <span class="tok-num">3183</span>;</span>
+<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>    <span class="tok-kw">case</span> <span class="tok-id">InvalidEncryption</span> = <span class="tok-num">3184</span>;</span>
+<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>    <span class="tok-kw">case</span> <span class="tok-id">SchemaMissing</span> = <span class="tok-num">3503</span>;</span>
+<span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a>    <span class="tok-kw">case</span> <span class="tok-id">TablespaceMissing</span> = <span class="tok-num">3510</span>;</span>
+<span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsParseError</span> = <span class="tok-num">3517</span>;</span>
+<span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsNotFoundWarning</span> = <span class="tok-num">3519</span>;</span>
+<span class="src-line" id="L114" data-diff="added"><a class="ln" href="#L114">114</a>    <span class="tok-kw">case</span> <span class="tok-id">PrimaryKeyInvisible</span> = <span class="tok-num">3522</span>;</span>
+<span class="src-line" id="L115" data-diff="added"><a class="ln" href="#L115">115</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsNotFound</span> = <span class="tok-num">3548</span>;</span>
+<span class="src-line" id="L116" data-diff="added"><a class="ln" href="#L116">116</a>    <span class="tok-kw">case</span> <span class="tok-id">DuplicateTablespaceFile</span> = <span class="tok-num">3606</span>;</span>
+<span class="src-line" id="L117" data-diff="added"><a class="ln" href="#L117">117</a>    <span class="tok-kw">case</span> <span class="tok-id">NoSdiFiles</span> = <span class="tok-num">3608</span>;</span>
+<span class="src-line" id="L118" data-diff="added"><a class="ln" href="#L118">118</a>    <span class="tok-kw">case</span> <span class="tok-id">TablespaceFileMissing</span> = <span class="tok-num">3629</span>;</span>
+<span class="src-line" id="L119" data-diff="added"><a class="ln" href="#L119">119</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsMissingAttribute</span> = <span class="tok-num">3708</span>;</span>
+<span class="src-line" id="L120" data-diff="added"><a class="ln" href="#L120">120</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsRepeatedAttribute</span> = <span class="tok-num">3709</span>;</span>
+<span class="src-line" id="L121" data-diff="added"><a class="ln" href="#L121">121</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsBlankName</span> = <span class="tok-num">3710</span>;</span>
+<span class="src-line" id="L122" data-diff="added"><a class="ln" href="#L122">122</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsBlankOrganization</span> = <span class="tok-num">3711</span>;</span>
+<span class="src-line" id="L123" data-diff="added"><a class="ln" href="#L123">123</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsExists</span> = <span class="tok-num">3712</span>;</span>
+<span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsExistsWarning</span> = <span class="tok-num">3713</span>;</span>
+<span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsZeroUnmodifiable</span> = <span class="tok-num">3714</span>;</span>
+<span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsReservedRange</span> = <span class="tok-num">3715</span>;</span>
+<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsInvalidCharacter</span> = <span class="tok-num">3717</span>;</span>
+<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>    <span class="tok-kw">case</span> <span class="tok-id">SrsAttributeTooLong</span> = <span class="tok-num">3718</span>;</span>
+<span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a>    <span class="tok-kw">case</span> <span class="tok-id">CheckConstraintNotFound</span> = <span class="tok-num">3821</span>;</span>
+<span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a>    <span class="tok-kw">case</span> <span class="tok-id">UnencryptedTable</span> = <span class="tok-num">3824</span>;</span>
+<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a>    <span class="tok-kw">case</span> <span class="tok-id">TemporaryTableEncryption</span> = <span class="tok-num">3833</span>;</span>
+<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a>    <span class="tok-kw">case</span> <span class="tok-id">SecondaryEngineFailed</span> = <span class="tok-num">3889</span>;</span>
+<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a>    <span class="tok-kw">case</span> <span class="tok-id">ConstraintNotFound</span> = <span class="tok-num">3940</span>;</span>
+<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a>    <span class="tok-kw">case</span> <span class="tok-id">AutoextendMultiple</span> = <span class="tok-num">4023</span>;</span>
+<span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a>    <span class="tok-kw">case</span> <span class="tok-id">AutoextendSize</span> = <span class="tok-num">4025</span>;</span>
+<span class="src-line" id="L136" data-diff="added"><a class="ln" href="#L136">136</a>    <span class="tok-kw">case</span> <span class="tok-id">NoVisibleColumn</span> = <span class="tok-num">4028</span>;</span>
+<span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a>}</span>
+<span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
