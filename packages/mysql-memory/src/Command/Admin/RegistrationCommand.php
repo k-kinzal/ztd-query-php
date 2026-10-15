@@ -59,14 +59,14 @@ final class RegistrationCommand implements Command
             if ($session->instance->accounts->find($names->identity($statement->user, $session)) === null) {
                 throw AdministrationError::PluginIsNotLoaded->error('');
             }
-            $factor = (new Literals())->number($statement->factor);
+            $factor = $statement->factor->value;
             throw AccountError::FactorMissing->error($factor, $factor);
         }
         $current = new Identity($session->user, '%');
         if ($names->identity($statement->user, $session)->key() !== $current->key()) {
             throw AccountError::RegistrationNotAllowed->error($current->user, $current->host);
         }
-        $factor = (new Literals())->number($statement->factor);
+        $factor = $statement->factor->value;
 
         throw AccountError::FactorMissing->error($factor, $factor);
     }

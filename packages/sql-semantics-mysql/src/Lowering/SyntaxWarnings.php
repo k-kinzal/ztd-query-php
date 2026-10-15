@@ -90,17 +90,9 @@ final class SyntaxWarnings
         $pending = [$tree];
         while ($pending !== []) {
             $condition = array_pop($pending);
-            if ($condition->name === 'simple_expr' && $lowering->form($condition)->signature === 'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )') {
-                $end = (new SourceRanges())->span($condition)[1] ?? 0;
-                return (new Routine\Program\InputPrefix($lowering))->before($tree, $end) ?? new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'), $end, false);
-            }
-            if (in_array($condition->name, ['sp_cond', 'sqlstate'], true)) {
-                try {
-                    (new Routine\Condition\ConditionRule($lowering))->value($condition);
-                } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                    return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
-                }
-                continue;
+            $failure = (new RejectedOperand())->of($condition, $lowering);
+            if ($failure !== null) {
+                return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
             }
             foreach (array_reverse($condition->children) as $child) {
                 if ($child instanceof Node) {

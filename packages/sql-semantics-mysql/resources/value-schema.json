@@ -23,7 +23,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\AlterRegistration": {
         "challengeResponse": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "factor": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "factor": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Factor",
         "ifExists": "bool",
         "step": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\RegistrationStep",
         "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account|SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\SessionUser"
@@ -185,6 +185,11 @@
         "roles": "array",
         "users": "array"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\AccountNameFailure": {
+        "host": "bool",
+        "limit": "?int",
+        "operand": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\InvalidFactorPair": {
         "identical": "bool"
     },
@@ -278,6 +283,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Credential": {
         "name": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Factor": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\FactorAction": {
         "name": "string",
         "value": "string"
@@ -288,7 +297,7 @@
         "user": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\FactorStep": {
-        "factor": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "factor": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Factor",
         "identification": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Identification"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\Grantee": {

@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 
 #[CoversClass(NumberChecks::class)]
@@ -37,8 +36,4 @@ final class NumberChecksTest extends TestCase
         self::assertSame([], $semantics->analyze('CREATE USER u PASSWORD EXPIRE INTERVAL 65535 DAY')->facts->diagnostics);
     }
 
-    public function testFactorReportsAFactorOtherThanTwoAndThree(): void
-    {
-        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics(Dialect::MySql))->analyze('ALTER USER u 02 FACTOR UNREGISTER')->facts->diagnostics[0]);
-    }
 }

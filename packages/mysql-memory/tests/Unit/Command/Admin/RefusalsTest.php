@@ -50,6 +50,25 @@ final class RefusalsTest extends TestCase
         $session->query('CREATE TABLESPACE t FILE_BLOCK_SIZE = 3000000000G');
     }
 
+    /**
+     * @return iterable<string, array{\SqlSemantics\Statement\Fact\Diagnostic, int, string}>
+     */
+    public static function providerFactorAndAccountRefusals(): iterable
+    {
+        yield 'duplicate' => [new \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair(true), 4063, 'Authentication factor should be different.'];
+        yield 'order' => [new \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair(false), 4062, '2 factor authentication method should be added before 3 factor authentication method.'];
+        yield 'host' => [new \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure('bad@host', true), 1105, "Malformed hostname (illegal symbol: '@')"];
+        yield 'user length' => [new \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure(str_repeat('あ', 33), false, 32), 1470, "String '" . str_repeat('あ', 23) . "?' is too long for user name (should be no longer than 32)"];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerFactorAndAccountRefusals')]
+    public function testErrorMapsTypedFactorAndAccountRefusals(\SqlSemantics\Statement\Fact\Diagnostic $problem, int $code, string $message): void
+    {
+        self::assertTrue(Refusals::handles($problem));
+        $error = (new Refusals())->error($problem, null, '');
+        self::assertSame([$code, $message], [$error->getCode(), $error->getMessage()]);
+    }
+
     public function testSpatialNamesTheStatementOfAnSridOutOfRange(): void
     {
         $statement = (new Instance())->connect()->analyze('DROP SPATIAL REFERENCE SYSTEM 4294967296')->statement;

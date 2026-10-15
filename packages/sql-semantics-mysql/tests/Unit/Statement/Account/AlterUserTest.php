@@ -10,19 +10,16 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash;
 
 #[CoversClass(AlterUser::class)]
 #[Medium]
 final class AlterUserTest extends TestCase
 {
-    public function testDeriveStatementReportsFactorAndPasswordHashProblems(): void
+    public function testDeriveStatementReportsPasswordHashProblems(): void
     {
-        $factors = (new Semantics(Dialect::MySql))->analyze('ALTER USER u MODIFY 2 FACTOR IDENTIFIED BY \'a\' MODIFY 2 FACTOR IDENTIFIED BY \'b\'');
         $hash = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("ALTER USER u IDENTIFIED BY PASSWORD '*AB'");
 
-        self::assertInstanceOf(InvalidFactorPair::class, $factors->facts->diagnostics[0]);
         self::assertInstanceOf(RejectedPasswordHash::class, $hash->facts->diagnostics[0]);
     }
 

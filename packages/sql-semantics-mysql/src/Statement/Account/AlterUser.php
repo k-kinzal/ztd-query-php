@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
-use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
@@ -95,9 +94,7 @@ final class AlterUser implements Statement
     {
         $checks = new AccountChecks();
         foreach ($this->users as $user) {
-            if ($user instanceof FactorChange) {
-                $checks->factors($derivation, $user);
-            } elseif ($user instanceof UserSpecification && $user->identification?->credential === Credential::PasswordHash) {
+            if ($user instanceof UserSpecification && $user->identification?->credential === Credential::PasswordHash) {
                 $derivation->report(new RejectedPasswordHash());
             }
         }

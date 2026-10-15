@@ -7,7 +7,6 @@ namespace MySqlMemory\Command\Account;
 use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Attributes;
 use MySqlMemory\Account\Credentials;
-use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
@@ -19,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
@@ -65,9 +63,6 @@ final class Options
             }
             if ($diagnostic instanceof RepeatedTlsAttribute) {
                 throw StatementError::DuplicateArgument->error($diagnostic->attribute->value);
-            }
-            if ($diagnostic instanceof InvalidFactorPair) {
-                throw $diagnostic->identical ? AccountError::FactorIdentical->error() : AccountError::FactorOrder->error(2, 3);
             }
         }
     }

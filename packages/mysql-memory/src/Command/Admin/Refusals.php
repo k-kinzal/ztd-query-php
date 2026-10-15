@@ -52,7 +52,7 @@ final class Refusals
      */
     public static function handles(Diagnostic $diagnostic): bool
     {
-        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong || $diagnostic instanceof StorageProblem || $diagnostic instanceof SpatialProblem || $diagnostic instanceof PriorityOutOfRange || $diagnostic instanceof RefusedSetting || $diagnostic instanceof NumberOutOfRange || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong || $diagnostic instanceof StorageProblem || $diagnostic instanceof SpatialProblem || $diagnostic instanceof PriorityOutOfRange || $diagnostic instanceof RefusedSetting || $diagnostic instanceof NumberOutOfRange || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
     }
 
     /**
@@ -61,6 +61,8 @@ final class Refusals
     public function error(Diagnostic $diagnostic, ?Node $statement, string $text, bool $legacy = false): SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair => $diagnostic->identical ? \MySqlMemory\Error\Family\AccountError::FactorIdentical->error() : \MySqlMemory\Error\Family\AccountError::FactorOrder->error(2, 3),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure => $diagnostic->limit === null ? new SqlError(StatementError::UnknownError, "Malformed hostname (illegal symbol: '@')") : DataError::WrongStringLength->error((new \MySqlMemory\Command\Account\Names())->cut($diagnostic->operand), $diagnostic->host ? 'host name' : 'user name', $diagnostic->limit),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong => SchemaError::TooLongIdentifier->error(\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName::decoded($diagnostic->name)),
             $diagnostic instanceof StorageProblem => match ($diagnostic->rule) {
                 StorageRule::RepeatedOption => SchemaError::FilegroupOptionOnlyOnce->error($diagnostic->option === 'ENGINE' ? 'STORAGE ENGINE' : $diagnostic->option),

@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Account\AccountChecks;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
 
@@ -36,8 +35,4 @@ final class AccountChecksTest extends TestCase
         self::assertSame([], $semantics->analyze("ALTER USER u ATTRIBUTE '{\"a\": 1}'")->facts->diagnostics);
     }
 
-    public function testFactorsReportsTheSameFactorTwice(): void
-    {
-        self::assertInstanceOf(InvalidFactorPair::class, (new Semantics(Dialect::MySql))->analyze('ALTER USER u DROP 3 FACTOR DROP 3 FACTOR')->facts->diagnostics[0]);
-    }
 }

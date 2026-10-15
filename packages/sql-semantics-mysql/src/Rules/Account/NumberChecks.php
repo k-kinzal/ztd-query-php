@@ -70,13 +70,4 @@ final class NumberChecks
         }
     }
 
-    /**
-     * Reports a factor number other than 2 and 3, which the server compares as written.
-     */
-    public function factor(Derivation $derivation, Numeral $factor): void
-    {
-        if ($factor->text !== '2' && $factor->text !== '3') {
-            $derivation->report(new NumberOutOfRange('nth factor', $factor->text, 'ER_WRONG_VALUE'));
-        }
-    }
 }

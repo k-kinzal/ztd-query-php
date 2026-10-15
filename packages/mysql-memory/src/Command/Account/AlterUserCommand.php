@@ -185,7 +185,7 @@ final class AlterUserCommand implements Command
     public function factors(FactorChange $change, ?Account $account, Session $session): void
     {
         $step = $change->steps[0];
-        $factor = (new \MySqlMemory\Command\Admin\Literals())->number($step->factor);
+        $factor = $step->factor->value;
         $plugin = $step->identification?->plugin?->value;
         if ($change->action !== FactorAction::Drop && $plugin === null) {
             $session->diagnostics->warning(AccountError::FactorPolicyMismatch, AccountError::FactorPolicyMismatch->message($factor));
@@ -212,7 +212,7 @@ final class AlterUserCommand implements Command
         $generated = [];
         foreach ($changed as [$account, $user]) {
             if ($user instanceof FactorChange) {
-                $factor = $user->steps[0]->factor->text;
+                $factor = $user->steps[0]->factor->value;
                 throw AccountError::FactorMissing->error($factor, $factor);
             }
             assert($user instanceof UserSpecification);

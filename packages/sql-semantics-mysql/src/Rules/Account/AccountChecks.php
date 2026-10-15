@@ -13,8 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
-use SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction;
-use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use stdClass;
 
 /**
@@ -81,23 +79,4 @@ final class AccountChecks
         }
     }
 
-    /**
-     * Reports the factor numbers and the factor pair of an ALTER USER factor change.
-     */
-    public function factors(Derivation $derivation, FactorChange $change): void
-    {
-        $numbers = new NumberChecks();
-        foreach ($change->steps as $step) {
-            $numbers->factor($derivation, $step->factor);
-        }
-        if (count($change->steps) === 2) {
-            $first = $change->steps[0]->factor->text;
-            $second = $change->steps[1]->factor->text;
-            if ($first === $second) {
-                $derivation->report(new InvalidFactorPair(true));
-            } elseif ($change->action === FactorAction::Add && $numbers->compare($first, $second) > 0) {
-                $derivation->report(new InvalidFactorPair(false));
-            }
-        }
-    }
 }
