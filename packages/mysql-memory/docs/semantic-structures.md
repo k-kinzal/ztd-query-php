@@ -540,3 +540,13 @@ setting objects with GTIDs off, then on, then off again on MySQL 8.0, 8.4 and
 the state-dependent refusals in the disabled states, and matching diagnostic
 notes. The separate input regression compares UUID boundaries and ordered
 setting refusals, including long and NUL-containing diagnostic values.
+
+MySQL 5.6 storage requests resolve their explicit engine or the session's
+`default_storage_engine` before looking up files and tablespaces. The same
+57 original structures are compared in four combinations of default engine
+and `NO_ENGINE_SUBSTITUTION` (228 native observations). Unknown engines either
+fail immediately or warn before substitution; built-in engines then report
+their unsupported operation. A separate input regression replays the 36
+previously differing SQL Faker storage inputs with substitution both enabled
+and disabled (74 wire observations, including setup). These checks establish
+engine-selection behavior; they do not claim NDB Cluster support.
