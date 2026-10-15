@@ -587,3 +587,20 @@ above its signed range. A failed ordinary reset then prevents subsequent changes
 from opening the connection metadata; `RESET REPLICA ALL` clears that state.
 Native histories compare the leading error, following conditions, competing
 GTID/compression/relay errors and recovery on three modern releases.
+
+Heartbeat options reject numeric literals above 4,294,967 seconds in their public
+constructor. SQL lowering retains the typed refusal and the warnings raised before
+it. Legacy unconfigured replicas preserve a valid heartbeat's timeout warning
+before their connection error. Deprecation messages retain the server's singular
+compression-option spelling without changing the plural SQL keyword. Input
+comparisons exercise 80 statements across eight releases.
+
+Legacy password statements share the account-name limits of MySQL 5.6. A password
+assignment inside a SET list and the per-account PASSWORD EXPIRE form cannot be
+combined with an account name requiring a newer release. A standalone password
+assignment uses `SetPassword`; `SetVariables` represents a password only alongside
+other assignments. The constructor regressions replay the two previously failing
+whole-model generation seeds. Native histories reuse each original request before
+account creation, after creation and after removal; memory receives no SQL input
+for those requests. These repairs do not certify all generated SQL errors as
+state-dependent.
