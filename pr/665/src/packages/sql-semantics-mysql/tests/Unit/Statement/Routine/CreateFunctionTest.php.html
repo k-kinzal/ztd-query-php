@@ -203,8 +203,10 @@
 <span class="src-line" id="L157" data-diff="same"><a class="ln" href="#L157">157</a>        ];</span>
 <span class="src-line" id="L158" data-diff="same"><a class="ln" href="#L158">158</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;MySQL 8.0 IF NOT EXISTS and COLLATE&#039;</span> =&gt; [</span>
 <span class="src-line" id="L159" data-diff="same"><a class="ln" href="#L159">159</a>            <span class="tok-str">&#039;mysql-8.0.44&#039;</span>,</span>
-<span class="src-line" id="L160" data-diff="same"><a class="ln" href="#L160">160</a>            <span class="tok-str">&quot;create function if not exists f(a int) returns char(3) collate utf8mb4_bin no sql begin return &#039;x&#039;; end&quot;</span>,</span>
-<span class="src-line" id="L161" data-diff="same"><a class="ln" href="#L161">161</a>            <span class="tok-str">&quot;CREATE FUNCTION IF NOT EXISTS f(a INT) RETURNS CHAR(3) COLLATE utf8mb4_bin NO SQL BEGIN RETURN &#039;x&#039;; END&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">163</span>            <span class="tok-str">&quot;create function if not exists f(a int) returns char(3) collate utf8mb4_bin no sql begin return &#039;x&#039;; end&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">164</span>            <span class="tok-str">&quot;CREATE FUNCTION IF NOT EXISTS f(a INT) RETURNS CHAR(3) COLLATE utf8mb4_bin NO SQL BEGIN RETURN &#039;x&#039;; END&quot;</span>,</span>
+<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>            <span class="tok-str">&quot;create function if not exists f(a int) returns char(3) character set utf8mb4 collate utf8mb4_bin no sql begin return &#039;x&#039;; end&quot;</span>,</span>
+<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a>            <span class="tok-str">&quot;CREATE FUNCTION IF NOT EXISTS f(a INT) RETURNS CHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NO SQL BEGIN RETURN &#039;x&#039;; END&quot;</span>,</span>
 <span class="src-line" id="L162" data-diff="same"><a class="ln" href="#L162">162</a>        ];</span>
 <span class="src-line" id="L163" data-diff="same"><a class="ln" href="#L163">163</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;MySQL 9.1 external body&#039;</span> =&gt; [</span>
 <span class="src-line" id="L164" data-diff="same"><a class="ln" href="#L164">164</a>            <span class="tok-str">&#039;mysql-9.1.0&#039;</span>,</span>
