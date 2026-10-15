@@ -153,7 +153,7 @@ final class PluginCommand implements Command
     }
 
     /**
-     * Answers the error of a library the plugin directory does not hold; an empty name, `.` and `..` name a directory.
+     * Answers the error of a library the plugin directory does not hold, bounding the operating-system detail to 128 bytes; an empty name, `.` and `..` name a directory.
      *
      * @param bool $qualified Whether the error names the full plugin path; function errors name the requested library
      * @param string $errno The error number the server reports for the failed open: 11 from 8.0 on, 2 in 5.6 and 5.7 (verified on live 5.7.44 and 8.4.7 servers)
@@ -165,6 +165,6 @@ final class PluginCommand implements Command
 
         $detail = $path . ': ' . $reason;
 
-        return AdministrationError::CantOpenLibrary->error($qualified ? $path : $library, $errno, $qualified ? $detail : substr($detail, 0, 128));
+        return AdministrationError::CantOpenLibrary->error(substr($qualified ? $path : $library, 0, 192), $errno, substr($detail, 0, 128));
     }
 }

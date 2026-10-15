@@ -13,7 +13,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
  * Syntax excerpts use the system's three-byte UTF-8 representation before the
  * 80-byte bound. Legacy releases keep complete characters. Modern releases
  * can retain incomplete bytes: conditions replace them with question marks,
- * while error packets transcode each such byte from ISO-8859-1. Established
+ * while error packets transcode each such byte from ISO-8859-1. A system
+ * diagnostic stops when a final three-byte sequence has fewer than three
+ * bytes remaining, including any following ASCII byte. Established
  * through SQL observations on 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
  *
  * @visibility MySqlMemory
@@ -44,8 +46,8 @@ final class Encoding
         $supplementary = $threeByte ? '' : '|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2}';
 
         return (string) preg_replace_callback(
-            '/[\x00-\x7F]+|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE-\xEF][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]' . $supplementary . '|([\x80-\xFF])/',
-            static fn (array $match): string => !isset($match[1]) ? $match[0] : ($packet ? mb_convert_encoding($match[1], 'UTF-8', 'ISO-8859-1') : '?'),
+            '/[\x00-\x7F]+|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE-\xEF][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]' . $supplementary . '|(?<short>[\xE0-\xEF][\s\S]?\z)|(?<bad>[\x80-\xFF])/',
+            static fn (array $match): string => ($match['short'] ?? '') !== '' ? '' : (!isset($match['bad']) ? $match[0] : ($packet ? mb_convert_encoding($match['bad'], 'UTF-8', 'ISO-8859-1') : '?')),
             $text,
         );
     }

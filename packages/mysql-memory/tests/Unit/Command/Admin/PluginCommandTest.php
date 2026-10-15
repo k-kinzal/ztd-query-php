@@ -49,6 +49,14 @@ final class PluginCommandTest extends TestCase
         self::assertSame("Can't open shared library '" . str_repeat('x', 65) . "' (errno: 11 /usr/lib64/mysql/plugin/" . str_repeat('x', 65) . ': cannot open shared object file: No su)', $error->getMessage());
     }
 
+    public function testUnopenedBoundsTheOperatingSystemDetailForPlugins(): void
+    {
+        $library = str_repeat('x', 64);
+        $error = (new PluginCommand())->unopened('/usr/lib64/mysql/plugin/', $library);
+
+        self::assertSame("Can't open shared library '/usr/lib64/mysql/plugin/" . $library . "' (errno: 11 /usr/lib64/mysql/plugin/" . $library . ': cannot open shared object file: No suc)', $error->getMessage());
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new PluginCommand())->clearsDiagnostics());
