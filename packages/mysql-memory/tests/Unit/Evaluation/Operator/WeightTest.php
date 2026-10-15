@@ -28,6 +28,33 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 #[Small]
 final class WeightTest extends TestCase
 {
+    public function testPadHonorsTheExplicitResultCapacity(): void
+    {
+        $domain = Domain::string(2, Collation::binary());
+        $weight = new Weight(new Constant($domain, 'ab'), null, null, $domain, resultLength: 4, flags: 128);
+
+        self::assertSame("ab\0\0", $weight->pad('ab', $domain, 3, 2));
+    }
+
+    public function testBinaryReportsPacketOverflowEvenForNull(): void
+    {
+        $session = (new Instance(globals: ['max_allowed_packet' => 4096]))->connect();
+        $result = $session->query('SELECT WEIGHT_STRING(NULL AS BINARY(8192))')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null]], $result->rows);
+        self::assertSame([['Warning', 1301, 'Result of cast_as_binary() was larger than max_allowed_packet (4096) - truncated']], $session->diagnostics->conditions);
+    }
+
+    public function testCountRetainsTheLegacyCharacterCapacityNarrowing(): void
+    {
+        $domain = Domain::string(3, Collation::known('utf8mb4_bin'));
+        $weight = new Weight(new Constant($domain, 'abc'), WeightCast::Char, 2147483649, Domain::string(4, Collation::binary()));
+
+        self::assertSame(1, $weight->count($domain, GrammarRelease::MySql5651));
+        self::assertSame(2147483649, $weight->count($domain, GrammarRelease::MySql5744));
+    }
+
     public function testEvaluateWarnsWhenBinaryWeightTruncatesTheArgument(): void
     {
         $session = (new Instance())->connect();

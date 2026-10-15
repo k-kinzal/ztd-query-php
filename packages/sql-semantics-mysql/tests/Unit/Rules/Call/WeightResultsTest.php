@@ -18,6 +18,16 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class WeightResultsTest extends TestCase
 {
+    public function testCharacterBytesNarrowsBeforeChoosingTheResultField(): void
+    {
+        $modern = (new Semantics(Dialect::MySql))->analyze("SELECT WEIGHT_STRING(_utf8mb4'abc' COLLATE utf8mb4_bin AS CHAR(1073741824)), WEIGHT_STRING(_utf8mb4'abc' COLLATE utf8mb4_bin AS CHAR(65536))");
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SELECT WEIGHT_STRING(_utf8mb4'abc' COLLATE utf8mb4_bin AS CHAR(1073741824))");
+
+        self::assertEquals(new Known(Domain::string(8, Collation::binary())), $modern->field(0)->type);
+        self::assertEquals(new Known(Domain::string(196608, Collation::binary(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::MediumBlob)), $modern->field(1)->type);
+        self::assertEquals(new Known(Domain::string(0, Collation::binary())), $legacy->field(0)->type);
+    }
+
     public function testFactResolvesCollationCapacityWithoutShorteningItForChar(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT WEIGHT_STRING(_utf8mb4'ab' COLLATE utf8mb4_general_ci AS CHAR(1)), WEIGHT_STRING(_utf8mb4'ab' COLLATE utf8mb4_general_ci,1,1,1)");

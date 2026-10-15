@@ -49,7 +49,31 @@ final class WeightStringParameters implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->fact((new Arguments())->one($this->subject, $derivation, $environment), $derivation, resultLength: (int) $this->length->text, weights: (int) $this->weights->text);
+        return (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->fact((new Arguments())->one($this->subject, $derivation, $environment), $derivation, resultLength: $this->resultLength(), weights: $this->weightCount());
+    }
+
+    /**
+     * Answers the result byte limit after unsigned option conversion.
+     */
+    public function resultLength(): int
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($this->length);
+    }
+
+    /**
+     * Answers the requested number of weights after unsigned option conversion.
+     */
+    public function weightCount(): int
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($this->weights);
+    }
+
+    /**
+     * Answers the formatting bits after unsigned option conversion.
+     */
+    public function formatFlags(): int
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($this->flags);
     }
 
     /**

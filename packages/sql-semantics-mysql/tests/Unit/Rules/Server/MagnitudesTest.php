@@ -21,6 +21,18 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
 #[Medium]
 final class MagnitudesTest extends TestCase
 {
+    public function testOption32ReadsLeadingDigitsWithoutEvaluatingExponents(): void
+    {
+        $magnitudes = new Magnitudes();
+
+        self::assertSame(1, $magnitudes->option32(new Numeral('1e2')));
+        self::assertSame(12, $magnitudes->option32(new Numeral('12.9')));
+        self::assertSame(0, $magnitudes->option32(new Numeral('.5')));
+        self::assertSame(10, $magnitudes->option32(new Numeral('A', true)));
+        self::assertSame(1, $magnitudes->option32(new Numeral('4294967297.0')));
+        self::assertSame(4294967295, $magnitudes->option32(new Numeral('18446744073709551616')));
+    }
+
     public function testUnsigned32NarrowsDecimalAndHexadecimalTokensExactly(): void
     {
         $magnitudes = new Magnitudes();
