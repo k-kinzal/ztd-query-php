@@ -132,15 +132,15 @@ final class LiteralRule
     }
 
     /**
-     * Decodes temporal text, refusing DATE and TIME operands outside their representation domains.
+     * Decodes temporal text, refusing temporal operands outside their representation domains.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When DATE or TIME has no bounded representation
+     * @throws \SqlSemantics\Construction\RejectedInput When the operand has no bounded representation
      */
     public function temporal(Form $form): TemporalLiteral
     {
         $kind = self::TEMPORAL[$form->signature];
         $text = $this->decode($form->token(1)->text);
-        if ($kind !== TemporalForm::Timestamp && \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($kind->value, $text, 6, false, false, true) === null) {
+        if ($kind === TemporalForm::Timestamp ? !\SqlSemantics\Platform\MySql\Rules\Literal\Timestamp::valid($text) : \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($kind->value, $text, 6, false, false, true) === null) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral($text, $kind), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
 

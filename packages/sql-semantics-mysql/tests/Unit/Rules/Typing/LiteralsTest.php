@@ -121,6 +121,7 @@ final class LiteralsTest extends TestCase
         self::assertSame([10, 0], [$literals->temporal(new TemporalLiteral(TemporalForm::Date, '2024-01-02'))->length, 0]);
         self::assertSame([14, 3], [$literals->temporal(new TemporalLiteral(TemporalForm::Time, '10:00:00.123'))->length, $literals->temporal(new TemporalLiteral(TemporalForm::Time, '10:00:00.123'))->decimals]);
         self::assertSame(26, $literals->temporal(new TemporalLiteral(TemporalForm::Timestamp, '2024-01-02 00:00:00.1234567'))->length);
+        self::assertSame([22, 2], [$literals->temporal(new TemporalLiteral(TemporalForm::Timestamp, '2024-01-02 03:04:05.12+05:30'))->length, $literals->temporal(new TemporalLiteral(TemporalForm::Timestamp, '2024-01-02 03:04:05.12+05:30'))->decimals]);
     }
 
     public function testBooleanIsABigIntOfOneDigit(): void

@@ -99,7 +99,7 @@ final class Inhabitants
     {
         $choices = $this->construction->choices;
         if (in_array($name, ['string', 'literal-string', 'non-empty-string'], true)) {
-            $values = ['a', 'b', 't', 'x', '0', '1', '2', '3', '10', '1.5', 'utf8mb4', 'utf8mb4_0900_ai_ci', '2024-01-01', 'A', '00000', '12345', 'ABCDE', 'A1B2C', 'PRIMARY', 'a b', "'", '\\', 'あ'];
+            $values = ['a', 'b', 't', 'x', '0', '1', '2', '3', '10', '1.5', 'utf8mb4', 'utf8mb4_0900_ai_ci', '2024-01-01', '2024-01-01 01:02:03', 'A', '00000', '12345', 'ABCDE', 'A1B2C', 'PRIMARY', 'a b', "'", '\\', 'あ'];
 
             return $choices->one($name === 'non-empty-string' ? $values : ['', ...$values]);
         }

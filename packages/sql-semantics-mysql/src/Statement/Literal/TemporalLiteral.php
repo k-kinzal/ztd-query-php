@@ -23,9 +23,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * TIME, and TIMESTAMP yields DATETIME; the fractional seconds precision of
  * TIME and DATETIME is the number of digits written after the last decimal
  * point, before an optional time zone offset, at most 6; never NULL. Text
- * outside the DATE or TIME representation domain is refused during construction.
+ * outside the temporal representation domain is refused during construction.
  * Calendar validity and zero dates can depend on session modes;
- * TIMESTAMP representation validation remains separate. Precision: exact for text the server
+ * precision: exact for text the server
  * accepts. Diagnostics: none. The text holds decoded bytes independent of
  * the lexical mode used to write them.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html,
@@ -42,6 +42,12 @@ use SqlSemantics\Statement\Type\Nullability;
  *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, '10:11:12.123-01:00') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing an oversized compact TIME token
  *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, '000000000001') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a TIMESTAMP without a clock
+ *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an arbitrary TIMESTAMP operand
+ *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, 'bad') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a TIMESTAMP that overflows during fractional rounding
+ *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '9999-12-31 23:59:59.9999999') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Retaining a date permitted by ALLOW_INVALID_DATES
  *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, '2024-02-31'))->text // => '2024-02-31'
  * @example Reading a temporal literal
@@ -58,7 +64,7 @@ final class TemporalLiteral implements LiteralExpression
      */
     public function __construct(public readonly TemporalForm $form, public readonly string $text)
     {
-        \SqlSemantics\Diagnostic\Check::input($form === TemporalForm::Timestamp || \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($form->value, $text, 6, false, false, true) !== null, 'A DATE or TIME literal requires a bounded representation.');
+        \SqlSemantics\Diagnostic\Check::input($form === TemporalForm::Timestamp ? \SqlSemantics\Platform\MySql\Rules\Literal\Timestamp::valid($text) : \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($form->value, $text, 6, false, false, true) !== null, 'A temporal literal requires a bounded representation.');
     }
 
     /**
@@ -69,7 +75,7 @@ final class TemporalLiteral implements LiteralExpression
         if ($this->form === TemporalForm::Date) {
             return new Temporal(TemporalKind::Date);
         }
-        $digits = preg_match('/\.([0-9]*)(?:[+-][0-9]{1,2}:[0-9]{2})?\s*\z/', $this->text, $match) === 1 ? min(6, strlen($match[1])) : 0;
+        $digits = $this->form === TemporalForm::Timestamp ? min(6, strlen(\SqlSemantics\Platform\MySql\Rules\Literal\Timestamp::parts($this->text)[6] ?? '')) : (preg_match('/\.([0-9]*)\s*\z/', $this->text, $match) === 1 ? min(6, strlen($match[1])) : 0);
 
         return new Temporal($this->form === TemporalForm::Time ? TemporalKind::Time : TemporalKind::DateTime, $digits === 0 ? null : (string) $digits);
     }

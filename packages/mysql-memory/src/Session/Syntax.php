@@ -160,12 +160,13 @@ final class Syntax
                 default => 'DATETIME',
             };
             $text = $this->unquote($tokens[1]->text, !$modes->has('NO_BACKSLASH_ESCAPES'));
-            if (Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES')) === null) {
+            $value = $form === 'DATETIME' ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::value($text, 6, $modes, (\MySqlMemory\Value\Zone::named((string) ($session?->variables->read('time_zone') ?? 'SYSTEM'), $modes->release) ?? \MySqlMemory\Value\Zone::utc())) : Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
+            if ($value === null) {
                 $prefix = $session === null ? null : (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->before($tree, $tokens[1]->end() + 1, $session->semantics()->profile());
                 if ($prefix !== null && !$prefix->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {
                     throw (new Problem\Errors())->error($prefix->problem, $session);
                 }
-                $error = DataError::WrongValue->error($form, substr($text, 0, 128));
+                $error = $form === 'DATETIME' ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::error($text, $modes) : DataError::WrongValue->error($form, substr($text, 0, 128));
                 if ($session === null || !$session->settings()->legacy()) {
                     throw $error;
                 }

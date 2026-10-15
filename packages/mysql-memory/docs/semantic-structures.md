@@ -504,3 +504,17 @@ it in the reading session's time zone, retaining hundredths; MySQL 5.6 reports N
 because that release does not store a creation timestamp. These histories exercise
 consumer behavior after successful state changes rather than relying on matching
 errors in an empty catalog.
+
+TIMESTAMP constructors now reject operands without both date and clock fields,
+out-of-range components, malformed displacements, and values that overflow
+fractional rounding. Compact and relaxed representations retain their decoded
+operand; no SQL or parser tree is stored. Calendar-invalid days and zero dates
+remain available where session modes permit them. A displaced value with a zero
+month or day cannot identify an instant and is rejected independently of modes.
+The consumer applies release-specific displacement support and session time zones
+using the semantic components. Literal precision comes from the semantic literal
+type, including when an explicit displacement follows the fractional digits.
+`TimestampDomainTest` keeps the same fifteen query structures across four mode and
+time-zone states on five releases. `TimestampInputTest` also checks malformed
+input against competing syntax and stored-program conditions. These focused
+checks do not replace the whole-model acceptance gates.

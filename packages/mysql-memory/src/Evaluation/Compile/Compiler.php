@@ -11,6 +11,7 @@ use MySqlMemory\Evaluation\Compile\Family\Calls;
 use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Evaluation\Compile\Family\Dates;
 use MySqlMemory\Evaluation\Compile\Family\Jsons;
+use MySqlMemory\Evaluation\Compile\Family\Literals;
 use MySqlMemory\Evaluation\Compile\Family\Texts;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Retyped;

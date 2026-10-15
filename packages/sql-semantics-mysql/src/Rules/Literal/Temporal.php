@@ -154,22 +154,14 @@ final class Temporal
         if ($form === 'TIME') {
             return self::timeLiteral($text, $decimals);
         }
+        if ($form === 'DATETIME') {
+            return Timestamp::value($text, $decimals, $noZeroDate, $noZeroInDate, $allowInvalidDates);
+        }
         $parts = self::scanDateTime($text);
         if ($parts === null || $parts[8] !== '' || $parts[7] !== ($form === 'DATETIME') || !self::accepted($parts[0], $parts[1], $parts[2], $noZeroDate, $noZeroInDate, $allowInvalidDates)) {
             return null;
         }
-        if ($form === 'DATE') {
-            return self::date($parts[0], $parts[1], $parts[2]);
-        }
-        if ($parts[3] > 23 || $parts[4] > 59 || $parts[5] > 59) {
-            return null;
-        }
-        if ($allowInvalidDates && self::micro($parts[6], false) >= 1000000 && !self::valid($parts[0], $parts[1], $parts[2])) {
-            return null;
-        }
-        $moment = self::carry($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], self::micro($parts[6], false));
-
-        return $moment === null ? null : self::dateTime($moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], $moment[6], $decimals);
+        return self::date($parts[0], $parts[1], $parts[2]);
     }
 
     /**

@@ -92,14 +92,14 @@ final class SignalProblemsTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
-    public function testValueRefusesAnInvalidTemporalLiteral(): void
+    public function testValueRefusesAZeroDateInTheCurrentMode(): void
     {
         $session = (new Instance('9.1.0'))->connect();
         $operation = $session->analyze("SIGNAL SQLSTATE '45000'");
 
         $this->expectExceptionCode(1525);
-        $this->expectExceptionMessage("Incorrect DATETIME value: '2020-01-01 25:00:00'");
+        $this->expectExceptionMessage("Incorrect DATETIME value: '0000-00-00 00:00:00'");
 
-        (new SignalProblems())->value(new TemporalLiteral(TemporalForm::Timestamp, '2020-01-01 25:00:00'), $operation, $session);
+        (new SignalProblems())->value(new TemporalLiteral(TemporalForm::Timestamp, '0000-00-00 00:00:00'), $operation, $session);
     }
 }

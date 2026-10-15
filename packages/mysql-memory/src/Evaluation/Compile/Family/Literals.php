@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Evaluation\Compile;
+namespace MySqlMemory\Evaluation\Compile\Family;
 
 use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Scope;
@@ -127,7 +128,7 @@ final class Literals
             TemporalForm::Timestamp => 'DATETIME',
         };
         $modes = $this->compiler->settings->modes;
-        $value = Temporal::literal($form, $literal->text, $domain->decimals, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
+        $value = $literal->form === TemporalForm::Timestamp ? TimestampLiteral::value($literal->text, $domain->decimals, $modes, $this->compiler->connection->context->zone()) : Temporal::literal($form, $literal->text, $domain->decimals, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
         if ($value === null) {
             throw DataError::WrongValue->error($form, substr($literal->text, 0, 128));
         }

@@ -24,6 +24,12 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class TemporalLiteralTest extends TestCase
 {
+    public function testTypeKeepsModeDependentCalendarValues(): void
+    {
+        self::assertSame('2024-02-31 03:04:05', (new TemporalLiteral(TemporalForm::Timestamp, '2024-02-31 03:04:05'))->text);
+        self::assertSame('0000-00-00 00:00:00', (new TemporalLiteral(TemporalForm::Timestamp, '0000-00-00 00:00:00'))->text);
+    }
+
     public function testTypeAnswersDateWithoutAPrecision(): void
     {
         $type = (new TemporalLiteral(TemporalForm::Date, '2024-01-02'))->type();
@@ -38,6 +44,8 @@ final class TemporalLiteralTest extends TestCase
         self::assertNull((new TemporalLiteral(TemporalForm::Time, '10:11:12.'))->type()->precision);
         self::assertSame('1', (new TemporalLiteral(TemporalForm::Time, '10:11:12.5'))->type()->precision);
         self::assertSame('6', (new TemporalLiteral(TemporalForm::Timestamp, '2024-01-02 03:04:05.123456789'))->type()->precision);
+        self::assertNull((new TemporalLiteral(TemporalForm::Timestamp, '2024.01.02.03.04.05'))->type()->precision);
+        self::assertNull((new TemporalLiteral(TemporalForm::Timestamp, '2024-01-02 03:04.5'))->type()->precision);
     }
 
     public function testTypeAnswersDateTimeForTimestampAndIgnoresATimeZoneOffset(): void

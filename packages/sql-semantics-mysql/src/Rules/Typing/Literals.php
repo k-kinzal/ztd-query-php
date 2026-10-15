@@ -144,8 +144,7 @@ final class Literals
      */
     public function temporal(TemporalLiteral $literal): Domain
     {
-        $point = strrpos($literal->text, '.');
-        $decimals = $point === false ? 0 : min(6, strlen(rtrim(substr($literal->text, $point + 1), " \t")));
+        $decimals = (int) $literal->type()->precision;
         $fraction = $decimals > 0 ? $decimals + 1 : 0;
 
         return match ($literal->form) {
