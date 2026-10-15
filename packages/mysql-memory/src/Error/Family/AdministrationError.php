@@ -109,6 +109,7 @@ enum AdministrationError: int implements ErrorCode
     case GroupUserEmpty = 3970;
     case GroupUserMissing = 3971;
     case AnonymousAssignmentWithoutGtid = 4015;
+    case AnonymousAssignmentTopology = 4017;
     case FailoverWithoutGtid = 3990;
     case FailoverWithoutAutoPosition = 3991;
     case GtidOnlyRequirements = 4065;

@@ -25,11 +25,10 @@ final class ChangeReplicationSourceTest extends TestCase
 {
     public function testDeriveStatementReportsRefusedSettings(): void
     {
-        $change = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648, SOURCE_HEARTBEAT_PERIOD = 5000000, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'x' FOR CHANNEL 'a'");
+        $change = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648, SOURCE_HEARTBEAT_PERIOD = 5000000 FOR CHANNEL 'a'");
 
         self::assertEquals([
             new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange), new RefusedSetting(ReplicationError::HeartbeatOutOfRange),
-            new RefusedSetting(ReplicationError::InvalidUuid),
         ], $change->facts->diagnostics);
     }
 

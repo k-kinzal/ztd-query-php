@@ -110,6 +110,16 @@ final class SourceChangeTest extends TestCase
         self::assertSame([1704, 3023, 1759, 1760, 3920], array_column($session->diagnostics->conditions, 1));
     }
 
+    public function testWarningsRecordTheTopologyNoteOnlyForEnabledAssignment(): void
+    {
+        $session = (new Instance('8.4.7', ['gtid_mode' => 'ON']))->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS=LOCAL');
+        self::assertSame([['Note', 4017, \MySqlMemory\Error\Family\AdministrationError::AnonymousAssignmentTopology->message()]], $session->diagnostics->conditions);
+
+        $session->query('CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS=OFF');
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testCompressionAcceptsCaseDuplicatesAndTrailingComma(): void
     {
         (new SourceChange())->compression('ZLIB,zlib,zstd,uncompressed,', '');

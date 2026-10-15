@@ -28,8 +28,9 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
  * compared as the server does after converting to a floating number);
  * REQUIRE_ROW_FORMAT, SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY other
  * than 0 or 1, and a fraction in the last two; an anonymous GTID UUID whose
- * first 36 characters are not a UUID in its text form. Each is a RefusedSetting
- * diagnostic. Terminates: one pass over the options.
+ * first 36 characters are not a UUID in its text form. UUID values are
+ * refused during lowering, before the SourceOption constructor publishes
+ * them. Completed input checks retain RefusedSetting descriptors. Terminates: one pass over the options.
  * Source: sql/sql_yacc.yy (source_def, master_def, TEXT_STRING_sys_nonewline,
  * assign_gtids_to_anonymous_transactions_def),
  * https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
@@ -78,7 +79,7 @@ final class SourceSettings
         }
         $error = $this->error($option, $release);
         if ($error !== null) {
-            $derivation->report(new RefusedSetting($error, text: $error === ReplicationError::LineFeed && $option->value instanceof Text ? $option->value : null));
+            $derivation->report(new RefusedSetting($error, text: in_array($error, [ReplicationError::LineFeed, ReplicationError::InvalidUuid], true) && $option->value instanceof Text ? $option->value : null));
         }
     }
 

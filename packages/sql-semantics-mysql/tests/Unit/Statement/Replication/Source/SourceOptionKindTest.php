@@ -43,6 +43,17 @@ final class SourceOptionKindTest extends TestCase
         self::assertTrue(SourceOptionKind::AssignGtidsToAnonymousTransactions->accepts(AnonymousGtids::Local));
     }
 
+    public function testAcceptsRequiresATextualUuidPrefixForAnonymousGtids(): void
+    {
+        $kind = SourceOptionKind::AssignGtidsToAnonymousTransactions;
+        self::assertFalse($kind->accepts(new Text('')));
+        self::assertFalse($kind->accepts(new Text('3e11fa4771ca11e19e33c80aa9429562')));
+        self::assertFalse($kind->accepts(new Text('3e11fa47-71ca-11e1-9e33-c80aa942956z')));
+        self::assertFalse($kind->accepts(new Text(' 3e11fa47-71ca-11e1-9e33-c80aa9429562')));
+        self::assertTrue($kind->accepts(new Text('3e11fa47-71ca-11e1-9e33-c80aa9429562')));
+        self::assertTrue($kind->accepts(new Text('3E11FA47-71CA-11E1-9E33-C80AA9429562 trailing')));
+    }
+
     public function testPositionNamesTheLogPositionOptions(): void
     {
         self::assertTrue(SourceOptionKind::RelayLogFile->position());

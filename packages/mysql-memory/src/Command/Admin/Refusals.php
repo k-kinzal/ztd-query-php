@@ -84,10 +84,13 @@ final class Refusals
     public function setting(RefusedSetting $problem, ?Node $statement, string $text, bool $legacy = false): SqlError
     {
         if ($problem->text !== null) {
-            return DataError::WrongValue->error('argument contains not-allowed LF', (new DiagnosticText())->bytes((new Literals())->bytes($problem->text), 128, $legacy));
+            $uuid = $problem->error === ReplicationError::InvalidUuid;
+            $value = (new Literals())->bytes($problem->text);
+
+            return DataError::WrongValue->error($uuid ? 'UUID' : 'argument contains not-allowed LF', (new DiagnosticText())->bytes($uuid ? explode("\0", $value, 2)[0] : $value, 128, $legacy));
         }
         if ($problem->number !== null) {
-            return AdministrationError::BinlogIndexOutOfRange->error((new Literals())->number($problem->number));
+            return $problem->error === ReplicationError::DelayOutOfRange ? AdministrationError::SourceDelayOutOfRange->error((new Literals())->number($problem->number), '2147483647') : AdministrationError::BinlogIndexOutOfRange->error((new Literals())->number($problem->number));
         }
 
         return $this->replication($problem->error, $statement, $text, $legacy);
@@ -141,7 +144,7 @@ final class Refusals
             ReplicationError::RowFormatValue => AdministrationError::RowFormatValue->error($this->option($statement, SourceOptionKind::RequireRowFormat)),
             ReplicationError::SwitchValue => $this->switch($statement, $text),
             ReplicationError::FractionalNumber => new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/[0-9]*\.[0-9]/') . "' at line 1"),
-            ReplicationError::InvalidUuid => DataError::WrongValue->error('UUID', $this->option($statement, SourceOptionKind::AssignGtidsToAnonymousTransactions)),
+            ReplicationError::InvalidUuid => DataError::WrongValue->error('UUID', (new DiagnosticText())->bytes(explode("\0", $this->option($statement, SourceOptionKind::AssignGtidsToAnonymousTransactions), 2)[0], 128)),
             ReplicationError::UntilCondition => AdministrationError::BadReplicaUntil->error(),
             ReplicationError::ApplierWithCredentials => AdministrationError::SqlThreadWithCredentials->error(),
             ReplicationError::FileNumberOutOfRange => AdministrationError::BinlogIndexOutOfRange->error($this->first($statement)),

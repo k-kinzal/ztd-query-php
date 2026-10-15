@@ -10,8 +10,8 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * A value of a replication statement that the server refuses while it parses the statement.
  *
- * The statement is grammatical and fully structured; the server rejects it
- * with the error the check names.
+ * A refused UUID or newline-free string retains its decoded operand even
+ * when lowering stops before a complete statement can be constructed.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility public
@@ -24,14 +24,15 @@ final class RefusedSetting implements Diagnostic
 
     /**
      * @param ReplicationError $error The check the value fails
-     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null $number The refused binary log index, including when only a statement prefix was read
-     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Text|null $text The decoded operand containing a forbidden line feed
+     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null $number The refused binary log index or source delay, including when only a statement prefix was read
+     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Text|null $text The decoded refused UUID or operand containing a forbidden line feed
      */
     public function __construct(public readonly ReplicationError $error, public readonly ?\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Literal\Text $text = null)
     {
-        \SqlSemantics\Diagnostic\Check::input(($error === ReplicationError::LineFeed) === ($text !== null), 'A line-feed refusal retains its decoded text operand.');
-        \SqlSemantics\Diagnostic\Check::input($text === null || str_contains($text->value, "\n"), 'A refused line-feed operand contains a line feed.');
-        \SqlSemantics\Diagnostic\Check::input(($error === ReplicationError::FileNumberOutOfRange) === ($number !== null), 'A refused binary log index retains its numeric operand.');
+        \SqlSemantics\Diagnostic\Check::input(in_array($error, [ReplicationError::LineFeed, ReplicationError::InvalidUuid], true) === ($text !== null), 'A line-feed or UUID refusal retains its decoded text operand.');
+        \SqlSemantics\Diagnostic\Check::input($text === null || $error !== ReplicationError::LineFeed || str_contains($text->value, "\n"), 'A refused line-feed operand contains a line feed.');
+        \SqlSemantics\Diagnostic\Check::input($error !== ReplicationError::InvalidUuid || !\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::AssignGtidsToAnonymousTransactions->accepts($text), 'A refused UUID operand is outside the assignment domain.');
+        \SqlSemantics\Diagnostic\Check::input($error === ReplicationError::DelayOutOfRange || (($error === ReplicationError::FileNumberOutOfRange) === ($number !== null)), 'A refused binary log index retains its numeric operand.');
     }
 
     /**

@@ -107,7 +107,7 @@ enum SourceOptionKind: string
             self::PrivilegeChecksUser => $value === null || $value instanceof AccountName,
             self::TlsCiphersuites => $value === null || $value instanceof Text,
             self::RequireTablePrimaryKeyCheck => $value instanceof PrimaryKeyCheck,
-            self::AssignGtidsToAnonymousTransactions => $value instanceof AnonymousGtids || $value instanceof Text,
+            self::AssignGtidsToAnonymousTransactions => $value instanceof AnonymousGtids || ($value instanceof Text && (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->text($this, $value, \SqlSemantics\Contract\GrammarRelease::MySql8044) === null),
         };
     }
 

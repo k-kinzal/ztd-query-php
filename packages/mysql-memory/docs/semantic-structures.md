@@ -529,3 +529,14 @@ and every wire field, including the original table name retained by MySQL 5.6
 when it materializes a derived query. Input tests separately cover competing
 database and duplicate-name conditions, later malformed input, and uncalled
 procedure bodies.
+
+Anonymous-GTID source options accept `OFF`, `LOCAL`, or a string beginning with
+36 characters in textual UUID form. Invalid strings cannot be published as a
+`SourceOption`; input lowering retains a typed refusal containing only the
+decoded operand. MySQL accepts trailing bytes after that UUID prefix, so the
+constructor preserves them. The direct native regression reuses nine original
+setting objects with GTIDs off, then on, then off again on MySQL 8.0, 8.4 and
+9.1 (81 observations). It asserts successful execution in the enabled state,
+the state-dependent refusals in the disabled states, and matching diagnostic
+notes. The separate input regression compares UUID boundaries and ordered
+setting refusals, including long and NUL-containing diagnostic values.

@@ -32,9 +32,9 @@ final class RejectedOperand
         if ($entry !== null) {
             return $entry;
         }
-        $setting = (new Replication\SyntaxSettings())->completed($node, $lowering);
-        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber) {
-            return new RejectedInput($setting->problem, (new SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
+        $setting = (new Replication\SyntaxSettings())->rejected($node, $lowering);
+        if ($setting !== null) {
+            return $setting;
         }
         $aborting = (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
         if ($aborting !== null) {

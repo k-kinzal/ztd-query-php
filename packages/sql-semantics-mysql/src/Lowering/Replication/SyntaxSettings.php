@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 
 /**
- * Preserves completed binary log index and line-feed checks before later input errors.
+ * Preserves completed replication value checks before later input errors.
  *
  * The notice retains the decoded operand needed to format its error. No SQL,
  * parser node or execution state survives the lowering call.
@@ -20,6 +20,19 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
  */
 final class SyntaxSettings
 {
+    /**
+     * Returns the refusal of an option outside its public constructor domain.
+     */
+    public function rejected(Node $node, Lowering $lowering): ?\SqlSemantics\Construction\RejectedInput
+    {
+        $setting = $this->completed($node, $lowering);
+        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber || ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && $setting->problem->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid)) {
+            return new \SqlSemantics\Construction\RejectedInput($setting->problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
+        }
+
+        return null;
+    }
+
     /**
      * Retains system-string conversion before a later input or channel refusal.
      *
@@ -36,13 +49,18 @@ final class SyntaxSettings
     }
 
     /**
-     * Returns the aborting condition of a completed index or newline-free text operand.
+     * Returns a completed value condition. An excessive delay continues parsing;
+     * a refused UUID, heartbeat or password stops before subsequent options.
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
         if ($node->name === 'source_def') {
             try {
-                (new SourceOptionRule($lowering))->option($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+                $option = (new SourceOptionRule($lowering))->option($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+                $error = (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->error($option, $lowering->profile->grammar);
+                if (in_array($error, [\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::DelayOutOfRange, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::HeartbeatOutOfRange, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::PasswordTooLong], true)) {
+                    return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting($error, $option->value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Numeral ? $option->value : null), $error !== \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::DelayOutOfRange);
+                }
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 return new ParseFailure($failure->problem, $failure->aborts);
             }

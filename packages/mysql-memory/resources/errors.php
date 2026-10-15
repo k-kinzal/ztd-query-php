@@ -309,6 +309,7 @@ return [
     3978 => ['HY000', 'Foreign key creation is not allowed with CREATE TABLE as SELECT and CREATE TABLE with START TRANSACTION statement.'],
     3979 => ['HY000', 'START TRANSACTION clause cannot be used %s'],
     4015 => ['HY000', 'CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL|<UUID> cannot be executed because @@GLOBAL.GTID_MODE <> ON.'],
+    4017 => ['HY000', 'Using ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS creates limitations on the replication topology - you cannot fail over between downstream and upstream servers. Only use this option if it is not possible to enable GTIDs on the source, for instance, because of lack of permissions. If possible, use the procedure for enabling GTID transactions online instead, as described in the documentation.'],
     4054 => ['HY000', 'This operation is not supported for plugin "%s".'],
     4058 => ['HY000', '%s factor authentication method does not match against authentication policy. Please refer @@authentication_policy system variable.'],
     1763 => ['HY000', 'Setting authentication options is not possible when only the Replica SQL Thread is being started.'],

@@ -17,7 +17,7 @@ use RuntimeException;
 final class Native
 {
     /**
-     * @return array<string, mixed> All result sets, the terminal error and stored conditions
+     * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<list<mixed>>|null, disconnected: bool} All result sets, the terminal error and stored conditions
      * @throws RuntimeException When the driver does not produce an observation
      */
     public function observe(mysqli $connection, string $sql, int $parameters = 0): array

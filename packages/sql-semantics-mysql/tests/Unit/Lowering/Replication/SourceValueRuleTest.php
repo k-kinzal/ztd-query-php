@@ -44,6 +44,14 @@ final class SourceValueRuleTest extends TestCase
         self::assertSame([], $change->facts->diagnostics);
     }
 
+    public function testAnonymousGtidsRejectsInvalidTextBeforePublishingAnOption(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid->value);
+
+        (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS='invalid'");
+    }
+
     public function testCipherSuitesLowersAString(): void
     {
         self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_TLS_CIPHERSUITES = 'x'", (new Semantics(Dialect::MySql))->analyze("change replication source to source_tls_ciphersuites = 'x'")->toString());

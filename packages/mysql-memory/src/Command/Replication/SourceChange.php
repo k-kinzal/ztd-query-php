@@ -145,6 +145,10 @@ final class SourceChange
      */
     public function warnings(array $options, Session $session, Context $context): void
     {
+        $assignment = $options[SourceOptionKind::AssignGtidsToAnonymousTransactions->value]->value ?? null;
+        if ($assignment !== null && $assignment !== AnonymousGtids::Off) {
+            $session->diagnostics->note(AdministrationError::AnonymousAssignmentTopology, AdministrationError::AnonymousAssignmentTopology->message());
+        }
         if (isset($options[SourceOptionKind::LogFile->value]) && !isset($options[SourceOptionKind::LogPosition->value])) {
             $context->warning(AdministrationError::SourceFileWithoutPosition);
         }

@@ -69,6 +69,21 @@ final class RefusalsTest extends TestCase
         self::assertSame([$code, $message], [$error->getCode(), $error->getMessage()]);
     }
 
+    public function testSettingFormatsARefusedUuidWithoutAStatement(): void
+    {
+        $text = new \SqlSemantics\Platform\MySql\Statement\Literal\Text(str_repeat('x', 127) . '猫');
+        $error = (new Refusals())->setting(new RefusedSetting(ReplicationError::InvalidUuid, text: $text), null, 'unrelated input');
+
+        self::assertSame([1525, "Incorrect UUID value: '" . str_repeat('x', 127) . "?'"], [$error->getCode(), $error->getMessage()]);
+    }
+
+    public function testSettingRetainsAnEarlierDelayWithoutAStatement(): void
+    {
+        $error = (new Refusals())->setting(new RefusedSetting(ReplicationError::DelayOutOfRange, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2147483648')), null, 'unrelated input');
+
+        self::assertSame([1729, 'The requested value 2147483648 for the source delay exceeds the maximum 2147483647'], [$error->getCode(), $error->getMessage()]);
+    }
+
     public function testSpatialNamesTheStatementOfAnSridOutOfRange(): void
     {
         $statement = (new Instance())->connect()->analyze('DROP SPATIAL REFERENCE SYSTEM 4294967296')->statement;
@@ -153,10 +168,10 @@ final class RefusalsTest extends TestCase
 
     public function testOptionAnswersTheValueOfASourceOption(): void
     {
-        $statement = (new Instance())->connect()->analyze("CHANGE REPLICATION SOURCE TO SOURCE_DELAY = 2147483648, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'zz'")->statement;
+        $statement = (new Instance())->connect()->analyze("CHANGE REPLICATION SOURCE TO SOURCE_DELAY = 2147483648, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = '3e11fa47-71ca-11e1-9e33-c80aa9429562'")->statement;
         $refusals = new Refusals();
 
-        self::assertSame(['2147483648', 'zz', ''], [$refusals->option($statement, SourceOptionKind::Delay), $refusals->option($statement, SourceOptionKind::AssignGtidsToAnonymousTransactions), $refusals->option($statement, SourceOptionKind::Host)]);
+        self::assertSame(['2147483648', '3e11fa47-71ca-11e1-9e33-c80aa9429562', ''], [$refusals->option($statement, SourceOptionKind::Delay), $refusals->option($statement, SourceOptionKind::AssignGtidsToAnonymousTransactions), $refusals->option($statement, SourceOptionKind::Host)]);
     }
 
     public function testFirstAnswersTheFileNumberOfReset(): void

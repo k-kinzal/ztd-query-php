@@ -107,8 +107,6 @@ final class ChannelNameTest extends TestCase
                 $observe = static function (mysqli $connection, string $sql) use ($reset): string {
                     $restored = (new Native())->observe($connection, $reset);
                     $error = $restored['error'] ?? [0];
-                    self::assertIsArray($error);
-                    self::assertArrayHasKey(0, $error);
                     self::assertContains($error[0], [0, 1794], 'The isolated channel fixture must be empty or already unconfigured.');
                     $connection->query('DO 0');
 
