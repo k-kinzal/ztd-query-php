@@ -37,6 +37,9 @@ final class SyntaxStatements
             if ($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch || $parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
                 return null;
             }
+            if ($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName && !$parameters->aborts) {
+                return new ParseFailure($parameters->problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+            }
             return new ParseFailure($parameters->problem, $parameters->aborts);
         }
         $problem = $prefix->diagnostic($frame->body(), $parameters);

@@ -38,6 +38,7 @@ final class OpenHandler implements Relation
      */
     public function __construct(public readonly Name $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check(new \SqlSemantics\Statement\Identifier\QualifiedName($name));
     }
 
     /**

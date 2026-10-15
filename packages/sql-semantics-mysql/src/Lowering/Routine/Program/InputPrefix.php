@@ -99,6 +99,10 @@ final class InputPrefix
      */
     public function completed(Node $node, PrefixFrame $frame, ParameterList $parameters, bool $isolated = false): ParameterList|RejectedInput
     {
+        $name = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->within($node, $this->lowering);
+        if ($name !== null) {
+            return $name;
+        }
         try {
             if (in_array($node->name, ['sp_pdparam_list', 'sp_fdparam_list'], true)) {
                 return (new ParameterRule($this->lowering))->parameters($node);

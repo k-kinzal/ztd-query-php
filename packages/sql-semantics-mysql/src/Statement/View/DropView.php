@@ -54,6 +54,7 @@ final class DropView implements Statement
     {
         $this->views = Check::listOf($views, QualifiedName::class, 'DROP VIEW names at least one view.', 1);
         foreach ($this->views as $view) {
+            (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($view);
             Check::input($view->catalog === null, 'A view name has at most a database qualifier.');
         }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

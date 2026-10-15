@@ -38,6 +38,7 @@ final class TableLock implements Node
      */
     public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias, public readonly LockMode $mode, public readonly AliasMark $mark = AliasMark::As)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
     }

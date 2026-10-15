@@ -55,6 +55,7 @@ final class WriteTarget implements NamedRelation
      */
     public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], public readonly AliasMark $mark = AliasMark::As)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($mark !== AliasMark::Equals, 'A write target alias uses AS or no marker.');
         Check::input($name->catalog === null, 'A table is qualified by at most a database.');

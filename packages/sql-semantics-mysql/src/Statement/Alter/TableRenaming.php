@@ -33,6 +33,8 @@ final class TableRenaming implements Node
      */
     public function __construct(public readonly QualifiedName $from, public readonly QualifiedName $to)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($from);
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($to);
         Check::input($from->catalog === null && $to->catalog === null, 'A table is qualified by at most a database.');
     }
 

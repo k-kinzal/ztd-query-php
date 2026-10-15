@@ -90,6 +90,7 @@ final class CreateTable implements Statement, Relation
         public readonly bool $ifNotExists = false,
         public readonly bool $enclosed = false,
     ) {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($name->catalog === null, 'A table name has at most a database qualifier.');
         Check::input($temporaryWords >= 0, 'TEMPORARY is written a non-negative number of times.');
         $this->elements = Check::listOf($elements, TableElement::class, 'Table elements are an ordered list of table elements.');

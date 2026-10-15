@@ -52,6 +52,8 @@ final class CreateTableLike implements Statement
         public readonly int $temporaryWords = 0,
         public readonly bool $ifNotExists = false,
     ) {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($source);
         Check::input($name->catalog === null && $source->catalog === null, 'A table name has at most a database qualifier.');
         Check::input($temporaryWords >= 0, 'TEMPORARY is written a non-negative number of times.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

@@ -1354,6 +1354,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CurrentUser": {
         "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\EmptyObjectName": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ObjectNameKind"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\InvalidProjectionAlias": {
         "candidates": "array",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
@@ -1362,6 +1365,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\MissingTableQualifier": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "qualifier": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ObjectNameKind": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\TableWildcard": {
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"

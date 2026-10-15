@@ -43,6 +43,7 @@ final class CachedTable implements Node
      */
     public function __construct(public readonly QualifiedName $table, public readonly ?PartitionSelection $partitions = null, ?array $indexes = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         $this->indexes = (new CachedIndexes())->checked($table, $indexes);
     }
 

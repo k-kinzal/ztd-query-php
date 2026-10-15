@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Parse\Entry;
 
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use RuntimeException;
@@ -12,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumbe
 use SqlSemantics\Statement\Fact\Diagnostic;
 
 /**
- * Dispatches typed input refusals whose messages need the original syntax excerpt.
+ * Dispatches typed input refusals, formatting syntax excerpts only when needed.
  *
  * SQL text is confined to input formatting and is never used to execute a structure.
  *
@@ -26,6 +27,10 @@ final class InputErrors
     public function error(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName => match ($diagnostic->kind) {
+                \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Database => SchemaError::WrongDatabaseName->error(''),
+                \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Table => SchemaError::WrongTableName->error(''),
+            },
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems => (new \MySqlMemory\Command\Condition\SignalProblems())->refused($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment => (new NamesInput())->error($diagnostic, $session),
             $diagnostic instanceof RefusedSourceNumber => (new SourceNumberInput())->error($diagnostic, $session->text),

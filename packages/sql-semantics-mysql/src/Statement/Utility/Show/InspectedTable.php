@@ -33,6 +33,7 @@ final class InspectedTable implements Node
      */
     public function __construct(public readonly QualifiedName $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($name->catalog === null, 'A table name has at most a database qualifier.');
     }
 

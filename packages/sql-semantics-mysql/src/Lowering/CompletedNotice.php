@@ -32,6 +32,15 @@ final class CompletedNotice
             return new ParseFailure($entry->problem, true);
         }
         $replication = new Replication\SyntaxDeprecations();
-        return $lowering->tableChanges->completed($node) ?? $lowering->numbers->completed($node) ?? (new Account\SyntaxRoles())->deprecation($node, $lowering->profile->grammar) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering) ?? (new Account\SyntaxFactors())->completed($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
+        return $this->operands($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? $lowering->numbers->completed($node) ?? (new Account\SyntaxRoles())->deprecation($node, $lowering->profile->grammar) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering) ?? (new Account\SyntaxFactors())->completed($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
     }
+
+    /**
+     * Interprets primitive name and cast operands before their enclosing constructs.
+     */
+    public function operands(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
+    {
+        return (new Leaf\SyntaxTableNames())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering);
+    }
+
 }
