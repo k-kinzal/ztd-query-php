@@ -193,7 +193,7 @@
 <span class="src-line" id="L153" data-diff="added"><a class="ln" href="#L153">153</a>    }</span>
 <span class="src-line" id="L154" data-diff="added"><a class="ln" href="#L154">154</a></span>
 <span class="src-line" id="L155" data-diff="added"><a class="ln" href="#L155">155</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L156" data-diff="added"><a class="ln" href="#L156">156</a><span class="tok-com">     * Answers the error of a library the plugin directory does not hold; an empty name, `.` and `..` name a directory.</span></span>
+<span class="src-line" id="L156" data-diff="added"><a class="ln" href="#L156">156</a><span class="tok-com">     * Answers the error of a library the plugin directory does not hold, bounding the operating-system detail to 128 bytes; an empty name, `.` and `..` name a directory.</span></span>
 <span class="src-line" id="L157" data-diff="added"><a class="ln" href="#L157">157</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L158" data-diff="added"><a class="ln" href="#L158">158</a><span class="tok-com">     * @param bool $qualified Whether the error names the full plugin path; function errors name the requested library</span></span>
 <span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a><span class="tok-com">     * @param string $errno The error number the server reports for the failed open: 11 from 8.0 on, 2 in 5.6 and 5.7 (verified on live 5.7.44 and 8.4.7 servers)</span></span>
@@ -205,7 +205,7 @@
 <span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a></span>
 <span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a>        <span class="tok-var">$detail</span> = <span class="tok-var">$path</span> . <span class="tok-str">&#039;: &#039;</span> . <span class="tok-var">$reason</span>;</span>
 <span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a></span>
-<span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a>        <span class="tok-kw">return</span> <span class="tok-id">AdministrationError</span>::<span class="tok-id">CantOpenLibrary</span>-&gt;<span class="tok-id">error</span>(<span class="tok-var">$qualified</span> ? <span class="tok-var">$path</span> : <span class="tok-var">$library</span>, <span class="tok-var">$errno</span>, <span class="tok-var">$qualified</span> ? <span class="tok-var">$detail</span> : <span class="tok-id">substr</span>(<span class="tok-var">$detail</span>, <span class="tok-num">0</span>, <span class="tok-num">128</span>));</span>
+<span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a>        <span class="tok-kw">return</span> <span class="tok-id">AdministrationError</span>::<span class="tok-id">CantOpenLibrary</span>-&gt;<span class="tok-id">error</span>(<span class="tok-id">substr</span>(<span class="tok-var">$qualified</span> ? <span class="tok-var">$path</span> : <span class="tok-var">$library</span>, <span class="tok-num">0</span>, <span class="tok-num">192</span>), <span class="tok-var">$errno</span>, <span class="tok-id">substr</span>(<span class="tok-var">$detail</span>, <span class="tok-num">0</span>, <span class="tok-num">128</span>));</span>
 <span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a>    }</span>
 <span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a>}</span>
 <span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a></span>
