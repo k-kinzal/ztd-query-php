@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
@@ -191,10 +190,12 @@ final class Stages
      * Tells whether the planner checks a diagnostic after resolving every name and window.
      *
      * IGNORE NULLS and FROM LAST are checked with window function arguments. Unsupported frames
-     * are checked after resolving names and refusing misplaced calls (verified on MySQL 8.4.7).
+     * are checked after resolving names and refusing misplaced calls. Aggregate diagnostics with
+     * an owning expression are located at the end of their own block by Locations
+     * (verified on MySQL 8.0.44, 8.4.7 and 9.1.0).
      */
     public static function planned(Diagnostic $diagnostic): bool
     {
-        return $diagnostic instanceof UnsupportedWindowing && in_array($diagnostic->limit, [WindowingLimit::IgnoreNulls, WindowingLimit::FromLast, WindowingLimit::Exclusion, WindowingLimit::GroupsUnit], true);
+        return $diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null;
     }
 }

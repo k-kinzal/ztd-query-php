@@ -351,6 +351,7 @@ final class LocatorTest extends TestCase
         $locator->windowed($statement, 'field list', []);
 
         self::assertSame([[['field list', [1, 0]]], [['w', [1, 0]]]], [array_map(static fn (array $entry): array => [$entry[1], $entry[2]], $locator->functions), array_map(static fn (array $entry): array => [$entry[0]->value, $entry[1]], $locator->windows)]);
+        self::assertSame([8, 1, 0], $locator->windowChecks[spl_object_id($item->expression)]);
     }
 
     public function testStatementResolvesTheQueryOfAnInsertBeforeItsColumnsInMySql57(): void

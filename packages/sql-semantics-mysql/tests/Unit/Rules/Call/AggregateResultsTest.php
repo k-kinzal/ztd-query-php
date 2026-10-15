@@ -52,9 +52,11 @@ final class AggregateResultsTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $int = [new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull)];
-        (new AggregateResults())->aggregate(new Aggregate(AggregateFunction::Sum, [new NumberLiteral('1')], true, false, new Name('w')), $int, $derivation);
+        $call = new Aggregate(AggregateFunction::Sum, [new NumberLiteral('1')], true, false, new Name('w'));
+        (new AggregateResults())->aggregate($call, $int, $derivation);
 
         self::assertInstanceOf(UnsupportedWindowing::class, $derivation->facts()->diagnostics[0]);
+        self::assertSame($call, $derivation->facts()->diagnostics[0]->expression);
     }
 
     public function testSumIsDecimalForExactNumbersAndDoubleOtherwise(): void

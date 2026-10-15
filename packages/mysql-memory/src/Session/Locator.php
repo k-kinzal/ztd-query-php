@@ -91,6 +91,11 @@ final class Locator
     public array $functions = [];
 
     /**
+     * @var array<int, list<int>> Each call's final window check, after its own query block's names and before enclosing expressions resume
+     */
+    public array $windowChecks = [];
+
+    /**
      * @var list<array{SetOperation|OrderedSetOperation, list<int>}> Each set operation, with the resolution order its operands are compared at: once its right operand is resolved
      */
     public array $sets = [];
@@ -306,6 +311,7 @@ final class Locator
     {
         if ($node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate) {
             $this->functions[] = [$node, $this->process && $this->block === [] ? 'process identifier' : $clause, $order];
+            $this->windowChecks[spl_object_id($node)] = [...$this->block, 8, ...$order];
         }
         $over = $node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate ? $node->over : null;
         if ($over instanceof Name) {

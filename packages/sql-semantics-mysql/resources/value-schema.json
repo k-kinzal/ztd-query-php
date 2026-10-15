@@ -615,6 +615,7 @@
         "function": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\UnsupportedWindowing": {
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\GroupConcat|null",
         "limit": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowingLimit"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowingLimit": {

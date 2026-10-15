@@ -38,11 +38,14 @@ final class GroupConcatTest extends TestCase
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
-        $fact = $derivation->scalar(new GroupConcat([new StringLiteral(['x'])], false, [], null, new Name('w')), $derivation->environment());
+        $call = new GroupConcat([new StringLiteral(['x'])], false, [], null, new Name('w'));
+        $fact = $derivation->scalar($call, $derivation->environment());
 
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertSame(TypeClass::Character, TypeClass::of($fact->type->descriptor));
-        self::assertEquals([new UnsupportedWindowing(WindowingLimit::GroupConcat)], $derivation->facts()->diagnostics);
+        self::assertEquals([new UnsupportedWindowing(WindowingLimit::GroupConcat, $call)], $derivation->facts()->diagnostics);
+        self::assertInstanceOf(UnsupportedWindowing::class, $derivation->facts()->diagnostics[0]);
+        self::assertSame($call, $derivation->facts()->diagnostics[0]->expression);
     }
 
     public function testRenderWritesTheOrderingAndTheSeparator(): void

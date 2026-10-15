@@ -110,7 +110,7 @@ final class GroupConcat implements SetFunction
         (new Windows())->derive($this->over, $derivation, $environment);
         (new AggregateOwnership())->register($this, $derivation, $environment);
         if ($this->over !== null) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupConcat));
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupConcat, $this));
         }
 
         $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));

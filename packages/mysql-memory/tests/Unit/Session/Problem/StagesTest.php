@@ -30,7 +30,16 @@ final class StagesTest extends TestCase
         self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::IgnoreNulls)));
         self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::FromLast)));
         self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::Exclusion)));
+        self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::GroupConcat)));
+        self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::DistinctAggregate)));
         self::assertFalse(Stages::planned(new Misuse(MisuseRule::DuplicateWindow, new Name('w'))));
+    }
+
+    public function testPlannedLeavesOwnedAggregateDiagnosticsToTheirBlockLocation(): void
+    {
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')], over: new Name('w'));
+
+        self::assertFalse(Stages::planned(new UnsupportedWindowing(WindowingLimit::GroupConcat, $call)));
     }
 
     public function testAnsweredLeavesTheMissingTableOfAShowStatementToItsCommand(): void

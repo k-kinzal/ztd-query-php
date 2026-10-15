@@ -32,6 +32,13 @@ final class FunctionsTest extends TestCase
      */
     public static function providerWindowRefusals(): iterable
     {
+        yield 'concatenation window name' => ['SELECT GROUP_CONCAT(1) OVER missing', 3579, "Window name 'missing' is not defined."];
+        yield 'concatenation later field' => ['SELECT GROUP_CONCAT(1) OVER (), missing', 1054, "Unknown column 'missing' in 'field list'"];
+        yield 'concatenation refusal' => ['SELECT GROUP_CONCAT(1) OVER ()', 1235, "This version of MySQL doesn't yet support 'group_concat as window function'"];
+        yield 'distinct later field' => ['SELECT COUNT(DISTINCT 1) OVER (), missing', 1054, "Unknown column 'missing' in 'field list'"];
+        yield 'nested block before later field' => ['SELECT (SELECT GROUP_CONCAT(1) OVER ()), missing', 1235, "This version of MySQL doesn't yet support 'group_concat as window function'"];
+        yield 'field before nested block' => ['SELECT missing, (SELECT GROUP_CONCAT(1) OVER ())', 1054, "Unknown column 'missing' in 'field list'"];
+        yield 'distinct refusal' => ['SELECT COUNT(DISTINCT 1) OVER ()', 1235, "This version of MySQL doesn't yet support '<window function>(DISTINCT ..)'"];
         yield 'undefined window' => ['SELECT NTH_VALUE(1,1) IGNORE NULLS OVER missing', 3579, "Window name 'missing' is not defined."];
         yield 'unresolved field' => ['SELECT NTH_VALUE(1,1) IGNORE NULLS OVER (), missing', 1054, "Unknown column 'missing' in 'field list'"];
         yield 'null treatment' => ['SELECT NTH_VALUE(1,1) FROM LAST IGNORE NULLS OVER ()', 1235, "This version of MySQL doesn't yet support 'IGNORE NULLS'"];

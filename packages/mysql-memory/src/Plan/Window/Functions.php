@@ -58,6 +58,11 @@ final class Functions
     public function compile(Scalar $call, Scope $scope, bool $direct = false): Analytic
     {
         $compiler = $this->planner->compiler;
+        foreach ($compiler->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing && $diagnostic->expression === $call) {
+                throw StatementError::NotSupportedYet->error($diagnostic->limit->value);
+            }
+        }
         $domain = $compiler->domain($call);
         if (!$direct) {
             $stored = $call instanceof WindowFunction ? (new \SqlSemantics\Platform\MySql\Rules\Call\WindowResults())->materialized($call->kind, $domain->resolved(), $compiler->settings->release()) : (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->windowed($domain->resolved(), $compiler->settings->release());
