@@ -21,6 +21,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ReaderTest extends TestCase
 {
+    public function testOperandKeepsTheDebugEntryBeforeDateInterpretation(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+
+        $session->query("SHOW PARSE_TREE SELECT DATE 'bad'");
+    }
+
     public function testTreeRefusesAStandalonePartitionBeforeItsParameterMarker(): void
     {
         $session = (new Instance('5.7.44'))->connect();

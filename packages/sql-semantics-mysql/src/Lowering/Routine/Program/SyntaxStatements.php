@@ -32,9 +32,9 @@ final class SyntaxStatements
         }
         $prefix = new InputPrefix($lowering);
         $frame = new PrefixFrame();
-        $parameters = $prefix->completed($node, $frame, new ParameterList([]));
+        $parameters = $prefix->completed($node, $frame, new ParameterList([]), true);
         if ($parameters instanceof RejectedInput) {
-            if ($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch) {
+            if ($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch || $parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
                 return null;
             }
             return new ParseFailure($parameters->problem, $parameters->aborts);

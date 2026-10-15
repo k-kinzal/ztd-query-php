@@ -23,6 +23,16 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class SyntaxWarningsTest extends TestCase
 {
+    public function testBeforeRetainsEarlierDuplicateDeclarations(): void
+    {
+        $sql = "CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE x INT; SELECT DATE 'bad'; END";
+        $profile = new LanguageProfile(GrammarRelease::MySql847);
+        $tree = (new Platform())->parser($profile)->parse($sql);
+        $problem = (new SyntaxWarnings())->before($tree, strlen('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE x INT; SELECT '), $profile);
+
+        self::assertSame('Duplicate variable: x', $problem?->problem->message());
+    }
+
     public function testCompletedKeepsAnInternalEntryBeforeALaterLexicalFailure(): void
     {
         $sql = "PARSE_GCOL_EXPR((SELECT a FROM .t)) 'unclosed";

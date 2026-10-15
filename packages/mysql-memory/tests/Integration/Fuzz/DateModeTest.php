@@ -24,7 +24,26 @@ final class DateModeTest extends TestCase
      */
     public static function providerModes(): iterable
     {
-        $statements = ['SET NAMES utf8mb4', 'CREATE DATABASE d'];
+        $statements = [
+            'SET NAMES utf8mb4', 'CREATE DATABASE d',
+            "SELECT DATE 'bad', BINARY 1",
+            "SELECT BINARY 1, DATE 'bad'",
+            "SELECT DATE 'bad' TRAILING GARBAGE",
+            "SELECT DATE 'bad', ?",
+            "SHOW PARSE_TREE SELECT DATE 'bad'",
+            "SIGNAL missing SET MESSAGE_TEXT = DATE 'bad'",
+            "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = DATE 'bad'",
+            "SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = @@absent, MESSAGE_TEXT = DATE 'bad'",
+            "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = DATE 'bad'",
+            "RESIGNAL SET MESSAGE_TEXT = DATE 'bad'",
+            "CREATE PROCEDURE d.p() SELECT DATE 'bad'",
+            "CREATE PROCEDURE d.p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MESSAGE_TEXT = DATE 'bad'; END",
+            "CREATE PROCEDURE d.p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN SIGNAL c SET MESSAGE_TEXT = DATE 'bad'; END; END",
+            "CREATE PROCEDURE d.p() BEGIN SIGNAL missing SET MESSAGE_TEXT = DATE 'bad'; END",
+            "CREATE PROCEDURE d.p() BEGIN DECLARE x INT; DECLARE x INT; SELECT DATE 'bad'; END",
+            "CREATE PROCEDURE d.p() BEGIN SELECT BINARY 1; SELECT DATE 'bad'; SELECT BINARY 2; END",
+            "CREATE PROCEDURE d.p() BEGIN DECLARE x DATE DEFAULT '2024-01-01'; SELECT DATE 'bad'; END",
+        ];
         foreach (['', 'ALLOW_INVALID_DATES'] as $mode) {
             $statements[] = "SET sql_mode='" . $mode . "'";
             foreach (["DATE '2024-02-31'", "DATE '2023-02-29'", "DATE '2024-04-31'", "DATE '2024-13-01'", "DATE '2024-02-32'", "DATE '0000-00-00'", "DATE '2024-00-01'", "TIMESTAMP '2024-02-31 01:02:03'", "TIMESTAMP '2024-02-31 01:02:03.9999999'", "TIMESTAMP '2024-02-31 23:59:59.9999999'"] as $literal) {

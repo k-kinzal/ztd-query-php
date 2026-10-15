@@ -116,6 +116,23 @@ final class Reader
     }
 
     /**
+     * Preserves input context before formatting an unconstructible operand.
+     *
+     * @throws SqlError When a debug-only client entry precedes value interpretation
+     */
+    public function operand(\SqlSemantics\Construction\RejectedInput $failure, Node $tree, string $statement, Session $session): SqlError
+    {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
+            $failure = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->before($tree, $failure->end + 1, $session->semantics()->profile()) ?? $failure;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral) {
+            (new Syntax())->debugOnly($tree, $statement);
+        }
+
+        return $this->rejection($failure, $statement, $session);
+    }
+
+    /**
      * Converts a typed operand refusal, preserving notices completed before its boundary.
      */
     public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError

@@ -93,6 +93,9 @@ final class Errors
     public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list', ?Node $statement = null): SqlError
     {
         $database = $session->variables->database;
+        if ($diagnostic instanceof TooBigPrecision && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return new SqlError(SchemaError::TooBigPrecision, sprintf("Too big precision %d specified for column '%s'. Maximum is %d.", $diagnostic->precision, $diagnostic->function, $diagnostic->maximum));
+        }
 
         return (new \MySqlMemory\Session\Parse\Entry\InputErrors())->error($diagnostic, $session)
             ?? $this->unopened($diagnostic, $session, $statement)
@@ -295,6 +298,7 @@ final class Errors
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize => $this->typeSize($diagnostic),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral => DataError::WrongValue->error('DATE', substr($diagnostic->text, 0, 128)),
             $diagnostic instanceof OperandColumns => QueryError::OperandColumns->error($diagnostic->expected),
             $diagnostic instanceof NotSupportedYet => StatementError::NotSupportedYet->error($diagnostic->feature),
             $diagnostic instanceof IllegalCollationMix => new SqlError(match (count($diagnostic->operands)) {

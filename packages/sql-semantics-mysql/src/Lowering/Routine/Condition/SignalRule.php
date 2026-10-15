@@ -71,18 +71,22 @@ final class SignalRule
     public function statement(Form $form): Signal|Resignal
     {
         if ($form->signature === 'signal_stmt: SIGNAL_SYM signal_value opt_set_signal_information') {
-            return new Signal($this->condition($form->node(1)), $this->items($form->node(2)));
+            $condition = $this->condition($form->node(1));
+
+            return new Signal($condition, $this->items($form->node(2), $condition));
         }
         if ($form->signature !== 'resignal_stmt: RESIGNAL_SYM opt_signal_value opt_set_signal_information') {
             throw ImplementationGap::production($form);
         }
         $value = $this->lowering->form($form->node(1));
 
-        return new Resignal(match ($value->signature) {
+        $condition = match ($value->signature) {
             'opt_signal_value:' => null,
             'opt_signal_value: signal_value' => $this->condition($value->node(0)),
             default => throw ImplementationGap::production($value),
-        }, $this->items($form->node(2)));
+        };
+
+        return new Resignal($condition, $this->items($form->node(2), $condition));
     }
 
     /**
@@ -105,9 +109,10 @@ final class SignalRule
      * Lowers the SET clause: a node of `opt_set_signal_information`; an absent clause is empty.
      *
      * @return list<SignalItem>
+     * @throws \SqlSemantics\Construction\RejectedInput When an item operand is outside its value domain
      * @throws ImplementationGap When a production has no rule
      */
-    public function items(Node $clause): array
+    public function items(Node $clause, ConditionName|SqlState|null $condition = null): array
     {
         $form = $this->lowering->form($clause);
         if ($form->signature === 'opt_set_signal_information:') {
@@ -133,7 +138,14 @@ final class SignalRule
         $items = [];
         foreach (array_reverse($pending) as [$item, $offset]) {
             $name = $this->lowering->form($item->node($offset));
-            $items[] = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
+            try {
+                $items[] = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral) {
+                    throw $failure;
+                }
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems(new Resignal($condition, $items), $failure->problem), $failure->end);
+            }
         }
 
         return $items;
@@ -143,6 +155,7 @@ final class SignalRule
      * Lowers the value of an item or a condition number: a node of `signal_allowed_expr`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a literal is outside its value domain
      * @throws \SqlSemantics\Diagnostic\AnalysisException When the operand assigns a variable instead of reading it
      */
     public function operand(Node $expression, ?Node $container = null): LiteralExpression|ColumnUse|SystemVariable|UserVariable

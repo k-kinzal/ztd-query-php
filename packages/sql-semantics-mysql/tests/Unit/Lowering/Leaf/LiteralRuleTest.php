@@ -32,6 +32,12 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Medium]
 final class LiteralRuleTest extends TestCase
 {
+    public function testTemporalRefusesDateTextOutsideTheValueDomain(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze("SELECT DATE 'not a date'");
+    }
+
     public function testLiteralLowersEveryLiteralForm(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'");

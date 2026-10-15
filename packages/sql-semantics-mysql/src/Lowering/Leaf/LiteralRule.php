@@ -109,6 +109,7 @@ final class LiteralRule
     /**
      * Lowers a literal at an expression position.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a temporal operand is outside its representation domain
      * @throws ImplementationGap When the production has no rule
      */
     public function literal(Node $literal): LiteralExpression
@@ -121,13 +122,29 @@ final class LiteralRule
             return $this->lowering->leaves->record(new NumberLiteral($form->token(0)->text));
         }
         if (isset(self::TEMPORAL[$form->signature])) {
-            return $this->lowering->leaves->record(new TemporalLiteral(self::TEMPORAL[$form->signature], $this->decode($form->token(1)->text)));
+            return $this->temporal($form);
         }
         if ($form->node->name === 'text_literal') {
             return $this->string($form->node);
         }
 
         return $this->constant($form);
+    }
+
+    /**
+     * Decodes temporal text, refusing DATE operands outside every calendar mode.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When DATE has no bounded representation
+     */
+    public function temporal(Form $form): TemporalLiteral
+    {
+        $kind = self::TEMPORAL[$form->signature];
+        $text = $this->decode($form->token(1)->text);
+        if ($kind === TemporalForm::Date && \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal('DATE', $text, 0, false, false, true) === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral($text), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
+
+        return $this->lowering->leaves->record(new TemporalLiteral($kind, $text));
     }
 
     /**

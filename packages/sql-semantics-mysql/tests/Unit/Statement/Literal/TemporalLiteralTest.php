@@ -26,7 +26,7 @@ final class TemporalLiteralTest extends TestCase
 {
     public function testTypeAnswersDateWithoutAPrecision(): void
     {
-        $type = (new TemporalLiteral(TemporalForm::Date, '2024-01-02 03:04:05.123'))->type();
+        $type = (new TemporalLiteral(TemporalForm::Date, '2024-01-02'))->type();
 
         self::assertSame(TemporalKind::Date, $type->kind);
         self::assertNull($type->precision);

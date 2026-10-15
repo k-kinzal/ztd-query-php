@@ -77,6 +77,19 @@ final class SignalProblems
     }
 
     /**
+     * Checks the completed condition/items before an input value that cannot be constructed.
+     *
+     * @throws SqlError When an earlier condition or item fails
+     */
+    public function refused(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems $refusal, Session $session): SqlError
+    {
+        $operation = new Operation($session->semantics()->context(session: $session->resolution()), $refusal->prefix);
+        $this->check($operation, $session);
+
+        return (new Errors())->error($refusal->problem, $session);
+    }
+
+    /**
      * Raises the problem of one node of the value of an item: an invalid temporal literal, or a system variable the server does not know.
      *
      * @throws SqlError When the node has such a problem

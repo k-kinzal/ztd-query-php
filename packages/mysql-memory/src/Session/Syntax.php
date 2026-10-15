@@ -186,6 +186,10 @@ final class Syntax
             };
             $text = $this->unquote($tokens[1]->text, !$modes->has('NO_BACKSLASH_ESCAPES'));
             if (Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES')) === null) {
+                $prefix = $session === null ? null : (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->before($tree, $tokens[1]->end() + 1, $session->semantics()->profile());
+                if ($prefix !== null && !$prefix->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral) {
+                    throw (new Problem\Errors())->error($prefix->problem, $session);
+                }
                 $error = DataError::WrongValue->error($form, substr($text, 0, 128));
                 if ($session === null || !$session->settings()->legacy()) {
                     throw $error;

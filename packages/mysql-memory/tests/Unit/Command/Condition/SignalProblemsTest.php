@@ -17,6 +17,16 @@ use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 #[Small]
 final class SignalProblemsTest extends TestCase
 {
+    public function testRefusedChecksTheEarlierConditionBeforeTheDateOperand(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1319);
+
+        $session->query("SIGNAL missing SET MESSAGE_TEXT = DATE 'bad'");
+    }
+
     public function testSignalsTellsSignalAndResignalFromOtherStatements(): void
     {
         $parser = (new Instance())->connect()->semantics()->parser();

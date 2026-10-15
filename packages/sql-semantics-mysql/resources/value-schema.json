@@ -1157,6 +1157,9 @@
         "expected": "int",
         "expression": "?SqlSemantics\\Statement\\Scalar"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedDateLiteral": {
+        "text": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\TooBigPrecision": {
         "function": "string",
         "maximum": "int",
@@ -2062,6 +2065,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramRule": {
         "name": "string",
         "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\RefusedSignalItems": {
+        "prefix": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Resignal",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedDateLiteral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind": {
         "name": "string",

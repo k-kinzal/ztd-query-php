@@ -89,6 +89,16 @@ final class SyntaxWarnings
     }
 
     /**
+     * Derives completed program operands before a refused value, preserving lexical scopes.
+     */
+    public function before(Node $tree, int $end, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
+    {
+        $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
+
+        return (new Routine\Program\InputPrefix($lowering))->before($tree, $end);
+    }
+
+    /**
      * Finds a rejected operand of a parsed input, retaining earlier program-scope refusals.
      */
     public function rejected(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput

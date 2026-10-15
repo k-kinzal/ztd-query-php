@@ -29,6 +29,18 @@ final class TemporalInputTest extends TestCase
         yield 'assignment after literal' => ["SELECT DATE 'text', @a:=1", [1287, 1525]];
     }
 
+    public function testNoticesKeepsOperatorWarningsBeforeARefusedCast(): void
+    {
+        $session = (new Instance())->connect();
+        $sql = "SELECT !1, DATE 'bad', CAST(1 AT LOCAL AS CHAR)";
+        $parser = $session->semantics()->parser();
+        self::assertInstanceOf(\SqlParser\Parser\ReductionParser::class, $parser);
+        $notices = (new TemporalInput())->notices($parser, $sql, strlen($sql), $session);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot, $notices[0][1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[1][1]);
+    }
+
     /**
      * @param list<int> $codes The ordered conditions before contextual value interpretation
      */

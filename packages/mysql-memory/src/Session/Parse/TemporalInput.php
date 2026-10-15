@@ -42,47 +42,62 @@ final class TemporalInput
         } catch (SqlError $failure) {
             $parser = $session->semantics()->parser();
             Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
-            $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
+            $notices = $this->notices($parser, $statement, $end, $session);
             foreach ($notices as [, $notice]) {
-                if ($notice instanceof ParseFailure && !$session->settings()->legacy()) {
-                    return;
+                if ($notice instanceof ParseFailure && !$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedDateLiteral && !$session->settings()->legacy()) {
+                    throw (new ModernWarnings())->recorded(array_column($notices, 1), $failure, $session, false);
                 }
             }
             if ($session->settings()->legacy()) {
                 $literal = $session->settings()->release() === GrammarRelease::MySql5651 ? $this->before($statement, $end, $session) : null;
                 foreach ($notices as [$offset, $notice]) {
                     if ($notice instanceof ParseFailure && ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision || $notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) && ($literal === null || $offset < $literal[0])) {
-                        return;
+                        throw (new ModernWarnings())->recorded(array_column($notices, 1), $failure, $session, false);
                     }
                 }
                 throw $failure;
             }
-            foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, $end, $parser) as $offset => $notice) {
-                $notices[] = [$offset, $notice];
-            }
-            usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
-
             throw (new ModernWarnings())->recorded(array_column($notices, 1), $failure, $session);
         }
     }
 
     /**
+     * Combines semantic input conditions with accepted operator warnings in source order.
+     *
+     * @return list<array{int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|\SqlSemantics\Platform\MySql\Statement\Notice\ParseStop}>
+     */
+    public function notices(ReductionParser $parser, string $statement, int $end, Session $session): array
+    {
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
+        if (!$session->settings()->legacy()) {
+            foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, $end, $parser) as $offset => $notice) {
+                $notices[] = [$offset, $notice];
+            }
+        }
+        usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+
+        return $notices;
+    }
+
+    /**
      * Finds a literal refusal interpreted before a later syntax failure.
      *
-     * MySQL 5.6 interprets individual literals during parsing. Later releases
-     * interpret a stored-program statement when that whole statement completes.
+     * MySQL 5.6 interprets individual literals during parsing. MySQL 5.7 also
+     * interprets a completed client statement before a following syntax failure.
+     * Later releases interpret stored-program members when they complete.
      *
      * @return array{int, SqlError}|null The interpretation boundary and its value error
      */
     public function before(string $statement, int $end, Session $session): ?array
     {
         $legacy = $session->settings()->release() === GrammarRelease::MySql5651;
+        $kinds = $legacy ? ['temporal_literal'] : ($session->settings()->legacy() ? ['statement', 'sp_proc_stmt', 'ev_sql_stmt_inner'] : ['sp_proc_stmt', 'ev_sql_stmt_inner']);
         $parser = $session->semantics()->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
         $found = null;
         try {
-            $parser->parse($statement, static function (Node $node, \SqlParser\Lexer\Token $lookahead) use ($end, $session, $legacy, $statement, &$found): void {
-                if ($found !== null || !in_array($node->name, $legacy ? ['temporal_literal'] : ['sp_proc_stmt', 'ev_sql_stmt_inner'], true) || $lookahead->offset > $end) {
+            $parser->parse($statement, static function (Node $node, \SqlParser\Lexer\Token $lookahead) use ($end, $session, $legacy, $statement, $kinds, &$found): void {
+                if ($found !== null || !in_array($node->name, $kinds, true) || $lookahead->offset > $end) {
                     return;
                 }
                 try {

@@ -94,8 +94,10 @@ final class InputPrefix
 
     /**
      * Adds a completed declaration or statement, preserving an input-operand refusal.
+     *
+     * @param bool $isolated Whether enclosing declarations are unavailable to this prefix
      */
-    public function completed(Node $node, PrefixFrame $frame, ParameterList $parameters): ParameterList|RejectedInput
+    public function completed(Node $node, PrefixFrame $frame, ParameterList $parameters, bool $isolated = false): ParameterList|RejectedInput
     {
         try {
             if (in_array($node->name, ['sp_pdparam_list', 'sp_fdparam_list'], true)) {
@@ -107,6 +109,10 @@ final class InputPrefix
                 $frame->statements[] = (new StatementRule($this->lowering))->statement($node);
             }
         } catch (RejectedInput $failure) {
+            if (!$isolated && $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
+                $frame->statements[] = $failure->problem->prefix;
+                return new RejectedInput($this->diagnostic($frame->body(), $parameters) ?? $failure->problem->problem, $failure->end);
+            }
             return $failure;
         }
 

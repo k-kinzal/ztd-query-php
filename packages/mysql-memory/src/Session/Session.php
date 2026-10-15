@@ -335,7 +335,7 @@ final class Session
             try {
                 $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($reader->bound($tree, $parameters, $prepared, $this))));
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                throw $reader->rejection($failure, $statement, $this);
+                throw $reader->operand($failure, $tree, $statement, $this);
             } catch (ImplementationGap $gap) {
                 throw new SqlError(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message($gap->getMessage()), $gap);
             } catch (AnalysisException $error) {

@@ -23,14 +23,19 @@ use SqlSemantics\Statement\Type\Nullability;
  * TIME, and TIMESTAMP yields DATETIME; the fractional seconds precision of
  * TIME and DATETIME is the number of digits written after the last decimal
  * point, before an optional time zone offset, at most 6; never NULL. Text
- * the server cannot read as a value of the kind is an error of the statement
- * when it runs and is not decided here. Precision: exact for text the server
+ * outside the DATE representation domain is refused during construction.
+ * Calendar validity and zero dates can depend on session modes; TIME and
+ * TIMESTAMP representation validation remains separate. Precision: exact for text the server
  * accepts. Diagnostics: none. The text holds decoded bytes independent of
  * the lexical mode used to write them.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html. Status: Implemented.
  *
  * @visibility public
+ * @example Refusing text outside the DATE domain
+ *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, 'not a date') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining a date permitted by ALLOW_INVALID_DATES
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, '2024-02-31'))->text // => '2024-02-31'
  * @example Reading a temporal literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
  *     [$query->statement->query->where->right->form, $query->statement->query->where->right->text, $query->statement->query->where->right->type()->precision] // => [\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02 03:04:05.25', '2']
@@ -45,6 +50,7 @@ final class TemporalLiteral implements LiteralExpression
      */
     public function __construct(public readonly TemporalForm $form, public readonly string $text)
     {
+        \SqlSemantics\Diagnostic\Check::input($form !== TemporalForm::Date || \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal('DATE', $text, 0, false, false, true) !== null, 'A DATE literal requires a bounded date representation.');
     }
 
     /**
