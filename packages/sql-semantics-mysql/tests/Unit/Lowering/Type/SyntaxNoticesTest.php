@@ -19,6 +19,14 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Medium]
 final class SyntaxNoticesTest extends TestCase
 {
+    public function testCollationDoesNotTraverseUnrelatedNestedExpressions(): void
+    {
+        $sql = 'SELECT BINARY ' . str_repeat('(', 1000) . '1' . str_repeat(')', 1000);
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertSame([Deprecated::BinaryOperator], array_column($notices, 1));
+    }
+
     public function testCollationCompletesBeforeADeclarationMismatch(): void
     {
         $sql = 'CREATE PROCEDURE p(x INT COLLATE ucs2_bin) BEGIN END';

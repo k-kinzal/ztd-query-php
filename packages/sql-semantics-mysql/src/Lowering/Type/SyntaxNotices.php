@@ -32,9 +32,12 @@ final class SyntaxNotices
     {
         $notice = in_array($node->name, ['opt_collate', 'opt_collate_explicit'], true)
             ? $lowering->charsets->collation($node)?->deprecation($lowering->profile->grammar) : null;
+        if ($notice === null) {
+            return [];
+        }
         $range = (new \SqlSemantics\Construction\SourceRanges())->span($node, true);
 
-        return $notice !== null && $range !== null && $range[1] <= $end ? [[$range[1], $notice]] : [];
+        return $range !== null && $range[1] <= $end ? [[$range[1], $notice]] : [];
     }
 
     /**
