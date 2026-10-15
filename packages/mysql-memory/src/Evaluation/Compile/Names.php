@@ -74,8 +74,8 @@ final class Names
         }
         if (!$resolution instanceof ResolvedColumn) {
             $qualifier = $use->qualifier === null ? '' : ($use->qualifier->schema === null ? '' : $use->qualifier->schema->value . '.') . $use->qualifier->name->value;
-            if ($use->qualifier !== null && $qualifier !== '' && $scope->offsets === [] && $scope->outer === null) {
-                throw QueryError::UnknownTable->error($this->compiler->settings->release() === GrammarRelease::MySql910 ? $use->qualifier->name->value : $qualifier, 'field list');
+            if ($resolution instanceof \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier) {
+                throw QueryError::UnknownTable->error($this->compiler->settings->release() === GrammarRelease::MySql910 ? $resolution->qualifier->name->value : $qualifier, 'field list');
             }
             throw QueryError::BadField->error(($qualifier === '' ? '' : $qualifier . '.') . $use->name->value, 'field list');
         }

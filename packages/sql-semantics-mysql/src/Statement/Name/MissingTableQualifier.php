@@ -11,7 +11,7 @@ use SqlSemantics\Statement\Reference\Column\Resolution;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A qualified column reference in a legacy scope with no visible query tables.
+ * A qualified column reference in a scope with no visible query tables.
  *
  * MySQL distinguishes this missing table qualifier (1109) from a missing
  * column among visible tables (1054), including inside an isolated derived table.
