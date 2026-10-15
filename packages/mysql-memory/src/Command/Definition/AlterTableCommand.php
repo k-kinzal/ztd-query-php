@@ -103,7 +103,7 @@ final class AlterTableCommand implements Command
         $table = $this->table($session, $schema, $name->name->value);
         $this->resolve($operation, $session);
         $layout = TableLayout::of($table->definition);
-        $change = new TableChange($layout, $table->definition->name, $database, $session->settings()->release());
+        $change = new TableChange($layout, $table->definition->name, $database, $session->settings()->release(), $session->instance->dictionary->schema($schema)?->collation);
         $change->apply($commands);
         $change->copies = $change->copies || ($change->referencing && $session->variables->read('foreign_key_checks') !== 'OFF');
         $target = $layout->name->schema->value ?? $schema;

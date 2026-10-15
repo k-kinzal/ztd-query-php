@@ -15,11 +15,36 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Command\ConvertCharset;
 #[Medium]
 final class ConvertCharsetTest extends TestCase
 {
-    public function testDeriveCommandDerivesNothing(): void
+    public function testDeriveCommandAcceptsKnownCharacterSets(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         self::assertSame([], $semantics->analyze('ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4', [$table])->facts->diagnostics);
+    }
+
+    public function testDeriveCommandReportsUnknownNamesInOrderBeforeTableBinding(): void
+    {
+        $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET absent COLLATE missing');
+        $warnings = $alter->facts->warnings;
+
+        self::assertCount(2, $warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warnings[0]->problem);
+        self::assertTrue($warnings[0]->aborts);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $warnings[1]->problem);
+        self::assertTrue($warnings[1]->aborts);
+    }
+
+    public function testDeriveCollationRetainsIncompatibleEncodingMeaning(): void
+    {
+        $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET utf8mb4 COLLATE latin1_bin');
+        $warnings = $alter->facts->warnings;
+
+        self::assertCount(1, $warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch::class, $warnings[0]->problem);
+        self::assertSame("COLLATION 'latin1_bin' is not valid for CHARACTER SET 'utf8mb4'", $warnings[0]->message());
     }
 
     public function testRenderWritesTheCharsetAndTheCollation(): void

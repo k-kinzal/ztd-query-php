@@ -33,6 +33,15 @@ final class TableCreationTest extends TestCase
         $session->query('CREATE TABLE t(a INT) CHARACTER SET missing');
     }
 
+    public function testDatabasePrecedesLegacyConversionNameLookups(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+        $session->query('ALTER TABLE t CONVERT TO CHARSET missing');
+    }
+
     public function testCheckRefusesStatementsUntilTheTransactionEnds(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

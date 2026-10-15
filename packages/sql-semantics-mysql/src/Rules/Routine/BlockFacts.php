@@ -150,7 +150,9 @@ final class BlockFacts
         $hidden = [];
         foreach ($declaration->names as $position => $name) {
             if ($scope->holds($declared, $name)) {
-                $derivation->report(new ProgramProblem(ProgramRule::DuplicateVariable, $name->value));
+                $problem = new ProgramProblem(ProgramRule::DuplicateVariable, $name->value);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $declaration);
                 $hidden[] = $position;
             }
             $declared[] = $name;
