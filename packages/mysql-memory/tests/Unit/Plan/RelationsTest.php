@@ -64,6 +64,17 @@ final class RelationsTest extends TestCase
         self::assertSame([Field::Long, Field::LongLong], array_map(static fn ($column): Field => $column->type, $result->columns));
     }
 
+    public function testDerivedRetainsTheOriginalTableOfLegacyTemporaryColumns(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(v INT); INSERT INTO d.t VALUES(2)');
+        $result = $session->query('SELECT * FROM (SELECT v AS renamed FROM d.t) AS ``')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+        self::assertSame('t', $result->columns[0]->originalTable);
+    }
+
     public function testPlanReadsAStoredTableByAScanAndPlacesItInTheScope(): void
     {
         $session = (new Instance())->connect();

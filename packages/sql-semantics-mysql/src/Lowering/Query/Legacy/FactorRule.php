@@ -68,6 +68,7 @@ final class FactorRule
      *
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When a SELECT is not the first reference inside parentheses ("we are not in parentheses": ER_SYNTAX_ERROR of the 5.6 `select_derived_init` action and of 5.7 `PT_table_factor_select_sym::contextualize`), caused by the syntax error at the SELECT keyword
+     * @throws \SqlSemantics\Construction\RejectedInput When a complete derived relation lacks its required alias
      */
     public function factor(Form $form): Relation
     {
@@ -79,7 +80,11 @@ final class FactorRule
         }
         $result = $this->parens($form);
 
-        return $result instanceof Query ? new DerivedTable($result) : $result;
+        if ($result instanceof Query) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
+
+        return $result;
     }
 
     /**

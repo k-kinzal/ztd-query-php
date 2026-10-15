@@ -59,7 +59,8 @@ final class SyntaxWarnings
                 if ($lookahead->offset > $end) {
                     return;
                 }
-                $log = (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
+                $derived = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? (new Query\Legacy\DerivedAliases())->rejected($node, $lowering) : null;
+                $log = $derived ?? (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
                 if ($log !== null && $log->end <= $end) {
                     $warnings[] = [$log->end, new ParseFailure($log->problem, true)];
                     $aborted = true;

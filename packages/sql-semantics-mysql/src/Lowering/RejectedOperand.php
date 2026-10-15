@@ -38,7 +38,7 @@ final class RejectedOperand
         }
         $aborting = (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
         if ($aborting !== null) {
-            return new RejectedInput($aborting->problem, (new SourceRanges())->span($node)[1] ?? 0, true);
+            return new RejectedInput($aborting->problem, (new SourceRanges())->span($node)[1] ?? 0, $aborting->aborts);
         }
         $roles = (new Account\SyntaxRoles())->completed($node, $lowering);
         if ($roles !== []) {
@@ -74,6 +74,6 @@ final class RejectedOperand
             return $failure;
         }
 
-        return null;
+        return (new Query\Legacy\DerivedAliases())->rejected($node, $lowering);
     }
 }

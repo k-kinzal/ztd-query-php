@@ -24,6 +24,13 @@ final class SyntaxAliases
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
+        if ($node->name === 'derived_table') {
+            $form = $lowering->form($node);
+            $at = $form->signature === 'derived_table: LATERAL_SYM table_subquery opt_table_alias opt_derived_column_list' ? 2 : 1;
+            $alias = (new TableRule($lowering))->alias($form->node($at));
+
+            return $alias === null ? new ParseFailure(new Misuse(MisuseRule::DerivedWithoutAlias)) : null;
+        }
         if ($node->name !== 'table_function') {
             return null;
         }

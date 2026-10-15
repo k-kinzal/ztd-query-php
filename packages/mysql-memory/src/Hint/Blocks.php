@@ -266,7 +266,7 @@ final class Blocks
             return [$sequence, []];
         }
         if ($relation instanceof DerivedTable) {
-            $block->tables[] = [$relation->alias->value ?? '', []];
+            $block->tables[] = [$relation->alias->value, []];
 
             return [$this->query($relation->query, false), []];
         }

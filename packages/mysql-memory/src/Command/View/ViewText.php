@@ -204,7 +204,7 @@ final class ViewText
         if ($relation instanceof DerivedTable) {
             $query = $this->query($relation->query);
 
-            return $query === null || $relation->alias === null || $relation->columns !== [] ? null : '(' . $query . ') ' . Routine::quoted($relation->alias->value);
+            return $query === null || $relation->columns !== [] ? null : '(' . $query . ') ' . Routine::quoted($relation->alias->value);
         }
         if ($relation instanceof NestedRelation) {
             return $this->relation($relation->relation);
@@ -284,7 +284,7 @@ final class ViewText
         if ($relation instanceof TableReference) {
             return ($relation->alias === null ? $this->table($relation->name->schema->value ?? null, $relation->name->name->value, $relation) : Routine::quoted($relation->alias->value)) . '.' . $column;
         }
-        if ($relation instanceof DerivedTable && $relation->alias !== null) {
+        if ($relation instanceof DerivedTable) {
             return Routine::quoted($relation->alias->value) . '.' . $column;
         }
 

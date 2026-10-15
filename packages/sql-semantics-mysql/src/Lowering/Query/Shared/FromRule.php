@@ -105,6 +105,8 @@ final class FromRule
      * Lowers a table factor of either grammar generation.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a factor cannot be published
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a legacy factor has contradictory syntax
      */
     public function factor(Node $factor): Relation
     {

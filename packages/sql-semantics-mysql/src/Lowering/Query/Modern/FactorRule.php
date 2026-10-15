@@ -81,6 +81,7 @@ final class FactorRule
      * Lowers a derived table.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a complete derived relation lacks its required alias
      */
     public function derived(Node $derived): DerivedTable
     {
@@ -93,7 +94,12 @@ final class FactorRule
         $at = $lateral ? 1 : 0;
         $tables = new TableRule($this->lowering);
 
-        return new DerivedTable((new ExpressionRule($this->lowering))->subquery($form->node($at)), $tables->alias($form->node($at + 1)), $tables->columns($form->node($at + 2)), $lateral, $tables->mark($form->node($at + 1)));
+        $alias = $tables->alias($form->node($at + 1));
+        if ($alias === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias), (new \SqlSemantics\Construction\SourceRanges())->span($derived)[1] ?? 0, false);
+        }
+
+        return new DerivedTable((new ExpressionRule($this->lowering))->subquery($form->node($at)), $alias, $tables->columns($form->node($at + 2)), $lateral, $tables->mark($form->node($at + 1)));
     }
 
     /**

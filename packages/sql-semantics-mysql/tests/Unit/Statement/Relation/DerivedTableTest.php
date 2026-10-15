@@ -10,8 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -63,13 +61,15 @@ final class DerivedTableTest extends TestCase
         self::assertInstanceOf(MissingTableQualifier::class, $plain->facts->diagnostics[0]);
     }
 
-    public function testDeriveRelationReportsAMissingAlias(): void
+    public function testDeriveRelationAcceptsAnEmptyQuotedAlias(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM (SELECT 1)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM (SELECT 1) AS ``');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::DerivedWithoutAlias, $operation->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
+        self::assertInstanceOf(DerivedTable::class, $operation->statement->query->from);
+        self::assertSame('', $operation->statement->query->from->alias->value);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesTheDerivedTable(): void

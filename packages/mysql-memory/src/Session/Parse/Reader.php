@@ -112,7 +112,10 @@ final class Reader
         $clash = $legacy ? ((new Clashes())->targets($tree, $error, $database) ?? (new Clashes())->nested($tree, $error, $database)) : null;
         $undeclared = $legacy ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->undeclared($tree, $error, $session->program) : null;
 
-        return ($undeclared === null ? null : (new CacheOptions())->undeclared($undeclared, $statement, $session)) ?? ($clash === null ? null : (new CacheOptions())->clashed($clash[0], $clash[1], $statement, $session)) ?? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->error($error, $statement, $release, $session->following);
+        $cause = $error->getPrevious();
+        $end = $release === GrammarRelease::MySql5651 && $cause instanceof \SqlParser\Parser\SyntaxException ? $cause->token->offset : strlen($statement);
+
+        return ($legacy ? (new Entry\DerivedInput())->before($statement, $end, $session) : null) ?? ($undeclared === null ? null : (new CacheOptions())->undeclared($undeclared, $statement, $session)) ?? ($clash === null ? null : (new CacheOptions())->clashed($clash[0], $clash[1], $statement, $session)) ?? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->error($error, $statement, $release, $session->following);
     }
 
     /**
@@ -144,7 +147,7 @@ final class Reader
         }
         $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
         $error = new SqlError($error->error, $error->getMessage(), $failure, $error->following, $error->signalled, $error->getCode(), $error->recorded);
-        $earlier = $failure->end === 0 ? null : (new CacheOptions())->condition($error, $statement, $session, $failure->end - 1);
+        $earlier = ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias ? (new Entry\DerivedInput())->before($statement, $failure->end, $session) : null) ?? ($failure->end === 0 ? null : (new CacheOptions())->condition($error, $statement, $session, $failure->end - 1));
         if ($earlier !== null) {
             return $earlier;
         }

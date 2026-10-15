@@ -1693,7 +1693,7 @@
         "tables": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\DerivedTable": {
-        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "alias": "SqlSemantics\\Statement\\Identifier\\Name",
         "columns": "array",
         "lateral": "bool",
         "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",

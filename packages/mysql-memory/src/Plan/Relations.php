@@ -159,8 +159,12 @@ final class Relations
         $merged = $this->mergeable($derived->query);
         $placed = $this->shaped($derived, $plan->domains);
         $scope->place($derived, $placed, $names);
-        $scope->merged[spl_object_id($derived)] = $merged ? $plan->origins : $this->planner->materialized($placed);
-        $scope->derived[spl_object_id($derived)] = $derived->alias->value ?? '';
+        $stored = $this->planner->materialized($placed);
+        if ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $stored = array_map(static fn (?ColumnOrigin $source, ?ColumnOrigin $temporary): ColumnOrigin => new ColumnOrigin('', '', $source->originalTable ?? '', '', $temporary->flags ?? 0), $plan->origins, $stored);
+        }
+        $scope->merged[spl_object_id($derived)] = $merged ? $plan->origins : $stored;
+        $scope->derived[spl_object_id($derived)] = $derived->alias->value;
 
         $once = !$merged && !$derived->lateral && \MySqlMemory\Evaluation\Compile\Constancy::of($derived->query, $this->planner->compiler->facts, effects: false)->constant();
 

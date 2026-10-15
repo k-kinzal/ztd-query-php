@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\FactorRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Modern\FactorRule;
 
 #[CoversClass(FactorRule::class)]
 #[Medium]
@@ -34,4 +34,12 @@ final class FactorRuleTest extends TestCase
     {
         self::assertSame('SELECT 1 FROM JSON_TABLE(@j, \'$\' COLUMNS (a INT PATH \'$\')) AS j', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('select 1 from json_table(@j, \'$\' columns (a int path \'$\')) as j')->toString());
     }
+    public function testDerivedRefusesAnAbsentAliasBeforePublishingARelation(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Every derived table must have its own alias');
+
+        (new Semantics(Dialect::MySql))->analyze('SELECT * FROM (SELECT 1)');
+    }
+
 }

@@ -518,3 +518,14 @@ type, including when an explicit displacement follows the fractional digits.
 time-zone states on five releases. `TimestampInputTest` also checks malformed
 input against competing syntax and stored-program conditions. These focused
 checks do not replace the whole-model acceptance gates.
+
+Derived tables require a `Name` for their correlation name. Missing aliases cannot
+be represented by a published `DerivedTable`; input lowering reports the typed
+refusal instead. An empty quoted alias remains valid. Parenthesized legacy query
+bodies receive the outer alias before becoming relations. The alias regression
+compares the same eighteen constructed queries before table creation, after
+inserting rows, and after updating them, across five releases. It checks rows
+and every wire field, including the original table name retained by MySQL 5.6
+when it materializes a derived query. Input tests separately cover competing
+database and duplicate-name conditions, later malformed input, and uncalled
+procedure bodies.

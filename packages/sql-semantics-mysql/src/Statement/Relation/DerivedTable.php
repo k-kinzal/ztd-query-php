@@ -10,8 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\DerivedShapes;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -28,15 +26,15 @@ use SqlSemantics\Statement\Snapshot;
  * Rule: MYSQL-DERIVED-TABLE-001. From MySQL 8.0 the query sees the enclosing queries and,
  * when LATERAL is written, the tables to its left in the same FROM clause
  * (MYSQL-FROM-SCOPE-001). The columns are those of the query, renamed by the
- * column list (MYSQL-DERIVED-SHAPES-001). A derived table without alias is
- * reported. Source: https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html,
+ * column list (MYSQL-DERIVED-SHAPES-001). The correlation name is mandatory;
+ * an empty quoted alias remains a valid name. Source: https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/lateral-derived-tables.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Reading a derived table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT x FROM (SELECT 1) AS d (x)');
- *     [$query->statement->query->from->alias?->value, $query->statement->query->from->columns[0]->value] // => ['d', 'x']
+ *     [$query->statement->query->from->alias->value, $query->statement->query->from->columns[0]->value] // => ['d', 'x']
  */
 final class DerivedTable implements Relation
 {
@@ -49,15 +47,15 @@ final class DerivedTable implements Relation
 
     /**
      * @param Query $query The query that produces the rows
-     * @param Name|null $alias The correlation name
+     * @param Name $alias The correlation name
      * @param list<Name> $columns The column names
      * @param bool $lateral Whether LATERAL is written
      * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly Query $query, public readonly ?Name $alias = null, array $columns = [], public readonly bool $lateral = false, public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly Query $query, public readonly Name $alias, array $columns = [], public readonly bool $lateral = false, public readonly AliasMark $mark = AliasMark::As)
     {
-        Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a derived table holds names.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -65,10 +63,6 @@ final class DerivedTable implements Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        if ($this->alias === null) {
-            $derivation->report(new Misuse(MisuseRule::DerivedWithoutAlias));
-        }
-
         $query = $derivation->query($this->query, $environment);
 
         return new RelationFact((new DerivedShapes())->shape($query, $this->columns, $derivation, (new Materialization())->mergeable($this->query, $derivation->context->profile->grammar, $derivation->facts(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->derivedMerge) ? null : $this->query));
@@ -83,10 +77,8 @@ final class DerivedTable implements Relation
             $out->keyword('LATERAL');
         }
         $out->symbol('(')->node($this->query)->symbol(')');
-        if ($this->alias !== null) {
-            $this->mark->write($out);
-            $out->name($this->alias, NameUse::Alias);
-        }
+        $this->mark->write($out);
+        $out->name($this->alias, NameUse::Alias);
         if ($this->columns !== []) {
             $out->symbol('(');
             foreach ($this->columns as $position => $column) {
