@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
@@ -18,7 +19,6 @@ use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(DerivedTable::class)]
@@ -60,7 +60,7 @@ final class DerivedTableTest extends TestCase
 
         self::assertSame([], $lateral->facts->diagnostics);
         self::assertSame($t->columns[0], $lateral->field('x')->column());
-        self::assertInstanceOf(MissingColumn::class, $plain->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingTableQualifier::class, $plain->facts->diagnostics[0]);
     }
 
     public function testDeriveRelationReportsAMissingAlias(): void

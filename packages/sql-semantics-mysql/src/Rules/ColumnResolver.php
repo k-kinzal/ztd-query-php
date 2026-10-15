@@ -122,13 +122,13 @@ final class ColumnResolver
     }
 
     /**
-     * Preserves the distinction between an absent qualifier in a tableless legacy
+     * Preserves the distinction between an absent qualifier in a tableless
      * scope and a column that visible tables do not contain.
      */
     public function missing(Environment $environment, Name $column, ?QualifiedName $qualifier): \SqlSemantics\Statement\Reference\Column\MissingColumn|\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier
     {
         $missing = (new HavingLookup())->missing($environment, $column, $qualifier);
-        if ($qualifier === null || !in_array($environment->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+        if ($qualifier === null) {
             return $missing;
         }
         for ($scope = $environment; $scope !== null; $scope = $scope->outer) {

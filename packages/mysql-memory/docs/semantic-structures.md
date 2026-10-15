@@ -311,3 +311,11 @@ before and after selecting a database. Both native and memory return 1046 when
 the unqualified name has no current database, then complete with a missing-table
 note after `USE`. The structure remains unchanged; this is a state-transition
 witness rather than a classification inferred from one error.
+
+Column resolution preserves an absent table qualifier separately from a missing
+column in every supported release. The compiler consumes that distinction from
+the semantic resolution; it does not infer it from its own row offsets. A
+non-lateral derived table also has this tableless scope even when its surrounding
+query lists the named table. Direct constructions of column uses, `VALUES`,
+`DEFAULT` and `PURGE` operands are checked against five native releases, including
+MySQL 9.1's table-only diagnostic spelling for database-qualified references.

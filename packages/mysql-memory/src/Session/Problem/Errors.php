@@ -99,7 +99,7 @@ final class Errors
 
         return (new \MySqlMemory\Session\Parse\Entry\InputErrors())->error($diagnostic, $session)
             ?? $this->unopened($diagnostic, $session, $statement)
-            ?? $this->names($diagnostic, $database, $clause, $statement)
+            ?? $this->names($diagnostic, $database, $clause, $statement, $session->settings()->release())
             ?? $this->query($diagnostic, $clause)
             ?? $this->call($diagnostic)
             ?? $this->database($diagnostic, $session->settings()->release())
@@ -164,11 +164,11 @@ final class Errors
      * A table without a database, when none is selected, is ER_NO_DB_ERROR. A column a USING list
      * names is reported in the FROM clause.
      */
-    public function names(Diagnostic $diagnostic, string $database, string $clause, ?Node $statement): ?SqlError
+    public function names(Diagnostic $diagnostic, string $database, string $clause, ?Node $statement, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): ?SqlError
     {
         return match (true) {
             $diagnostic instanceof MissingTable => $diagnostic->name->schema === null && $database === '' ? QueryError::NoDatabase->error() : QueryError::NoSuchTable->error($diagnostic->name->schema->value ?? $database, $diagnostic->name->name->value),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier => QueryError::UnknownTable->error(($diagnostic->qualifier->schema === null ? '' : $diagnostic->qualifier->schema->value . '.') . $diagnostic->qualifier->name->value, $clause),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier => QueryError::UnknownTable->error(($diagnostic->qualifier->schema === null || $release === \SqlSemantics\Contract\GrammarRelease::MySql910 ? '' : $diagnostic->qualifier->schema->value . '.') . $diagnostic->qualifier->name->value, $clause),
             $diagnostic instanceof MissingColumn => QueryError::BadField->error(($diagnostic->qualifier?->schema === null ? '' : $diagnostic->qualifier->schema->value . '.') . ($diagnostic->qualifier === null ? '' : $diagnostic->qualifier->name->value . '.') . $diagnostic->name->value, $this->joining($diagnostic, $statement) ? 'from clause' : $clause),
             $diagnostic instanceof AmbiguousColumn => QueryError::NonUniqueColumn->error($diagnostic->name->value, $clause),
             $diagnostic instanceof AmbiguousAlias => QueryError::NonUniqueColumn->error($diagnostic->name->value, $clause),

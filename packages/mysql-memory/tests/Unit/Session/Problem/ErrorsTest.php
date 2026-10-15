@@ -100,7 +100,7 @@ final class ErrorsTest extends TestCase
         self::assertSame($diagnostic->message(), $error->getMessage());
     }
 
-    public function testNamesReportsAMissingLegacyTableQualifierSeparately(): void
+    public function testNamesReportsAMissingTableQualifierSeparately(): void
     {
         $problem = new \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier(new Name('a'), new QualifiedName(new Name('t')));
         $error = (new Errors())->names($problem, 'd', 'field list', null);
@@ -108,6 +108,15 @@ final class ErrorsTest extends TestCase
         self::assertNotNull($error);
         self::assertSame(1109, $error->getCode());
         self::assertSame("Unknown table 't' in field list", $error->getMessage());
+    }
+
+    public function testNamesUsesTheReleaseSpecificQualifierSpelling(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier(new Name('c'), new QualifiedName(new Name('t'), new Name('db')));
+        $error = (new Errors())->names($problem, '', 'field list', null, GrammarRelease::MySql910);
+
+        self::assertNotNull($error);
+        self::assertSame([1109, "Unknown table 't' in field list"], [$error->getCode(), $error->getMessage()]);
     }
 
     public function testNamesDistinguishesForwardAndAmbiguousSelectItems(): void
