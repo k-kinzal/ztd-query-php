@@ -119,15 +119,15 @@ final class ShowCollationCommand implements Command
     {
         $table = 'COLLATIONS';
         $schema = 'information_schema';
-        $name = ColumnFlag::NotNull->value | ColumnFlag::NoDefaultValue->value;
+        $name = ColumnFlag::NotNull->value | ($legacy ? 0 : ColumnFlag::NoDefaultValue->value);
 
         $headings = [
-            Heading::text('Collation', Field::VarString, $legacy ? 32 : 64, $name, 0, 'Collation', $table, $table, $schema),
-            Heading::text('Charset', Field::VarString, $legacy ? 32 : 64, $name, 0, 'Charset', $table, $table, $schema),
-            new Heading('Id', Field::LongLong, $legacy ? 11 : 20, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Numeric->value, 0, false, 'Id', $table, $table, $schema),
-            Heading::text('Default', Field::VarString, 3, ColumnFlag::NotNull->value, 0, 'Default', $table, $table, $schema),
-            Heading::text('Compiled', Field::VarString, 3, ColumnFlag::NotNull->value, 0, 'Compiled', $table, $table, $schema),
-            new Heading('Sortlen', $legacy ? Field::LongLong : Field::Long, $legacy ? 3 : 10, $name | ColumnFlag::Unsigned->value | ColumnFlag::Numeric->value, 0, false, 'Sortlen', $table, $table, $schema),
+            Heading::text('Collation', Field::VarString, $legacy ? 32 : 64, $name, 0, $legacy ? 'COLLATION_NAME' : 'Collation', $table, $table, $schema),
+            Heading::text('Charset', Field::VarString, $legacy ? 32 : 64, $name, 0, $legacy ? 'CHARACTER_SET_NAME' : 'Charset', $table, $table, $schema),
+            new Heading('Id', Field::LongLong, $legacy ? 11 : 20, ColumnFlag::NotNull->value | ($legacy ? 0 : ColumnFlag::Unsigned->value) | ColumnFlag::Numeric->value, 0, false, $legacy ? 'ID' : 'Id', $table, $table, $schema),
+            Heading::text('Default', Field::VarString, 3, ColumnFlag::NotNull->value, 0, $legacy ? 'IS_DEFAULT' : 'Default', $table, $table, $schema),
+            Heading::text('Compiled', Field::VarString, 3, ColumnFlag::NotNull->value, 0, $legacy ? 'IS_COMPILED' : 'Compiled', $table, $table, $schema),
+            new Heading('Sortlen', $legacy ? Field::LongLong : Field::Long, $legacy ? 3 : 10, $name | ($legacy ? 0 : ColumnFlag::Unsigned->value) | ColumnFlag::Numeric->value, 0, false, $legacy ? 'SORTLEN' : 'Sortlen', $table, $table, $schema),
             Heading::text('Pad_attribute', Field::String, 9, $name | ColumnFlag::Binary->value | ColumnFlag::Enum->value, 0, 'Pad_attribute', $table, $table, $schema),
         ];
 
@@ -146,10 +146,10 @@ final class ShowCollationCommand implements Command
         $key = ColumnFlag::NotNull->value | ($legacy ? 0 : ColumnFlag::UniqueKey->value | ColumnFlag::NoDefaultValue->value | 16384);
 
         return [
-            Heading::text('Charset', Field::VarString, $legacy ? 32 : 64, $key, 0, 'Charset', $table, $legacy ? $table : 'cs', $schema),
-            Heading::text('Description', Field::VarString, $legacy ? 60 : 2048, ColumnFlag::NotNull->value | ColumnFlag::NoDefaultValue->value, 0, 'Description', $table, $legacy ? $table : 'cs', $schema),
-            Heading::text('Default collation', Field::VarString, $legacy ? 32 : 64, $key, 0, 'Default collation', $table, $legacy ? $table : 'col', $schema),
-            new Heading('Maxlen', $legacy ? Field::LongLong : Field::Long, $legacy ? 3 : 10, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::NoDefaultValue->value | ColumnFlag::Numeric->value, 0, false, 'Maxlen', $table, $legacy ? $table : 'cs', $schema),
+            Heading::text('Charset', Field::VarString, $legacy ? 32 : 64, $key, 0, $legacy ? 'CHARACTER_SET_NAME' : 'Charset', $table, $legacy ? $table : 'cs', $schema),
+            Heading::text('Description', Field::VarString, $legacy ? 60 : 2048, ColumnFlag::NotNull->value | ($legacy ? 0 : ColumnFlag::NoDefaultValue->value), 0, $legacy ? 'DESCRIPTION' : 'Description', $table, $legacy ? $table : 'cs', $schema),
+            Heading::text('Default collation', Field::VarString, $legacy ? 32 : 64, $key, 0, $legacy ? 'DEFAULT_COLLATE_NAME' : 'Default collation', $table, $legacy ? $table : 'col', $schema),
+            new Heading('Maxlen', $legacy ? Field::LongLong : Field::Long, $legacy ? 3 : 10, ColumnFlag::NotNull->value | ($legacy ? 0 : ColumnFlag::Unsigned->value | ColumnFlag::NoDefaultValue->value) | ColumnFlag::Numeric->value, 0, false, $legacy ? 'MAXLEN' : 'Maxlen', $table, $legacy ? $table : 'cs', $schema),
         ];
     }
 }

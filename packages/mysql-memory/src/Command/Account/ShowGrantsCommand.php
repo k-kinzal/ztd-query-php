@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Operation;
  * Executes SHOW GRANTS.
  *
  * The statement writes the GRANT statements of an account (see GrantText), in one text column
- * of 4096 characters named after the account, 1024 in MySQL 5.6 and 5.7 (verified on live
+ * of 1024 characters named after the account, converted to the results character set (verified on live
  * 5.6.51 and 5.7.44 servers). Without FOR, or FOR CURRENT_USER, it shows the
  * account of the session with the privileges of its active roles; USING adds the privileges of
  * roles granted to the account, and of the roles granted to them. An account that does not
@@ -78,8 +78,9 @@ final class ShowGrantsCommand implements Command
         $grants->merge($this->through($roles, $accounts));
         $grants->prune();
         $release = $session->settings()->release();
-        $legacy = (new \MySqlMemory\Account\Catalog($release))->legacy();
-        $column = new ResultColumn('Grants for ' . $identity->text(), Field::VarString, $legacy ? 1024 : 4096, 31, ColumnFlag::NotNull->value, 255);
+        $results = $session->variables->read('character_set_results');
+        $charset = (is_string($results) ? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($results) : null) ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1');
+        $column = new ResultColumn('Grants for ' . $identity->text(), Field::VarString, 1024 * $charset->maxLength, 31, ColumnFlag::NotNull->value, $charset->defaultCollation($release)->id);
         $lines = (new GrantText())->lines($identity, $grants, $granted, $release, $account);
 
         return new ResultSet([$column], array_map(static fn (string $line): array => [$line], $lines), $context->diagnostics->raised());

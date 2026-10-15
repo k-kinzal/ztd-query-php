@@ -9,6 +9,7 @@ use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
@@ -78,7 +79,7 @@ final class ShowRoutinesCommand implements Command
         $definer = $legacy ? ($release === GrammarRelease::MySql5651 ? 77 : 93) : 288;
         $characters = $legacy ? 32 : 64;
 
-        return [
+        $headings = [
             Heading::text('Db', Field::VarString, 64, 4225, 0, 'Db', $table, 'schemata'),
             Heading::text('Name', Field::VarString, 64, 4097, 0, 'Name', $table, 'routines'),
             Heading::text('Type', $kind, 9, 4481, 0, 'Type', $table, 'routines'),
@@ -92,5 +93,11 @@ final class ShowRoutinesCommand implements Command
             Heading::text('collation_connection', Field::VarString, $characters, 4097 | ($direct ? 4 : 0), 0, 'collation_connection', $table, 'collations'),
             Heading::text('Database Collation', Field::VarString, $characters, 4097 | ($direct ? 4 : 0), 0, 'Database Collation', $table, 'collations'),
         ];
+        if (!$legacy) {
+            return $headings;
+        }
+        $origins = ['Db' => 'ROUTINE_SCHEMA', 'Name' => 'ROUTINE_NAME', 'Type' => 'ROUTINE_TYPE', 'Definer' => 'DEFINER', 'Modified' => 'LAST_ALTERED', 'Created' => 'CREATED', 'Security_type' => 'SECURITY_TYPE', 'Comment' => 'ROUTINE_COMMENT', 'character_set_client' => 'CHARACTER_SET_CLIENT', 'collation_connection' => 'COLLATION_CONNECTION', 'Database Collation' => 'DATABASE_COLLATION'];
+
+        return array_map(static fn (Heading $heading): Heading => new Heading($heading->name, $heading->field, $heading->length, $heading->flags & (ColumnFlag::NotNull->value | ColumnFlag::Blob->value | ($heading->text ? 0 : ColumnFlag::Binary->value)), $heading->decimals, $heading->text, $origins[$heading->name] ?? $heading->name, $table, $table, 'information_schema', $heading->collation), $headings);
     }
 }

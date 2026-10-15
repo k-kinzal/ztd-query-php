@@ -76,6 +76,7 @@ final class ShowRoutinesCommandTest extends TestCase
 
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, $headings[2]->field);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::DateTime, $headings[4]->field);
+        self::assertSame(['ROUTINE_SCHEMA', 'ROUTINES', 'information_schema', 1], [$headings[0]->originalName, $headings[0]->originalTable, $headings[0]->schema, $headings[0]->flags]);
         self::assertSame([77, 93, 196605, 32], [$headings[3]->length, $later[3]->length, $headings[7]->length, $headings[8]->length]);
     }
 

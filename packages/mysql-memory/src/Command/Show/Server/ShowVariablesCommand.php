@@ -58,12 +58,14 @@ final class ShowVariablesCommand implements Command
         $global = $statement->scope === VariableScope::Global;
         $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context) : $this->status($session, $global, $context->started, $context->zone());
         $table = ($global ? 'global_' : 'session_') . ($statement instanceof ShowVariables ? 'variables' : 'status');
-        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+        $oldest = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        if ($oldest) {
             $table = $statement instanceof ShowVariables ? 'VARIABLES' : 'STATUS';
         }
+        $schema = $oldest ? 'information_schema' : ($session->settings()->legacy() ? '' : 'performance_schema');
         $headings = [
-            Heading::text('Variable_name', Field::VarString, 64, ColumnFlag::NotNull->value | ColumnFlag::NoDefaultValue->value, 0, 'Variable_name', $table, $table, 'performance_schema', 'utf8mb4_0900_ai_ci'),
-            Heading::text('Value', Field::VarString, 1024, 0, 0, 'Value', $table, $table, 'performance_schema', 'utf8mb4_0900_ai_ci'),
+            Heading::text('Variable_name', Field::VarString, 64, ColumnFlag::NotNull->value | ($oldest ? 0 : ColumnFlag::NoDefaultValue->value), 0, $oldest ? 'VARIABLE_NAME' : 'Variable_name', $table, $table, $schema, 'utf8mb4_0900_ai_ci'),
+            Heading::text('Value', Field::VarString, 1024, 0, 0, $oldest ? 'VARIABLE_VALUE' : 'Value', $table, $table, $schema, 'utf8mb4_0900_ai_ci'),
         ];
 
         return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb4_0900_ai_ci');

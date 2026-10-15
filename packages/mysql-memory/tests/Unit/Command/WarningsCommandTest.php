@@ -23,7 +23,8 @@ final class WarningsCommandTest extends TestCase
     public function testColumnsUsesTheLegacyCodeWidth(): void
     {
         $session = (new Instance('5.6.51'))->connect();
-        self::assertSame(4, (new WarningsCommand())->columns($session)[1]->length);
+        $session->query('SET NAMES utf8mb4');
+        self::assertSame([4, 45], [(new WarningsCommand())->columns($session)[1]->length, (new WarningsCommand())->columns($session)[0]->charset]);
         self::assertSame(4, (new WarningsCommand())->columns((new Instance('5.7.44'))->connect())[1]->length);
     }
 

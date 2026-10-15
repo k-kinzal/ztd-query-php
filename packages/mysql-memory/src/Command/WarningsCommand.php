@@ -13,7 +13,6 @@ use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use Override;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
@@ -90,7 +89,7 @@ final class WarningsCommand implements Command
     {
         $results = $session->variables->read('character_set_results');
         $charset = (is_string($results) ? Charset::named($results) : null) ?? Charset::known('utf8mb3');
-        $collation = $charset->defaultCollation(GrammarRelease::MySql847)->id;
+        $collation = $charset->defaultCollation($session->settings()->release())->id;
 
         return [
             new ResultColumn('Level', Field::VarString, 7 * $charset->maxLength, 31, ColumnFlag::NotNull->value, $collation),
