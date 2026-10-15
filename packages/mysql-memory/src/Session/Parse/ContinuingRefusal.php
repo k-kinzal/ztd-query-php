@@ -17,7 +17,8 @@ use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
  * Preserves completed grammar conditions when lowering cannot publish an operand.
  *
  * A continuing input refusal, such as AT LOCAL, still allows later grammar
- * warnings and refusals. It never reaches contextualization or execution.
+ * warnings and refusals. Contextual operand failures follow completed grammar
+ * conditions. Neither publishes a rejected expression for execution.
  * The input remains confined to this reading boundary; no rejected expression
  * is fabricated to carry its diagnostics into a plan.
  *
@@ -49,6 +50,10 @@ final class ContinuingRefusal
             $notices[] = [$offset, $notice];
         }
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+        $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($parser->parse($statement), $session->semantics()->profile());
+        if ($target !== null && $target->schema === null && $session->variables->database === '') {
+            $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+        }
         $append = array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure) === [];
         try {
             (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($parser->parse($statement), $statement);

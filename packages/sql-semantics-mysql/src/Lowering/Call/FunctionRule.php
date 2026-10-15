@@ -166,7 +166,7 @@ final class FunctionRule
             'function_call_keyword: CHAR_SYM ( expr_list USING charset_name )' => new CharCall($expressions->expressions($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
             'function_call_keyword: CURRENT_USER optional_braces' => $this->niladic($form, KeywordFunction::CurrentUser),
             'function_call_nonkeyword: POSITION_SYM ( bit_expr IN_SYM expr )' => new Position($expressions->bitExpression($form->node(2)), $this->expression($form, 4)),
-            'function_call_generic: IDENT_sys ( opt_udf_expr_list )' => new FunctionCall($this->lowering->names->identifier($form->node(0)), $this->arguments($form->node(2))),
+            'function_call_generic: IDENT_sys ( opt_udf_expr_list )' => $this->generic($form),
             'function_call_generic: ident . ident ( opt_expr_list )' => new FunctionCall(
                 $this->lowering->names->identifier($form->node(2)),
                 array_map(static fn (Scalar $argument): CallArgument => new CallArgument($argument), $expressions->expressions($form->node(4))),
@@ -174,6 +174,24 @@ final class FunctionRule
             ),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers arguments before checking the current release's native signature.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a completed native call is outside its operand domain
+     */
+    public function generic(Form $form): FunctionCall
+    {
+        $arguments = $this->arguments($form->node(2));
+        $name = $this->lowering->names->identifier($form->node(0));
+        $named = array_filter($arguments, static fn (CallArgument $argument): bool => $argument->alias !== null) !== [];
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->problem($this->lowering->profile->grammar, $name, count($arguments), $named);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        }
+
+        return new FunctionCall($name, $arguments);
     }
 
     /**

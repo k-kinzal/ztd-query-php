@@ -40,6 +40,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $query->field(0)->type->missing[0]->describe() // => 'the signature of routine score'
  * @example Refusing an alias on a qualified call
  *     new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('f'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Statement\Identifier\Name('x'))], new \SqlSemantics\Statement\Identifier\Name('db')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an argument count that no supported native ABS accepts
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ABS')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing argument aliases for a function that is always native
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ABS'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Statement\Identifier\Name('n'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class FunctionCall implements Scalar
 {
@@ -59,6 +63,7 @@ final class FunctionCall implements Scalar
     {
         $this->arguments = Check::listOf($arguments, CallArgument::class, 'Function arguments are call arguments.');
         Check::input($schema === null || !$this->named(), 'Only an unqualified call takes argument aliases.');
+        Check::input($schema !== null || (new NativeFunctions())->possible($name, count($this->arguments), $this->named()), 'A generic call must have a supported native signature or a stored-function interpretation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -143,7 +148,7 @@ final class FunctionCall implements Scalar
      * still resolves as a stored function. A database qualifier always selects a routine.
      *
      * @example Resolving an ordinary native function
-     *     (new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ABS')))->native(\SqlSemantics\Contract\GrammarRelease::MySql847) // => true
+     *     (new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ABS'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]))->native(\SqlSemantics\Contract\GrammarRelease::MySql847) // => true
      */
     public function native(\SqlSemantics\Contract\GrammarRelease $release): bool
     {

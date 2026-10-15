@@ -42,7 +42,7 @@ final class TemporalInput
         } catch (SqlError $failure) {
             $parser = $session->semantics()->parser();
             Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
-            $notices = array_values(array_filter($this->notices($parser, $statement, $end, $session), static fn (array $notice): bool => !$notice[1] instanceof ParseFailure || $notice[1]->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax));
+            $notices = array_values(array_filter($this->notices($parser, $statement, $session->settings()->legacy() ? $end : strlen($statement), $session), static fn (array $notice): bool => !$notice[1] instanceof ParseFailure || $notice[1]->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax));
             foreach ($notices as [, $notice]) {
                 if ($notice instanceof ParseFailure && !$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral && !$session->settings()->legacy()) {
                     throw (new ModernWarnings())->recorded(array_column($notices, 1), $failure, $session, false);

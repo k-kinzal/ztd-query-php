@@ -101,7 +101,7 @@ final class Errors
             ?? $this->unopened($diagnostic, $session, $statement)
             ?? $this->names($diagnostic, $database, $clause, $statement, $session->settings()->release())
             ?? $this->query($diagnostic, $clause)
-            ?? $this->call($diagnostic)
+            ?? $this->call($diagnostic, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651)
             ?? $this->database($diagnostic, $session->settings()->release())
             ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
             ?? $this->manipulation($diagnostic, $statement)
@@ -220,11 +220,11 @@ final class Errors
     /**
      * Answers the server error of a wrong call of a native function, or null for another diagnostic.
      */
-    public function call(Diagnostic $diagnostic): ?SqlError
+    public function call(Diagnostic $diagnostic, bool $originalCase = false): ?SqlError
     {
         return match (true) {
             $diagnostic instanceof WrongArgumentCount => QueryError::WrongParameterCountToNativeFunction->error($diagnostic->function->value),
-            $diagnostic instanceof NamedArgument => QueryError::WrongParametersToNativeFunction->error(strtolower($diagnostic->function->value)),
+            $diagnostic instanceof NamedArgument => QueryError::WrongParametersToNativeFunction->error($originalCase ? $diagnostic->function->value : strtolower($diagnostic->function->value)),
             $diagnostic instanceof ReservedFunction => QueryError::NativeFunctionRejected->error($diagnostic->function->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant => ($diagnostic->nullName ? StatementError::ReservedSyntax : StatementError::WrongArguments)->error('NAME_CONST'),
             $diagnostic instanceof UnsupportedWindowing => StatementError::NotSupportedYet->error($diagnostic->limit->value),

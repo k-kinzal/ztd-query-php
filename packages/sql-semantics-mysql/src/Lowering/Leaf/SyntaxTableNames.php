@@ -66,4 +66,19 @@ final class SyntaxTableNames
         return $failure?->aborts === true ? new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true) : null;
     }
 
+    /**
+     * Reads a modern CREATE TABLE target independently of its later definition operands.
+     * No source tree is retained by the returned identifier.
+     */
+    public function created(Node $tree, \SqlSemantics\Contract\LanguageProfile $profile): ?\SqlSemantics\Statement\Identifier\QualifiedName
+    {
+        $node = $tree->find('create_table_stmt')[0] ?? null;
+        if ($node === null || ($tree->tokens()[0] ?? null) !== ($node->tokens()[0] ?? null)) {
+            return null;
+        }
+        $lowering = new Lowering(\SqlSemantics\Lowering\Productions::load(dirname(__DIR__, 3) . '/resources/productions/' . $profile->grammar->value . '.php'), new \SqlSemantics\Lowering\Leaves(), $profile);
+
+        return $lowering->names->qualified($lowering->form($node)->node(4));
+    }
+
 }

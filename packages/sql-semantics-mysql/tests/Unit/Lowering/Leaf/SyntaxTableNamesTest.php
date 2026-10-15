@@ -87,4 +87,16 @@ final class SyntaxTableNamesTest extends TestCase
 
         (new Semantics(Dialect::MySql))->analyze('CREATE VIEW `` AS SELECT 1 AS a');
     }
+    public function testCreatedReadsOnlyTheTargetBeforeAnInvalidDefinition(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $rule = new SyntaxTableNames();
+        $name = $rule->created($semantics->parser()->parse('CREATE TABLE d.t(a INT DEFAULT (ABS()))'), $semantics->profile());
+
+        self::assertSame('d', $name?->schema?->value);
+        self::assertSame('t', $name->name->value);
+        self::assertNull($rule->created($semantics->parser()->parse('SELECT ABS()'), $semantics->profile()));
+        self::assertNull($rule->created($semantics->parser()->parse('CREATE PROCEDURE d.p() CREATE TABLE t(a INT DEFAULT (ABS()))'), $semantics->profile()));
+    }
+
 }

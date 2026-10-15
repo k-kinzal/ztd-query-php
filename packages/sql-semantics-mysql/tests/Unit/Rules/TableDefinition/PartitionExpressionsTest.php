@@ -53,7 +53,6 @@ final class PartitionExpressionsTest extends TestCase
     public static function providerEarlierErrors(): iterable
     {
         yield 'unknown system variable' => ['@@unknown_system_variable'];
-        yield 'incorrect function arity' => ['RAND(1,2)'];
     }
 
     #[DataProvider('providerEarlierErrors')]
@@ -78,4 +77,12 @@ final class PartitionExpressionsTest extends TestCase
         self::assertNotNull($origin);
         self::assertSame('(FOUND_ROWS())', substr($sql, $origin->offset, $origin->length));
     }
+    public function testDeriveCannotReceiveAnInvalidNativeSignature(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect parameter count in the call to native function 'RAND'");
+
+        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE missing PARTITION BY HASH (RAND(1,2))');
+    }
+
 }

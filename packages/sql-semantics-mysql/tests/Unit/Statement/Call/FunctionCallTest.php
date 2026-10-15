@@ -37,7 +37,7 @@ final class FunctionCallTest extends TestCase
     {
         $release = \SqlSemantics\Contract\GrammarRelease::MySql847;
 
-        self::assertTrue((new FunctionCall(new Name('ABS')))->native($release));
+        self::assertTrue((new FunctionCall(new Name('ABS'), [new CallArgument(new NumberLiteral('1'))]))->native($release));
         self::assertFalse((new FunctionCall(new Name('COLLATION')))->native($release));
         self::assertFalse((new FunctionCall(new Name('ABS'), schema: new Name('d')))->native($release));
     }

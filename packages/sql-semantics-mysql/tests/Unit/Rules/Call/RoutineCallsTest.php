@@ -61,8 +61,8 @@ final class RoutineCallsTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $int = new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull);
-        $count = (new RoutineCalls())->result(new FunctionCall(new Name('abs')), [], $derivation);
-        $named = (new RoutineCalls())->result(new FunctionCall(new Name('abs'), [new CallArgument(new NumberLiteral('1'), new Name('x'))]), [$int], $derivation);
+        $count = (new RoutineCalls())->result(new FunctionCall(new Name('regexp_like')), [], $derivation);
+        $named = (new RoutineCalls())->result(new FunctionCall(new Name('regexp_like'), [new CallArgument(new NumberLiteral('1'), new Name('x')), new CallArgument(new NumberLiteral('2'))]), [$int, $int], $derivation);
         $reserved = (new RoutineCalls())->result(new FunctionCall(new Name('internal_use_terminology_previous')), [], $derivation);
 
         self::assertInstanceOf(Invalid::class, $count->type);

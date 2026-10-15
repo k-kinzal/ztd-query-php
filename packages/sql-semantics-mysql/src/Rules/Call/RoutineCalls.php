@@ -6,9 +6,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Call;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -57,18 +54,13 @@ final class RoutineCalls
                 : new ScalarFact(new Known($returns), Nullability::Nullable);
         }
         $row = $natives->row($release, $call->name->value, count($arguments));
-        $reserved = in_array(true, array_column($natives->rows($release, $call->name->value), 3), true);
-        if ($row === null || $reserved || $call->named()) {
-            $problem = match (true) {
-                $reserved => new ReservedFunction($call->name),
-                $call->named() => new NamedArgument($call->name),
-                $row === null => new WrongArgumentCount($call->name, count($arguments)),
-                default => new ReservedFunction($call->name),
-            };
+        $problem = $natives->problem($release, $call->name, count($arguments), $call->named());
+        if ($problem !== null) {
             $derivation->report($problem);
 
             return new ScalarFact(new Invalid($problem), Nullability::Dependent);
         }
+        \SqlSemantics\Diagnostic\Check::invariant($row !== null, 'An accepted native signature has a result row.');
 
         return (new ResultTyping())->fact($row[2], $arguments);
     }

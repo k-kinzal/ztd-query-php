@@ -561,3 +561,13 @@ Memory preserves the original semantic name; its server registry distinguishes t
 original lookup name from the 64-character stored name refreshed by `ALTER SERVER`.
 Missing-server diagnostics have a separate 64-byte display limit. These state
 transitions are verified by 300 direct observations across five native releases.
+
+Generic function-call construction checks the versioned native signatures. An
+unqualified call such as `ABS()` cannot be constructed when no supported MySQL
+release admits its argument count. Qualified stored calls remain available, as
+do names that have a stored-function interpretation in another supported release.
+SQL input outside the current release's signature domain produces a typed input
+refusal before a `FunctionCall` is published. Native comparisons check argument
+counts, aliases, reserved names, nested calls, unfinished statements and preceding
+or following warnings on five releases. This is an operand-domain invariant;
+it does not certify execution or resolve the availability of a stored function.

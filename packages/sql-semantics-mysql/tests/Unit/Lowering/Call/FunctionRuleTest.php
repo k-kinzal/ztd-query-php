@@ -36,6 +36,18 @@ final class FunctionRuleTest extends TestCase
         self::assertFalse($rule->claims('function_call_nonkeyword: now'));
     }
 
+    public function testGenericRefusesAnImpossibleNativeSignatureBeforeConstruction(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT abs()')->find('function_call_generic')[0];
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect parameter count in the call to native function 'abs'");
+
+        (new FunctionRule($lowering))->generic($lowering->form($node));
+    }
+
     public function testCallLowersKeywordAndGenericCalls(): void
     {
         $platform = new Platform();

@@ -81,7 +81,7 @@ final class SpatialWarnings
         try {
             $semantics = $session->semantics();
             $operation = $semantics->analyze($semantics->parser()->parse('SELECT ' . $expression));
-        } catch (SourceException|AnalysisException) {
+        } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
             return false;
         }
         $root = $operation->statement;

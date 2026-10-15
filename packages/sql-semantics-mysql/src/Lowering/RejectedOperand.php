@@ -60,7 +60,9 @@ final class RejectedOperand
     public function lowered(Node $node, Lowering $lowering): ?RejectedInput
     {
         try {
-            if ($node->name === 'partition_entry') {
+            if ($node->name === 'function_call_generic') {
+                (new Call\FunctionRule($lowering))->call($lowering->form($node));
+            } elseif ($node->name === 'partition_entry') {
                 return (new ClientEntry())->partition($node->tokens()[0] ?? null, $lowering->profile);
             }
             if (in_array($node->name, ['user', 'role'], true)) {
