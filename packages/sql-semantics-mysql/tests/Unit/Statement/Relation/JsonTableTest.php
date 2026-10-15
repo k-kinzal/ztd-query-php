@@ -13,8 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\Field;
@@ -31,13 +29,17 @@ final class JsonTableTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
-    public function testDeriveRelationReportsAMissingAlias(): void
+    public function testMissingAliasIsRefusedBeforePublishingAnInvalidRelation(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$'))", []);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Every table function must have an alias');
+        (new Semantics(Dialect::MySql))->analyze("SELECT 1 FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$'))", []);
+    }
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::TableFunctionWithoutAlias, $operation->facts->diagnostics[0]->rule);
+    public function testEmptyAliasCannotBeConstructed(): void
+    {
+        $this->expectExceptionMessage('A JSON table requires a nonempty alias.');
+        new JsonTable(new NullLiteral(), new StringLiteral(['$']), [new OrdinalityColumn(new Name('n'))], new Name(''));
     }
 
     public function testRenderWritesTheTableFunction(): void
@@ -49,7 +51,7 @@ final class JsonTableTest extends TestCase
     {
         $this->expectExceptionMessage('JSON_TABLE defines at least one column.');
 
-        new JsonTable(new NullLiteral(), new StringLiteral(['$']), []);
+        new JsonTable(new NullLiteral(), new StringLiteral(['$']), [], new Name('j'));
     }
 
     public function testEqualsIsNotAJsonTableAliasMark(): void

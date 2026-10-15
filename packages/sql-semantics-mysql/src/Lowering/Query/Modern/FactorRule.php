@@ -99,6 +99,7 @@ final class FactorRule
     /**
      * Lowers a JSON_TABLE table function.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the required alias is absent or empty
      * @throws ImplementationGap When the production has no rule
      */
     public function function(Node $function): JsonTable
@@ -108,11 +109,16 @@ final class FactorRule
             throw ImplementationGap::production($form);
         }
 
+        $alias = (new TableRule($this->lowering))->alias($form->node(7));
+        if ($alias === null || $alias->value === '') {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::TableFunctionWithoutAlias), (new \SqlSemantics\Construction\SourceRanges())->span($function)[1] ?? 0);
+        }
+
         return new JsonTable(
             $this->lowering->expressions->expression($form->node(2)),
             $this->lowering->literals->string($form->node(4)),
             $this->lowering->calls->jsonTableColumns($form->node(5)),
-            (new TableRule($this->lowering))->alias($form->node(7)),
+            $alias,
             (new TableRule($this->lowering))->mark($form->node(7)),
         );
     }

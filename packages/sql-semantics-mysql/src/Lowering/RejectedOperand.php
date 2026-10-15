@@ -36,7 +36,7 @@ final class RejectedOperand
         if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber) {
             return new RejectedInput($setting->problem, (new SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
         }
-        $aborting = (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
+        $aborting = (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
         if ($aborting !== null) {
             return new RejectedInput($aborting->problem, (new SourceRanges())->span($node)[1] ?? 0, true);
         }

@@ -137,6 +137,15 @@ final class ProgramProblemsTest extends TestCase
         (new ProgramProblems())->triggers($statement, $session);
     }
 
+    public function testTriggersDefersALegacyDatabaseLookupUntilRowsAreRead(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query('SHOW TRIGGERS FROM absent WHERE 0')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+    }
+
     public function testDefinerRefusesAHostNameOfMoreThan255CharactersOfAView(): void
     {
         $session = (new Instance())->connect();

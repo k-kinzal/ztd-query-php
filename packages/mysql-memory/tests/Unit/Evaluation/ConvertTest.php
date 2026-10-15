@@ -21,6 +21,28 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class ConvertTest extends TestCase
 {
+    public function testToPredicateReadsLegacyRootStringsAsIntegersWithoutChangingExpressionTruth(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $domain = Domain::string(3, Collation::known('utf8mb4_general_ci'));
+
+        self::assertFalse(Convert::toPredicate('0.5', $domain, $context));
+        self::assertTrue(Convert::toBool('0.5', $domain, $context));
+        self::assertNull(Convert::toPredicate(null, $domain, $context));
+        self::assertSame([['Warning', 1292, "Truncated incorrect INTEGER value: '0.5'"]], $session->diagnostics->conditions);
+    }
+
+    public function testToPredicateRetainsFractionalTruthOnModernReleases(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertTrue(Convert::toPredicate('0.5', Domain::string(3, Collation::known('utf8mb4_general_ci')), $context));
+        self::assertNull(Convert::toPredicate(null, Domain::null(), $context));
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testToDoubleReadsAnUnsignedIntegerAboveTheSignedRange(): void
     {
         $session = (new Instance())->connect();

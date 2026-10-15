@@ -39,7 +39,7 @@ final class JsonTablesTest extends TestCase
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
 
-        self::assertSame(['x', 'y'], array_map(static fn (JsonTable $table): ?string => $table->alias?->value, (new JsonTables())->functions($select->from)));
+        self::assertSame(['x', 'y'], array_map(static fn (JsonTable $table): string => $table->alias->value, (new JsonTables())->functions($select->from)));
     }
 
     public function testPathsAnswersThePathsOfTheColumnsNestedOnesIncluded(): void

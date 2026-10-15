@@ -47,7 +47,8 @@ use SqlSemantics\Statement\Reference\Column\MissingColumn;
  * itself are errors then: the rules of stored programs, a wrong call of a native function, and
  * in a trigger a column of the NEW or OLD row its table lacks; the rules come first. A
  * function without RETURN is named with its database.
- * SHOW TRIGGERS looks up its database before it reads its condition.
+ * Modern SHOW TRIGGERS looks up its database before it reads its condition.
+ * MySQL 5.6 and 5.7 defer that lookup until rows are read.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-program-restrictions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
  *
@@ -95,14 +96,14 @@ final class ProgramProblems
     }
 
     /**
-     * Refuses SHOW TRIGGERS of a database that does not exist, before its condition is read.
+     * Requires a database name and, on modern releases, its existence before the condition is read.
      *
      * @throws SqlError When the database does not exist (ER_BAD_DB_ERROR)
      */
     public function triggers(ShowTriggers $statement, Session $session): void
     {
         $database = ProgramSource::database($statement->database, $session);
-        if ($session->instance->dictionary->schema($database) === null) {
+        if (!$session->settings()->legacy() && $session->instance->dictionary->schema($database) === null) {
             throw QueryError::BadDatabase->error($database);
         }
     }

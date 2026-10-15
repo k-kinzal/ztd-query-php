@@ -49,4 +49,17 @@ final class RoutineTimesTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['2000-01-01 00:00:00', '2000-01-02 00:00:00']], $result->rows);
     }
+
+    public function testLocalRetainsTriggerFractionsAndTheSessionTimestamp(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect();
+        $session->query("USE d; SET time_zone='+09:00', timestamp=1700000000.129999; CREATE TABLE t(a INT); CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.a=1; SET time_zone='+00:00'");
+        $result = $session->query("SELECT CREATED FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='d'")[0];
+        $listing = $session->query('SHOW TRIGGERS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $listing);
+        self::assertSame([['2023-11-14 22:13:20.12']], $result->rows);
+        self::assertSame('2023-11-14 22:13:20.12', $listing->rows[0][5]);
+    }
 }

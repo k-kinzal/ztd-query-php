@@ -31,7 +31,7 @@ final class OrdinalityColumnTest extends TestCase
 
         self::assertCount(1, $slots);
         self::assertSame(Nullability::Nullable, $slots[0]->nullability);
-        self::assertEquals(new Known(Domain::integer(Field::LongLong, 10, true)), $slots[0]->type);
+        self::assertEquals(new Known(Domain::column(Field::LongLong, 10)), $slots[0]->type);
     }
 
     public function testRenderWritesForOrdinality(): void

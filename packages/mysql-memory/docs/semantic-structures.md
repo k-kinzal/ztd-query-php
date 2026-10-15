@@ -486,3 +486,21 @@ extra prior access to exercise unequal baselines. All four listing forms retain
 metadata, warnings and every row. The release catalogs now include separate 8.1,
 8.2, 8.3 and 9.0 inventories rather than borrowing a later release's names. The
 combined native checks pass 12 tests and 1,953 assertions across nine releases.
+
+`JSON_TABLE` requires a nonempty correlation name in its public constructor.
+Missing or empty aliases in SQL are refused during lowering, including in an
+uncalled routine body and before competing later errors. The ordinality column
+retains a signed BIGINT value domain independently of its reported display width
+of ten. The plan consumes the resolved relation slots for both ordinary and nested
+JSON columns; it does not derive their types again. Direct native comparisons
+include quoted aliases, subtraction from the counter and nullable nested rows.
+
+Trigger listing histories reuse the same structures before database creation,
+in an empty database and after creating a trigger. They compare all metadata,
+warnings and rows, including constant-false predicates and legacy database lookup
+ordering. Trigger creation uses the statement timestamp, including `SET timestamp`,
+and stores the instant in UTC. SHOW TRIGGERS and INFORMATION_SCHEMA.TRIGGERS display
+it in the reading session's time zone, retaining hundredths; MySQL 5.6 reports NULL
+because that release does not store a creation timestamp. These histories exercise
+consumer behavior after successful state changes rather than relying on matching
+errors in an empty catalog.

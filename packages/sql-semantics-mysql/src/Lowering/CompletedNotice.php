@@ -40,7 +40,7 @@ final class CompletedNotice
      */
     public function operands(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
     {
-        return (new Leaf\SyntaxTableNames())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Routine\DeclarationPrefix())->completed($node, $lowering);
+        return (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Leaf\SyntaxTableNames())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Routine\DeclarationPrefix())->completed($node, $lowering);
     }
 
 }

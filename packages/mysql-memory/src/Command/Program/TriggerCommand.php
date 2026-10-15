@@ -92,7 +92,8 @@ final class TriggerCommand implements Command
             return new Completion(0, 0, $context->diagnostics->raised());
         }
         $position = $this->position($statement, $schema, $table);
-        $trigger = new Trigger($database, $name, $table, $statement->time->value, $statement->event->value, ProgramSource::definer($statement->definer, $session, $context), ProgramText::of($operation, $session)->body($statement->body, 'sp_proc_stmt'), (string) $session->variables->read('sql_mode'), ProgramSource::now(2), ProgramSource::charsets($session, $database), $statement);
+        $created = gmdate('Y-m-d H:i:s', (int) floor($context->started)) . '.' . sprintf('%02d', (int) floor(($context->started - floor($context->started)) * 100));
+        $trigger = new Trigger($database, $name, $table, $statement->time->value, $statement->event->value, ProgramSource::definer($statement->definer, $session, $context), ProgramText::of($operation, $session)->body($statement->body, 'sp_proc_stmt'), (string) $session->variables->read('sql_mode'), $created, ProgramSource::charsets($session, $database), $statement);
         array_splice($schema->triggers, $position, 0, [$trigger]);
 
         return new Completion();

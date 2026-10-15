@@ -19,6 +19,7 @@ use MySqlMemory\Value\Json\Json;
 use MySqlMemory\Value\NumericText;
 use MySqlMemory\Value\Real;
 use MySqlMemory\Value\Temporal;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -174,7 +175,7 @@ final class Convert
         }
         $literal = $origin instanceof Constant || $origin instanceof Bits;
         if (!$literal && preg_match('/\A[ \t\n\r\v\f]*[+-]?\.?[0-9]/', $text) !== 1) {
-            $legacy = $context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+            $legacy = $context->modes->release === GrammarRelease::MySql5651;
             $context->warnMessage(DataError::TruncatedWrongValueForField, DataError::TruncatedWrongValueForField->message($legacy ? 'decimal' : 'DECIMAL', $legacy ? '' : '0', '', -1));
         }
         if (($literal || $origin instanceof ColumnRead || $origin instanceof Outer) && (!$read->complete || trim($text, " \t\n\r\v\f") === '')) {
@@ -216,6 +217,22 @@ final class Convert
             Kind::Decimal => Decimal::compare((string) $value, '0') !== 0,
             Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => self::toDouble($value, $domain, $context) !== 0.0,
         };
+    }
+
+    /**
+     * Reads a row-filter root: MySQL 5.6 and 5.7 use integer conversion,
+     * including truncation notices, while later releases use boolean conversion.
+     * IF and other expression-level truth tests continue to use toBool().
+     */
+    public static function toPredicate(int|float|string|null $value, Domain $domain, Context $context): ?bool
+    {
+        if ($context->modes->release === GrammarRelease::MySql5651 || $context->modes->release === GrammarRelease::MySql5744) {
+            $integer = self::toInteger($value, $domain, $context);
+
+            return $integer === null ? null : $integer !== 0;
+        }
+
+        return self::toBool($value, $domain, $context);
     }
 
     /**

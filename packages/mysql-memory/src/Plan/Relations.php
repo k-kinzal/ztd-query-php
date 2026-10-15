@@ -29,7 +29,6 @@ use MySqlMemory\Value\Json\JsonKind;
 use MySqlMemory\Value\Json\JsonPath;
 use MySqlMemory\Value\Json\JsonSyntax;
 use ReflectionClass;
-use SqlSemantics\Platform\MySql\Rules\Typing\Declared;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponseKind;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns;
@@ -48,7 +47,6 @@ use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
@@ -172,7 +170,7 @@ final class Relations
     /**
      * Plans JSON_TABLE: its document sees the tables before it, and its columns take their declared types.
      *
-     * A counter is an unsigned BIGINT of ten digits. ON ERROR written before ON EMPTY is deprecated
+     * A counter is a signed BIGINT of ten digits. ON ERROR written before ON EMPTY is deprecated
      * with a warning. A DEFAULT value of ON EMPTY or ON ERROR is read as
      * a JSON text when the statement is resolved, and may be an array or an object only for a JSON
      * column (ER_INVALID_DEFAULT) (verified on a live 8.4 server).
@@ -183,12 +181,15 @@ final class Relations
     public function jsonTable(JsonTable $table, Scope $scope): AccessPath
     {
         $document = $this->planner->compiler->compile($table->document, $scope);
-        $declared = new Declared($this->planner->settings->connectionCollation, $this->planner->settings->release());
-        $columns = array_map(fn (JsonTableColumn $column): JsonColumn => $this->jsonColumn($column, $declared), $table->columns);
+        $slots = $this->planner->compiler->facts->relation($table)->shape->slots;
+        $columns = [];
+        foreach ($table->columns as $column) {
+            $columns[] = $this->jsonColumn($column, $slots);
+        }
         [$domains, $names] = self::flattened($columns);
         $scope->place($table, $domains, $names);
-        $scope->merged[spl_object_id($table)] = $this->planner->materialized($domains);
-        $scope->derived[spl_object_id($table)] = $table->alias->value ?? '';
+        $scope->merged[spl_object_id($table)] = array_map(static fn (?ColumnOrigin $origin): ColumnOrigin => new ColumnOrigin('', '', 'json_table', '', $origin->flags ?? 0), $this->planner->materialized($domains));
+        $scope->derived[spl_object_id($table)] = $table->alias->value;
 
         return new JsonTableScan($document, self::jsonPath($table->path->value()), $columns);
     }
@@ -218,22 +219,30 @@ final class Relations
     }
 
     /**
-     * Prepares one column of JSON_TABLE.
+     * Prepares one column of JSON_TABLE using its already resolved semantic slot.
      *
+     * @param list<\SqlSemantics\Statement\Shape\OutputSlot> $slots Remaining flattened slots, consumed in written order
      * @throws SqlError When a path or a DEFAULT value is not valid
      */
-    public function jsonColumn(JsonTableColumn $column, Declared $declared): JsonColumn
+    public function jsonColumn(JsonTableColumn $column, array &$slots): JsonColumn
     {
-        if ($column instanceof OrdinalityColumn) {
-            return new JsonColumn('ordinality', $column->name->value, Domain::integer(Field::LongLong, 10, true)->withNullable(true));
-        }
         if ($column instanceof NestedColumns) {
-            return new JsonColumn('nested', '', Domain::null(), self::jsonPath($column->path->value()), [JsonResponseKind::Null, null], [JsonResponseKind::Null, null], array_map(fn (JsonTableColumn $inner): JsonColumn => $this->jsonColumn($inner, $declared), $column->columns));
+            $nested = [];
+            foreach ($column->columns as $inner) {
+                $nested[] = $this->jsonColumn($inner, $slots);
+            }
+            return new JsonColumn('nested', '', Domain::null(), self::jsonPath($column->path->value()), [JsonResponseKind::Null, null], [JsonResponseKind::Null, null], $nested);
+        }
+        $slot = array_shift($slots);
+        $type = $slot?->type;
+        \SqlSemantics\Diagnostic\Check::invariant($slot !== null && $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain, 'A JSON_TABLE column has a resolved semantic domain.');
+        $domain = Domain::of($type->descriptor, $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull);
+        if ($column instanceof OrdinalityColumn) {
+            return new JsonColumn('ordinality', $column->name->value, $domain);
         }
         if (!$column instanceof PathColumn) {
             throw StatementError::NotSupportedYet->error('a JSON_TABLE column');
         }
-        $domain = Domain::of($declared->tableFunction($column->type), true);
         $name = $column->name->value;
         $response = static function (?JsonResponse $response) use ($domain, $name): array {
             $default = $response?->default;

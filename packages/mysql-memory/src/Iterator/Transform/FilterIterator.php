@@ -54,9 +54,9 @@ final class FilterIterator implements RowIterator
         $condition = $this->path->condition;
         while (($row = $this->input->read()) !== null) {
             $this->frame->row = $row;
-            if (Convert::toBool($condition->evaluate($this->frame), $condition->domain(), $this->frame->context) === true) {
+            if (Convert::toPredicate($condition->evaluate($this->frame), $condition->domain(), $this->frame->context) === true) {
                 $recheck = $this->path->recheck;
-                if ($recheck !== null && Convert::toBool($recheck->evaluate($this->frame), $recheck->domain(), $this->frame->context) !== true) {
+                if ($recheck !== null && Convert::toPredicate($recheck->evaluate($this->frame), $recheck->domain(), $this->frame->context) !== true) {
                     continue;
                 }
                 return $row;
@@ -79,7 +79,7 @@ final class FilterIterator implements RowIterator
         }
         $kept = $this->frame->context->kept;
         if (!isset($kept[$this->path])) {
-            $kept[$this->path] = [Convert::toBool($precondition->evaluate($this->frame), $precondition->domain(), $this->frame->context) === true ? 1 : 0];
+            $kept[$this->path] = [Convert::toPredicate($precondition->evaluate($this->frame), $precondition->domain(), $this->frame->context) === true ? 1 : 0];
         }
 
         return $kept[$this->path][0] === 1;

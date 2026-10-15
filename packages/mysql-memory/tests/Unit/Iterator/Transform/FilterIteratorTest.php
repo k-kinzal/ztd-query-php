@@ -111,4 +111,29 @@ final class FilterIteratorTest extends TestCase
 
         self::assertSame([null, false], [$iterator->read(), $iterator->holds()]);
     }
+
+    public function testReadUsesIntegerConversionForALegacyRootPredicate(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $working = new WorkingTable(1);
+        $working->rows = [['0.5'], ['1'], [null]];
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::string(3, Collation::known('utf8mb4_general_ci')), 0)), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame(['1'], $iterator->read());
+        self::assertNull($iterator->read());
+        self::assertSame(1, $session->diagnostics->count());
+    }
+
+    public function testHoldsUsesIntegerConversionForALegacyConstantPredicate(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $working = new WorkingTable(1);
+        $working->rows = [[1]];
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::integer(), 0), new Constant(Domain::decimal(1, 1), '0.1')), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertFalse($iterator->holds());
+        self::assertNull($iterator->read());
+    }
 }

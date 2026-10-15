@@ -271,7 +271,7 @@ final class Blocks
             return [$this->query($relation->query, false), []];
         }
         if ($relation instanceof JsonTable) {
-            $block->tables[] = [$relation->alias->value ?? '', []];
+            $block->tables[] = [$relation->alias->value, []];
 
             return [[], []];
         }

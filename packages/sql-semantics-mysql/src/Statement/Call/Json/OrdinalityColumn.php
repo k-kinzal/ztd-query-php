@@ -21,8 +21,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * A `name FOR ORDINALITY` column of JSON_TABLE: the number of the row, counting from 1.
  *
  * Rule: MYSQL-JSON-TABLE-COLUMN-001 (ordinality). The column is an
- * unsigned BIGINT of ten digits, reported as nullable; it is never NULL at
- * its own nesting level (verified on a live 8.4 server). Terminates: a leaf.
+ * signed BIGINT of ten digits, reported as nullable; it is never NULL at
+ * its own nesting level. Subtracting 2 from the first value returns -1
+ * (verified through SQL on 8.4.7). Terminates: a leaf.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
  * Status: Implemented.
  *
@@ -48,7 +49,7 @@ final class OrdinalityColumn implements JsonTableColumn
      */
     public function deriveColumns(Derivation $derivation, Environment $environment): array
     {
-        return [new OutputSlot($this->name, new Known(Domain::integer(Field::LongLong, 10, true)), Nullability::Nullable)];
+        return [new OutputSlot($this->name, new Known(Domain::column(Field::LongLong, 10)), Nullability::Nullable)];
     }
 
     /**

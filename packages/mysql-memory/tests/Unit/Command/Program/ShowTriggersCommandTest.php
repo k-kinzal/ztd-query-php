@@ -10,6 +10,9 @@ use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 #[CoversClass(ShowTriggersCommand::class)]
 #[Small]
@@ -63,5 +66,28 @@ final class ShowTriggersCommandTest extends TestCase
         $this->expectExceptionMessage("Unknown database 'SHUTDOWN'");
 
         $session->query("SHOW FULL TRIGGERS FROM SHUTDOWN LIKE 'x'");
+    }
+
+    public function testHeadingsRetainDirectTimestampConversionAndBaseIndexes(): void
+    {
+        $command = new ShowTriggersCommand();
+        $materialized = $command->headings(GrammarRelease::MySql847);
+        $direct = $command->headings(GrammarRelease::MySql847, true);
+
+        self::assertSame(22, $materialized[5]->column(Charset::known('utf8mb4'))->length);
+        self::assertSame(88, $direct[5]->column(Charset::known('utf8mb4'))->length);
+        self::assertSame([20617, 'trg', 'information_schema'], [$direct[7]->flags, $direct[7]->originalTable, $direct[7]->schema]);
+        self::assertSame(20485, $direct[8]->flags);
+    }
+
+    public function testLegacyRetainsNullableCreationTimeAndVersionedWidths(): void
+    {
+        $oldest = (new ShowTriggersCommand())->legacy(GrammarRelease::MySql5651);
+        $later = (new ShowTriggersCommand())->headings(GrammarRelease::MySql5744, true);
+
+        self::assertSame([Field::DateTime, 19, 128, 0], [$oldest[5]->field, $oldest[5]->length, $oldest[5]->flags, $oldest[5]->decimals]);
+        self::assertSame([22, 2], [$later[5]->length, $later[5]->decimals]);
+        self::assertSame([77, 93], [$oldest[7]->length, $later[7]->length]);
+        self::assertSame('EVENT_MANIPULATION', $oldest[1]->originalName);
     }
 }

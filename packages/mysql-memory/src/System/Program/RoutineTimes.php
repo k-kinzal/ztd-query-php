@@ -20,9 +20,9 @@ use MySqlMemory\Value\Temporal;
 final class RoutineTimes
 {
     /**
-     * Formats a UTC dictionary timestamp in the reading session's time zone.
+     * Formats a UTC dictionary timestamp in the reading session's time zone, retaining the requested fractional precision.
      */
-    public static function local(string $utc, Context $context): string
+    public static function local(string $utc, Context $context, int $decimals = 0): string
     {
         $parts = Temporal::parseDateTime($utc);
         if ($parts === null) {
@@ -30,6 +30,9 @@ final class RoutineTimes
         }
         $instant = Calendar::epoch($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5]);
 
-        return Temporal::dateTime(...[...$context->local((float) $instant), 0]);
+        $local = $context->local((float) $instant);
+        $local[6] = $parts[6];
+
+        return Temporal::dateTime(...[...$local, $decimals]);
     }
 }

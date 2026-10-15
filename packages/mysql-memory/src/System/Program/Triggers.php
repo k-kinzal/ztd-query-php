@@ -55,7 +55,7 @@ final class Triggers implements SystemRows
                     'ACTION_REFERENCE_NEW_TABLE' => null,
                     'ACTION_REFERENCE_OLD_ROW' => 'OLD',
                     'ACTION_REFERENCE_NEW_ROW' => 'NEW',
-                    'CREATED' => $trigger->created,
+                    'CREATED' => $reading->dictionary() ? $trigger->created : ($reading->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? null : RoutineTimes::local($trigger->created, $reading->connection->context, 2)),
                     'SQL_MODE' => $trigger->mode,
                     'DEFINER' => $trigger->definer[0] . '@' . $trigger->definer[1],
                     'CHARACTER_SET_CLIENT' => $trigger->charsets[0],

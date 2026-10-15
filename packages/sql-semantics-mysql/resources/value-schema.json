@@ -1736,7 +1736,7 @@
         "using": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\JsonTable": {
-        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "alias": "SqlSemantics\\Statement\\Identifier\\Name",
         "columns": "array",
         "document": "SqlSemantics\\Statement\\Scalar",
         "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
