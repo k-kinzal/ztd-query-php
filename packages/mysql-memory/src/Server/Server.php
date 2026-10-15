@@ -40,13 +40,14 @@ final class Server
      * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      * @param bool $supervised Whether SQL RESTART is available
      * @param bool $resourcePriorities Whether the emulated platform applies resource-group thread priorities
+     * @param positive-int $resourceProcessors The number of logical processors visible to resource groups
      * @param array<string, array{int, int}> $routineTimestamps Installation creation and modification epochs, keyed by FUNCTION:name or PROCEDURE:name
      *
      * @throws RuntimeException When the process cannot be started
      */
-    public static function start(string $version = '8.4.7', array $databases = [], array $globals = [], ?string $clientHost = null, bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true): self
+    public static function start(string $version = '8.4.7', array $databases = [], array $globals = [], ?string $clientHost = null, bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8): self
     {
-        $command = [PHP_BINARY, '-d', 'memory_limit=-1', '-d', 'xdebug.mode=off', dirname(__DIR__, 2) . '/bin/mysql-memory', '--listen=tcp://127.0.0.1:0', '--release=' . $version];
+        $command = [PHP_BINARY, '-d', 'memory_limit=-1', '-d', 'xdebug.mode=off', dirname(__DIR__, 2) . '/bin/mysql-memory', '--listen=tcp://127.0.0.1:0', '--release=' . $version, '--resource-processors=' . $resourceProcessors];
         if (!$supervised) {
             $command[] = '--unsupervised';
         }

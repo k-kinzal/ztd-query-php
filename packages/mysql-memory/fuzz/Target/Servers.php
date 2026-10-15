@@ -83,7 +83,7 @@ final class Servers
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
-        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version));
+        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version), resourceProcessors: $this->resourceProcessors($native, $version));
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
@@ -252,6 +252,31 @@ final class Servers
         } finally {
             $native->exec('DROP RESOURCE GROUP ' . $name);
         }
+    }
+
+    /**
+     * Reads the default group's processor domain before generated statements run.
+     *
+     * The fixture shares this platform capability; CPU validation errors are still compared exactly.
+     * @return positive-int
+     * @throws RuntimeException When the native default group does not describe a contiguous CPU domain
+     */
+    public function resourceProcessors(PDO $native, string $version): int
+    {
+        if (str_starts_with($version, '5.')) {
+            return 8;
+        }
+        $result = $native->query("SELECT VCPU_IDS FROM information_schema.RESOURCE_GROUPS WHERE RESOURCE_GROUP_NAME = 'USR_default'");
+        $cpus = $result === false ? false : $result->fetchColumn();
+        if (!is_string($cpus) || preg_match('/\A0(?:-([0-9]+))?\z/', $cpus, $match) !== 1) {
+            throw new RuntimeException('The default resource group did not expose a contiguous processor domain.');
+        }
+        $last = filter_var($match[1] ?? '0', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => PHP_INT_MAX - 1]]);
+        if ($last === false) {
+            throw new RuntimeException('The default resource group exposed an invalid processor index.');
+        }
+
+        return $last + 1;
     }
 
 }

@@ -73,10 +73,11 @@ final class Registry
      * Creates the objects of a server that has just been installed.
      *
      * @param bool $resourcePriorities Whether the emulated platform applies thread priorities
+     * @param positive-int $resourceProcessors The number of logical processors visible to resource groups
      */
-    public function __construct(bool $resourcePriorities = true)
+    public function __construct(bool $resourcePriorities = true, int $resourceProcessors = 8)
     {
-        $this->resourceGroups = new ResourceGroups(priorities: $resourcePriorities);
+        $this->resourceGroups = new ResourceGroups($resourceProcessors, $resourcePriorities);
         $this->spatialCatalog = new SpatialCatalog();
         $this->binaryLog = new BinaryLog();
         $this->status = new StatusCounters();

@@ -49,7 +49,7 @@ final class Lifecycle
             foreach ((new Servers())->rows($native, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
                 $globals[strtolower($name)] = $value;
             }
-            $server = Server::start($version, [], $globals, supervised: $definition->supervised(), resourcePriorities: (new Servers())->resourcePriorities($native, $version));
+            $server = Server::start($version, [], $globals, supervised: $definition->supervised(), resourcePriorities: (new Servers())->resourcePriorities($native, $version), resourceProcessors: (new Servers())->resourceProcessors($native, $version));
             try {
                 $expected = $this->observe($native, $dsn, $endpoint->username, $endpoint->password, $sql);
                 $memory = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);

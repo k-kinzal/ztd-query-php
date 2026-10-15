@@ -75,4 +75,19 @@ final class ServerTest extends TestCase
         }
     }
 
+    public function testStartPreservesThePlatformProcessorDomain(): void
+    {
+        $server = Server::start(resourceProcessors: 16);
+        try {
+            $client = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $client->exec('CREATE RESOURCE GROUP g TYPE USER VCPU 9-15');
+            $result = $client->query("SELECT VCPU_IDS FROM information_schema.RESOURCE_GROUPS WHERE RESOURCE_GROUP_NAME = 'g'");
+
+            self::assertNotFalse($result);
+            self::assertSame('9-15', $result->fetchColumn());
+        } finally {
+            $server->stop();
+        }
+    }
+
 }

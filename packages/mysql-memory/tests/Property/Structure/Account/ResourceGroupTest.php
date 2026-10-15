@@ -65,6 +65,34 @@ final class ResourceGroupTest extends TestCase
 
         self::assertNull($session->instance->registry->resourceGroups->find($name->value));
     }
+
+    /**
+     * The same typed CPU range fails or succeeds according to explicit platform state.
+     */
+    #[DataProvider('providerHistories')]
+    public function testCpuRangesExecuteWhenTheirProcessorsExist(string $release, int $seed): void
+    {
+        $choices = new Choices('resource-group-cpus:' . $seed);
+        $first = $choices->integer(8, 15);
+        $last = $choices->integer($first, 31);
+        $statement = new CreateResourceGroup(new ResourceGroupName(new Name('g')), ResourceGroupKind::User, [new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange($first, $last)]);
+        $small = (new Instance($release, resourceProcessors: 8))->connect();
+        $large = (new Instance($release, resourceProcessors: 32))->connect();
+        $small->text = $large->text = 'unrelated invalid SQL';
+        $execution = new Execution();
+        $failure = null;
+        try {
+            $execution->runIn($small, $statement);
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            $failure = $error;
+        }
+
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $failure);
+        self::assertSame(3652, $failure->getCode());
+        self::assertSame('Invalid cpu id ' . $first, $failure->getMessage());
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $execution->runIn($large, $statement));
+        self::assertSame(range($first, $last), $large->instance->registry->resourceGroups->find('g')?->cpus);
+    }
     /**
      * Creation and alteration consume the same signed value without reading SQL.
      */

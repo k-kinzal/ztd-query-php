@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Registry;
 
+use InvalidArgumentException;
+
 /**
  * The resource groups of the server and the group each session's thread is assigned to.
  *
@@ -28,10 +30,14 @@ final class ResourceGroups
 
     /**
      * @param bool $priorities Whether the emulated platform applies thread priorities
-     * @param int $processors The number of CPUs the server sees; the CPUs are numbered from 0
+     * @param int $processors The positive number of CPUs the server sees; the CPUs are numbered from 0
+     * @throws InvalidArgumentException When the processor count is not positive
      */
     public function __construct(public readonly int $processors = 8, public readonly bool $priorities = true)
     {
+        if ($processors < 1) {
+            throw new InvalidArgumentException('Resource groups require at least one logical processor.');
+        }
         foreach (['USR_default' => false, 'SYS_default' => true] as $name => $system) {
             $this->groups[Registry::key($name)] = new ResourceGroup($name, $system, range(0, $processors - 1));
         }

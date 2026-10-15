@@ -95,9 +95,10 @@ final class Instance
      * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      * @param bool $supervised Whether a supervisor permits SQL RESTART
      * @param bool $resourcePriorities Whether the emulated platform applies resource-group thread priorities
+     * @param positive-int $resourceProcessors The number of logical processors visible to resource groups
      * @param array<string, array{int, int}> $routineTimestamps Installation creation and modification epochs, keyed by FUNCTION:name or PROCEDURE:name
      */
-    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true)
+    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8)
     {
         $release = GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847;
         $this->catalog = SystemVariables::of($release);
@@ -109,7 +110,7 @@ final class Instance
         $this->globals = new Globals($globals);
         $this->dictionary = new Dictionary();
         $this->accounts = Accounts::installed($release);
-        $this->registry = new Registry($resourcePriorities);
+        $this->registry = new Registry($resourcePriorities, $resourceProcessors);
         $this->transactions = new Concurrency\Transactions();
         $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
         $system = $legacy ? ['information_schema' => 'utf8mb3_general_ci', 'mysql' => 'latin1_swedish_ci', 'performance_schema' => 'utf8mb3_general_ci', 'sys' => 'utf8mb3_general_ci'] : ['information_schema' => 'utf8mb3_general_ci', 'mysql' => 'utf8mb4_0900_ai_ci', 'performance_schema' => 'utf8mb4_0900_ai_ci', 'sys' => 'utf8mb4_0900_ai_ci'];
