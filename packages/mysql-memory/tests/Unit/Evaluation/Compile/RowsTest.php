@@ -92,6 +92,16 @@ final class RowsTest extends TestCase
         $session->query('SELECT (1, 2) = (1, 2, 3)');
     }
 
+    public function testInComparesJsonTextWithinRowsWithOnePreparationWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT (CAST('[1]' AS JSON),1) IN ((0,1),(2,2))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0']], $result->rows);
+        self::assertSame([['Warning', 1235, "This version of MySQL doesn't yet support 'comparison of JSON within a ROW in the IN operator'"]], $session->diagnostics->conditions);
+    }
+
     public function testInTellsWhetherARowIsInAListOfRows(): void
     {
         $session = (new Instance())->connect();

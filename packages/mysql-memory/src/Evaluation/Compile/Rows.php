@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Evaluation\Compile;
 
 use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Operator\Comparison\RowCompare;
@@ -15,6 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Row;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -139,9 +142,18 @@ final class Rows
     public function in(Scalar $operand, array $elements, bool $negated, Scope $scope): Evaluable
     {
         $result = null;
+        $json = false;
         foreach ($elements as $element) {
             $equality = $this->compare(ComparisonOperator::Equal, $operand, $element, $scope);
+            if (count($elements) > 1 && $equality instanceof RowCompare) {
+                $json = $json || array_filter($equality->pairs, static fn (array $pair): bool => $pair[0]->domain()->kind === Kind::Json || $pair[1]->domain()->kind === Kind::Json) !== [];
+                $pairs = array_map(static fn (array $pair): array => [$pair[0], $pair[1], $pair[2]->mode === Kind::Json ? new Comparator(Kind::String, $pair[0]->domain(), $pair[1]->domain(), Collation::known('utf8mb4_bin')) : $pair[2]], $equality->pairs);
+                $equality = new RowCompare(ComparisonOperator::Equal, $pairs, $equality->domain());
+            }
             $result = $result === null ? $equality : new Logic(LogicalOperator::Or, $result, $equality, $this->compiler->operators->truth($result->domain()->nullable || $equality->domain()->nullable));
+        }
+        if ($json && !$this->compiler->settings->legacy()) {
+            $this->compiler->connection->context->diagnostics->warning(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message('comparison of JSON within a ROW in the IN operator'));
         }
         assert($result !== null);
 

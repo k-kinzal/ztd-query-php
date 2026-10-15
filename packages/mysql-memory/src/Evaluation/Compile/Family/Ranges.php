@@ -120,9 +120,10 @@ final class Ranges
         $fields = new FieldConstants($this->compiler);
         foreach ($node->elements as $element) {
             $compiled[] = (new \MySqlMemory\Evaluation\Compile\FieldStrings($this->compiler))->check($node->operand, $operand, $element, $fields->stored($node->operand, $operand, $element, $this->compiler->compile($element, $scope)), false);
-            $modes[] = Comparator::of($operand->domain(), $compiled[count($compiled) - 1]->domain(), 'in', $connection)->mode;
+            $modes[] = $this->membershipComparator($operand->domain(), $compiled[count($compiled) - 1]->domain())->mode;
             $fixed = $fixed && $this->compiler->constancy($element)->constant();
         }
+        $this->warnJsonMembership([$operand, ...$compiled]);
         $strings = array_values(array_filter($compiled, static fn (int $index): bool => $modes[$index] === Kind::String, ARRAY_FILTER_USE_KEY));
         if ($fixed && $strings !== [] && $this->compiler->settings->legacy()) {
             [$collation] = \MySqlMemory\Typing\Collations::aggregate([$operand->domain(), ...array_map(static fn (Evaluable $element): Domain => $element->domain(), $strings)], 'in', $connection, true);
@@ -133,10 +134,36 @@ final class Ranges
             $operand = $operand->domain()->kind === Kind::Double ? $operand : new DoubleOperand($operand, false);
             $compiled = array_map(static fn (Evaluable $element): Evaluable => $element->domain()->kind === Kind::Double ? $element : new DoubleOperand($element, false), $compiled);
         }
-        $elements = array_map(static fn (Evaluable $element): array => [$element, Comparator::of($operand->domain(), $element->domain(), 'in', $connection)], $compiled);
+        $elements = array_map(fn (Evaluable $element): array => [$element, $this->membershipComparator($operand->domain(), $element->domain())], $compiled);
         $types = $this->compiler->settings->legacy() ? $this->comparisons($operand->domain(), array_map(static fn (Evaluable $element): Domain => $element->domain(), $compiled)) : [];
 
         return new Membership($operand, $elements, $node->negated, $this->compiler->domain($node), $fixed, $types, $this->compiler->settings->release() === GrammarRelease::MySql5744);
+    }
+
+    /**
+     * Selects the comparison domain for a multi-element membership test.
+     *
+     * Legacy JSON operands participate as string domains while retaining their
+     * JSON value conversion when compared numerically.
+     */
+    public function membershipComparator(Domain $left, Domain $right): Comparator
+    {
+        $text = fn (Domain $domain): Domain => $this->compiler->settings->release() === GrammarRelease::MySql5744 && $domain->kind === Kind::Json ? Domain::string(4294967295, Collation::known('utf8mb4_bin')) : $domain;
+        $comparator = Comparator::of($text($left), $text($right), 'in', $this->compiler->settings->connectionCollation, $this->compiler->settings->release());
+
+        return new Comparator($comparator->mode, $left, $right, $comparator->collation);
+    }
+
+    /**
+     * Reports the legacy JSON membership conversion before rows are evaluated.
+     *
+     * @param list<Evaluable> $values The resolved operand and list members
+     */
+    public function warnJsonMembership(array $values): void
+    {
+        if ($this->compiler->settings->release() === GrammarRelease::MySql5744 && array_filter($values, static fn (Evaluable $value): bool => $value->domain()->kind === Kind::Json) !== []) {
+            $this->compiler->connection->context->diagnostics->warning(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message('comparison of JSON in the IN operator'));
+        }
     }
 
     /**

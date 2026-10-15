@@ -408,16 +408,17 @@ final class Grouping
      * Compiles an aggregate into the fold of its arguments; JSON_OBJECTAGG folds its name and value.
      *
      * A JSON aggregate names itself in lower case as the column a warning about its value read as
-     * another type comes from (verified on a live 8.4 server).
+     * another type comes from. MySQL 5.7 includes its opening parenthesis; modern
+     * releases use the bare name (verified on 5.7.44, 8.0.44 and 8.4.7).
      */
     public function accumulation(Aggregate|GroupConcat|JsonObjectAggregate $node, Scope $scope): Accumulation
     {
         $compiler = $this->planner->compiler;
         if ($node instanceof JsonObjectAggregate) {
-            return new Accumulation(AggregateFunction::JsonArray, [$compiler->compile($node->key, $scope), $this->json($node->value, $scope)], false, $compiler->domain($node)->withSource('json_objectagg'), [], ',', 0, true);
+            return new Accumulation(AggregateFunction::JsonArray, [$compiler->compile($node->key, $scope), $this->json($node->value, $scope)], false, $compiler->domain($node)->withSource($compiler->settings->legacy() ? 'json_objectagg(' : 'json_objectagg'), [], ',', 0, true);
         }
         if ($node instanceof Aggregate && $node->function === AggregateFunction::JsonArray) {
-            return new Accumulation($node->function, array_map(fn (Operand $argument): Evaluable => $this->json($argument, $scope), $node->arguments), false, $compiler->domain($node)->withSource('json_arrayagg'), [], ',', 0);
+            return new Accumulation($node->function, array_map(fn (Operand $argument): Evaluable => $this->json($argument, $scope), $node->arguments), false, $compiler->domain($node)->withSource($compiler->settings->legacy() ? 'json_arrayagg(' : 'json_arrayagg'), [], ',', 0);
         }
         $arguments = array_map(static fn (Operand $argument): Evaluable => $compiler->compile($argument, $scope), $node->arguments);
         if ($node instanceof GroupConcat) {

@@ -45,6 +45,30 @@ final class RangesTest extends TestCase
         self::assertSame([['1', '1', null]], $result->rows);
     }
 
+    public function testMembershipComparatorRetainsLegacyJsonNumericCoercion(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query("SELECT CAST('[1]' AS JSON) IN (0,2)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertSame([
+            ['Warning', 1235, "This version of MySQL doesn't yet support 'comparison of JSON in the IN operator'"],
+            ['Warning', 3156, 'Invalid JSON value for CAST to DOUBLE from column cast_as_json at row 1'],
+        ], $session->diagnostics->conditions);
+    }
+
+    public function testWarnJsonMembershipRunsBeforeAnEmptyTableIsRead(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a JSON)');
+        $result = $session->query('SELECT a IN (1,2) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertSame([['Warning', 1235, "This version of MySQL doesn't yet support 'comparison of JSON in the IN operator'"]], $session->diagnostics->conditions);
+    }
+
     public function testComparisonsAnswersTheComparisonTypeOfEachElementOfAMixedList(): void
     {
         $session = (new Instance('5.7.44'))->connect();
