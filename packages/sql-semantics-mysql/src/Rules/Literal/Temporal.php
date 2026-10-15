@@ -152,17 +152,7 @@ final class Temporal
     public static function literal(string $form, string $text, int $decimals, bool $noZeroDate, bool $noZeroInDate, bool $allowInvalidDates = false): ?string
     {
         if ($form === 'TIME') {
-            $time = self::scanTime($text);
-            if ($time === null || $time[5] !== '' || $time[2] > 59 || $time[3] > 59) {
-                return null;
-            }
-            $micro = self::micro($time[4], false);
-            if ($time[1] > 838 || ($time[1] === 838 && $time[2] === 59 && $time[3] === 59 && $micro > 0)) {
-                return null;
-            }
-            $seconds = $time[1] * 3600 + $time[2] * 60 + $time[3] + intdiv($micro, 1000000);
-
-            return self::time($time[0], intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60, $micro % 1000000, $decimals);
+            return self::timeLiteral($text, $decimals);
         }
         $parts = self::scanDateTime($text);
         if ($parts === null || $parts[8] !== '' || $parts[7] !== ($form === 'DATETIME') || !self::accepted($parts[0], $parts[1], $parts[2], $noZeroDate, $noZeroInDate, $allowInvalidDates)) {
@@ -180,6 +170,24 @@ final class Temporal
         $moment = self::carry($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], self::micro($parts[6], false));
 
         return $moment === null ? null : self::dateTime($moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], $moment[6], $decimals);
+    }
+
+    /**
+     * Reads a complete TIME literal, retaining its sign and rounding fractional seconds.
+     */
+    public static function timeLiteral(string $text, int $decimals): ?string
+    {
+        $time = self::scanTime($text);
+        if ($time === null || $time[5] !== '' || $time[2] > 59 || $time[3] > 59) {
+            return null;
+        }
+        $micro = self::micro($time[4], false);
+        if ($time[1] > 838 || ($time[1] === 838 && $time[2] === 59 && $time[3] === 59 && $micro > 0)) {
+            return null;
+        }
+        $seconds = $time[1] * 3600 + $time[2] * 60 + $time[3] + intdiv($micro, 1000000);
+
+        return self::time($time[0], intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60, $micro % 1000000, $decimals);
     }
 
     /**
