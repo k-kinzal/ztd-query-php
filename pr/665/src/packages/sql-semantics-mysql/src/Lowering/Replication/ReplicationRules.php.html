@@ -101,35 +101,43 @@
 <span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a><span class="tok-com">     * Lowers a FOR CHANNEL clause: a node of `opt_channel`; an absent clause is null.</span></span>
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a><span class="tok-com">     * @throws ImplementationGap When the production has no rule</span></span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">channel</span>(<span class="tok-id">Node</span> <span class="tok-var">$channel</span>): ?<span class="tok-id">Text</span></span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    {</span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>        <span class="tok-var">$form</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$channel</span>);</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a></span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>) {</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>            <span class="tok-str">&#039;opt_channel:&#039;</span> =&gt; <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>            <span class="tok-str">&#039;opt_channel: FOR_SYM CHANNEL_SYM TEXT_STRING_sys_nonewline&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">literals</span>-&gt;<span class="tok-id">text</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">2</span>)),</span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>),</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>        };</span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>    }</span>
-<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a></span>
-<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a><span class="tok-com">     * Answers the vocabulary of the keyword SLAVE or REPLICA as written: a node of `replica`.</span></span>
-<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a><span class="tok-com">     * @throws ImplementationGap When the production has no rule</span></span>
-<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">terminology</span>(<span class="tok-id">Node</span> <span class="tok-var">$replica</span>): <span class="tok-id">Terminology</span></span>
-<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    {</span>
-<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>        <span class="tok-var">$form</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$replica</span>);</span>
-<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a></span>
-<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>) {</span>
-<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>            <span class="tok-str">&#039;replica: SLAVE&#039;</span> =&gt; <span class="tok-id">Terminology</span>::<span class="tok-id">Legacy</span>,</span>
-<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>            <span class="tok-str">&#039;replica: REPLICA_SYM&#039;</span> =&gt; <span class="tok-id">Terminology</span>::<span class="tok-id">Current</span>,</span>
-<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>),</span>
-<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>        };</span>
-<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>    }</span>
-<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a>}</span>
-<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a></span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a><span class="tok-com">     * @throws \SqlSemantics\Construction\RejectedInput When the decoded channel name contains LF</span></span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">channel</span>(<span class="tok-id">Node</span> <span class="tok-var">$channel</span>): ?<span class="tok-id">Text</span></span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>    {</span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>        <span class="tok-var">$form</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$channel</span>);</span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">69</span>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>) {</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-var">$text</span> = <span class="tok-kw">match</span> (<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>) {</span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>            <span class="tok-str">&#039;opt_channel:&#039;</span> =&gt; <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>            <span class="tok-str">&#039;opt_channel: FOR_SYM CHANNEL_SYM TEXT_STRING_sys_nonewline&#039;</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">literals</span>-&gt;<span class="tok-id">text</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">2</span>)),</span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>),</span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>        };</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$problem</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Replication\ChannelName</span>())-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$text</span>);</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-kw">if</span> (<span class="tok-var">$problem</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Construction\RejectedInput</span>(<span class="tok-var">$problem</span>, (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Construction\SourceRanges</span>())-&gt;<span class="tok-id">span</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>)[<span class="tok-num">1</span>] ?? <span class="tok-num">0</span>);</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>        }</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        <span class="tok-kw">return</span> <span class="tok-var">$text</span>;</span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>    }</span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a></span>
+<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a><span class="tok-com">     * Answers the vocabulary of the keyword SLAVE or REPLICA as written: a node of `replica`.</span></span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a><span class="tok-com">     * @throws ImplementationGap When the production has no rule</span></span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">terminology</span>(<span class="tok-id">Node</span> <span class="tok-var">$replica</span>): <span class="tok-id">Terminology</span></span>
+<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    {</span>
+<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>        <span class="tok-var">$form</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$replica</span>);</span>
+<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>) {</span>
+<span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a>            <span class="tok-str">&#039;replica: SLAVE&#039;</span> =&gt; <span class="tok-id">Terminology</span>::<span class="tok-id">Legacy</span>,</span>
+<span class="src-line" id="L94" data-diff="same"><a class="ln" href="#L94">94</a>            <span class="tok-str">&#039;replica: REPLICA_SYM&#039;</span> =&gt; <span class="tok-id">Terminology</span>::<span class="tok-id">Current</span>,</span>
+<span class="src-line" id="L95" data-diff="same"><a class="ln" href="#L95">95</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>),</span>
+<span class="src-line" id="L96" data-diff="same"><a class="ln" href="#L96">96</a>        };</span>
+<span class="src-line" id="L97" data-diff="same"><a class="ln" href="#L97">97</a>    }</span>
+<span class="src-line" id="L98" data-diff="same"><a class="ln" href="#L98">98</a>}</span>
+<span class="src-line" id="L99" data-diff="same"><a class="ln" href="#L99">99</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
