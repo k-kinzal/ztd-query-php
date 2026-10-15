@@ -50,6 +50,11 @@ final class Variables
     public array $connected = [];
 
     /**
+     * The result collation selected by SET NAMES; a direct character_set_results assignment resets it.
+     */
+    public ?Collation $resultsCollation = null;
+
+    /**
      * The current database, or the empty string for none.
      */
     public string $database = '';
@@ -197,12 +202,29 @@ final class Variables
      */
     public function set(Definition $definition, string|int|null $value): void
     {
+        if ($definition->name === 'character_set_results') {
+            $this->resultsCollation = null;
+        }
         if (in_array($definition->name, ['last_insert_id', 'identity'], true)) {
             $this->lastInsertId = (int) $value;
 
             return;
         }
         $this->session[$definition->name] = $value;
+    }
+
+    /**
+     * Answers the result encoding, retaining SET NAMES' explicit collation independently of the connection collation.
+     */
+    public function resultCollation(): ?Collation
+    {
+        $value = $this->read('character_set_results');
+        $charset = is_string($value) ? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($value) : null;
+        if ($charset === null) {
+            return null;
+        }
+
+        return $this->resultsCollation?->charset === $charset ? $this->resultsCollation : $charset->defaultCollation(\SqlSemantics\Contract\GrammarRelease::from('mysql-' . $this->instance->version));
     }
 
     /**

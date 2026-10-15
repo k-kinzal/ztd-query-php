@@ -89,7 +89,7 @@ final class WarningsCommand implements Command
     {
         $results = $session->variables->read('character_set_results');
         $charset = (is_string($results) ? Charset::named($results) : null) ?? Charset::known('utf8mb3');
-        $collation = $charset->defaultCollation($session->settings()->release())->id;
+        $collation = ($session->variables->resultCollation() ?? $charset->defaultCollation($session->settings()->release()))->id;
 
         return [
             new ResultColumn('Level', Field::VarString, 7 * $charset->maxLength, 31, ColumnFlag::NotNull->value, $collation),

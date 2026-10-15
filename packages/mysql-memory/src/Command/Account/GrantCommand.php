@@ -88,8 +88,8 @@ final class GrantCommand implements Command
         $names = new Names($session->settings()->release());
         $names->check([...$names->users($statement->grantees), $statement->as?->user, ...$statement->as->roles->roles ?? []]);
         $levels = new Levels($session->settings()->release());
-        $levels->parsed($operation, $session);
         $target = $levels->target($statement->kind, $statement->level, $session);
+        $levels->parsed($operation, $session);
         $levels->objects($operation, $session, $statement->privileges, $target);
         if ($statement->as !== null) {
             $this->as($statement->as, $session);

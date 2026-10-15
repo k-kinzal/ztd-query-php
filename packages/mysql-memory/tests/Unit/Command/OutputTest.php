@@ -22,6 +22,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testCollationKeepsHeldTextWhenConversionIsDisabled(): void
+    {
+        $output = new Output();
+        $held = Collation::known('latin1_bin');
+        $domain = Domain::string(3, $held);
+        $selected = Collation::known('utf8mb4_bin');
+        $release = \SqlSemantics\Contract\GrammarRelease::MySql847;
+
+        self::assertSame($held, $output->collation($domain, null, $release, $selected));
+        self::assertSame($selected, $output->collation($domain, Charset::known('utf8mb4'), $release, $selected));
+        self::assertSame('utf8mb4_0900_ai_ci', $output->collation($domain, Charset::known('utf8mb4'), $release, null)->name);
+    }
+
     public function testResultRetainsFoundRowsThroughFinalWindowAssignments(): void
     {
         $session = (new Instance())->connect();

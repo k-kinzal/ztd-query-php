@@ -21,6 +21,7 @@ use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Real;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
@@ -52,6 +53,7 @@ final class Output
         $results = $context->variables->read('character_set_results');
         $charset = is_string($results) ? Charset::named($results) : null;
         $release = GrammarRelease::from('mysql-' . $context->variables->instance->version);
+        $resultCollation = $context->variables->resultCollation();
         $rows = [];
         $found = 0;
         $frame = new Frame($context);
@@ -71,13 +73,13 @@ final class Output
             }
         } catch (SqlError $error) {
             if ($failed !== null) {
-                $failed(new ResultSet($this->columns($plan, $charset, $release), $rows, $context->diagnostics->raised(), false));
+                $failed(new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), false));
             }
             throw $error;
         }
         $context->variables->foundRows = $frame->foundBeforeProjection ?? $found;
 
-        return new ResultSet($this->columns($plan, $charset, $release), $rows, $context->diagnostics->raised());
+        return new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised());
     }
 
     /**
@@ -97,13 +99,13 @@ final class Output
      *
      * @return list<ResultColumn>
      */
-    public function columns(QueryPlan $plan, ?Charset $results = null, GrammarRelease $release = GrammarRelease::MySql847): array
+    public function columns(QueryPlan $plan, ?Charset $results = null, GrammarRelease $release = GrammarRelease::MySql847, ?Collation $resultCollation = null): array
     {
         $columns = [];
         foreach ($plan->domains as $position => $domain) {
             $origin = $plan->origins[$position] ?? null;
             $name = $plan->names[$position] ?? '';
-            $columns[] = $this->column($results === null || Encoding::utf8($results) ? $name : Encoding::convert($name, Charset::known('utf8mb4'), $results), $domain, $origin, $results, $release);
+            $columns[] = $this->column($results === null || Encoding::utf8($results) ? $name : Encoding::convert($name, Charset::known('utf8mb4'), $results), $domain, $origin, $results, $release, $resultCollation);
         }
 
         return $columns;
@@ -121,10 +123,10 @@ final class Output
      * expressions retain it. A column of a system table carries the flags the
      * server reports for it, and NOT NULL when its type is.
      */
-    public function column(string $name, Domain $domain, ?ColumnOrigin $origin, ?Charset $results = null, GrammarRelease $release = GrammarRelease::MySql847): ResultColumn
+    public function column(string $name, Domain $domain, ?ColumnOrigin $origin, ?Charset $results = null, GrammarRelease $release = GrammarRelease::MySql847, ?Collation $resultCollation = null): ResultColumn
     {
         $text = in_array($domain->kind, [Kind::String, Kind::Json, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year], true) && !$domain->collation->bytes();
-        $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation($release)->id) : 63;
+        $charset = $text ? $this->collation($domain, $results, $release, $resultCollation)->id : 63;
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
         $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
         $characters = $this->characters($domain, $blob);
@@ -136,6 +138,14 @@ final class Output
         }
 
         return new ResultColumn($name, $field, $length, $domain->displayDecimals ?? $domain->decimals, $flags, $charset, $origin->column ?? '', $origin->table ?? '', $origin->originalTable ?? '', $origin->schema ?? '');
+    }
+
+    /**
+     * Retains a column's held collation when result conversion is disabled; otherwise uses the selected result encoding.
+     */
+    public function collation(Domain $domain, ?Charset $results, GrammarRelease $release, ?Collation $resultCollation): Collation
+    {
+        return $results === null ? $domain->collation : ($resultCollation ?? $results->defaultCollation($release));
     }
 
     /**

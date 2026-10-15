@@ -22,6 +22,7 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
+use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
@@ -319,6 +320,9 @@ final class HandlerCommand implements Command
             $sent[] = $values;
         }
 
-        return new ResultSet($output->columns($plan, $charset), $sent, $context->diagnostics->raised());
+        $columns = $output->columns($plan, $charset, $session->settings()->release(), $session->variables->resultCollation());
+        $columns = array_map(static fn (ResultColumn $column): ResultColumn => new ResultColumn($column->name, $column->type, $column->length, $column->decimals, $column->flags, $column->charset, $column->originalName, $column->table, $column->originalTable, $session->settings()->legacy() ? $column->schema : '*any*'), $columns);
+
+        return new ResultSet($columns, $sent, $context->diagnostics->raised());
     }
 }

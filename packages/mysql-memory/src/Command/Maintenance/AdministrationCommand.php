@@ -16,7 +16,6 @@ use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use Override;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions;
 use SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
@@ -118,24 +117,24 @@ final class AdministrationCommand implements Command
     }
 
     /**
-     * Refuses a statement before it commits: a key cache other than DEFAULT, a histogram that names
-     * a column twice, then a table without database when no database is selected, in that order.
+     * Requires a database for every table before checking key caches or repeated histogram
+     * columns. These checks precede the implicit commit.
      *
      * @param list<array{QualifiedName, bool}> $names The tables the statement names
      * @throws \MySqlMemory\Error\SqlError When the statement is refused
      */
     public function validate(CheckTable|OptimizeTable|RepairTable|AnalyzeTable|CacheIndex|LoadIndex $statement, array $names, Session $session): void
     {
+        foreach ($names as [$name]) {
+            if ($name->schema === null && $session->variables->database === '') {
+                throw QueryError::NoDatabase->error();
+            }
+        }
         if ($statement instanceof CacheIndex && $statement->cache !== null && strcasecmp($statement->cache->value, 'default') !== 0) {
             throw AdministrationError::UnknownKeyCache->error($statement->cache->value);
         }
         if ($statement instanceof AnalyzeTable && $statement->histogram !== null) {
             (new Histograms())->check($statement->histogram);
-        }
-        foreach ($names as [$name]) {
-            if ($name->schema === null && $session->variables->database === '') {
-                throw QueryError::NoDatabase->error();
-            }
         }
     }
 
@@ -276,13 +275,13 @@ final class AdministrationCommand implements Command
     {
         $results = $session->variables->read('character_set_results');
         $charset = (is_string($results) ? Charset::named($results) : null) ?? Charset::known('utf8mb3');
-        $collation = $charset->defaultCollation(GrammarRelease::MySql847)->id;
+        $collation = ($session->variables->resultCollation() ?? $charset->defaultCollation($session->settings()->release()))->id;
 
         return [
             new ResultColumn('Table', Field::VarString, 128 * $charset->maxLength, 31, 0, $collation),
             new ResultColumn('Op', Field::VarString, 10 * $charset->maxLength, 31, 0, $collation),
             new ResultColumn('Msg_type', Field::VarString, 10 * $charset->maxLength, 31, 0, $collation),
-            new ResultColumn('Msg_text', Field::MediumBlob, 393216 * $charset->maxLength, 31, 0, $collation),
+            new ResultColumn('Msg_text', Field::MediumBlob, 393216 * ($results === null ? 1 : $charset->maxLength), 31, 0, $collation),
         ];
     }
 }

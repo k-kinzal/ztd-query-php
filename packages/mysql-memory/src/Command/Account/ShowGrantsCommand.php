@@ -80,7 +80,7 @@ final class ShowGrantsCommand implements Command
         $release = $session->settings()->release();
         $results = $session->variables->read('character_set_results');
         $charset = (is_string($results) ? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($results) : null) ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1');
-        $column = new ResultColumn('Grants for ' . $identity->text(), Field::VarString, 1024 * $charset->maxLength, 31, ColumnFlag::NotNull->value, $charset->defaultCollation($release)->id);
+        $column = new ResultColumn('Grants for ' . $identity->text(), Field::VarString, 1024 * $charset->maxLength, 31, ColumnFlag::NotNull->value, ($session->variables->resultCollation() ?? $charset->defaultCollation($release))->id);
         $lines = (new GrantText())->lines($identity, $grants, $granted, $release, $account);
 
         return new ResultSet([$column], array_map(static fn (string $line): array => [$line], $lines), $context->diagnostics->raised());
