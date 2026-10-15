@@ -10,7 +10,7 @@ The work is complete only when all of these gates pass on the same revision:
 | Gate | Required evidence |
 | --- | --- |
 | Source independence | The semantic value schema excludes retained source SQL and parser ASTs; dependency checks prevent planning and execution from accessing the parser or input text. Direct construction executes with no SQL submitted to memory. |
-| Constructible structure | Type-driven generation visits every public MySQL statement and scalar root. Every accepted construction has a coherent language interpretation and all information required by its consumer. Exhaustion, unsupported generator metadata, profile failures, internal exceptions and missing implementation remain failures. |
+| Constructible structure | Type-driven generation visits every public MySQL statement and scalar root. Every accepted construction has a coherent language interpretation and all information required by its consumer. Intrinsically contradictory operands must be excluded by types or constructor invariants. Exhaustion, unsupported generator metadata, profile failures, internal exceptions and missing implementation remain failures. |
 | SQL outcomes | Every generated structure is compared with MySQL, including successful results, result metadata, SQL errors and warnings. Catching a SQL error is not sufficient. A native success cannot confirm an emulator's unsupported-feature error. Profile failures and internal exceptions cannot become SQL outcomes. |
 | State transitions | When an error is explained as state-dependent, preserve the same structure and demonstrate the relevant transition against MySQL. Include populated fixtures and histories so that an empty database does not hide all downstream behavior. |
 | Differential behavior | Replay all SQL Faker supplied high-coverage seeds and run an unseeded differential campaign for at least 900 seconds without an unexplained difference or crash. Grammar coverage belongs exclusively to SQL Faker. |
@@ -29,7 +29,13 @@ dependence by itself. For example, `SIGNAL SQLSTATE '45000'` intentionally repor
 an error even when the structure is valid. Requiring every valid structure to
 return successful rows or a completion would exclude SQL's condition language.
 The construction property requires a defined SQL outcome and native agreement,
-not a success-only execution certificate supplied by SQL Semantics.
+not a success-only execution certificate supplied by SQL Semantics. Native
+agreement is necessary but does not establish the construction property by
+itself. Each observed rejection still needs an explanation: an intentional SQL
+condition, a state constraint with a transition witness, or an intrinsic
+structural defect that must be repaired. A matching error must not be used to
+close that last category. The `compare` command's exit status tests the SQL
+outcome gate; it is not a certificate for all the gates above.
 
 Run the package static checks and tests, then the campaigns described in
 [direct semantic construction](semantic-structures.md) and the

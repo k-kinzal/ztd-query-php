@@ -81,6 +81,10 @@ an error; treating it as an implementation failure would make the property
 impossible. A native success, different error, missing warning or metadata
 difference still fails. No exception is accepted solely by error number or class.
 Generation, profile and infrastructure failures cannot count as matches.
+This exit status establishes native agreement for the sampled outcomes. It does
+not establish the separate constructible-structure gate: matching rejections
+still require an intentional-condition explanation, a state-transition witness,
+or a structural repair. See the [acceptance contract](acceptance.md).
 
 Each trial has a fresh native server so partial effects cannot leak into another
 trial. `MYSQL_MEMORY_STRUCTURE_NATIVE_PORT` optionally fixes its published port;
