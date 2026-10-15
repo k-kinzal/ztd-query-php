@@ -51,13 +51,13 @@ final class RejectedOperand
         if ($node->name === 'simple_expr' && $lowering->form($node)->signature === 'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )') {
             return new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($node)[1] ?? 0, false);
         }
-        return $this->constructed($node, $lowering);
+        return $this->lowered($node, $lowering);
     }
 
     /**
      * Runs ordinary operand lowering for constructors that can refuse input.
      */
-    public function constructed(Node $node, Lowering $lowering): ?RejectedInput
+    public function lowered(Node $node, Lowering $lowering): ?RejectedInput
     {
         try {
             if ($node->name === 'partition_entry') {

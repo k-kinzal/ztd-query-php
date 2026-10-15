@@ -29,7 +29,7 @@ final class RejectedOperandTest extends TestCase
         self::assertLessThan(strpos($sql, 'PARTITION'), $failure->end);
     }
 
-    public function testConstructedKeepsTheFactorBoundaryBeforeItsAuthenticationClause(): void
+    public function testLoweredKeepsTheFactorBoundaryBeforeItsAuthenticationClause(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $sql = 'ALTER USER u ADD 01 FACTOR IDENTIFIED WITH p ADD 2 FACTOR IDENTIFIED WITH q';
