@@ -86,7 +86,7 @@
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>            }</span>
 <span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        }</span>
 <span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-var">$problems</span>-&gt;<span class="tok-id">opened</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$session</span>, <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-id">CheckDefinitions</span>::<span class="tok-id">forbidden</span>(<span class="tok-var">$create</span>, <span class="tok-id">false</span>);</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-id">CheckDefinitions</span>::<span class="tok-id">forbidden</span>(<span class="tok-var">$create</span>, <span class="tok-id">false</span>, <span class="tok-id">release</span>: <span class="tok-var">$session</span>-&gt;<span class="tok-id">settings</span>()-&gt;<span class="tok-id">release</span>());</span>
 <span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    }</span>
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>}</span>
 <span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
