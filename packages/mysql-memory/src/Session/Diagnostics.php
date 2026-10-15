@@ -24,6 +24,12 @@ use MySqlMemory\Error\SqlError;
 final class Diagnostics
 {
     /**
+     * Executed SIGNAL statements, used to invalidate retained conditions across routine calls.
+     * Ordinary area clearing and handled conditions do not reset this sequence.
+     */
+    public int $signalCount = 0;
+
+    /**
      * @var list<array{string, int, string}> The level, error number and message of each condition
      */
     public array $conditions = [];

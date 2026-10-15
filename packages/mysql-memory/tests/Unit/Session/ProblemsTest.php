@@ -21,6 +21,18 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ProblemsTest extends TestCase
 {
+    public function testSignalsChecksTheNamedResignalConditionBeforeHandlerState(): void
+    {
+        $session = (new Instance())->connect();
+        $node = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal(new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName(new Name('missing')));
+        $operation = new \SqlSemantics\Statement\Operation($session->semantics()->context(), $node);
+        $session->text = 'unrelated invalid input';
+
+        $this->expectExceptionCode(1319);
+        $this->expectExceptionMessage('Undefined CONDITION: missing');
+        (new Problems())->signals($operation, $session);
+    }
+
     public function testRaiseUsesResolvedFactsWithoutParsingSessionText(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

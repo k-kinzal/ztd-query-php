@@ -83,6 +83,9 @@ final class SignalCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof Signal || $statement instanceof Resignal);
+        if ($statement instanceof Signal) {
+            $session->diagnostics->signalCount++;
+        }
         $stacked = $session->program === null ? [] : $session->program->stacked;
         if ($statement instanceof Resignal && $stacked === []) {
             throw ProgramError::ResignalWithoutHandler->error();
