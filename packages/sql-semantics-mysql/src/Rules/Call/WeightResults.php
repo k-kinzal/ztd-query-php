@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -46,12 +47,15 @@ final class WeightResults
         $length = match (true) {
             $resultLength > 0 => $resultLength,
             $cast === WeightCast::Binary => $castLength ?? 0,
-            $operand->kind === Kind::String => $legacy ? max($operand->length * $operand->collation->charset->maxLength, $count) * $operand->collation->charset->maxLength : $this->length($operand, $count),
+            $operand->kind === Kind::String => $legacy ? $this->characterBytes($operand, $count) : $this->length($operand, $count),
             default => max($count, (new Texts(Settings::of($derivation->context)))->length($operand)),
         };
         $minimum = $legacy ? 0 : 8;
 
-        return new ScalarFact(new Known(Domain::string(max($minimum, $length), Collation::binary())), $base->nullability);
+        $length = min(4294967295, max($minimum, $length));
+        $field = $length <= 65535 ? Field::VarString : ($length <= 16777215 ? Field::MediumBlob : Field::LongBlob);
+
+        return new ScalarFact(new Known(Domain::string($length, Collation::binary(), $field)), $base->nullability);
     }
 
     /**
@@ -59,7 +63,18 @@ final class WeightResults
      */
     public function length(Domain $operand, int $count = 0): int
     {
-        return $this->capacity($operand->collation, $operand->length * $operand->collation->charset->maxLength, $count);
+        return $this->capacity($operand->collation, intdiv($this->characterBytes($operand, $count), $operand->collation->charset->maxLength));
+    }
+
+    /**
+     * Answers the character cast's declared byte capacity after 32-bit narrowing.
+     * The retained operand capacity is a lower bound before the multiplication.
+     */
+    public function characterBytes(Domain $operand, int $count): int
+    {
+        $width = $operand->collation->charset->maxLength;
+
+        return (max($operand->length * $width, $count) * $width) % 4294967296;
     }
 
     /**

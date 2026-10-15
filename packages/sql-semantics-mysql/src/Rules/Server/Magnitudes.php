@@ -85,9 +85,21 @@ final class Magnitudes
     public function unsigned32(Numeral $number): int
     {
         Check::input($this->integral($number), 'An unsigned integer operand is an integer token.');
-        $digits = ltrim($number->hexadecimal ? $this->decimal($number->text) : $number->text, '0');
-        if ($number->hexadecimal && (strlen($digits) > 19 || strlen($digits) === 19 && strcmp($digits, self::LARGEST) > 0)) {
-            $digits = self::LARGEST;
+
+        return $this->option32($number);
+    }
+
+    /**
+     * Reads an unsigned option's leading digits before narrowing to 32 bits.
+     * Unlike real_ulong_num, ulong_num permits fractional and exponent spellings;
+     * their suffix is not evaluated. Overflow saturates before narrowing.
+     */
+    public function option32(Numeral $number): int
+    {
+        $digits = ltrim($number->hexadecimal ? $this->decimal($number->text) : (string) preg_replace('/\A([0-9]*).*\z/s', '$1', $number->text), '0');
+        $limit = $number->hexadecimal ? self::LARGEST : '18446744073709551615';
+        if (strlen($digits) > strlen($limit) || strlen($digits) === strlen($limit) && strcmp($digits, $limit) > 0) {
+            $digits = $limit;
         }
         $identity = 0;
         foreach (str_split($digits) as $digit) {

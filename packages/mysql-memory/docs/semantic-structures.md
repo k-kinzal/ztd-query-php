@@ -291,8 +291,20 @@ derivation and compilation consume that meaning instead of casting token text
 independently. Positive tokens that narrow to zero remain valid. Direct
 properties include leading zeros, hexadecimal digits, wraparound and the maximum
 unsigned decimal token. Native histories check constructor refusals, warning
-order and numeric spellings across five releases. Large-result packet limits and
-weight metadata are not established by the NULL-operand construction property.
+order and numeric spellings across five releases. The four-argument form also
+exposes resolved result length, weight count and formatting flags. Its option
+conversion accepts fractional and exponent spellings, reads their leading digits,
+and narrows after overflow saturation; Plan does not interpret those token strings.
+
+Packet-limit properties execute large non-NULL weights directly, including
+32-bit boundaries and a short result buffer with a large weight count. Allocation
+is bounded before padding. The same constructed values are compared against native
+servers with packet limits of 4096 and 65536 bytes, preserving values, complete
+metadata and warnings. This includes the legacy character-capacity narrowing and
+the distinction between a binary cast's overflow and its subsequent weight
+overflow. The result type carries the declared capacity and corresponding string
+or blob field. These observations cover the sampled casts and options; they do not
+establish every collation or close the whole-model construction gate.
 
 The same directly constructed `DROP TABLE IF EXISTS` request is also checked
 before and after selecting a database. Both native and memory return 1046 when

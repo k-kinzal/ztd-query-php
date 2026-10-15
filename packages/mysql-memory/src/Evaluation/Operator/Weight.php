@@ -65,13 +65,13 @@ final class Weight implements Evaluable
     #[Override]
     public function evaluate(Frame $frame): ?string
     {
+        if ($this->cast === WeightCast::Binary) {
+            return $this->binary($frame);
+        }
         $value = $this->operand->evaluate($frame);
         $domain = $this->operand->domain();
         if ($value === null) {
             return null;
-        }
-        if ($this->cast === WeightCast::Binary) {
-            return (new Conversion($this->operand, $this->domain, $this->length, 'BINARY'))->text((string) Convert::toText($value, $domain), $frame->context);
         }
         if ($domain->kind === Kind::Double || $domain->kind === Kind::Decimal) {
             return null;
@@ -85,7 +85,47 @@ final class Weight implements Evaluable
         if ($domain->kind !== Kind::String) {
             throw StatementError::NotSupportedYet->error('WEIGHT_STRING of this value');
         }
+        $count = $this->count($domain, $frame->context->modes->release);
+        $capacity = $this->resultLength > 0 ? $this->resultLength : (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->capacity($domain->collation, strlen((string) $value), $count);
+        if (!(new \MySqlMemory\Evaluation\Function\Strings())->fits($frame, $capacity, 'weight_string')) {
+            return null;
+        }
         return $this->text((string) $value, $domain, $frame->context->modes->release);
+    }
+
+    /**
+     * Evaluates a binary cast without allocating a result beyond the packet limit.
+     * Legacy casts interpret lengths above INT32_MAX as negative, leaving the
+     * subsequent weight allocation to report the overflow for a non-NULL input.
+     */
+    public function binary(Frame $frame): ?string
+    {
+        $legacy = in_array($frame->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        $negative = $legacy && $this->length > 2147483647;
+        $strings = new \MySqlMemory\Evaluation\Function\Strings();
+        if (!$negative && !$strings->fits($frame, $this->length ?? 0, 'cast_as_binary')) {
+            return null;
+        }
+        $value = $this->operand->evaluate($frame);
+        if ($value === null || ($negative && !$strings->fits($frame, $this->length ?? 0, 'weight_string'))) {
+            return null;
+        }
+
+        return (new Conversion($this->operand, $this->domain, $this->length, 'BINARY'))->text((string) Convert::toText($value, $this->operand->domain()), $frame->context);
+    }
+
+    /**
+     * Answers the weight count, including the 5.6 character-capacity narrowing.
+     */
+    public function count(Domain $domain, \SqlSemantics\Contract\GrammarRelease $release): int
+    {
+        $count = $this->cast === WeightCast::Char ? $this->length ?? 0 : $this->weights;
+        if ($this->cast === WeightCast::Char && $release === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $width = $domain->collation->charset->maxLength;
+            $count = intdiv(($count * $width) % 4294967296, $width);
+        }
+
+        return $count;
     }
 
     /**
@@ -94,7 +134,11 @@ final class Weight implements Evaluable
     public function text(string $value, Domain $domain, \SqlSemantics\Contract\GrammarRelease $release): string
     {
         $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        $count = $this->cast === WeightCast::Char ? $this->length ?? 0 : $this->weights;
+        $count = $this->count($domain, $release);
+        if ($this->cast === WeightCast::Char && $this->length !== 0 && $count === 0) {
+            return '';
+        }
+        $count = $this->resultLength > 0 ? min($count, $this->resultLength) : $count;
         $flags = $this->flags | ($legacy && ($this->cast === WeightCast::Char || ($this->flags & 64) !== 0) ? 128 : 0);
         $pad = !$legacy || $this->cast === WeightCast::Char || ($this->flags & 64) !== 0;
         $weigher = new \MySqlMemory\Typing\Weights();
@@ -108,16 +152,25 @@ final class Weight implements Evaluable
             $weight = $weigher->text($value, $domain->collation, $count, $flags, $pad);
         }
 
-        if (($this->flags & 128) !== 0) {
-            $capacity = $this->resultLength > 0 ? $this->resultLength : (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->capacity($domain->collation, strlen($value), $count);
-            $padding = $domain->collation->bytes() || !$domain->collation->padSpace ? "\0" : (new \MySqlMemory\Typing\Weights())->character(' ', $domain->collation);
-            $weight = str_pad($weight, $capacity, $padding);
-        }
-
+        $weight = $this->pad($weight, $domain, $count, strlen($value));
         $weight = $this->resultLength > 0 ? substr($weight, 0, $this->resultLength) : $weight;
         $weight = $this->descending ? ~$weight : $weight;
 
         return $this->reverse ? strrev($weight) : $weight;
+    }
+
+    /**
+     * Pads a weight to its checked result capacity when the internal form requests it.
+     */
+    public function pad(string $weight, Domain $domain, int $count, int $inputBytes): string
+    {
+        if (($this->flags & 128) === 0) {
+            return $weight;
+        }
+        $capacity = $this->resultLength > 0 ? $this->resultLength : (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->capacity($domain->collation, $inputBytes, $count);
+        $padding = $domain->collation->bytes() || !$domain->collation->padSpace ? "\0" : (new \MySqlMemory\Typing\Weights())->character(' ', $domain->collation);
+
+        return str_pad($weight, $capacity, $padding);
     }
 
     /**

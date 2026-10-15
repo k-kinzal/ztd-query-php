@@ -23,6 +23,27 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class WeightStringParametersTest extends TestCase
 {
+    public function testResultLengthExposesNumericMeaningIndependentlyOfSpelling(): void
+    {
+        $node = new WeightStringParameters(new StringLiteral(['abc']), new Numeral('A', true), new Numeral('1e2'), new Numeral('4294967424'));
+
+        self::assertSame([10, 1, 128], [$node->resultLength(), $node->weightCount(), $node->formatFlags()]);
+    }
+
+    public function testWeightCountNarrowsAfterHexadecimalConversion(): void
+    {
+        $node = new WeightStringParameters(new StringLiteral(['abc']), new Numeral('0'), new Numeral('100000001', true), new Numeral('0'));
+
+        self::assertSame(1, $node->weightCount());
+    }
+
+    public function testFormatFlagsDoesNotEvaluateAnExponentSuffix(): void
+    {
+        $node = new WeightStringParameters(new StringLiteral(['abc']), new Numeral('0'), new Numeral('0'), new Numeral('128e2'));
+
+        self::assertSame(128, $node->formatFlags());
+    }
+
     public function testDeriveScalarAnswersABinaryString(): void
     {
         $platform = new Platform();
