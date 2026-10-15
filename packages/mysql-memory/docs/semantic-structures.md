@@ -361,3 +361,11 @@ wrapper. Native comparisons check complete results and preceding deprecation
 warnings across five releases. Direct construction tests submit the original
 objects with unrelated session text. These name-domain checks do not establish
 that all configured replication-channel histories are implemented.
+
+XA identifier refusals retain the native excerpt position as typed diagnostic
+data. Length limits still apply to decoded bytes, and the format range depends
+on the release. Fractional format spellings remain valid: their leading numeric
+value identifies the transaction. Input comparisons include following syntax
+errors and routine declarations. A direct state-transition test preserves the
+same `XaCommit` object before and after preparing its transaction; both native
+and memory change from the unknown-transaction error to successful completion.
