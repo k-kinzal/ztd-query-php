@@ -121,6 +121,40 @@ final class GrantCommandTest extends TestCase
         $session->query('GRANT v TO r1');
     }
 
+    public function testRolesLooksUpRolesForEachRecipientBeforeAdvancing(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE USER u');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage('Unknown authorization ID `missing_role`@`%`');
+
+        $session->query('GRANT missing_role TO u, missing_user');
+    }
+
+    public function testRolesRestoresEarlierGrantsAfterALaterRecipientFailure(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE USER u');
+        $session->query('CREATE ROLE r');
+
+        $session->run('GRANT r TO u, missing_user');
+
+        self::assertSame([], $session->instance->accounts->roles(new Identity('u', '%')));
+        self::assertSame([['Error', 3523, 'Unknown authorization ID `missing_user`@`%`']], $session->diagnostics->conditions);
+    }
+
+    public function testRolesRestoresEarlierRolesAfterALaterRoleFailure(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE USER u');
+        $session->query('CREATE ROLE r');
+
+        $session->run('GRANT r, missing_role TO u');
+
+        self::assertSame([], $session->instance->accounts->roles(new Identity('u', '%')));
+        self::assertSame([['Error', 3523, 'Unknown authorization ID `missing_role`@`%`']], $session->diagnostics->conditions);
+    }
+
     public function testRolesRefusesAMissingAccountFirst(): void
     {
         $session = (new Instance())->connect();

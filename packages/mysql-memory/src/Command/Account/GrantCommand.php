@@ -247,21 +247,31 @@ final class GrantCommand implements Command
         $accounts = $session->instance->accounts;
         $users = array_map(static fn ($user): Identity => $names->identity($user, $session), $statement->users);
         $roles = array_map(static fn (AccountName $role): Identity => $names->identity($role, $session), $listed);
-        foreach ([...$users, ...$roles] as $identity) {
-            if ($accounts->find($identity) === null) {
-                throw AccountError::UnknownAuthorizationId->error($identity->backquoted());
-            }
-        }
         $saved = $accounts->copy();
-        foreach ($users as $user) {
-            foreach ($roles as $role) {
-                if ($role->key() === $user->key() || $accounts->reaches($role, $user)) {
-                    $accounts->restore($saved);
-
-                    throw AccountError::RoleGrantedToItself->error($user->backquoted(), $role->backquoted());
+        try {
+            foreach ($users as $user) {
+                if ($user->user === '') {
+                    throw AccountError::AnonymousRoleGrantee->error();
                 }
-                $accounts->grant($role, $user, $statement->withAdminOption);
+                if ($accounts->find($user) === null) {
+                    throw AccountError::UnknownAuthorizationId->error($user->backquoted());
+                }
+                foreach ($roles as $role) {
+                    if ($accounts->find($role) === null) {
+                        throw AccountError::UnknownAuthorizationId->error($role->backquoted());
+                    }
+                    if ($role->user === '') {
+                        throw AccountError::FailedRoleGrant->error($role->backquoted(), $user->backquoted());
+                    }
+                    if ($role->key() === $user->key() || $accounts->reaches($role, $user)) {
+                        throw AccountError::RoleGrantedToItself->error($user->backquoted(), $role->backquoted());
+                    }
+                    $accounts->grant($role, $user, $statement->withAdminOption);
+                }
             }
+        } catch (SqlError $failure) {
+            $accounts->restore($saved);
+            throw $failure;
         }
     }
 }
