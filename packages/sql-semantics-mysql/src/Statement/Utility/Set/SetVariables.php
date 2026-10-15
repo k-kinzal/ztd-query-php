@@ -87,13 +87,6 @@ final class SetVariables implements Statement
         foreach ($this->items as $item) {
             $item->deriveItem($derivation);
         }
-        if (!in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
-            foreach ($this->items as $item) {
-                if ($item instanceof NamesExpression) {
-                    $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($item->problem($derivation), true));
-                }
-            }
-        }
     }
 
     /**

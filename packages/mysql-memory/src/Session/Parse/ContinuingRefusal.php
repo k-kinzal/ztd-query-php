@@ -35,11 +35,20 @@ final class ContinuingRefusal
         $end = strlen($statement);
         $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
         $warnings = new ModernWarnings();
-        foreach ($warnings->before($parser->tokenize($statement), $statement, $end, $parser) as $offset => $notice) {
+        $tokens = $parser->tokenize($statement);
+        $error = (new Errors())->error($failure->problem, $session);
+        if ($session->settings()->legacy()) {
+            [$operators, $conflict] = (new Modifiers($tokens, $session->settings()->release()))->scan($end, $end);
+            if ($conflict !== null) {
+                return (new \MySqlMemory\Session\CacheOptions())->recorded($operators, $conflict, $error, $session);
+            }
+        } else {
+            $operators = $warnings->before($tokens, $statement, $end, $parser);
+        }
+        foreach ($operators as $offset => $notice) {
             $notices[] = [$offset, $notice];
         }
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
-        $error = (new Errors())->error($failure->problem, $session);
         $append = false;
         try {
             (new Syntax())->debugOnly($parser->parse($statement), $statement);

@@ -60,6 +60,8 @@ final class CommandPrefix
             }
             try {
                 $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
+            } catch (\SqlSemantics\Construction\RejectedInput) {
+                return null;
             } catch (AnalysisException $failure) {
                 return (new Syntax())->error($failure, $statement, $session->settings()->release(), $session->following);
             }

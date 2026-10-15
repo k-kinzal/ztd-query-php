@@ -68,4 +68,12 @@ final class VariablePrefixTest extends TestCase
         self::assertNull((new VariablePrefix())->before($session->semantics()->parser()->tokenize($set), $set, strlen($set), $session));
         self::assertNull((new VariablePrefix())->before($legacy->semantics()->parser()->tokenize($select), $select, strlen($select), $legacy));
     }
+
+    public function testBeforeLeavesRefusedNamesOperandsToTheInputReader(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $sql = 'SET NAMES=1 TRAILING';
+
+        self::assertNull((new VariablePrefix())->before($session->semantics()->parser()->tokenize($sql), $sql, strlen($sql), $session));
+    }
 }

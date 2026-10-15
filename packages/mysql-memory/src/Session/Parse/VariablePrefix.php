@@ -47,7 +47,7 @@ final class VariablePrefix
             try {
                 $tree = $semantics->parser()->parse(substr($statement, 0, $position) . '=DEFAULT');
                 $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
-            } catch (SourceException|AnalysisException) {
+            } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
                 continue;
             }
             foreach ($operation->facts->diagnostics as $problem) {

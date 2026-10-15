@@ -100,6 +100,9 @@ final class ModernWarnings
             }
             $failure = (new Errors())->error($notice->problem, $session);
             $session->diagnostics->error($failure->getCode(), $failure->getMessage());
+            foreach ($failure->following as [$code, $message]) {
+                $session->diagnostics->error($code, $message);
+            }
             $first ??= $failure;
             if ($notice->aborts) {
                 $aborted = true;

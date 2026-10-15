@@ -10,7 +10,6 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
-use SqlSemantics\Platform\MySql\Statement\Utility\Set\NamesExpression;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetCharacterSet;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetItem;
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * option_value_following_option_type, internal_variable_name (5.6, 5.7),
  * and the variable names of lvalue_variable (8.0 and later, also lowered by
  * the leaf rules). Constructs: NameAssignment, SystemAssignment,
- * UserAssignment, SetNames, SetCharacterSet, NamesExpression and, in MySQL
+ * UserAssignment, SetNames, SetCharacterSet and, in MySQL
  * 5.6, PasswordAssignment. The values are lowered by
  * MYSQL-SET-VALUE-LOWERING-001. `DEFAULT.x` names the instance `default`
  * (UtilityNoise). Terminates: every part is a strict subtree.
@@ -67,6 +66,7 @@ final class ItemRule
      * Lowers an item written without a leading scope keyword: a form of `option_value_no_option_type`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an operand has no SET-item meaning
      */
     public function unscoped(Form $form): SetItem
     {
@@ -95,6 +95,7 @@ final class ItemRule
      * Lowers an item that sets the connection character sets, or a MySQL 5.6 password item.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When NAMES is used as an unquoted assignment target
      */
     public function connection(Form $form): SetItem
     {
@@ -111,9 +112,9 @@ final class ItemRule
             case 'option_value_no_option_type: NAMES_SYM DEFAULT_SYM':
                 return new SetNames(new CharsetName(null));
             case 'option_value_no_option_type: NAMES_SYM equal expr':
-                $this->lowering->options->skip($form->node(1));
-
-                return $this->lowering->origins->record(new NamesExpression($this->lowering->expressions->expression($form->node(2))), $form->node);
+                $refusal = (new SyntaxNames())->assignment($form->node, $this->lowering);
+                \SqlSemantics\Diagnostic\Check::invariant($refusal !== null, 'A NAMES assignment has an input refusal.');
+                throw $refusal;
         }
         [$user, $password] = self::PASSWORDS[$form->signature] ?? throw ImplementationGap::production($form);
         $this->lowering->options->skip($form->node($password - 1));

@@ -51,7 +51,7 @@ final class TemporalInput
             if ($session->settings()->legacy()) {
                 $literal = $session->settings()->release() === GrammarRelease::MySql5651 ? $this->before($statement, $end, $session) : null;
                 foreach ($notices as [$offset, $notice]) {
-                    if ($notice instanceof ParseFailure && $notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision && ($literal === null || $offset < $literal[0])) {
+                    if ($notice instanceof ParseFailure && ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision || $notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) && ($literal === null || $offset < $literal[0])) {
                         return;
                     }
                 }

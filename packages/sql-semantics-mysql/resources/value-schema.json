@@ -3124,6 +3124,11 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\ProgramVariable": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedNamesAssignment": {
+        "end": "int",
+        "offset": "int",
+        "shadowed": "bool"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\TableOrView": {
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
@@ -3156,9 +3161,6 @@
         "qualifier": "?SqlSemantics\\Statement\\Identifier\\Name",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope",
         "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\NamesExpression": {
-        "value": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\PasswordAssignment": {
         "password": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Password",

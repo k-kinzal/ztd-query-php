@@ -24,6 +24,10 @@ final class RejectedOperand
      */
     public function of(Node $node, Lowering $lowering): ?RejectedInput
     {
+        $names = (new Utility\Set\SyntaxNames())->assignment($node, $lowering);
+        if ($names !== null) {
+            return $names;
+        }
         $entry = (new ClientEntry())->generated($node);
         if ($entry !== null) {
             return $entry;

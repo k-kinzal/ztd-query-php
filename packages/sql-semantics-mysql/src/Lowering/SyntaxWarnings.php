@@ -51,8 +51,9 @@ final class SyntaxWarnings
         $lowering = new Lowering($productions, new Leaves(), $profile);
         $aborted = false;
         $failed = false;
+        $names = new Utility\Set\SyntaxNames();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, &$failed, $ranges, $end, $lowering, $parser, $statement): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, &$failed, $ranges, $end, $lowering, $parser, $statement, $names): void {
                 if ($aborted || $lookahead->offset > $end) {
                     return;
                 }
@@ -61,7 +62,7 @@ final class SyntaxWarnings
                     $aborted = true;
                     return;
                 }
-                $notice = (new CompletedNotice())->of($node, $lowering, $parser, $statement);
+                $notice = ($failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement);
                 $conditions = $notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice];
                 foreach ($conditions as $condition) {
                     $range = $ranges->span($node, true);
@@ -102,6 +103,9 @@ final class SyntaxWarnings
             $condition = array_pop($pending);
             $failure = (new RejectedOperand())->of($condition, $lowering);
             if ($failure !== null) {
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) {
+                    $failure = new \SqlSemantics\Construction\RejectedInput((new Utility\Set\SyntaxNames())->scoped($tree, $failure->problem, $lowering), $failure->end, $failure->aborts);
+                }
                 return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
             }
             foreach (array_reverse($condition->children) as $child) {

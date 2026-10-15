@@ -98,6 +98,14 @@ final class CommandPrefixTest extends TestCase
         self::assertNull((new CommandPrefix())->before($session->semantics()->parser()->tokenize($sql), $sql, strlen($sql), $session));
     }
 
+    public function testBeforeLeavesRejectedOperandsToTheirCompletedProductionRules(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $sql = 'SET NAMES=1 TRAILING';
+
+        self::assertNull((new CommandPrefix())->before($session->semantics()->parser()->tokenize($sql), $sql, strlen($sql), $session));
+    }
+
     public function testCompletedRequiresADatabaseForUnqualifiedCreation(): void
     {
         $session = (new Instance('5.7.44'))->connect();

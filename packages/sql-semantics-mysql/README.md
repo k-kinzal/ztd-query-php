@@ -409,6 +409,8 @@ Database encryption uses `Statement\Server\Database\Encryption::Enabled` or `Dis
 
 Legacy INSERT statements retain their optimizer hints in the semantic head. Qualified wildcards in an INSERT column list require a legacy grammar and cannot compose with modern-only hints.
 
+`SetItem` contains only accepted assignment roles. `SET NAMES = expression` has no public expression-assignment type: input lowering raises `RefusedNamesAssignment`, carrying the assignment and operand offsets and whether a local `names` variable is visible. The refused expression and its parser nodes are discarded. `SetNames` still represents character-set changes, and `NameAssignment` can assign a declared local variable named `names`.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

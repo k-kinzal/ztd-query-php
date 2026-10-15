@@ -168,16 +168,19 @@ final class SetCommand implements Command
         $default = $server === null ? 'utf8mb4' : (string) $session->instance->globals->value($server);
         $charset = $item->charset->name->value ?? $default;
         $collation = $item instanceof SetNames && $item->collation?->name !== null ? $item->collation->name->value : (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($charset)?->defaultCollation($planner->settings->release())->name ?? $charset);
+        $connection = $charset;
+        if ($item instanceof SetCharacterSet) {
+            $connection = $session->variables->read('character_set_database');
+            $collation = $session->variables->read('collation_database');
+        }
 
-        return static function () use ($assigner, $charset, $collation, $item): void {
+        return static function () use ($assigner, $charset, $collation, $connection): void {
             $text = Domain::string(64, Collation::known('utf8mb4_0900_ai_ci'));
             foreach (['character_set_client', 'character_set_results'] as $name) {
                 $assigner->assign($name, VariableScope::Session, $charset, $text);
             }
-            if ($item instanceof SetNames) {
-                $assigner->assign('collation_connection', VariableScope::Session, $collation, $text);
-                $assigner->assign('character_set_connection', VariableScope::Session, $charset, $text);
-            }
+            $assigner->assign('collation_connection', VariableScope::Session, $collation, $text);
+            $assigner->assign('character_set_connection', VariableScope::Session, $connection, $text);
         };
     }
 
