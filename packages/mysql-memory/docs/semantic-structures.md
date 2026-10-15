@@ -571,3 +571,11 @@ refusal before a `FunctionCall` is published. Native comparisons check argument
 counts, aliases, reserved names, nested calls, unfinished statements and preceding
 or following warnings on five releases. This is an operand-domain invariant;
 it does not certify execution or resolve the availability of a stored function.
+
+Composition also intersects those signature domains with each other and with
+retained grammar requirements. `X()` and `SQL_CACHE` cannot share a supported
+interpretation, nor can zero-argument `X()` and `REGEXP_LIKE()` in the same query.
+Their containing structure is rejected by its constructor. Compatible stored
+calls retain their state dependence: native transition tests reuse the identical
+call object before function creation, after creation and after removal, comparing
+complete outcomes while memory's session text contains unrelated invalid input.

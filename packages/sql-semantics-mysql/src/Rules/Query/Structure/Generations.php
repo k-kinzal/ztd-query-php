@@ -29,6 +29,13 @@ use SqlSemantics\Statement\Node;
  * Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\MySql
+ * @example Refusing a modern stored-call interpretation inside a legacy query
+ *     $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('X'));
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($call)]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing two calls whose stored-function interpretations cannot coexist
+ *     $x = new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('X')));
+ *     $regexp = new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('REGEXP_LIKE')));
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [$x, $regexp]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a legacy parameter name combined with a vector parameter
  *     $parameter = new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name(''), new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Vector));
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([$parameter]), new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers(false)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -49,6 +56,7 @@ final class Generations
         $pending = [$root];
         $seen = new SplObjectStorage();
         $requirements = 0;
+        $calls = [];
         $transition = 0;
         $modes = 0;
         $spelling = null;
@@ -69,6 +77,9 @@ final class Generations
                     $spelling = $value;
                 }
                 $namedParameters = $namedParameters || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter && $value->marker !== '?');
+                if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall) {
+                    $calls[] = $value;
+                }
                 $requirements |= $this->requirement($value);
                 $transition |= $this->transition($value);
                 Check::input($transition !== 3, 'A structure cannot combine MySQL 5.6-only forms with forms introduced in MySQL 5.7 or later.');
@@ -80,6 +91,7 @@ final class Generations
                 }
             }
         }
+        Check::input((new Signatures())->compatible($calls, $requirements, $transition, $spelling), 'Native signatures and grammar operands must share a supported language interpretation.');
         Check::input(!$namedParameters || $spelling === null || $spelling->parameters === ParameterStyle::Named, 'A named parameter cannot accompany a spelling that requires native parameters.');
     }
 
