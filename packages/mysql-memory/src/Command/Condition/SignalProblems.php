@@ -86,7 +86,7 @@ final class SignalProblems
         if ($node instanceof TemporalLiteral) {
             $form = $node->form === TemporalForm::Timestamp ? 'DATETIME' : $node->form->value;
             $modes = $session->modes();
-            if (Temporal::literal($form, $node->text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE')) === null) {
+            if (Temporal::literal($form, $node->text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES')) === null) {
                 throw DataError::WrongValue->error($form, substr($node->text, 0, 128));
             }
         }

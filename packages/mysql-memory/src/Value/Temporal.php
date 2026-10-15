@@ -150,10 +150,11 @@ final class Temporal
     /**
      * Tells whether parts name a date a mode accepts: one that exists, the zero date unless
      * NO_ZERO_DATE is set, or a date with a zero month or day unless NO_ZERO_IN_DATE is set.
+     * ALLOW_INVALID_DATES accepts days up to 31 without requiring that day in the month.
      */
-    public static function accepted(int $year, int $month, int $day, bool $noZeroDate, bool $noZeroInDate): bool
+    public static function accepted(int $year, int $month, int $day, bool $noZeroDate, bool $noZeroInDate, bool $allowInvalidDates = false): bool
     {
-        return \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::accepted($year, $month, $day, $noZeroDate, $noZeroInDate);
+        return \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::accepted($year, $month, $day, $noZeroDate, $noZeroInDate, $allowInvalidDates);
     }
 
     /**
@@ -166,10 +167,11 @@ final class Temporal
      * @param int $decimals The fractional digits of the type of the literal
      * @param bool $noZeroDate Whether NO_ZERO_DATE refuses the zero date
      * @param bool $noZeroInDate Whether NO_ZERO_IN_DATE refuses a zero month or day
+     * @param bool $allowInvalidDates Whether calendar-invalid days within 1 through 31 are retained
      */
-    public static function literal(string $form, string $text, int $decimals, bool $noZeroDate, bool $noZeroInDate): ?string
+    public static function literal(string $form, string $text, int $decimals, bool $noZeroDate, bool $noZeroInDate, bool $allowInvalidDates = false): ?string
     {
-        return \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($form, $text, $decimals, $noZeroDate, $noZeroInDate);
+        return \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($form, $text, $decimals, $noZeroDate, $noZeroInDate, $allowInvalidDates);
     }
 
     /**

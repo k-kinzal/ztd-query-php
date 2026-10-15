@@ -73,6 +73,11 @@ final class TemporalTest extends TestCase
         self::assertSame([true, false, true, false, false, true], [Temporal::accepted(0, 0, 0, false, true), Temporal::accepted(0, 0, 0, true, false), Temporal::accepted(2024, 0, 1, true, false), Temporal::accepted(2024, 0, 1, false, true), Temporal::accepted(2024, 2, 30, false, false), Temporal::accepted(2024, 2, 29, true, true)]);
     }
 
+    public function testLiteralPreservesBoundedInvalidDatesOnlyWhenTheModeAllowsThem(): void
+    {
+        self::assertSame([null, '2024-02-31', '2024-02-31 01:02:03', null, null], [Temporal::literal('DATE', '2024-02-31', 0, false, false), Temporal::literal('DATE', '2024-02-31', 0, false, false, true), Temporal::literal('DATETIME', '2024-02-31 01:02:03', 0, false, false, true), Temporal::literal('DATE', '2024-13-01', 0, false, false, true), Temporal::literal('DATETIME', '2024-02-31 23:59:59.9999999', 6, false, false, true)]);
+    }
+
     public function testLiteralAnswersTheValueOfEachForm(): void
     {
         self::assertSame(['2024-02-29', '-34:00:00.0', '2025-01-01 00:00:00.000000', '10:00:00.123457'], [Temporal::literal('DATE', '2024-02-29', 0, true, true), Temporal::literal('TIME', '-1 10:00:00.0', 1, true, true), Temporal::literal('DATETIME', '2024-12-31 23:59:59.9999995', 6, true, true), Temporal::literal('TIME', '10:00:00.1234567', 6, true, true)]);

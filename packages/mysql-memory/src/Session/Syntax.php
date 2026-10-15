@@ -185,7 +185,7 @@ final class Syntax
                 default => 'DATETIME',
             };
             $text = $this->unquote($tokens[1]->text, !$modes->has('NO_BACKSLASH_ESCAPES'));
-            if (Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE')) === null) {
+            if (Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES')) === null) {
                 $error = DataError::WrongValue->error($form, substr($text, 0, 128));
                 if ($session === null || !$session->settings()->legacy()) {
                     throw $error;

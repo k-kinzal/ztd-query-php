@@ -127,7 +127,7 @@ final class Literals
             TemporalForm::Timestamp => 'DATETIME',
         };
         $modes = $this->compiler->settings->modes;
-        $value = Temporal::literal($form, $literal->text, $domain->decimals, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'));
+        $value = Temporal::literal($form, $literal->text, $domain->decimals, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
         if ($value === null) {
             throw DataError::WrongValue->error($form, substr($literal->text, 0, 128));
         }
@@ -153,7 +153,7 @@ final class Literals
         if ($form !== null && $escape->operand instanceof StringLiteral) {
             $domain = $this->compiler->domain($escape);
             $modes = $this->compiler->settings->modes;
-            $value = Temporal::literal($form, $escape->operand->value(), $domain->kind->temporal() ? $domain->decimals : 0, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'));
+            $value = Temporal::literal($form, $escape->operand->value(), $domain->kind->temporal() ? $domain->decimals : 0, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
             if ($value !== null) {
                 return new Constant($domain, $value);
             }

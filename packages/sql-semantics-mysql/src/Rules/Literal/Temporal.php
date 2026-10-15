@@ -123,8 +123,9 @@ final class Temporal
     /**
      * Tells whether parts name a date a mode accepts: one that exists, the zero date unless
      * NO_ZERO_DATE is set, or a date with a zero month or day unless NO_ZERO_IN_DATE is set.
+     * ALLOW_INVALID_DATES accepts days up to 31 without requiring that day in the month.
      */
-    public static function accepted(int $year, int $month, int $day, bool $noZeroDate, bool $noZeroInDate): bool
+    public static function accepted(int $year, int $month, int $day, bool $noZeroDate, bool $noZeroInDate, bool $allowInvalidDates = false): bool
     {
         if ($year === 0 && $month === 0 && $day === 0) {
             return !$noZeroDate;
@@ -133,7 +134,7 @@ final class Temporal
             return !$noZeroInDate && $month <= 12 && $day <= 31 && $year <= 9999;
         }
 
-        return self::valid($year, $month, $day);
+        return self::valid($year, $month, $day) || ($allowInvalidDates && $year <= 9999 && $month >= 1 && $month <= 12 && $day >= 1 && $day <= 31);
     }
 
     /**
@@ -146,8 +147,9 @@ final class Temporal
      * @param int $decimals The fractional digits of the type of the literal
      * @param bool $noZeroDate Whether NO_ZERO_DATE refuses the zero date
      * @param bool $noZeroInDate Whether NO_ZERO_IN_DATE refuses a zero month or day
+     * @param bool $allowInvalidDates Whether calendar-invalid days within 1 through 31 are retained
      */
-    public static function literal(string $form, string $text, int $decimals, bool $noZeroDate, bool $noZeroInDate): ?string
+    public static function literal(string $form, string $text, int $decimals, bool $noZeroDate, bool $noZeroInDate, bool $allowInvalidDates = false): ?string
     {
         if ($form === 'TIME') {
             $time = self::scanTime($text);
@@ -163,13 +165,16 @@ final class Temporal
             return self::time($time[0], intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60, $micro % 1000000, $decimals);
         }
         $parts = self::scanDateTime($text);
-        if ($parts === null || $parts[8] !== '' || $parts[7] !== ($form === 'DATETIME') || !self::accepted($parts[0], $parts[1], $parts[2], $noZeroDate, $noZeroInDate)) {
+        if ($parts === null || $parts[8] !== '' || $parts[7] !== ($form === 'DATETIME') || !self::accepted($parts[0], $parts[1], $parts[2], $noZeroDate, $noZeroInDate, $allowInvalidDates)) {
             return null;
         }
         if ($form === 'DATE') {
             return self::date($parts[0], $parts[1], $parts[2]);
         }
         if ($parts[3] > 23 || $parts[4] > 59 || $parts[5] > 59) {
+            return null;
+        }
+        if ($allowInvalidDates && self::micro($parts[6], false) >= 1000000 && !self::valid($parts[0], $parts[1], $parts[2])) {
             return null;
         }
         $moment = self::carry($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], self::micro($parts[6], false));
