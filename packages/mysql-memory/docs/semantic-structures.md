@@ -620,3 +620,28 @@ week numbering. Direct comparisons exercise all 20 units with 13 operand forms
 on five releases, comparing 1,300 complete observations without submitting the
 rendered SQL to memory. Result-column widths remain available in the semantic
 facts rather than being inferred again by the consumer.
+
+Prepared arithmetic markers now derive their initial domains through SQL
+Semantics' `ParameterInference`, shared by native-protocol preparation and the
+direct-construction comparison fixture. Integer division retains versioned widths,
+including a divisor's decimal scale and legacy zero-width NULL results. NULL
+markers keep their coercibility separately from NULL literals. Native comparisons
+exercise 136 structures on five releases through both direct execution and the
+MySQL protocol (680 reference observations per path). The previously failing
+whole-model arithmetic input at index 77 now matches without an exception.
+
+LOAD annotations have a versioned interpretation: MySQL 8.0 and 8.1 follow
+ordinary file loading, while 8.2 onward validate the bulk algorithm. MySQL 8.2
+and 8.3 also append target and file conditions after the unsupported-algorithm
+error. Native histories reuse nine original structures before table creation,
+after creation, after primary-key addition and after removal on six releases
+(216 observations). These checks explain the observed version difference; they
+do not certify every LOAD option combination as intrinsically valid.
+
+The completed whole-model audit at `dc14db871fb` retained all 245 public roots:
+93 matching successes, 136 matching SQL errors and 16 differences, with no
+exhaustion, generation, profile or infrastructure failures. The matching errors
+still need the explanations and witnesses required by the acceptance contract.
+After the NULL and LOAD repairs at `2e58a4016d5`, replay of the original 16 failing
+MySQL 8.0 supplied seeds gives 11 matches and five remaining differences. These
+focused replays do not replace the final whole-model and differential campaigns.
