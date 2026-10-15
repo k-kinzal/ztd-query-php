@@ -156,7 +156,7 @@ final class Syntax
                 $offset = $token->offset;
                 $line = substr_count(substr($statement, 0, $offset), "\n") + 1;
 
-                throw new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(substr($statement, $offset), 0, 80, 'UTF-8'), $line), new SyntaxException($token, [], ''));
+                throw new SqlError(StatementError::ParseError, StatementError::ParseError->message(\MySqlMemory\Value\Diagnostic\Encoding::prefix(substr($statement, $offset), $this->client ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'), false), $line), new SyntaxException($token, [], ''));
             }
         }
     }

@@ -59,6 +59,18 @@ final class SyntaxTest extends TestCase
         $session->query('show   parse_tree   select 1');
     }
 
+    public function testDebugOnlyRetainsPartialBytesAtTheModernExcerptBoundary(): void
+    {
+        $session = (new Instance())->connect();
+        $sql = "SHOW PARSE_TREE SELECT '" . str_repeat('a', 60) . "猫'";
+        $tree = $session->semantics()->parser()->parse($sql);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("near 'PARSE_TREE SELECT '" . str_repeat('a', 60) . "\xE7' at line 1");
+
+        (new Syntax())->debugOnly($tree, $sql);
+    }
+
     public function testDebugOnlyAcceptsParseTreeAsAName(): void
     {
         $session = (new Instance())->connect();

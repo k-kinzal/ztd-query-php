@@ -126,7 +126,7 @@ final class Reader
             $failure = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->before($tree, $failure->end + 1, $session->semantics()->profile()) ?? $failure;
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {
-            (new Syntax())->debugOnly($tree, $statement);
+            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($tree, $statement);
         }
 
         return $this->rejection($failure, $statement, $session);

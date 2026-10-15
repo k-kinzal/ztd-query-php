@@ -344,7 +344,7 @@ final class Session
                 $typing->restore($this);
             }
             try {
-                (new Syntax())->debugOnly($tree, $statement);
+                (new Syntax(Charset::named((string) $this->variables->read('character_set_client'))))->debugOnly($tree, $statement);
             } catch (SqlError $error) {
                 throw (new Parse\DebugRequest())->refusal($operation, $error, $this);
             }

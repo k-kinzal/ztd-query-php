@@ -51,7 +51,7 @@ final class ContinuingRefusal
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $append = false;
         try {
-            (new Syntax())->debugOnly($parser->parse($statement), $statement);
+            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($parser->parse($statement), $statement);
         } catch (SqlError $debug) {
             $error = $debug;
             $append = true;
