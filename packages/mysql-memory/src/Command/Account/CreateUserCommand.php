@@ -76,7 +76,7 @@ final class CreateUserCommand implements Command
             return $this->legacy($statement, $session, $context, $plugin);
         }
         $created = $this->absent($statement, $names, $session, $context);
-        $defaults = $this->defaults($statement, $session);
+        $defaults = $created === [] ? [] : $this->defaults($statement, $session);
         $accounts = $session->instance->accounts;
         $saved = $accounts->copy();
         try {
@@ -98,6 +98,8 @@ final class CreateUserCommand implements Command
      * Existing accounts under IF NOT EXISTS draw notes without validating replacement credentials.
      * Other occurrences validate their credentials before checking existence. All occurrences
      * contribute diagnostics in order; credential failures precede the final existence error.
+     * Default roles are resolved only for new recipients. After a role refusal,
+     * later new recipients cannot receive roles in that failed account batch.
      *
      * @return list<array{Identity, UserSpecification}>
      *
@@ -108,6 +110,7 @@ final class CreateUserCommand implements Command
         $failed = [];
         $created = [];
         $first = null;
+        $rolesRefused = false;
         $options = new Options($session->settings()->release());
         $plugin = (new Credentials($session->settings()->release()))->default();
         foreach ($statement->users as $user) {
@@ -119,7 +122,14 @@ final class CreateUserCommand implements Command
             }
             try {
                 $options->check($user->initial ?? $user->identification, $plugin);
+                if (!$exists) {
+                    if ($rolesRefused) {
+                        throw AccountError::UserDoesNotExist->error($identity->backquoted());
+                    }
+                    $this->defaults($statement, $session);
+                }
             } catch (SqlError $error) {
+                $rolesRefused = $rolesRefused || $error->error === AccountError::UserDoesNotExist;
                 $session->diagnostics->error($error->getCode(), $error->getMessage());
                 $first ??= $error;
                 continue;

@@ -18,6 +18,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CreateUserCommandTest extends TestCase
 {
+    public function testExecuteSkipsDefaultRolesWhenAllUsersAlreadyExist(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE USER existing');
+        $reply = $session->query('CREATE USER IF NOT EXISTS existing DEFAULT ROLE missing')[0];
+
+        self::assertSame(1, $reply->warnings());
+        self::assertSame([], $session->instance->accounts->defaults);
+    }
+
     public function testAbsentRecordsEveryCredentialFailureAndExistingAccountInOrder(): void
     {
         $session = (new Instance())->connect();
