@@ -17,8 +17,19 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseStop;
  */
 final class Completion
 {
+    /**
+     * Whether a completed condition prevents any further input notices.
+     */
     public bool $aborted = false;
+
+    /**
+     * Whether the current stored instruction must stop when it completes.
+     */
     public bool $failed = false;
+
+    /**
+     * The completion offset of the most recent failure, before enclosing reductions.
+     */
     public ?int $failedAt = null;
 
     /**
