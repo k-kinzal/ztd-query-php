@@ -136,6 +136,8 @@ final class CreateTable implements Statement, Relation
             if ($element instanceof ColumnDefinition) {
                 (new TypeNotices())->type($element->specification->dataType(), $derivation);
                 (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation);
+            } elseif ($element instanceof Key\IndexDefinition) {
+                (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->parsers($element->options, $derivation);
             }
         }
         (new ElementFacts())->options($this->options, $derivation);

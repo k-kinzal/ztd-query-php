@@ -246,6 +246,15 @@ dependent on session state. Analysis does not open, advance or close a handler;
 the consumer supplies a new snapshot after those operations. Key values, predicate
 parameters and LIMIT parameters retain their positions in the original statement.
 
+`Settings::$fullTextParsers` supplies the available full-text parser plugins as
+a list of `Name` values. An empty list means no parser plugins are available;
+`null` leaves availability unspecified. `WITH PARSER` resolves names without
+regard to case. A name absent from a supplied catalog produces an
+`UnknownIndexParser` diagnostic and an ordered, aborting `ParseFailure` notice,
+before conditions in later table options or partition expressions. The same
+lookup applies to directly constructed CREATE TABLE, CREATE INDEX and ALTER
+TABLE definitions. Analysis does not load or install plugins.
+
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With
 the setting disabled they are NOT NULL; with it enabled they are nullable.

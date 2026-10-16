@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace MySqlMemory\Error;
 
 use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize;
 
 /**
- * Formats declared-type bounds, including the precision wording used by MySQL 5.6.
+ * Formats declared-type bounds and incompatible column attributes.
+ *
+ * Precision diagnostics retain the wording used by MySQL 5.6.
  *
  * @visibility MySqlMemory
  */
@@ -31,4 +34,17 @@ final class TypeErrors
             ? sprintf("Too big precision %d specified for column '%s'. Maximum is %d.", $diagnostic->actual, $diagnostic->name, $diagnostic->maximum)
             : $diagnostic->message());
     }
+
+    /**
+     * Formats a column attribute incompatible with its declared column kind.
+     */
+    public function columnAttribute(\SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute $diagnostic): SqlError
+    {
+        return match ($diagnostic->attribute) {
+            'SRID' => StatementError::WrongUsage->error('SRID', 'non-geometry column'),
+            'DEFAULT' => SchemaError::InvalidDefault->error($diagnostic->column->value),
+            'ON UPDATE' => SchemaError::InvalidOnUpdate->error($diagnostic->column->value),
+        };
+    }
+
 }

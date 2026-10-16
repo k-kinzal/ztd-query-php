@@ -100,6 +100,7 @@ final class CreateIndex implements Statement, Relation
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->parsers($this->options, $derivation);
         $targets = new TableTargets();
         $fact = $derivation->relation($this, $derivation->environment());
         (new RelationKinds())->require($derivation, $this->table, $fact->table, RelationKind::BaseTable);

@@ -41,6 +41,12 @@ final class ResetVocabularyTest extends TestCase
     {
         $targets = [static fn () => new ResetBinaryLogs(Terminology::Current, synonym: true), static fn () => new ResetBinaryLogs(Terminology::Current), static fn () => new ResetReplica(Terminology::Current, synonym: true), static fn () => new ResetReplica(Terminology::Current)];
         $nodes = array_merge(...array_map(static fn (Closure $first): array => array_map(static fn (Closure $second): Reset => new Reset([$first(), $second()]), $targets), $targets));
+        $nodes[] = new Reset([
+            new ResetReplica(Terminology::Current, true, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('missing')),
+            new ResetBinaryLogs(Terminology::Current, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('17'), true),
+            new ResetBinaryLogs(Terminology::Current),
+            new ResetReplica(Terminology::Current),
+        ]);
         $container = Testcontainers::run(new DisposableMySql($release));
         try {
             $endpoint = $container->getData(Endpoint::class);

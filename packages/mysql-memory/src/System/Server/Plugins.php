@@ -18,6 +18,22 @@ use Override;
 final class Plugins implements SystemRows
 {
     /**
+     * Answers the names of active full-text parsers in the server catalog.
+     *
+     * @return list<\SqlSemantics\Statement\Identifier\Name>
+     */
+    public function fullTextParsers(\SqlSemantics\Contract\GrammarRelease $release): array
+    {
+        $names = [];
+        foreach (ServerTables::of($release)->plugins as $plugin) {
+            if ($plugin[2] === 'ACTIVE' && $plugin[3] === 'FTPARSER') {
+                $names[] = new \SqlSemantics\Statement\Identifier\Name($plugin[0]);
+            }
+        }
+        return $names;
+    }
+
+    /**
      * Answers a row for each plugin.
      */
     #[Override]

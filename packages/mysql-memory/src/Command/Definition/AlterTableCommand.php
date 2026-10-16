@@ -9,7 +9,6 @@ use MySqlMemory\Command\Definition\Constraint\Constraints;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
@@ -46,7 +45,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexParser;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
 use SqlSemantics\Statement\Declaration\Table;
@@ -232,14 +230,10 @@ final class AlterTableCommand implements Command
     public function read(array $commands, Operation $operation): void
     {
         $indexes = $this->indexes($commands);
-        foreach ($indexes as $index) {
-            foreach ($index->options as $option) {
-                if ($option instanceof IndexParser && strcasecmp($option->parser->value, 'ngram') !== 0) {
-                    throw AdministrationError::FunctionNotDefined->error($option->parser->value);
-                }
-            }
-        }
         foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser) {
+                throw \MySqlMemory\Error\Family\AdministrationError::FunctionNotDefined->error($diagnostic->parser->value);
+            }
             if ($diagnostic instanceof UnknownAlterChoice) {
                 throw ($diagnostic->lock ? SchemaError::UnknownAlterLock : SchemaError::UnknownAlterAlgorithm)->error($diagnostic->name->value);
             }

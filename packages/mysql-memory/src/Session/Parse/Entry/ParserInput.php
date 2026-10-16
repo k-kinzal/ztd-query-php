@@ -32,7 +32,7 @@ final class ParserInput
             if ($session->settings()->legacy() && $session->variables->database === '' && $table?->schema === null) {
                 return \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
             }
-            if (strcasecmp($dependency->parser->value, 'ngram') === 0) {
+            if ($dependency->problem($session->resolution()) === null) {
                 continue;
             }
             $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile(), $session->resolution()->replicaNetTimeout);

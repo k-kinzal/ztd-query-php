@@ -3008,6 +3008,9 @@
         "position": "int",
         "reason": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\UnknownIndexParser": {
+        "parser": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\UnknownKeyColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -3190,6 +3193,7 @@
         "derivedMerge": "bool",
         "divPrecisionIncrement": "int",
         "explicitDefaultsForTimestamp": "?bool",
+        "fullTextParsers": "?array",
         "functions": "array",
         "groupConcatMaxLen": "int",
         "handlers": "array",

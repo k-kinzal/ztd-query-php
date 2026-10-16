@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Table\Key\Option;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -31,4 +32,30 @@ final class IndexParserTest extends TestCase
         self::assertSame('ngram', $option->parser->value);
         self::assertSame('CREATE TABLE t (a TEXT, FULLTEXT (a) WITH PARSER ngram)', $create->toString());
     }
+
+    /**
+     * @return iterable<string, array{list<string>|null, bool}>
+     */
+    public static function providerCatalogs(): iterable
+    {
+        yield 'unspecified' => [null, false];
+        yield 'empty' => [[], true];
+        yield 'different plugin' => [['mecab'], true];
+        yield 'case insensitive' => [['NGraM'], false];
+    }
+
+    /**
+     * @param list<string>|null $catalog The available plugins, or an unspecified catalog
+     */
+    #[DataProvider('providerCatalogs')]
+    public function testProblemUsesTheSuppliedCatalog(?array $catalog, bool $missing): void
+    {
+        $option = new IndexParser(new \SqlSemantics\Statement\Identifier\Name('ngram'));
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), fullTextParsers: $catalog === null ? null : array_map(static fn (string $name): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($name), $catalog));
+        $problem = $option->problem($settings);
+
+        self::assertSame($missing, $problem !== null);
+        self::assertSame($missing ? "Function 'ngram' is not defined" : null, $problem?->message());
+    }
+
 }

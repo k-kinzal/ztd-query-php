@@ -8,12 +8,18 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexParser;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(IndexOptions::class)]
@@ -48,5 +54,21 @@ final class IndexOptionsTest extends TestCase
 
         self::assertSame(IndexAlgorithm::Btree, $using->algorithm);
         self::assertSame('p', $parser->parser->value);
+    }
+
+    public function testParsersRetainsAnAbortingDependencyBeforeLaterOptions(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_bin'), fullTextParsers: [new Name('ngram')]);
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([], true, null, $settings));
+        $options = [new IndexParser(new Name('ngram')), new IndexParser(new Name('missing_parser'))];
+        (new IndexOptions())->parsers($options, $derivation);
+        $facts = $derivation->facts();
+
+        self::assertCount(1, $facts->diagnostics);
+        self::assertCount(1, $facts->warnings);
+        self::assertInstanceOf(ParseFailure::class, $facts->warnings[0]);
+        self::assertTrue($facts->warnings[0]->aborts);
+        self::assertSame($facts->diagnostics[0], $facts->warnings[0]->problem);
+        self::assertSame("Function 'missing_parser' is not defined", $facts->warnings[0]->message());
     }
 }

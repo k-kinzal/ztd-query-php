@@ -50,14 +50,15 @@ final class ResetTargetsTest extends TestCase
     {
         $logs = (new Construction(new Choices('reset-index:' . $seed), new Catalogue(), new Metadata()))->object(ResetBinaryLogs::class, 4);
         self::assertInstanceOf(ResetBinaryLogs::class, $logs);
-        $session = (new Instance($logs->terminology === Terminology::Legacy ? '8.0.44' : '8.4.7'))->connect();
+        $session = (new Instance($logs->synonym ? '8.3.0' : ($logs->terminology === Terminology::Legacy ? '8.0.44' : '8.4.7')))->connect();
         $session->text = 'unrelated invalid input';
         $statement = new Reset([new ResetReplica(Terminology::Current, true, new Text('missing')), $logs, new ResetBinaryLogs($logs->terminology), new ResetReplica(Terminology::Current)]);
 
         self::assertInstanceOf(Completion::class, (new Execution())->runIn($session, $statement));
         self::assertSame([$logs->first === null ? 1 : (new Magnitudes())->integer($logs->first)], $session->instance->registry->binaryLog->files);
         self::assertSame(1, $session->instance->registry->status->read('Flush_commands'));
-        self::assertSame([], $session->diagnostics->conditions);
+        $deprecated = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ResetMaster;
+        self::assertSame($logs->synonym ? array_fill(0, 2, ['Warning', $deprecated->code(), $deprecated->value]) : [], $session->diagnostics->conditions);
     }
     /**
      * @throws JsonException When the value inventory is invalid

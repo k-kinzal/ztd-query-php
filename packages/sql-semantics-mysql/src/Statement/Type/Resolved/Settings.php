@@ -62,6 +62,11 @@ final class Settings implements Session
     public readonly array $handlers;
 
     /**
+     * @var list<Name>|null The available full-text parser plugins; null when the context does not provide a plugin catalog
+     */
+    public readonly ?array $fullTextParsers;
+
+    /**
      * @param Collation $connection The collation of string literals (collation_connection)
      * @param int $divPrecisionIncrement The digits a division adds to the scale of its dividend (div_precision_increment)
      * @param Collation|null $server The default collation of a schema the settings do not list (collation_server); the connection collation when null
@@ -84,6 +89,7 @@ final class Settings implements Session
      * @param array<array-key, QualifiedName> $handlers The table names behind open handler aliases
      * @param Collation|null $databaseCollation The session collation_database, which SET may override independently of schema defaults
      * @param int|null $replicaNetTimeout The global replication network timeout in seconds; null selects the release default
+     * @param list<Name>|null $fullTextParsers The available full-text parser plugins; null leaves plugin availability unresolved
      */
     public function __construct(
         public readonly Collation $connection,
@@ -108,7 +114,9 @@ final class Settings implements Session
         array $handlers = [],
         public readonly ?Collation $databaseCollation = null,
         public readonly ?int $replicaNetTimeout = null,
+        ?array $fullTextParsers = null,
     ) {
+        $this->fullTextParsers = $fullTextParsers === null ? null : Check::listOf($fullTextParsers, Name::class, 'The full-text parser catalog is an ordered list of plugin names.');
         Check::input($replicaNetTimeout === null || $replicaNetTimeout > 0, 'The replication network timeout is positive.');
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
         $routines = [];

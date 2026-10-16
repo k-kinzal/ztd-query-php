@@ -6,10 +6,12 @@ namespace Tests\Unit\Error;
 
 use MySqlMemory\Error\TypeErrors;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize;
 use SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(TypeErrors::class)]
 #[Small]
@@ -25,4 +27,26 @@ final class TypeErrorsTest extends TestCase
         self::assertSame(1426, $errors->size($diagnostic, true)->getCode());
         self::assertSame(1439, $errors->size(new InvalidTypeSize(TypeLimit::Width, '', 0, 255))->getCode());
     }
+
+    /**
+     * @return iterable<string, array{'SRID'|'DEFAULT'|'ON UPDATE', int}>
+     */
+    public static function providerColumnAttributes(): iterable
+    {
+        yield 'spatial reference' => ['SRID', 1221];
+        yield 'default' => ['DEFAULT', 1067];
+        yield 'update timestamp' => ['ON UPDATE', 1294];
+    }
+
+    /**
+     * @param 'SRID'|'DEFAULT'|'ON UPDATE' $attribute The incompatible declared attribute
+     */
+    #[DataProvider('providerColumnAttributes')]
+    public function testColumnAttributeKeepsTheSpecificDefinitionError(string $attribute, int $code): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute(new Name('a'), $attribute);
+
+        self::assertSame($code, (new TypeErrors())->columnAttribute($problem)->getCode());
+    }
+
 }

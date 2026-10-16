@@ -8,6 +8,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\System\Server\Plugins;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -23,4 +24,24 @@ final class PluginsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result1);
         self::assertSame([['binlog', '1.0', 'ACTIVE', 'STORAGE ENGINE', '80407.0', null, null, 'Oracle Corporation', 'FORCE']], $result1->rows);
     }
+
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, list<string>}>
+     */
+    public static function providerParsers(): iterable
+    {
+        yield '5.6' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, []];
+        yield '5.7' => [\SqlSemantics\Contract\GrammarRelease::MySql5744, ['ngram']];
+        yield '8.4' => [\SqlSemantics\Contract\GrammarRelease::MySql847, ['ngram']];
+    }
+
+    /**
+     * @param list<string> $expected The built-in parsers in the native-observed catalog
+     */
+    #[DataProvider('providerParsers')]
+    public function testFullTextParsersReportsOnlyActiveParserPlugins(\SqlSemantics\Contract\GrammarRelease $release, array $expected): void
+    {
+        self::assertSame($expected, array_map(static fn (\SqlSemantics\Statement\Identifier\Name $name): string => $name->value, (new Plugins())->fullTextParsers($release)));
+    }
+
 }

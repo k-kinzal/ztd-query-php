@@ -51,6 +51,9 @@ final class ElementFacts
         if ($typeNotices && $element instanceof ColumnDefinition) {
             (new TypeNotices())->type($element->specification->dataType(), $derivation);
         }
+        if ($typeNotices && $element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition) {
+            (new IndexOptions())->parsers($element->options, $derivation);
+        }
         $element->deriveElement($derivation, $scope);
         $references = $element instanceof ForeignKey ? $element->references : ($element instanceof ColumnDefinition ? $this->references($element->specification) : null);
         $references?->deriveReferences($derivation, $defined, $definedName);
