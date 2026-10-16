@@ -69,7 +69,7 @@ final class LoadTable implements Statement
      * @param LoadInput $input What is read
      * @param DuplicateHandling|null $duplicates What a row that duplicates a unique key does
      * @param WriteTarget $table The table the rows are written to; it has no correlation name
-     * @param CharsetName|null $charset The character set of the file
+     * @param CharsetName|null $charset The character set of the file, including explicit DEFAULT in MySQL 5.6 and 5.7
      * @param Text|null $compression The compression algorithm of the files (9.x bulk load)
      * @param Text|null $rowTag The XML element of a row, `ROWS IDENTIFIED BY`
      * @param list<FieldOption> $fields The FIELDS options
@@ -96,7 +96,6 @@ final class LoadTable implements Statement
         array $assignments = [],
         public readonly ?BulkOptions $bulk = null,
     ) {
-        Check::input($charset === null || $charset->name !== null, 'A LOAD character set names a character set, not DEFAULT.');
         Check::input($table->alias === null, 'The table of LOAD has no correlation name.');
         Check::input($compression === null || $compression->radix === null, 'A LOAD compression algorithm is quoted text.');
         Check::input($ignored === null || $ignored->isIntegerToken(), 'A LOAD ignored-row count is a decimal integer token no greater than 2147483647.');
@@ -118,6 +117,7 @@ final class LoadTable implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        Check::input($this->charset === null || $this->charset->name !== null || in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true), 'LOAD CHARACTER SET DEFAULT belongs to MySQL 5.6 and 5.7.');
         (new LoadFacts())->derive($this, $derivation);
     }
 

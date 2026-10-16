@@ -68,4 +68,13 @@ final class DefaultDatabaseTest extends TestCase
 
         self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $session->query('CREATE PROCEDURE d.p() DELETE t FROM d.t')[0]);
     }
+    public function testCheckRequiresTheLegacyLoadDatabaseBeforeItsCharset(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $this->expectExceptionCode(1046);
+        $this->expectExceptionMessage('No database selected');
+
+        $session->query("LOAD XML INFILE 'missing' INTO TABLE t CHARSET ``");
+    }
+
 }

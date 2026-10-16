@@ -83,8 +83,8 @@ final class LoadDataCommand implements Command
         }
         foreach ($operation->facts->diagnostics as $diagnostic) {
             $schema = $diagnostic instanceof MissingTable ? ($diagnostic->name->schema->value ?? $session->variables->database) : '';
-            if ($schema !== '' && $session->instance->dictionary->schema($schema) === null) {
-                throw QueryError::BadDatabase->error($schema);
+            if ($diagnostic instanceof MissingTable && $schema !== '' && $session->instance->dictionary->schema($schema) === null) {
+                throw Errors::unknown($schema, $diagnostic->name->name->value, $session->settings()->release());
             }
             if (Stages::answered($statement, $diagnostic)) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $statement);

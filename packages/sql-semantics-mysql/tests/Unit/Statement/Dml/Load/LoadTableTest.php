@@ -75,10 +75,20 @@ final class LoadTableTest extends TestCase
 
         new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t')), new Name('x')));
     }
-    public function testValueRejectsDefaultCharacterSet(): void
+    public function testValuePreservesTheLegacyDefaultCharacterSet(): void
     {
-        $this->expectExceptionMessage('A LOAD character set names a character set, not DEFAULT.');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET DEFAULT");
 
-        new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('file')), null, new WriteTarget(new QualifiedName(new Name('t'))), new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null));
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertNotNull($operation->statement->charset);
+        self::assertNull($operation->statement->charset->name);
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE t CHARSET DEFAULT", $operation->toString());
+    }
+
+    public function testValueRejectsDefaultCharacterSetCombinedWithModernLoadInput(): void
+    {
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+
+        new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::S3, new Text('file')), null, new WriteTarget(new QualifiedName(new Name('t'))), new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null));
     }
 }

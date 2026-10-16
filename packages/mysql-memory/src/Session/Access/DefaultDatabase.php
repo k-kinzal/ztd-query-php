@@ -43,6 +43,7 @@ final class DefaultDatabase
         }
         $names = match (true) {
             $statement instanceof MultipleDelete => $statement->targets,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $session->settings()->legacy() => [$statement->table->name],
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger,
