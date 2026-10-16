@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Account\AccountChecks;
 use SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
@@ -40,6 +39,8 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Refusing AS at a database privilege level
  *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel(new \SqlSemantics\Statement\Identifier\Name('d')), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())], as: new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a routine kind at the global level
+ *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing column privileges on a routine
  *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Granting table privileges with the grant option
@@ -82,15 +83,12 @@ final class GrantPrivileges implements Statement
         array $options = [],
         public readonly ?GrantAs $as = null,
     ) {
-        $this->privileges = Check::listOf($privileges, Privilege::class, 'GRANT names at least one privilege.', 1);
-        $this->grantees = array_map(Grantee::from(...), Check::listOf($grantees, \SqlSemantics\Statement\Node::class, 'GRANT names at least one account.', 1));
-        $this->options = Check::listOf($options, WithOption::class, 'The WITH clause lists options.');
-        foreach ($this->privileges as $privilege) {
-            Check::input($kind === ObjectKind::Table || !$privilege instanceof Item\StaticPrivilege || $privilege->columns === [], 'Column privileges apply only to tables.');
-            Check::input(!$privilege instanceof AllPrivileges || count($this->privileges) === 1, 'ALL is the only item of its list.');
-        }
+        $request = new Request\GrantRequest($privileges, $kind, $level, $grantees, $tls, $options, $as);
+        $this->privileges = $request->privileges;
+        $this->grantees = $request->grantees;
+        $this->options = $request->options;
+        Check::input($request->scopeProblem() === null, 'The privilege and object kind must fit the grant level.');
         Check::input($as === null || $level instanceof Level\GlobalLevel, 'GRANT AS applies only at the global privilege level.');
-        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -107,18 +105,6 @@ final class GrantPrivileges implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('GRANT')->list($this->privileges)->keyword('ON');
-        $keyword = $this->kind->keyword();
-        if ($keyword !== null) {
-            $out->keyword($keyword);
-        }
-        $out->node($this->level)->keyword('TO')->list($this->grantees)->node($this->tls);
-        if ($this->options !== []) {
-            $out->keyword('WITH');
-            foreach ($this->options as $option) {
-                $out->node($option);
-            }
-        }
-        $out->node($this->as);
+        $out->node(new Request\GrantRequest($this->privileges, $this->kind, $this->level, $this->grantees, $this->tls, $this->options, $this->as));
     }
 }

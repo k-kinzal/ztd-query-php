@@ -38,6 +38,6 @@ final class GrantPrivilegesTest extends TestCase
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame("GRANT SELECT ON FUNCTION db.f TO u IDENTIFIED BY 'x' REQUIRE NONE WITH MAX_USER_CONNECTIONS 2", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("grant select on function db.f to u identified by 'x' require none with max_user_connections 2")->toString());
+        self::assertSame("GRANT EXECUTE ON FUNCTION db.f TO u IDENTIFIED BY 'x' REQUIRE NONE WITH MAX_USER_CONNECTIONS 2", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("grant execute on function db.f to u identified by 'x' require none with max_user_connections 2")->toString());
     }
 }

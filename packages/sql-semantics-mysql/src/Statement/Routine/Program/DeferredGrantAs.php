@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
@@ -25,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Refusing to defer a global grant
- *     $grant = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT ALL ON *.* TO u')->statement;
+ *     $grant = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs($grant, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Keeping a deferred privilege instruction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER');
@@ -36,10 +37,10 @@ final class DeferredGrantAs implements ProgramStatement
     use Snapshot;
 
     /**
-     * @param GrantPrivileges $grant The otherwise complete grant, without an AS clause
+     * @param GrantRequest $grant The retained privilege operands, without an AS clause
      * @param GrantAs $as The clause whose level constraint is deferred by the program
      */
-    public function __construct(public readonly GrantPrivileges $grant, public readonly GrantAs $as)
+    public function __construct(public readonly GrantRequest $grant, public readonly GrantAs $as)
     {
         Check::input($grant->as === null && !$grant->level instanceof GlobalLevel, 'A deferred GRANT AS has a non-global level and exactly one AS clause.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -50,7 +51,10 @@ final class DeferredGrantAs implements ProgramStatement
      */
     public function deriveProgram(Derivation $derivation, ProgramScope $scope): void
     {
-        (new BodyFacts())->statement($this->grant, $derivation, $scope);
+        if ($this->grant->scopeProblem() === null) {
+            $grant = new GrantPrivileges($this->grant->privileges, $this->grant->kind, $this->grant->level, $this->grant->grantees, $this->grant->tls, $this->grant->options);
+            (new BodyFacts())->statement($grant, $derivation, $scope);
+        }
     }
 
     /**

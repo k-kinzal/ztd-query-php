@@ -160,6 +160,15 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectLevel": {
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest": {
+        "as": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantAs",
+        "grantees": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectKind",
+        "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
+        "options": "array",
+        "privileges": "array",
+        "tls": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsRequirement"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\RevokeAll": {
         "ifExists": "bool",
         "ignoreUnknownUser": "bool",
@@ -210,6 +219,11 @@
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupKind",
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
         "priority": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RefusedGrantLevel": {
+        "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\MisplacedPrivilege",
+        "definition": "bool",
+        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RejectedPasswordHash": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RepeatedTlsAttribute": {
@@ -2127,7 +2141,10 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredGrantAs": {
         "as": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantAs",
-        "grant": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantPrivileges"
+        "grant": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredGrantLevel": {
+        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\ConditionalBranch": {
         "condition": "SqlSemantics\\Statement\\Scalar",

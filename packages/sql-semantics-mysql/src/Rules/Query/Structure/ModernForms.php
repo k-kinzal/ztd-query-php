@@ -64,6 +64,7 @@ final class ModernForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel => $value->request->columnLevel(),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName => (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($value->user, $value->host, \SqlSemantics\Contract\GrammarRelease::MySql5744) !== null,
             $value === ElementaryKind::Vector, $value === TextOptionKind::EngineAttribute,
             $value === TextOptionKind::SecondaryEngineAttribute, $value instanceof AutoextendSizeOption => true,

@@ -84,6 +84,18 @@ final class StatementsTest extends TestCase
         self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $answers[0]);
     }
 
+    public function testValueRetainsLegacyConditionsUntilAnotherConditionIsRaised(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $activation = new Activation('PROCEDURE', 'd.p', false, Collation::known('utf8mb4_general_ci'));
+        $session->diagnostics->warning(1292, 'prior');
+        $revision = $session->diagnostics->revision;
+        $statements = new Statements($session, $activation);
+        $statements->value(new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(false));
+        self::assertSame($revision, $session->diagnostics->revision);
+        self::assertSame([['Warning', 1292, 'prior']], $session->diagnostics->conditions);
+    }
+
     public function testValueStoresTheValueAssignedToAVariable(): void
     {
         $session = (new Instance())->connect();

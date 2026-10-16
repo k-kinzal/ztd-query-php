@@ -867,8 +867,8 @@ constructor rejects a non-global AS clause and column privileges on routines.
 Stored programs use `DeferredGrantAs` for the distinct instruction that native
 MySQL accepts at definition time and rejects only when reached. The value retains
 the typed grant and AS operands and implements `ProgramStatement`, not the
-standalone statement interface. Definition-time binding and program restrictions
-still derive from the retained grant. SQL lowering reports an immediate typed
+standalone statement interface. The retained privilege operands provide definition-time table facts where the
+target admits binding. SQL lowering reports an immediate typed
 refusal before publishing a contradictory standalone grant.
 
 A type-driven property retains all twenty generated deferred grants on three
@@ -903,3 +903,33 @@ observations, including handled errors, SIGNAL, empty invocations, nested calls,
 table reads and function warnings alongside the current caller's warning.
 These histories test session diagnostics; the scalar-versus-row type boundary
 remains a separate outstanding construction constraint.
+
+
+Immediate GRANT constructors also reject routine kinds without an object,
+column privileges outside an object level, static privileges outside their
+object-kind domain, and dynamic privileges below the global level. Typed
+`GrantRequest` operands are shared with the separate `DeferredGrantLevel` and
+`DeferredGrantAs` procedure instructions. A refused input retains its typed
+target and the first structural condition, preserving earlier account spelling
+and default-database errors without consulting input text during execution.
+Dynamic privilege-level refusals precede object existence and static
+object-privilege errors. Legacy column-level refusals still occur during
+procedure definition, including unreachable instructions.
+
+The target-domain input matrix compares 889 SQL observations across five
+releases. Twenty type-generated target instructions produce 80 direct
+observations, reusing each CREATE and CALL object across absence, definition,
+invocation and duplicate definition. None is discarded. The existing twenty
+AS instructions also pass again on three modern releases. The full related
+regression run passes 80 tests and 167 assertions. Function and trigger bodies
+still need a constructor-level restriction on privilege commands: native MySQL
+rejects their implicit commit even inside an unreachable branch. These
+procedure tests do not close that separate body-kind constraint, or the later
+account-dependent priority of database-level static privilege refusals.
+
+Program expressions preserve MySQL 5.6 diagnostic history until they raise a
+new condition, including control predicates, defaults and table-reading
+subqueries. Retained warnings do not invoke their handler again. A five-release
+history adds 440 observations for these expressions, alongside the prior
+395-observation stored-condition history. Later releases retain their distinct
+reset behavior.

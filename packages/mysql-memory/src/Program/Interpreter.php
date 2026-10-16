@@ -104,7 +104,7 @@ final class Interpreter
     public function statement(Node $statement): ?Jump
     {
         return match (true) {
-            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs => $this->deferredCondition($statement),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel => $this->deferredCondition($statement),
             $statement instanceof Block => $this->block($statement),
             $statement instanceof IfStatement => $this->branches($statement->branches, $statement->otherwise, null, false),
             $statement instanceof SearchedCase => $this->branches($statement->branches, $statement->otherwise, null, true),
@@ -124,7 +124,7 @@ final class Interpreter
     /**
      * Raises a deferred instruction condition through the program's handlers.
      */
-    public function deferredCondition(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs $statement): ?Jump
+    public function deferredCondition(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel $statement): ?Jump
     {
         $jump = $this->instruction(fn () => throw (new \MySqlMemory\Session\Problem\Errors())->error($statement->problem(), $this->session));
 

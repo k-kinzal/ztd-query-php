@@ -86,7 +86,7 @@ final class GrantRule
     /**
      * Reads either privilege spelling without publishing an invalid standalone statement.
      */
-    public function request(Form $form, bool $all): GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs
+    public function request(Form $form, bool $all): GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel
     {
         if ($all) {
             $this->privileges->words($form->node(2));
@@ -99,21 +99,17 @@ final class GrantRule
         $options = (new ClauseRule($this->lowering))->grantOptions($form->node(7 + $offset));
         $as = $this->grantAs($form->node(8 + $offset));
         $this->privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
-        if ($as !== null && !$level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel) {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs(new GrantPrivileges($items, $kind, $level, $grantees, options: $options), $as);
-        }
-
-        return new GrantPrivileges($items, $kind, $level, $grantees, options: $options, as: $as);
+        return (new \SqlSemantics\Platform\MySql\Lowering\Routine\Program\PrivilegeGrant())->select(new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest($items, $kind, $level, $grantees, options: $options, as: $as));
     }
 
     /**
      * Reports the immediate constraint before publishing a standalone grant.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When AS names a non-global level
+     * @throws \SqlSemantics\Construction\RejectedInput When the privilege target contradicts the immediate GRANT role
      */
-    public function checked(GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs $request, Form $form): GrantPrivileges
+    public function checked(GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel $request, Form $form): GrantPrivileges
     {
-        if ($request instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs) {
+        if (!$request instanceof GrantPrivileges) {
             throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
         }
 

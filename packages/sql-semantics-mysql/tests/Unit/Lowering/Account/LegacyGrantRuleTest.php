@@ -16,6 +16,13 @@ use SqlSemantics\Platform\MySql\Lowering\Account\LegacyGrantRule;
 #[Medium]
 final class LegacyGrantRuleTest extends TestCase
 {
+    public function testRequestKeepsInvalidRoutineLevelsOnlyAsProgramInstructions(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel::class, $operation->statement->body);
+    }
+
     public function testGrantLowersEveryCommand(): void
     {
         self::assertSame('GRANT EXECUTE ON FUNCTION f TO u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('grant execute on function f to u')->toString());

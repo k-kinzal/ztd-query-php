@@ -25,11 +25,42 @@ use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
 final class PrivilegeInput
 {
     /**
-     * Formats an immediate GRANT AS placement refusal, leaving other privilege rules to binding.
+     * Formats immediate or deferred target contradictions using their semantic operands.
      */
-    public function placement(\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege $problem): ?SqlError
+    public function placement(\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege|\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel $problem, Session $session): ?SqlError
     {
-        return $problem->error === 'ER_UNSUPPORTED_USE_OF_GRANT_AS' ? \MySqlMemory\Error\Family\AccountError::UnsupportedGrantAs->error() : null;
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel) {
+            return $this->level($problem, $session);
+        }
+        return match ($problem->error) {
+            'ER_UNSUPPORTED_USE_OF_GRANT_AS' => \MySqlMemory\Error\Family\AccountError::UnsupportedGrantAs->error(),
+            'ER_ILLEGAL_GRANT_FOR_TABLE' => \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error(),
+            default => null,
+        };
+    }
+
+    /**
+     * Preserves account spelling, database and AS precedence before a target condition.
+     */
+    public function level(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel $problem, Session $session): SqlError
+    {
+        if ($problem->definition) {
+            return \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
+        }
+        $request = $problem->request;
+        $names = new \MySqlMemory\Command\Account\Names($session->settings()->release());
+        try {
+            $names->check([...$names->users($request->grantees), $request->as?->user, ...$request->as->roles->roles ?? []]);
+            (new \MySqlMemory\Command\Account\Levels($session->settings()->release()))->target($request->kind, $request->level, $session);
+        } catch (SqlError $error) {
+            return $error;
+        }
+        if ($request->as !== null && !$request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel) {
+            return \MySqlMemory\Error\Family\AccountError::UnsupportedGrantAs->error();
+        }
+        return $problem->condition->error === 'ER_ILLEGAL_PRIVILEGE_LEVEL'
+            ? \MySqlMemory\Error\Family\AccountError::IllegalPrivilegeLevel->error($request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel ? $request->level->name->name->value : strtoupper($problem->condition->privilege))
+            : \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
     }
 
     /**

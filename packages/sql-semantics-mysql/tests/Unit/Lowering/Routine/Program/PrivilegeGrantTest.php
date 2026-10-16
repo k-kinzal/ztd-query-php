@@ -17,6 +17,13 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs;
 #[Medium]
 final class PrivilegeGrantTest extends TestCase
 {
+    public function testSelectKeepsContradictoryTargetsOnlyInProgramMembers(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON PROCEDURE *.* TO u')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel::class, $create->body);
+    }
+
     public function testReadDistinguishesImmediateAndDeferredGrantForms(): void
     {
         $semantics = new Semantics(Dialect::MySql);

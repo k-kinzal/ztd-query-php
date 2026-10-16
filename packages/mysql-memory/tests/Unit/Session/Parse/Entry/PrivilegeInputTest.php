@@ -15,12 +15,23 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PrivilegeInputTest extends TestCase
 {
-    public function testPlacementFormatsOnlyImmediateGrantAsRefusals(): void
+    public function testPlacementFormatsImmediateGrantRefusals(): void
     {
         $input = new PrivilegeInput();
 
-        self::assertSame(3835, $input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('AS clause', 'database', 'ER_UNSUPPORTED_USE_OF_GRANT_AS'))?->getCode());
-        self::assertNull($input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('SELECT', 'routine', 'ER_ILLEGAL_GRANT_FOR_TABLE')));
+        self::assertSame(3835, $input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('AS clause', 'database', 'ER_UNSUPPORTED_USE_OF_GRANT_AS'), (new Instance())->connect())?->getCode());
+        self::assertSame(1144, $input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('SELECT', 'routine', 'ER_ILLEGAL_GRANT_FOR_TABLE'), (new Instance())->connect())?->getCode());
+    }
+
+    public function testLevelUsesTypedTargetsWithoutReadingRequestText(): void
+    {
+        $request = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel($request);
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1046, (new PrivilegeInput())->level($problem, $session)->getCode());
+        $session->variables->database = 'd';
+        self::assertSame(1144, (new PrivilegeInput())->level($problem, $session)->getCode());
     }
 
     public function testColumnsReportsTheDeferredInputPosition(): void

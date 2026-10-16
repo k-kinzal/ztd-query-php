@@ -43,7 +43,13 @@ final class PrivilegeRuleTest extends TestCase
 
     public function testItemsLowersTheList(): void
     {
-        self::assertSame('GRANT SELECT, INSERT (a), CREATE ROLE, DROP ROLE ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select, insert (a), create role, drop role on *.* to u')->toString());
+        self::assertSame('GRANT SELECT, INSERT, CREATE ROLE, DROP ROLE ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select, insert, create role, drop role on *.* to u')->toString());
+    }
+
+    public function testItemsRefusesAColumnListAtTheGlobalLevel(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze('grant select, insert (a), create role, drop role on *.* to u');
     }
 
     public function testItemLowersEveryStaticPrivilege(): void

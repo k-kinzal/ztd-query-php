@@ -36,7 +36,8 @@ use WeakReference;
  * statement does, starting a new diagnostics area. A query of a procedure answers a result
  * set; a stored function or a trigger cannot answer one (ER_SP_NO_RETSET). An expression of
  * the program, such as the condition of IF, starts a new diagnostics area too but leaves
- * ROW_COUNT() as it was; a value assigned to a variable is computed and stored as a value
+ * ROW_COUNT() as it was. MySQL 5.6 instead retains prior conditions until the
+ * expression raises a new condition, even for a table-reading subquery. A value assigned to a variable is computed and stored as a value
  * written to a column of the variable's type, so that a warning is an error under a strict
  * sql_mode, named after the variable (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/local-variable-scope.html,
@@ -117,7 +118,11 @@ final class Statements
         \MySqlMemory\Session\State\StatementCounters::query($session);
         $select = new Select([], [new SelectExpression($expression)]);
         $operation = $this->operation(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($select));
-        $session->diagnostics->clear();
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $session->diagnostics->retain();
+        } else {
+            $session->diagnostics->clear();
+        }
         (new Problems())->raise($operation, $session);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, microtime(true));
         $context->strict = ($target !== null || $assigned) && $context->modes->strict();

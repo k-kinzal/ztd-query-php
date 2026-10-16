@@ -28,7 +28,8 @@ final class InputErrors
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege => (new PrivilegeInput())->columns($diagnostic, $session),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege => (new PrivilegeInput())->placement($diagnostic),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel => (new PrivilegeInput())->placement($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto => (new ExplainInput())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption => \MySqlMemory\Error\Family\StatementError::CantUseOptionHere->error($diagnostic->option->value),

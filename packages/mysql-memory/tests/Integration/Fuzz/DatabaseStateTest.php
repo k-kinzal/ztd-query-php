@@ -58,11 +58,11 @@ final class DatabaseStateTest extends TestCase
                 new CacheIndex([new CachedTable(new QualifiedName(new Name('t')))], new Name('missing')),
                 new GrantPrivileges($execute, ObjectKind::Procedure, $routine, [$user]),
                 new RevokePrivileges(false, $execute, ObjectKind::Procedure, $routine, [$user]),
-                new GrantPrivileges([new AllPrivileges()], ObjectKind::Procedure, new CurrentDatabaseLevel(), [$user]),
+                new GrantPrivileges([new AllPrivileges()], ObjectKind::Table, new CurrentDatabaseLevel(), [$user]),
                 new RevokePrivileges(false, [new AllPrivileges()], ObjectKind::Procedure, new CurrentDatabaseLevel(), [$user]),
             ];
             $before = [1046, $legacy ? 1146 : 1049, 1046, 1046, 1046, 1046, 1046, 1046];
-            $after = [null, null, null, 1284, null, null, 1144, 1144];
+            $after = [null, null, null, 1284, null, null, null, 1144];
             if (!$legacy) {
                 $nodes[] = new ImportTable([new Text('x')]);
                 $nodes[] = new ImportTable([new Text('/var/lib/mysql-files/x.sdi')]);

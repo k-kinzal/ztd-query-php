@@ -37,7 +37,7 @@ final class PrivilegeChecksTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT BACKUP_ADMIN ON db.* TO u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE BACKUP_ADMIN ON db.* FROM u')->facts->diagnostics[0]);
         self::assertSame([], $semantics->analyze('REVOKE IF EXISTS BACKUP_ADMIN ON db.* FROM u')->facts->diagnostics);
     }
 
@@ -45,8 +45,8 @@ final class PrivilegeChecksTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT EXECUTE ON t TO u')->facts->diagnostics[0]);
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT SELECT ON PROCEDURE p TO u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE EXECUTE ON t FROM u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE SELECT ON PROCEDURE p FROM u')->facts->diagnostics[0]);
     }
 
     public function testColumnPrivilegesOnRoutinesAreRefusedBeforeDerivation(): void

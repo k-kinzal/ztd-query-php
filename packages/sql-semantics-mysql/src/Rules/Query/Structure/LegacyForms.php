@@ -75,6 +75,7 @@ final class LegacyForms
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList => array_filter($value->columns, static fn ($column): bool => $column instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard) !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping => array_filter($value->items, static fn (\SqlSemantics\Platform\MySql\Statement\Query\OrderItem $item): bool => $item->direction !== null) !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy => $this->grant($value),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset => $value->charset->name === null,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable => $value->ignore,
@@ -89,12 +90,12 @@ final class LegacyForms
     /**
      * Identifies authentication and WITH options only legacy GRANT syntax admits.
      */
-    public function grant(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy $value): bool
+    public function grant(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy $value): bool
     {
         if (array_filter($value->grantees, static fn (\SqlSemantics\Platform\MySql\Statement\Account\User\Grantee $user): bool => $user->identification !== null) !== []) {
             return true;
         }
-        return $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges
+        return !$value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy
             && ($value->tls !== null || count($value->options) > 1 || array_filter($value->options, static fn (\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption $option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit) !== []);
     }
 

@@ -73,6 +73,9 @@ final class Handlers
     public function warned(): ?Jump
     {
         $diagnostics = $this->interpreter->session->diagnostics;
+        if ($diagnostics->stale) {
+            return null;
+        }
         $conditions = [];
         foreach ($diagnostics->conditions as $position => [$level, $number]) {
             if ($level === 'Warning') {

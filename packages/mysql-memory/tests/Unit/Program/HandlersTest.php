@@ -41,6 +41,15 @@ final class HandlersTest extends TestCase
         self::assertSame([[['1']], []], [$result2->rows, $session->diagnostics->conditions]);
     }
 
+    public function testWarnedDoesNotHandleARetainedLegacyWarningAgain(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("CREATE DATABASE d; USE d; SET sql_mode=''; CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLWARNING SET @hits=@hits+1; SET @hits=0; DO 'new'+0; IF FALSE THEN SELECT 1; END IF; SELECT @hits; END");
+        $result = $session->query('CALL p()')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
     public function testFindPrefersTheInnermostBlock(): void
     {
         $session = (new Instance())->connect();
