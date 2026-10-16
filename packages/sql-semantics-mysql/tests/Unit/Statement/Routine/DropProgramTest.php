@@ -22,6 +22,18 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class DropProgramTest extends TestCase
 {
+    public function testLegacyNamePreservesTheMySql56FunctionOperandDomain(): void
+    {
+        $legacy = new DropProgram(ProgramKind::Function, new QualifiedName(new Name('')));
+        $ordinary = new DropProgram(ProgramKind::Function, new QualifiedName(new Name('f')));
+        $parsed = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('DROP FUNCTION ``')->statement;
+
+        self::assertTrue($legacy->legacyName());
+        self::assertFalse($ordinary->legacyName());
+        self::assertInstanceOf(DropProgram::class, $parsed);
+        self::assertSame('', $parsed->name->name->value);
+    }
+
     public function testDeriveStatementChangesNoContext(): void
     {
         $semantics = new Semantics(Dialect::MySql);

@@ -70,6 +70,7 @@ final class CreateTrigger implements Statement
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
     ) {
+        ProgramNames::check($name);
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
         $this->body = (new StatementSequence())->member($body);
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Trigger, $name);

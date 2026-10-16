@@ -67,7 +67,11 @@ final class SyntaxPrivileges
         try {
             $parser->parse($sql, static function (Node $node) use ($lowering, $end, &$boundary, &$routineSchema): void {
                 if ($routineSchema === null && $node->name === 'sp_name') {
-                    $routineSchema = $lowering->names->qualified($node)->schema !== null;
+                    try {
+                        $routineSchema = $lowering->names->qualified($node)->schema !== null;
+                    } catch (RejectedInput) {
+                        return;
+                    }
                 }
                 if ($boundary !== null || $routineSchema === true || $node->name !== 'grant_ident') {
                     return;

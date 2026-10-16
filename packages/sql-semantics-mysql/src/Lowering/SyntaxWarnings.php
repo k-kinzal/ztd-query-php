@@ -59,7 +59,11 @@ final class SyntaxWarnings
                 if ($lookahead->offset > $end) {
                     return;
                 }
-                $header->observe($node, $lookahead, $lowering, $tokens);
+                $failure = $header->observe($node, $lookahead, $lowering, $tokens);
+                if ($failure !== null && $failure->end <= $end) {
+                    $state->record($failure->end, new ParseFailure($failure->problem, $failure->aborts));
+                    return;
+                }
                 $derived = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? (new Query\Legacy\DerivedAliases())->rejected($node, $lowering) : null;
                 $log = $derived ?? (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
                 if ($log !== null && $log->end <= $end) {

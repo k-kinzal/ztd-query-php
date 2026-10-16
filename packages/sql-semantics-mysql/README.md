@@ -409,6 +409,13 @@ Deprecated type attributes produce warnings in written order, including integer 
 
 ## Stored program body structure
 
+Stored-program names exclude empty names, trailing spaces, NUL bytes and names
+longer than 64 characters. These constructor constraints apply to declarations,
+calls, alterations and inspection requests. Input lowering reports the name's
+typed condition before later database or body conditions. MySQL 5.6 permits a
+wider operand domain for `DROP FUNCTION`; `DropProgram::legacyName()` identifies
+that form, and composition checks exclude incompatible newer language features.
+
 Routine declarations check the kinds of instructions they can contain, including
 unreachable branches and handlers. A stored function must contain a `RETURN`
 instruction; this does not require every runtime path to reach it. Procedures,

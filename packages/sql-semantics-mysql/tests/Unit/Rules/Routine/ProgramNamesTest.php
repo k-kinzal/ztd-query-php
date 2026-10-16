@@ -23,6 +23,34 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class ProgramNamesTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerInvalidNames(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'trailing space' => ['p '];
+        yield 'too many characters' => [str_repeat('p', 65)];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidNames')]
+    public function testProblemReportsNamesOutsideTheStoredProgramDomain(string $name): void
+    {
+        $problem = ProgramNames::problem(new Name($name));
+
+        self::assertNotNull($problem);
+        self::assertSame($name, $problem->subject);
+    }
+
+    public function testCheckCountsCharactersAndPreservesPermittedWhitespace(): void
+    {
+        $name = new QualifiedName(new Name(str_repeat('é', 64)));
+        ProgramNames::check($name);
+        ProgramNames::check(new QualifiedName(new Name("\tp\t")));
+
+        self::assertNull(ProgramNames::problem($name->name));
+    }
+
     public function testQualifiedWritesTheDatabaseQualifierWhenPresent(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql910));

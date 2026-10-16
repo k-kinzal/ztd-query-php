@@ -72,6 +72,10 @@ final class AlterEvent implements Statement
         ?Node $body = null,
         public readonly ?Account $definer = null,
     ) {
+        ProgramNames::check($name);
+        if ($newName !== null) {
+            ProgramNames::check($newName);
+        }
         Check::input($name->catalog === null && $newName?->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
         Check::input($schedule !== null || $completion !== null || $newName !== null || $status !== null || $comment !== null || $body !== null, 'ALTER EVENT changes at least one event property after its name.');

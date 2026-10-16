@@ -35,7 +35,7 @@ use SqlSemantics\Statement\Node;
  * database of the statements that name one, and the columns and indexes a definition names, in
  * written order and the database before the name. An alias and the table qualifying a column
  * are not checked; the database qualifying a column, and that of a privilege level, is, except
- * in MySQL 5.6 and 5.7, which ignore the name of a CHECK constraint; MySQL 5.6 does not check DROP FUNCTION IF EXISTS (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and
+ * in MySQL 5.6 and 5.7, which ignore the name of a CHECK constraint; MySQL 5.6 does not check DROP FUNCTION operands (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and
  * 9.1.0 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/identifier-length.html.
  *
@@ -77,7 +77,7 @@ final class Identifiers
             $node instanceof ColumnUse => $legacy ? [] : [$node->qualifier?->schema],
             $node instanceof ColumnName => $legacy ? [] : [$node->table?->schema],
             $node instanceof TableWildcard => [],
-            $node instanceof DropProgram && $release === GrammarRelease::MySql5651 && $node->kind === ProgramKind::Function && $node->ifExists => [],
+            $node instanceof DropProgram && $release === GrammarRelease::MySql5651 && $node->kind === ProgramKind::Function => $node->name->schema === null ? [] : [$node->name->schema],
             $node instanceof CreateDatabase, $node instanceof DropDatabase, $node instanceof AlterDatabase, $node instanceof ShowCreateDatabase => [$node->name],
             $node instanceof DatabaseLevel => $legacy ? [] : [$node->database],
             $node instanceof FunctionCall => [$node->schema, $node->name],

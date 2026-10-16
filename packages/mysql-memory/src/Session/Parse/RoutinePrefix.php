@@ -48,7 +48,7 @@ final class RoutinePrefix
                 $seen = true;
                 $tokens = $node->tokens();
                 $last = $tokens[count($tokens) - 1] ?? null;
-                $missing = $missing || ($last !== null && $last->end() <= $end && count($tokens) < 3);
+                $missing = $missing || ($last !== null && $last->end() < $end && count($tokens) < 3);
             });
         } catch (SourceException) {
             // Only routine names completed before the original refusal are relevant.

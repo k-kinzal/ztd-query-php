@@ -47,6 +47,7 @@ final class AlterRoutine implements Statement
     public function __construct(public readonly ProgramKind $kind, public readonly QualifiedName $name, array $characteristics = [])
     {
         Check::input($kind === ProgramKind::Procedure || $kind === ProgramKind::Function, 'ALTER of a routine names a procedure or a function.');
+        ProgramNames::check($name);
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
         foreach ($this->characteristics as $characteristic) {

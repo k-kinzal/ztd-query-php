@@ -48,13 +48,7 @@ final class Parameter implements Node
      */
     public static function nameProblem(Name $name): ?Problem\ProgramProblem
     {
-        $rule = match (true) {
-            $name->value === '', str_ends_with($name->value, ' ') => Problem\ProgramRule::IncorrectName,
-            mb_strlen($name->value, 'UTF-8') > 64 => Problem\ProgramRule::NameTooLong,
-            default => null,
-        };
-
-        return $rule === null ? null : new Problem\ProgramProblem($rule, $name->value);
+        return ProgramNames::problem($name);
     }
 
     /**

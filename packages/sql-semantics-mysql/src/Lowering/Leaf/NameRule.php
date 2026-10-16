@@ -192,6 +192,7 @@ final class NameRule
      * Lowers the name of a table, view or routine with its optional database qualifier.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a stored-program name is outside its intrinsic domain
      */
     public function qualified(Node $name): QualifiedName
     {
@@ -204,8 +205,13 @@ final class NameRule
             throw ImplementationGap::production($form);
         }
         $schema = $positions[1] === null ? null : $this->identifier($form->node($positions[1]));
+        $identifier = $this->identifier($form->node($positions[0]));
+        $problem = $form->node->name === 'sp_name' ? \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($identifier) : null;
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($name)[1] ?? 0);
+        }
 
-        return new QualifiedName($this->identifier($form->node($positions[0])), $schema);
+        return new QualifiedName($identifier, $schema);
     }
 
     /**

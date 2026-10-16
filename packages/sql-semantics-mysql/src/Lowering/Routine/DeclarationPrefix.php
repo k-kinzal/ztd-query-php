@@ -61,6 +61,15 @@ final class DeclarationPrefix
      */
     public function rejected(Node $node, Lowering $lowering): ?RejectedInput
     {
+        if ($node->name === 'sp_name') {
+            try {
+                $lowering->names->qualified($node);
+            } catch (RejectedInput $failure) {
+                return $failure;
+            }
+
+            return null;
+        }
         if (!in_array($node->name, ['type_with_opt_collate', 'sp_fdparam', 'sp_pdparam', 'sp_decl', 'sf_tail'], true)) {
             return null;
         }

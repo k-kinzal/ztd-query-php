@@ -185,6 +185,7 @@ final class DefinitionRule
      * one of the `drop_*_stmt` rules.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a modern DROP FUNCTION name is invalid
      */
     public function drop(Form $form): DropProgram
     {
@@ -196,6 +197,10 @@ final class DefinitionRule
             'drop: DROP FUNCTION_SYM if_exists ident', 'drop_function_stmt: DROP FUNCTION_SYM if_exists ident' => new QualifiedName($this->lowering->names->identifier($form->node(3))),
             default => throw ImplementationGap::production($form),
         };
+        $problem = $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? null : \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($name->name);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
 
         return new DropProgram(ProgramKind::Function, $name, $this->lowering->options->present($form->node(2)));
     }

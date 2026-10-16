@@ -79,6 +79,7 @@ final class CreateFunction implements Statement
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
     ) {
+        ProgramNames::check($name);
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->check($returns, $collation);
         foreach ($parameters->parameters as $parameter) {

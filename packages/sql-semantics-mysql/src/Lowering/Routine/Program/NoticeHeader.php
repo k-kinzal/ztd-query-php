@@ -34,27 +34,34 @@ final class NoticeHeader
      * Reads the first declaration header and recognizes entry into its instruction body.
      *
      * @param list<Token> $tokens The transient input tokens identifying the declaration kind
+     * @return \SqlSemantics\Construction\RejectedInput|null The first invalid header operand, when present
      */
-    public function observe(Node $node, Token $lookahead, Lowering $lowering, array $tokens): void
+    public function observe(Node $node, Token $lookahead, Lowering $lowering, array $tokens): ?\SqlSemantics\Construction\RejectedInput
     {
-        if ($this->name === null && $node->name === 'definer') {
-            $this->definer = $lowering->users->definer($node);
+        try {
+            if ($this->name === null && $node->name === 'definer') {
+                $this->definer = $lowering->users->definer($node);
+            }
+            if ($this->name === null && $node->name === 'sp_name') {
+                $this->name = $lowering->names->qualified($node);
+                $this->nameEnd = (new SourceRanges())->span($node)[1] ?? 0;
+            }
+            if ($this->kind !== null || $this->name === null) {
+                return null;
+            }
+            if ($node->name === 'sp_c_chistics') {
+                $function = array_filter($tokens, fn (Token $token): bool => $token->offset < $this->nameEnd && strtoupper($token->text) === 'FUNCTION') !== [];
+                $this->kind = $function ? ProgramKind::Function : ProgramKind::Procedure;
+            } elseif ($node->name === 'trigger_follows_precedes_clause' || $node->name === 'trg_event') {
+                $this->kind = ProgramKind::Trigger;
+            } elseif ($node->name === 'opt_ev_comment' && $lookahead->name === 'DO_SYM') {
+                $this->kind = ProgramKind::Event;
+            }
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return $failure;
         }
-        if ($this->name === null && $node->name === 'sp_name') {
-            $this->name = $lowering->names->qualified($node);
-            $this->nameEnd = (new SourceRanges())->span($node)[1] ?? 0;
-        }
-        if ($this->kind !== null || $this->name === null) {
-            return;
-        }
-        if ($node->name === 'sp_c_chistics') {
-            $function = array_filter($tokens, fn (Token $token): bool => $token->offset < $this->nameEnd && strtoupper($token->text) === 'FUNCTION') !== [];
-            $this->kind = $function ? ProgramKind::Function : ProgramKind::Procedure;
-        } elseif ($node->name === 'trigger_follows_precedes_clause' || $node->name === 'trg_event') {
-            $this->kind = ProgramKind::Trigger;
-        } elseif ($node->name === 'opt_ev_comment' && $lookahead->name === 'DO_SYM') {
-            $this->kind = ProgramKind::Event;
-        }
+
+        return null;
     }
 
     /**
