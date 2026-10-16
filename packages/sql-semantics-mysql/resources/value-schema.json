@@ -2018,7 +2018,7 @@
         "status": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\EventStatus"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateFunction": {
-        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\FunctionBody",
         "characteristics": "array",
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
@@ -2096,6 +2096,9 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch": {
+        "offset": "?int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem": {
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramRule",
         "subject": "?string"
@@ -2111,7 +2114,7 @@
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "nameEnd": "int",
         "parameters": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList",
-        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch",
         "returns": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName",
         "typeEnds": "array"
     },

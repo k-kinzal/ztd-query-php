@@ -28,6 +28,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Rejecting RETURN outside a function declaration
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
+ * @example Rejecting a body that contradicts its language
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(), [new \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage(new \SqlSemantics\Statement\Identifier\Name('JAVASCRIPT'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading a procedure definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE shop.p(IN a INT) DETERMINISTIC SELECT a');
@@ -67,6 +70,7 @@ final class CreateProcedure implements Statement
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
         $this->body = (new ProgramFacts())->body($body);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyLanguage())->check($this->body, $this->characteristics);
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Procedure, $name);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

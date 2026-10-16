@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $block = $create->statement->body;
  *     [$block->label->value, count($block->declarations), count($block->statements)] // => ['work', 1, 1]
  */
-final class Block implements ProgramStatement
+final class Block implements Flow\FunctionBody
 {
     use Snapshot;
 

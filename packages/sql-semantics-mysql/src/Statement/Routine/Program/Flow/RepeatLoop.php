@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) again: REPEAT SELECT 1; UNTIL a > 0 END REPEAT again');
  *     [$create->statement->body->label->value, count($create->statement->body->statements)] // => ['again', 1]
  */
-final class RepeatLoop implements ProgramStatement
+final class RepeatLoop implements FunctionBody
 {
     use Snapshot;
 

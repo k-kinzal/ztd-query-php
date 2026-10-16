@@ -12,7 +12,7 @@ composer fuzz:structures -- 100 example-seed
 
 The campaign discovers concrete types from the reviewed semantic value inventories. Its generator interprets native constructor types and PHPDoc collection types, chooses enum cases, and builds fresh nested objects. A readonly field's declared `@var` type takes precedence over the corresponding constructor parameter: for example, a constructor may accept a broad list and check that every element is a select item before retaining it as a `non-empty-list<SelectExpression|Star|TableWildcard>`. Constructor invariant violations cause another construction attempt. The generator has finite depth and attempt budgets; exhaustion is reported as an incomplete trial and never as a successful execution. Primitive values and collection lengths are bounded, so passing a finite campaign is evidence about the sampled inputs.
 
-Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. Each subtree also has a finite attempt budget, so an invalid nested combination cannot spend the entire trial retrying itself. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
+Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. The selected root can use the shared 2,000-attempt cap. Each nested constructor retains a smaller depth-dependent cap that includes its descendants, preventing one nested alternative from taking the entire root search budget. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
 
 The generated root is a MySQL statement or an ordinary expression placed in a SELECT item. The runner derives its semantic facts against a fresh in-memory session and sends the result directly to statement execution. Every parameter occurrence receives an explicit NULL value and its type before derivation, so the fixture supplies bindings without relying on unresolved parameter types. Separate properties exercise non-NULL bindings and their occurrence order. The generator has no list of supported SQL commands and does not use execution success or semantic diagnostics to select inputs.
 
@@ -962,8 +962,8 @@ covering body kinds, condition priority, existing definitions, both strictness
 settings and headers without a selected database. A separate constructor-only
 sample retains 100 generated declarations across all five body-bearing roots,
 without generation or profile failures. These checks do not close the remaining
-lexical-scope constraints, other implicit-commit statements, external-language
-declarations, or the whole-model construction gate.
+lexical-scope constraints, other implicit-commit statements, or the whole-model
+construction gate.
 
 Program expressions preserve MySQL 5.6 diagnostic history until they raise a
 new condition, including control predicates, defaults and table-reading
@@ -971,3 +971,19 @@ subqueries. Retained warnings do not invoke their handler again. A five-release
 history adds 440 observations for these expressions, alongside the prior
 395-observation stored-condition history. Later releases retain their distinct
 reset behavior.
+
+
+A stored function retains either external code or a `FunctionBody`: RETURN or a
+compound control structure capable of containing RETURN. Cursor instructions and
+ordinary SQL statements cannot be its entire body. The declaration constructor
+still checks that an actual RETURN exists, including unreachable instructions
+and handlers; it does not require every execution path to reach one.
+
+Routine constructors also relate the effective language to the body format.
+The last LANGUAGE characteristic wins; omitted LANGUAGE and the SQL identifier
+in any letter case mean SQL instructions. Other languages require an external
+body. A refused SQL input keeps its typed header and a numeric diagnostic
+location, without publishing an invalid declaration or retaining SQL or ASTs.
+Without a language component, MySQL 8.1 refuses external routine creation;
+8.2 and later retain the definition with a warning and refuse its invocation.
+The emulator preserves this distinction and the release-specific message text.

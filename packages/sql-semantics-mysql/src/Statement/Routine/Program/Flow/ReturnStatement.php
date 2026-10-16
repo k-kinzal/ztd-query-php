@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Routine\FlowFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
  *     $create->statement->body->value->name->value // => 'a'
  */
-final class ReturnStatement implements ProgramStatement
+final class ReturnStatement implements FunctionBody
 {
     use Snapshot;
 

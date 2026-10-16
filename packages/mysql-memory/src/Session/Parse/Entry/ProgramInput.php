@@ -10,6 +10,7 @@ use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\ProgramErrors;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
+use RuntimeException;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
 
@@ -34,6 +35,9 @@ final class ProgramInput
             $database = $refusal->name->schema->value ?? $session->variables->database;
             if ($database === '') {
                 throw QueryError::NoDatabase->error();
+            }
+            if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch) {
+                return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($refusal->problem->offset ?? strlen($session->text), $session->text, $session->following, new RuntimeException($refusal->problem->message()), true, $session->semantics()->parser());
             }
             $error = $refusal->problem->rule === ProgramRule::MissingReturn
                 ? ProgramError::MissingReturn->error($database . '.' . $refusal->name->name->value)

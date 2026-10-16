@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() again: LOOP LEAVE again; END LOOP again');
  *     [$create->statement->body->label->value, count($create->statement->body->statements)] // => ['again', 1]
  */
-final class Loop implements ProgramStatement
+final class Loop implements FunctionBody
 {
     use Snapshot;
 

@@ -44,6 +44,9 @@ final class Construction
     }
 
     /**
+     * The selected root can use the complete shared 2,000-attempt cap. Nested
+     * constructors retain smaller depth-dependent bounds, including their descendants.
+     *
      * @param class-string $class The concrete type or interface to inhabit
      * @throws Exhausted When the finite construction budget finds no inhabitant
      * @throws ReflectionException When a public constructor cannot be invoked
@@ -58,7 +61,7 @@ final class Construction
         }
         $implementations = interface_exists($class) ? $this->catalogue->implementations($class) : [$class];
         $depths = array_values(array_filter(range(0, $depth), fn (int $remaining): bool => $this->depth->object($class, $remaining)));
-        $deadline = min(2000, $this->attempts + 24 * 2 ** $depth);
+        $deadline = $this->attempts === 0 ? 2000 : min(2000, $this->attempts + 24 * 2 ** $depth);
         while ($this->attempts < $deadline) {
             $this->attempts++;
             $remaining = interface_exists($class) || !$this->depth->object($class, 0) ? $this->choices->one($depths) : $depth;

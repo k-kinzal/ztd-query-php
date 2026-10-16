@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\FunctionBody;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
@@ -30,6 +30,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Rejecting a body with no RETURN instruction
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
+ * @example Rejecting a body that contradicts its language
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('code'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading a function definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION twice(a INT) RETURNS BIGINT DETERMINISTIC RETURN a * 2');
@@ -45,9 +48,9 @@ final class CreateFunction implements Statement
     public readonly array $characteristics;
 
     /**
-     * @var ExternalBody|ProgramStatement|Statement The routine body
+     * @var ExternalBody|FunctionBody The external code or SQL instruction structure containing RETURN
      */
-    public readonly ExternalBody|ProgramStatement|Statement $body;
+    public readonly ExternalBody|FunctionBody $body;
 
     /**
      * @param QualifiedName $name The function name with its optional database
@@ -76,8 +79,10 @@ final class CreateFunction implements Statement
             Check::input($parameter->mode === null, 'A function parameter has no direction.');
         }
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
-        $this->body = (new ProgramFacts())->body($body);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Function, $name);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyLanguage())->check($body, $this->characteristics);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($body, ProgramKind::Function, $name);
+        Check::input($body instanceof ExternalBody || $body instanceof FunctionBody, 'A function body is external code or an instruction shape containing RETURN.');
+        $this->body = $body;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

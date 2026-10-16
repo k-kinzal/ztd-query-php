@@ -18,6 +18,18 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class DefinitionBodyTest extends TestCase
 {
+    public function testLanguageKeepsAnExternalBodyLocationWithoutPublishingTheDeclaration(): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.1.0'))->analyze("CREATE FUNCTION f() RETURNS INT AS 'body'");
+            self::fail('The SQL language cannot contain an external body.');
+        } catch (RejectedInput $error) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $error->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch::class, $error->problem->problem);
+            self::assertSame(35, $error->problem->problem->offset);
+        }
+    }
+
     public function testCheckRefusesAFunctionWithoutReturn(): void
     {
         $this->expectException(RejectedInput::class);

@@ -76,7 +76,11 @@ final class RoutineCommand implements Command
         }
         assert($statement instanceof CreateProcedure || $statement instanceof CreateFunction);
         if ($statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody) {
-            $context->warning(ProgramError::LanguageComponentUnavailable);
+            $unavailable = (new \MySqlMemory\Error\ProgramErrors())->language($session->settings()->release());
+            if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql810) {
+                throw $unavailable;
+            }
+            $context->warning(ProgramError::LanguageComponentUnavailable, $unavailable->getMessage());
         }
         $function = $statement instanceof CreateFunction;
         $kind = $function ? 'FUNCTION' : 'PROCEDURE';

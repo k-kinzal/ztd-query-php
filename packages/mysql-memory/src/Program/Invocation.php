@@ -54,6 +54,9 @@ final class Invocation
      */
     public function run(Activation $activation, Node $body, string $database, string $mode): ?Jump
     {
+        if ($body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody) {
+            throw (new \MySqlMemory\Error\ProgramErrors())->language($this->session->settings()->release());
+        }
         $session = $this->session;
         $variables = $session->variables;
         $saved = [$session->program, $variables->database, $variables->session];

@@ -24,6 +24,15 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
 final class ProgramErrors
 {
     /**
+     * Answers the unavailable-language condition in the release's spelling.
+     * Observed on MySQL 8.1, 8.2, 8.3, 8.4 and 9.1 without a language component.
+     */
+    public function language(\SqlSemantics\Contract\GrammarRelease $release): SqlError
+    {
+        return ProgramError::LanguageComponentUnavailable->error(in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true) ? 'No Language component available' : 'Language component: Not available.');
+    }
+
+    /**
      * The error number of each program rule, by the name of the rule.
      *
      * It holds every case of ProgramRule.

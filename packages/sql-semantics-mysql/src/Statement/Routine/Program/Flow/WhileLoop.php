@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) again: WHILE a > 0 DO SELECT 1; END WHILE again');
  *     [$create->statement->body->label->value, count($create->statement->body->statements)] // => ['again', 1]
  */
-final class WhileLoop implements ProgramStatement
+final class WhileLoop implements FunctionBody
 {
     use Snapshot;
 

@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) IF a THEN SELECT 1; ELSE SELECT 2; END IF');
  *     [count($create->statement->body->branches), count($create->statement->body->otherwise)] // => [1, 1]
  */
-final class IfStatement implements ProgramStatement
+final class IfStatement implements FunctionBody
 {
     use Snapshot;
 

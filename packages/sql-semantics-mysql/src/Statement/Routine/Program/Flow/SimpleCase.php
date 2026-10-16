@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) CASE a WHEN 1 THEN SELECT 1; ELSE SELECT 2; END CASE');
  *     [count($create->statement->body->branches), count($create->statement->body->otherwise)] // => [1, 1]
  */
-final class SimpleCase implements ProgramStatement
+final class SimpleCase implements FunctionBody
 {
     use Snapshot;
 

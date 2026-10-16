@@ -122,16 +122,18 @@ final class DefinitionRule
         $exists = isset($parts['opt_if_not_exists']) && $this->lowering->options->present($parts['opt_if_not_exists']);
         $name = $this->lowering->names->qualified($parts['sp_name']);
         $characteristics = (new CharacteristicRule($this->lowering))->characteristics($parts['sp_c_chistics']);
-        $body = (new StatementRule($this->lowering))->body($parts['stored_routine_body'] ?? $parts['sp_proc_stmt']);
+        $bodyTree = $parts['stored_routine_body'] ?? $parts['sp_proc_stmt'];
+        $body = (new StatementRule($this->lowering))->body($bodyTree);
+        $language = (new DefinitionBody())->language($body, $characteristics, $bodyTree);
         if ($tail->name === 'sp_tail') {
             $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_pdparam_list']);
-            (new DefinitionBody())->check($body, ProgramKind::Procedure, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, $parameters, typeEnds: (new DefinitionBody())->typeEnds($parts['sp_pdparam_list']), nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0);
+            (new DefinitionBody())->check($body, ProgramKind::Procedure, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, $parameters, typeEnds: (new DefinitionBody())->typeEnds($parts['sp_pdparam_list']), nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0, language: $language);
             return new CreateProcedure($name, $parameters, $body, $characteristics, $definer, $exists);
         }
         [$type, $collation] = (new ParameterRule($this->lowering))->declared($parts['type_with_opt_collate'] ?? $parts['type'], $parts['opt_collate'] ?? null);
 
         $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_fdparam_list']);
-        (new DefinitionBody())->check($body, ProgramKind::Function, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, $parameters, $type, $collation, (new DefinitionBody())->typeEnds($parts['sp_fdparam_list'], $parts['type_with_opt_collate'] ?? $parts['type']), (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0);
+        (new DefinitionBody())->check($body, ProgramKind::Function, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, $parameters, $type, $collation, (new DefinitionBody())->typeEnds($parts['sp_fdparam_list'], $parts['type_with_opt_collate'] ?? $parts['type']), (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0, language: $language);
         return new CreateFunction($name, $parameters, $type, $body, $collation, $characteristics, $definer, $exists);
     }
 

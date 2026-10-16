@@ -20,6 +20,13 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class ProgramErrorsTest extends TestCase
 {
+    public function testLanguagePreservesTheReleaseSpelling(): void
+    {
+        $errors = new ProgramErrors();
+        self::assertSame('No Language component available', $errors->language(\SqlSemantics\Contract\GrammarRelease::MySql820)->getMessage());
+        self::assertSame('Language component: Not available.', $errors->language(\SqlSemantics\Contract\GrammarRelease::MySql847)->getMessage());
+    }
+
     public function testErrorKeepsTheMessageOfTheProblem(): void
     {
         $error = (new ProgramErrors())->error(new ProgramProblem(ProgramRule::UndefinedCondition, 'PROCESS'));

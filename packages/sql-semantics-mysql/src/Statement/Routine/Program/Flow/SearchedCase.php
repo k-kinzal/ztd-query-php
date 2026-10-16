@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) CASE WHEN a > 1 THEN SELECT 1; WHEN a < 0 THEN SELECT 2; END CASE');
  *     [count($create->statement->body->branches), $create->statement->body->otherwise] // => [2, []]
  */
-final class SearchedCase implements ProgramStatement
+final class SearchedCase implements FunctionBody
 {
     use Snapshot;
 

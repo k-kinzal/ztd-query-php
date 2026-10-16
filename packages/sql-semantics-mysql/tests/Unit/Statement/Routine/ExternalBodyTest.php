@@ -38,7 +38,7 @@ final class ExternalBodyTest extends TestCase
      */
     public static function providerRenderWritesAsAndTheCode(): iterable
     {
-        yield 'MySQL 8.4 quoted' => ['mysql-8.4.7', "create procedure p() language sql as 'x'", "CREATE PROCEDURE p() LANGUAGE SQL AS 'x'"];
+        yield 'MySQL 8.4 quoted' => ['mysql-8.4.7', "create procedure p() language javascript as 'x'", "CREATE PROCEDURE p() LANGUAGE javascript AS 'x'"];
         yield 'MySQL 9.0 dollar-quoted' => [
             'mysql-9.0.1',
             'create function f() returns int language javascript as $js$ return 1 $js$',
@@ -56,6 +56,12 @@ final class ExternalBodyTest extends TestCase
     public function testRenderWritesAsAndTheCode(string $release, string $sql, string $expected): void
     {
         self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+    }
+
+    public function testRenderRefusesTheOriginalSqlLanguageAndExternalCodeExample(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("create procedure p() language sql as 'x'");
     }
 
     public function testRenderWritesAConstructedBody(): void
