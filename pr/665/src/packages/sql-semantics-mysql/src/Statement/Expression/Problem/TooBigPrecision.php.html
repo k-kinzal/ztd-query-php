@@ -55,31 +55,30 @@
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example Reporting a precision above 6</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT CAST(1 AS TIME(7))&#039;);</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $query-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &quot;Too-big precision 7 specified for &#039;CAST&#039;. Maximum is 6.&quot;</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">TooBigPrecision</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>{</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * @param int $precision The precision as reported by the server</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @param string $function The function as the server names it</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param int $maximum The maximum precision of the target type</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$precision</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$function</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$maximum</span> = <span class="tok-num">6</span>)</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    {</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    }</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * Describes the problem as the server does.</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">return</span> <span class="tok-id">sprintf</span>(<span class="tok-str">&quot;Too-big precision %d specified for &#039;%s&#039;. Maximum is %d.&quot;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">precision</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">function</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">maximum</span>);</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    }</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>}</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(7, &#039;CAST&#039;))-&gt;message() // =&gt; &quot;Too-big precision 7 specified for &#039;CAST&#039;. Maximum is 6.&quot;</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">TooBigPrecision</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>{</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * @param int $precision The precision as reported by the server</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * @param string $function The function as the server names it</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @param int $maximum The maximum precision of the target type</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$precision</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$function</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$maximum</span> = <span class="tok-num">6</span>)</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    {</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    }</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Describes the problem as the server does.</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    {</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">return</span> <span class="tok-id">sprintf</span>(<span class="tok-str">&quot;Too-big precision %d specified for &#039;%s&#039;. Maximum is %d.&quot;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">precision</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">function</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">maximum</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>}</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
