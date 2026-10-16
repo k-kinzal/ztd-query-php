@@ -108,8 +108,35 @@
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            <span class="tok-var">$container</span>-&gt;<span class="tok-id">stop</span>();</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        }</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    }</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>}</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     * @return iterable&lt;string, array{\SqlSemantics\Contract\GrammarRelease}&gt;</span></span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerAliases</span>(): <span class="tok-id">iterable</span></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    {</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;5.6&#039;</span> =&gt; [<span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span>::<span class="tok-id">MySql5651</span>];</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;5.7&#039;</span> =&gt; [<span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span>::<span class="tok-id">MySql5744</span>];</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    }</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerAliases&#039;</span>)]</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSameStructureSeesTheDestinationCollisionAfterCreatingItsLegacyAlias</span>(<span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span> <span class="tok-var">$release</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    {</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-var">$node</span> = <span class="tok-kw">new</span> <span class="tok-id">UpgradeDatabaseName</span>(<span class="tok-kw">new</span> <span class="tok-id">LegacyDatabaseName</span>(<span class="tok-kw">new</span> <span class="tok-id">Name</span>(<span class="tok-str">&#039;x&#039;</span>)));</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-var">$observation</span> = (<span class="tok-kw">new</span> <span class="tok-id">\Fuzz\Structure\Audit\Comparison</span>())-&gt;<span class="tok-id">compare</span>(<span class="tok-var">$node</span>, <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Contract\LanguageProfile</span>(<span class="tok-var">$release</span>));</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$observation</span>[<span class="tok-str">&#039;matches&#039;</span>], <span class="tok-id">serialize</span>(<span class="tok-var">$observation</span>));</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        <span class="tok-var">$initial</span> = <span class="tok-var">$observation</span>[<span class="tok-str">&#039;native&#039;</span>][<span class="tok-str">&#039;error&#039;</span>];</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsArray</span>(<span class="tok-var">$initial</span>);</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">1049</span>, <span class="tok-var">$initial</span>[<span class="tok-num">0</span>]);</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>        <span class="tok-id">self</span>::<span class="tok-id">assertCount</span>(<span class="tok-num">3</span>, <span class="tok-var">$observation</span>[<span class="tok-str">&#039;transitions&#039;</span>]);</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-id">true</span>, <span class="tok-id">true</span>, <span class="tok-id">true</span>], <span class="tok-id">array_column</span>(<span class="tok-var">$observation</span>[<span class="tok-str">&#039;transitions&#039;</span>], <span class="tok-str">&#039;matches&#039;</span>));</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>        <span class="tok-var">$later</span> = <span class="tok-var">$observation</span>[<span class="tok-str">&#039;transitions&#039;</span>][<span class="tok-num">2</span>][<span class="tok-str">&#039;native&#039;</span>][<span class="tok-str">&#039;error&#039;</span>];</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        <span class="tok-id">self</span>::<span class="tok-id">assertIsArray</span>(<span class="tok-var">$later</span>);</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">1007</span>, <span class="tok-var">$later</span>[<span class="tok-num">0</span>]);</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$observation</span>[<span class="tok-str">&#039;sql&#039;</span>], <span class="tok-var">$observation</span>[<span class="tok-str">&#039;transitions&#039;</span>][<span class="tok-num">2</span>][<span class="tok-str">&#039;sql&#039;</span>]);</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    }</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a></span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>}</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
