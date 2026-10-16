@@ -94,6 +94,36 @@ final class ConstructRuleTest extends TestCase
         self::assertSame(strlen("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7))"), $failure->end);
     }
 
+    /**
+     * @return iterable<string, array{string, string, int, int, bool}>
+     */
+    public static function providerCastPrecisions(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.4.7'] as $release) {
+            $aborts = !in_array($release, ['mysql-5.7.44', 'mysql-8.0.44', 'mysql-8.1.0'], true);
+            yield $release . ' temporal' => [$release, 'CAST(NULL AS TIME(7))', 7, 6, $aborts];
+            yield $release . ' convert' => [$release, 'CONVERT(NULL,DATETIME(7))', 7, 6, $aborts];
+        }
+        yield 'floating limit' => ['mysql-8.4.7', 'CAST(NULL AS FLOAT(54))', 54, 53, true];
+        yield 'floating overflow' => ['mysql-8.4.7', 'CAST(NULL AS FLOAT(4294967296))', 0, 53, true];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCastPrecisions')]
+    public function testCastPublishesAPrecisionRefusalWithoutAnInvalidScalar(string $release, string $cast, int $precision, int $maximum, bool $aborts): void
+    {
+        $failure = null;
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT ' . $cast . ', BINARY 1');
+        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
+            $failure = $caught;
+        }
+
+        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision($precision, 'CAST', $maximum), $failure->problem);
+        self::assertSame($aborts, $failure->aborts);
+        self::assertSame(strlen('SELECT ' . $cast), $failure->end);
+    }
+
     public function testOptionalLowersTheOperandAndTheElseOfCase(): void
     {
         $platform = new Platform();

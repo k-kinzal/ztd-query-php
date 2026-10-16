@@ -44,6 +44,11 @@ final class Modifiers
     public ?array $exclusive = null;
 
     /**
+     * The input boundary at which a modifier conflict stopped reading, when any.
+     */
+    public ?int $stoppedAt = null;
+
+    /**
      * @var bool Whether the token read last is a SELECT or one of its modifiers
      */
     public bool $listing = false;
@@ -128,9 +133,13 @@ final class Modifiers
                 $this->exclusive ??= $this->ended($this->written, $this->checked, $this->release === GrammarRelease::MySql5744 && $this->blocks > 1);
             }
             if ($token->offset >= $end || $this->stopped()) {
+                $this->stoppedAt = $this->stopped() ? $token->offset : null;
                 break;
             }
             $this->read($index, $token, $modifier);
+            if ($this->stopped()) {
+                $this->stoppedAt = $token->end();
+            }
         }
 
         return [$this->warned, $this->conflict ?? $this->exclusive];

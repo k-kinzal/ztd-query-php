@@ -56,17 +56,15 @@ final class ConstructRule
      * Lowers one of the constructs.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When AT LOCAL has no semantic expression domain
+     * @throws RejectedInput When the construct has no semantic expression domain
      */
     public function lower(Form $form): Scalar
     {
         $expressions = $this->lowering->expressions;
-        $types = $this->lowering->types;
 
         return match ($form->signature) {
             'simple_expr: CASE_SYM opt_expr when_list opt_else END' => new CaseExpression($this->optional($form->node(1)), $this->branches($form->node(2)), $this->optional($form->node(3))),
-            'simple_expr: CAST_SYM ( expr AS cast_type )', 'simple_expr: CONVERT_SYM ( expr , cast_type )' => new Cast($expressions->expression($form->node(2)), $types->castTarget($form->node(4))),
-            'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' => new Cast($expressions->expression($form->node(2)), $types->castTarget($form->node(4)), $this->flag($form->node(5))),
+            'simple_expr: CAST_SYM ( expr AS cast_type )', 'simple_expr: CONVERT_SYM ( expr , cast_type )', 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' => $this->cast($form),
             'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )' => throw new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($form->node)[1] ?? 0, false),
             'simple_expr: CAST_SYM ( expr AT_SYM TIME_SYM ZONE_SYM opt_interval TEXT_STRING_literal AS DATETIME_SYM type_datetime_precision )' => $this->zone($form),
             'simple_expr: CONVERT_SYM ( expr USING charset_name )' => new CharsetConversion($expressions->expression($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
@@ -74,6 +72,24 @@ final class ConstructRule
             'simple_expr: MATCH ident_list_arg AGAINST ( bit_expr fulltext_options )' => $this->search($form),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers a CAST or typed CONVERT after checking the target's intrinsic precision.
+     *
+     * @throws RejectedInput When the target precision cannot denote a cast
+     */
+    public function cast(Form $form): Cast
+    {
+        $operand = $this->lowering->expressions->expression($form->node(2));
+        $target = $this->lowering->types->castTarget($form->node(4));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->precision($target);
+        if ($problem !== null) {
+            throw new RejectedInput($problem, (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
+        }
+        $array = $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' && $this->flag($form->node(5));
+
+        return new Cast($operand, $target, $array);
     }
 
     /**

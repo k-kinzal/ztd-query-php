@@ -16,6 +16,16 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class ContinuingRefusalTest extends TestCase
 {
+    public function testUnfinishedRetainsTheFirstPrecisionErrorBeforeAnUnpreparedMarker(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $reply = $session->run('SELECT SQL_CACHE CAST(NULL AS TIME(7)), CAST(NULL AS DATETIME(8)),?')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1426, $reply->getCode());
+        self::assertSame([1681, 1426, 1426, 1064], array_column($session->diagnostics->conditions, 1));
+    }
+
     /**
      * @return iterable<string, array{string, list<int>}>
      */

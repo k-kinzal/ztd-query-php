@@ -16,6 +16,29 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 #[Small]
 final class CastProblemsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{CastKind, ?string, ?int, int}>
+     */
+    public static function providerPrecisions(): iterable
+    {
+        yield 'float omitted' => [CastKind::Float, null, null, 53];
+        yield 'float boundary' => [CastKind::Float, '53', null, 53];
+        yield 'float excess' => [CastKind::Float, '54', 54, 53];
+        yield 'signed overflow' => [CastKind::Float, '2147483648', -2147483648, 53];
+        yield 'unsigned overflow' => [CastKind::Float, '4294967296', 0, 53];
+        yield 'unsigned maximum' => [CastKind::Float, '18446744073709551615', -1, 53];
+        yield 'time boundary' => [CastKind::Time, '6', null, 6];
+        yield 'time excess' => [CastKind::Time, '7', 7, 6];
+        yield 'datetime excess' => [CastKind::DateTime, '7', 7, 6];
+        yield 'character length' => [CastKind::Char, '54', null, 6];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPrecisions')]
+    public function testPrecisionPreservesTheLimitAndReportedPrecision(CastKind $kind, ?string $length, ?int $reported, int $maximum): void
+    {
+        self::assertEquals($reported === null ? null : new TooBigPrecision($reported, 'CAST', $maximum), (new CastProblems())->precision(new CastTarget($kind, $length)));
+    }
+
     public function testPrecisionRetainsTemporalLimitsAndFloatingOverflow(): void
     {
         $rules = new CastProblems();

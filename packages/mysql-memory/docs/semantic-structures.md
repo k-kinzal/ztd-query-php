@@ -689,3 +689,17 @@ on each of six releases, including stored definitions, leading and trailing
 warnings, further cast errors and unprepared markers. All 264 observations match.
 This closes the precision domain; it does not certify every zoned operand or the
 remaining whole-model construction property.
+
+Ordinary `Cast` construction also enforces the temporal and floating-point
+precision limits. A caller cannot construct TIME/DATETIME precision above six
+or FLOAT precision above 53 and defer that intrinsic defect to execution.
+Input lowering returns a typed precision refusal with its completion boundary;
+Memory no longer walks accepted cast structures to rediscover these errors.
+MySQL 5.7, 8.0 and 8.1 keep subsequent grammar conditions after the refusal,
+whereas 5.6 and 8.2 onward stop. The input matrix compares CAST and CONVERT,
+large overflowing precision spellings, stored definitions, unprepared markers
+and competing SELECT modifiers across eight releases (2,140 observations).
+In 5.7, a later query-cache conflict stops reading but does not replace an
+already recorded precision error; deferred ALL/DISTINCT checks do not displace
+a prior syntax refusal. These checks close this precision domain only; array
+cast placement and other expression-role constraints remain separate obligations.

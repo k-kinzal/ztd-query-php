@@ -33,31 +33,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class CastTest extends TestCase
 {
-    /**
-     * @return iterable<string, array{CastKind, ?string, ?int, int}>
-     */
-    public static function providerPrecisions(): iterable
-    {
-        yield 'float omitted' => [CastKind::Float, null, null, 53];
-        yield 'float boundary' => [CastKind::Float, '53', null, 53];
-        yield 'float excess' => [CastKind::Float, '54', 54, 53];
-        yield 'signed overflow' => [CastKind::Float, '2147483648', -2147483648, 53];
-        yield 'unsigned overflow' => [CastKind::Float, '4294967296', 0, 53];
-        yield 'unsigned maximum' => [CastKind::Float, '18446744073709551615', -1, 53];
-        yield 'time boundary' => [CastKind::Time, '6', null, 6];
-        yield 'time excess' => [CastKind::Time, '7', 7, 6];
-        yield 'datetime excess' => [CastKind::DateTime, '7', 7, 6];
-        yield 'character length' => [CastKind::Char, '54', null, 6];
-    }
-
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerPrecisions')]
-    public function testPrecisionProblemPreservesTheLimitAndReportedPrecision(CastKind $kind, ?string $length, ?int $reported, int $maximum): void
-    {
-        $cast = new Cast(new NumberLiteral('1'), new CastTarget($kind, $length));
-
-        self::assertEquals($reported === null ? null : new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision($reported, 'CAST', $maximum), $cast->precisionProblem());
-    }
-
     public function testDeriveScalarHasTheTargetTypeAndADateCanBeNull(): void
     {
         $platform = new Platform();
@@ -111,30 +86,11 @@ final class CastTest extends TestCase
         self::assertSame("This version of MySQL doesn't yet support 'CAST-ing data to array of JSON'.", $operation->facts->diagnostics[0]->message());
     }
 
-    public function testDeriveScalarPreservesContinuingCastErrorsInMySql80(): void
-    {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('SELECT CAST(1 AS DATETIME(7)), CAST(1 AS JSON ARRAY), BINARY 1');
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[0]);
-        self::assertFalse($operation->facts->warnings[0]->aborts);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[1]);
-        self::assertFalse($operation->facts->warnings[1]->aborts);
-    }
-
     public function testDeriveScalarWarnsAboutAUtf8mb3Target(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT CAST(1 AS CHAR CHARACTER SET utf8mb3)');
 
         self::assertSame(["'utf8mb3' is deprecated and will be removed in a future release. Please use utf8mb4 instead"], array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings));
-    }
-
-    public function testDeriveScalarRefusesATooBigPrecisionWhileParsing(): void
-    {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT CAST(1 AS DATETIME(7))');
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[0]);
-        self::assertTrue($operation->facts->warnings[0]->aborts);
-        self::assertSame("Too-big precision 7 specified for 'CAST'. Maximum is 6.", $operation->facts->diagnostics[0]->message());
     }
 
     public function testDeriveScalarWarnsThatACastToNcharIsUtf8mb3(): void

@@ -72,7 +72,8 @@ final class CacheOptions
         if ($target !== null) {
             return $target;
         }
-        $condition = $this->condition($error, $statement, $session);
+        $condition = $this->condition($error, $statement, $session)
+            ?? (new Parse\ContinuingRefusal())->unfinished($error, $statement, $cause?->token->offset ?? strlen($statement), $session);
         if ($condition !== null) {
             return $condition;
         }

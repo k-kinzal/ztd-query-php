@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a precision above 6
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CAST(1 AS TIME(7))');
- *     $query->facts->diagnostics[0]->message() // => "Too-big precision 7 specified for 'CAST'. Maximum is 6."
+ *     (new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(7, 'CAST'))->message() // => "Too-big precision 7 specified for 'CAST'. Maximum is 6."
  */
 final class TooBigPrecision implements Diagnostic
 {

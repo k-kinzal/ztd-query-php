@@ -37,7 +37,7 @@ final class SyntaxCasts
             return null;
         }
         $form = $lowering->productions->form($node);
-        $aborts = !in_array($lowering->profile->grammar, [GrammarRelease::MySql8044, GrammarRelease::MySql810], true);
+        $aborts = !in_array($lowering->profile->grammar, [GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql810], true);
         if ($form->signature === 'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )') {
             return new ParseFailure(new NotSupportedYet('AT LOCAL'));
         }

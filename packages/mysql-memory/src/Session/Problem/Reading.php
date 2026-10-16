@@ -58,7 +58,6 @@ final class Reading
         $this->variables($operation, $session);
         $this->legacyWrites($operation, $session);
         $this->targets($operation->statement, $session);
-        (new Precision())->check($operation->statement);
         $this->diagnosed($operation, $session);
         (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session);
         (new \MySqlMemory\Command\Explain\ExplainCommand())->check($operation->statement, $session);

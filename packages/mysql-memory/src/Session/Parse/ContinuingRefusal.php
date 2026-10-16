@@ -27,6 +27,33 @@ use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
 final class ContinuingRefusal
 {
     /**
+     * Keeps continuing semantic conditions before a later legacy syntax refusal.
+     * A modifier conflict retains the legacy parser's stopping behavior.
+     */
+    public function unfinished(SqlError $error, string $statement, int $end, Session $session): ?SqlError
+    {
+        $parser = $session->semantics()->parser();
+        Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
+        if (array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure) === []) {
+            return null;
+        }
+        $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
+        $modifiers = new Modifiers($tokens, $session->settings()->release());
+        [$operators, $conflict] = $modifiers->scan($end, -1);
+        if ($conflict !== null) {
+            $notices = array_values(array_filter($notices, static fn (array $notice): bool => $notice[0] <= ($modifiers->stoppedAt ?? $end)));
+            $error = (new \MySqlMemory\Session\CacheOptions())->refusal($conflict);
+        }
+        foreach ($operators as $offset => $notice) {
+            $notices[] = [$offset, $notice];
+        }
+        usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+
+        return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);
+    }
+
+    /**
      * Records the complete grammar observation, including a debug-build refusal.
      */
     public function error(RejectedInput $failure, string $statement, Session $session): SqlError

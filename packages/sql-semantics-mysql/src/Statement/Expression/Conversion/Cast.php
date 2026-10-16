@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Typing\Casts;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
@@ -39,7 +38,7 @@ use SqlSemantics\Statement\Type\Known;
  * Rule: MYSQL-CAST-001. Facts: MYSQL-CAST-RESULT-001; a cast to an array is
  * a JSON value, or a problem for a type no multi-valued index takes
  * (arrayRefusal()). A TIME or DATETIME precision above 6 is a problem the
- * server finds while it parses the cast. The operand takes a single value. Terminates: the operand
+ * server finds while it parses the cast; construction excludes it. The operand takes a single value. Terminates: the operand
  * is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast,
  * https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_convert.
@@ -48,6 +47,10 @@ use SqlSemantics\Statement\Type\Known;
  * @visibility public
  * @example Writing CONVERT with a type as CAST
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE CONVERT(a, SIGNED)')->toString() // => 'SELECT a FROM t WHERE CAST(a AS SIGNED)'
+ * @example Refusing an impossible temporal precision
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Time, '7')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an impossible floating precision
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Float, '54')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Cast implements Scalar
 {
@@ -60,6 +63,7 @@ final class Cast implements Scalar
      */
     public function __construct(public readonly Scalar $operand, public readonly CastTarget $target, public readonly bool $array = false)
     {
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->precision($target) === null, 'A CAST precision must fit its target type.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -73,11 +77,6 @@ final class Cast implements Scalar
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         if ($this->target->kind === CastKind::NationalChar) {
             Deprecation::raise(Deprecated::National, $derivation);
-        }
-        $problem = $this->precisionProblem();
-        if ($problem !== null) {
-            $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, !in_array($grammar, [GrammarRelease::MySql8044, GrammarRelease::MySql810], true)));
         }
         if ($this->target->charset?->charset !== null) {
             Deprecation::charset($this->target->charset->charset->value, $derivation);
@@ -104,14 +103,6 @@ final class Cast implements Scalar
         $domain = $operand === null ? null : (new Casts(Settings::of($derivation->context), $grammar))->cast($operand, $this->target);
 
         return new ScalarFact($domain === null ? $result->type($this->target) : new Known($domain), $result->nullability($this->target, $fact->nullability, $grammar));
-    }
-
-    /**
-     * Answers a precision beyond the cast target's limit.
-     */
-    public function precisionProblem(): ?TooBigPrecision
-    {
-        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->precision($this->target);
     }
 
     /**

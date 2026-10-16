@@ -5,38 +5,17 @@ declare(strict_types=1);
 namespace MySqlMemory\Session\Problem;
 
 use MySqlMemory\Error\Family\SchemaError;
-use MySqlMemory\Evaluation\Compile\Walker;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
-use SqlSemantics\Statement\Node;
 
 /**
- * Refuses an excessive CAST precision while the statement is read.
+ * Formats versioned precision diagnostics already supplied by SQL Semantics.
  *
- * SQL Semantics supplies each cast's precision problem: at most 53 bits for FLOAT and 6 digits
- * for temporal fractions. The error is ER_TOO_BIG_PRECISION, named for CAST in each case;
- * the casts are checked in their order. AT TIME ZONE enforces its fractional
- * precision in its semantic constructor, before this consumer is reached.
+ * Accepted cast structures enforce their intrinsic precision at construction.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html.
  *
  * @visibility MySqlMemory
  */
 final class Precision
 {
-    /**
-     * Raises cast precision problems.
-     *
-     * @throws \MySqlMemory\Error\SqlError When such a precision is found
-     */
-    public function check(Node $statement): void
-    {
-        foreach ((new Walker())->find($statement, Cast::class) as $cast) {
-            $problem = $cast->precisionProblem();
-            if ($problem !== null) {
-                throw SchemaError::TooBigPrecision->error($problem->precision, $problem->function, $problem->maximum);
-            }
-        }
-    }
-
     /**
      * Answers an error as the release reports it: MySQL 5.6 writes ER_TOO_BIG_PRECISION as "Too big precision ... for column ..." (verified on a live 5.6.51 server); any other error, or release, is answered as it is.
      */

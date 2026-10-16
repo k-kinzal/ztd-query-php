@@ -16,6 +16,16 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class ModifiersTest extends TestCase
 {
+    public function testScanRetainsTheBoundaryOfAnAbortingModifierConflict(): void
+    {
+        $tokens = (new Instance('5.7.44'))->connect()->semantics()->parser()->tokenize('SELECT SQL_CACHE SQL_CACHE CAST(NULL AS TIME(7)),?');
+        $modifiers = new Modifiers($tokens, GrammarRelease::MySql5744);
+        $modifiers->scan(PHP_INT_MAX, -1);
+
+        self::assertSame(strlen('SELECT SQL_CACHE SQL_CACHE'), $modifiers->stoppedAt);
+        self::assertSame(['SQL_CACHE', 'SQL_CACHE'], $modifiers->conflict);
+    }
+
     public function testScanAnswersTheWarningsOfTheTokensBeforeAnOffset(): void
     {
         $session = (new Instance('5.7.44'))->connect();
