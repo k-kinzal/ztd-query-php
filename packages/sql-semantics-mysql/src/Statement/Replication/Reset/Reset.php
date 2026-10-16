@@ -55,8 +55,15 @@ final class Reset implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $legacySpelling = false;
         foreach ($this->targets as $target) {
             $target->deriveTarget($derivation);
+            if ($target instanceof ResetBinaryLogs && !$target->synonym && $legacySpelling && \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ResetMaster->warnedIn($derivation->context->profile->grammar)) {
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ResetMaster), $target, false);
+            }
+            if (($target instanceof ResetBinaryLogs || $target instanceof ResetReplica) && $target->synonym) {
+                $legacySpelling = true;
+            }
         }
     }
 

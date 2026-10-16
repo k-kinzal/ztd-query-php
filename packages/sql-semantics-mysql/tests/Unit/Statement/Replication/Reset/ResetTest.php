@@ -24,7 +24,7 @@ final class ResetTest extends TestCase
 
     public function testRenderWritesTheItemsInOrder(): void
     {
-        self::assertSame("RESET SLAVE FOR CHANNEL 'channel', BINARY LOGS AND GTIDS TO 7", (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("reset slave for channel 'channel', master to 7")->toString());
+        self::assertSame("RESET SLAVE FOR CHANNEL 'channel', MASTER TO 7", (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("reset slave for channel 'channel', master to 7")->toString());
     }
 
     public function testTargetsRejectMixedVocabulariesOfTheSameKind(): void
@@ -54,6 +54,24 @@ final class ResetTest extends TestCase
 
         self::assertSame([$logs, $replica], $reset->effectiveTargets());
         self::assertCount(4, $reset->targets);
+    }
+
+    public function testDeriveStatementRetainsWrittenNoticeOrderWithoutSourceOrigins(): void
+    {
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql, 'mysql-8.2.0'))->context());
+        $reset = new Reset([
+            new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, synonym: true),
+            new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current),
+            new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current),
+            new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, synonym: true),
+        ]);
+        $reset->deriveStatement($derivation);
+
+        self::assertSame([
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ReplicationSpelling,
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ResetMaster,
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ResetMaster,
+        ], array_column($derivation->facts()->warnings, 'construct'));
     }
 
 }

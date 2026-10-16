@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading RESET MASTER as its synonym
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.3.0'))->analyze('reset master to 5')->toString() // => 'RESET BINARY LOGS AND GTIDS TO 5'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.3.0'))->analyze('reset master to 5')->toString() // => 'RESET MASTER TO 5'
  */
 final class ResetBinaryLogs implements ResetTarget
 {
@@ -39,9 +39,11 @@ final class ResetBinaryLogs implements ResetTarget
     /**
      * @param Terminology $terminology The vocabulary of the release
      * @param Numeral|null $first The number of the first new binary log file, when TO is written
+     * @param bool $synonym Whether MASTER is written where BINARY LOGS AND GTIDS is the current vocabulary
      */
-    public function __construct(public readonly Terminology $terminology, public readonly ?Numeral $first = null)
+    public function __construct(public readonly Terminology $terminology, public readonly ?Numeral $first = null, public readonly bool $synonym = false)
     {
+        Check::input(!$synonym || $terminology === Terminology::Current, 'The MASTER synonym applies to current binary-log terminology.');
         Check::input(self::problem($first) === null, 'A binary log index is an integer between 1 and 2000000000.');
     }
 
@@ -51,6 +53,11 @@ final class ResetBinaryLogs implements ResetTarget
     public function deriveTarget(Derivation $derivation): void
     {
         $release = $derivation->context->profile->grammar;
+        if ($this->synonym) {
+            $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ResetMaster;
+            Check::input($notice->warnedIn($release), 'The MASTER synonym is accepted in MySQL 8.2 and 8.3.');
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice), $this, false);
+        }
         $releases = new Releases();
         Check::input($releases->binaryLogs($release) === $this->terminology, 'RESET BINARY LOGS AND GTIDS is written in the vocabulary of the release.');
         Check::input($this->first === null || !$releases->legacy($release), 'RESET MASTER TO needs MySQL 8.0 or later.');
@@ -77,7 +84,7 @@ final class ResetBinaryLogs implements ResetTarget
      */
     public function render(Output $out): void
     {
-        if ($this->terminology === Terminology::Legacy) {
+        if ($this->terminology === Terminology::Legacy || $this->synonym) {
             $out->keyword('MASTER');
         } else {
             $out->keyword('BINARY', 'LOGS', 'AND', 'GTIDS');

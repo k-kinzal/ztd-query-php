@@ -34,4 +34,10 @@ final class ResetBinaryLogsTest extends TestCase
         self::assertSame($number, ResetBinaryLogs::problem($number)?->number);
         self::assertNull(ResetBinaryLogs::problem(null));
     }
+    public function testSynonymRejectsLegacyTerminology(): void
+    {
+        $this->expectExceptionMessage('The MASTER synonym applies to current binary-log terminology.');
+        new ResetBinaryLogs(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy, synonym: true);
+    }
+
 }

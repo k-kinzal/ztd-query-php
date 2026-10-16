@@ -64,7 +64,7 @@ final class SyntaxDeprecations
     public function binaryLogs(Node $node, Token $first, ?Token $preceding): ?Deprecated
     {
         return match (true) {
-            $node->name === 'master_or_binary_logs_and_gtids' && $first->name === 'MASTER_SYM' => Deprecated::ResetMaster,
+            $node->name === 'master_or_binary_logs_and_gtids' && ($first->name === 'MASTER_SYM' || in_array($preceding?->name, ['MASTER_SYM', 'SLAVE'], true)) => Deprecated::ResetMaster,
             $node->name === 'master_or_binary' && $first->name === 'MASTER_SYM' && $preceding?->name === 'SHOW' => Deprecated::ShowMasterLogs,
             $node->name === 'master_or_binary' && $first->name === 'MASTER_SYM' && $preceding?->name === 'PURGE' => Deprecated::PurgeMasterLogs,
             $node->name === 'show_master_status_stmt' => Deprecated::ShowMasterStatus,
@@ -77,18 +77,24 @@ final class SyntaxDeprecations
      */
     public function preceding(Node $node, \SqlParser\Parser\SqlParser $parser, string $sql, ?Token $lookahead = null): ?Token
     {
-        if (!in_array($node->name, ['replica', 'opt_replica_reset_options', 'master_or_binary'], true)) {
+        if (!in_array($node->name, ['replica', 'opt_replica_reset_options', 'master_or_binary', 'master_or_binary_logs_and_gtids'], true)) {
             return null;
         }
         $range = (new \SqlSemantics\Construction\SourceRanges())->span($node, true);
         $offset = $range[0] ?? $lookahead?->offset;
         $preceding = null;
+        $resetLegacy = null;
         foreach ($offset === null ? [] : $parser->tokenize(substr($sql, 0, $offset)) as $token) {
+            if ($token->name === 'RESET_SYM') {
+                $resetLegacy = null;
+            } elseif (in_array($token->name, ['MASTER_SYM', 'SLAVE'], true)) {
+                $resetLegacy = $token;
+            }
             if ($token->text !== '') {
                 $preceding = $token;
             }
         }
 
-        return $preceding;
+        return $node->name === 'master_or_binary_logs_and_gtids' ? $resetLegacy : $preceding;
     }
 }

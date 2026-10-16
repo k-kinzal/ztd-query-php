@@ -51,7 +51,7 @@ final class ShowProcesslistCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowProcesslist);
         $legacy = $session->settings()->legacy();
-        if (!$legacy) {
+        if (!$legacy && $session->settings()->release() !== GrammarRelease::MySql810) {
             $context->warning(StatementError::DeprecatedSyntax, 'INFORMATION_SCHEMA.PROCESSLIST', 'performance_schema.processlist');
         }
         $rows = [];

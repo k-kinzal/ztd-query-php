@@ -49,6 +49,7 @@ final class ReleaseCatalogTest extends TestCase
             'ALTER TABLE child ADD b INT REFERENCES parent(a)',
             'INSERT INTO child VALUES(2,2)', 'SHOW CREATE TABLE child',
             'LOCK TABLE missing LOW_PRIORITY WRITE', 'UNLOCK TABLES',
+            'ALTER EVENT missing DISABLE ON SLAVE',
             'RESET MASTER', 'RESET MASTER TO 1',
             'PURGE MASTER LOGS TO \'text\'', "PURGE MASTER LOGS BEFORE '2000-01-01'",
             'SHOW MASTER LOGS', 'SHOW MASTER STATUS',

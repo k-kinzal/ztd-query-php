@@ -1882,6 +1882,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Reset\\ResetBinaryLogs": {
         "first": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "synonym": "bool",
         "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Reset\\ResetPersist": {

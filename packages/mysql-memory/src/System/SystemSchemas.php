@@ -183,7 +183,7 @@ final class SystemSchemas
      */
     public function read(SystemTable $table, Connection $connection): StoredTable
     {
-        if ($this->release !== GrammarRelease::MySql5651 && $this->release !== GrammarRelease::MySql5744 && SystemTables::key($table->schema, $table->name) === 'information_schema.processlist') {
+        if ($this->release !== GrammarRelease::MySql5651 && $this->release !== GrammarRelease::MySql5744 && $this->release !== GrammarRelease::MySql810 && SystemTables::key($table->schema, $table->name) === 'information_schema.processlist') {
             $this->instance->registry->status->processlist($this->instance->registry->threads->now());
             $connection->context->warning(StatementError::DeprecatedSyntax, 'INFORMATION_SCHEMA.PROCESSLIST', 'performance_schema.processlist');
         }

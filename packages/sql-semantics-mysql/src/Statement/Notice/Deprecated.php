@@ -130,7 +130,7 @@ enum Deprecated: string
         }
 
         if ($this === self::DisableOnSlave) {
-            return $release !== GrammarRelease::MySql8044;
+            return !in_array($release, [GrammarRelease::MySql8044, GrammarRelease::MySql810], true);
         }
         if ($this === self::LowPriorityWrite) {
             return in_array($release, [GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830], true);

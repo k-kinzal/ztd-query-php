@@ -127,13 +127,7 @@ final class ResetRule
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
 
-        $target = new ResetBinaryLogs($terminology, $number);
-        $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ResetMaster;
-        if ($master && $notice->warnedIn($this->lowering->profile->grammar)) {
-            $this->lowering->origins->notice($target, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice), $form->node(0));
-        }
-
-        return $target;
+        return new ResetBinaryLogs($terminology, $number, $master && $terminology === Terminology::Current);
     }
 
     /**
