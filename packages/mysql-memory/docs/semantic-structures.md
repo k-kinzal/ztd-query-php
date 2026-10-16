@@ -797,3 +797,16 @@ before and after successful scalar requests and intentional SIGNAL errors on
 five releases (110 observations), retaining exact Questions and command counts.
 This closes those request-history discrepancies; it does not exempt physical
 status values or establish all remaining status-listing contracts.
+
+Complete direct SHOW STATUS listings use independent GLOBAL/SESSION baselines
+and the same value policy as SQL differential fuzzing. Session command counts
+remain exact; global command counts retain their observed history deltas. Native
+wire bytes are checked against mysqlnd measurements and the actual request size.
+Direct calls have no transport and must retain zero byte counts. Physical
+quantities must be zero or empty in memory. All metadata, variable identities,
+diagnostics, live connection counts and unclassified values remain exact.
+The fixture mirrors its two overlapping setup connections instead of exempting
+the maximum connection count. Thirty comparisons reuse the same status objects
+against independent native instances across five releases and three scopes;
+negative controls reject changed counters, nonempty physical values, extra names,
+metadata, diagnostics and termination. Raw observations remain in each record.

@@ -19,12 +19,14 @@ final class Observations
      * @param array<string, mixed> $actual The complete memory observation
      * @return array{matches: bool, contracts: list<string>} Equality and the exceptions validated independently on both sides
      */
-    public function compare(Statement|Scalar $node, string $release, array $expected, array $actual): array
+    public function compare(Statement|Scalar $node, string $release, array $expected, array $actual, ?Status\Listing $status = null): array
     {
         $library = new LibraryErrors();
         $left = $library->comparable($expected, $release);
         $right = $library->comparable($actual, $release);
         $contracts = $left !== $expected && $right !== $actual ? ['missing-library-os-errno-2-or-11'] : [];
+        $left = $status?->comparable($left, false) ?? $left;
+        $right = $status?->comparable($right, true) ?? $right;
         $left = (new EngineReport())->comparable($node, (new CatalogRows())->comparable($node, $left), false);
         $right = (new EngineReport())->comparable($node, (new CatalogRows())->comparable($node, $right), true);
         $leftContracts = $left['contracts'] ?? [];
