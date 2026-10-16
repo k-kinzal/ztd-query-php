@@ -25,7 +25,7 @@ use Testcontainers\Testcontainers;
 final class Comparison
 {
     /**
-     * @return array{sql: string, profile: string, mode: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool} Both complete observations and their strict equality
+     * @return array{sql: string, profile: string, mode: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>} Both original observations, equality and explicit comparison contracts
      */
     public function compare(Statement|Scalar $node, LanguageProfile $profile, ?string $mode = null, ?int $port = null): array
     {
@@ -49,10 +49,7 @@ final class Comparison
                 $actual = (new Memory())->observe($session, $node, $this->parameters($node, $session));
                 $expected = (new Native())->observe($native, $sql, count((new Bindings())->nulls($node)));
 
-                $actual = (new CatalogRows())->comparable($node, $actual);
-                $expected = (new CatalogRows())->comparable($node, $expected);
-
-                return ['sql' => $sql, 'profile' => $profile->grammar->value, 'mode' => $mode, 'native' => $expected, 'memory' => $actual, 'matches' => $expected === $actual];
+                return ['sql' => $sql, 'profile' => $profile->grammar->value, 'mode' => $mode, 'native' => $expected, 'memory' => $actual, ...(new Observations())->compare($node, $release, $expected, $actual)];
             } finally {
                 $native->close();
             }

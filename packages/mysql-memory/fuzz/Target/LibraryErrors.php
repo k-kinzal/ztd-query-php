@@ -34,8 +34,9 @@ final class LibraryErrors
         $warnings = $observation['warnings'] ?? null;
         if (is_array($warnings)) {
             foreach ($warnings as $index => $condition) {
-                if ($condition === ['Error', 1126, $message]) {
-                    $warnings[$index] = ['Error', 1126, $comparable];
+                if ($condition === ['Error', 1126, $message] || $condition === ['Error', '1126', $message]) {
+                    $condition[2] = $comparable;
+                    $warnings[$index] = $condition;
                 }
             }
             $observation['warnings'] = $warnings;

@@ -89,9 +89,14 @@ or a structural repair. See the [acceptance contract](acceptance.md).
 Each trial has a fresh native server so partial effects cannot leak into another
 trial. `MYSQL_MEMORY_STRUCTURE_NATIVE_PORT` optionally fixes its published port;
 otherwise Testcontainers chooses it. Every comparison record includes the SQL,
-profile and both observations. Instance-specific observations still need explicit
-contracts; this runner currently reports their differences without normalizing
-them. Separate state-transition properties use the same constructed object under
+profile and both original observations. Comparison copies may use explicit,
+recorded exception contracts: legacy missing-library OS errno 2/11, and physical
+engine reports validated by the same rules as SQL differential fuzzing. The
+engine contract requires an empty memory report and a recognized native payload;
+metadata, warnings, errors and connection termination remain exact. Tests compare
+the same constructed engine requests against two independent native instances
+for each supported release and preserve both original payloads. Other
+instance-specific differences remain failures until their contracts are established. Separate state-transition properties use the same constructed object under
 changed session modes, declarations or stored-program scopes. A single matching
 rejection is not evidence that every part of its structure was reached.
 
