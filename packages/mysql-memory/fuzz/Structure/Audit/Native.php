@@ -17,7 +17,7 @@ use RuntimeException;
 final class Native
 {
     /**
-     * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<list<mixed>>|null, disconnected: bool} All result sets, the terminal error and stored conditions
+     * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<list<mixed>>|null, disconnected: bool, warningsError?: array{int, string, string}} All result sets, the terminal error and the separate condition-reading outcome
      * @throws RuntimeException When the driver does not produce an observation
      */
     public function observe(mysqli $connection, string $sql, int $parameters = 0): array
@@ -51,10 +51,11 @@ final class Native
     }
 
     /**
-     * Reads conditions, or records that the completed statement disconnected its session.
+     * Reads conditions, or records why the condition query was refused.
+     * An expired password can deny SHOW WARNINGS while the connection remains live.
      * An error during the target itself is still retained by observe().
      *
-     * @return array{warnings: list<list<mixed>>|null, disconnected: bool}
+     * @return array{warnings: list<list<mixed>>|null, disconnected: bool, warningsError?: array{int, string, string}}
      * @throws RuntimeException When a live connection supplies no condition result
      */
     public function conditions(mysqli $connection): array
@@ -63,7 +64,7 @@ final class Native
             $warnings = $connection->query('SHOW WARNINGS');
         } catch (mysqli_sql_exception $error) {
             if (!in_array($error->getCode(), [2006, 2013], true)) {
-                throw $error;
+                return ['warnings' => null, 'disconnected' => false, 'warningsError' => [$error->getCode(), $error->getSqlState(), $error->getMessage()]];
             }
 
             return ['warnings' => null, 'disconnected' => true];

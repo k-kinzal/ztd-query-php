@@ -40,7 +40,9 @@ use SqlSemantics\Statement\Operation;
  * level and tolerates missing accounts; in 5.x it removes only global static privileges. REVOKE of
  * roles refuses an account or a role that does not exist (ER_UNKNOWN_AUTHID, for a role a
  * warning under IF EXISTS); revoking a role that is not granted does nothing. REVOKE ALL, GRANT
- * OPTION keeps the roles and refuses an account that does not exist (ER_REVOKE_GRANTS). REVOKE
+ * OPTION keeps the roles. In 5.x every missing account causes ER_REVOKE_GRANTS,
+ * while successful recipients keep their changes. In 8.x and later the final
+ * recipient determines that error and a failure rolls back the whole statement. REVOKE
  * PROXY requires authority over the proxied account (see Proxies).
  * A failed privilege or proxy REVOKE keeps successful changes in 5.x and rolls them back in 8.x and later
  * (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
@@ -77,7 +79,7 @@ final class RevokeCommand implements Command
                 default => $this->privileges($operation, $session),
             };
         } catch (SqlError $error) {
-            if ((!$statement instanceof RevokePrivileges && !$statement instanceof RevokeProxy) || !$session->settings()->legacy()) {
+            if ((!$statement instanceof RevokePrivileges && !$statement instanceof RevokeProxy && !$statement instanceof RevokeAll) || !$session->settings()->legacy()) {
                 $accounts->restore($saved);
             }
             throw $error;
@@ -306,15 +308,30 @@ final class RevokeCommand implements Command
     /**
      * Revokes every privilege at every level from accounts, keeping their roles.
      *
-     * @throws SqlError When an account does not exist
+     * @throws SqlError When the versioned recipient policy refuses an absent account
      */
     public function everything(RevokeAll $statement, Session $session): void
     {
         $names = new Names($session->settings()->release());
         $users = $names->users($statement->users);
         $names->check($users);
-        foreach ($this->found($users, $statement->ignoreUnknownUser, $session, false, AccountError::RevokeGrants->error()) as $account) {
-            $account->grants->clear();
+        $failed = false;
+        foreach ($users as $user) {
+            $identity = $names->identity($user, $session);
+            $account = $session->instance->accounts->find($identity);
+            if (!$session->settings()->legacy()) {
+                $failed = false;
+            }
+            if ($account !== null) {
+                $account->grants->clear();
+            } elseif ($statement->ignoreUnknownUser) {
+                $session->diagnostics->warning(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->user));
+            } else {
+                $failed = true;
+            }
+        }
+        if ($failed) {
+            throw AccountError::RevokeGrants->error();
         }
     }
 }

@@ -85,4 +85,18 @@ final class MemoryTest extends TestCase
         self::assertSame("\0\xFF", $observer->value("\0\xFF", $binary));
     }
 
+    /**
+     * An inaccessible condition query remains a distinct, exactly compared outcome.
+     */
+    public function testObserveRetainsTheFailureOfItsOwnConditionQuery(): void
+    {
+        $session = (new Instance())->connect();
+        $session->passwordExpired = true;
+        $actual = (new Memory())->observe($session, new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings());
+        $error = [1820, 'HY000', 'You must reset your password using ALTER USER statement before executing this statement.'];
+
+        self::assertSame(['results' => [], 'error' => $error, 'warnings' => null, 'disconnected' => false, 'warningsError' => $error], $actual);
+        self::assertSame([['Error', 1820, $error[2]], ['Error', 1820, $error[2]]], $session->diagnostics->conditions);
+    }
+
 }

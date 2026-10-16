@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Predicate;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
@@ -48,15 +49,17 @@ final class SoundsLike implements Scalar
     }
 
     /**
-     * Derives both operands; the comparison can be NULL, as SOUNDEX can (verified on a live 8.4 server).
+     * Derives both operands. MySQL 5.6 propagates their nullability; later
+     * releases mark SOUNDEX as nullable even for non-NULL operands.
+     * Verified through result metadata on 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
-        $operands->single($derivation->scalar($this->operand, $environment), $derivation);
-        $operands->single($derivation->scalar($this->pattern, $environment), $derivation);
+        $left = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
+        $right = $operands->single($derivation->scalar($this->pattern, $environment), $derivation);
 
-        return $operands->truth(Nullability::Nullable);
+        return $operands->truth($derivation->context->profile->grammar === GrammarRelease::MySql5651 ? $left->nullability->propagate($right->nullability) : Nullability::Nullable);
     }
 
     /**

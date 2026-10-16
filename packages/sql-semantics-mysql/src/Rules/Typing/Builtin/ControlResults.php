@@ -31,7 +31,7 @@ final class ControlResults
     public function rules(): array
     {
         return [
-            'IF' => static fn (Invocation $call): ?Domain => $call->aggregation()->of((new self())->branches($call, [1, 2]), 'if', $call->derivation),
+            'IF' => static fn (Invocation $call): ?Domain => $call->aggregation()->of((new self())->branches($call, [1, 2], 'IF'), 'if', $call->derivation),
             'IFNULL' => static fn (Invocation $call): ?Domain => $call->aggregation()->of((new self())->branches($call, array_keys($call->domains)), 'ifnull', $call->derivation),
             'COALESCE' => static fn (Invocation $call): ?Domain => $call->aggregation()->of((new self())->branches($call, array_keys($call->domains)), 'coalesce', $call->derivation),
             'NULLIF' => $this->nullable(...),
@@ -91,11 +91,11 @@ final class ControlResults
      * @param list<int> $positions The result-argument positions
      * @return list<Domain>
      */
-    public function branches(Invocation $call, array $positions): array
+    public function branches(Invocation $call, array $positions, string $operation = 'COALESCE'): array
     {
         $domains = array_map($call->domain(...), $positions);
         $nodes = array_map(static fn (int $position): ?\SqlSemantics\Statement\Scalar => $call->nodes[$position] ?? null, $positions);
 
-        return (new \SqlSemantics\Platform\MySql\Rules\Typing\BranchInference())->resolve($domains, $nodes, $call->derivation);
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\BranchInference())->resolve($domains, $nodes, $call->derivation, $operation);
     }
 }

@@ -95,7 +95,7 @@ final class Results
         if ($derivation->context->profile->grammar === GrammarRelease::MySql5651 && $type?->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongBlob && in_array(strtoupper($name), ['CONCAT', 'CONCAT_WS', 'REPLACE'], true)) {
             $nullability = Nullability::Nullable;
         }
-        if (in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && strtoupper($name) === 'COALESCE') {
+        if (in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && (strtoupper($name) === 'COALESCE' || (strtoupper($name) === 'IFNULL' && ($facts[1]->resolution ?? null) instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding))) {
             $nullability = (new ResultTyping())->nullability('P', $facts);
         }
         $nullability = (new Pattern\PatternResults())->nullability($name, $type, $nullability);

@@ -1158,3 +1158,17 @@ conflicting row, and an existing index. MySQL and memory agree on all six stages
 on 5.6, 5.7, 8.0, 8.4 and 9.1. The same structure is never replaced and its memory
 request label is unrelated invalid input. These observations distinguish the
 constructor's intrinsic bound from column-type and row-state dependencies.
+
+The native observer also runs `SHOW WARNINGS` after each target. A statement
+that expires the current password can succeed while this follow-up query fails.
+Such observations preserve the target response and record the separate
+`warningsError` (code, SQLSTATE and message), with `warnings: null` and the
+connection's actual state. The direct observer executes the same typed follow-up;
+its SQL condition is compared exactly. Internal exceptions still fail the audit.
+A same-session expiration/reset history verifies that warning access returns.
+
+Prepared branch types are derived by SQL Semantics from the other CASE, IF,
+IFNULL and COALESCE results. Legacy NULL markers have distinct binary-string
+aggregation behavior; literal NULL remains ignorable. The direct comparison
+supplies the inferred domains before execution and compares protocol metadata
+as well as values, including nonempty multibyte results.

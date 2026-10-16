@@ -21,7 +21,8 @@ use SqlSemantics\Statement\Type\Known;
  * The initial marker domains of a prepared statement, derived from semantic facts.
  *
  * Arithmetic and comparison markers inherit their sibling's domain, widening
- * integers to BIGINT. Arithmetic against NULL needs DOUBLE. CAST records that
+ * integers to BIGINT. CASE and control-function result branches supply the
+ * other branch types. Arithmetic against NULL needs DOUBLE. CAST records that
  * its argument is fixed against automatic repreparation. Other positions retain
  * their supplied preparation domain. Consumers retain these domains between
  * executions and supply them as parameter settings when resolving again.
@@ -52,6 +53,9 @@ final class ParameterInference
             }
         }
         foreach ($nodes as $expression) {
+            foreach ((new \SqlSemantics\Platform\MySql\Rules\Typing\Prepared\BranchParameters())->infer($expression, $operation) as $position => $domain) {
+                $types[$position] = [$domain, false];
+            }
             if ($expression instanceof Arithmetic || $expression instanceof Comparison) {
                 foreach ([[$expression->left, $expression->right], [$expression->right, $expression->left]] as [$operand, $other]) {
                     if (!$operand instanceof Parameter || $other instanceof Parameter || !$operation->facts->covers($other)) {

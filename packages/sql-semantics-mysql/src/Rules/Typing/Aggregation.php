@@ -209,6 +209,9 @@ final class Aggregation
 
     /**
      * Settles values on a string as long as the longest of them written as text: 22 characters for a DOUBLE, 23 for a FLOAT (verified on live 8.0 and 8.4 servers).
+     * Legacy numeric branches retain their maximum fractional precision when
+     * joined with a zero-width NULL marker; a text branch supplies NOT_FIXED.
+     * Verified through prepared CASE and COALESCE on MySQL 5.6 and 5.7.
      *
      * @param non-empty-list<Domain> $domains
      */
@@ -230,6 +233,9 @@ final class Aggregation
         }
 
         $result = $blob || $operation === 'UNION' ? Domain::string($length, $collation, $blob ? Field::Blob : Field::VarString, $coercibility) : $this->sized($length, $collation, $coercibility);
+        if ($operation !== 'UNION' && array_filter($domains, static fn (Domain $domain): bool => $domain->kind->numeric()) !== []) {
+            $result = new Domain($result->kind, $result->field, $result->length, max(array_column($domains, 'decimals')), $result->unsigned, $result->collation, [], $result->coercibility);
+        }
 
         return $operation === 'UNION' ? $result : (new Text\ResultBounds())->computed($this->fixed($result, $domains));
     }

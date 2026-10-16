@@ -36,4 +36,16 @@ final class BranchInferenceTest extends TestCase
         self::assertSame([], $derivation->introducedVariables);
         self::assertSame([], $settings->userVariables);
     }
+    public function testResolveDistinguishesLegacyNullMarkersFromNullLiterals(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $domains = [Domain::null(), Domain::null()];
+        $nodes = [new Grouped(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()), null];
+        $rules = new BranchInference();
+        $expected = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, Collation::binary(), [], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
+
+        self::assertEquals([$expected, $domains[1]], $rules->resolve($domains, $nodes, $derivation));
+        self::assertSame($domains, $rules->resolve($domains, $nodes, $derivation, 'IF'));
+    }
+
 }

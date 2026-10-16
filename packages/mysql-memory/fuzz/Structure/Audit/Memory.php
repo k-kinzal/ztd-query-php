@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Scalar;
 final class Memory
 {
     /**
-     * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<array{string, string, string}>|null, disconnected: bool} All result sets, the terminal error and stored conditions
+     * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<array{string, string, string}>|null, disconnected: bool, warningsError?: array{int, string, string}} All result sets, the terminal error and the separate condition-reading outcome
      * @param list<array{int|float|string|null, Domain}>|null $parameters Bindings selected before execution, or the local NULL fixture
      */
     public function observe(Session $session, Statement|Scalar $node, ?array $parameters = null): array
@@ -41,7 +41,13 @@ final class Memory
         $observation['warnings'] = $session->released ? null : array_map(static fn (array $condition): array => [$condition[0], (string) $condition[1], $condition[2]], $session->diagnostics->conditions);
         $observation['disconnected'] = $session->released;
         if (!$session->released) {
-            (new Execution())->runIn($session, new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings());
+            try {
+                (new Execution())->runIn($session, new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings());
+            } catch (SqlError $error) {
+                (new \MySqlMemory\Session\Execution($session))->failed($error);
+                $observation['warnings'] = null;
+                $observation['warningsError'] = [$error->getCode(), $error->sqlState(), $error->getMessage()];
+            }
         }
 
         return $observation;
