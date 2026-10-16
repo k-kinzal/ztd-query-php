@@ -21,6 +21,10 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/floating-point-types.html.
  *
  * @visibility public
+ * @example Requiring both display dimensions for REAL
+ *     new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Real, '12') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Requiring both display dimensions for DOUBLE
+ *     new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Double, '12') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading an approximate type
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Float, '7', '3');
  *     [$type->name(), $type->precision, $type->scale] // => ['FLOAT', '7', '3']
@@ -44,6 +48,7 @@ final class Floating implements DeclaredName
     {
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
         Check::input($scale === null || ($precision !== null && preg_match('/\A[0-9]+\z/', $scale) === 1), 'A scale is an unsigned integer written after a precision.');
+        Check::input($precision === null || $scale !== null || $kind === FloatingKind::Float, 'Only FLOAT permits a precision without a scale.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');
     }
 
