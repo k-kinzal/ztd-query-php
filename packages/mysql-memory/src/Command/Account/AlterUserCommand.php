@@ -67,80 +67,12 @@ final class AlterUserCommand implements Command
         $names->check($names->users($statement->users));
         $options = new Options($session->settings()->release());
         $options->parsed($operation, $session->text);
-        $accounts = $session->instance->accounts;
-        $this->authentication($statement, $session, $options);
-        $missing = [];
-        $changed = [];
-        foreach ($statement->users as $user) {
-            $identity = $names->identity($names->users([$user])[0], $session);
-            $account = $accounts->find($identity);
-            if ($account === null) {
-                $missing[] = $identity;
-                if ($statement->ifExists) {
-                    $context->diagnostics->note(AccountError::UserDoesNotExist, $names->existence($identity, false));
-                }
-                continue;
-            }
-            $changed[] = [$account, $user];
-        }
-        $this->missing($missing, $changed, $statement, $session, $options);
-        $saved = $accounts->copy();
-        try {
-            $generated = $this->change($changed, $statement, $session, $options);
-        } catch (SqlError $error) {
-            $accounts->restore($saved);
-            throw $error;
-        }
-        foreach ($changed as [$account]) {
-            (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
-        }
+        $generated = (new Authentication\AlterRecipients($this, $statement, $session, $options))->apply();
         if ($generated !== []) {
             return (new Passwords())->result($generated, $context);
         }
 
         return new Completion(0, 0, $context->diagnostics->raised());
-    }
-
-    /**
-     * Reports absent accounts after applying the valid changes on MySQL 5.7.
-     *
-     * @param list<Identity> $missing
-     * @param list<array{Account, \SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration}> $changed
-     * @throws SqlError When a named account does not exist
-     */
-    public function missing(array $missing, array $changed, AlterUser $statement, Session $session, Options $options): void
-    {
-        if ($missing === [] || $statement->ifExists) {
-            return;
-        }
-        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-            $this->change($changed, $statement, $session, $options);
-            foreach ($changed as [$account]) {
-                (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
-            }
-        }
-        throw (new Names($session->settings()->release()))->failure('ALTER USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
-    }
-
-    /**
-     * Checks authentication plugins and factors before reporting missing accounts.
-     *
-     * @throws SqlError When an authentication request is invalid
-     */
-    public function authentication(AlterUser $statement, Session $session, Options $options): void
-    {
-        $names = new Names($session->settings()->release());
-        $accounts = $session->instance->accounts;
-        foreach ($statement->users as $user) {
-            $account = $accounts->find($names->identity($names->users([$user])[0], $session));
-            $plugin = $account->plugin ?? (new Credentials($session->settings()->release()))->default();
-            if ($user instanceof UserSpecification) {
-                $options->check($user->identification, $plugin);
-            }
-            if ($user instanceof FactorChange) {
-                $this->factors($user, $account, $session);
-            }
-        }
     }
 
     /**

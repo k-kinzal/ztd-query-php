@@ -122,6 +122,7 @@ final class CreateUserCommand implements Command
             }
             try {
                 $options->check($user->initial ?? $user->identification, $plugin);
+                (new Authentication\CreateFactors())->check($user, $exists, $session);
                 if (!$exists) {
                     if ($rolesRefused) {
                         throw AccountError::UserDoesNotExist->error($identity->backquoted());

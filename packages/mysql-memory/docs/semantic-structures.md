@@ -1222,3 +1222,14 @@ legacy spelling is deprecated, including when a later operand is rejected.
 Native catalog tests establish the same account password and proxy-grant fixture
 on both servers before comparing SHOW GRANTS; container installation differences
 are not treated as SQL-result exceptions.
+
+Account lists preserve occurrence order during execution. An ALTER USER batch
+checks each recipient against changes made by earlier occurrences and retains
+all recipient conditions. MySQL 5.7 keeps successful changes on failure; modern
+releases restore account data but require a password reset when the failed batch
+successfully addressed the acting session's account. The warning observer keeps
+that subsequent access failure separate from the original ALTER USER error.
+CREATE USER checks additional authentication methods only for new recipients,
+while retaining the authentication-policy notice for existing recipients. Native
+histories and direct structure replays compare these distinctions without
+replacing failed targets or suppressing their conditions.
