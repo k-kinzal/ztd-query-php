@@ -352,6 +352,21 @@ Earlier supported releases reject those names in grouped blocks, except for
 eligible derived or common tables merged into the block from MySQL 5.7 onward.
 The `derivedMerge` session setting controls that exception.
 
+### Constant JSON paths
+
+`Statement\Call\Json\JsonValueCall::pathValue` exposes the interpreted constant
+path before an `Operation` is derived. A `Json\Path` holds typed member, wildcard,
+array-cell, array-range and recursive-descent steps. Its constructors exclude
+missing or contradictory step operands. `Json\Path\Invalid` instead holds the
+byte position of an invalid decoded path operand; it is an SQL condition, not
+retained SQL source. The written string literal remains available for rendering.
+
+Derivation reports `InvalidJsonDocument` or `InvalidJsonPath`, tied to the owning
+call. Document types depend on the analysis context: the same column expression
+can be unresolved, numeric or textual as its table declaration changes. Consumers
+apply valid path steps to document values and retain their own execution state.
+Semantics does not execute JSON selection or certify execution eligibility.
+
 ### Tables and views
 
 A `CREATE VIEW` declares a view (`RelationKind::View`); every other declaration is a base table. The declared kind decides what statements on the name do, as the server decides it. `SHOW CREATE TABLE` returns `Table` and `Create Table` for a base table and the four columns of `SHOW CREATE VIEW` for a view. A statement that needs a base table (`ALTER TABLE`, `CREATE INDEX`, `CREATE TRIGGER`, `CREATE TABLE ... LIKE`, `HANDLER ... OPEN`) refuses a view, and one that needs a view (`ALTER VIEW`, `CREATE OR REPLACE VIEW`, `SHOW CREATE VIEW`, `DROP VIEW`) refuses a base table (`WrongRelationKind`). `DROP TABLE` and `TRUNCATE TABLE` do not find a view. `DROP VIEW IF EXISTS` of a base table is refused in 8.1, 8.2, 8.3, 9.0 and 9.1 only; the other releases add only a note.

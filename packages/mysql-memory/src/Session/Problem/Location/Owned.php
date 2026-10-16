@@ -34,13 +34,13 @@ final class Owned
     {
         foreach ($diagnostics as $diagnostic) {
             $owner = match (true) {
-                $diagnostic instanceof TimeZoneConversion => $diagnostic->expression,
+                $diagnostic instanceof TimeZoneConversion, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath => $diagnostic->expression,
                 $diagnostic instanceof Misuse, $diagnostic instanceof CountMismatch => $diagnostic->valueRow,
                 default => null,
             };
             $place = $owner === null ? null : $locator->place($owner);
             if ($place !== null) {
-                if ($diagnostic instanceof TimeZoneConversion) {
+                if ($diagnostic instanceof TimeZoneConversion || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath) {
                     $place[1][] = PHP_INT_MAX;
                 }
                 $located[spl_object_id($diagnostic)] = [$diagnostic, $place];

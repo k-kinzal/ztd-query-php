@@ -15,6 +15,13 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class JsonLegTest extends TestCase
 {
+    public function testFromUsesSemanticRangeDirections(): void
+    {
+        $leg = new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Leg(\SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::Range, from: new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Index(false, 1), to: new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Index(true, 1));
+        $selector = JsonLeg::from($leg);
+        self::assertSame(['2', '3'], array_map(static fn (JsonNode $node): string => $node->text(), $selector->apply(JsonNode::parse('[1,2,3,4]'))));
+    }
+
     public function testApplySelectsMembersCellsAndRanges(): void
     {
         $array = JsonNode::parse('[1, 2, 3]');

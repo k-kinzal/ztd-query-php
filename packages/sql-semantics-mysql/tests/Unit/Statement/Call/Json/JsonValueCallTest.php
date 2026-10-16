@@ -32,6 +32,27 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class JsonValueCallTest extends TestCase
 {
+    public function testPathStepsAreAvailableBeforeOperationDerivation(): void
+    {
+        $call = new JsonValueCall(new StringLiteral(['{}']), new StringLiteral(['$[last-1].a']));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\Json\Path::class, $call->pathValue);
+        self::assertSame('a', $call->pathValue->legs[1]->name);
+        self::assertNotNull($call->pathValue->legs[0]->from);
+        self::assertSame(1, $call->pathValue->legs[0]->from->offset);
+    }
+
+    public function testInvalidDocumentTypeIsOwnedByItsCall(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $derivation = new Derivation($platform->context($profile, null, [], false));
+        $call = new JsonValueCall(new NumberLiteral('1'), new StringLiteral(['']));
+        $derivation->scalar($call, $derivation->environment());
+        $problem = $derivation->facts()->diagnostics[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument::class, $problem);
+        self::assertSame($call, $problem->expression);
+    }
+
     public function testDeriveScalarAnswersTheReturningType(): void
     {
         $platform = new Platform();

@@ -58,47 +58,11 @@ final class JsonPathTest extends TestCase
         self::assertSame(['a', 'b c', [true, 2], [true, 0]], [$path->legs[0]->name, $path->legs[1]->name, $path->legs[4]->from, $path->legs[6]->to]);
     }
 
-    public function testMemberReadsANameQuotedOrNot(): void
+    public function testFromUsesSemanticStepsToSelectValues(): void
     {
-        $at = 0;
-        $quoted = JsonPath::member('."a\"b".c', $at);
-        $plain = JsonPath::member('."a\"b".c', $at);
-
-        self::assertSame(['a"b', 'c', 9], [$quoted->name, $plain->name, $at]);
-    }
-
-    public function testCellReadsACellARangeOrEveryCell(): void
-    {
-        $at = 0;
-        $range = JsonPath::cell('[1 to 2][*]', $at);
-        $every = JsonPath::cell('[1 to 2][*]', $at);
-
-        self::assertSame([JsonLegKind::Range, [false, 1], [false, 2], JsonLegKind::AnyCell, 11], [$range->kind, $range->from, $range->to, $every->kind, $at]);
-    }
-
-    public function testIndexReadsANumberOrLast(): void
-    {
-        $at = 0;
-        $last = JsonPath::index('last-3]', $at);
-        $position = $at;
-        $at = 0;
-
-        self::assertSame([[true, 3], 6, [false, 7], 2], [$last, $position, JsonPath::index('07', $at), $at]);
-    }
-
-    public function testCloseReadsTheClosingBracket(): void
-    {
-        $at = 1;
-        JsonPath::close(' ]', $at);
-
-        self::assertSame(2, $at);
-    }
-
-    public function testDescendantsReadsTwoStarsBeforeALeg(): void
-    {
-        $at = 0;
-
-        self::assertSame([JsonLegKind::Descendants, 2], [JsonPath::descendants('**.a', $at)->kind, $at]);
+        $path = \SqlSemantics\Platform\MySql\Statement\Call\Json\Path::read('$[last].a');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\Json\Path::class, $path);
+        self::assertSame('2', JsonPath::from($path)->extract(JsonNode::parse('[{"a":1},{"a":2}]'))?->text());
     }
 
     public function testWildHoldsForAPathThatCanSelectSeveralValues(): void

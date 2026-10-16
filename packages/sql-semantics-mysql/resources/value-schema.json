@@ -591,6 +591,7 @@
         "onEmpty": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
         "onError": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
         "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral",
+        "pathValue": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Invalid",
         "returning": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\NestedColumns": {
@@ -599,6 +600,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\OrdinalityColumn": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path": {
+        "legs": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\PathColumn": {
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
@@ -609,6 +613,22 @@
         "onError": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonResponse",
         "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral",
         "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Index": {
+        "last": "bool",
+        "offset": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Invalid": {
+        "position": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Kind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Leg": {
+        "from": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Index",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Kind",
+        "name": "?string",
+        "to": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Index"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordCall": {
         "arguments": "array",
@@ -622,6 +642,13 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Position": {
         "string": "SqlSemantics\\Statement\\Scalar",
         "substring": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\InvalidJsonDocument": {
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonValueCall"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\InvalidJsonPath": {
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\JsonValueCall",
+        "position": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\InvalidNamedConstant": {
         "nullName": "bool"
@@ -2482,7 +2509,7 @@
         "update": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\HistogramUpdate"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\ComponentSetting": {
-        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\OnWord",
+        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName|SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\OnWord",
         "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemTarget"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\InstallComponent": {
@@ -3287,6 +3314,7 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName": {
+        "parentheses": "int",
         "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "system": "bool",
         "word": "SqlSemantics\\Statement\\Identifier\\Name"

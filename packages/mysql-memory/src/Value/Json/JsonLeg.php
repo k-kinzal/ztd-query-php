@@ -30,6 +30,22 @@ final class JsonLeg
     }
 
     /**
+     * Converts a semantic path step into its runtime selector.
+     */
+    public static function from(\SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Leg $leg): self
+    {
+        $kind = match ($leg->kind) {
+            \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::Member => JsonLegKind::Member,
+            \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::AnyMember => JsonLegKind::AnyMember,
+            \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::Cell => JsonLegKind::Cell,
+            \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::AnyCell => JsonLegKind::AnyCell,
+            \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::Range => JsonLegKind::Range,
+            \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::Descendants => JsonLegKind::Descendants,
+        };
+        return new self($kind, $leg->name ?? '', $leg->from === null ? [false, 0] : [$leg->from->last, $leg->from->offset], $leg->to === null ? [false, 0] : [$leg->to->last, $leg->to->offset]);
+    }
+
+    /**
      * Answers the values the leg selects from a value, in order.
      *
      * @return list<JsonNode>

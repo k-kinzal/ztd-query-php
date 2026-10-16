@@ -619,4 +619,5 @@ return [
     4065 => ['HY000', "GTID_ONLY cannot be enabled for replication channel '%s'. You need GTID_MODE = ON, SOURCE_AUTO_POSITION = 1 and REQUIRE_ROW_FORMAT = 1."],
     4066 => ['HY000', "REQUIRE_ROW_FORMAT cannot be disabled for replication channel '%s' when GTID_ONLY=1."],
     4067 => ['HY000', "SOURCE_AUTO_POSITION cannot be disabled for replication channel '%s' when GTID_ONLY=1."],
+    4160 => ['HY000', 'The value supplied for %s in the SET list cannot be null'],
 ];

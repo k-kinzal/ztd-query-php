@@ -113,9 +113,29 @@ final class PluginRule
         $value = $this->lowering->form($form->node(3));
 
         return new ComponentSetting($variable, match ($value->signature) {
-            'install_set_rvalue: expr' => $this->lowering->expressions->expression($value->node(0)),
+            'install_set_rvalue: expr' => $this->word($value->node(0)) ?? $this->lowering->expressions->expression($value->node(0)),
             'install_set_rvalue: ON_SYM' => new OnWord(),
             default => throw ImplementationGap::production($value),
         });
+    }
+
+    /**
+     * Interprets a standalone name as a component word before constructing column occurrences.
+     */
+    public function word(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName
+    {
+        $parentheses = 0;
+        while (true) {
+            $form = $this->lowering->form($node);
+            if ($form->signature === 'simple_expr: ( expr )') {
+                $parentheses++;
+                $node = $form->node(1);
+            } elseif (in_array($node->name, ['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr'], true) && count($node->children) === 1 && $node->children[0] instanceof Node) {
+                $node = $node->children[0];
+            } else {
+                $word = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\WordRule($this->lowering))->word($node, true);
+                return $word === null ? null : new \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName($word->word, $word->qualifier, parentheses: $parentheses);
+            }
+        }
     }
 }

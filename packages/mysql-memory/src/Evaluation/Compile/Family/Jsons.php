@@ -111,12 +111,25 @@ final class Jsons
      */
     public function jsonValue(JsonValueCall $node, Scope $scope): Evaluable
     {
-        $document = $this->compiler->compile($node->document, $scope);
-        try {
-            $path = JsonPath::parse($node->path->value());
-        } catch (JsonSyntax $failure) {
-            throw new SqlError(DataError::InvalidJsonPath, DataError::InvalidJsonPath->message($failure->position), $failure);
+        $problem = null;
+        foreach ($this->compiler->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument && $diagnostic->expression === $node) {
+                $problem = $diagnostic;
+                break;
+            }
         }
+        $binding = $this->compiler->facts->scalar($node->document)->resolution;
+        if ($problem !== null && ($binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding || $binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding)) {
+            throw DataError::InvalidJsonType->error(1, 'json_value');
+        }
+        $document = $this->compiler->compile($node->document, $scope);
+        if ($problem !== null) {
+            throw DataError::InvalidJsonType->error(1, 'json_value');
+        }
+        if ($node->pathValue instanceof \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Invalid) {
+            throw DataError::InvalidJsonPath->error($node->pathValue->position);
+        }
+        $path = JsonPath::from($node->pathValue);
         $domain = $this->compiler->domain($node);
         $response = function (?JsonResponse $response) use ($scope, $domain): array {
             $default = $response?->default;

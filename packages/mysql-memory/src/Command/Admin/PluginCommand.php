@@ -84,6 +84,7 @@ final class PluginCommand implements Command
             throw ProgramError::RoutineMissing->error('PLUGIN', $statement->plugin->value);
         }
         if ($statement instanceof InstallComponent) {
+            (new Plugin\Settings())->prepare($operation, $session, $context, $connection);
             foreach ($statement->components as $component) {
                 $this->load((new Literals())->bytes($component), $directory);
             }

@@ -44,6 +44,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Reading a word assigned to a system variable
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET @@sql_mode = TRADITIONAL');
  *     [$set->statement->items[0]->value->word->value, $set->facts->scalar($set->statement->items[0]->value)->type->descriptor->name()] // => ['TRADITIONAL', 'VARCHAR']
+ * @example Refusing a negative grouping count
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName(new \SqlSemantics\Statement\Identifier\Name('word'), parentheses: -1) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class BareName implements Operand
 {
@@ -53,10 +55,12 @@ final class BareName implements Operand
      * @param Name $word The last name part, whose text is the value
      * @param QualifiedName|null $qualifier The name parts written before it
      * @param bool $system Whether the assigned variable is known to be a system variable
+     * @param int $parentheses The enclosing pairs that preserve a word expression's spelling
      */
-    public function __construct(public readonly Name $word, public readonly ?QualifiedName $qualifier = null, public readonly bool $system = true)
+    public function __construct(public readonly Name $word, public readonly ?QualifiedName $qualifier = null, public readonly bool $system = true, public readonly int $parentheses = 0)
     {
         Check::input($qualifier?->catalog === null, 'A word value has at most two qualifiers.');
+        Check::input($parentheses >= 0, 'A word has a nonnegative number of enclosing parentheses.');
     }
 
     /**
@@ -80,6 +84,9 @@ final class BareName implements Operand
      */
     public function render(Output $out): void
     {
+        for ($index = 0; $index < $this->parentheses; $index++) {
+            $out->symbol('(');
+        }
         if ($this->qualifier?->schema !== null) {
             $out->name($this->qualifier->schema, NameUse::Qualifier)->symbol('.');
         }
@@ -87,5 +94,8 @@ final class BareName implements Operand
             $out->name($this->qualifier->name, NameUse::Qualifier)->symbol('.');
         }
         $out->name($this->word, NameUse::Column);
+        for ($index = 0; $index < $this->parentheses; $index++) {
+            $out->symbol(')');
+        }
     }
 }

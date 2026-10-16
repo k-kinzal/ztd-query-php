@@ -174,6 +174,9 @@ final class Names
     {
         $definition = $scope->inserted;
         if ($definition === null) {
+            if ($this->compiler->facts->scalar($node->column)->type instanceof \SqlSemantics\Statement\Type\Invalid) {
+                $this->column($node->column, $scope);
+            }
             return new Constant(Domain::null(), null);
         }
         foreach ($definition->columns as $position => $column) {
