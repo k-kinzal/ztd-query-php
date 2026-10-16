@@ -48,6 +48,11 @@ final class Derivation
     private array $relations = [];
 
     /**
+     * @var array<int, array{QualifiedName, Relation}> Names bound to input occurrences
+     */
+    private array $references = [];
+
+    /**
      * @var list<array{Query, QueryFact}>
      */
     private array $queries = [];
@@ -302,6 +307,14 @@ final class Derivation
     }
 
     /**
+     * Records the input occurrence a relation name denotes, preserving its identity for consumers.
+     */
+    public function bindReference(QualifiedName $name, Relation $relation): void
+    {
+        $this->references[spl_object_id($name)] = [$name, $relation];
+    }
+
+    /**
      * Derives and records the output of a query used at a position.
      */
     public function query(Query $node, Environment $outer): QueryFact
@@ -318,11 +331,8 @@ final class Derivation
     /**
      * Derives the parts of a definition whose problems surface only where the definition is used.
      *
-     * The parts receive their facts at once; the diagnostics they raise are
-     * kept back and reported when table() first resolves a name to the
-     * definition, in the place of that use. A definition that is never used
-     * reports nothing, as a database that resolves such a definition only
-     * for its uses never sees its problems.
+     * Facts are recorded immediately. Diagnostics wait until table() first resolves
+     * a use of the definition; an unused definition reports none of them.
      *
      * @template T
      *
@@ -422,6 +432,6 @@ final class Derivation
      */
     public function facts(): Facts
     {
-        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->diagnostics, $this->readingWarnings(), $this->warnings->instructions());
+        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->diagnostics, $this->readingWarnings(), $this->warnings->instructions(), array_values($this->references));
     }
 }

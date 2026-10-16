@@ -24,6 +24,16 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class FactsTest extends TestCase
 {
+    public function testReferencedRelationRetainsTheBoundOccurrence(): void
+    {
+        $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE d.t FROM e.t, d.t');
+        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
+
+        self::assertSame($statement->tables[1], $operation->facts->referencedRelation($statement->targets[0]));
+        self::assertNull($operation->facts->referencedRelation(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('d'))));
+    }
+
     public function testWarningInstructionDistinguishesAnInstructionFromAnOuterNotice(): void
     {
         $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');

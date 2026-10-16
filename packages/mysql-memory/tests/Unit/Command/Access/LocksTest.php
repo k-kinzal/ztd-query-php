@@ -56,7 +56,7 @@ final class LocksTest extends TestCase
     public function testWrittenAnswersTheTablesOfAnUpdate(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('UPDATE t SET a = 1')->statement;
+        $statement = $session->analyze('UPDATE t SET a = 1');
 
         self::assertCount(1, (new Locks())->written($statement));
     }

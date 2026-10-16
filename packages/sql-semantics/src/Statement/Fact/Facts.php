@@ -6,9 +6,11 @@ namespace SqlSemantics\Statement\Fact;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
@@ -43,6 +45,11 @@ final class Facts
     private readonly array $queries;
 
     /**
+     * @var array<int, array{QualifiedName, Relation}> Resolved names of input occurrences, such as multiple-table DELETE targets
+     */
+    private readonly array $references;
+
+    /**
      * @var list<Table> The relation declarations the statement provides to a context
      */
     public readonly array $declarations;
@@ -71,12 +78,14 @@ final class Facts
      * @param list<Diagnostic> $diagnostics The semantic problems of the statement
      * @param list<Warning> $warnings The conditions the statement raises without failing
      * @param list<array{Warning, Statement}> $warningInstructions Explicit instruction ownership, independent of source locations
+     * @param list<array{QualifiedName, Relation}> $references Names bound to particular input occurrences
      */
-    public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics, array $warnings = [], array $warningInstructions = [])
+    public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics, array $warnings = [], array $warningInstructions = [], array $references = [])
     {
         $this->scalars = $this->index($scalars);
         $this->relations = $this->index($relations);
         $this->queries = $this->index($queries);
+        $this->references = $this->index(Check::pairs($references, QualifiedName::class, Relation::class, 'Relation references pair names with input occurrences.'));
         $this->declarations = Check::listOf($declarations, Table::class, 'Provided declarations are tables.');
         $this->diagnostics = Check::listOf($diagnostics, Diagnostic::class, 'Diagnostics are diagnostic values.');
         $this->warnings = Check::listOf($warnings, Warning::class, 'Warnings are warning values.');
@@ -142,6 +151,16 @@ final class Facts
         Check::input($entry !== null && $entry[0] === $node, 'The relation is not part of this operation.');
 
         return $entry[1];
+    }
+
+    /**
+     * Answers the input occurrence a name was bound to, or null when no binding was established.
+     *
+     * Consumers use this identity instead of repeating name resolution against their own scopes.
+     */
+    public function referencedRelation(QualifiedName $name): ?Relation
+    {
+        return $this->references[spl_object_id($name)][1] ?? null;
     }
 
     /**

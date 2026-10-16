@@ -1243,3 +1243,11 @@ an absent table, an integer column, an empty timestamp column, populated timesta
 rows and a datetime column. These checks establish diagnostic ownership and the
 observed state transitions; they do not close the outstanding general row and
 VALUES constructor domains.
+
+Multiple-table DELETE targets bind to input occurrence identities in Semantics.
+An unqualified target uses the current database unless it names an explicit
+alias. A qualified target selects its database even when another input has the
+same table name. Execution, row locking, LOCK TABLES checks and read-only
+transaction checks consume these bindings. Direct construction tests preserve
+one DELETE object while switching the current database; native histories also
+compare populated tables and asymmetric READ/WRITE locks across databases.

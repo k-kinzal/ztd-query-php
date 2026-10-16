@@ -86,9 +86,9 @@ final class AccessTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT); CREATE TABLE u (a INT)');
         $access = new Access();
-        $insert = $session->analyze('INSERT INTO d.t VALUES (1)')->statement;
-        $update = $session->analyze('UPDATE t JOIN u ON t.a = u.a SET t.a = 1')->statement;
-        $select = $session->analyze('SELECT 1')->statement;
+        $insert = $session->analyze('INSERT INTO d.t VALUES (1)');
+        $update = $session->analyze('UPDATE t JOIN u ON t.a = u.a SET t.a = 1');
+        $select = $session->analyze('SELECT 1');
 
         self::assertSame([['t'], [null], []], [array_map(static fn ($name): ?string => $name?->name->value, $access->written($insert)), $access->written($update), $access->written($select)]);
     }

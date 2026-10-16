@@ -77,6 +77,7 @@
         "diagnostics": "array",
         "output": "?SqlSemantics\\Statement\\Fact\\QueryFact",
         "queries": "array",
+        "references": "array",
         "relations": "array",
         "scalars": "array",
         "warningInstructions": "array",

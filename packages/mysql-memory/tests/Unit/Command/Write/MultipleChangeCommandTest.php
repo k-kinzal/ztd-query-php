@@ -18,6 +18,22 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 #[Small]
 final class MultipleChangeCommandTest extends TestCase
 {
+    public function testDeleteUsesTheBoundOccurrenceAmongTablesWithTheSameName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE DATABASE e; USE e; CREATE TABLE d.t(a INT); CREATE TABLE e.t(a INT); INSERT INTO d.t VALUES (1); INSERT INTO e.t VALUES (2)');
+
+        $reply = $session->query('DELETE t FROM d.t, e.t')[0];
+        $first = $session->query('SELECT * FROM d.t')[0];
+        $second = $session->query('SELECT * FROM e.t')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(1, $reply->affectedRows);
+        self::assertInstanceOf(ResultSet::class, $first);
+        self::assertInstanceOf(ResultSet::class, $second);
+        self::assertSame([[['1']], []], [$first->rows, $second->rows]);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new MultipleChangeCommand())->clearsDiagnostics());

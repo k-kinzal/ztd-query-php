@@ -9,6 +9,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement as MySql;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -50,8 +51,9 @@ final class Access
      *
      * @throws SqlError When the statement is refused
      */
-    public function check(Statement $statement, Session $session): void
+    public function check(Operation $operation, Session $session): void
     {
+        $statement = $operation->statement;
         $transaction = $session->transaction;
         $temporary = ($statement instanceof MySql\Table\CreateTable && $statement->temporary())
             || ($statement instanceof MySql\Table\CreateTableLike && $statement->temporaryWords > 0)
@@ -74,7 +76,7 @@ final class Access
         if (!$readOnly) {
             return;
         }
-        foreach ($this->written($statement) as $name) {
+        foreach ($this->written($operation) as $name) {
             $table = $name === null ? null : $session->instance->dictionary->table($name->schema->value ?? $session->variables->database, $name->name->value);
             if ($table === null || !$table->definition->temporary) {
                 throw TransactionError::ReadOnlyTransaction->error();
@@ -104,12 +106,17 @@ final class Access
      *
      * @return list<QualifiedName|null>
      */
-    public function written(Statement $statement): array
+    public function written(Operation $operation): array
     {
+        $statement = $operation->statement;
         return match (true) {
             $statement instanceof MySql\Dml\Insert\InsertRows, $statement instanceof MySql\Dml\Insert\InsertSet, $statement instanceof MySql\Dml\Insert\InsertQuery => [$statement->into->table->name],
             $statement instanceof MySql\Dml\Delete => [$statement->table->name],
-            $statement instanceof MySql\Dml\MultipleDelete => $statement->targets,
+            $statement instanceof MySql\Dml\MultipleDelete => array_map(static function (QualifiedName $target) use ($operation): ?QualifiedName {
+                $relation = $operation->facts->referencedRelation($target);
+
+                return $relation instanceof MySql\Relation\TableReference ? $relation->name : null;
+            }, $statement->targets),
             $statement instanceof MySql\Dml\Update => array_map(static fn ($relation): ?QualifiedName => $relation instanceof MySql\Relation\TableReference ? $relation->name : null, $statement->tables),
             $statement instanceof MySql\Dml\Load\LoadTable => [null],
             default => [],

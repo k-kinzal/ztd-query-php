@@ -32,6 +32,28 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ChangeFactsTest extends TestCase
 {
+    public function testDeleteMultipleBindsTheTargetInTheCurrentSchema(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $operation = $semantics->analyze('DELETE t FROM other.t, t');
+        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
+
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame($statement->tables[1], $operation->facts->referencedRelation($statement->targets[0]));
+        self::assertInstanceOf(UnknownDeleteTable::class, $semantics->analyze('DELETE t FROM other.t')->facts->diagnostics[0]);
+    }
+
+    public function testDeleteMultipleBindsAnAliasAcrossSchemas(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('DELETE x FROM other.t AS x');
+        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
+
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame($statement->tables[0], $operation->facts->referencedRelation($statement->targets[0]));
+    }
+
     public function testUpdateSeesEveryTable(): void
     {
         $semantics = new Semantics(Dialect::MySql);

@@ -23,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
@@ -108,12 +109,16 @@ final class ChangeFacts
         foreach ($delete->targets as $target) {
             $found = null;
             foreach ($visible as $relation) {
-                $found ??= $projection->admits($derivation, $relation, $target) ? $relation : null;
+                $name = $relation->alias === null ? new QualifiedName($target->name, $target->schema ?? $derivation->context->searchPath[0]) : $target;
+                $found ??= $projection->admits($derivation, $relation, $name) ? $relation : null;
             }
             if ($found === null) {
                 $derivation->report(new UnknownDeleteTable($target));
             } elseif (!$this->updatable($found->relation, $derivation)) {
                 $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($found->relation)));
+            }
+            if ($found !== null) {
+                $derivation->bindReference($target, $found->relation);
             }
         }
         $this->clauses($delete->where, [], null, $derivation, $base, new Environment($derivation->context, $base, $visible));

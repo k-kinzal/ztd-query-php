@@ -17,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Statement;
 
@@ -38,14 +39,15 @@ final class Locks
      *
      * @throws \MySqlMemory\Error\SqlError When a table is not locked, or is written under a READ lock
      */
-    public function check(Statement $statement, Session $session): void
+    public function check(Operation $operation, Session $session): void
     {
+        $statement = $operation->statement;
         if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && !$statement instanceof InsertRows && !$statement instanceof InsertSet && !$statement instanceof InsertQuery
             && !$statement instanceof Update && !$statement instanceof Delete && !$statement instanceof MultipleDelete) {
             return;
         }
         $common = array_map(static fn (CommonTableExpression $table): string => $table->name->value, (new Walker())->find($statement, CommonTableExpression::class));
-        $written = $this->written($statement);
+        $written = $this->written($operation);
         foreach ((new Walker())->find($statement, TableReference::class) as $reference) {
             $this->allowed($session, $reference->name, $reference->alias->value ?? $reference->name->name->value, $common, in_array($reference, $written, true));
         }
@@ -59,17 +61,18 @@ final class Locks
      *
      * @return list<TableReference>
      */
-    public function written(Statement $statement): array
+    public function written(Operation $operation): array
     {
+        $statement = $operation->statement;
         if ($statement instanceof Update) {
             return array_values(array_filter($statement->tables, static fn ($table): bool => $table instanceof TableReference));
         }
         if (!$statement instanceof MultipleDelete) {
             return [];
         }
-        $targets = array_map(static fn (QualifiedName $name): string => strtolower($name->name->value), $statement->targets);
+        $targets = array_map($operation->facts->referencedRelation(...), $statement->targets);
 
-        return array_values(array_filter((new Walker())->find($statement, TableReference::class), static fn (TableReference $reference): bool => in_array(strtolower($reference->alias->value ?? $reference->name->name->value), $targets, true)));
+        return array_values(array_filter($targets, static fn ($reference): bool => $reference instanceof TableReference));
     }
 
     /**

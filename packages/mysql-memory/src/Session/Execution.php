@@ -93,7 +93,7 @@ final class Execution
             $session->diagnostics->warning(($warning instanceof Deprecation || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName) ? $warning->code() : 1105, $warning->message());
         }
         (new \MySqlMemory\System\Guard())->check($operation->statement, $session);
-        (new \MySqlMemory\Concurrency\Access())->check($operation->statement, $session);
+        (new \MySqlMemory\Concurrency\Access())->check($operation, $session);
         try {
             (new Problems())->raise($operation, $session);
         } catch (SqlError $error) {
@@ -101,7 +101,7 @@ final class Execution
             throw (new Problem\Precision())->legacy(\MySqlMemory\Command\Admin\KillCommand::preparation((new Problem\ValueRows())->extended($error, $operation->statement, $session->settings()->release()), $operation->statement), $session->settings()->release());
         }
         if ($session->locks !== []) {
-            (new \MySqlMemory\Command\Access\Locks())->check($operation->statement, $session);
+            (new \MySqlMemory\Command\Access\Locks())->check($operation, $session);
         }
         (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
         if ($session->program?->contained === true) {

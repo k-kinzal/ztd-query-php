@@ -27,6 +27,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
@@ -77,7 +79,7 @@ final class MultipleChangeCommand implements Command
             $matches[] = [$row, $numbers];
         }
         if ($statement instanceof MultipleDelete) {
-            return $this->delete($statement, $scope, $matches, $session, $context);
+            return $this->delete($statement, $scope, $matches, $session, $context, $operation->facts);
         }
 
         return $this->update($statement, $planner, $scope, $matches, $session, $context);
@@ -88,11 +90,11 @@ final class MultipleChangeCommand implements Command
      *
      * @param list<array{list<int|float|string|null>, array<int, int|null>}> $matches
      */
-    public function delete(MultipleDelete $statement, Scope $scope, array $matches, Session $session, Context $context): Reply
+    public function delete(MultipleDelete $statement, Scope $scope, array $matches, Session $session, Context $context, Facts $facts): Reply
     {
         $deleted = 0;
         foreach ($statement->targets as $target) {
-            $id = $this->occurrence($scope, $target->name->value);
+            $id = $this->occurrence($scope, $target, $facts);
             if ($id === null) {
                 throw QueryError::UnknownTable->error($target->name->value, 'MULTI DELETE');
             }
@@ -115,7 +117,7 @@ final class MultipleChangeCommand implements Command
         $written = [];
         if ($statement instanceof MultipleDelete) {
             foreach ($statement->targets as $target) {
-                $id = $this->occurrence($scope, $target->name->value);
+                $id = $this->occurrence($scope, $target, $planner->compiler->facts);
                 if ($id !== null) {
                     $written[$id] = true;
                 }
@@ -134,18 +136,14 @@ final class MultipleChangeCommand implements Command
     }
 
     /**
-     * Finds the occurrence a target names: by alias, or by table name when it has none.
+     * Finds the scan of the occurrence Semantics bound the target to.
      */
-    public function occurrence(Scope $scope, string $name): ?int
+    public function occurrence(Scope $scope, QualifiedName $name, Facts $facts): ?int
     {
-        foreach ($scope->nodes as $node) {
-            $id = spl_object_id($node);
-            if ($node instanceof TableReference && isset($scope->scans[$id]) && ($node->alias->value ?? $node->name->name->value) === $name) {
-                return $id;
-            }
-        }
+        $relation = $facts->referencedRelation($name);
+        $id = $relation === null ? null : spl_object_id($relation);
 
-        return null;
+        return $id !== null && isset($scope->scans[$id]) ? $id : null;
     }
 
     /**

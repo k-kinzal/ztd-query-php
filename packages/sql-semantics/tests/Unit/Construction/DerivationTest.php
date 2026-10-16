@@ -35,6 +35,18 @@ use SqlSemantics\Statement\Shape\RowShape;
 #[Medium]
 final class DerivationTest extends TestCase
 {
+    public function testBindReferencePreservesOccurrenceIdentity(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $name = new QualifiedName(new Name('t'));
+        $input = new TableInput($name);
+        $derivation->bindReference($name, $input);
+        $derivation->bindReference($name, $input);
+
+        self::assertSame($input, $derivation->facts()->referencedRelation($name));
+        self::assertNull($derivation->facts()->referencedRelation(new QualifiedName(new Name('t'))));
+    }
+
     public function testParameterPositionUsesOccurrenceIdentityAndWrittenOrder(): void
     {
         $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
