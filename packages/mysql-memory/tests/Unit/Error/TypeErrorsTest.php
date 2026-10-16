@@ -49,4 +49,15 @@ final class TypeErrorsTest extends TestCase
         self::assertSame($code, (new TypeErrors())->columnAttribute($problem)->getCode());
     }
 
+
+    public function testCharsetBoundsNamesByBytesAndRelease(): void
+    {
+        $errors = new TypeErrors();
+        self::assertSame("Unknown character set: '" . str_repeat('a', 64) . "'", $errors->charset(str_repeat('a', 80))->getMessage());
+        self::assertSame("Unknown character set: '" . str_repeat('a', 63) . "?'", $errors->charset(str_repeat('a', 63) . '界')->getMessage());
+        self::assertSame("Unknown character set: '" . str_repeat('a', 63) . "'", $errors->charset(str_repeat('a', 63) . '界', true)->getMessage());
+        self::assertSame("Unknown character set: 'bad'", $errors->charset("bad\0suffix")->getMessage());
+        self::assertSame(1115, $errors->charset('bad')->getCode());
+    }
+
 }

@@ -333,7 +333,7 @@ final class Assigner
         if (str_starts_with($definition->name, 'character_set_')) {
             $charset = Charset::named($text);
             if ($charset === null) {
-                throw SchemaError::UnknownCharacterSet->error($text);
+                throw (new \MySqlMemory\Error\TypeErrors())->charset($text, in_array($this->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
             }
 
             return $charset->name;

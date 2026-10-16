@@ -47,4 +47,13 @@ final class TypeErrors
         };
     }
 
+
+    /**
+     * Bounds an unknown character-set name without changing the retained operand.
+     */
+    public function charset(string $name, bool $legacy = false): SqlError
+    {
+        return SchemaError::UnknownCharacterSet->error((new DiagnosticText())->bytes(explode("\0", $name, 2)[0], 64, $legacy));
+    }
+
 }

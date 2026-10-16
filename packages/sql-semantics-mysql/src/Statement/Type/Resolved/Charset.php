@@ -28,11 +28,11 @@ final class Charset
     }
 
     /**
-     * Finds a character set by name, case-insensitively; `utf8` names `utf8mb3`.
+     * Finds a character set by its null-terminated name, case-insensitively; `utf8` names `utf8mb3`.
      */
     public static function named(string $name): ?self
     {
-        return Catalog::shared()->charsets[Catalog::canonical($name)] ?? null;
+        return Catalog::shared()->charsets[Catalog::canonical(explode("\0", $name, 2)[0])] ?? null;
     }
 
     /**

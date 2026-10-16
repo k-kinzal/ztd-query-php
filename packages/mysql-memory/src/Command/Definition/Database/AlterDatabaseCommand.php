@@ -117,7 +117,7 @@ final class AlterDatabaseCommand implements Command
         $name = $option->charset->name->value ?? '';
         $named = Charset::named($name);
         if ($named === null) {
-            throw SchemaError::UnknownCharacterSet->error($name);
+            throw (new \MySqlMemory\Error\TypeErrors())->charset($name, in_array($context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true));
         }
         if ($earlier !== null && $earlier->name !== $named->name) {
             throw SchemaError::ConflictingDeclarations->error('CHARACTER SET ', $earlier->name, 'CHARACTER SET ', $named->name);

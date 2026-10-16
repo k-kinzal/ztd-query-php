@@ -21,6 +21,14 @@ final class CharsetTest extends TestCase
         self::assertNull(Charset::named('klingon'));
     }
 
+    public function testNamedStopsCatalogLookupAtTheFirstNullByte(): void
+    {
+        $name = "UTF8MB4\0suffix";
+        self::assertSame(Charset::known('utf8mb4'), Charset::named($name));
+        self::assertSame(Charset::known('utf8mb3'), Charset::named("UTF8\0suffix"));
+        self::assertNull(Charset::named("bad\0utf8mb4"));
+    }
+
     public function testKnownFindsANameTheCatalogHas(): void
     {
         self::assertSame('latin1', Charset::known('latin1')->name);

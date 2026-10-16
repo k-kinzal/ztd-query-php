@@ -310,7 +310,7 @@ final class Errors
             }, $diagnostic->message()),
             $diagnostic instanceof UnknownCollation => SchemaError::UnknownCollation->error((new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $diagnostic->name, 2)[0], 64, $legacy)),
             $diagnostic instanceof TooBigPrecision => SchemaError::TooBigPrecision->error($diagnostic->precision, $diagnostic->function, $diagnostic->maximum),
-            $diagnostic instanceof UnknownCharset => SchemaError::UnknownCharacterSet->error($diagnostic->name),
+            $diagnostic instanceof UnknownCharset => (new TypeErrors())->charset($diagnostic->name, $legacy),
             $diagnostic instanceof CollationMismatch => SchemaError::CollationCharsetMismatch->error($diagnostic->collation, $diagnostic->charset),
             default => null,
         };

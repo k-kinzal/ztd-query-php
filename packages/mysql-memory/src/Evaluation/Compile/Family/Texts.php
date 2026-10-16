@@ -119,7 +119,7 @@ final class Texts
         $name = $node->charset->name->value ?? 'binary';
         $charset = Charset::named($name);
         if ($charset === null) {
-            throw SchemaError::UnknownCharacterSet->error($name);
+            throw (new \MySqlMemory\Error\TypeErrors())->charset($name, $this->compiler->settings->legacy());
         }
         $domain = $operand->domain();
         $length = $domain->kind === Kind::String ? $domain->length : (new Strings())->length($domain);
