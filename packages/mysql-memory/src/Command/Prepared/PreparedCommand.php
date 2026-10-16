@@ -11,7 +11,6 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
-use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate;
@@ -87,7 +86,6 @@ final class PreparedCommand implements Command
             throw StatementError::UnsupportedPreparedStatement->error();
         }
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
-        (new Problems())->raise($prepared, $session);
         $parameters = count(array_filter($session->semantics()->parser()->tokenize($text), static fn ($token): bool => $token->name === 'PARAM_MARKER'));
         $session->preparation->named[$key] = [$text, $parameters, ParameterBindings::capture($prepared)];
 

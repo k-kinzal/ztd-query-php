@@ -62,11 +62,6 @@ final class Session
     public array $hinted = [];
 
     /**
-     * Whether the text of the statement last parsed holds a hint comment.
-     */
-    public bool $commented = false;
-
-    /**
      * Whether the statement runs a prepared statement, whose hints warned when it was prepared.
      */
     public bool $replayed = false;

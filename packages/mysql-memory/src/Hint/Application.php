@@ -38,6 +38,11 @@ final class Application
     public array $warnings = [];
 
     /**
+     * @var list<array{int, string}> Resource-group conditions, deferred until preparation ends
+     */
+    public array $resourceWarnings = [];
+
+    /**
      * @var array<string, array{bool, string|int|null}> The session value each set variable had before, by name: whether it had one, and the value
      */
     public array $saved = [];
@@ -46,18 +51,23 @@ final class Application
      * Applies the hints that count to a session; a prepared statement that runs keeps only the warnings about the values SET_VAR refuses.
      *
      * @param bool $replayed Whether the statement runs a prepared statement, whose other warnings were raised when it was prepared
+     * @param bool $preparing Whether resource-group conditions follow preparation, including its error
      */
-    public function apply(Registration $registration, Session $session, bool $replayed = false): self
+    public function apply(Registration $registration, Session $session, bool $replayed = false, bool $preparing = false): self
     {
         $this->warnings = $replayed ? [] : $registration->warnings;
+        $this->resourceWarnings = [];
         $group = $registration->group;
         if ($group !== null) {
             $found = $session->instance->registry->resourceGroups->find($group->group);
             if ($found === null) {
-                $this->warnings[] = [AdministrationError::ResourceGroupMissing->number(), AdministrationError::ResourceGroupMissing->message($group->group)];
+                $this->resourceWarnings[] = [AdministrationError::ResourceGroupMissing->number(), AdministrationError::ResourceGroupMissing->message($group->group)];
             } elseif ($found->system) {
-                $this->warnings[] = [AdministrationError::ResourceGroupBindFailed->number(), AdministrationError::ResourceGroupBindFailed->message($group->group, (string) $session->id, "System resource group can't be bound with a session thread")];
+                $this->resourceWarnings[] = [AdministrationError::ResourceGroupBindFailed->number(), AdministrationError::ResourceGroupBindFailed->message($group->group, (string) $session->id, "System resource group can't be bound with a session thread")];
             }
+        }
+        if (!$preparing) {
+            array_push($this->warnings, ...$this->resourceWarnings);
         }
         if ($registration->variables === []) {
             return $this;

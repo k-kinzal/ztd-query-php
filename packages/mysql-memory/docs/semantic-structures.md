@@ -16,6 +16,14 @@ Before choosing a nested type, the generator checks whether its constructor type
 
 The generated root is a MySQL statement or an ordinary expression placed in a SELECT item. The runner derives its semantic facts against a fresh in-memory session and sends the result directly to statement execution. Every parameter occurrence receives an explicit NULL value and its type before derivation, so the fixture supplies bindings without relying on unresolved parameter types. Separate properties exercise non-NULL bindings and their occurrence order. The generator has no list of supported SQL commands and does not use execution success or semantic diagnostics to select inputs.
 
+Typed optimizer hints are read from the original structure independently of the
+previous SQL input. Typing-related SET_VAR values are applied before domain and
+parameter inference, then restored. A request with parameter occurrences uses
+the same preparation checks as the protocol adapter before direct execution;
+resource-group conditions follow a preparation error, while ordinary hint and
+SET_VAR conditions precede name resolution. Database-selection histories and
+populated table histories reuse the same hinted objects on both sides.
+
 Direct submission reports the semantic warnings of a newly submitted statement, including deprecations, just as SQL submission does. Only execution of a previously created stored-program statement suppresses those initial warnings. A separate inventory check requires an explicit command route for every public MySQL statement variant. Internal parser entry points are rejected during input lowering, before a statement is published. Debug-only commands retain their dependency on the server build and produce its native client rejection.
 
 For MySQL 5.6 and 5.7, `UpgradeDatabaseName` consumes the typed database name. Its command moves table declarations and data to the upgraded name, retains view and trigger references, and removes stored routines and events. SQL Semantics supplies the 5.7 deprecation fact. Differential histories against isolated servers check the resulting rows, metadata, warnings and errors, including invalid references after the move.

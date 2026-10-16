@@ -15,6 +15,24 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DefaultDatabaseTest extends TestCase
 {
+    public function testReferencedIgnoresAnUnusedCommonTableBody(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('WITH q AS (SELECT 1 FROM missing) SELECT 1');
+
+        (new DefaultDatabase())->referenced($operation, $session);
+
+        self::assertSame('', $session->variables->database);
+    }
+
+    public function testReferencedRejectsAReachedTableBeforeHintWarnings(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('SELECT /*+ RESOURCE_GROUP(missing) */ * FROM missing');
+
+        self::assertSame([['Error', 1046, 'No database selected']], $session->diagnostics->conditions);
+    }
+
     public function testCheckRequiresTheDeleteTargetDatabaseBeforeDerivedQueryProblems(): void
     {
         $session = (new Instance())->connect();

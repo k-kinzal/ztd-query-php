@@ -83,26 +83,44 @@ final class Hints
     }
 
     /**
+     * Applies typing variables from the semantic hint values before direct construction
+     * derives expression domains. No input text or parser state is consulted.
+     */
+    public function typingValue(Node $statement, Session $session): Application
+    {
+        if (!$this->hinted($session)) {
+            return new Application();
+        }
+        $registration = $this->registration($statement, $session);
+        $registration->variables = array_intersect_key($registration->variables, array_fill_keys(self::TYPING, true));
+        $registration->group = null;
+        $registration->warnings = [];
+        $application = (new Application())->apply($registration, $session);
+        $application->warnings = [];
+
+        return $application;
+    }
+
+    /**
      * Reads the hints of a statement and applies those that count to the session; the warnings are raised later, by Application::report().
      */
-    public function apply(Node $statement, Session $session): Application
+    public function apply(Node $statement, Session $session, bool $preparing = false): Application
     {
         if (!$this->hinted($session)) {
             return new Application();
         }
 
-        return (new Application())->apply($this->registration($statement, $session), $session, $session->replayed);
+        return (new Application())->apply($this->registration($statement, $session), $session, $session->replayed, $preparing);
     }
 
     /**
-     * Raises the warnings of the hints of a statement being prepared: its hint comments, the hints that do not count and the values SET_VAR refuses; the variables keep their values.
+     * Prepares a typed operation with ordered hint conditions; the variables keep their values.
+     *
+     * @throws \MySqlMemory\Error\SqlError When preparation rejects the operation
      */
     public function prepare(\SqlSemantics\Statement\Operation $operation, Session $session): void
     {
-        (new \MySqlMemory\Session\Execution($session))->parsing($operation, $operation->facts->warnings);
-        $application = $this->apply($operation->statement, $session);
-        $application->restore($session);
-        $application->report($session);
+        (new \MySqlMemory\Session\Access\Preparation())->check($operation, $session);
     }
 
     /**
@@ -161,10 +179,10 @@ final class Hints
     }
 
     /**
-     * Tells whether the statement may have hints: the text last parsed holds a hint comment, or it runs in a stored procedure; the server reads no hint of a statement of a stored function or a trigger (verified on a live 8.4 server).
+     * Tells whether this execution context reads typed hints. Stored functions and triggers ignore them, and MySQL 5.6 has no optimizer hints. Input text does not participate in this decision.
      */
     public function hinted(Session $session): bool
     {
-        return ($session->commented || $session->program !== null) && $session->program?->contained !== true && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        return $session->program?->contained !== true && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651;
     }
 }

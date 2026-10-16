@@ -87,7 +87,6 @@ final class Statements
             $operation = $session->analyze($sql, true);
             (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($operation->statement));
             (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
-            (new \MySqlMemory\Session\Problems())->raise($operation, $session);
             $tokens = $session->semantics()->parser()->tokenize($sql);
             $parameters = count(array_filter($tokens, static fn ($token): bool => $token->text === '?'));
             $columns = $this->columns($operation, $session, $parameters);

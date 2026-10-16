@@ -54,4 +54,29 @@ final class DefaultDatabase
             }
         }
     }
+
+    /**
+     * Checks reached base-table references before statement-level hints are applied.
+     * A CTE or an unused CTE body does not need a default database merely because
+     * its spelling is unqualified; the resolved diagnostics distinguish them.
+     *
+     * @throws SqlError When a reached base-table reference requires a current database
+     */
+    public function referenced(\SqlSemantics\Statement\Operation $operation, Session $session): void
+    {
+        if ($session->variables->database !== '' || \MySqlMemory\Command\Dispatcher::program($operation->statement)) {
+            return;
+        }
+        $names = [];
+        foreach ((new \MySqlMemory\Session\Problems())->reached($operation->statement) as $node) {
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable || $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget) {
+                $names[spl_object_id($node->name())] = true;
+            }
+        }
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name->schema === null && isset($names[spl_object_id($diagnostic->name)])) {
+                throw QueryError::NoDatabase->error();
+            }
+        }
+    }
 }

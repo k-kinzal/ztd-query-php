@@ -91,7 +91,7 @@ final class ReaderTest extends TestCase
         $session = (new Instance())->connect();
         (new Reader())->read('SELECT /*+ BKA() */ ?', true, $session);
 
-        self::assertTrue($session->commented);
+        self::assertSame([], $session->hinted);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1064);
 

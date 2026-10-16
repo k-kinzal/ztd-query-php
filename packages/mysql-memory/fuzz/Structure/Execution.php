@@ -57,17 +57,64 @@ final class Execution
     {
         if ($session->running->using === []) {
             $session->activity->begin();
-            \MySqlMemory\Session\State\StatementCounters::received($session);
+            \MySqlMemory\Session\State\StatementCounters::received($session, $parameters === []);
         }
+        $session->hinted = [];
+        $session->dots = [];
         $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot($node instanceof \SqlSemantics\Statement\Query ? $node : new Select([], [new SelectExpression($node)]));
-        $domains = array_map(static fn (array $parameter): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $parameter[1]->resolved(), $parameters);
-        $semantics = new Semantics(Dialect::MySql, 'mysql-' . $session->instance->version, Mode::fromString((string) $session->variables->read('sql_mode')), $this->parameters($statement));
-        $session->instance->dictionary->temporaries = $session->temporaries;
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
-        $context = $semantics->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new SearchPath($session->variables->database), $session->resolution($domains));
-        $operation = new Operation($context, $statement);
+        $operation = $this->operation($session, $statement, $parameters);
 
-        return (new StatementExecution($session))->perform($operation, (new Dispatcher())->command($statement), $parameters);
+        return $this->execute($session, $operation, $parameters);
+    }
+
+    /**
+     * Resolves an original statement in the session's current typing context.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     */
+    public function operation(Session $session, Statement $statement, array $parameters): Operation
+    {
+        $typing = (new \MySqlMemory\Hint\Hints())->typingValue($statement, $session);
+        try {
+            $domains = array_map(static fn (array $parameter): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $parameter[1]->resolved(), $parameters);
+            $semantics = new Semantics(Dialect::MySql, 'mysql-' . $session->instance->version, Mode::fromString((string) $session->variables->read('sql_mode')), $this->parameters($statement));
+            $session->instance->dictionary->temporaries = $session->temporaries;
+            \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
+            $context = $semantics->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new SearchPath($session->variables->database), $session->resolution($domains));
+            return new Operation($context, $statement);
+        } finally {
+            $typing->restore($session);
+        }
+    }
+
+    /**
+     * Uses the shared typed preparation path when bindings require the native
+     * prepared protocol, then executes and closes that one-shot statement.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and domains
+     * @throws \MySqlMemory\Error\SqlError When preparation or execution rejects the operation
+     */
+    public function execute(Session $session, Operation $operation, array $parameters): Reply
+    {
+        $execution = new StatementExecution($session);
+        $command = (new Dispatcher())->command($operation->statement);
+        if ($parameters === []) {
+            return $execution->perform($operation, $command);
+        }
+        \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
+        $execution->area($operation, $command);
+        (new \MySqlMemory\Session\Access\Preparation())->check($operation, $session);
+        \MySqlMemory\Session\State\StatementCounters::received($session);
+        \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_execute');
+        $replayed = $session->replayed;
+        $session->replayed = true;
+        try {
+            return $execution->perform($operation, $command, $parameters);
+        } finally {
+            $session->replayed = $replayed;
+            \MySqlMemory\Session\State\StatementCounters::received($session, false);
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_close');
+        }
     }
 
     /**

@@ -126,9 +126,8 @@ final class Comparison
         $domain = \MySqlMemory\Typing\Domain::string(16383, $collation)->withCollation($collation, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
 
         $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($node)]));
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-' . $session->instance->version, \SqlSemantics\Platform\MySql\Mode::fromString((string) $session->variables->read('sql_mode')), (new \Fuzz\Structure\Execution())->parameters($node));
-        $context = $semantics->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution(array_fill(0, count($values), $domain->resolved())));
-        $types = \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer(new \SqlSemantics\Statement\Operation($context, $statement));
+        $operation = (new \Fuzz\Structure\Execution())->operation($session, $statement, array_fill(0, count($values), [null, $domain]));
+        $types = \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation);
 
         return array_values(array_map(static fn (array $entry): array => [null, \MySqlMemory\Typing\Domain::of($entry[0], true)], $types));
     }

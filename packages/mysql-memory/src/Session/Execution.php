@@ -84,6 +84,7 @@ final class Execution
         $late = $this->reading($operation, $read);
         State\StatementCounters::evaluated($operation->statement, $session);
         $this->access($operation->statement, $context);
+        (new Access\DefaultDatabase())->referenced($operation, $session);
         $hints->report($session);
         foreach ($session->replayed || $this->undeclared($operation) ? [] : $late as $warning) {
             $session->diagnostics->warning(($warning instanceof Deprecation || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName) ? $warning->code() : 1105, $warning->message());

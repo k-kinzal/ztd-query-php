@@ -55,6 +55,19 @@ final class HintsTest extends TestCase
         self::assertSame(4, $session->variables->read('div_precision_increment'));
     }
 
+    public function testTypingValueReadsTheOriginalStructureWithoutInputText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], hints: [new \SqlSemantics\Platform\MySql\Statement\Hint\Form\VariableHint('div_precision_increment', new \SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral(\SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteralKind::Integer, '10'))]));
+        $application = (new Hints())->typingValue($query, $session);
+
+        self::assertSame(10, $session->variables->read('div_precision_increment'));
+        self::assertSame([], $application->warnings);
+        $application->restore($session);
+        self::assertSame(4, $session->variables->read('div_precision_increment'));
+    }
+
     public function testApplySetsTheVariablesWhileTheStatementRuns(): void
     {
         $session = (new Instance())->connect();
@@ -165,6 +178,6 @@ final class HintsTest extends TestCase
         $plain = (new Hints())->hinted($session);
         $session->analyze('SELECT /*+ BKA(t) */ 1');
 
-        self::assertSame([false, true], [$plain, (new Hints())->hinted($session)]);
+        self::assertSame([true, true], [$plain, (new Hints())->hinted($session)]);
     }
 }

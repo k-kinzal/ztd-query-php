@@ -66,7 +66,6 @@ final class Reader
         }
         $session->dots = $session->settings()->release() === GrammarRelease::MySql5744 ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->dots($tree) : [];
         $session->hinted = (new \MySqlMemory\Hint\Hints())->syntax($tree, $statement, $session);
-        $session->commented = str_contains($statement, '/*+');
 
         return $tree;
     }
