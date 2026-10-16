@@ -703,3 +703,14 @@ In 5.7, a later query-cache conflict stops reading but does not replace an
 already recorded precision error; deferred ALL/DISTINCT checks do not displace
 a prior syntax refusal. These checks close this precision domain only; array
 cast placement and other expression-role constraints remain separate obligations.
+
+Current-database selection is an execution-state input, not a constructor
+invariant. Unqualified targets of a multiple-table DELETE, CREATE EVENT, and
+SHOW FUNCTION/PROCEDURE CODE require a selected database before later body or
+query diagnostics. Qualified targets keep their own database. A direct native
+property preserves five original structures across an unselected session,
+`USE`, and deletion of the selected database. It compares all outcomes and
+conditions on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1 (75 observations). A separate
+SQL-input matrix checks warning and error precedence in 165 observations.
+These witnesses establish the tested database-state transitions; they do not
+classify unrelated matching errors in the whole-model campaign.

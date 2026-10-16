@@ -136,6 +136,7 @@ final class Execution
             throw (new Parse\DebugRequest())->refusal($operation, (new \MySqlMemory\Command\InternalCommand())->error($operation), $session);
         }
         (new Access\TableCreation())->database($operation->statement, $session);
+        (new Access\DefaultDatabase())->check($operation->statement, $session);
         $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
         if ($read && !$session->replayed) {
             $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
