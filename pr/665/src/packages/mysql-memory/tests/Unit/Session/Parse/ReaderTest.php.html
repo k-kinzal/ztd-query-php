@@ -131,7 +131,7 @@
 <span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
 <span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>        (<span class="tok-kw">new</span> <span class="tok-id">Reader</span>())-&gt;<span class="tok-id">read</span>(<span class="tok-str">&#039;SELECT /*+ BKA() */ ?&#039;</span>, <span class="tok-id">true</span>, <span class="tok-var">$session</span>);</span>
 <span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a></span>
-<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$session</span>-&gt;<span class="tok-id">commented</span>);</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$session</span>-&gt;<span class="tok-id">hinted</span>);</span>
 <span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">SqlError</span>::<span class="tok-kw">class</span>);</span>
 <span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionCode</span>(<span class="tok-num">1064</span>);</span>
 <span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a></span>
