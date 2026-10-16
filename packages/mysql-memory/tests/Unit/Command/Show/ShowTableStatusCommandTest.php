@@ -84,6 +84,29 @@ final class ShowTableStatusCommandTest extends TestCase
         self::assertSame([Field::Blob, Field::VarString], [$plain[17]->field, $derived[17]->field]);
     }
 
+    public function testLegacyHeadingsPreserveInformationSchemaOriginsAndDomains(): void
+    {
+        $headings = (new ShowTableStatusCommand())->legacyHeadings();
+
+        self::assertCount(18, $headings);
+        self::assertSame(['TABLE_NAME', 'TABLE_ROWS', 'TABLE_COLLATION', 'TABLE_COMMENT'], array_map(static fn (Heading $heading): string => $heading->originalName, [$headings[0], $headings[4], $headings[14], $headings[17]]));
+        self::assertSame([Field::LongLong, Field::DateTime, Field::VarString], [$headings[2]->field, $headings[11]->field, $headings[17]->field]);
+        self::assertSame([32, 255, 2048], [$headings[14]->length, $headings[16]->length, $headings[17]->length]);
+        self::assertSame(['TABLES', 'TABLES', 'information_schema'], [$headings[0]->table, $headings[0]->originalTable, $headings[0]->schema]);
+    }
+
+    public function testDerivedDistinguishesStoredAndComputedFields(): void
+    {
+        $command = new ShowTableStatusCommand();
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('Name'));
+        $engine = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('Engine'));
+
+        self::assertTrue($command->derived($name));
+        self::assertFalse($command->derived($engine));
+        self::assertFalse($command->derived(new \SqlSemantics\Platform\MySql\Statement\Expression\NullTest($name, true)));
+        self::assertTrue($command->derived(new \SqlSemantics\Platform\MySql\Statement\Expression\NullTest($name)));
+    }
+
     public function testStatisticsCountsThePageOfTheFullTextDocumentIndex(): void
     {
         $s = (new Instance())->connect();

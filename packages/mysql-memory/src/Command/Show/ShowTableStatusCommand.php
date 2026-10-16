@@ -8,7 +8,6 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Server\ServerCatalog;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Evaluation\Compile\Connection;
-use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
@@ -66,9 +65,40 @@ final class ShowTableStatusCommand implements Command
         $tables = array_filter($schema->tables, static fn (StoredTable $table): bool => !$table->definition->temporary);
         ksort($tables, SORT_STRING);
         $rows = array_map(fn (StoredTable $table): array => $this->row($table, $context), array_values($tables));
-        $derived = $statement->filter instanceof ShowWhere && Constancy::of($statement->filter->condition, $operation->facts) === Constancy::Row;
+        $listing = new Listing($session->settings()->legacy() ? $this->legacyHeadings() : $this->headings(false));
+        $result = $listing->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
+        $derived = !$session->settings()->legacy() && $statement->filter instanceof ShowWhere && ($listing->constantEmpty || $this->derived($statement->filter->condition));
 
-        return (new Listing($this->headings($derived)))->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
+        return $derived ? new \MySqlMemory\Result\ResultSet((new Listing($this->headings(true)))->sent([], $context)->columns, $result->rows, $result->warnings) : $result;
+    }
+
+    /**
+     * Tells whether a filter reads stored dictionary fields instead of computed
+     * status fields. These predicates expose the derived TABLES metadata in MySQL
+     * 8.x and 9.1. A redundant NOT NULL test of a nonnullable field does not.
+     */
+    public function derived(\SqlSemantics\Statement\Node $node): bool
+    {
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\NullTest && $node->negated && $node->operand instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse && in_array(strtolower($node->operand->name->value), ['name', 'create_time'], true)) {
+            return false;
+        }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
+            return in_array(strtolower($node->name->value), ['name', 'row_format', 'create_time'], true);
+        }
+        $children = [];
+        $properties = get_object_vars($node);
+        array_walk_recursive($properties, static function ($value) use (&$children): void {
+            if ($value instanceof \SqlSemantics\Statement\Node) {
+                $children[] = $value;
+            }
+        });
+        foreach ($children as $child) {
+            if ($this->derived($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -175,6 +205,29 @@ final class ShowTableStatusCommand implements Command
             Heading::text('Create_options', Field::VarString, 256, 0, $derived ? 31 : 0, 'Create_options', $table),
             $derived ? Heading::text('Comment', Field::VarString, 2048, 0, 31, 'Comment', $table) : Heading::text('Comment', Field::Blob, 6144, ColumnFlag::Blob->value, 0, 'Comment', $table),
         );
+
+        return $headings;
+    }
+
+    /**
+     * Answers the INFORMATION_SCHEMA.TABLES fields reported by MySQL 5.6 and 5.7,
+     * including with LIKE or WHERE. Verified against both native releases.
+     *
+     * @return list<Heading>
+     */
+    public function legacyHeadings(): array
+    {
+        $headings = [];
+        $text = ['Name' => 64, 'Engine' => 64, 'Row_format' => 10, 'Collation' => 32, 'Create_options' => 255, 'Comment' => 2048];
+        foreach (['Name', 'Engine', 'Version', 'Row_format', 'Rows', 'Avg_row_length', 'Data_length', 'Max_data_length', 'Index_length', 'Data_free', 'Auto_increment', 'Create_time', 'Update_time', 'Check_time', 'Collation', 'Checksum', 'Create_options', 'Comment'] as $name) {
+            $original = in_array($name, ['Name', 'Rows', 'Collation', 'Comment'], true) ? 'TABLE_' . strtoupper($name) : strtoupper($name);
+            if (isset($text[$name])) {
+                $headings[] = Heading::text($name, Field::VarString, $text[$name], in_array($name, ['Name', 'Comment'], true) ? ColumnFlag::NotNull->value : 0, 0, $original, 'TABLES', 'TABLES', 'information_schema');
+            } else {
+                $temporal = in_array($name, ['Create_time', 'Update_time', 'Check_time'], true);
+                $headings[] = new Heading($name, $temporal ? Field::DateTime : Field::LongLong, $temporal ? 19 : 21, $temporal ? ColumnFlag::Binary->value : ColumnFlag::Numeric->value | ColumnFlag::Unsigned->value, 0, false, $original, 'TABLES', 'TABLES', 'information_schema');
+            }
+        }
 
         return $headings;
     }
