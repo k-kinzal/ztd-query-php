@@ -810,3 +810,18 @@ the maximum connection count. Thirty comparisons reuse the same status objects
 against independent native instances across five releases and three scopes;
 negative controls reject changed counters, nonempty physical values, extra names,
 metadata, diagnostics and termination. Raw observations remain in each record.
+
+Direct random `SET PASSWORD` requests for the current account use the same
+relationship contract as SQL differential fuzzing. Each instance validates its
+own generated password, account identity and configured length. Subsequent
+constructed requests require an incorrect replacement password to fail and the
+returned password to succeed. With RETAIN CURRENT PASSWORD, the previous primary
+hash must become the secondary; DISCARD OLD PASSWORD must remove that secondary
+without changing the replacement primary. Memory never receives a native password
+or hash. Only the validated returned password field is substituted in comparison
+copies; protocol metadata, warnings and original observations are preserved.
+The comparison fixture uses the default generation length on both sessions.
+Twelve native cases execute the same original structures against two independent
+instances on MySQL 8.0, 8.4 and 9.1 (24 comparisons), covering implicit and explicit
+current users and both retention choices. Four properties exercise missing
+primaries, forged passwords, broken retention and incomplete validation responses.

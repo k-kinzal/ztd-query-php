@@ -47,10 +47,11 @@ final class Comparison
                 $session->text = 'unrelated invalid input';
                 (new SessionSetup())->apply($session, $mode);
                 $status = Status\Listing::capture($node, $native, $session, $sql);
+                $password = Password\Contract::capture($node, $endpoint, $session);
                 $actual = (new Memory())->observe($session, $node, $this->parameters($node, $session));
                 $expected = (new Native())->observe($native, $sql, count((new Bindings())->nulls($node)));
 
-                return ['sql' => $sql, 'profile' => $profile->grammar->value, 'mode' => $mode, 'native' => $expected, 'memory' => $actual, ...(new Observations())->compare($node, $release, $expected, $actual, $status)];
+                return ['sql' => $sql, 'profile' => $profile->grammar->value, 'mode' => $mode, 'native' => $expected, 'memory' => $actual, ...(new Observations())->compare($node, $release, $expected, $actual, $status, password: $password)];
             } finally {
                 $native->close();
             }
