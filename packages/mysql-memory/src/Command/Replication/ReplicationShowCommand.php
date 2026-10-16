@@ -154,10 +154,10 @@ final class ReplicationShowCommand implements Command
             return $this->listing($legacy ? self::LEGACY_LOG_STATUS : self::LOG_STATUS, $logging ? [[BinaryLog::name($active), $log->size($active, $version), '', '', '']] : [], $context);
         }
         if ($statement instanceof ShowBinlogEvents) {
-            return $this->binlogEvents($statement, $session, $context);
+            return $this->binlogEvents($statement, $session, $context, new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary)));
         }
         if ($statement instanceof ShowRelaylogEvents) {
-            return $this->relaylogEvents($statement, $session, $context);
+            return $this->relaylogEvents($statement, $session, $context, new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary)));
         }
         if ($statement instanceof ShowReplicas) {
             $columns = str_starts_with($version, '5.') ? [['Server_Id', Field::Long, 10], ['Host', 20], ['Port', Field::Long, 7], ['Source_Id', Field::Long, 10], ['Replica_UUID', 36]] : self::REPLICAS;
@@ -204,9 +204,9 @@ final class ReplicationShowCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When a LIMIT operand names a variable, the file is not in the index, or the position cannot be read
      */
-    public function binlogEvents(ShowBinlogEvents $statement, Session $session, Context $context): Reply
+    public function binlogEvents(ShowBinlogEvents $statement, Session $session, Context $context, ?\MySqlMemory\Plan\Blocks $bounds = null): Reply
     {
-        $this->limit($statement->limit);
+        $this->limit($statement->limit, $session);
         if (!BinaryLog::enabled($session)) {
             return $this->listing((new \MySqlMemory\Account\Catalog($session->settings()->release()))->legacy() ? self::LEGACY_EVENTS : self::EVENTS, [], $context);
         }
@@ -217,7 +217,7 @@ final class ReplicationShowCommand implements Command
         }
         $events = array_map(static fn (array $event): array => [BinaryLog::name($file), ...$event], $log->events($file, $session->instance->version));
 
-        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->prefix($statement->position), $statement->limit, 'SHOW BINLOG EVENTS'), $context);
+        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->prefix($statement->position), $statement->limit, 'SHOW BINLOG EVENTS', $bounds), $context);
     }
 
     /**
@@ -225,9 +225,9 @@ final class ReplicationShowCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When a LIMIT operand names a variable, the channel does not exist, the file is not the relay log, or the position cannot be read
      */
-    public function relaylogEvents(ShowRelaylogEvents $statement, Session $session, Context $context): Reply
+    public function relaylogEvents(ShowRelaylogEvents $statement, Session $session, Context $context, ?\MySqlMemory\Plan\Blocks $bounds = null): Reply
     {
-        $this->limit($statement->limit);
+        $this->limit($statement->limit, $session);
         (new ReplicaCommand())->channel($statement->channel, $session->settings()->legacy());
         $replication = $session->instance->registry->replication;
         if (!$replication->initialized) {
@@ -243,7 +243,7 @@ final class ReplicationShowCommand implements Command
             $events[] = [$name, $end, 'Stop', 1, $end + 23, ''];
         }
 
-        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->prefix($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS'), $context);
+        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->prefix($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS', $bounds), $context);
     }
 
     /**
@@ -275,7 +275,7 @@ final class ReplicationShowCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the position cannot be read
      */
-    public function window(array $events, string $position, ?Limit $limit, string $command): array
+    public function window(array $events, string $position, ?Limit $limit, string $command, ?\MySqlMemory\Plan\Blocks $bounds = null): array
     {
         if (bccomp($position, self::LAST_POSITION) > 0) {
             $shown = bccomp($position, '18446744073709551615') > 0 ? '18446744073709551615' : $position;
@@ -285,8 +285,8 @@ final class ReplicationShowCommand implements Command
         $from = max(4, (int) $position);
         $events = array_values(array_filter($events, static fn (array $event): bool => (int) $event[1] >= $from));
         if ($limit instanceof RowLimit) {
-            $count = $this->bound($limit->count);
-            $offset = $this->bound($limit->offset) ?? 0;
+            $count = $this->bound($limit->count, $bounds);
+            $offset = $this->bound($limit->offset, $bounds) ?? 0;
             $events = array_slice($events, $offset, $count === 0 ? null : $count);
         }
 
@@ -294,29 +294,35 @@ final class ReplicationShowCommand implements Command
     }
 
     /**
-     * Refuses a LIMIT operand that names a variable.
+     * Refuses a LIMIT operand that names an undeclared variable, in written order.
      *
      * @throws \MySqlMemory\Error\SqlError When an operand names a variable
      */
-    public function limit(?Limit $limit): void
+    public function limit(?Limit $limit, ?Session $session = null): void
     {
         if (!$limit instanceof RowLimit) {
             return;
         }
-        foreach ([$limit->offset, $limit->count] as $operand) {
-            if ($operand instanceof ProgramVariable) {
+        foreach ($limit->spelling === \SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Comma ? [$limit->offset, $limit->count] : [$limit->count, $limit->offset] as $operand) {
+            if ($operand instanceof ProgramVariable && $session?->program?->variable($operand->name->value) === null) {
                 throw ProgramError::UndeclaredVariable->error($operand->name->value);
             }
         }
     }
 
     /**
-     * Answers the value of a LIMIT operand, an unsigned integer literal; none for an absent one.
+     * Answers a LIMIT value, using semantic bindings for parameters and program variables.
+     * An absent operand has no bound; literal-only callers need no evaluation context.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a bound cannot be evaluated as an integer
      */
-    public function bound(?\SqlSemantics\Statement\Operand $operand): ?int
+    public function bound(?\SqlSemantics\Statement\Operand $operand, ?\MySqlMemory\Plan\Blocks $bounds = null): ?int
     {
         if ($operand === null) {
             return null;
+        }
+        if ($bounds !== null && !$operand instanceof NumberLiteral) {
+            return $bounds->bound($operand, null);
         }
         if (!$operand instanceof NumberLiteral) {
             return 0;

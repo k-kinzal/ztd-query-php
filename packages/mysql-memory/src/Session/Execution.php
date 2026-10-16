@@ -189,9 +189,10 @@ final class Execution
         $session->interrupted = false;
         $session->diagnostics->previous = [$session->diagnostics->raised(), $session->diagnostics->errors()];
         $session->diagnostics->limit = $session->variables->count('max_error_count', 1024);
+        $resetsOnParseFailure = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings && $session->settings()->legacy()) || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
         if ($command->clearsDiagnostics() && $this->retains($operation->statement, $command)) {
             $session->diagnostics->retain();
-        } elseif ($command->clearsDiagnostics() || ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics && ($this->undeclared($operation) || array_filter($operation->facts->diagnostics, Stages::parsed(...)) !== []))) {
+        } elseif ($command->clearsDiagnostics() || ($resetsOnParseFailure && ($this->undeclared($operation) || array_filter($operation->facts->diagnostics, Stages::parsed(...)) !== []))) {
             $session->diagnostics->clear();
         }
     }
@@ -320,6 +321,9 @@ final class Execution
     {
         try {
             (new Problem\Reading())->into($operation->statement, $this->session);
+            if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors) {
+                (new Problem\Reading())->limited($operation->statement->limit, $this->session);
+            }
         } catch (SqlError) {
             return true;
         }

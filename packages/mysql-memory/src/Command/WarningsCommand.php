@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -14,7 +13,6 @@ use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -56,11 +54,7 @@ final class WarningsCommand implements Command
     {
         $statement = $operation->statement;
         $bounded = $statement instanceof ShowWarnings || $statement instanceof ShowErrors ? $statement->limit : null;
-        foreach ($bounded instanceof RowLimit ? [$bounded->offset, $bounded->count] : [] as $operand) {
-            if ($operand instanceof ProgramVariable) {
-                throw ProgramError::UndeclaredVariable->error($operand->name->value);
-            }
-        }
+        (new \MySqlMemory\Session\Problem\Reading())->limited($bounded, $session);
         $errors = $statement instanceof ShowErrors || $statement instanceof ShowErrorCount;
         $rows = [];
         foreach ($session->diagnostics->conditions as [$level, $code, $message]) {
@@ -75,7 +69,8 @@ final class WarningsCommand implements Command
         }
         $limit = $statement instanceof ShowWarnings || $statement instanceof ShowErrors ? $statement->limit : null;
         if ($limit instanceof RowLimit) {
-            $rows = array_slice($rows, $this->bound($limit->offset) ?? 0, $this->bound($limit->count));
+            $bounds = new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary));
+            $rows = array_slice($rows, $limit->offset === null ? 0 : $bounds->bound($limit->offset, null), $bounds->bound($limit->count, null));
         }
         return new ResultSet($this->columns($session), $rows);
     }

@@ -17,6 +17,28 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class ReadingTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling, string}>
+     */
+    public static function providerLimitOrders(): iterable
+    {
+        yield 'offset written last' => [\SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Keyword, 'amount'];
+        yield 'offset written first' => [\SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Comma, 'start'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLimitOrders')]
+    public function testLimitedUsesTheConstructedOperandOrder(\SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling $spelling, string $missing): void
+    {
+        $limit = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable(new \SqlSemantics\Statement\Identifier\Name('amount')), new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable(new \SqlSemantics\Statement\Identifier\Name('start')), $spelling);
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid request';
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage('Undeclared variable: ' . $missing);
+
+        (new Reading())->limited($limit, $session);
+    }
+
     public function testVariablesRefusesAnUndeclaredWindowCountBeforeTheFrame(): void
     {
         $session = (new Instance())->connect();

@@ -113,8 +113,8 @@ final class Reading
     {
         $reached = array_fill_keys(array_map(spl_object_id(...), (new \MySqlMemory\Session\Problems())->reached($operation->statement)), true);
         $program = \MySqlMemory\Command\Dispatcher::program($operation->statement);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile) {
-            $this->limited($operation->statement, $session);
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEvents || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents) {
+            $this->limited($operation->statement->limit, $session);
         }
         foreach ($program ? [] : (new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable::class) as $variable) {
             if ($session->program?->variable($variable->name->value) === null) {
@@ -178,7 +178,7 @@ final class Reading
     {
         if ($ended) {
             $this->aliased($select, $operation, $session);
-            $this->limited($select, $session);
+            $this->limited($select->limit, $session);
         }
         $position = $select->intoPosition;
         if ($select->into instanceof IntoVariables && $position !== \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition::AfterLocking && ($position === \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition::AfterItems) !== $ended) {
@@ -218,9 +218,8 @@ final class Reading
      *
      * @throws SqlError When the LIMIT names such a variable
      */
-    public function limited(Select|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile $select, Session $session): void
+    public function limited(?\SqlSemantics\Platform\MySql\Statement\Query\Limit $limit, Session $session): void
     {
-        $limit = $select->limit;
         if (!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit) {
             return;
         }
