@@ -15,6 +15,13 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class EnginePrefixTest extends TestCase
 {
+    public function testBeforeLeavesARefusedProgramToItsOriginalInputDiagnostic(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $sql = 'CREATE FUNCTION f() RETURNS INT RETURN ?';
+        self::assertSame([], (new EnginePrefix())->before($session->semantics()->parser()->tokenize($sql), $sql, strlen($sql), $session));
+    }
+
     public function testBeforeFindsTheEngineWithoutCreatingTheTable(): void
     {
         $session = (new Instance('5.7.44'))->connect();

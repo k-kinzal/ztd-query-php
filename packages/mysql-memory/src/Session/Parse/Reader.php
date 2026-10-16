@@ -50,7 +50,11 @@ final class Reader
             if ($listed !== null) {
                 throw (new CacheOptions())->clashed($listed[0], $listed[1], $statement, $session);
             }
-            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy(), $rejection?->aborts === true ? $rejection->end : PHP_INT_MAX);
+            try {
+                (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy(), $rejection?->aborts === true ? $rejection->end : PHP_INT_MAX);
+            } catch (SqlError $error) {
+                throw (new Entry\ProgramInput())->marker($error, $tree, $session);
+            }
         }
         $databaseError = $rejection === null ? null : ((new RoutinePrefix())->database($statement, $rejection->end, $session) ?? (new Entry\PrivilegeInput())->database($statement, $rejection->end, $session));
         if ($databaseError !== null) {

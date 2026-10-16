@@ -30,6 +30,7 @@ final class Preparation
     public function check(Operation $operation, Session $session): void
     {
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
+        $this->program($operation, $session);
         (new Reading())->read($operation, $session);
         (new DefaultDatabase())->check($operation->statement, $session);
         (new DefaultDatabase())->referenced($operation, $session);
@@ -51,5 +52,34 @@ final class Preparation
                 $session->diagnostics->warning($code, $message);
             }
         }
+    }
+
+    /**
+     * Applies the routine and trigger protocol restriction after their reading
+     * conditions, before catalog existence and invocation checks. A valid stored
+     * body may be defined through the text protocol but not COM_STMT_PREPARE.
+     * Observed on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1.
+     *
+     * @throws SqlError When a header, body or protocol condition refuses preparation
+     */
+    public function program(Operation $operation, Session $session): void
+    {
+        $statement = $operation->statement;
+        if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger) {
+            return;
+        }
+        $programs = new \MySqlMemory\Command\Program\ProgramProblems();
+        $programs->definer($statement, $session->settings()->release());
+        \MySqlMemory\Command\Program\ProgramSource::database($statement->name->schema, $session);
+        if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger) {
+            (new \MySqlMemory\Command\Program\RoutineCommand())->types($statement, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, microtime(true)));
+        }
+        (new Reading())->read($operation, $session);
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($programs->parsed($diagnostic, false)) {
+                throw (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session, 'field list', $statement);
+            }
+        }
+        throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
     }
 }

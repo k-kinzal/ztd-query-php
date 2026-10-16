@@ -43,6 +43,9 @@ final class DefaultDatabase
         }
         $names = match (true) {
             $statement instanceof MultipleDelete => $statement->targets,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger,
             $statement instanceof CreateEvent,
             $statement instanceof ShowFunctionCode,
             $statement instanceof ShowProcedureCode => [$statement->name],

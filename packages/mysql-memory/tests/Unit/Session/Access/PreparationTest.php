@@ -14,6 +14,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testProgramRefusesPreparationBeforeLookingUpTheRoutineDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('CREATE FUNCTION missing.f() RETURNS INT RETURN 1', true);
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1295);
+        (new Preparation())->program($operation, $session);
+    }
+
     public function testCheckRecordsResolutionBeforeResourceGroupConditions(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

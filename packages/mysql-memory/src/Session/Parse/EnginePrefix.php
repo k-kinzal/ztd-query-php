@@ -45,7 +45,7 @@ final class EnginePrefix
             $semantics = $session->semantics();
             $tree = $semantics->parser()->parse(substr($statement, 0, $end));
             $operation = $semantics->analyze($tree);
-        } catch (SourceException|AnalysisException) {
+        } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
             return [];
         }
         if (!$operation->statement instanceof CreateTable && !$operation->statement instanceof AlterTable) {

@@ -40,6 +40,15 @@ final class CacheOptionsTest extends TestCase
         self::assertSame([], $session->diagnostics->conditions);
     }
 
+    public function testReportedPreservesAlreadyRecordedHeaderConditions(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $session->query("SET sql_mode=''");
+        $session->run("CREATE FUNCTION f(a ENUM('x','x')) RETURNS INT RETURN ?");
+
+        self::assertSame([['Note', 1291, "Column '' has duplicated value 'x' in ENUM"], ['Error', 1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?' at line 1"]], $session->diagnostics->conditions);
+    }
+
     public function testPrefixResolvesAssignmentsAndLoadTargetsWithoutExecution(): void
     {
         $session = (new Instance('5.6.51'))->connect();

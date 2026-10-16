@@ -987,3 +987,17 @@ location, without publishing an invalid declaration or retaining SQL or ASTs.
 Without a language component, MySQL 8.1 refuses external routine creation;
 8.2 and later retain the definition with a warning and refuse its invocation.
 The emulator preserves this distinction and the release-specific message text.
+
+Stored routine and trigger bodies cannot retain client `Parameter` occurrences:
+their invocation variables do not provide a client binding scope. The check also
+visits scalar subqueries, local defaults and unreachable branches. Literal text
+and opaque external code remain uninterpreted. SQL input is represented by a
+typed `ParameterScopeMismatch` refusal and its completed header, without
+publishing the contradictory declaration. Events have a separate binding domain
+and are not included in this routine/trigger constraint.
+
+Preparing an otherwise valid routine or trigger definition follows its own
+protocol restriction. Memory checks the typed header and reading diagnostics
+before error 1295, independently of target-object existence. Text execution
+retains its distinct marker error and all preceding declaration notes. An
+already recorded condition sequence is preserved when the refusal propagates.

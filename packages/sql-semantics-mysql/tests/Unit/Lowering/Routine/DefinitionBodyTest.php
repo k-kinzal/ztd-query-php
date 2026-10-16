@@ -18,6 +18,18 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class DefinitionBodyTest extends TestCase
 {
+    public function testCheckRetainsTheGeneratedParameterCounterexampleAsAnInputRefusal(): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE FUNCTION `10`.`2`(`あ` DECIMAL, utf8mb4_0900_ai_ci DECIMAL, `0` DECIMAL) RETURNS MEDIUMBLOB RETURN !! JSON_OBJECTAGG(0, ?)');
+            self::fail('A routine body cannot retain an unscoped client parameter.');
+        } catch (RejectedInput $error) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $error->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ParameterScopeMismatch::class, $error->problem->problem);
+            self::assertSame('10', $error->problem->name->schema?->value);
+        }
+    }
+
     public function testLanguageKeepsAnExternalBodyLocationWithoutPublishingTheDeclaration(): void
     {
         try {

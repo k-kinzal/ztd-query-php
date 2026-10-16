@@ -41,13 +41,16 @@ final class CacheOptions
      */
     public function reported(SqlError $error, string $statement, Session $session): SqlError
     {
+        if ($error->recorded) {
+            return $error;
+        }
         for ($refusal = $error->getPrevious(); $refusal !== null; $refusal = $refusal->getPrevious()) {
             if ($refusal instanceof \SqlSemantics\Construction\RejectedInput && $refusal->aborts) {
                 return $error;
             }
         }
         $release = $session->settings()->release();
-        if (!$error->recorded && $error->error === StatementError::ParseError) {
+        if ($error->error === StatementError::ParseError) {
             $error = (new Parse\Entry\WeightInput())->before($statement, $this->cause($error)?->token->offset ?? strlen($statement), $session) ?? $error;
         }
         if ($error->error !== StatementError::ParseError || ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744)) {

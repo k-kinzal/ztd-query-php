@@ -54,6 +54,7 @@ final class DefinitionBody
         if ($language !== null && ($problem === null || in_array($problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::MissingReturn, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ResultSet, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::FunctionStatement], true))) {
             $problem = $language;
         }
+        $problem ??= (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyBindings())->problem($body, $kind);
         if ($problem !== null) {
             throw new RejectedInput(new RefusedProgramBody($name, $kind, $problem, $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $end, false);
         }

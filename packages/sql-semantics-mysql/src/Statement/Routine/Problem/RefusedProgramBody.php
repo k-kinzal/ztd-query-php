@@ -35,7 +35,7 @@ final class RefusedProgramBody implements Diagnostic
     /**
      * @param QualifiedName $name The declaration's name and optional database
      * @param ProgramKind $kind The enclosing declaration kind
-     * @param ProgramProblem|LanguageBodyMismatch $problem The intrinsic instruction, language or return constraint
+     * @param ProgramProblem|LanguageBodyMismatch|ParameterScopeMismatch $problem The intrinsic instruction, language, binding or return constraint
      * @param Account|null $definer The preceding definer operand
      * @param ParameterList|null $parameters The routine parameters, absent for events and triggers
      * @param DeclaredName|null $returns The stored function return type
@@ -43,7 +43,7 @@ final class RefusedProgramBody implements Diagnostic
      * @param list<int> $typeEnds Completion offsets of parameters followed by the return type, used only to order input notices
      * @param int $nameEnd Completion offset of the declared name, before its field types
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ProgramKind $kind, public readonly ProgramProblem|LanguageBodyMismatch $problem, public readonly ?Account $definer = null, public readonly ?ParameterList $parameters = null, public readonly ?DeclaredName $returns = null, public readonly ?CollationName $collation = null, array $typeEnds = [], public readonly int $nameEnd = 0)
+    public function __construct(public readonly QualifiedName $name, public readonly ProgramKind $kind, public readonly ProgramProblem|LanguageBodyMismatch|ParameterScopeMismatch $problem, public readonly ?Account $definer = null, public readonly ?ParameterList $parameters = null, public readonly ?DeclaredName $returns = null, public readonly ?CollationName $collation = null, array $typeEnds = [], public readonly int $nameEnd = 0)
     {
         \SqlSemantics\Diagnostic\Check::input($nameEnd >= 0, 'The input name position is nonnegative.');
         $this->typeEnds = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\InputPositions())->checked($typeEnds);

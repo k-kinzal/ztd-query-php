@@ -38,6 +38,7 @@ final class BodyStructure
     {
         $problem = $this->problem($body, $kind, $name);
         Check::input($problem === null, $problem?->message() ?? 'The body fits its declaration kind.');
+        (new BodyBindings())->check($body, $kind);
     }
 
     /**

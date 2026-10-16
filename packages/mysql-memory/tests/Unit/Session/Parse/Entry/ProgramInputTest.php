@@ -20,6 +20,22 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class ProgramInputTest extends TestCase
 {
+    public function testMarkerKeepsTheCompletedHeaderNoteBeforeTheTextProtocolRefusal(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query("SET sql_mode=''");
+        $session->run("CREATE FUNCTION f(a ENUM('x','x')) RETURNS INT RETURN ?");
+        self::assertSame([['Note', 1291, "Column '' has duplicated value 'x' in ENUM"], ['Error', 1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?' at line 1"]], $session->diagnostics->conditions);
+    }
+
+    public function testMarkerNotesRequiresTheHeaderDatabaseBeforeReportingAnyNotes(): void
+    {
+        $session = (new Instance())->connect();
+        $refusal = new RefusedProgramBody(new QualifiedName(new Name('f')), ProgramKind::Function, new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ParameterScopeMismatch(), nameEnd: 17);
+        $session->text = 'CREATE FUNCTION f() RETURNS INT RETURN ?';
+        self::assertSame(1046, (new ProgramInput())->markerNotes($refusal, \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error(), 38, $session)->getCode());
+    }
+
     public function testErrorUsesTheDatabaseAndTypedHeaderWithoutInputText(): void
     {
         $refusal = new RefusedProgramBody(new QualifiedName(new Name('f')), ProgramKind::Function, new ProgramProblem(ProgramRule::MissingReturn, 'f'));
