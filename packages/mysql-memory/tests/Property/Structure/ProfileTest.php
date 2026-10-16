@@ -230,4 +230,22 @@ final class ProfileTest extends TestCase
         self::assertSame('mysql', $profile->grammar->database());
         self::assertSame(ParameterStyle::Native, $profile->parameters);
     }
+
+    /**
+     * Keeps the selected EXPLAIN root when incompatible DELETE aliases are rejected.
+     *
+     * @throws JsonException When a semantic inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testSelectPreservesExplainAfterRejectingMixedDeleteGenerations(): void
+    {
+        $catalogue = new \Fuzz\Structure\Catalogue();
+        $choices = new Choices('row-roles-20261017:187');
+        $choices->one($catalogue->roots());
+        $node = (new \Fuzz\Structure\Construction($choices, $catalogue, new \Fuzz\Structure\Metadata()))->object(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, 6);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $node);
+
+        self::assertSame('mysql', (new Profiles())->select($node)->grammar->database());
+    }
+
 }

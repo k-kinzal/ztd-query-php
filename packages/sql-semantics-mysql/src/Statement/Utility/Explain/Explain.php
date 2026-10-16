@@ -35,6 +35,10 @@ use SqlSemantics\Statement\Snapshot;
  * @example Refusing a format outside the public format domain
  *     $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
  *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, new \SqlSemantics\Statement\Identifier\Name('XML')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a legacy modifier around a modern DELETE alias
+ *     $target = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), alias: new \SqlSemantics\Statement\Identifier\Name('x'));
+ *     $delete = new \SqlSemantics\Platform\MySql\Statement\Dml\Delete(null, [], $target);
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($delete, modifier: \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Inspecting a query and reading the report columns
  *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('EXPLAIN FORMAT = TREE SELECT 1');
  *     [$explain->field(0)->name?->value, $explain->toString()] // => ['EXPLAIN', 'EXPLAIN FORMAT = TREE SELECT 1']

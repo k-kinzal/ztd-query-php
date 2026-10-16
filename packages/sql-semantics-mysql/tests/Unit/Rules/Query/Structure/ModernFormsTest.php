@@ -126,4 +126,17 @@ final class ModernFormsTest extends TestCase
         self::assertFalse((new ModernForms())->definition(new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(null)));
     }
 
+
+    public function testRequiresDistinguishesDeleteAliasesFromSharedWriteTargets(): void
+    {
+        $forms = new ModernForms();
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+        $plain = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget($name);
+        $aliased = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget($name, alias: new \SqlSemantics\Statement\Identifier\Name('x'));
+
+        self::assertFalse($forms->requires($aliased));
+        self::assertFalse($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Dml\Delete(null, [], $plain)));
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Dml\Delete(null, [], $aliased)));
+    }
+
 }

@@ -46,6 +46,7 @@ final class ModernForms
             || $this->definition($value)
             || match (true) {
                 $value instanceof Select => $this->query($value),
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete => $value->table->alias !== null,
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain, $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection => $this->explain($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint => !$value->name()->available(\SqlSemantics\Contract\GrammarRelease::MySql5744),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification => $this->authentication($value),
