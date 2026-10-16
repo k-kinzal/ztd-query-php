@@ -65,6 +65,34 @@ final class LoadDataCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof LoadTable);
+        $input = $statement->input;
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if (Stages::answered($statement, $diagnostic)) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
+            }
+        }
+        if ($input->local) {
+            throw StatementError::LocalInfileDisabled->error();
+        }
+        if (str_starts_with($input->file->value, self::SECURE_DIRECTORY)) {
+            throw AdministrationError::FileStat->error($input->file->value, 2, 'No such file or directory');
+        }
+
+        throw StatementError::OptionPreventsStatement->error('--secure-file-priv');
+    }
+
+    /**
+     * Checks load-entry restrictions before preparing SET expressions.
+     *
+     * Grammar conditions have already been reported. Modern disabled LOCAL
+     * loading then precedes subquery resolution and scalar-width checks.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the input is unavailable or incompatible
+     */
+    public function prepare(Operation $operation, Session $session): void
+    {
+        $statement = $operation->statement;
+        assert($statement instanceof LoadTable);
         $legacy = $session->settings()->legacy();
         if ($legacy) {
             $this->separators($statement);
@@ -81,25 +109,19 @@ final class LoadDataCommand implements Command
             $this->separators($statement);
         }
         if (preg_match('/[\x80-\xff]/', implode('', $this->separatorBytes($statement))) === 1) {
-            $context->warning(\MySqlMemory\Error\Family\DataError::NonAsciiSeparator);
+            $error = \MySqlMemory\Error\Family\DataError::NonAsciiSeparator;
+            $session->diagnostics->warning($error, $error->message());
         }
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            $schema = $diagnostic instanceof MissingTable ? ($diagnostic->name->schema->value ?? $session->variables->database) : '';
-            if ($diagnostic instanceof MissingTable && $schema !== '' && $session->instance->dictionary->schema($schema) === null) {
+            if (!$diagnostic instanceof MissingTable) {
+                continue;
+            }
+            $schema = $diagnostic->name->schema->value ?? $session->variables->database;
+            if ($schema !== '' && $session->instance->dictionary->schema($schema) === null) {
                 throw Errors::unknown($schema, $diagnostic->name->name->value, $session->settings()->release());
             }
-            if (Stages::answered($statement, $diagnostic)) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
-            }
+            throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
         }
-        if ($input->local) {
-            throw StatementError::LocalInfileDisabled->error();
-        }
-        if (str_starts_with($input->file->value, self::SECURE_DIRECTORY)) {
-            throw AdministrationError::FileStat->error($input->file->value, 2, 'No such file or directory');
-        }
-
-        throw StatementError::OptionPreventsStatement->error('--secure-file-priv');
     }
 
     /**

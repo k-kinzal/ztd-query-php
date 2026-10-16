@@ -264,7 +264,7 @@ final class Problems
     }
 
     /**
-     * Checks temporary reopening first, then clauses refused before name resolution.
+     * Checks load entry, temporary reopening, and clauses refused before name resolution.
      *
      * GROUP BY CUBE in a statement that reads no table is not supported; with tables, CUBE fails
      * only when the statement runs (Grouping). QUALIFY needs the hypergraph optimizer, which the
@@ -278,6 +278,9 @@ final class Problems
      */
     public function prepared(Operation $operation, Session $session): void
     {
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable) {
+            (new \MySqlMemory\Command\Access\LoadDataCommand())->prepare($operation, $session);
+        }
         (new Problem\Definition\CheckQueries())->prepare($operation, $session, $this);
         (new Problem\Definition\FunctionalQueries())->prepare($operation, $session, $this);
         (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);

@@ -73,6 +73,9 @@ final class RejectedOperand
             if ($node->name === 'json_attribute') {
                 return (new Leaf\SyntaxJsonAttribute())->rejected($node, $lowering);
             }
+            if ($node->name === 'bool_pri') {
+                return (new Expression\ComparisonRule())->rejected($node, $lowering);
+            }
             if ($node->name === 'function_call_generic') {
                 (new Call\FunctionRule($lowering))->call($lowering->form($node));
             } elseif ($node->name === 'partition_entry') {

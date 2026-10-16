@@ -61,6 +61,7 @@ final class Comparison implements Scalar
     {
         $left = $derivation->scalar($this->left, $environment);
         $right = $derivation->scalar($this->right, $environment);
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\ComparisonWidth())->notice($this->left, $this->right, $derivation);
         $operands = new Operands();
         $operands->comparable([$left, $right], $derivation, $this);
         $operands->collated([$left, $right], $this->operator->value, $derivation);

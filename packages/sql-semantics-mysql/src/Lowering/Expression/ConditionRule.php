@@ -8,7 +8,6 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
@@ -94,6 +93,7 @@ final class ConditionRule
      * Lowers a node of expr.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
     public function expression(Node $expression): Scalar
     {
@@ -116,6 +116,7 @@ final class ConditionRule
      * Lowers an expr production that is not a logical operation.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
     public function unit(Form $form): Scalar
     {
@@ -137,6 +138,7 @@ final class ConditionRule
      * Lowers a node of bool_pri.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
     public function boolean(Node $expression): Scalar
     {
@@ -161,6 +163,7 @@ final class ConditionRule
      * Applies one left-recursive bool_pri production to its already lowered left operand.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
     public function apply(Form $form, Scalar $left): Scalar
     {
@@ -169,8 +172,8 @@ final class ConditionRule
         return match ($form->signature) {
             'bool_pri: bool_pri IS NULL_SYM' => new NullTest($left),
             'bool_pri: bool_pri IS not NULL_SYM' => $this->negatedNull($form, $left),
-            'bool_pri: bool_pri EQUAL_SYM predicate' => new Comparison(ComparisonOperator::NullSafeEqual, $left, $predicates->predicate($form->node(2))),
-            'bool_pri: bool_pri comp_op predicate' => new Comparison($this->operator($form->node(1)), $left, $predicates->predicate($form->node(2))),
+            'bool_pri: bool_pri EQUAL_SYM predicate' => (new ComparisonRule())->lower(ComparisonOperator::NullSafeEqual, $left, $predicates->predicate($form->node(2)), $form->node, $this->lowering->profile->grammar),
+            'bool_pri: bool_pri comp_op predicate' => (new ComparisonRule())->lower($this->operator($form->node(1)), $left, $predicates->predicate($form->node(2)), $form->node, $this->lowering->profile->grammar),
             'bool_pri: bool_pri comp_op all_or_any ( subselect )' => new QuantifiedComparison($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(4))),
             'bool_pri: bool_pri comp_op all_or_any table_subquery' => new QuantifiedComparison($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(3))),
             default => throw ImplementationGap::production($form),

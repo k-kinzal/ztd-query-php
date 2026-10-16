@@ -72,6 +72,16 @@ final class LoadDataCommandTest extends TestCase
         $session->query("LOAD DATA FROM LOCAL URL 'x' COUNT 1 INTO TABLE nope");
     }
 
+    public function testPrepareRefusesLocalInputBeforePreparingAssignmentSubqueries(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); CREATE TABLE two_columns(a INT,b INT)');
+        $operation = $session->analyze("LOAD XML LOCAL INFILE 'x' INTO TABLE t SET a=1=ALL(SELECT * FROM two_columns)");
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3948);
+        (new LoadDataCommand())->prepare($operation, $session);
+    }
+
     public function testExecuteRefusesLocalData(): void
     {
         $session = (new Instance())->connect();

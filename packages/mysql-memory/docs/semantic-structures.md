@@ -890,6 +890,20 @@ SQL to memory. This consumer repair does not close the separate public-type
 defect that still permits a Row at ordinary scalar positions.
 
 
+Written row comparisons also carry their diagnostic phase. Different outer
+widths are checked during contextualization of a completed statement in
+MySQL 5.7 and modern releases; MySQL 5.6 defers the check. Scalar/row pairs, nested shape
+conflicts and membership/subquery widths remain preparation conditions. The
+semantic input refusal retains this distinction, including in stored-program bodies;
+execution does not infer it from SQL text. LOAD checks its input restrictions
+before preparing assignments, so disabled LOCAL input precedes a subquery width
+error. A direct history reuses one LOAD structure while its wildcard subquery's
+catalog changes from absent to one column, then two columns, then absent. Native
+comparison includes the resulting table, file-policy and column-count errors.
+These phase and state witnesses do not repair the remaining public row-domain
+contradictions.
+
+
 Standalone privilege grants admit AS only at the global privilege level. The
 constructor rejects a non-global AS clause and column privileges on routines.
 Stored programs use `DeferredGrantAs` for the distinct instruction that native
