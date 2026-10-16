@@ -68,11 +68,11 @@
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    }</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * Finds a character set by name, case-insensitively; `utf8` names `utf8mb3`.</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * Finds a character set by its null-terminated name, case-insensitively; `utf8` names `utf8mb3`.</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">named</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>): ?<span class="tok-id">self</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">return</span> <span class="tok-id">Catalog</span>::<span class="tok-id">shared</span>()-&gt;<span class="tok-id">charsets</span>[<span class="tok-id">Catalog</span>::<span class="tok-id">canonical</span>(<span class="tok-var">$name</span>)] ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">return</span> <span class="tok-id">Catalog</span>::<span class="tok-id">shared</span>()-&gt;<span class="tok-id">charsets</span>[<span class="tok-id">Catalog</span>::<span class="tok-id">canonical</span>(<span class="tok-id">explode</span>(<span class="tok-str">&quot;\0&quot;</span>, <span class="tok-var">$name</span>, <span class="tok-num">2</span>)[<span class="tok-num">0</span>])] ?? <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    }</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-com">/**</span></span>
