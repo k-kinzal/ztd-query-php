@@ -71,18 +71,9 @@ final class AccountName implements Account
      */
     public function render(Output $out): void
     {
-        if (str_contains($this->user->value, "\0")) {
-            $out->spelled($out->quote($this->user->value));
-        } else {
-            $out->name($this->user, NameUse::Label);
-        }
+        $out->name($this->user, NameUse::Label);
         if ($this->host !== null) {
-            $out->glue()->symbol('@')->glue();
-            if (str_contains($this->host->value, "\0")) {
-                $out->spelled($out->quote($this->host->value));
-            } else {
-                $out->name($this->host, NameUse::Label);
-            }
+            $out->glue()->symbol('@')->glue()->name($this->host, NameUse::Label);
         }
     }
 }

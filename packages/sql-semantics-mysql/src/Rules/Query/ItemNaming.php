@@ -145,19 +145,14 @@ final class ItemNaming
     }
 
     /**
-     * Answers an alias or a column name as the server stores it: converted from a latin1 character_set_client into the system character set.
+     * Answers a decoded identifier, stopping at the first NUL as MySQL does for output names.
      *
-     * The server reads identifiers in character_set_client; a client of another character set
-     * than latin1 is taken to write UTF-8.
+     * Identifier character sets are interpreted during lowering. A constructed name already
+     * denotes its system-character-set value and never changes with the execution session.
      */
     public function identifier(Name $name): Name
     {
-        $name = str_contains($name->value, "\0") ? new Name(explode("\0", $name->value, 2)[0]) : $name;
-        if ($this->client?->name !== 'latin1' || preg_match('/[\x80-\xFF]/', $name->value) !== 1) {
-            return $name;
-        }
-
-        return new Name($this->latin1($name->value));
+        return str_contains($name->value, "\0") ? new Name(explode("\0", $name->value, 2)[0]) : $name;
     }
 
     /**
@@ -248,7 +243,10 @@ final class ItemNaming
      */
     public function text(SelectExpression $item): string
     {
-        return $item->layout === null ? $this->canonical($item->expression) : $item->layout->tokens[0]->gap . $item->layout->text();
+        $out = new Output(new Codec($this->profile->grammar, $this->profile->lexical));
+        $out->layout($item->layout, $item->expression, $item->spellingProfile?->grammar === GrammarRelease::MySql5651);
+
+        return $this->encoded($out);
     }
 
     /**
@@ -259,7 +257,18 @@ final class ItemNaming
         $out = new Output(new Codec($this->profile->grammar, $this->profile->lexical));
         $out->layout(null, $expression);
 
-        return (new Lexical())->join($out->pieces());
+        return $this->encoded($out);
+    }
+
+    /**
+     * Encodes name slots for an observable result label, replacing characters
+     * the client character set cannot represent. Literal slots already hold bytes.
+     */
+    public function encoded(Output $output): string
+    {
+        $pieces = array_map(fn (\SqlSemantics\Rendering\Piece $piece): \SqlSemantics\Rendering\Piece => new \SqlSemantics\Rendering\Piece($piece->kind, $piece->kind === \SqlSemantics\Rendering\PieceKind::Name ? (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->encode($piece->text, $this->client) : $piece->text, $piece->glued, $piece->gap), $output->pieces());
+
+        return (new Lexical())->join($pieces);
     }
 
     /**
@@ -337,17 +346,7 @@ final class ItemNaming
      */
     public function latin1(string $text): string
     {
-        $converted = '';
-        foreach (str_split($text) as $byte) {
-            $code = ord($byte);
-            $converted .= match (true) {
-                $code < 0x80 => $byte,
-                in_array($code, [0x81, 0x8D, 0x8F, 0x90, 0x9D], true) => mb_chr($code, 'UTF-8'),
-                default => mb_convert_encoding($byte, 'UTF-8', 'Windows-1252'),
-            };
-        }
-
-        return $converted;
+        return (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($text, Charset::known('latin1'));
     }
 
     /**

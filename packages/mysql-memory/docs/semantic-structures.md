@@ -1025,3 +1025,22 @@ with charset warnings and stored-program restrictions. Original invalid SQL stay
 in the native comparison matrix. A constructor sample of 100 LOAD values and the
 245-root sample remain constructible without exclusions or increased budgets;
 these samples do not establish every possible cross-release combination.
+
+Identifier character sets are interpreted at the input boundary. In particular,
+Latin-1 input bytes become decoded system-character-set names before the model
+is published. Planning uses those names directly; changing `character_set_client`
+does not reinterpret an existing name. Rendering reverses that conversion for
+the selected client context. Observable expression layouts retain name spellings
+in the same representation as their typed identifiers, while string literal
+slots retain their original value bytes. Tests reuse the identical statement
+object under Latin-1 and UTF-8 contexts and compare native legacy filename
+errors, including Unicode, quoted delimiters and reserved filesystem names.
+Conversions for additional client character sets remain separate work; this
+change does not establish equivalence for arbitrary connection encodings.
+
+Structural publication checks names in the model's canonical representation. It
+must not reject a valid decoded name merely because the current client character
+set cannot spell it. `Operation::toString()` reports `UnrepresentableName` if
+rendering would replace identifier characters. This does not prevent direct
+structure consumers from resolving or executing the same object. Result labels
+and origin metadata follow the session's result character set independently.

@@ -253,4 +253,33 @@ final class NameRuleTest extends TestCase
         self::assertSame([], $legacy->sources->notices);
     }
 
+    public function testIdentifierIsDecodedBeforePublicationAndRemainsStableAcrossSessions(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $latin1 = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        $utf8 = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'));
+        $original = $semantics->analyze('SELECT 1 AS `é`', $semantics->context(null, session: $latin1));
+        $reused = new \SqlSemantics\Statement\Operation($semantics->context(null, session: $utf8), $original->statement);
+        self::assertSame($original->statement, $reused->statement);
+        self::assertSame('Ã©', $original->field(0)->name?->value);
+        self::assertSame('Ã©', $reused->field(0)->name?->value);
+        self::assertSame('SELECT 1 AS `é`', $original->toString());
+        self::assertSame('SELECT 1 AS `Ã©`', $reused->toString());
+    }
+
+    public function testIdentifierNormalizesLayoutNamesWithoutConvertingStringLiteralBytes(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $session = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        $sql = "SELECT `é`+1, ('é'), 1 AS 'é\\0z'";
+        $operation = $semantics->analyze($sql, $semantics->context(null, session: $session));
+        self::assertSame($sql, $operation->toString());
+        self::assertSame('`Ã©`+1', $operation->field(0)->name?->value);
+        self::assertSame('Ã©', $operation->field(1)->name?->value);
+        self::assertSame('Ã©', $operation->field(2)->name?->value);
+        $other = new \SqlSemantics\Statement\Operation($semantics->context(), $operation->statement);
+        self::assertSame($operation->statement, $other->statement);
+        self::assertSame("SELECT `Ã©`+1, ('é'), 1 AS 'Ã©\\0z'", $other->toString());
+    }
+
 }

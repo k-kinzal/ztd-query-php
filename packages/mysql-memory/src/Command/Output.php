@@ -137,7 +137,9 @@ final class Output
             $flags &= ~ColumnFlag::Binary->value;
         }
 
-        return new ResultColumn($name, $field, $length, $domain->displayDecimals ?? $domain->decimals, $flags, $charset, $origin->column ?? '', $origin->table ?? '', $origin->originalTable ?? '', $origin->schema ?? '');
+        $encode = static fn (string $value): string => $results === null ? $value : Encoding::convert($value, Charset::known('utf8mb4'), $results);
+
+        return new ResultColumn($name, $field, $length, $domain->displayDecimals ?? $domain->decimals, $flags, $charset, $encode($origin->column ?? ''), $encode($origin->table ?? ''), $encode($origin->originalTable ?? ''), $encode($origin->schema ?? ''));
     }
 
     /**

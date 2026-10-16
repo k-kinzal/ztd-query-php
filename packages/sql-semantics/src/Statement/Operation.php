@@ -66,12 +66,14 @@ final class Operation
     }
 
     /**
-     * Answers the SQL rendered from the structure and confirmed to correspond to it; never the analyzed text.
+     * Answers SQL rendered from the structure in its client character set; never the analyzed text.
+     *
+     * @throws \SqlSemantics\Diagnostic\UnrepresentableName When the client character set cannot represent a decoded name
      */
     public function toString(): string
     {
         $platform = \SqlSemantics\Contract\Platforms::of($this->context->profile->grammar->database());
-        $output = new \SqlSemantics\Rendering\Output($platform->codec($this->context->profile));
+        $output = new \SqlSemantics\Rendering\Output($platform->codec($this->context->profile, $this->context->session));
         $this->statement->render($output);
 
         return (new \SqlSemantics\Rendering\Lexical())->join($output->pieces()) . $output->trailing();

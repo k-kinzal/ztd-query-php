@@ -28,7 +28,8 @@ use SqlSemantics\Statement\Statement;
  * parameter occurrences in written order. (3) The statement derives its facts
  * against the context; every scalar, relation and query node must have received
  * a fact. (4) The pieces are joined to text. The
- * text is parsed under the same profile and lowered by the same rules, and the
+ * text uses the model name representation, independently of client encoding,
+ * and is parsed under the same profile and lowered by the same rules. The
  * result must correspond operand by operand to the structure. Spelled regions
  * must only re-spell the rendered tokens (CORE-SPELLING-001). Any failure
  * discards the candidate. Trusted: the parser, the lowering and derivation

@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes RENAME TABLE: renames tables one after the other, all or none.
  *
- * Each new name is checked first, while the statement is read: an empty name, or one that ends
+ * Source and destination names are checked in written order, while the statement is read: an empty name, or one that ends
  * with a space, is ER_WRONG_TABLE_NAME, and a name longer than 64 characters
  * ER_TOO_LONG_IDENT. Then each rename in order: the databases must exist, the new name must be
  * free, and the table must exist; a temporary table is not renamed by this statement. A later
@@ -65,7 +65,8 @@ final class RenameTableCommand implements Command
             $from = [$renaming->from->schema->value ?? $database, $renaming->from->name->value];
             $to = [$renaming->to->schema->value ?? $database, $renaming->to->name->value];
             if ($session->settings()->legacy() && !isset($names[$from[0] . "\0" . $from[1]])) {
-                throw SchemaError::FileNotFound->error('./' . $from[0] . '/' . $from[1] . '.frm', 2, 'No such file or directory');
+                $files = new Database\FileName();
+                throw SchemaError::FileNotFound->error('./' . $files->encoded($from[0]) . '/' . $files->encoded($from[1]) . '.frm', 2, 'No such file or directory');
             }
             foreach ([$from[0], $to[0]] as $schema) {
                 if ($dictionary->schema($schema) === null) {
@@ -120,14 +121,15 @@ final class RenameTableCommand implements Command
     }
 
     /**
-     * Refuses what the server refuses while it reads the statement: first a new name no table
+     * Refuses what the server refuses while it reads the statement: first a name no table
      * can have, then an unqualified name when no database is selected.
      *
-     * @throws \MySqlMemory\Error\SqlError When a new name is invalid or a name needs a database
+     * @throws \MySqlMemory\Error\SqlError When a name is invalid or a name needs a database
      */
     public function written(RenameTable $statement, string $database): void
     {
         foreach ($statement->renamings as $renaming) {
+            $this->valid($renaming->from->name->value);
             $this->valid($renaming->to->name->value);
         }
         foreach ($statement->renamings as $renaming) {

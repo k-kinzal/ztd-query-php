@@ -36,7 +36,8 @@ final class CommonTableFactsTest extends TestCase
         $context = (new \SqlSemantics\Platform\PostgreSql\Platform())->context(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172), null, [], true);
         $derivation = new \SqlSemantics\Construction\Derivation($context);
         $table = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('x'), new \SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('T'))))));
-        self::assertSame(['t' => true], (new \SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\CommonTableFacts())->uses($table, $derivation));
+        self::assertSame(['T' => true], (new \SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\CommonTableFacts())->uses($table, $derivation));
+        self::assertSame('TABLE "T"', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('TABLE "T"')->toString());
     }
 
     public function testOrderDerivesReferencedTablesFirst(): void

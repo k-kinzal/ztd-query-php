@@ -110,17 +110,17 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Lowers a parse tree into its statements.
      */
-    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null): array
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?\SqlSemantics\Contract\Session $session = null): array
     {
-        return (new Lowering($this->productions($profile), $leaves, $profile, $origins ?? new \SqlSemantics\Construction\Origins()))->statements($tree);
+        return (new Lowering($this->productions($profile), $leaves, $profile, $origins ?? new \SqlSemantics\Construction\Origins(), $session instanceof Statement\Type\Resolved\Settings ? $session->client : null))->statements($tree);
     }
 
     /**
      * Answers the name codec of the release.
      */
-    public function codec(LanguageProfile $profile): Codec
+    public function codec(LanguageProfile $profile, ?\SqlSemantics\Contract\Session $session = null): Codec
     {
-        return new Codec($profile->grammar, $profile->lexical);
+        return new Codec($profile->grammar, $profile->lexical, $session instanceof Statement\Type\Resolved\Settings ? $session->client : null);
     }
 
     /**

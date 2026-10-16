@@ -226,7 +226,7 @@ final class Output
         $spelled = [];
         foreach (array_slice($this->pieces, $start) as $offset => $canonical) {
             $token = $layout->tokens[$offset];
-            $spelled[] = new Piece($canonical->kind, $token->text, $canonical->glued, $offset === 0 && (!$leading || $token->gap === '') ? $canonical->gap : $token->gap);
+            $spelled[] = new Piece($canonical->kind, $canonical->kind === PieceKind::Name ? $this->codec->spelling($token->text) : $token->text, $canonical->glued, $offset === 0 && (!$leading || $token->gap === '') ? $canonical->gap : $token->gap);
         }
         $this->pieces = [...array_slice($this->pieces, 0, $start), ...$spelled];
         $this->trail = $layout->trail === '' ? null : $layout->trail;

@@ -585,4 +585,13 @@ final class ClientTest extends TestCase
         self::assertFalse($open);
         self::assertSame(["\x07\x00\x00\x01\x00\x00\x00\x0A\x00\x00\x00"], array_slice($sent->getArrayCopy(), 1));
     }
+    public function testAuthenticateNegotiatesTheClientEncodingBeforeTheFirstQuery(): void
+    {
+        $client = new Client(new Instance('5.7.44'), 1, static function (string $bytes): void {
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\x2D" . str_repeat("\x00", 23) . "root\x00\x00");
+        self::assertSame('utf8mb4', $client->session()->variables->read('character_set_client'));
+        self::assertSame('utf8mb4_general_ci', $client->session()->variables->read('collation_connection'));
+    }
+
 }

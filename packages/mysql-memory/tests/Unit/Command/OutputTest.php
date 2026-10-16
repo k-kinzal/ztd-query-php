@@ -373,4 +373,11 @@ final class OutputTest extends TestCase
 
         self::assertSame(36865, $column->flags);
     }
+    public function testColumnEncodesAllOriginNamesInTheResultCharacterSet(): void
+    {
+        $origin = new ColumnOrigin('Ã©db', 'Ã©alias', 'Ã©table', 'Ã©column', 0);
+        $column = (new Output())->column('é', Domain::integer(), $origin, Charset::known('latin1'));
+        self::assertSame(['é', 'écolumn', 'éalias', 'étable', 'édb'], [$column->name, $column->originalName, $column->table, $column->originalTable, $column->schema]);
+    }
+
 }

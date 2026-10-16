@@ -92,4 +92,18 @@ final class CodecTest extends TestCase
         self::assertSame('users', $codec->name(new Name('users'), NameUse::Routine));
         self::assertSame('users', $codec->name(new Name('users'), NameUse::Label));
     }
+    public function testSpellingEncodesCanonicalNamesAndPreservesQuoteMarks(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql5744, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        self::assertSame('`é``x`', $codec->spelling('`Ã©``x`'));
+        self::assertSame("'é\\0x'", $codec->name(new Name("Ã©\0x"), NameUse::Alias));
+    }
+
+    public function testSpellingRefusesLossySqlEncodingInsteadOfChangingTheName(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql5744, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        $this->expectException(\SqlSemantics\Diagnostic\UnrepresentableName::class);
+        $codec->spelling('猫');
+    }
+
 }

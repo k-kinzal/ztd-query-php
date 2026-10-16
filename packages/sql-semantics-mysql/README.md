@@ -447,3 +447,18 @@ Legacy INSERT statements retain their optimizer hints in the semantic head. Qual
 MIT License. See [LICENSE](LICENSE) for details.
 
 `Statement\Account\Privilege\GrantRoles` and `RevokeRoles` accept nonempty lists of `GrantedRole` only. A static privilege such as `SELECT`, or a name with a column list, is not a role operand. SQL containing those operands raises `Construction\RejectedInput` during lowering instead of publishing an invalid role statement. Ordered input notices retain recipient-name precedence, each role-list problem, and whether parsing continues into later program statements. Diagnostic positions are integer offsets; no original SQL or parser node is retained.
+
+When a context supplies `Settings::client`, Latin-1 identifier input is decoded
+before statements are published. A `Name` constructed directly already holds
+the decoded name; changing the session character set does not change that name.
+SQL rendering encodes identifiers for the context's client character set. String
+literal bytes remain separate from identifier encoding. UTF-8 names therefore
+need no conversion; conversions for other client character sets are not covered
+by the Latin-1 rule.
+
+Structural publication checks names in the model's canonical representation. It
+must not reject a valid decoded name merely because the current client character
+set cannot spell it. `Operation::toString()` reports `UnrepresentableName` if
+rendering would replace identifier characters. This does not prevent direct
+structure consumers from resolving or executing the same object. Result labels
+and origin metadata follow the session's result character set independently.

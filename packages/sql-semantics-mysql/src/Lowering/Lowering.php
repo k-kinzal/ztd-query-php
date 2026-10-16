@@ -183,8 +183,9 @@ final class Lowering
      * @param Leaves $leaves The record of operand leaves of this analysis
      * @param LanguageProfile $profile The language profile the tree was parsed under
      * @param \SqlSemantics\Construction\Origins $origins The input locations recorded for this lowering
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null $client The character set of identifier bytes in this input
      */
-    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins())
+    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins(), public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null)
     {
         $this->names = new NameRule($this);
         $this->literals = new LiteralRule($this);

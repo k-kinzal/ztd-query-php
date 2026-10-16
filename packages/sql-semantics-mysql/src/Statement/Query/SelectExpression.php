@@ -74,11 +74,7 @@ final class SelectExpression implements SelectItem
         $out->layout($this->layout, $this->expression, $this->spellingProfile?->grammar === GrammarRelease::MySql5651);
         if ($this->alias !== null) {
             $this->mark->write($out);
-            if (str_contains($this->alias->value, "\0")) {
-                $out->spelled($out->quote($this->alias->value));
-            } else {
-                $out->name($this->alias, NameUse::Alias);
-            }
+            $out->name($this->alias, NameUse::Alias);
         }
     }
 }

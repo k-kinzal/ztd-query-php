@@ -69,6 +69,27 @@ final class ItemLayout
     }
 
     /**
+     * Decodes the name slots of a layout; string literals retain their bytes.
+     *
+     * The expression's typed rendering identifies name positions. The layout
+     * retains equivalent spelling in the same representation as semantic names,
+     * so another client character set cannot change the referenced identifiers.
+     */
+    public function names(Layout $layout, \SqlSemantics\Statement\Scalar $expression, \SqlSemantics\Contract\LanguageProfile $profile, ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client): Layout
+    {
+        $output = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($profile->grammar, $profile->lexical));
+        $expression->render($output);
+        $pieces = $output->canonical();
+        $tokens = [];
+        foreach ($layout->tokens as $index => $token) {
+            $text = ($pieces[$index]->kind ?? null) === \SqlSemantics\Rendering\PieceKind::Name ? (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($token->text, $client) : $token->text;
+            $tokens[] = new Spelled($token->gap, $text);
+        }
+
+        return new Layout($tokens, $layout->trail);
+    }
+
+    /**
      * Splits the one lexeme the lexer makes of `WITH ROLLUP` and `WITH CUBE` into its two words, which the rendering writes as two keywords.
      *
      * @return non-empty-list<array{string, string}> Each word with the trivia before it

@@ -123,7 +123,7 @@ final class NameRule
             $form = $this->lowering->productions->form($form->node(0));
         }
         if ($form->node->name === 'TEXT_STRING_sys' || $form->node->name === 'TEXT_STRING_validated') {
-            return $this->lowering->leaves->record(new Name($this->lowering->literals->bytes($form->node)));
+            return $this->lowering->leaves->record(new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($this->lowering->literals->bytes($form->node), $this->lowering->client)));
         }
         $kind = self::TOKENS[$form->signature] ?? ($this->keyword($form->signature) ? 'word' : null);
         if ($kind === null) {
@@ -131,7 +131,7 @@ final class NameRule
         }
         $text = $form->token(0)->text;
 
-        $value = $this->lowering->leaves->record(new Name($kind === 'identifier' ? (new Identifiers())->decode($text) : $text));
+        $value = $this->lowering->leaves->record(new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($kind === 'identifier' ? (new Identifiers())->decode($text) : $text, $this->lowering->client)));
         $deprecated = (new SyntaxNames())->unquoted($form->node, $this->lowering->profile->grammar);
         if ($deprecated !== null) {
             $this->lowering->origins->notice($value, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $form->node);

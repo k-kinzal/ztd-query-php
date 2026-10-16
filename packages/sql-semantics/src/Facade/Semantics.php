@@ -171,7 +171,7 @@ final class Semantics
         }
         $leaves = new Leaves();
         $origins = new \SqlSemantics\Construction\Origins();
-        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves, $origins));
+        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves, $origins, $declarations->session));
         $operation = new Operation($declarations, $statement, $origins->publish());
 
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $this->platform->statementNamespace()]);

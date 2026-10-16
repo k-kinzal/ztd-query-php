@@ -159,7 +159,7 @@ final class Client
     {
         $this->capabilities = $reader->integer(4);
         $reader->integer(4);
-        $reader->integer(1);
+        $collation = (new ConnectionEncoding())->collation($this->instance, $reader->integer(1));
         $reader->bytes(23);
         $user = $reader->nulTerminated();
         if (($this->capabilities & Capability::PLUGIN_AUTH_LENENC_CLIENT_DATA) !== 0) {
@@ -169,11 +169,12 @@ final class Client
         }
         $database = null;
         if (($this->capabilities & Capability::CONNECT_WITH_DB) !== 0 && $reader->remaining() > 0) {
-            $database = $reader->nulTerminated();
+            $database = (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($reader->nulTerminated(), $collation?->charset);
             $database = $database === '' ? null : $database;
         }
         try {
             $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database, $this->port, $this->id);
+            (new ConnectionEncoding())->apply($this->session, $collation);
             $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
         } catch (SqlError $error) {
             $this->packet($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) ($this->session?->variables->read('character_set_results') ?? 'utf8mb4')));
@@ -238,7 +239,7 @@ final class Client
         \MySqlMemory\Session\State\StatementCounters::received($this->session());
         \MySqlMemory\Session\State\StatementCounters::command($this->session(), 'Com_change_db');
         try {
-            $this->session()->use($database);
+            $this->session()->use((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($database, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $this->session()->variables->read('character_set_client'))));
         } catch (SqlError $error) {
             return $this->send($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) ($this->session?->variables->read('character_set_results') ?? 'utf8mb4')));
         }

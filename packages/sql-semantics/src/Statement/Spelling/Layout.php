@@ -21,6 +21,8 @@ use SqlSemantics\Statement\Snapshot;
  * whose spellings are not the same tokens, or whose gaps are not trivia, and
  * the rendered SQL must lower to the same structure, layout included. A layout
  * never stands for structure, and nothing is rendered from it alone.
+ * Identifier slots use the model name representation; the output codec encodes
+ * their spelling for the client. Literal slots keep their value bytes.
  * Status: Implemented.
  *
  * @visibility public
