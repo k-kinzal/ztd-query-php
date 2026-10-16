@@ -27,6 +27,19 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class ProgramFactsTest extends TestCase
 {
+    public function testRoutineBindsDeleteTargetsInItsOwnDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $operation = $semantics->analyze('CREATE PROCEDURE d.p() DELETE t FROM d.t');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        $delete = $operation->statement->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $delete);
+
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame($delete->tables[0], $operation->facts->referencedRelation($delete->targets[0]));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable::class, $semantics->analyze('CREATE PROCEDURE d.p() DELETE t FROM e.t')->facts->diagnostics[0]);
+    }
+
     public function testRoutineRejectsAnImplicitBinaryReturnCollation(): void
     {
         $semantics = new Semantics(Dialect::MySql);

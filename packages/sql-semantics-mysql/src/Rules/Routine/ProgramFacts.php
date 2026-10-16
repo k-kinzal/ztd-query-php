@@ -28,7 +28,8 @@ use SqlSemantics\Statement\Node;
  * Derives the statements that define stored programs: routines, triggers and events.
  *
  * Rule: MYSQL-ROUTINE-001, MYSQL-TRIGGER-001, MYSQL-EVENT-001. A routine
- * body is derived in a scope whose outermost level holds the parameters as
+ * body uses the routine's database, independent of the caller's current
+ * database, and is derived in a scope whose outermost level holds the parameters as
  * one row (MYSQL-ROUTINE-PARAMETERS-001), with distinct identities enforced
  * by ParameterList. A stored function
  * whose SQL body holds no RETURN is reported (ER_SP_NORETURN). A trigger
@@ -78,7 +79,11 @@ final class ProgramFacts
         if ($body instanceof ExternalBody) {
             return;
         }
-        $environment = new Environment($derivation->context, null, [new VisibleRelation($parameters, $fact->shape)]);
+        $context = $derivation->context;
+        if ($name->schema !== null) {
+            $context = new \SqlSemantics\Contract\AnalysisContext($context->profile, [$name->schema], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema, $context->session, $context->foldedSchemas);
+        }
+        $environment = new Environment($context, null, [new VisibleRelation($parameters, $fact->shape)]);
         (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, $kind));
         if ($kind === ProgramKind::Function && !(new ReturnSearch())->found($body)) {
             $derivation->report(new ProgramProblem(ProgramRule::MissingReturn, $name->name->value));

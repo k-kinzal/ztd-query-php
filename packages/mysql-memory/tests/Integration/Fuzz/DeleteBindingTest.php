@@ -56,6 +56,9 @@ final class DeleteBindingTest extends TestCase
             'DELETE T FROM d.t AS T', 'DELETE T FROM d.t AS t',
             'CREATE TEMPORARY TABLE tmp(a INT)', 'INSERT INTO tmp VALUES (7)',
             'START TRANSACTION READ ONLY', 'DELETE x FROM tmp AS x', 'SELECT * FROM tmp', 'ROLLBACK',
+            'USE e', 'CREATE PROCEDURE d.p() DELETE t FROM d.t',
+            'CREATE PROCEDURE d.q() DELETE t FROM e.t', 'CREATE PROCEDURE d.r() DELETE x FROM d.t',
+            'CALL d.p()', 'SELECT * FROM d.t', 'SELECT * FROM e.t',
         ];
         $container = Testcontainers::run(new DisposableMySql($release));
         try {
