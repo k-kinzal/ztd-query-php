@@ -104,16 +104,30 @@
 <span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>        (<span class="tok-kw">new</span> <span class="tok-id">CaseExpression</span>(<span class="tok-kw">new</span> <span class="tok-id">NumberLiteral</span>(<span class="tok-str">&#039;1&#039;</span>), [<span class="tok-kw">new</span> <span class="tok-id">CaseBranch</span>(<span class="tok-kw">new</span> <span class="tok-id">NumberLiteral</span>(<span class="tok-str">&#039;1&#039;</span>), <span class="tok-kw">new</span> <span class="tok-id">StringLiteral</span>([<span class="tok-str">&#039;a&#039;</span>]))], <span class="tok-kw">new</span> <span class="tok-id">StringLiteral</span>([<span class="tok-str">&#039;b&#039;</span>])))-&gt;<span class="tok-id">render</span>(<span class="tok-var">$out</span>);</span>
 <span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a></span>
 <span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&quot;CASE 1 WHEN 1 THEN &#039;a&#039; ELSE &#039;b&#039; END&quot;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Lexical</span>())-&gt;<span class="tok-id">join</span>(<span class="tok-var">$out</span>-&gt;<span class="tok-id">pieces</span>()));</span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    }</span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a></span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testACaseWithoutBranchesIsRejected</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    {</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;A CASE expression has at least one WHEN branch.&#039;</span>);</span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a></span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>        <span class="tok-kw">new</span> <span class="tok-id">CaseExpression</span>(<span class="tok-id">null</span>, []);</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>    }</span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>}</span>
-<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    }</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveScalarRequiresSingleValuesEvenWhenRowsHaveEqualWidths</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    {</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT CASE (1, 2) WHEN (1, 2) THEN 1 ELSE 0 END&#039;</span>);</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a></span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;Operand should contain 1 column(s), not 2.&#039;</span>, <span class="tok-str">&#039;Operand should contain 1 column(s), not 2.&#039;</span>], <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$problem</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$problem</span>-&gt;<span class="tok-id">message</span>(), <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>));</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    }</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveScalarChecksWhenBeforeTheComparedOperand</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    {</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT CASE missing WHEN (1, 2) THEN 1 END&#039;</span>);</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;Operand should contain 1 column(s), not 2.&#039;</span>, <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">message</span>());</span>
+<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>    }</span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a></span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testACaseWithoutBranchesIsRejected</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>    {</span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;A CASE expression has at least one WHEN branch.&#039;</span>);</span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>        <span class="tok-kw">new</span> <span class="tok-id">CaseExpression</span>(<span class="tok-id">null</span>, []);</span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>    }</span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>}</span>
+<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
