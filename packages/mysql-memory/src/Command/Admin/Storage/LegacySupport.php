@@ -17,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateTablespace;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption;
+use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -51,6 +52,17 @@ final class LegacySupport
         if ($options === null) {
             return;
         }
+
+        throw SchemaError::IllegalCreateOption->error($this->engine($options, $session, $context), 'TABLESPACE or LOGFILE GROUP');
+    }
+
+    /**
+     * Resolves a legacy storage command's engine, using the session default after an allowed substitution.
+     *
+     * @param list<StorageOption> $options The written storage options
+     */
+    public function engine(array $options, Session $session, Context $context): string
+    {
         $default = (string) $session->variables->read('default_storage_engine');
         $engine = $default;
         foreach ($options as $option) {
@@ -68,6 +80,6 @@ final class LegacySupport
             }
         }
 
-        throw SchemaError::IllegalCreateOption->error($engine, 'TABLESPACE or LOGFILE GROUP');
+        return $engine;
     }
 }

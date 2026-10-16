@@ -84,6 +84,9 @@ final class TablespaceCommand implements Command
         $registry = $session->instance->registry;
         $session->transaction->commit();
         (new Storage\LegacySupport())->check($statement, $session, $context);
+        if ((new Storage\LegacyTablespaces())->execute($statement, $session, $context)) {
+            return new Completion(0, 0, $context->diagnostics->raised());
+        }
         match (true) {
             $statement instanceof CreateTablespace => $this->create($statement, $registry),
             $statement instanceof CreateUndoTablespace => $this->createUndo($statement, $registry),

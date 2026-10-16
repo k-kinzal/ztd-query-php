@@ -15,6 +15,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class LegacySupportTest extends TestCase
 {
+    public function testEngineResolvesTheDefaultForA57Tablespace(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SET sql_mode='', default_storage_engine=InnoDB; CREATE TABLESPACE s ADD DATAFILE 'x.ibd' ENGINE unknown_engine");
+
+        self::assertArrayHasKey('s', $session->instance->registry->tablespaces);
+        self::assertSame([['Warning', 1286, "Unknown storage engine 'unknown_engine'"]], $session->diagnostics->conditions);
+    }
+
     public function testCheckUsesTheSessionDefaultBeforeLookingUpATablespace(): void
     {
         $session = (new Instance('5.6.51'))->connect();

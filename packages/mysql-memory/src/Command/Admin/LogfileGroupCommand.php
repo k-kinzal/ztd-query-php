@@ -23,8 +23,9 @@ use SqlSemantics\Statement\Operation;
  *
  * Each commits the open transaction, checks its ENGINE option as the tablespace statements do,
  * then fails: InnoDB does not support log file groups (ER_FEATURE_UNSUPPORTED, followed by
- * ER_CHECK_NOT_IMPLEMENTED; verified on a live 8.4 server). MySQL 5.7 reports only
- * ER_CHECK_NOT_IMPLEMENTED with the specific operation, as observed in the differential suite.
+ * ER_CHECK_NOT_IMPLEMENTED; verified on a live 8.4 server). MySQL 5.7 reports
+ * ER_ILLEGAL_HA_CREATE_OPTION before ER_CHECK_NOT_IMPLEMENTED for CREATE, and
+ * only the latter for ALTER or DROP.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-logfile-group.html.
  *
  * @visibility MySqlMemory
@@ -50,14 +51,20 @@ final class LogfileGroupCommand implements Command
         $session->transaction->commit();
         (new Storage\LegacySupport())->check($statement, $session, $context);
         $operationName = 'CREATE/ALTER/DROP LOGFILE GROUP';
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && ($statement instanceof CreateLogfileGroup || $statement instanceof AlterLogfileGroup || $statement instanceof DropLogfileGroup)) {
+            $engine = (new Storage\LegacySupport())->engine($statement->options, $session, $context);
+            if ($engine !== 'InnoDB') {
+                throw SchemaError::IllegalCreateOption->error($engine, 'TABLESPACE or LOGFILE GROUP');
+            }
+            $verb = $statement instanceof CreateLogfileGroup ? 'CREATE' : ($statement instanceof AlterLogfileGroup ? 'ALTER' : 'DROP');
+            if ($statement instanceof CreateLogfileGroup) {
+                throw new SqlError(SchemaError::IllegalCreateOption, SchemaError::IllegalCreateOption->message('InnoDB', 'LOGFILE GROUP'), null, [[SchemaError::EngineUnsupportedOperation->value, SchemaError::EngineUnsupportedOperation->message('CREATE LOGFILE GROUP')]]);
+            }
+            throw SchemaError::EngineUnsupportedOperation->error($verb . ' LOGFILE GROUP');
+        }
         if ($statement instanceof CreateLogfileGroup || $statement instanceof AlterLogfileGroup || $statement instanceof DropLogfileGroup) {
             (new TablespaceCommand())->engine($statement->options, $operationName);
         }
-        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-            $verb = $statement instanceof CreateLogfileGroup ? 'CREATE' : ($statement instanceof AlterLogfileGroup ? 'ALTER' : 'DROP');
-            throw SchemaError::EngineUnsupportedOperation->error($verb . ' LOGFILE GROUP');
-        }
-
         throw new SqlError(AdministrationError::FeatureUnsupported, AdministrationError::FeatureUnsupported->message('LOGFILE GROUP', 'by InnoDB'), null, [[SchemaError::EngineUnsupportedOperation->value, SchemaError::EngineUnsupportedOperation->message($operationName)]]);
     }
 }
