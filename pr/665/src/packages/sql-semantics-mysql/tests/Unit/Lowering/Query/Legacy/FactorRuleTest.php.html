@@ -99,7 +99,7 @@
 <span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSingleAnswersOnlyALoneParenthesizedOrSelectFactor</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>    {</span>
 <span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM ((t))&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-5.7.44&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from ((t))&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    }</span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>    }</span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a></span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRefusalPlacesTheSyntaxErrorOfANestedJoinWhereEachReleaseReportsIt</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    {</span>
@@ -175,9 +175,17 @@
 <span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">SyntaxException</span>::<span class="tok-kw">class</span>, <span class="tok-var">$first</span>);</span>
 <span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">SyntaxException</span>::<span class="tok-kw">class</span>, <span class="tok-var">$second</span>);</span>
 <span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-num">33</span>, <span class="tok-num">26</span>], [<span class="tok-var">$first</span>-&gt;<span class="tok-id">token</span>-&gt;<span class="tok-id">offset</span>, <span class="tok-var">$second</span>-&gt;<span class="tok-id">token</span>-&gt;<span class="tok-id">offset</span>]);</span>
-<span class="src-line" id="L136" data-diff="same"><a class="ln" href="#L136">136</a>    }</span>
-<span class="src-line" id="L137" data-diff="same"><a class="ln" href="#L137">137</a>}</span>
-<span class="src-line" id="L138" data-diff="same"><a class="ln" href="#L138">138</a></span>
+<span class="src-line" id="L136" data-diff="added"><a class="ln" href="#L136">136</a>    }</span>
+<span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDerivedRefusesAStatementModifierInADerivedQuery</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a>    {</span>
+<span class="src-line" id="L139" data-diff="added"><a class="ln" href="#L139">139</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">\SqlSemantics\Construction\RejectedInput</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&quot;Incorrect usage/placement of &#039;HIGH_PRIORITY&#039;&quot;</span>);</span>
+<span class="src-line" id="L141" data-diff="added"><a class="ln" href="#L141">141</a></span>
+<span class="src-line" id="L142" data-diff="added"><a class="ln" href="#L142">142</a>        (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-5.6.51&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT * FROM (SELECT HIGH_PRIORITY 1) d&#039;</span>);</span>
+<span class="src-line" id="L143" data-diff="added"><a class="ln" href="#L143">143</a>    }</span>
+<span class="src-line" id="L144" data-diff="added"><a class="ln" href="#L144">144</a></span>
+<span class="src-line" id="L145" data-diff="same"><a class="ln" href="#L145">145</a>}</span>
+<span class="src-line" id="L146" data-diff="same"><a class="ln" href="#L146">146</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

@@ -128,14 +128,16 @@
 <span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a></span>
 <span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a><span class="tok-com">     * Lowers the table names of a multiple-table DELETE or of a locking clause: a node of</span></span>
-<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a><span class="tok-com">     * `table_alias_ref_list`.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">91</span><span class="tok-com">     * `table_alias_ref_list`.</span></span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     * `table_alias_ref_list` or the 5.6 `table_wild_list`.</span></span>
 <span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a><span class="tok-com">     * @return list&lt;QualifiedName&gt;</span></span>
 <span class="src-line" id="L94" data-diff="same"><a class="ln" href="#L94">94</a><span class="tok-com">     * @throws ImplementationGap When a production has no rule</span></span>
 <span class="src-line" id="L95" data-diff="same"><a class="ln" href="#L95">95</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L96" data-diff="same"><a class="ln" href="#L96">96</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deleteTargets</span>(<span class="tok-id">Node</span> <span class="tok-var">$list</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L97" data-diff="same"><a class="ln" href="#L97">97</a>    {</span>
-<span class="src-line" id="L98" data-diff="same"><a class="ln" href="#L98">98</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">TargetRule</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>))-&gt;<span class="tok-id">tables</span>(<span class="tok-var">$list</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">98</span>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">TargetRule</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>))-&gt;<span class="tok-id">tables</span>(<span class="tok-var">$list</span>);</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>        <span class="tok-kw">return</span> <span class="tok-var">$list</span>-&gt;<span class="tok-id">name</span> === <span class="tok-str">&#039;table_wild_list&#039;</span> ? (<span class="tok-kw">new</span> <span class="tok-id">ChangeRule</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>))-&gt;<span class="tok-id">wildTargets</span>(<span class="tok-var">$list</span>) : (<span class="tok-kw">new</span> <span class="tok-id">TargetRule</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>))-&gt;<span class="tok-id">tables</span>(<span class="tok-var">$list</span>);</span>
 <span class="src-line" id="L99" data-diff="same"><a class="ln" href="#L99">99</a>    }</span>
 <span class="src-line" id="L100" data-diff="same"><a class="ln" href="#L100">100</a></span>
 <span class="src-line" id="L101" data-diff="same"><a class="ln" href="#L101">101</a>    <span class="tok-com">/**</span></span>
