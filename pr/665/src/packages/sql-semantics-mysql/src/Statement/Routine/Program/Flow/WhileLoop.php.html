@@ -69,7 +69,8 @@
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;CREATE PROCEDURE p(a INT) again: WHILE a &gt; 0 DO SELECT 1; END WHILE again&#039;);</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> *     [$create-&gt;statement-&gt;body-&gt;label-&gt;value, count($create-&gt;statement-&gt;body-&gt;statements)] // =&gt; [&#039;again&#039;, 1]</span></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">WhileLoop</span> <span class="tok-kw">implements</span> <span class="tok-id">ProgramStatement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">32</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">WhileLoop</span> <span class="tok-kw">implements</span> <span class="tok-id">ProgramStatement</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">WhileLoop</span> <span class="tok-kw">implements</span> <span class="tok-id">FunctionBody</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>{</span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a></span>
