@@ -25,10 +25,14 @@ final class TablespacePathTest extends TestCase
     public static function providerReleases(): iterable
     {
         $files = ['', 'a', 'a.ibd', '.ibd', 'ab.ibd', 'a/b', 'a\\b', 'ab/cd', 'ab\\cd', 'a/b.ibd', 'a\\b.ibd', './a', './a.ibd', '../a', '../a.ibd', '/a', '/a.ibd', 'a/', 'a\\', 'a/.ibd', 'a\\.ibd', 'C:\\a', 'C:\\a.ibd', "a\nb", "a\0b", 'a.IBD', 'a.ibd ', 'abcd', 'abcde', 'abc.def', 'a:b.ibd', 'C:a.ibd', 'abc:d.ibd', 'foo/../b.ibd', '././c.ibd', 'foo/../../d.ibd', 'e.ibd ', 'e.ibd', "f.ibd\t", "g.ibd\n", "h.ibd\0stuff", 'h.ibd', 'b:bad/name.ibd', './x:y.ibd'];
+        array_push($files, 'foo/../a', './././', './', '../missing/a.ibd', '/missing/a.ibd', 'a/.../b.ibd', 'a/..x/b.ibd', 'a/.hidden/b.ibd');
         $statements = [];
-        foreach ($files as $index => $file) {
-            $quoted = str_replace(['\\', "'", "\0"], ['\\\\', "''", '\\0'], $file);
-            $statements[] = 'CREATE TABLESPACE probe_' . $index . " ADD DATAFILE '" . $quoted . "'";
+        foreach (['general' => '', 'undo' => 'UNDO '] as $kind => $keyword) {
+            foreach ($files as $index => $file) {
+                $file = $kind === 'undo' ? str_replace(['.ibd', '.IBD'], ['.ibu', '.IBU'], $file) : $file;
+                $quoted = str_replace(['\\', "'", "\0"], ['\\\\', "''", '\\0'], $file);
+                $statements[] = 'CREATE ' . $keyword . 'TABLESPACE probe_' . $kind . '_' . $index . " ADD DATAFILE '" . $quoted . "'";
+            }
         }
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
