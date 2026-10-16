@@ -89,6 +89,7 @@ final class GrantPrivileges implements Statement
         $this->options = $request->options;
         Check::input($request->scopeProblem() === null, 'The privilege and object kind must fit the grant level.');
         Check::input($as === null || $level instanceof Level\GlobalLevel, 'GRANT AS applies only at the global privilege level.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
