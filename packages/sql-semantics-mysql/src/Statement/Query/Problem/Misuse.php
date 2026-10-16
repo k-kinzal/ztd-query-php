@@ -23,10 +23,12 @@ final class Misuse implements Diagnostic
 
     /**
      * @param MisuseRule $rule The broken rule
+     * @param \SqlSemantics\Platform\MySql\Statement\Query\ValueRow|null $valueRow The empty VALUES row that owns the condition, when supplied
      * @param Name|QualifiedName|null $name The name the rule is broken for, as the server names it: the alias, common table, column, window or locked table
      */
-    public function __construct(public readonly MisuseRule $rule, public readonly Name|QualifiedName|null $name = null)
+    public function __construct(public readonly MisuseRule $rule, public readonly Name|QualifiedName|null $name = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\ValueRow $valueRow = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($valueRow === null || ($rule === MisuseRule::EmptyValuesRow && $valueRow->values === []), 'An empty-row condition identifies an empty VALUES row.');
     }
 
     /**

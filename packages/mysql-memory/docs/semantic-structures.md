@@ -1233,3 +1233,13 @@ CREATE USER checks additional authentication methods only for new recipients,
 while retaining the authentication-policy notice for existing recipients. Native
 histories and direct structure replays compare these distinctions without
 replacing failed targets or suppressing their conditions.
+
+VALUES width conditions retain their owning semantic row, and AT TIME ZONE
+conditions retain their owning conversion. Consumers place a row condition
+before its elements and a conversion condition after its operand, without
+recovering input text. Native comparisons include competing window names and
+missing columns. A direct conversion history preserves one query object across
+an absent table, an integer column, an empty timestamp column, populated timestamp
+rows and a datetime column. These checks establish diagnostic ownership and the
+observed state transitions; they do not close the outstanding general row and
+VALUES constructor domains.

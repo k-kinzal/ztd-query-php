@@ -285,6 +285,9 @@ final class Locator
         if ($node instanceof SetOperation || $node instanceof OrderedSetOperation) {
             $this->sets[] = [$node, [...$order, (int) array_search('right', array_keys(get_object_vars($node)), true), PHP_INT_MAX]];
         }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ValueRow || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone) {
+            $this->places[spl_object_id($node)] = [$clause, $order];
+        }
         $this->windowed($node, $clause, $order);
     }
 

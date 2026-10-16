@@ -63,6 +63,12 @@ final class AtTimeZone implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
+        $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($fact->type);
+        if ($domain !== null && $domain->field !== Field::Timestamp && $domain->kind !== Kind::Null) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion($this, true));
+        } elseif ($domain !== null && $this->zone->value !== 'UTC' && $this->zone->value !== '+00:00') {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion($this, false));
+        }
         $decimals = (int) ($this->precision ?? '0');
 
         return new ScalarFact(new Known(new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, null, [], Coercibility::Numeric)), $fact->nullability);

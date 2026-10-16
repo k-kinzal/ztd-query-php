@@ -303,6 +303,7 @@ final class Errors
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize => $this->typeSize($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral => DataError::WrongValue->error($diagnostic->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp ? 'DATETIME' : $diagnostic->form->value, substr($diagnostic->text, 0, 128)),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion => $diagnostic->operand ? DataError::TimeZoneCast->error() : DataError::UnknownTimeZone->error($diagnostic->expression->zone->value),
             $diagnostic instanceof OperandColumns => QueryError::OperandColumns->error($diagnostic->expected),
             $diagnostic instanceof NotSupportedYet => StatementError::NotSupportedYet->error($diagnostic->feature),
             $diagnostic instanceof IllegalCollationMix => new SqlError(match (count($diagnostic->operands)) {

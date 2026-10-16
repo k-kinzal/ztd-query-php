@@ -1194,6 +1194,10 @@
         "form": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalForm",
         "text": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\TimeZoneConversion": {
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\AtTimeZone",
+        "operand": "bool"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\TooBigPrecision": {
         "function": "string",
         "maximum": "int",
@@ -1590,7 +1594,8 @@
         "actual": "int",
         "expected": "int",
         "list": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CountedList",
-        "row": "int"
+        "row": "int",
+        "valueRow": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\ValueRow"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CountedList": {
         "name": "string",
@@ -1601,7 +1606,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Misuse": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Statement\\Identifier\\QualifiedName|null",
-        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\MisuseRule"
+        "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\MisuseRule",
+        "valueRow": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\ValueRow"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\MisuseRule": {
         "name": "string",

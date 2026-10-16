@@ -165,9 +165,9 @@ final class ResultSlots
             if ($target !== null && $target[0] !== [] && ($count !== 0 || !$target[1]) && $count !== count($target[0])) {
                 $derivation->report(new ValueCountMismatch(count($target[0]), $count, $index + 1));
             } elseif ($count !== $width) {
-                $derivation->report($target === null ? new CountMismatch(CountedList::ValueRows, $width, $count, $index + 1) : new ValueCountMismatch($width, $count, $index + 1));
+                $derivation->report($target === null ? new CountMismatch(CountedList::ValueRows, $width, $count, $index + 1, $row) : new ValueCountMismatch($width, $count, $index + 1));
             } elseif ($count === 0 && $target === null) {
-                $derivation->report(new Misuse(MisuseRule::EmptyValuesRow));
+                $derivation->report(new Misuse(MisuseRule::EmptyValuesRow, valueRow: $row));
             }
             foreach ($row->values as $position => $value) {
                 $environment = new Environment($derivation->context, $outer);

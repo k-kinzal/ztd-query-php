@@ -71,6 +71,11 @@ final class ResultSlotsTest extends TestCase
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch::class, $longer[0]);
         self::assertSame(3, $longer[0]->row);
+        self::assertNotNull($longer[0]->valueRow);
+        self::assertCount(2, $longer[0]->valueRow->values);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $empty[0]);
+        self::assertNotNull($empty[0]->valueRow);
+        self::assertSame([], $empty[0]->valueRow->values);
         self::assertSame(['Each row of a VALUES clause must have at least one column, unless when used as source in an INSERT statement.', "Column count doesn't match value count (0 and 1)."], array_map(static fn ($diagnostic): string => $diagnostic->message(), $empty));
     }
 

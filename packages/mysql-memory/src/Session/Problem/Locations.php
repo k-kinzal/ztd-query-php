@@ -70,6 +70,7 @@ final class Locations
             $refusal = new NotSupportedYet(Cast::ARRAY_OUTSIDE_INDEX);
             $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];
         }
+        $located = (new Location\Owned())->located($locator, $diagnostics, $located);
         $located = $this->defaults($operation, $locator, $session, $located);
         $located = $this->wildcards($locator, $diagnostics, $located);
         $located = $this->stars($operation, $locator, $diagnostics, $located);

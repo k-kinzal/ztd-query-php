@@ -54,4 +54,16 @@ final class AtTimeZoneTest extends TestCase
         new AtTimeZone(new NumberLiteral('1'), new Text('00', Radix::Hexadecimal));
     }
 
+    public function testDeriveScalarRetainsTheConversionThatOwnsItsTypeCondition(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze("SELECT CAST(1 AT TIME ZONE '+00:00' AS DATETIME), missing");
+        $diagnostic = $operation->facts->diagnostics[0];
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $diagnostic);
+        self::assertSame($operation->field(0)->expression, $diagnostic->expression);
+        self::assertTrue($diagnostic->operand);
+        self::assertSame('Cannot cast value to TIMESTAMP WITH TIME ZONE.', $diagnostic->message());
+    }
+
 }
