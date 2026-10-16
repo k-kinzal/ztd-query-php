@@ -9,7 +9,7 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 
@@ -67,7 +67,7 @@ final class SelectOptions
             $cache = $option === SelectOption::Cache || $option === SelectOption::NoCache;
             $earlier = $grammar === GrammarRelease::MySql5651 ? $first : ($grammar === GrammarRelease::MySql5744 ? $previous : null);
             if ($cache && $earlier !== null) {
-                $problem = new CacheOptionConflict($earlier, $option);
+                $problem = new SelectOptionConflict($earlier, $option);
                 $notices[] = new ParseFailure($problem, true);
 
                 return $notices;

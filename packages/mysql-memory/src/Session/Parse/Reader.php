@@ -147,11 +147,13 @@ final class Reader
         }
         $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
         $error = new SqlError($error->error, $error->getMessage(), $failure, $error->following, $error->signalled, $error->getCode(), $error->recorded);
-        $earlier = ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias ? (new Entry\DerivedInput())->before($statement, $failure->end, $session) : null) ?? ($failure->end === 0 ? null : (new CacheOptions())->condition($error, $statement, $session, $failure->end - 1));
+        $target = (new Entry\DerivedInput())->refusal($failure, $statement, $session);
+        $error = $target ?? $error;
+        $earlier = ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias ? (new Entry\DerivedInput())->before($statement, $failure->end, $session) : null) ?? ($failure->end === 0 || $target !== null ? null : (new CacheOptions())->condition($error, $statement, $session, $failure->end - 1));
         if ($earlier !== null) {
             return $earlier;
         }
-        if (!$failure->aborts) {
+        if (!$failure->aborts && $target === null) {
             return (new ContinuingRefusal())->error($failure, $statement, $session);
         }
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
@@ -162,9 +164,12 @@ final class Reader
             $tokens = $parser->tokenize($statement);
         }
         $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $failure->end, $session->semantics()->profile());
+        if ($target !== null) {
+            $notices = array_values(array_filter($notices, static fn (array $notice): bool => !$notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure || !$notice[1]->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption));
+        }
         if ($session->settings()->legacy()) {
             [$warnings, $conflict] = (new Modifiers($tokens, $session->settings()->release()))->scan($failure->end, $failure->end);
-            if ($conflict !== null) {
+            if ($conflict !== null && $target === null) {
                 return (new CacheOptions())->recorded($warnings, $conflict, $error, $session);
             }
             foreach ($warnings as $offset => $notice) {

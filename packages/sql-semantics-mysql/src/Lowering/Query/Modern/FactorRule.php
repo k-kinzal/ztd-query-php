@@ -99,7 +99,13 @@ final class FactorRule
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias), (new \SqlSemantics\Construction\SourceRanges())->span($derived)[1] ?? 0, false);
         }
 
-        return new DerivedTable((new ExpressionRule($this->lowering))->subquery($form->node($at)), $alias, $tables->columns($form->node($at + 2)), $lateral, $tables->mark($form->node($at + 1)));
+        $query = (new ExpressionRule($this->lowering))->subquery($form->node($at));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($derived)[1] ?? 0, false);
+        }
+
+        return new DerivedTable($query, $alias, $tables->columns($form->node($at + 2)), $lateral, $tables->mark($form->node($at + 1)));
     }
 
     /**

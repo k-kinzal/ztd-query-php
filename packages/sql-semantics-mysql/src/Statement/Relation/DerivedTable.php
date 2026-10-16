@@ -35,6 +35,12 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading a derived table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT x FROM (SELECT 1) AS d (x)');
  *     [$query->statement->query->from->alias->value, $query->statement->query->from->columns[0]->value] // => ['d', 'x']
+ * @example Refusing an option that no derived table accepts
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable($query, new \SqlSemantics\Statement\Identifier\Name('t')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing the cache modifier in a derived relation
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable($query, new \SqlSemantics\Statement\Identifier\Name('t')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class DerivedTable implements Relation
 {
@@ -55,6 +61,7 @@ final class DerivedTable implements Relation
     public function __construct(public readonly Query $query, public readonly Name $alias, array $columns = [], public readonly bool $lateral = false, public readonly AliasMark $mark = AliasMark::As)
     {
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a derived table holds names.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query) === null, 'A derived query cannot carry statement-level SELECT modifiers.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

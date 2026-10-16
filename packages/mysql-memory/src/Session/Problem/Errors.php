@@ -189,7 +189,7 @@ final class Errors
             $diagnostic instanceof NonUniqueTable => QueryError::NonUniqueTable->error($diagnostic->alias->value),
             $diagnostic instanceof UndeclaredVariable => ProgramError::UndeclaredVariable->error($diagnostic->name->value),
             $diagnostic instanceof Misuse => $this->misuse($diagnostic),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict => $diagnostic->repeated() ? StatementError::DuplicateArgument->error($diagnostic->first->value) : StatementError::WrongUsage->error($diagnostic->first->value, $diagnostic->second->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict => $diagnostic->repeated() ? StatementError::DuplicateArgument->error($diagnostic->first->value) : StatementError::WrongUsage->error($diagnostic->first->value, $diagnostic->second->value),
             $diagnostic instanceof AggregateInOrdering => new SqlError($diagnostic->distinct ? QueryError::AggregateInDistinctOrder : QueryError::AggregateInOrder, $diagnostic->message()),
             $diagnostic instanceof NonGroupedColumn => new SqlError(match ($diagnostic->rule) {
                 GroupingRule::NotDetermined => QueryError::WrongFieldWithGroup,

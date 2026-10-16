@@ -125,4 +125,13 @@ final class ModifiersTest extends TestCase
 
         self::assertSame([['SQL_CACHE', 'SQL_NO_CACHE'], [7, 17]], [$modifiers->conflict, array_keys($modifiers->warned)]);
     }
+    public function testMisplacedRecognizesTheFirstDerivedBlockOfADelete(): void
+    {
+        $parser = (new Instance('5.6.51'))->connect()->semantics()->parser();
+        $tokens = $parser->tokenize('DELETE a FROM (SELECT ALL DISTINCT HIGH_PRIORITY 1) d');
+        $modifiers = new Modifiers($tokens, GrammarRelease::MySql5651);
+
+        self::assertSame([[], ['HIGH_PRIORITY', '']], $modifiers->scan(PHP_INT_MAX));
+    }
+
 }

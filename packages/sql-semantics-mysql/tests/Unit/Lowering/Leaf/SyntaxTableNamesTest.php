@@ -99,4 +99,24 @@ final class SyntaxTableNamesTest extends TestCase
         self::assertNull($rule->created($semantics->parser()->parse('CREATE PROCEDURE d.p() CREATE TABLE t(a INT DEFAULT (ABS()))'), $semantics->profile()));
     }
 
+    public function testDeletedRetainsOnlyTheOuterCommandsTargetNames(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $rule = new SyntaxTableNames();
+        $names = $rule->deleted($semantics->parser()->parse('DELETE a, d.b FROM (SELECT HIGH_PRIORITY 1) x'), $semantics->profile());
+
+        self::assertSame(['a', 'b'], array_map(static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): string => $name->name->value, $names));
+        self::assertSame([null, 'd'], array_map(static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): ?string => $name->schema?->value, $names));
+        self::assertSame([], $rule->deleted($semantics->parser()->parse('CREATE PROCEDURE p() DELETE a FROM a'), $semantics->profile()));
+    }
+
+    public function testDeletedReadsLegacyTargetsBeforeAnInvalidQuery(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $names = (new SyntaxTableNames())->deleted($semantics->parser()->parse('DELETE a.*, d.b FROM (SELECT HIGH_PRIORITY 1) x'), $semantics->profile());
+
+        self::assertSame(['a', 'b'], array_map(static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): string => $name->name->value, $names));
+        self::assertSame([null, 'd'], array_map(static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): ?string => $name->schema?->value, $names));
+    }
+
 }

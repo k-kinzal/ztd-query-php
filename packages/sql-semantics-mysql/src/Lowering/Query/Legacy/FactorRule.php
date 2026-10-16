@@ -161,6 +161,7 @@ final class FactorRule
     /**
      * Lowers a parenthesized 5.x table factor: a query when it is a derived table without alias, else the relation.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a derived query carries a forbidden statement modifier
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When a nested join has an alias, a union, an ORDER BY or a LIMIT (ER_SYNTAX_ERROR of the 5.6 `table_factor` and `select_derived_union` actions and of 5.7 `PT_table_factor_parenthesis` and `PT_select_derived_union_*::contextualize`), caused by the syntax error at its closing parenthesis
      */
@@ -208,6 +209,21 @@ final class FactorRule
             $operands[] = $operand;
         }
         $query = (new Chain($operands, $quantifiers, $this->lowering->profile->grammar))->query();
+
+        return $this->derived($query, $name, $alias);
+    }
+
+    /**
+     * Publishes a named derived query after enforcing its modifier role.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When its query carries a forbidden modifier
+     */
+    public function derived(Query $query, ?\SqlSemantics\Statement\Identifier\Name $name, Node $alias): Query|DerivedTable
+    {
+        $problem = $name === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($alias)[1] ?? 0, $this->lowering->profile->grammar === GrammarRelease::MySql5651);
+        }
 
         return $name === null ? $query : new DerivedTable($query, $name, [], false, (new TableRule($this->lowering))->mark($alias));
     }

@@ -20,11 +20,11 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -793,8 +793,8 @@ final class ErrorsTest extends TestCase
     public function testQueryAnswersTheErrorsOfConflictingQueryCacheModifiers(): void
     {
         $errors = new Errors();
-        $twice = $errors->query(new CacheOptionConflict(SelectOption::Cache, SelectOption::Cache), 'field list');
-        $both = $errors->query(new CacheOptionConflict(SelectOption::NoCache, SelectOption::Cache), 'field list');
+        $twice = $errors->query(new SelectOptionConflict(SelectOption::Cache, SelectOption::Cache), 'field list');
+        $both = $errors->query(new SelectOptionConflict(SelectOption::NoCache, SelectOption::Cache), 'field list');
 
         self::assertSame([1225, 1221, 'Incorrect usage of SQL_NO_CACHE and SQL_CACHE'], [$twice?->getCode(), $both?->getCode(), $both?->getMessage()]);
     }

@@ -9,9 +9,9 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * Two query cache modifiers a query block of MySQL 5.6 or 5.7 may not combine: one written twice (ER_DUP_ARGUMENT), or SQL_CACHE with SQL_NO_CACHE (ER_WRONG_USAGE).
+ * Two SELECT modifiers that cannot coexist in their query-block position: a repeated cache modifier (ER_DUP_ARGUMENT), opposite cache modifiers, or ALL with DISTINCT (ER_WRONG_USAGE).
  *
- * The server finds the problem while it parses the modifiers, so it stops the parse there.
+ * The enclosing rule determines when the server reports the conflict.
  * Source: https://dev.mysql.com/doc/refman/5.7/en/query-cache-in-select.html.
  *
  * @visibility public
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_CACHE SQL_CACHE 1');
  *     $query->facts->diagnostics[0]->message() // => "Option 'SQL_CACHE' used twice in statement"
  */
-final class CacheOptionConflict implements Diagnostic
+final class SelectOptionConflict implements Diagnostic
 {
     use Snapshot;
 

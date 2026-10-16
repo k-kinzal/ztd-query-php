@@ -714,3 +714,23 @@ conditions on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1 (75 observations). A separate
 SQL-input matrix checks warning and error precedence in 165 observations.
 These witnesses establish the tested database-state transitions; they do not
 classify unrelated matching errors in the whole-model campaign.
+
+Derived relations now exclude HIGH_PRIORITY, SQL_BUFFER_RESULT,
+SQL_CALC_FOUND_ROWS and SQL_CACHE from the query blocks of their query-expression
+spine. The constraint includes later set operands and applies inside stored
+program definitions; nested expression queries retain their own boundaries.
+SQL input lowering reports typed refusals without publishing invalid relations.
+Legacy modifier ordering and the independent DELETE target's database selection
+remain input-boundary concerns, with no source tree retained in semantic values.
+The input matrix matches 930 native observations across five releases.
+
+The same six directly constructed derived query roles are also compared before
+table creation, after insertion of duplicate rows and after a data update:
+90 complete native/memory observations across five releases. Those histories
+exposed lost source metadata on materialized DISTINCT columns. Materialized
+base fields now preserve their source table, their schema on modern releases,
+and their no-default flag. Another 55 native observations cover LIMIT, DISTINCT,
+GROUP BY, set operations, aliases and computed columns through the SQL input
+boundary. The direct histories exercise accepted structures without submitting
+their SQL to Memory. These checks do not close the remaining whole-model
+construction and version-domain obligations.

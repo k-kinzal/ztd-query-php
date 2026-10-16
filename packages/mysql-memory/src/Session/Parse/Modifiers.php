@@ -218,12 +218,22 @@ final class Modifiers
         }
         $earlier = $this->release === GrammarRelease::MySql5651 ? $this->first : $this->previous;
         $this->conflict = match (true) {
+            $this->misplaced($token, $modifier) => [$token->name, ''],
             $cache === null => null,
             $this->release === GrammarRelease::MySql5651 && $this->blocks > 1 => [$cache, ''],
             default => $earlier === null ? null : [$earlier, $cache],
         };
         $this->previous = $cache;
         $this->first ??= $cache;
+    }
+
+    /**
+     * Recognizes a statement modifier that 5.6 refuses immediately in a derived block.
+     * A DELETE's first SELECT can itself be a derived relation after FROM.
+     */
+    public function misplaced(Token $token, bool $modifier): bool
+    {
+        return $modifier && $this->release === GrammarRelease::MySql5651 && ($this->blocks > 1 || ($this->depth > 0 && ($this->clauses[0] ?? false))) && in_array($token->name, ['HIGH_PRIORITY', 'SQL_BUFFER_RESULT', 'SQL_CALC_FOUND_ROWS'], true);
     }
 
     /**
@@ -240,8 +250,10 @@ final class Modifiers
         $placement = $misplaced && $caches !== [] ? [$caches[count($caches) - 1] === 'SQL_CACHE_SYM' ? 'SQL_CACHE' : 'SQL_NO_CACHE', ''] : null;
         $last = array_key_last($written);
         $exclusive = $checked && isset($written['ALL'], $written['DISTINCT']) ? ['ALL', 'DISTINCT'] : null;
+        $restricted = $misplaced ? array_values(array_intersect(['HIGH_PRIORITY', 'SQL_BUFFER_RESULT', 'SQL_CALC_FOUND_ROWS'], array_keys($written))) : [];
+        $option = $restricted === [] ? null : [$restricted[0], ''];
 
-        return in_array($last, ['SQL_CACHE_SYM', 'SQL_NO_CACHE_SYM'], true) ? $placement ?? $exclusive : $exclusive ?? $placement;
+        return in_array($last, ['SQL_CACHE_SYM', 'SQL_NO_CACHE_SYM'], true) ? $placement ?? $exclusive ?? $option : $exclusive ?? $option ?? $placement;
     }
 
     /**

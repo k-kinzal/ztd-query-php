@@ -40,4 +40,22 @@ final class DerivedInputTest extends TestCase
         self::assertSame([], $input->conditions($names[1], 10, ''));
         self::assertSame(1046, $input->conditions($names[1], 100, '')[0][1]->getCode());
     }
+    public function testTargetsChecksTheIndependentDeleteHeader(): void
+    {
+        $session = (new Instance())->connect();
+        $input = new DerivedInput();
+
+        self::assertSame(1046, $input->targets('DELETE missing FROM (SELECT HIGH_PRIORITY 1) d', $session)?->getCode());
+        self::assertNull($input->targets('DELETE d.missing FROM (SELECT HIGH_PRIORITY 1) d', $session));
+        self::assertNull($input->targets('CREATE PROCEDURE p() DELETE missing FROM (SELECT HIGH_PRIORITY 1) d', $session));
+    }
+
+    public function testRefusalPreservesTheOuterTargetDatabaseRequirement(): void
+    {
+        $failure = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority), 42, false);
+        $session = (new Instance())->connect();
+
+        self::assertSame(1046, (new DerivedInput())->refusal($failure, 'DELETE a FROM (SELECT HIGH_PRIORITY 1) d', $session)?->getCode());
+    }
+
 }

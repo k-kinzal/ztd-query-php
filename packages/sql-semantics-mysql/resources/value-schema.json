@@ -1558,10 +1558,6 @@
         "distinct": "bool",
         "position": "int"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CacheOptionConflict": {
-        "first": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption",
-        "second": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CountMismatch": {
         "actual": "int",
         "expected": "int",
@@ -1594,12 +1590,19 @@
         "release": "SqlSemantics\\Contract\\GrammarRelease",
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\GroupingRule"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Option\\RestrictedSelectOption": {
+        "option": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\OrdinalOutOfRange": {
         "items": "int",
         "position": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\RecursiveReference": {
         "table": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\SelectOptionConflict": {
+        "first": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption",
+        "second": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\UndeclaredVariable": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"

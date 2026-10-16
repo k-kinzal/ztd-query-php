@@ -24,6 +24,31 @@ use SqlSemantics\Diagnostic\Check;
 final class DerivedInput
 {
     /**
+     * Resolves an outer DELETE target before a contextual derived-option refusal.
+     */
+    public function refusal(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
+    {
+        return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict ? $this->targets($statement, $session) : null;
+    }
+
+    /**
+     * Answers a missing database on outer DELETE targets before relation lowering.
+     */
+    public function targets(string $statement, Session $session): ?SqlError
+    {
+        if ($session->variables->database !== '') {
+            return null;
+        }
+        try {
+            $names = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->deleted($session->semantics()->parser()->parse($statement), $session->semantics()->profile());
+        } catch (SourceException) {
+            return null;
+        }
+
+        return array_filter($names, static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): bool => $name->schema === null) === [] ? null : QueryError::NoDatabase->error();
+    }
+
+    /**
      * Answers the earliest relation condition before an input refusal boundary.
      */
     public function before(string $statement, int $end, Session $session): ?SqlError

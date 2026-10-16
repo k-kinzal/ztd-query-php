@@ -59,9 +59,9 @@ final class SubqueryOptionsTest extends TestCase
 
         self::assertSame($query, $subquery->query);
     }
-    public function testCheckKeepsTheIndependentGrammarOfANestedDerivedTable(): void
+    public function testCheckAcceptsNestedDerivedTablesWithTheirOwnModifierDomain(): void
     {
-        $derived = new DerivedTable(new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))]), new \SqlSemantics\Statement\Identifier\Name('x'));
+        $derived = new DerivedTable(new Select([SelectOption::Distinct], [new SelectExpression(new NumberLiteral('1'))]), new \SqlSemantics\Statement\Identifier\Name('x'));
         $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], from: $derived);
         $subquery = new ScalarSubquery($query);
 

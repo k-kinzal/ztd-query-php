@@ -106,7 +106,7 @@ final class CacheOptionsTest extends TestCase
 
         self::assertInstanceOf(SqlError::class, $answers[0]);
         self::assertSame([1234, "Incorrect usage/placement of 'SQL_CACHE'"], [$answers[0]->getCode(), $answers[0]->getMessage()]);
-        self::assertNull((new CacheOptions())->placed(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache), $session->analyze('SELECT 1')->statement, $session));
+        self::assertNull((new CacheOptions())->placed(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache), $session->analyze('SELECT 1')->statement, $session));
     }
 
     public function testPlacedLeavesAConflictInAnEarlierBlockFirstInMySql56(): void

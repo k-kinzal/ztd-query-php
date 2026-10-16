@@ -81,4 +81,27 @@ final class SyntaxTableNames
         return $lowering->names->qualified($lowering->form($node)->node(4));
     }
 
+    /**
+     * Reads multiple-DELETE targets independently of rejected relation operands.
+     * Only the outer command owns these names; stored bodies are not inspected.
+     *
+     * @return list<\SqlSemantics\Statement\Identifier\QualifiedName> The independently lowered target names
+     */
+    public function deleted(Node $tree, \SqlSemantics\Contract\LanguageProfile $profile): array
+    {
+        $node = $tree->find('delete_stmt')[0] ?? $tree->find('delete')[0] ?? null;
+        if ($node === null || ($tree->tokens()[0] ?? null) !== ($node->tokens()[0] ?? null)) {
+            return [];
+        }
+        $lowering = new Lowering(\SqlSemantics\Lowering\Productions::load(dirname(__DIR__, 3) . '/resources/productions/' . $profile->grammar->value . '.php'), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $node = $node->find('single_multi')[0] ?? $node;
+        foreach ($node->children as $child) {
+            if ($child instanceof Node && in_array($child->name, ['table_alias_ref_list', 'table_wild_list'], true)) {
+                return $lowering->dml->deleteTargets($child);
+            }
+        }
+
+        return [];
+    }
+
 }

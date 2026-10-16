@@ -134,4 +134,12 @@ final class FactorRuleTest extends TestCase
         self::assertInstanceOf(SyntaxException::class, $second);
         self::assertSame([33, 26], [$first->token->offset, $second->token->offset]);
     }
+    public function testDerivedRefusesAStatementModifierInADerivedQuery(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect usage/placement of 'HIGH_PRIORITY'");
+
+        (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT * FROM (SELECT HIGH_PRIORITY 1) d');
+    }
+
 }

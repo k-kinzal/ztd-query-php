@@ -68,4 +68,13 @@ final class InputErrorsTest extends TestCase
     {
         self::assertNull((new InputErrors())->error(new NotSupportedYet('feature'), (new Instance())->connect()));
     }
+    public function testErrorFormatsARestrictedQueryModifierWithoutReadingInput(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority);
+
+        self::assertSame(1234, (new InputErrors())->error($problem, $session)?->getCode());
+    }
+
 }

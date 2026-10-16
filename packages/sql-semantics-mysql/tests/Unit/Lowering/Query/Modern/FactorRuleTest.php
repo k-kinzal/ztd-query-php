@@ -42,4 +42,12 @@ final class FactorRuleTest extends TestCase
         (new Semantics(Dialect::MySql))->analyze('SELECT * FROM (SELECT 1)');
     }
 
+    public function testDerivedRefusesAStatementModifierInADerivedQuery(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect usage/placement of 'HIGH_PRIORITY'");
+
+        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT * FROM (SELECT HIGH_PRIORITY 1) d');
+    }
+
 }

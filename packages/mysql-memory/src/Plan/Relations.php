@@ -160,9 +160,8 @@ final class Relations
         $placed = $this->shaped($derived, $plan->domains);
         $scope->place($derived, $placed, $names);
         $stored = $this->planner->materialized($placed);
-        if ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            $stored = array_map(static fn (?ColumnOrigin $source, ?ColumnOrigin $temporary): ColumnOrigin => new ColumnOrigin('', '', $source->originalTable ?? '', '', $temporary->flags ?? 0), $plan->origins, $stored);
-        }
+        $legacy = $this->planner->settings->legacy();
+        $stored = array_map(static fn (?ColumnOrigin $source, ?ColumnOrigin $temporary): ColumnOrigin => new ColumnOrigin($legacy ? '' : ($source->schema ?? ''), '', $source->originalTable ?? '', '', ($temporary->flags ?? 0) | (($source->flags ?? 0) & \MySqlMemory\Result\ColumnFlag::NoDefaultValue->value)), $plan->origins, $stored);
         $scope->merged[spl_object_id($derived)] = $merged ? $plan->origins : $stored;
         $scope->derived[spl_object_id($derived)] = $derived->alias->value;
 

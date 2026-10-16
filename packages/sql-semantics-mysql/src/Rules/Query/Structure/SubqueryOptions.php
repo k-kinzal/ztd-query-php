@@ -17,8 +17,7 @@ use SqlSemantics\Statement\Query;
  *
  * SQL_CACHE is available only before MySQL 8.0 and those releases do not
  * accept it in the query blocks of an expression subquery. A derived table
- * has its own query grammar and reports invalid placement as a semantic
- * diagnostic; its body must not inherit this syntactic restriction. A parenthesized top-level SELECT can still
+ * enforces its independent modifier domain at construction. A parenthesized top-level SELECT can still
  * carry it, so parentheses alone do not impose this constraint.
  * Verified against isolated MySQL 5.6.51 and 5.7.44 servers.
  *

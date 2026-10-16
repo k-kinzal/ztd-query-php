@@ -331,7 +331,7 @@ final class CacheOptions
      */
     public function placed(\SqlSemantics\Statement\Fact\Diagnostic $problem, \SqlSemantics\Statement\Node $statement, Session $session): ?SqlError
     {
-        if (!$problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict || $session->settings()->release() !== GrammarRelease::MySql5651) {
+        if (!$problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict || $session->settings()->release() !== GrammarRelease::MySql5651) {
             return null;
         }
         $placement = new Placement();
