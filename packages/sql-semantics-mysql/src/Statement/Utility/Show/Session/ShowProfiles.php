@@ -34,6 +34,7 @@ final class ShowProfiles implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ShowProfiles, $derivation, $this);
         (new ShowFacts())->rows($derivation, Report::Profiles);
     }
 

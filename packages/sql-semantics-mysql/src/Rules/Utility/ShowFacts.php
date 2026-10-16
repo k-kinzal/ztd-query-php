@@ -132,17 +132,25 @@ final class ShowFacts
     }
 
     /**
-     * Derives the operands of a LIMIT clause.
+     * Derives LIMIT operands and answers whether its local-variable names resolved.
      */
-    public function limit(Derivation $derivation, ?Limit $limit): void
+    public function limit(Derivation $derivation, ?Limit $limit): bool
     {
         if ($limit === null) {
-            return;
+            return true;
         }
         Check::invariant($limit instanceof RowLimit, 'A SHOW limit is a row limit.');
-        $derivation->scalar($limit->count, $derivation->environment());
-        if ($limit->offset !== null) {
-            $derivation->scalar($limit->offset, $derivation->environment());
+        $resolved = true;
+        foreach ([$limit->count, $limit->offset] as $operand) {
+            if ($operand === null) {
+                continue;
+            }
+            $fact = $derivation->scalar($operand, $derivation->environment());
+            if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable && !$fact->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn) {
+                $resolved = false;
+            }
         }
+
+        return $resolved;
     }
 }

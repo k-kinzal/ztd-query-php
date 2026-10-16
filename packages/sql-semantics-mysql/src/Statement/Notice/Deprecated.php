@@ -26,6 +26,8 @@ use SqlSemantics\Contract\GrammarRelease;
  */
 enum Deprecated: string
 {
+    case ShowProfile = "'SHOW PROFILE' is deprecated and will be removed in a future release. Please use Performance Schema instead";
+    case ShowProfiles = "'SHOW PROFILES' is deprecated and will be removed in a future release. Please use Performance Schema instead";
     case SuperPrivilege = 'The SUPER privilege identifier is deprecated';
     case ReplicationSpelling = 'A legacy replication keyword is deprecated.';
     case UnquotedFull = 'Using FULL as unquoted identifier is deprecated, please use quotes or rename the identifier.';
@@ -92,7 +94,7 @@ enum Deprecated: string
     public function code(): int
     {
         return match ($this) {
-            self::SuperPrivilege, self::ReplicationSpelling, self::ResetMaster, self::PurgeMasterLogs, self::ShowMasterLogs, self::ShowMasterStatus => 1287,
+            self::ShowProfile, self::ShowProfiles, self::SuperPrivilege, self::ReplicationSpelling, self::ResetMaster, self::PurgeMasterLogs, self::ShowMasterLogs, self::ShowMasterStatus => 1287,
             self::InsertDelayed, self::ReplaceDelayed => 3005,
             self::UnquotedFull => 4119,
             self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
@@ -113,6 +115,9 @@ enum Deprecated: string
      */
     public function warnedIn(GrammarRelease $release): bool
     {
+        if ($this === self::ShowProfile || $this === self::ShowProfiles) {
+            return true;
+        }
         if (in_array($this, [self::ResetMaster, self::PurgeMasterLogs, self::ShowMasterLogs, self::ShowMasterStatus], true)) {
             return in_array($release, [GrammarRelease::MySql820, GrammarRelease::MySql830], true);
         }

@@ -273,6 +273,9 @@ final class Execution
         if ($this->session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return false;
         }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles) {
+            return true;
+        }
         $kept = [
             \MySqlMemory\Command\EmptyCommand::class,
             \MySqlMemory\Command\TransactionCommand::class, \MySqlMemory\Command\Transaction\SetTransactionCommand::class, \MySqlMemory\Command\Transaction\SavepointCommand::class,

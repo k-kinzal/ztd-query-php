@@ -32,4 +32,17 @@ final class ShowProfileTest extends TestCase
         $this->expectExceptionMessage('A SHOW PROFILE query number is a decimal integer token no greater than 2147483647.');
         new ShowProfile(query: new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2147483648'));
     }
+    public function testDeriveStatementOwnsOnlyTheLegacyDefinitionNoticeAfterLimitBinding(): void
+    {
+        $legacy = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $modern = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+
+        $notices = $legacy->analyze('SHOW PROFILE LIMIT ?')->facts->warnings;
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $notices[0]);
+        self::assertSame(1287, $notices[0]->code());
+        self::assertSame([], $legacy->analyze('SHOW PROFILE LIMIT missing')->facts->warnings);
+        self::assertSame([], $modern->analyze('SHOW PROFILE LIMIT ?')->facts->warnings);
+    }
+
 }

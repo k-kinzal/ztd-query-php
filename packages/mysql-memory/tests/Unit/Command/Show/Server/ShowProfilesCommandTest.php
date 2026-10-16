@@ -73,4 +73,11 @@ final class ShowProfilesCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([10, 8], [$result->columns[0]->length, $result->columns[1]->length]);
     }
+    public function testHeadingsKeepLegacyResourceCounterWidths(): void
+    {
+        $headings = (new ShowProfilesCommand())->headings([ProfileSection::Swaps], true);
+
+        self::assertSame(20, $headings[2]->length);
+    }
+
 }

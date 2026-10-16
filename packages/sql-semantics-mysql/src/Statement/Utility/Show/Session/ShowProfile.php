@@ -60,7 +60,10 @@ final class ShowProfile implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $facts = new ShowFacts();
-        $facts->limit($derivation, $this->limit);
+        $resolved = $facts->limit($derivation, $this->limit);
+        if ($resolved && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ShowProfile, $derivation, $this);
+        }
         $all = $facts->shape($derivation, Report::Profile)->slots;
         $positions = [0 => true, 1 => true];
         foreach ($this->sections as $section) {

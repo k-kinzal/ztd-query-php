@@ -113,6 +113,9 @@ final class Reading
     {
         $reached = array_fill_keys(array_map(spl_object_id(...), (new \MySqlMemory\Session\Problems())->reached($operation->statement)), true);
         $program = \MySqlMemory\Command\Dispatcher::program($operation->statement);
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile) {
+            $this->limited($operation->statement, $session);
+        }
         foreach ($program ? [] : (new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable::class) as $variable) {
             if ($session->program?->variable($variable->name->value) === null) {
                 throw ProgramError::UndeclaredVariable->error($variable->name->value);
@@ -215,7 +218,7 @@ final class Reading
      *
      * @throws SqlError When the LIMIT names such a variable
      */
-    public function limited(Select $select, Session $session): void
+    public function limited(Select|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile $select, Session $session): void
     {
         $limit = $select->limit;
         if (!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit) {
