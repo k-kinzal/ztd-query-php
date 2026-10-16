@@ -56,6 +56,30 @@ final class InvocationTest extends TestCase
         self::assertSame(1, $session->diagnostics->signalCount);
     }
 
+    public function testContainedReplacesStaleConditionsAfterOrdinaryFailures(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('CREATE DATABASE d');
+        $session->run('CREATE PROCEDURE d.p() SELECT (1,2)');
+        $session->run("SELECT 'old'+0");
+        $session->run('CALL d.p()');
+
+        self::assertSame([['Error', 1241, 'Operand should contain 1 column(s)']], $session->diagnostics->conditions);
+    }
+
+    public function testContainedPreservesStaleConditionsAcrossNestedEmptyFrames(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('CREATE DATABASE d');
+        $session->run('CREATE PROCEDURE d.noop() BEGIN END');
+        $session->run('CREATE PROCEDURE d.p() CALL d.noop()');
+        $session->run("SELECT 'old'+0");
+        $before = $session->diagnostics->conditions;
+        $session->run('CALL d.p()');
+
+        self::assertSame($before, $session->diagnostics->conditions);
+    }
+
     public function testContainedLeavesRowCountAsItWas(): void
     {
         $session = (new Instance())->connect();

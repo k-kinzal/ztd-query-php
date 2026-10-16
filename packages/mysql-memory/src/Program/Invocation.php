@@ -109,7 +109,7 @@ final class Invocation
 
     /**
      * Runs a program with its own diagnostics area, retaining preceding conditions.
-     * SIGNAL discards stale conditions even when its handler consumes the new condition;
+     * A new condition or SQL area reset discards stale conditions, even after handling;
      * notices raised while loading this invocation remain current and are preserved.
      * Functions and triggers also preserve ROW_COUNT(); procedures publish their final count.
      *
@@ -124,13 +124,13 @@ final class Invocation
         $session = $this->session;
         $diagnostics = $session->diagnostics;
         [$conditions, $signalled, $count] = [$diagnostics->conditions, $diagnostics->signalled, $session->variables->rowCount];
-        [$stale, $signals] = [$diagnostics->stale, $diagnostics->signalCount];
-        $diagnostics->clear();
+        [$stale, $revision] = [$diagnostics->stale, $diagnostics->revision];
+        $diagnostics->clear(false);
         try {
             return $run();
         } finally {
             $own = [$diagnostics->conditions, $diagnostics->signalled];
-            [$diagnostics->conditions, $diagnostics->signalled] = $stale && $diagnostics->signalCount !== $signals ? [[], []] : [$conditions, $signalled];
+            [$diagnostics->conditions, $diagnostics->signalled] = $stale && $diagnostics->revision !== $revision ? [[], []] : [$conditions, $signalled];
             if ($preserveRowCount) {
                 $session->variables->rowCount = $count;
             }

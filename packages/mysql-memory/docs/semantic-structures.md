@@ -891,3 +891,15 @@ identities and stored definitions. Another thirty direct observations on four
 releases reuse each original request while its target connection is alive and
 after disconnection. The first state completes, the second reports unknown thread
 identity, and memory executes with unrelated input text throughout.
+
+
+Stored invocations distinguish stale diagnostics from conditions raised by the
+current caller. A new condition or a SQL diagnostics reset inside a routine
+replaces stale history, even when a handler consumes the condition or a later
+statement empties the area. Entering an isolated routine frame does not itself
+replace that history. This preserves an empty nested call while avoiding
+duplicate legacy errors and warnings. A five-release history compares 395 SQL
+observations, including handled errors, SIGNAL, empty invocations, nested calls,
+table reads and function warnings alongside the current caller's warning.
+These histories test session diagnostics; the scalar-versus-row type boundary
+remains a separate outstanding construction constraint.

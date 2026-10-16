@@ -24,6 +24,12 @@ use MySqlMemory\Error\SqlError;
 final class Diagnostics
 {
     /**
+     * The sequence of SQL condition replacements, including conditions consumed by handlers.
+     * Isolating a stored-program diagnostics frame does not advance it.
+     */
+    public int $revision = 0;
+
+    /**
      * Executed SIGNAL statements, used to invalidate retained conditions across routine calls.
      * Ordinary area clearing and handled conditions do not reset this sequence.
      */
@@ -154,9 +160,14 @@ final class Diagnostics
 
     /**
      * Forgets every condition, as a new statement does.
+     *
+     * @param bool $observable Whether this is a SQL reset rather than an isolated frame's initialization
      */
-    public function clear(): void
+    public function clear(bool $observable = true): void
     {
+        if ($observable) {
+            $this->revision++;
+        }
         $this->conditions = [];
         $this->signalled = [];
         $this->stale = false;
@@ -178,6 +189,7 @@ final class Diagnostics
      */
     public function fresh(): void
     {
+        $this->revision++;
         if ($this->stale) {
             $this->clear();
         }
