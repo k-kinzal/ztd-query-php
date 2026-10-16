@@ -67,7 +67,7 @@ final class AlterUserCommand implements Command
         $names->check($names->users($statement->users));
         $options = new Options($session->settings()->release());
         $options->parsed($operation, $session->text);
-        $generated = (new Authentication\AlterRecipients($this, $statement, $session, $options))->apply();
+        $generated = (new Authentication\AlterRecipients($statement, $session, $options))->apply();
         if ($generated !== []) {
             return (new Passwords())->result($generated, $context);
         }

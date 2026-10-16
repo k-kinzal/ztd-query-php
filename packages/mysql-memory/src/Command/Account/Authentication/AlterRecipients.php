@@ -4,20 +4,13 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Account\Authentication;
 
-use MySqlMemory\Account\Credentials;
 use MySqlMemory\Account\Identity;
-use MySqlMemory\Command\Account\AlterUserCommand;
 use MySqlMemory\Command\Account\Names;
 use MySqlMemory\Command\Account\Options;
-use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Session\Access\PasswordAccess;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
-use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
-use SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration;
-use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 
 /**
  * Applies account occurrences in order while retaining every failed recipient's condition.
@@ -38,7 +31,12 @@ final class AlterRecipients
 
     private bool $currentChanged = false;
 
-    public function __construct(private readonly AlterUserCommand $command, private readonly AlterUser $statement, private readonly Session $session, private readonly Options $options)
+    /**
+     * @param AlterUser $statement The ordered account alterations
+     * @param Session $session The acting connection and shared account catalog
+     * @param Options $options Authentication and account option interpretation
+     */
+    public function __construct(private readonly AlterUser $statement, private readonly Session $session, private readonly Options $options)
     {
     }
 
@@ -55,7 +53,13 @@ final class AlterRecipients
         $first = null;
         foreach ($this->statement->users as $user) {
             try {
-                $this->recipient($user);
+                [$identity, $account, $generated] = (new AlterRecipient())->apply($this->statement, $user, $this->session, $this->options);
+                if ($account === null) {
+                    $this->missing[] = $identity;
+                } else {
+                    $this->generated = [...$this->generated, ...$generated];
+                    $this->currentChanged = $this->currentChanged || $identity->key() === $this->session->variables->definer->key();
+                }
             } catch (SqlError $error) {
                 $this->session->diagnostics->error($error->getCode(), $error->getMessage());
                 $first ??= $error;
@@ -78,31 +82,4 @@ final class AlterRecipients
         return $this->generated;
     }
 
-    /**
-     * Checks and changes one occurrence against the state left by earlier occurrences.
-     *
-     * @throws SqlError When its authentication or options are refused
-     */
-    private function recipient(UserAlteration $user): void
-    {
-        $names = new Names($this->session->settings()->release());
-        $identity = $names->identity($names->users([$user])[0], $this->session);
-        $account = $this->session->instance->accounts->find($identity);
-        if ($user instanceof UserSpecification) {
-            $this->options->check($user->identification, $account->plugin ?? (new Credentials($this->session->settings()->release()))->default());
-        }
-        if ($user instanceof FactorChange) {
-            $this->command->factors($user, $account, $this->session);
-        }
-        if ($account === null) {
-            $this->missing[] = $identity;
-            if ($this->statement->ifExists) {
-                $this->session->diagnostics->note(AccountError::UserDoesNotExist, $names->existence($identity, false));
-            }
-            return;
-        }
-        $this->generated = [...$this->generated, ...$this->command->change([[$account, $user]], $this->statement, $this->session, $this->options)];
-        $this->currentChanged = $this->currentChanged || $identity->key() === $this->session->variables->definer->key();
-        (new PasswordAccess())->changed($account, $this->session);
-    }
 }
