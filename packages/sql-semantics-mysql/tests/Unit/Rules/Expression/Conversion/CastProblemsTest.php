@@ -48,6 +48,17 @@ final class CastProblemsTest extends TestCase
         self::assertEquals(new TooBigPrecision(-1, 'CAST', 53), $rules->precision(new CastTarget(CastKind::Float, '18446744073709551615')));
     }
 
+    public function testTargetPrefersAnUnsupportedElementKindToItsPrecision(): void
+    {
+        $rules = new CastProblems();
+        $target = new CastTarget(CastKind::Float, '54');
+
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('CAST-ing data to array of FLOAT'), $rules->target($target, true));
+        self::assertEquals(new TooBigPrecision(54, 'CAST', 53), $rules->target($target, false));
+        self::assertEquals(new TooBigPrecision(7, 'CAST'), $rules->target(new CastTarget(CastKind::Time, '7'), true));
+        self::assertNull($rules->target(new CastTarget(CastKind::Time, '6'), true));
+    }
+
     public function testArrayDistinguishesIndexTargetsFromOrdinaryCasts(): void
     {
         $rules = new CastProblems();

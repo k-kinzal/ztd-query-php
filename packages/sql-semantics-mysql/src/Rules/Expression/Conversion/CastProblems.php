@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression\Conversion;
 
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
@@ -18,6 +19,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
  */
 final class CastProblems
 {
+    /**
+     * Checks an array's element kind before its precision, as the completed cast does.
+     */
+    public function target(CastTarget $target, bool $array): NotSupportedYet|TooBigPrecision|null
+    {
+        $refusal = $array ? $this->array($target) : null;
+
+        return $refusal === null ? $this->precision($target) : new NotSupportedYet($refusal);
+    }
+
     /**
      * Answers a precision beyond the cast target's limit, before resolving its operand.
      *

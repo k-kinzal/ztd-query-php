@@ -75,20 +75,19 @@ final class ConstructRule
     }
 
     /**
-     * Lowers a CAST or typed CONVERT after checking the target's intrinsic precision.
+     * Lowers a CAST or typed CONVERT after checking its target kind and precision.
      *
-     * @throws RejectedInput When the target precision cannot denote a cast
+     * @throws RejectedInput When the target kind or precision cannot denote a cast
      */
     public function cast(Form $form): Cast
     {
         $operand = $this->lowering->expressions->expression($form->node(2));
         $target = $this->lowering->types->castTarget($form->node(4));
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->precision($target);
+        $array = $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' && $this->flag($form->node(5));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->target($target, $array);
         if ($problem !== null) {
             throw new RejectedInput($problem, (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
         }
-        $array = $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' && $this->flag($form->node(5));
-
         return new Cast($operand, $target, $array);
     }
 

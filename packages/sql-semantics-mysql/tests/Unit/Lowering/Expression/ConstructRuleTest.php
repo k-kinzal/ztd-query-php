@@ -124,6 +124,34 @@ final class ConstructRuleTest extends TestCase
         self::assertSame(strlen('SELECT ' . $cast), $failure->end);
     }
 
+    /**
+     * @return iterable<string, array{string, string, string, bool}>
+     */
+    public static function providerArrayTargets(): iterable
+    {
+        foreach (['mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.4.7', 'mysql-9.1.0'] as $release) {
+            foreach (['JSON' => 'CAST-ing data to array of JSON', 'FLOAT(54)' => 'CAST-ing data to array of FLOAT', 'NCHAR(2)' => 'specifying charset for multi-valued index', 'BINARY' => 'CAST-ing data to array of char/binary BLOBs'] as $type => $problem) {
+                yield $release . ' ' . $type => [$release, $type, $problem, !in_array($release, ['mysql-8.0.44', 'mysql-8.1.0'], true)];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerArrayTargets')]
+    public function testCastPublishesAnElementTypeRefusalWithoutAnInvalidScalar(string $release, string $type, string $problem, bool $aborts): void
+    {
+        $failure = null;
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT CAST(NULL AS ' . $type . ' ARRAY), BINARY 1');
+        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
+            $failure = $caught;
+        }
+
+        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet($problem), $failure->problem);
+        self::assertSame($aborts, $failure->aborts);
+        self::assertSame(strlen('SELECT CAST(NULL AS ' . $type . ' ARRAY)'), $failure->end);
+    }
+
     public function testOptionalLowersTheOperandAndTheElseOfCase(): void
     {
         $platform = new Platform();

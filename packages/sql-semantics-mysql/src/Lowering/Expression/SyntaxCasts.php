@@ -50,14 +50,9 @@ final class SyntaxCasts
             return null;
         }
         $target = $lowering->types->castTarget($form->node(4));
-        $problems = new CastProblems();
-        $problem = $problems->precision($target);
-        if ($problem !== null) {
-            return new ParseFailure($problem, $aborts);
-        }
         $array = $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' && (new ConstructRule($lowering))->flag($form->node(5));
-        $refusal = $array ? $problems->array($target) : null;
+        $problem = (new CastProblems())->target($target, $array);
 
-        return $refusal === null ? null : new ParseFailure(new NotSupportedYet($refusal), $lowering->profile->grammar !== GrammarRelease::MySql8044);
+        return $problem === null ? null : new ParseFailure($problem, $aborts);
     }
 }

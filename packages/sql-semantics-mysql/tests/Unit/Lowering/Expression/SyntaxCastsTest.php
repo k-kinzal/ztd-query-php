@@ -32,6 +32,7 @@ final class SyntaxCastsTest extends TestCase
         yield 'convert precision' => ['SELECT CONVERT(1,DATETIME(7)),?', [new ParseFailure(new TooBigPrecision(7, 'CAST'), true)]];
         yield 'binary stops after local operand' => ['SELECT BINARY CAST(1 AT LOCAL AS SIGNED),?', [new ParseFailure(new NotSupportedYet('AT LOCAL')), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::BinaryOperator, aborts: true)]];
         yield 'incomplete cast' => ['SELECT CAST(1 AS DATETIME(7),?', []];
+        yield 'array kind precedes precision' => ['SELECT CAST(1 AS FLOAT(54) ARRAY),?', [new ParseFailure(new NotSupportedYet('CAST-ing data to array of FLOAT'), true)]];
         yield 'json array' => ['SELECT CAST(1 AS JSON ARRAY),?', [new ParseFailure(new NotSupportedYet('CAST-ing data to array of JSON'), true)]];
         yield 'incomplete array' => ['SELECT CAST(1 AS JSON ARRAY,?', []];
         yield 'local zone continues' => ['SELECT CAST(1 AT LOCAL AS DATETIME(7)),?', [new ParseFailure(new NotSupportedYet('AT LOCAL'))]];
@@ -54,11 +55,21 @@ final class SyntaxCastsTest extends TestCase
         self::assertEquals($expected, array_column($notices, 1));
     }
 
-    public function testCompletedContinuesAfterCastErrorsInMySql80(): void
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerContinuingReleases(): iterable
+    {
+        yield '8.0' => [GrammarRelease::MySql8044];
+        yield '8.1' => [GrammarRelease::MySql810];
+    }
+
+    #[DataProvider('providerContinuingReleases')]
+    public function testCompletedContinuesAfterCastErrorsInEarlyModernReleases(GrammarRelease $release): void
     {
         $sql = 'SELECT CAST(1 AS DATETIME(7)), CAST(1 AS JSON ARRAY), BINARY 1,?';
-        $profile = new LanguageProfile(GrammarRelease::MySql8044);
-        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.0.44'), $sql, (int) strpos($sql, '?'), $profile);
+        $profile = new LanguageProfile($release);
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser($release->value), $sql, (int) strpos($sql, '?'), $profile);
 
         self::assertEquals([new ParseFailure(new TooBigPrecision(7, 'CAST')), new ParseFailure(new NotSupportedYet('CAST-ing data to array of JSON')), Deprecated::BinaryOperator], array_column($notices, 1));
     }

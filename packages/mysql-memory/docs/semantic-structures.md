@@ -734,3 +734,23 @@ GROUP BY, set operations, aliases and computed columns through the SQL input
 boundary. The direct histories exercise accepted structures without submitting
 their SQL to Memory. These checks do not close the remaining whole-model
 construction and version-domain obligations.
+
+Array CAST construction now rejects element types that no multi-valued index
+accepts. Input lowering emits a typed refusal before publishing such a scalar;
+completed-prefix diagnostics use the same target rule. An unsupported array
+element kind takes precedence over its excessive precision, and MySQL 8.0 and
+8.1 preserve later completed warnings while 8.2 onward stop. The input matrix
+checks every cast kind, explicit lengths, character sets and competing failures:
+1,044 native observations across six modern releases. This establishes the target
+domain only. Separating index-only array conversions from ordinary scalars,
+stored-routine restrictions and functional-index execution remain unresolved;
+these rejected-input checks do not establish the whole-model construction gate.
+
+The complete public-root audit at `5fd0b90f519`, using seed
+`contract-20261015`, retained all 245 roots and recorded 94 matching successes,
+143 matching SQL errors and eight differences, with no generation, profile or
+infrastructure failures. The remaining differences concern random passwords,
+loadable-library diagnostics, ordered LOCK TABLES warnings, open-table physical
+cache contents, engine reports, installed plugins, process lists and status
+counters. Matching SQL errors still require the classification and transition
+witnesses in the acceptance contract; this audit does not close that gate.

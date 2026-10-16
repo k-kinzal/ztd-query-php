@@ -285,7 +285,7 @@ final class Locator
             }
             $this->keyed[spl_object_id($keyed)] = true;
         }
-        if ($node instanceof Cast && $node->array && $node->arrayRefusal() === null && !isset($this->keyed[spl_object_id($node)])) {
+        if ($node instanceof Cast && $node->array && !isset($this->keyed[spl_object_id($node)])) {
             $this->arrays[] = [$node, $clause, $order];
         }
         if ($node instanceof ColumnUse || $node instanceof OutputOrdinal || $node instanceof FunctionCall) {
