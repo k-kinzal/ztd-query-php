@@ -1001,3 +1001,11 @@ protocol restriction. Memory checks the typed header and reading diagnostics
 before error 1295, independently of target-object existence. Text execution
 retains its distinct marker error and all preceding declaration notes. An
 already recorded condition sequence is preserved when the refusal propagates.
+
+The direct comparison also retains an unknown-database error for a qualified
+request, creates and selects that schema on both engines, and retries the same
+object. Schema names are typed identifiers, including quotes and Unicode; the
+native diagnostic supplies fixture state only. Every setup observation remains
+in the report. A setup difference or unrecognized database diagnostic fails the
+comparison instead of dropping the history. Five-release tests exercise a
+qualified function that becomes creatable after the missing schema is created.

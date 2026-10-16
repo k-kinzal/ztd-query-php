@@ -47,9 +47,8 @@ final class Comparison
                 $session->text = 'unrelated invalid input';
                 (new SessionSetup())->apply($session, $mode);
                 $observation = $this->observe($node, $profile, $native, $session, $endpoint);
-                $error = $observation['native']['error'] ?? null;
-                $history = $observation['matches'] && is_array($error) && ($error[0] ?? null) === 1046
-                    ? $this->selected($node, $profile, $native, $session, $endpoint) : [];
+                $database = $observation['matches'] ? $this->database($observation['native']) : null;
+                $history = $database === null ? [] : $this->selected($node, $profile, $native, $session, $endpoint, $database);
 
                 return [...$observation, 'profile' => $profile->grammar->value, 'mode' => $mode, 'matches' => $observation['matches'] && !in_array(false, array_column($history, 'matches'), true), 'transitions' => $history];
             } finally {
@@ -58,6 +57,33 @@ final class Comparison
         } finally {
             $container->stop();
         }
+    }
+
+    /**
+     * Selects an explicit schema fixture for a matching database-state refusal.
+     * The reported name supplies setup state only; it never changes the tested
+     * structure or substitutes a native response for a memory observation.
+     *
+     * @param array<string, mixed> $observation The retained native outcome
+     * @throws RuntimeException When an unknown-database error has an unrecognized diagnostic shape
+     */
+    public function database(array $observation): ?\SqlSemantics\Statement\Identifier\Name
+    {
+        $error = $observation['error'] ?? null;
+        if (!is_array($error)) {
+            return null;
+        }
+        if (($error[0] ?? null) === 1046) {
+            return new \SqlSemantics\Statement\Identifier\Name('structure_fixture');
+        }
+        if (($error[0] ?? null) !== 1049) {
+            return null;
+        }
+        $message = $error[2] ?? null;
+        if (!is_string($message) || preg_match("/\\AUnknown database '(.*)'\\z/s", $message, $matches) !== 1) {
+            throw new RuntimeException('The native unknown-database observation has no schema fixture name.');
+        }
+        return new \SqlSemantics\Statement\Identifier\Name($matches[1]);
     }
 
     /**
@@ -85,9 +111,9 @@ final class Comparison
      * @return list<array{sql: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>}>
      * @throws RuntimeException When a matching fixture error prevents the state transition
      */
-    public function selected(Statement|Scalar $node, LanguageProfile $profile, mysqli $native, \MySqlMemory\Session\Session $session, Endpoint $endpoint): array
+    public function selected(Statement|Scalar $node, LanguageProfile $profile, mysqli $native, \MySqlMemory\Session\Session $session, Endpoint $endpoint, ?\SqlSemantics\Statement\Identifier\Name $database = null): array
     {
-        $database = new \SqlSemantics\Statement\Identifier\Name('structure_fixture');
+        $database ??= new \SqlSemantics\Statement\Identifier\Name('structure_fixture');
         $steps = [new \SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase(true, $database), new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase($database), $node];
         $history = [];
         foreach ($steps as $index => $step) {
