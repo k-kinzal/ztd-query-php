@@ -19,6 +19,14 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ModernFormsTest extends TestCase
 {
+    public function testDefinitionRecognizesLoadSourceFeaturesBeforeCombiningTheirOperands(): void
+    {
+        $forms = new ModernForms();
+        self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(false, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('f'))));
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(false, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::S3, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('f'))));
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions(bulk: true)));
+    }
+
     public function testDefinitionDistinguishesAccountHostLimits(): void
     {
         $forms = new ModernForms();

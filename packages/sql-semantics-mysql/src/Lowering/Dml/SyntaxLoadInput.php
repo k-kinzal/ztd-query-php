@@ -23,6 +23,28 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount;
 final class SyntaxLoadInput
 {
     /**
+     * Preserves charset warnings and count refusals when later LOAD operands fail.
+     */
+    public function completed(Node $node, Lowering $lowering): \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure|null
+    {
+        $refusal = $this->rejected($node, $lowering);
+        if ($refusal !== null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($refusal->problem, true);
+        }
+        if ($node->name !== 'opt_load_data_charset') {
+            return null;
+        }
+        $name = (new FormatRule($lowering))->charset($node)?->name?->value;
+        $notice = match (strtolower($name ?? '')) {
+            'utf8' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias,
+            'utf8mb3' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3,
+            'ucs2' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Ucs2,
+            default => null,
+        };
+        return $notice?->warnedIn($lowering->profile->grammar) === true ? $notice : null;
+    }
+
+    /**
      * Refuses a zero count only after a valid COUNT spelling in the newer form.
      */
     public function rejected(Node $node, Lowering $lowering): ?RejectedInput

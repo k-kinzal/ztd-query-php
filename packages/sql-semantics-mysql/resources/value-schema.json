@@ -968,6 +968,13 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedLoadOptions": {
+        "assignments": "array",
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadFormat",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadConflict",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\UnknownDeleteTable": {
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },

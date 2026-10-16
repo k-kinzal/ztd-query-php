@@ -19,6 +19,14 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testSourceDistinguishesTypedSourceFailuresFromOtherDiagnostics(): void
+    {
+        $session = (new Instance())->connect();
+        $errors = new InputErrors();
+        self::assertSame(3945, $errors->source(new RefusedSourceNumber(SourceOptionKind::RequireRowFormat, new Numeral('2'), 0), $session)?->getCode());
+        self::assertNull($errors->source(new NotSupportedYet('feature'), $session));
+    }
+
     public function testErrorLocatesACompletedInternalEntry(): void
     {
         $session = (new Instance('5.7.44'))->connect();

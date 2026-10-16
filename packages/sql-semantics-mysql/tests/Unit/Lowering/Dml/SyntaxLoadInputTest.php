@@ -18,6 +18,15 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount;
 #[Small]
 final class SyntaxLoadInputTest extends TestCase
 {
+    public function testCompletedRetainsTheCharsetWarningBeforeLaterRefusals(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tree = $semantics->parser()->parse("LOAD DATA S3 'f' INTO TABLE t CHARACTER SET utf8 (a) ALGORITHM=BULK");
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering(\SqlSemantics\Contract\Platforms::of('mysql')->productions($semantics->profile()), new \SqlSemantics\Lowering\Leaves(), $semantics->profile());
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias, (new SyntaxLoadInput())->completed($tree->find('opt_load_data_charset')[0], $lowering));
+        self::assertNull((new SyntaxLoadInput())->completed($tree, $lowering));
+    }
+
     public function testRejectedRetainsOnlyTheZeroCountInputPosition(): void
     {
         try {

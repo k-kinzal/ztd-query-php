@@ -1009,3 +1009,19 @@ native diagnostic supplies fixture state only. Every setup observation remains
 in the report. A setup difference or unrecognized database diagnostic fails the
 comparison instead of dropping the history. Five-release tests exercise a
 qualified function that becomes creatable after the missing schema is created.
+
+LOAD constructors intersect their input features with their option constraints.
+MySQL 8.0 and 8.1 ignore bulk annotations, so an otherwise valid legacy load can
+retain them. Combining incompatible annotations with S3, PARALLEL, MEMORY or
+compression has no supported interpretation and is rejected during construction.
+Compression also cannot accompany a zero file count. Source and bulk features
+participate in the enclosing generation checks, preventing legacy dotted column
+references from being combined with newer LOAD forms.
+
+SQL lowering reports incompatible inputs as `RefusedLoadOptions`, retaining only
+the target name, format, character set, assignments and typed conflict. The input
+boundary preserves earlier database, charset and assignment conditions, together
+with charset warnings and stored-program restrictions. Original invalid SQL stays
+in the native comparison matrix. A constructor sample of 100 LOAD values and the
+245-root sample remain constructible without exclusions or increased budgets;
+these samples do not establish every possible cross-release combination.
