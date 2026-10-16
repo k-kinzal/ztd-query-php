@@ -87,6 +87,18 @@ final class ResultSlotsTest extends TestCase
         self::assertSame([], $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(DEFAULT, 1))', [$t])->facts->diagnostics);
     }
 
+    public function testValuesStillChecksTheFirstRowWidthWhenTheTargetWidthMatches(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
+        $diagnostics = $semantics->analyze('INSERT INTO t (VALUES ROW(), ROW(1, 2))', [$table])->facts->diagnostics;
+
+        self::assertCount(1, $diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch::class, $diagnostics[0]);
+        self::assertSame(2, $diagnostics[0]->row);
+        self::assertSame("Column count doesn't match value count at row 2", $diagnostics[0]->message());
+    }
+
     public function testSettledCountsTheBytesOfATextOnce(): void
     {
         $semantics = new Semantics(Dialect::MySql);

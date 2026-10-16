@@ -162,10 +162,8 @@ final class ResultSlots
         $target = $derivation->written($values);
         foreach ($values->rows as $index => $row) {
             $count = count($row->values);
-            if ($target !== null && $target[0] !== [] && ($count !== 0 || !$target[1])) {
-                if ($count !== count($target[0])) {
-                    $derivation->report(new ValueCountMismatch(count($target[0]), $count, $index + 1));
-                }
+            if ($target !== null && $target[0] !== [] && ($count !== 0 || !$target[1]) && $count !== count($target[0])) {
+                $derivation->report(new ValueCountMismatch(count($target[0]), $count, $index + 1));
             } elseif ($count !== $width) {
                 $derivation->report($target === null ? new CountMismatch(CountedList::ValueRows, $width, $count, $index + 1) : new ValueCountMismatch($width, $count, $index + 1));
             } elseif ($count === 0 && $target === null) {

@@ -65,6 +65,20 @@ final class CaseExpressionTest extends TestCase
         self::assertSame("CASE 1 WHEN 1 THEN 'a' ELSE 'b' END", (new Lexical())->join($out->pieces()));
     }
 
+    public function testDeriveScalarRequiresSingleValuesEvenWhenRowsHaveEqualWidths(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CASE (1, 2) WHEN (1, 2) THEN 1 ELSE 0 END');
+
+        self::assertSame(['Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.'], array_map(static fn ($problem): string => $problem->message(), $operation->facts->diagnostics));
+    }
+
+    public function testDeriveScalarChecksWhenBeforeTheComparedOperand(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CASE missing WHEN (1, 2) THEN 1 END');
+
+        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->facts->diagnostics[0]->message());
+    }
+
     public function testACaseWithoutBranchesIsRejected(): void
     {
         $this->expectExceptionMessage('A CASE expression has at least one WHEN branch.');

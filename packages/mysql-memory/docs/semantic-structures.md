@@ -1120,3 +1120,22 @@ conversion cases use fresh primary keys to avoid mixing this history into their
 oracle. No general warning suppression is applied to SQL Faker or direct
 structure comparisons. This observed variation is consistent with retired
 physical index entries; it does not establish the server's internal mechanism.
+
+VALUES rows are checked against both the first row's width and the insertion
+target. Matching the target's column count does not excuse a difference from
+the first row. Empty rows and DEFAULT have different meanings in read queries
+and INSERT sources. Stored programs defer these checks until an instruction is
+reached; an unreachable VALUES instruction does not prevent creation or a call.
+The retained SQL histories test each position, including the table contents
+after a refused insertion. Direct histories reuse one InsertQuery object while
+the table, its column count and its defaults change, and compare stored rows
+after every submission. These witnesses distinguish actual state dependencies;
+they do not close the remaining public query-role constructor domains.
+
+CASE takes single values for its compared operand and every WHEN, THEN and ELSE
+operand. Equal row widths do not make row-valued CASE operands valid. Semantics
+resolves each WHEN/result pair before the compared operand and ELSE, retaining
+the same first diagnostic as native MySQL when names and operand widths both
+fail. Tests compare standalone expressions, reached stored-program instructions
+and unreachable branches. General row and aggregate construction domains remain
+unresolved; matching these input diagnostics does not establish that property.

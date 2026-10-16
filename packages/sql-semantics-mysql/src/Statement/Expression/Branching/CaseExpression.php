@@ -29,9 +29,10 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * Rule: MYSQL-CASE-001. Facts: the type is the aggregate of the results
  * (MYSQL-TYPE-AGGREGATION-001); the value is NULL when a result can be
- * NULL or when there is no ELSE. In the simple form the operand and every
- * value must have the same number of columns (MYSQL-OPERAND-COLUMNS-001);
- * conditions and results take single values. Terminates: the parts are
+ * NULL or when there is no ELSE. The compared operand, conditions and results
+ * all take single values (MYSQL-OPERAND-COLUMNS-001), including the simple form.
+ * WHEN/result pairs are resolved before the compared operand and ELSE.
+ * Verified on MySQL 8.0, 8.4 and 9.1. Terminates: the parts are
  * strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flow-control-functions.html#operator_case.
  * Status: Implemented.
@@ -67,23 +68,19 @@ final class CaseExpression implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
-        $compared = $this->operand === null ? [] : [$derivation->scalar($this->operand, $environment)];
         $types = [];
         $results = [];
         $nullability = $this->else === null ? Nullability::Nullable : Nullability::NotNull;
         foreach ($this->branches as $branch) {
-            $condition = $derivation->scalar($branch->condition, $environment);
-            if ($this->operand === null) {
-                $operands->single($condition, $derivation);
-            } else {
-                $compared[] = $condition;
-            }
+            $operands->single($derivation->scalar($branch->condition, $environment), $derivation);
             $result = $operands->single($derivation->scalar($branch->result, $environment), $derivation);
             $types[] = $result->type;
             $results[] = $branch->result;
             $nullability = $nullability->propagate($result->nullability);
         }
-        $operands->comparable($compared, $derivation);
+        if ($this->operand !== null) {
+            $operands->single($derivation->scalar($this->operand, $environment), $derivation);
+        }
         if ($this->else !== null) {
             $result = $operands->single($derivation->scalar($this->else, $environment), $derivation);
             $types[] = $result->type;
