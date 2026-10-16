@@ -102,6 +102,15 @@ final class TypeLimitsTest extends TestCase
         self::assertSame("Too-big precision -1 specified for 'a'. Maximum is 65.", $problem?->message());
     }
 
+    public function testProblemKeepsTheReleaseSpecificEmptyBitDomain(): void
+    {
+        $limits = new TypeLimits();
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit, '0');
+
+        self::assertNull($limits->problem($type, '', \SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Empty, ''), $limits->problem($type, '', \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testCheckAcceptsEmptyBitOnMySql56(): void
     {
         $operation = (new Semantics(Dialect::MySql, '5.6.51'))->analyze('CREATE FUNCTION f() RETURNS BIT(0) RETURN 1');

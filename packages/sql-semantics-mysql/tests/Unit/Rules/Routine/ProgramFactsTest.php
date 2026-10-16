@@ -45,6 +45,16 @@ final class ProgramFactsTest extends TestCase
         self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", (new Semantics(Dialect::MySql, '5.7.44'))->analyze($sql)->facts->diagnostics[0]->message());
     }
 
+    public function testReturnCollationDistinguishesNationalAndNamedAttributes(): void
+    {
+        $facts = new ProgramFacts();
+        $binary = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary);
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, '2', true, $binary);
+
+        self::assertNull($facts->returnCollation($type, \SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('return value collation'), $facts->returnCollation($type, \SqlSemantics\Contract\GrammarRelease::MySql5744));
+    }
+
     public function testBodyKeepsExternalCode(): void
     {
         $body = new ExternalBody(new Text('return 1'));

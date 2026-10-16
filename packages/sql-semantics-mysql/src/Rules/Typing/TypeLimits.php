@@ -48,14 +48,22 @@ final class TypeLimits
      */
     public function check(TypeName $type, string $name, Derivation $derivation): void
     {
-        $problem = $this->width($type, $name) ?? ($type instanceof Floating || $type instanceof Decimal ? $this->fractional($type, $name) : $this->simple($type, $name));
-        if ($problem?->rule === TypeLimit::Empty && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            return;
-        }
+        $problem = $this->problem($type, $name, $derivation->context->profile->grammar);
         if ($problem !== null) {
             $derivation->report($problem);
             $derivation->warn(new ParseFailure($problem, true));
         }
+    }
+
+    /**
+     * Answers the first bound violation for a declaration in a release.
+     * Input completion and ordinary derivation share this ordering.
+     */
+    public function problem(TypeName $type, string $name, \SqlSemantics\Contract\GrammarRelease $release): ?InvalidTypeSize
+    {
+        $problem = $this->width($type, $name) ?? ($type instanceof Floating || $type instanceof Decimal ? $this->fractional($type, $name) : $this->simple($type, $name));
+
+        return $problem?->rule === TypeLimit::Empty && $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? null : $problem;
     }
 
     /**

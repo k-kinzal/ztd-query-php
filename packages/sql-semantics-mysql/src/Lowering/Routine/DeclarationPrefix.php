@@ -43,7 +43,12 @@ final class DeclarationPrefix
         $type = $this->returnType;
         $this->returnType = null;
         try {
-            (new ParameterRule($lowering))->declared($type, $node);
+            [$declared] = (new ParameterRule($lowering))->declared($type, $node);
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($declared, '', $lowering->profile->grammar)
+                ?? (new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramFacts())->returnCollation($declared, $lowering->profile->grammar);
+            if ($problem !== null) {
+                return new ParseFailure($problem, true);
+            }
         } catch (RejectedInput $failure) {
             return new ParseFailure($failure->problem, true);
         }

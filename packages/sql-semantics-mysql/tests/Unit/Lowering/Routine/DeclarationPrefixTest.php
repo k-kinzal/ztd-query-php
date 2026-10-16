@@ -40,6 +40,22 @@ final class DeclarationPrefixTest extends TestCase
         self::assertEquals([new ParseFailure(new NotSupportedYet('COLLATE with no CHARACTER SET in SP parameters, RETURNS, DECLARE'), true)], array_column($notices, 1));
     }
 
+    public function testFollowingKeepsReturnBoundsBeforeMissingReturn(): void
+    {
+        $sql = 'CREATE FUNCTION f() RETURNS FLOAT(0,0) RESTART';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.0.44'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql8044));
+
+        self::assertEquals([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::FloatingDigits, new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Width, '', 0, 255), true)], array_column($notices, 1));
+    }
+
+    public function testFollowingKeepsImplicitReturnCollationBeforeMissingReturn(): void
+    {
+        $sql = 'CREATE FUNCTION f() RETURNS CHAR(0) BINARY RESTART';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.0.44'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql8044));
+
+        self::assertEquals([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryAttribute, new ParseFailure(new NotSupportedYet('return value collation'), true)], array_column($notices, 1));
+    }
+
     public function testCompletedStopsBeforeLaterParameterWarnings(): void
     {
         $sql = 'CREATE PROCEDURE p(x INT COLLATE utf8mb4_bin, y INT(3)) BEGIN END';

@@ -51,7 +51,7 @@ final class SyntaxNotices
             $type = $lowering->types->type($node);
             $notices = $type instanceof Integral || $type instanceof Decimal || $type instanceof Floating ? (new TypeNotices())->numericWarnings($type) : [];
             if ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Character && $type->national) {
-                $notices[] = Deprecated::National;
+                $notices = [...$notices, ...(new TypeNotices())->charsetWarnings($type->charset), Deprecated::National];
             }
 
             return array_values(array_filter($notices, static fn (Deprecated $notice): bool => $notice->warnedIn($lowering->profile->grammar)));

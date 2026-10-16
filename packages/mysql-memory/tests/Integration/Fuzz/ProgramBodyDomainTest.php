@@ -59,7 +59,7 @@ final class ProgramBodyDomainTest extends TestCase
             foreach (['STRICT_TRANS_TABLES', ''] as $mode) {
                 array_push($statements, "SET sql_mode='" . $mode . "'", "CREATE FUNCTION g() RETURNS SET('a','a') DO 1", "CREATE FUNCTION g(a ENUM('a','a')) RETURNS INT BEGIN COMMIT; RETURN 1; END", "CREATE PROCEDURE p(a ENUM('a','a')) LOCK TABLES t READ");
             }
-            yield $release => [$release, [...$statements, ...self::providerTypeStatements()]];
+            yield $release => [$release, [...$statements, ...self::providerTypeStatements(), ...self::providerReturnStatements()]];
         }
     }
 
@@ -75,6 +75,20 @@ final class ProgramBodyDomainTest extends TestCase
                 foreach (['BEGIN COMMIT; RETURN 1; END', 'BEGIN SELECT BINARY 1; RETURN 1; END', 'BEGIN END'] as $branch => $body) {
                     $statements[] = 'CREATE FUNCTION types' . $index . $branch . '(' . $args . ') RETURNS INT(3) ' . $body;
                 }
+            }
+        }
+        return $statements;
+    }
+
+    /**
+     * @return list<string> Return bounds and collation before a refused or incomplete body
+     */
+    public static function providerReturnStatements(): array
+    {
+        $statements = [];
+        foreach (['FLOAT(0,0)', 'CHAR(0) BINARY', 'NCHAR(0) BINARY', 'BIT(0)', 'CHAR(256)', 'DECIMAL(2,3)', 'TIME(7)'] as $type) {
+            foreach (['DO 1', 'BEGIN SELECT BINARY 1; END', 'RETURN 1', "'unfinished"] as $body) {
+                array_push($statements, 'CREATE FUNCTION returns_type() RETURNS ' . $type . ' ' . $body, 'DROP FUNCTION IF EXISTS returns_type');
             }
         }
         return $statements;

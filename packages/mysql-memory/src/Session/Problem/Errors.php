@@ -12,6 +12,7 @@ use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\TypeErrors;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
@@ -93,6 +94,9 @@ final class Errors
     public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list', ?Node $statement = null): SqlError
     {
         $database = $session->variables->database;
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return (new TypeErrors())->size($diagnostic, true);
+        }
         if ($diagnostic instanceof TooBigPrecision && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return new SqlError(SchemaError::TooBigPrecision, sprintf("Too big precision %d specified for column '%s'. Maximum is %d.", $diagnostic->precision, $diagnostic->function, $diagnostic->maximum));
         }
@@ -319,15 +323,7 @@ final class Errors
      */
     public function typeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize $diagnostic): SqlError
     {
-        return new SqlError(match ($diagnostic->rule) {
-            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Width => SchemaError::TooBigDisplayWidth,
-            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Length => SchemaError::TooBigFieldLength,
-            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision => SchemaError::TooBigPrecision,
-            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Scale => SchemaError::TooBigScale,
-            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision => SchemaError::MBiggerThanD,
-            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Empty => SchemaError::InvalidFieldSize,
-            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Specifier => SchemaError::WrongFieldSpec,
-        }, $diagnostic->message());
+        return (new TypeErrors())->size($diagnostic);
     }
 
     /**

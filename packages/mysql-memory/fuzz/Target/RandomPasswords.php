@@ -41,7 +41,7 @@ final class RandomPasswords
     {
         $user = '(?:CURRENT_USER(?:\s*\(\s*\))?|USER\s*\(\s*\))';
 
-        return !str_starts_with($version, '5.') && preg_match('/\A\s*(?:ALTER\s+USER\s+' . $user . '\s+IDENTIFIED\s+BY\s+RANDOM\s+PASSWORD|SET\s+PASSWORD(?:\s+FOR\s+' . $user . ')?\s+TO\s+RANDOM)(?:\s+RETAIN\s+CURRENT\s+PASSWORD)?\s*;?\s*\z/i', $sql) === 1;
+        return !str_starts_with($version, '5.') && preg_match('/\A\s*(?:ALTER\s+USER\s+(?:IF\s+EXISTS\s+)?' . $user . '\s+IDENTIFIED\s+BY\s+RANDOM\s+PASSWORD|SET\s+PASSWORD(?:\s+FOR\s+' . $user . ')?\s+TO\s+RANDOM)(?:\s+RETAIN\s+CURRENT\s+PASSWORD)?\s*;?\s*\z/i', $sql) === 1;
     }
 
     /**

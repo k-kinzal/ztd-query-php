@@ -70,8 +70,8 @@ final class ProgramFacts
             (new Declaration\DeclaredCollation())->warn($collation, $derivation);
             (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($returns, '', $derivation);
         }
-        if (($returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Character && (!$returns->national || in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) || $returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) && $returns->charset?->form === \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary) {
-            $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('return value collation');
+        $problem = $returns === null ? null : $this->returnCollation($returns, $derivation->context->profile->grammar);
+        if ($problem !== null) {
             $derivation->report($problem);
             $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
         }
@@ -83,6 +83,19 @@ final class ProgramFacts
         if ($kind === ProgramKind::Function && !(new ReturnSearch())->found($body)) {
             $derivation->report(new ProgramProblem(ProgramRule::MissingReturn, $name->name->value));
         }
+    }
+
+    /**
+     * Identifies the implicit binary collation that a function return declaration cannot carry.
+     * National types select their own collation on MySQL 8 and later.
+     */
+    public function returnCollation(\SqlSemantics\Platform\MySql\Statement\Type\TypeName $returns, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet
+    {
+        if (($returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Character && (!$returns->national || in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) || $returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) && $returns->charset?->form === \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary) {
+            return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('return value collation');
+        }
+
+        return null;
     }
 
     /**

@@ -23,6 +23,8 @@ final class RandomPasswordsTest extends TestCase
     {
         yield 'alter current' => ['ALTER USER CURRENT_USER IDENTIFIED BY RANDOM PASSWORD', '8.4.7', true];
         yield 'alter user function' => ['ALTER USER USER ( ) IDENTIFIED BY RANDOM PASSWORD', '8.4.7', true];
+        yield 'alter if exists' => ['ALTER USER IF EXISTS CURRENT_USER IDENTIFIED BY RANDOM PASSWORD', '8.4.7', true];
+        yield 'alter if exists with retention' => ['ALTER USER IF EXISTS USER ( ) IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', '8.4.7', true];
         yield 'set implicit' => ['SET PASSWORD TO RANDOM', '8.4.7', true];
         yield 'set explicit' => ['SET PASSWORD FOR CURRENT_USER TO RANDOM', '8.4.7', true];
         yield 'whitespace and terminator' => [" set\n password for current_user ( ) to random ; ", '8.0.44', true];
@@ -33,6 +35,8 @@ final class RandomPasswordsTest extends TestCase
         yield 'multiple statements' => ['SET PASSWORD TO RANDOM; SELECT 1', '8.4.7', false];
         yield 'preceding settings' => ['SET generated_random_password_length=5; SET PASSWORD TO RANDOM', '8.4.7', false];
         yield 'explicit replacement' => ["SET PASSWORD TO RANDOM REPLACE 'root'", '8.4.7', false];
+        yield 'invalid existence clause' => ['ALTER USER IF NOT EXISTS CURRENT_USER IDENTIFIED BY RANDOM PASSWORD', '8.4.7', false];
+        yield 'conditional change of another account' => ["ALTER USER IF EXISTS 'u'@'%' IDENTIFIED BY RANDOM PASSWORD", '8.4.7', false];
     }
 
     #[DataProvider('providerStatements')]
@@ -93,10 +97,12 @@ final class RandomPasswordsTest extends TestCase
         $contracts = [RandomPasswords::CONTRACT];
         yield 'alter current user' => ['ALTER USER CURRENT_USER IDENTIFIED BY RANDOM PASSWORD', $contracts];
         yield 'alter user function' => ['ALTER USER USER ( ) IDENTIFIED BY RANDOM PASSWORD', $contracts];
+        yield 'alter if exists' => ['ALTER USER IF EXISTS CURRENT_USER IDENTIFIED BY RANDOM PASSWORD', $contracts];
         yield 'set implicit' => ['SET PASSWORD TO RANDOM', $contracts];
         yield 'set explicit' => ['SET PASSWORD FOR CURRENT_USER TO RANDOM', $contracts];
         $retained = [...$contracts, \Fuzz\Target\Password\Retention::CONTRACT];
         yield 'alter with retention' => ['ALTER USER USER() IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', $retained];
+        yield 'alter if exists with retention' => ['ALTER USER IF EXISTS USER ( ) IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', $retained];
         yield 'set with retention' => ['SET PASSWORD TO RANDOM RETAIN CURRENT PASSWORD', $retained];
     }
 

@@ -52,6 +52,7 @@ final class SyntaxNoticesTest extends TestCase
         yield 'deprecated charset' => ['TEXT CHARACTER SET utf8mb3 BINARY', [Deprecated::Utf8mb3, Deprecated::BinaryAttribute]];
         yield 'byte' => ['TEXT BYTE', []];
         yield 'binary type' => ['BINARY(2)', []];
+        yield 'national binary' => ['NCHAR(0) BINARY', [Deprecated::BinaryAttribute, Deprecated::National]];
         yield 'invalid attribute' => ['INT BINARY', []];
     }
 
