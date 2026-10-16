@@ -44,6 +44,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment => (new NamesInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier => (new XaInput())->error($diagnostic, $session),
             $diagnostic instanceof RefusedSourceNumber => (new SourceNumberInput())->error($diagnostic, $session->text),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount => (new SourceNumberInput())->fileCount($diagnostic, $session),
             $diagnostic instanceof RoleOrPrivilegeMismatch => (new RoleInput())->error($diagnostic, $session->text),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedLogSubquery => (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($diagnostic->offset, $session->text, $session->following, new RuntimeException($diagnostic->message()), true, $session->semantics()->parser()),

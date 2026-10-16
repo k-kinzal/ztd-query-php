@@ -24,6 +24,10 @@ final class RejectedOperand
      */
     public function of(Node $node, Lowering $lowering): ?RejectedInput
     {
+        $load = (new Dml\SyntaxLoadInput())->rejected($node, $lowering);
+        if ($load !== null) {
+            return $load;
+        }
         $names = (new Utility\Set\SyntaxNames())->assignment($node, $lowering);
         if ($names !== null) {
             return $names;

@@ -22,6 +22,17 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 final class SourceNumberInput
 {
     /**
+     * Formats a refused LOAD count using its input location and client charset.
+     */
+    public function fileCount(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount $problem, \MySqlMemory\Session\Session $session): SqlError
+    {
+        $charset = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known((string) $session->variables->read('character_set_client'));
+        $near = \MySqlMemory\Value\Diagnostic\Encoding::prefix(rtrim(substr($session->text, $problem->offset) . $session->following, " \t\n\r\f\v"), $charset, false);
+        $line = substr_count(substr($session->text, 0, $problem->offset), "\n") + 1;
+        return new SqlError(StatementError::ParseError, $problem->message() . " near '" . $near . "' at line " . $line);
+    }
+
+    /**
      * Returns the source-option error, including its original numeric spelling.
      */
     public function error(RefusedSourceNumber $problem, string $sql): SqlError

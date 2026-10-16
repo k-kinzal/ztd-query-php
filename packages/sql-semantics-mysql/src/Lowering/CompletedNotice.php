@@ -40,6 +40,10 @@ final class CompletedNotice
      */
     public function operands(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
     {
+        $load = (new Dml\SyntaxLoadInput())->rejected($node, $lowering);
+        if ($load !== null) {
+            return new ParseFailure($load->problem, true);
+        }
         if ($node->name === 'lock_option' && $lowering->form($node)->signature === 'lock_option: LOW_PRIORITY WRITE_SYM' && Deprecated::LowPriorityWrite->warnedIn($lowering->profile->grammar)) {
             return Deprecated::LowPriorityWrite;
         }

@@ -196,6 +196,10 @@ final class LoadRule
             return new LoadInput($local, $source, $file, null, $order);
         }
         $number = $this->lowering->numbers->token($count->token(1));
+        $failure = (new SyntaxLoadInput())->rejected($parts['opt_source_count'], $this->lowering);
+        if ($failure !== null) {
+            throw $failure;
+        }
         if ($count->signature === 'opt_source_count: COUNT_SYM NUM') {
             return new LoadInput($local, $source, $file, $number, $order);
         }

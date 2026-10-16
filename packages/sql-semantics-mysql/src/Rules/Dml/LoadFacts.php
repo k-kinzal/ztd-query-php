@@ -6,12 +6,8 @@ namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
-use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
-use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
-use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
-use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadRule;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
@@ -62,17 +58,6 @@ final class LoadFacts
      */
     public function algorithm(LoadTable $load): ?LoadConflict
     {
-        $bulk = $load->bulk->bulk ?? false;
-        $rule = match (true) {
-            $bulk && $load->format === LoadFormat::Xml => LoadRule::XmlBulk,
-            $bulk && $load->input->local => LoadRule::LocalBulk,
-            $bulk && $load->duplicates === DuplicateHandling::Ignore => LoadRule::IgnoreBulk,
-            !$bulk && $load->input->count !== null => LoadRule::MultipleFilesWithoutBulk,
-            !$bulk && $load->input->source === LoadSource::Url => LoadRule::UrlWithoutBulk,
-            !$bulk && $load->compression !== null => LoadRule::CompressionWithoutBulk,
-            default => null,
-        };
-
-        return $rule === null ? null : new LoadConflict($rule);
+        return (new LoadOptions())->conflict($load->format, $load->input, $load->duplicates, $load->compression, $load->columns !== [], $load->assignments !== [], $load->bulk);
     }
 }

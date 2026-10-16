@@ -17,6 +17,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
 enum LoadRule: string
 {
     case XmlBulk = 'Incorrect usage of LOAD XML and BULK Algorithm';
+    case ColumnsBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and column list specification';
+    case AssignmentsBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and assignment to columns or variables';
     case LocalBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and LOCAL client file';
     case IgnoreBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and IGNORE clause';
     case MultipleFilesWithoutBulk = 'Incorrect usage of LOAD DATA without BULK Algorithm and multiple files';

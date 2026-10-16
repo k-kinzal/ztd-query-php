@@ -45,6 +45,7 @@ final class LoadFactsTest extends TestCase
         $local = new LoadInput(true, LoadSource::Url, new Text('f'), new Numeral('2'));
         $bulk = new BulkOptions(bulk: true);
         yield 'XML before LOCAL and IGNORE' => [new LoadTable(LoadFormat::Xml, null, $local, DuplicateHandling::Ignore, $target, bulk: $bulk), LoadRule::XmlBulk];
+        yield 'columns before LOCAL and IGNORE' => [new LoadTable(LoadFormat::Data, null, $local, DuplicateHandling::Ignore, $target, columns: [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a'))], bulk: $bulk), LoadRule::ColumnsBulk];
         yield 'LOCAL before IGNORE' => [new LoadTable(LoadFormat::Data, null, $local, DuplicateHandling::Ignore, $target, bulk: $bulk), LoadRule::LocalBulk];
         yield 'IGNORE' => [new LoadTable(LoadFormat::Data, null, $file, DuplicateHandling::Ignore, $target, bulk: $bulk), LoadRule::IgnoreBulk];
         yield 'files before URL and compression' => [new LoadTable(LoadFormat::Data, null, $local, null, $target, compression: new Text('x')), LoadRule::MultipleFilesWithoutBulk];
@@ -52,6 +53,7 @@ final class LoadFactsTest extends TestCase
         yield 'compression' => [new LoadTable(LoadFormat::Data, null, $file, null, $target, compression: new Text('x')), LoadRule::CompressionWithoutBulk];
         yield 'bulk capability belongs to execution' => [new LoadTable(LoadFormat::Data, null, $file, DuplicateHandling::Replace, $target, bulk: $bulk), null];
         yield 'ordinary file' => [new LoadTable(LoadFormat::Data, null, $file, null, $target), null];
+        yield 'zero count is not multiple files' => [new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f'), new Numeral('000')), null, $target), null];
     }
 
     #[DataProvider('providerAlgorithms')]

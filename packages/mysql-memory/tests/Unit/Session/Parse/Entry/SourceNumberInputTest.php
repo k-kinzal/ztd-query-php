@@ -16,6 +16,18 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class SourceNumberInputTest extends TestCase
 {
+    public function testFileCountReportsTheOriginalLineAndSuffix(): void
+    {
+        $session = (new \MySqlMemory\Instance())->connect();
+        $prefix = "LOAD DATA INFILE 'f'\nCOUNT ";
+        $session->text = $prefix . '000 INTO TABLE t';
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount(strlen($prefix));
+        $error = (new SourceNumberInput())->fileCount($problem, $session);
+
+        self::assertSame(1064, $error->getCode());
+        self::assertSame("The number of files cannot be zero near '000 INTO TABLE t' at line 2", $error->getMessage());
+    }
+
     public function testErrorUsesTheRetainedNumericSpelling(): void
     {
         $problem = new RefusedSourceNumber(SourceOptionKind::RequireRowFormat, new Numeral('100000000', true), 0);
