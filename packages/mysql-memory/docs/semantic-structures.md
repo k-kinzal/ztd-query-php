@@ -1044,3 +1044,21 @@ set cannot spell it. `Operation::toString()` reports `UnrepresentableName` if
 rendering would replace identifier characters. This does not prevent direct
 structure consumers from resolving or executing the same object. Result labels
 and origin metadata follow the session's result character set independently.
+
+Prepared statements retain the semantic object, its lexical profile, its default
+database and the settings that interpret literals. Ordinary SQL EXECUTE and
+binary-protocol execution resolve fresh table and parameter facts from this
+object. Their request text is an observable label outside the semantic graph;
+the direct execution path accepts an unrelated invalid label. Result encoding
+and exposed session variables use current values.
+
+Protocol preparations also track the identities of their referenced relation
+declarations. A changed declaration invalidates the preparation and returns to
+the SQL input boundary. Observations on MySQL 5.6, 5.7 and 8.4 show that this can
+reinterpret double quotes, double pipes and identifier bytes under current
+settings while retaining the original default database. A wire-level observation
+on 8.4 confirms this happens without a second client COM_STMT_PREPARE. This
+protocol behavior is separate from rebinding a semantic value: explicit direct
+execution always retains that value. Planning receives the newly published
+structure after protocol repreparation, without access to either request SQL or
+parser nodes.

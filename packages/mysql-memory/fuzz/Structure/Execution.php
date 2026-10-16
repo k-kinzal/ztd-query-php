@@ -11,7 +11,6 @@ use MySqlMemory\Session\Execution as StatementExecution;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
@@ -74,17 +73,8 @@ final class Execution
      */
     public function operation(Session $session, Statement $statement, array $parameters): Operation
     {
-        $typing = (new \MySqlMemory\Hint\Hints())->typingValue($statement, $session);
-        try {
-            $domains = array_map(static fn (array $parameter): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $parameter[1]->resolved(), $parameters);
-            $semantics = new Semantics(Dialect::MySql, 'mysql-' . $session->instance->version, Mode::fromString((string) $session->variables->read('sql_mode')), $this->parameters($statement));
-            $session->instance->dictionary->temporaries = $session->temporaries;
-            \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
-            $context = $semantics->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new SearchPath($session->variables->database), $session->resolution($domains));
-            return new Operation($context, $statement);
-        } finally {
-            $typing->restore($session);
-        }
+        $semantics = new Semantics(Dialect::MySql, 'mysql-' . $session->instance->version, Mode::fromString((string) $session->variables->read('sql_mode')), $this->parameters($statement));
+        return (new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement, $parameters, $semantics->profile());
     }
 
     /**

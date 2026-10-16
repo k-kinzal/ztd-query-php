@@ -30,6 +30,9 @@ final class Preparation
     public function check(Operation $operation, Session $session): void
     {
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase) {
+            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
+        }
         $this->program($operation, $session);
         (new Reading())->read($operation, $session);
         (new DefaultDatabase())->check($operation->statement, $session);

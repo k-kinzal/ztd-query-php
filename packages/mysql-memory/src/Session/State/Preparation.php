@@ -19,7 +19,7 @@ use MySqlMemory\Typing\Domain;
 final class Preparation
 {
     /**
-     * @var array<string, array{string, int, ParameterBindings}> SQL preparations by lower-case name
+     * @var array<string, array{string, int, ParameterBindings, \MySqlMemory\Command\Prepared\PreparedCache}> SQL preparations by lower-case name
      */
     public array $named = [];
 
@@ -27,6 +27,11 @@ final class Preparation
      * @var array<int, Domain> Derived domains used to resolve the current execution
      */
     public array $domains = [];
+
+    /**
+     * The current operation's resolved typing context, scoped to command execution.
+     */
+    public ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings $resolution = null;
 
     /**
      * The dictionary generation of the routine identities already loaded by this session.

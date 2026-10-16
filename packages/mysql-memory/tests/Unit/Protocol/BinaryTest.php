@@ -149,7 +149,7 @@ final class BinaryTest extends TestCase
         $reader = new PayloadReader("\x02\x01\x08\x00\xFD\x00\x2A\x00\x00\x00\x00\x00\x00\x00");
 
         self::assertEquals(
-            [[[42, Domain::integer(Field::LongLong, 20)->withNullable(false)], [null, Domain::null()]], [8, 253]],
+            [[[42, Domain::integer(Field::LongLong, 21)->withNullable(false)], [null, Domain::null()]], [8, 253]],
             (new Binary())->parameters($reader, 2, [], Collation::known('utf8mb4_0900_ai_ci')),
         );
     }
@@ -182,7 +182,7 @@ final class BinaryTest extends TestCase
         self::assertEquals([-1, Domain::integer(Field::LongLong, 4)->withNullable(false)], $binary->parameter(new PayloadReader("\xFF"), 1, $collation));
         self::assertEquals([-2, Domain::integer(Field::LongLong, 6)->withNullable(false)], $binary->parameter(new PayloadReader("\xFE\xFF"), 2, $collation));
         self::assertEquals([-3, Domain::integer(Field::LongLong, 11)->withNullable(false)], $binary->parameter(new PayloadReader("\xFD\xFF\xFF\xFF"), 3, $collation));
-        self::assertEquals([-4, Domain::integer(Field::LongLong, 20)->withNullable(false)], $binary->parameter(new PayloadReader("\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF"), 8, $collation));
+        self::assertEquals([-4, Domain::integer(Field::LongLong, 21)->withNullable(false)], $binary->parameter(new PayloadReader("\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF"), 8, $collation));
     }
 
     public function testParameterReadsUnsignedIntegers(): void

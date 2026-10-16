@@ -151,7 +151,7 @@ final class Binary
             Field::Tiny => [$integer(1, $reader->integer(1)), Domain::integer(Field::LongLong, 4, $unsigned)->withNullable(false)],
             Field::Short, Field::Year => [$integer(2, $reader->integer(2)), Domain::integer(Field::LongLong, 6, $unsigned)->withNullable(false)],
             Field::Long, Field::Int24 => [$integer(4, $reader->integer(4)), Domain::integer(Field::LongLong, 11, $unsigned)->withNullable(false)],
-            Field::LongLong => [$reader->integer(8), Domain::integer(Field::LongLong, 20, $unsigned)->withNullable(false)],
+            Field::LongLong => [$reader->integer(8), Domain::integer(Field::LongLong, $unsigned ? 20 : 21, $unsigned)->withNullable(false)],
             Field::Float => [$this->float($reader, 'g', 4), Domain::double()->withNullable(false)],
             Field::Double => [$this->float($reader, 'e', 8), Domain::double()->withNullable(false)],
             Field::Null => [null, Domain::null()],

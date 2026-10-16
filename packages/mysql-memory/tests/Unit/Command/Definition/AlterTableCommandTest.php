@@ -213,7 +213,7 @@ final class AlterTableCommandTest extends TestCase
         self::assertSame(['u'], array_values(array_map(static fn ($declaration): string => $declaration->name->name->value, array_filter((new AlterTableCommand())->others($session, $table), static fn ($declaration): bool => !in_array($declaration->name->schema?->value, ['information_schema', 'mysql', 'performance_schema'], true)))));
     }
 
-    public function testCopiesRefusesAlgorithmInplaceForAChangeOfType(): void
+    public function testTypeAlgorithmRefusesInplaceForAChangeOfType(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
@@ -413,6 +413,18 @@ final class AlterTableCommandTest extends TestCase
         $result2 = $session->query('SELECT * FROM g')[0];
         self::assertInstanceOf(ResultSet::class, $result2);
         self::assertSame([['1', '2']], $result2->rows);
+    }
+
+    public function testRebuildCountsCopiedRowsWhenAddingATemporaryTableColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TEMPORARY TABLE t(a INT); INSERT INTO t VALUES (7), (8)');
+
+        $reply = $session->query('ALTER TABLE t ADD b INT')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(2, $reply->affectedRows);
+        self::assertSame('Records: 2  Duplicates: 0  Warnings: 0', $reply->info);
     }
 
     public function testCopiesAddedAnswersTrueForAStoredGeneratedColumn(): void

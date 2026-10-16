@@ -85,9 +85,10 @@ final class PreparedCommand implements Command
         if ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate) {
             throw StatementError::UnsupportedPreparedStatement->error();
         }
+        (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($prepared->statement));
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
         $parameters = count(array_filter($session->semantics()->parser()->tokenize($text), static fn ($token): bool => $token->name === 'PARAM_MARKER'));
-        $session->preparation->named[$key] = [$text, $parameters, ParameterBindings::capture($prepared)];
+        $session->preparation->named[$key] = [$text, $parameters, ParameterBindings::capture($prepared), PreparedCache::capture($prepared, $session)];
 
         return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
     }
@@ -103,7 +104,7 @@ final class PreparedCommand implements Command
         if ($prepared === null) {
             throw StatementError::UnknownStatementHandler->error($statement->name->value, 'EXECUTE');
         }
-        [$text, $count, $types] = $prepared;
+        [$text, $count, $types, $definition] = $prepared;
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_execute');
         if (count($statement->variables) !== $count) {
             throw StatementError::WrongArguments->error('EXECUTE');
@@ -120,7 +121,9 @@ final class PreparedCommand implements Command
         $previous = $session->preparation->domains;
         $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $types->domains() : [];
         try {
-            return $session->execute($text, $parameters, true);
+            $definition->refresh($session, $text, $types, $parameters);
+            $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $types->domains() : [];
+            return $definition->definition->execute($session, $text, $parameters);
         } finally {
             $session->preparation->domains = $previous;
         }

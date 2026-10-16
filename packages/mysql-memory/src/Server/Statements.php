@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 final class Statements
 {
     /**
-     * @var array<int, array{string, int, list<int>, array<int, string>, \MySqlMemory\Command\Prepared\ParameterBindings}> The text, parameter count, wire types, long data and derived marker types of each statement, by id
+     * @var array<int, array{string, int, list<int>, array<int, string>, \MySqlMemory\Command\Prepared\ParameterBindings, \MySqlMemory\Command\Prepared\PreparedCache}> The request label, parameter count, wire types, long data, derived marker types and semantic definition of each statement, by id
      */
     private array $prepared = [];
 
@@ -100,7 +100,7 @@ final class Statements
             return $this->client->send($this->client->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) $session->variables->read('character_set_results')));
         }
         $id = $this->next++;
-        $this->prepared[$id] = [$sql, $parameters, [], [], \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation)];
+        $this->prepared[$id] = [$sql, $parameters, [], [], \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation), \MySqlMemory\Command\Prepared\PreparedCache::capture($operation, $session)];
         $this->client->packet((new PayloadWriter())->integer(0, 1)->integer($id, 4)->integer(count($columns), 2)->integer($parameters, 2)->integer(0, 1)->integer(min(65535, $session->diagnostics->raised()), 2)->payload());
         if ($parameters > 0) {
             for ($i = 0; $i < $parameters; $i++) {
@@ -150,14 +150,14 @@ final class Statements
             \MySqlMemory\Session\State\StatementCounters::received($this->client->session());
             return $this->client->send($this->client->messages->error(1243, 'HY000', \MySqlMemory\Error\Family\StatementError::UnknownStatementHandler->message((string) $id, 'mysqld_stmt_execute')));
         }
-        [$sql, $count, $types, $long, $derived] = $this->prepared[$id];
+        [$sql, $count, $types, $long, $derived, $definition] = $this->prepared[$id];
         $session = $this->client->session();
         $collation = Collation::named((string) $session->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
         [$values, $types] = (new Binary())->parameters($reader, $count, $types, $collation);
         foreach ($long as $index => $data) {
             $values[$index] = (new Binary())->text($data, Field::Blob, $collation);
         }
-        $this->prepared[$id] = [$sql, $count, $types, [], $derived];
+        $this->prepared[$id] = [$sql, $count, $types, [], $derived, $definition];
         if (version_compare($session->instance->version, '8.0.22', '>=') && $derived->changed($values)) {
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_reprepare');
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
@@ -165,7 +165,11 @@ final class Statements
         $previous = $session->preparation->domains;
         $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $derived->domains() : [];
         try {
-            $answers = $session->run($sql, $values, true);
+            $definition->refresh($session, $sql, $derived, $values);
+            $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $derived->domains() : [];
+            $answers = $definition->definition->run($session, $sql, $values);
+        } catch (SqlError $error) {
+            $answers = (new \MySqlMemory\Session\Execution($session))->failed($error);
         } finally {
             $session->preparation->domains = $previous;
         }

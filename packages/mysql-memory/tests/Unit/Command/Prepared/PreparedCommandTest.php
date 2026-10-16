@@ -69,6 +69,16 @@ final class PreparedCommandTest extends TestCase
         $session->query("PREPARE s FROM 'PREPARE t FROM ''SELECT 1'''");
     }
 
+    public function testExecuteRefusesToPrepareAClientDatabaseChange(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+
+        $this->expectExceptionCode(1295);
+
+        $session->query("PREPARE s FROM 'USE d'");
+    }
+
     public function testExecuteForgetsTheStatementOfTheNameWhenPreparingFails(): void
     {
         $session = (new Instance())->connect();

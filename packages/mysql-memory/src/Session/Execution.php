@@ -53,9 +53,12 @@ final class Execution
     public function perform(Operation $operation, Command $command, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
         $hints = (new \MySqlMemory\Hint\Hints())->apply($operation->statement, $this->session);
+        $previous = $this->session->preparation->resolution;
+        $this->session->preparation->resolution = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($operation->context);
         try {
             return $this->run($operation, $command, $hints, $parameters, $read, $contained);
         } finally {
+            $this->session->preparation->resolution = $previous;
             $hints->restore($this->session);
         }
     }
