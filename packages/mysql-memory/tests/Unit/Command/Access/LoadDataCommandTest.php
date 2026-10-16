@@ -162,4 +162,13 @@ final class LoadDataCommandTest extends TestCase
 
         $this->addToAssertionCount(1);
     }
+    public function testSeparatorBytesKeepsOnlyTheLastValueOfEachOption(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze("LOAD DATA INFILE 'x' INTO TABLE d.t FIELDS TERMINATED BY X'80' TERMINATED BY 'a' ENCLOSED BY 'x' OPTIONALLY ENCLOSED BY 'y' LINES STARTING BY B'10000000'");
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+
+        self::assertSame(['field:TERMINATED' => 'a', 'field:ENCLOSED' => 'y', 'line:STARTING' => "\x80"], (new LoadDataCommand())->separatorBytes($operation->statement));
+    }
+
 }

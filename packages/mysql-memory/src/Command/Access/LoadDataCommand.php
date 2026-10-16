@@ -18,7 +18,6 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
-use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
@@ -80,6 +79,9 @@ final class LoadDataCommand implements Command
         }
         if (!$legacy) {
             $this->separators($statement);
+        }
+        if (preg_match('/[\x80-\xff]/', implode('', $this->separatorBytes($statement))) === 1) {
+            $context->warning(\MySqlMemory\Error\Family\DataError::NonAsciiSeparator);
         }
         foreach ($operation->facts->diagnostics as $diagnostic) {
             $schema = $diagnostic instanceof MissingTable ? ($diagnostic->name->schema->value ?? $session->variables->database) : '';
@@ -157,16 +159,29 @@ final class LoadDataCommand implements Command
      */
     public function separators(LoadTable $statement): void
     {
-        foreach ($statement->fields as $option) {
-            $digits = strlen($option->text->value);
-            $bytes = match ($option->text->radix) {
-                Radix::Hexadecimal => intdiv($digits + 1, 2),
-                Radix::Bit => intdiv($digits + 7, 8),
-                null => $digits,
-            };
-            if ($option->kind !== FieldOptionKind::Terminated && $bytes > 1) {
+        foreach ($this->separatorBytes($statement) as $kind => $bytes) {
+            if (in_array($kind, ['field:ENCLOSED', 'field:ESCAPED'], true) && strlen($bytes) > 1) {
                 throw StatementError::WrongFieldTerminators->error();
             }
         }
+    }
+
+    /**
+     * Resolves repeated options to their last value before validating separators.
+     *
+     * @return array<string, string> Effective field and line separator bytes
+     */
+    public function separatorBytes(LoadTable $statement): array
+    {
+        $bytes = [];
+        foreach ($statement->fields as $option) {
+            $kind = $option->kind === FieldOptionKind::OptionallyEnclosed ? FieldOptionKind::Enclosed : $option->kind;
+            $bytes['field:' . $kind->value] = $option->text->bytes();
+        }
+        foreach ($statement->lines as $option) {
+            $bytes['line:' . $option->kind->value] = $option->text->bytes();
+        }
+
+        return $bytes;
     }
 }
