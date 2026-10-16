@@ -137,6 +137,7 @@ final class Execution
         }
         (new Access\TableCreation())->database($operation->statement, $session);
         (new Access\DefaultDatabase())->check($operation->statement, $session);
+        (new Access\LockNames())->check($operation, $session, $read);
         $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
         if ($read && !$session->replayed) {
             $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));

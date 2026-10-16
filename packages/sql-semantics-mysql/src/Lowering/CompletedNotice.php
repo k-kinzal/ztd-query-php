@@ -40,6 +40,9 @@ final class CompletedNotice
      */
     public function operands(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
     {
+        if ($node->name === 'lock_option' && $lowering->form($node)->signature === 'lock_option: LOW_PRIORITY WRITE_SYM' && Deprecated::LowPriorityWrite->warnedIn($lowering->profile->grammar)) {
+            return Deprecated::LowPriorityWrite;
+        }
         return (new Call\SyntaxCalls())->completed($node, $lowering) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Leaf\SyntaxTableNames())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Routine\DeclarationPrefix())->completed($node, $lowering);
     }
 

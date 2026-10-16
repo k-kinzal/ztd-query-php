@@ -754,3 +754,14 @@ loadable-library diagnostics, ordered LOCK TABLES warnings, open-table physical
 cache contents, engine reports, installed plugins, process lists and status
 counters. Matching SQL errors still require the classification and transition
 witnesses in the acceptance contract; this audit does not close that gate.
+LOCK TABLES resolves completed lock specifications in order. A lock mode's
+semantic notice precedes that table's identifier, default database and duplicate
+alias checks; a failure preserves only notices reached through that lock. Input
+lowering also publishes completed `TableLock` values before a malformed suffix,
+so the same consumer checks that prefix without inspecting a parser tree.
+Native histories reuse six original structures before database selection, after
+selection and after table creation on MySQL 5.6 and 5.7 (36 observations). A
+separate five-release matrix checks 220 input observations, including long
+identifiers, duplicate aliases, deprecated modes and later syntax errors.
+These histories establish the database/table state transitions for those
+structures, not the remaining whole-model construction gate.

@@ -85,6 +85,10 @@ final class Reader
             $tree = $error;
         }
         if ($tree instanceof SourceException) {
+            $lock = (new Entry\LockInput())->before($statement, $tree->offset, $session);
+            if ($lock !== null) {
+                throw $lock;
+            }
             $entry = (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($semantics->parser(), $statement, $semantics->profile())
                 ?? (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->nested($semantics->parser(), $statement, $semantics->profile());
             if ($entry !== null) {
@@ -201,6 +205,7 @@ final class Reader
             $error = (new Entry\PartitionInput())->refused($entry, $sql, $session);
         }
         $error = $entry === null ? (!$prepared ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->premature($error, $sql, $session->semantics()->parser(), '', $session->settings()->legacy()) : null) ?? $error : $error;
+        $error = $entry === null ? (new Entry\LockInput())->reported($error, $sql, $session) : $error;
         $error = (new CacheOptions())->reported($error, $sql, $session);
         if (!$error->recorded) {
             $session->diagnostics->error($error->getCode(), $error->getMessage());
