@@ -24,6 +24,9 @@ final class RandomPasswordsTest extends TestCase
         yield 'alter current' => ['ALTER USER CURRENT_USER IDENTIFIED BY RANDOM PASSWORD', '8.4.7', true];
         yield 'alter user function' => ['ALTER USER USER ( ) IDENTIFIED BY RANDOM PASSWORD', '8.4.7', true];
         yield 'alter if exists' => ['ALTER USER IF EXISTS CURRENT_USER IDENTIFIED BY RANDOM PASSWORD', '8.4.7', true];
+        yield 'alter system user function' => ['ALTER USER IF EXISTS SYSTEM_USER( ) IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', '8.4.7', true];
+        yield 'alter session user function' => ['ALTER USER SESSION_USER() IDENTIFIED BY RANDOM PASSWORD', '8.4.7', true];
+        yield 'bare system user is an account name' => ['ALTER USER SYSTEM_USER IDENTIFIED BY RANDOM PASSWORD', '8.4.7', false];
         yield 'alter if exists with retention' => ['ALTER USER IF EXISTS USER ( ) IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', '8.4.7', true];
         yield 'set implicit' => ['SET PASSWORD TO RANDOM', '8.4.7', true];
         yield 'set explicit' => ['SET PASSWORD FOR CURRENT_USER TO RANDOM', '8.4.7', true];
@@ -104,6 +107,8 @@ final class RandomPasswordsTest extends TestCase
         yield 'alter with retention' => ['ALTER USER USER() IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', $retained];
         yield 'alter if exists with retention' => ['ALTER USER IF EXISTS USER ( ) IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', $retained];
         yield 'set with retention' => ['SET PASSWORD TO RANDOM RETAIN CURRENT PASSWORD', $retained];
+        yield 'alter system user function with retention' => ['ALTER USER IF EXISTS SYSTEM_USER( ) IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', $retained];
+        yield 'alter session user function' => ['ALTER USER SESSION_USER() IDENTIFIED BY RANDOM PASSWORD', $contracts];
     }
 
     /**
