@@ -2106,6 +2106,11 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\EmptyEventAlteration": {
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "offset": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch": {
         "offset": "?int"
     },
@@ -2125,7 +2130,7 @@
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "nameEnd": "int",
         "parameters": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList",
-        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ParameterScopeMismatch",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ParameterScopeMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\EmptyEventAlteration",
         "returns": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName",
         "typeEnds": "array"
     },

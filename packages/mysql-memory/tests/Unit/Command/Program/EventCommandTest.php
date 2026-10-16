@@ -177,7 +177,7 @@ final class EventCommandTest extends TestCase
         $schema = $session->instance->dictionary->schema('d');
         self::assertNotNull($schema);
 
-        $found = (new EventCommand())->found(new AlterEvent(new QualifiedName(new Name('E'))), 'd', $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $found = (new EventCommand())->found(new AlterEvent(new QualifiedName(new Name('E')), status: EventStatus::Enable), 'd', $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
 
         self::assertSame($schema->events['e'], $found);
     }
@@ -189,7 +189,7 @@ final class EventCommandTest extends TestCase
         $this->expectExceptionCode(1539);
         $this->expectExceptionMessage("Unknown event 'e'");
 
-        (new EventCommand())->found(new AlterEvent(new QualifiedName(new Name('e'))), 'nodb', $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        (new EventCommand())->found(new AlterEvent(new QualifiedName(new Name('e')), status: EventStatus::Enable), 'nodb', $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
     }
 
     public function testLapseDisablesAPreservedEventWhoseTimeHasPassed(): void

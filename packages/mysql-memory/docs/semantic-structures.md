@@ -1172,3 +1172,21 @@ IFNULL and COALESCE results. Legacy NULL markers have distinct binary-string
 aggregation behavior; literal NULL remains ignorable. The direct comparison
 supplies the inferred domains before execution and compares protocol metadata
 as well as values, including nonempty multibyte results.
+
+Spatial-reference identifiers in CREATE, DROP and ORGANIZATION attributes accept
+integer tokens only. Decimal fractions, exponent notation and decimal tokens
+above the unsigned 64-bit token range are rejected before a semantic value is
+published. The input adapter preserves the existing fractional-number refusal,
+including its boundary inside a stored program. This narrows the lexical operand
+domain; it does not establish the validity of every spatial definition or make
+existing identifiers independent of database state.
+
+`AlterEvent` requires at least one change after its event name. A definer alone
+does not satisfy this invariant. An empty SQL alteration produces a typed
+`EmptyEventAlteration` instead of an invalid statement. Completed program headers
+supply the enclosing database and definer even when later input does not parse;
+only those typed operands and numeric diagnostic positions leave input lowering.
+Native histories exercise absent and existing events, valid comment changes,
+functions, procedures, triggers, event bodies and unreachable instructions. The
+integer-token and event-change checks are constructor guarantees, not an execution
+eligibility decision supplied by SQL Semantics.

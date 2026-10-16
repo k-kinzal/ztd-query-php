@@ -88,6 +88,9 @@ final class ProgramInput
             if ($database === '') {
                 throw QueryError::NoDatabase->error();
             }
+            if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration) {
+                return (new Event\Alteration())->syntax($refusal->problem, $session);
+            }
             if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ParameterScopeMismatch) {
                 return \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
             }

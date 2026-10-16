@@ -47,6 +47,7 @@ final class CreateSpatialReference implements Statement
     public function __construct(public readonly bool $orReplace, public readonly bool $ifNotExists, public readonly Numeral $srid, array $attributes)
     {
         Check::input(!$orReplace || !$ifNotExists, 'OR REPLACE and IF NOT EXISTS exclude each other.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($srid), 'A spatial reference identifier is an integer token.');
         $this->attributes = Check::listOf($attributes, SpatialAttribute::class, 'CREATE SPATIAL REFERENCE SYSTEM takes a list of attributes.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

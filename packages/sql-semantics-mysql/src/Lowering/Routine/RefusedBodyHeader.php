@@ -33,9 +33,6 @@ final class RefusedBodyHeader
         foreach ($tails as $tail) {
             $range = $ranges->span($tail);
             if ($range !== null && $range[0] < $failure->end && $range[1] >= $failure->end) {
-                if (!in_array($tail->name, ['sp_tail', 'sf_tail'], true)) {
-                    return $failure;
-                }
                 $definers = array_values(array_filter($tree->find('definer'), static fn (Node $node): bool => ($ranges->span($node)[1] ?? PHP_INT_MAX) <= $range[0]));
                 $definer = $definers === [] ? null : $lowering->users->definer($definers[0]);
                 return $this->routine($tail, $failure, $lowering, $definer);
@@ -55,12 +52,19 @@ final class RefusedBodyHeader
                 $parts[$child->name] = $child;
             }
         }
+        if (in_array($tail->name, ['trigger_tail', 'event_tail'], true)) {
+            if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration) {
+                return $failure;
+            }
+            $problem = new RefusedProgramBody($lowering->names->qualified($parts['sp_name']), $tail->name === 'trigger_tail' ? ProgramKind::Trigger : ProgramKind::Event, $failure->problem, $definer, nameEnd: (new SourceRanges())->span($parts['sp_name'])[1] ?? 0);
+            return new RejectedInput($problem, $failure->end, $failure->aborts);
+        }
         $parameters = new ParameterRule($lowering);
         $function = $tail->name === 'sf_tail';
         $parameterTree = $parts[$function ? 'sp_fdparam_list' : 'sp_pdparam_list'];
         $returnTree = $function ? ($parts['type_with_opt_collate'] ?? $parts['type']) : null;
         [$returns, $collation] = $returnTree === null ? [null, null] : $parameters->declared($returnTree, $parts['opt_collate'] ?? null);
-        \SqlSemantics\Diagnostic\Check::invariant($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem, 'A refused body carries a program diagnostic.');
+        \SqlSemantics\Diagnostic\Check::invariant($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration, 'A refused body carries a program diagnostic.');
         $problem = new RefusedProgramBody($lowering->names->qualified($parts['sp_name']), $function ? ProgramKind::Function : ProgramKind::Procedure, $failure->problem, $definer, $parameters->parameters($parameterTree), $returns, $collation, (new DefinitionBody())->typeEnds($parameterTree, $returnTree), (new SourceRanges())->span($parts['sp_name'])[1] ?? 0);
 
         return new RejectedInput($problem, $failure->end, $failure->aborts);

@@ -49,8 +49,9 @@ final class SyntaxWarnings
         $names = new Utility\Set\SyntaxNames();
         $types = new Routine\DeclarationPrefix();
         $arrays = new Routine\Program\SyntaxArrays();
+        $header = new Routine\Program\NoticeHeader();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $names, $types, $tokens, $arrays): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $names, $types, $tokens, $arrays, $header): void {
                 if ($state->aborted) {
                     return;
                 }
@@ -58,6 +59,7 @@ final class SyntaxWarnings
                 if ($lookahead->offset > $end) {
                     return;
                 }
+                $header->observe($node, $lookahead, $lowering, $tokens);
                 $derived = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? (new Query\Legacy\DerivedAliases())->rejected($node, $lowering) : null;
                 $log = $derived ?? (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
                 if ($log !== null && $log->end <= $end) {
@@ -72,7 +74,7 @@ final class SyntaxWarnings
                 $conditions = [...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
                     $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
-                    $state->record($range[1], $condition);
+                    $state->record($range[1], $condition instanceof ParseFailure ? $header->scoped($condition) : $condition);
                 }
             });
         } catch (SourceException) {
@@ -131,7 +133,7 @@ final class SyntaxWarnings
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) {
                     $failure = new \SqlSemantics\Construction\RejectedInput((new Utility\Set\SyntaxNames())->scoped($tree, $failure->problem, $lowering), $failure->end, $failure->aborts);
                 }
-                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && in_array($failure->problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ArrayCast, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::RecursiveCreate, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::EventRecursion], true)) {
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && in_array($failure->problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ArrayCast, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::RecursiveCreate, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::EventRecursion], true)) {
                     $failure = (new Routine\RefusedBodyHeader())->wrap($tree, $failure, $lowering);
                 }
                 return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;

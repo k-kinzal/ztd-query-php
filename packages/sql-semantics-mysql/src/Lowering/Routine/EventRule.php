@@ -147,6 +147,12 @@ final class EventRule
         if ($instruction !== null) {
             (new DefinitionBody())->check($instruction, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node(3))[1] ?? 0);
         }
+        $status = $this->status($form->node(6));
+        $comment = $this->comment($form->node(7));
+        $refusal = $this->rejected($form->node);
+        if ($refusal !== null) {
+            throw $refusal;
+        }
 
         return new AlterEvent(
             $name,
@@ -157,11 +163,34 @@ final class EventRule
                 'opt_ev_rename_to: RENAME TO_SYM sp_name' => $this->lowering->names->qualified($rename->node(2)),
                 default => throw ImplementationGap::production($rename),
             },
-            $this->status($form->node(6)),
-            $this->comment($form->node(7)),
+            $status,
+            $comment,
             $instruction,
             $definer,
         );
+    }
+
+    /**
+     * Refuses a completed event header whose optional change productions are all empty.
+     */
+    public function rejected(Node $node): ?\SqlSemantics\Construction\RejectedInput
+    {
+        if (!in_array($node->name, ['alter', 'alter_event_stmt'], true)) {
+            return null;
+        }
+        $form = $this->lowering->form($node);
+        if (!isset(self::ALTERS[$form->signature])) {
+            return null;
+        }
+        for ($index = 4; $index <= 8; ++$index) {
+            if ($form->node($index)->tokens() !== []) {
+                return null;
+            }
+        }
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0;
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration($this->lowering->names->qualified($form->node(3)), $this->lowering->users->definer($form->node(1)), $end);
+
+        return new \SqlSemantics\Construction\RejectedInput($problem, $end);
     }
 
     /**

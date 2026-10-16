@@ -63,6 +63,9 @@ final class RejectedOperand
      */
     public function lowered(Node $node, Lowering $lowering): ?RejectedInput
     {
+        if (in_array($node->name, ['alter', 'alter_event_stmt'], true)) {
+            return (new Routine\EventRule($lowering))->rejected($node);
+        }
         try {
             if ($node->name === 'key_part') {
                 return (new TableDefinition\Key\SyntaxPrefixes())->rejected($node, $lowering);

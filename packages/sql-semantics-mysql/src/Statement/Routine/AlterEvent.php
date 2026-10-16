@@ -74,6 +74,7 @@ final class AlterEvent implements Statement
     ) {
         Check::input($name->catalog === null && $newName?->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
+        Check::input($schedule !== null || $completion !== null || $newName !== null || $status !== null || $comment !== null || $body !== null, 'ALTER EVENT changes at least one event property after its name.');
         $this->body = $body === null ? null : (new StatementSequence())->member($body);
         if ($this->body !== null) {
             (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Event, $name);

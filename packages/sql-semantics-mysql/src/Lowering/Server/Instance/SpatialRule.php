@@ -61,16 +61,16 @@ final class SpatialRule
             'create_srs_stmt: CREATE OR_SYM REPLACE_SYM SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM real_ulonglong_num srs_attributes' => new CreateSpatialReference(
                 true,
                 false,
-                $numbers->numeral($form->node(6)),
+                $numbers->integral($form->node(6)),
                 $this->attributes($form->node(7)),
             ),
             'create_srs_stmt: CREATE SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM opt_if_not_exists real_ulonglong_num srs_attributes' => new CreateSpatialReference(
                 false,
                 $options->present($form->node(4)),
-                $numbers->numeral($form->node(5)),
+                $numbers->integral($form->node(5)),
                 $this->attributes($form->node(6)),
             ),
-            'drop_srs_stmt: DROP SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM if_exists real_ulonglong_num' => new DropSpatialReference($options->present($form->node(4)), $numbers->numeral($form->node(5))),
+            'drop_srs_stmt: DROP SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM if_exists real_ulonglong_num' => new DropSpatialReference($options->present($form->node(4)), $numbers->integral($form->node(5))),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -87,7 +87,7 @@ final class SpatialRule
         $form = $this->lowering->form($list);
         while ($form->signature !== 'srs_attributes:') {
             $kind = self::ATTRIBUTES[$form->signature] ?? throw ImplementationGap::production($form);
-            $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->numeral($form->node(5)) : null;
+            $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->integral($form->node(5)) : null;
             array_unshift($attributes, new SpatialAttribute($kind, $this->lowering->literals->text($form->node(2)), $identifier));
             $form = $this->lowering->form($form->node(0));
         }

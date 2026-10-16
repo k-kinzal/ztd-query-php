@@ -62,9 +62,10 @@ final class MagnitudesTest extends TestCase
 
     public function testIntegerReportsAFractionalNumber(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 1e2');
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
 
-        self::assertInstanceOf(FractionalNumber::class, $operation->facts->diagnostics[0]);
+        self::assertFalse((new Magnitudes())->integer($derivation, new Numeral('1e2')));
+        self::assertInstanceOf(FractionalNumber::class, $derivation->facts()->diagnostics[0]);
     }
 
     public function testAtMostComparesTheDigitsExactly(): void

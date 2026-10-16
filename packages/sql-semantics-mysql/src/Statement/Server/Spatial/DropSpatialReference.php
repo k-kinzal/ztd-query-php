@@ -34,6 +34,7 @@ final class DropSpatialReference implements Statement
      */
     public function __construct(public readonly bool $ifExists, public readonly Numeral $srid)
     {
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($srid), 'A spatial reference identifier is an integer token.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
