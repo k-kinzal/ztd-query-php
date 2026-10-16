@@ -270,8 +270,26 @@
 <span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;mysql&#039;</span>, <span class="tok-var">$profile</span>-&gt;<span class="tok-id">grammar</span>-&gt;<span class="tok-id">database</span>());</span>
 <span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">ParameterStyle</span>::<span class="tok-id">Native</span>, <span class="tok-var">$profile</span>-&gt;<span class="tok-id">parameters</span>);</span>
 <span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a>    }</span>
-<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>}</span>
-<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a></span>
+<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a></span>
+<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a><span class="tok-com">     * Keeps the selected EXPLAIN root when incompatible DELETE aliases are rejected.</span></span>
+<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a><span class="tok-com">     * @throws JsonException When a semantic inventory is invalid</span></span>
+<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a><span class="tok-com">     * @throws ReflectionException When a constructor cannot be invoked</span></span>
+<span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSelectPreservesExplainAfterRejectingMixedDeleteGenerations</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L241" data-diff="added"><a class="ln" href="#L241">241</a>    {</span>
+<span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a>        <span class="tok-var">$catalogue</span> = <span class="tok-kw">new</span> <span class="tok-id">\Fuzz\Structure\Catalogue</span>();</span>
+<span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a>        <span class="tok-var">$choices</span> = <span class="tok-kw">new</span> <span class="tok-id">Choices</span>(<span class="tok-str">&#039;row-roles-20261017:187&#039;</span>);</span>
+<span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a>        <span class="tok-var">$choices</span>-&gt;<span class="tok-id">one</span>(<span class="tok-var">$catalogue</span>-&gt;<span class="tok-id">roots</span>());</span>
+<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>        <span class="tok-var">$node</span> = (<span class="tok-kw">new</span> <span class="tok-id">\Fuzz\Structure\Construction</span>(<span class="tok-var">$choices</span>, <span class="tok-var">$catalogue</span>, <span class="tok-kw">new</span> <span class="tok-id">\Fuzz\Structure\Metadata</span>()))-&gt;<span class="tok-id">object</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain</span>::<span class="tok-kw">class</span>, <span class="tok-num">6</span>);</span>
+<span class="src-line" id="L246" data-diff="added"><a class="ln" href="#L246">246</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain</span>::<span class="tok-kw">class</span>, <span class="tok-var">$node</span>);</span>
+<span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a></span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;mysql&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Profiles</span>())-&gt;<span class="tok-id">select</span>(<span class="tok-var">$node</span>)-&gt;<span class="tok-id">grammar</span>-&gt;<span class="tok-id">database</span>());</span>
+<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a>    }</span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a></span>
+<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>}</span>
+<span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
