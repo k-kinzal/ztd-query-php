@@ -842,7 +842,7 @@ retain differences in identities, ports, elapsed times, other values, metadata,
 warnings, duplicate rows and termination. The original public-root counterexample
 now passes while both original observations remain available.
 
-At checkpoint `d4f6939be12`, the complete 245-root comparison with seed
+At checkpoint `c8dd3a0dfe3`, the complete 245-root comparison with seed
 `contract-20261015` reports 99 matching successes, 146 matching SQL errors and
 zero differences, with no generation, profile or infrastructure failures. All
 roots are retained. This passes the sampled SQL-outcome comparison only. The
