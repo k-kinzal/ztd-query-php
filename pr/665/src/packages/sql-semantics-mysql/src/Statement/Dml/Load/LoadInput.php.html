@@ -59,7 +59,8 @@
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * LOCAL makes the client read the file. COUNT and IN PRIMARY KEY ORDER</span></span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * belong to the bulk load of the HeatWave grammars (8.0.30 and later) and</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * tell how many files the name pattern matches and that they are sorted by</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * primary key. The 8.4 and later grammars read the word COUNT as an</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> * primary key. The 8.4 and later grammars read the word COUNT as an</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * primary key. The 8.2 and later grammars read the word COUNT as an</span></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * identifier, which the server requires to be `count` in any letter case;</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * that word is kept so it is written back the way the grammar reads it.</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.</span></span>
@@ -84,7 +85,8 @@
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param Text $file The file name, URL or pattern</span></span>
 <span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     * @param Numeral|null $count The number of files</span></span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     * @param bool $primaryKeyOrder Whether the files are sorted by primary key</span></span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com">     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier (8.4 and later), which may be quoted; null for the keyword</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">43</span><span class="tok-com">     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier (8.4 and later), which may be quoted; null for the keyword</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier (8.2 and later), which may be quoted; null for the keyword</span></span>
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a><span class="tok-com">     * @throws InvalidConstruction When the word COUNT is given without a count or is another word</span></span>
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
