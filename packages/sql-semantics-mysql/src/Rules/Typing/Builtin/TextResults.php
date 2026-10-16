@@ -37,7 +37,7 @@ final class TextResults
             'LCASE' => $same,
             'REVERSE' => $same,
             'LTRIM' => $same,
-            'TRIM' => static fn (Invocation $call): ?Domain => $call->text($call->domains, $call->length($call->domain(count($call->domains) - 1)), 'trim'),
+            'TRIM' => $this->trim(...),
             'RTRIM' => $same,
             'LEFT' => fn (Invocation $call): ?Domain => $call->text([$call->domain(0)], $this->leading($call), 'left'),
             'RIGHT' => fn (Invocation $call): ?Domain => $call->text([$call->domain(0)], $this->leading($call), 'right'),
@@ -52,6 +52,21 @@ final class TextResults
             'SUBSTRING_INDEX' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0), $call->domain(1)], $call->length($call->domain(0)), 'substring_index'),
             'INSERT' => static fn (Invocation $call): Domain => (new FormatResults())->inserted($call),
         ];
+    }
+
+    /**
+     * Modern releases keep a NULL trim subject as a zero-length binary result, independently of its removal text.
+     * A non-NULL subject aggregates the removal operand's collation normally.
+     * Verified through literal and prepared operands on MySQL 5.6–9.1.
+     */
+    public function trim(Invocation $call): ?Domain
+    {
+        $subject = $call->domain(count($call->domains) - 1);
+        if ($subject->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null && !in_array($call->derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            return Domain::string(0, Collation::binary(), coercibility: $subject->coercibility);
+        }
+
+        return $call->text($call->domains, $call->length($subject), 'trim');
     }
 
     /**

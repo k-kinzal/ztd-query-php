@@ -61,6 +61,19 @@ final class InvocationTest extends TestCase
         self::assertSame([22, 0, 4], [(new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->length(Domain::double()), (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->length(Domain::null()), (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->length(Domain::integer(Field::LongLong, 4))]);
     }
 
+    public function testTextPreservesTheBinaryCollationOfBoundNullMarkers(): void
+    {
+        $connection = Collation::known('utf8mb4_general_ci');
+        $call = new Invocation([], [], new Settings($connection), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])));
+        $marker = new Domain(Kind::Null, Field::VarString, coercibility: Coercibility::Coercible);
+        $text = Domain::string(1, $connection, coercibility: Coercibility::Coercible);
+
+        self::assertSame('binary', $call->text([$marker], 0, 'trim')?->collation->name);
+        self::assertSame('binary', $call->text([$marker, $text], 1, 'trim')?->collation->name);
+        self::assertSame('binary', $call->text([Domain::null()], 0, 'trim')?->collation->name);
+        self::assertSame('utf8mb4_general_ci', $call->text([Domain::null(), $text], 1, 'trim')?->collation->name);
+    }
+
     public function testTextBecomesAMediumBlobBeyondSixteenThousandUtf8mb4Characters(): void
     {
         self::assertSame(Field::VarString, (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->text([Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], 16383, 'concat')?->field);

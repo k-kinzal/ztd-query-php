@@ -24,6 +24,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class TextResultsTest extends TestCase
 {
+    public function testTrimPreservesItsNullSubjectBeforeCombiningRemovalText(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT TRIM('x' FROM NULL)");
+        $type = $operation->field(0)->type;
+
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame(['binary', 0], [$type->descriptor->collation->name, $type->descriptor->length]);
+    }
+
     public function testBoundedKeepsLegacyBinaryConcatenationCharacterWidths(): void
     {
         $collation = Collation::known('utf8mb4_general_ci');

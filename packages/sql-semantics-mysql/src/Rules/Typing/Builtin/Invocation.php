@@ -96,6 +96,8 @@ final class Invocation
     /**
      * Resolves a string result of a length in the collation some arguments aggregate to, or null after a conflict.
      *
+     * NULL contributes its binary collation; legacy NULL markers retain coercible strength,
+     * while literal NULL remains ignorable beside a text argument.
      * A result longer than 65535 bytes is a MEDIUMBLOB or LONGBLOB as long as its bytes
      * (FormatResults::sized(), verified on live 5.7, 8.0 and 8.4 servers).
      *
@@ -103,7 +105,7 @@ final class Invocation
      */
     public function text(array $domains, int $length, string $operation): ?Domain
     {
-        $domains = array_map(static fn (Domain $domain): Domain => $domain->field === Field::Bit ? Domain::string($domain->length, $domain->collation, Field::VarString, $domain->coercibility) : $domain, $domains);
+        $domains = array_map(static fn (Domain $domain): Domain => ($domain->field === Field::Bit || $domain->kind === Kind::Null) ? Domain::string($domain->length, $domain->collation, Field::VarString, $domain->coercibility) : $domain, $domains);
         $settled = $this->collations()->aggregate($domains, $operation, $this->derivation);
         if ($settled === null) {
             return null;
