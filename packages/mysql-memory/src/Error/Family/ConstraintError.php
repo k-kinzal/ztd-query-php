@@ -44,7 +44,13 @@ enum ConstraintError: int implements ErrorCode
     case WindowFunctionContext = 3593;
     case DropReferencedTable = 3730;
     case ForeignColumnMissing = 3734;
+    case FunctionalJsonGeometry = 3753;
+    case FunctionalAutoIncrement = 3754;
+    case FunctionalPrimary = 3756;
     case FunctionalIndexFunction = 3758;
+    case FunctionalFullText = 3759;
+    case FunctionalSpatial = 3760;
+    case FunctionalColumn = 3762;
     case GeneratedFunction = 3763;
     case DefaultNotPrior = 3767;
     case DefaultAutoIncrement = 3768;
@@ -61,6 +67,7 @@ enum ConstraintError: int implements ErrorCode
     case CheckColumnMissing = 3820;
     case DuplicateCheckName = 3822;
     case CheckReferentialColumn = 3823;
+    case FunctionalDependency = 3837;
     case CheckColumnDependency = 3959;
     case ForeignMissingKey = 6125;
 }

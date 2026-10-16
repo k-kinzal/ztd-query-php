@@ -66,6 +66,9 @@ final class ShowColumnsCommand implements Command
         $keys = new Keys();
         $rows = [];
         foreach ($definition->columns as $position => $column) {
+            if ($column->functional !== null) {
+                continue;
+            }
             $collation = $text->textual($column->domain) ? $column->domain->collation->name : null;
             $row = [$column->name, $text->type($column->domain, $text->written($definition, $column))];
             if ($full) {

@@ -73,7 +73,7 @@ final class ShowKeysCommand implements Command
                     $key->unique() ? 0 : 1,
                     $key->name,
                     $sequence + 1,
-                    $column->name,
+                    $column->functional !== null ? null : $column->name,
                     $key->kind === KeyKind::FullText || $key->access($definition->engine) === IndexAlgorithm::Hash ? null : (($key->descending[$sequence] ?? false) ? 'D' : 'A'),
                     $cardinality,
                     $key->kind === KeyKind::Spatial ? 32 : ($key->prefixes[$sequence] ?? null),
@@ -82,7 +82,7 @@ final class ShowKeysCommand implements Command
                     $this->type($key->kind, $definition->engine, $key->access($definition->engine)),
                     '',
                     '',
-                    ...($legacy ? [] : [$key->visible ? 'YES' : 'NO', null]),
+                    ...($legacy ? [] : [$key->visible ? 'YES' : 'NO', $column->functional !== null ? $column->expression : null]),
                 ];
             }
         }

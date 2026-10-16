@@ -367,8 +367,8 @@ final class AlterTableCommand implements Command
     public function copies(TableDefinition $old, TableDefinition $new, array $origins, TableChange $change, Context $context): bool
     {
         $retyped = false;
-        $copies = $change->copies || $change->algorithm === 'copy' || ($old->primaryKey() !== null && $new->primaryKey() === null);
-        foreach ($new->columns as $position => $column) {
+        $copies = $change->copies || $change->algorithm === 'copy' || ($old->primaryKey() !== null && $new->primaryKey() === null) || (new Constraint\FunctionalKeys())->copies($change->layout->keys);
+        foreach (array_filter($new->columns, static fn (ColumnDefinition $column): bool => $column->functional === null) as $position => $column) {
             $origin = $origins[$position] ?? null;
             if ($origin === null) {
                 $copies = $copies || $this->copiesAdded($column);

@@ -59,6 +59,9 @@ final class Columns implements SystemRows
                 }
                 $definition = $object instanceof View ? Listed::stored($object, $reading)->definition : $object->definition;
                 foreach ($definition->columns as $position => $column) {
+                    if ($column->functional !== null) {
+                        continue;
+                    }
                     $rows[] = $table + $this->column($definition, $column, $position, $object instanceof StoredTable, $reading);
                 }
             }

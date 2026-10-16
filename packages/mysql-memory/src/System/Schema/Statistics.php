@@ -44,10 +44,7 @@ final class Statistics implements SystemRows
                     continue;
                 }
                 $definition = $table->definition;
-                $keys = (new Keys())->ordered($definition);
-                if ($named && $reading->dictionary()) {
-                    usort($keys, static fn ($left, $right): int => strcasecmp($left->name, $right->name));
-                }
+                $keys = $this->keys($definition, $named && $reading->dictionary());
                 foreach ($keys as $key) {
                     foreach ($key->columns as $sequence => $position) {
                         if ($key->access($definition->engine) === IndexAlgorithm::Hash) {
@@ -63,7 +60,7 @@ final class Statistics implements SystemRows
                             'INDEX_SCHEMA' => $schema->name,
                             'INDEX_NAME' => $key->name,
                             'SEQ_IN_INDEX' => $sequence + 1,
-                            'COLUMN_NAME' => $column->name,
+                            'COLUMN_NAME' => $column->functional !== null ? null : $column->name,
                             'COLLATION' => $key->kind === KeyKind::FullText || $key->access($definition->engine) === IndexAlgorithm::Hash ? null : (($key->descending[$sequence] ?? false) ? 'D' : 'A'),
                             'CARDINALITY' => $table->statistics['index ' . $key->name . ' ' . $sequence][0],
                             'SUB_PART' => $key->kind === KeyKind::Spatial ? 32 : ($key->prefixes[$sequence] ?? null),
@@ -73,7 +70,7 @@ final class Statistics implements SystemRows
                             'COMMENT' => '',
                             'INDEX_COMMENT' => '',
                             'IS_VISIBLE' => $key->visible ? 'YES' : 'NO',
-                            'EXPRESSION' => null,
+                            'EXPRESSION' => $column->functional !== null ? $column->expression : null,
                         ];
                     }
                 }
@@ -81,5 +78,20 @@ final class Statistics implements SystemRows
         }
 
         return $rows;
+    }
+
+    /**
+     * Orders the indexes by their dictionary names when this release exposes that order.
+     *
+     * @return list<\MySqlMemory\Dictionary\Key>
+     */
+    public function keys(\MySqlMemory\Dictionary\TableDefinition $definition, bool $named): array
+    {
+        $keys = (new Keys())->ordered($definition);
+        if ($named) {
+            usort($keys, static fn ($left, $right): int => strcasecmp($left->name, $right->name));
+        }
+
+        return $keys;
     }
 }

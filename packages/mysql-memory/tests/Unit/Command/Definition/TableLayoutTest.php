@@ -23,6 +23,19 @@ use SqlSemantics\Statement\Operation;
 #[Small]
 final class TableLayoutTest extends TestCase
 {
+    public function testRetainedPreservesSqlColumnsAndLeavesComputedIndexSlotsForRecompilation(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT,KEY ((a+1)))');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        self::assertNotNull($table->definition->statement);
+        [$columns] = TableLayout::retained($table->definition, TableLayout::elements($table->definition->statement));
+        self::assertCount(1, $columns);
+        self::assertSame('a', $columns[0][0]->name->column->value);
+        self::assertSame(0, $columns[0][1]);
+    }
+
     public function testElementsIndexesColumnDefinitionsWithoutKeys(): void
     {
         $session = (new Instance())->connect();

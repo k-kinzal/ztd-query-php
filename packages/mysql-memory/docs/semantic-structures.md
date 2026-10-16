@@ -1072,3 +1072,22 @@ and instruction errors, and the different continuation behavior of early MySQL
 8 releases. Event schedules remain outside the stored body and retain their
 separate expression restrictions. These checks do not yet separate array casts
 from the general scalar interface or establish all functional-index behavior.
+
+Ordinary functional indexes now retain their typed expression parts in the
+dictionary. Their computed values participate in inserts, updates, uniqueness
+checks and table rebuilding without becoming SQL columns or name-resolution
+declarations. ALTER and CREATE TABLE LIKE reuse these expressions without
+parsing the display text. Added index declarations are reconstructed through
+their semantic constructors before combining them with retained declarations,
+so repeated execution of one statement does not create repeated occurrences
+inside the new structure.
+
+The direct functional-index history reuses the same CreateIndex object before
+its table exists, before its column exists, with duplicate fixture values,
+after removing a duplicate, and after creating the index. Each stage compares
+results, errors and warnings with MySQL. The memory request label is unrelated
+invalid input throughout direct execution. Separate SQL histories compare
+dependency errors, inferred result-type restrictions, populated table changes
+and dictionary metadata on MySQL 8.0, 8.4 and 9.1. These witnesses close the
+tested ordinary-index execution gaps; they do not establish the intrinsic
+construction domains of all key parts or implement multi-valued ARRAY indexes.

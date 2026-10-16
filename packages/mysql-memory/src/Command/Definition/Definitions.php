@@ -14,7 +14,6 @@ use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\Family\SchemaError;
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Typing\Declared;
@@ -34,6 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey as ForeignKeyElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
@@ -116,6 +116,7 @@ final class Definitions
         if ($elements === [] && in_array($this->planner->settings->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
             throw SchemaError::NoVisibleColumn->error();
         }
+        $columns = (new Constraint\FunctionalKeys())->columns($create, new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine), $this->planner);
         $keys = $this->tableKeys($create, $columns, $keys, $engine);
         $this->check($columns, $keys);
         $expressions->keyed($columns, $keys);
@@ -336,20 +337,19 @@ final class Definitions
         $prefixes = [];
         $descending = [];
         foreach ($index->parts as $part) {
-            if (!$part instanceof ColumnPart) {
-                throw StatementError::NotSupportedYet->error('functional key parts');
-            }
+            \SqlSemantics\Diagnostic\Check::invariant($part instanceof ColumnPart || $part instanceof ExpressionPart, 'An index part names a column or supplies its expression.');
+            $name = $part instanceof ColumnPart ? $part->column->value : (new Constraint\FunctionalKeys())->name($part);
             $position = null;
             foreach ($columns as $candidate => $column) {
-                if (strcasecmp($column->name, $part->column->value) === 0) {
+                if (strcasecmp($column->name, $name) === 0) {
                     $position = $candidate;
                 }
             }
             if ($position === null) {
-                throw SchemaError::KeyColumnMissing->error($part->column->value);
+                throw SchemaError::KeyColumnMissing->error($name);
             }
             $positions[] = $position;
-            $prefixes[] = $part->length === null ? null : (int) $part->length->text;
+            $prefixes[] = !$part instanceof ColumnPart || $part->length === null ? null : (int) $part->length->text;
             $descending[] = $part->direction === Direction::Descending;
         }
         $kind = match ($index->kind) {
@@ -386,7 +386,7 @@ final class Definitions
         $named = [];
         foreach ($keys as $key) {
             if ($key->name === '') {
-                $base = $columns[$key->columns[0]]->name;
+                $base = $columns[$key->columns[0]]->functional !== null ? 'functional_index' : $columns[$key->columns[0]]->name;
                 $name = $base;
                 for ($suffix = 2; isset($used[strtolower($name)]); $suffix++) {
                     $name = $base . '_' . $suffix;

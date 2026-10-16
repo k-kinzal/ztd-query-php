@@ -74,4 +74,45 @@ final class ProgramMetadataTest extends TestCase
         self::assertSame(['d', 'a', 't', 'c', 16, true], [$buffered->schema, $buffered->table, $buffered->originalTable, $buffered->column, $buffered->flags, $buffered->exact]);
         self::assertNull(ProgramMetadata::origin(null, $domain));
     }
+
+    public function testColumnsOriginRetainsObservedBaseNamesAndMaterializedFlags(): void
+    {
+        $ordinal = ProgramMetadata::columnsOrigin(new ColumnOrigin('information_schema', 'c', 'COLUMNS', 'ORDINAL_POSITION', 53280, true), Domain::integer());
+        $name = ProgramMetadata::columnsOrigin(new ColumnOrigin('', 'c', 'COLUMNS', 'COLUMN_NAME', 0, true), Domain::string(64, Collation::known('utf8mb3_bin')));
+        $length = ProgramMetadata::columnsOrigin(new ColumnOrigin('', 'c', 'COLUMNS', 'CHARACTER_MAXIMUM_LENGTH', 32896, true), Domain::integer());
+
+        self::assertSame(['information_schema', 'columns', 36896], [$ordinal->schema, $ordinal->originalTable, $ordinal->flags]);
+        self::assertSame(['information_schema', '', 'c'], [$name->schema, $name->originalTable, $name->table]);
+        self::assertSame(32768, $length->flags);
+    }
+
+    public function testDomainMaterializesTheObservedColumnsViewTypes(): void
+    {
+        $precision = ProgramMetadata::domain(Domain::integer(Field::Long, 10, true), new ColumnOrigin('information_schema', 'c', 'COLUMNS', 'NUMERIC_PRECISION'));
+        $comment = ProgramMetadata::domain(Domain::string(2048, Collation::known('utf8mb3_bin')), new ColumnOrigin('', 'c', 'COLUMNS', 'COLUMN_COMMENT'));
+
+        self::assertSame([Field::LongLong, 10, true], [$precision->field, $precision->length, $precision->unsigned]);
+        self::assertSame([Field::Blob, 6144, 0], [$comment->field, $comment->length, $comment->decimals]);
+    }
+
+    public function testDomainKeepsAnOrdinaryTableNamedColumnsOutsideTheDictionaryRules(): void
+    {
+        $number = Domain::integer(Field::Long, 10, true);
+        $text = Domain::string(2048, Collation::known('utf8mb3_bin'));
+
+        self::assertSame($number, ProgramMetadata::domain($number, new ColumnOrigin('d', 'c', 'COLUMNS', 'NUMERIC_PRECISION')));
+        self::assertSame(Field::VarString, ProgramMetadata::domain($text, new ColumnOrigin('d', 'c', 'COLUMNS', 'COLUMN_COMMENT'))->field);
+    }
+
+    public function testOriginMaterializesKeyColumnUsageBaseAndComputedFields(): void
+    {
+        $text = Domain::string(64, Collation::known('utf8mb4_0900_ai_ci'));
+        $base = ProgramMetadata::origin(new ColumnOrigin('information_schema', 'k', 'KEY_COLUMN_USAGE', 'TABLE_NAME', 20609), $text);
+        $computed = ProgramMetadata::origin(new ColumnOrigin('', 'k', 'KEY_COLUMN_USAGE', 'COLUMN_NAME'), $text);
+
+        self::assertNotNull($base);
+        self::assertNotNull($computed);
+        self::assertSame(['tables', 4225], [$base->originalTable, $base->flags]);
+        self::assertSame(['information_schema', ''], [$computed->schema, $computed->originalTable]);
+    }
 }

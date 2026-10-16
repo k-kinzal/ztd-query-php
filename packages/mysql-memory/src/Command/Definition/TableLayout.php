@@ -110,23 +110,7 @@ final class TableLayout
             throw StatementError::NotSupportedYet->error('ALTER TABLE of a table created by a query');
         }
         $elements = self::elements($statement);
-        $columns = [];
-        $undefaulted = [];
-        $lengths = [];
-        foreach ($definition->columns as $position => $column) {
-            $element = $elements[strtolower($column->name)] ?? null;
-            if ($element === null) {
-                throw StatementError::NotSupportedYet->error('ALTER TABLE of a table created by a query');
-            }
-            if ($column->domain->kind === Kind::Double && $column->domain->display !== null) {
-                $lengths[mb_strtolower($column->name)] = $column->domain->display;
-            }
-            $collation = $column->domain->kind === Kind::String && !$column->domain->collation->bytes() ? $column->domain->collation->name : null;
-            $columns[] = [self::unkeyed($element, $collation, !$column->nullable()), $position];
-            if (!$column->default->declared && $column->nullable() && !$column->autoIncrement) {
-                $undefaulted[mb_strtolower($column->name)] = true;
-            }
-        }
+        [$columns, $undefaulted, $lengths] = self::retained($definition, $elements);
         $keys = array_map(static fn (Key $key): array => [self::index($key, $definition), $key], $definition->keys);
         foreach ($statement->elements as $element) {
             if (!$element instanceof ColumnElement && !$element instanceof IndexDefinition && !$element instanceof CheckConstraint && !$element instanceof ForeignKey) {
@@ -142,7 +126,8 @@ final class TableLayout
 
         $layout = new self(new QualifiedName(new Name($definition->name), new Name($definition->schema)), $columns, $keys, $options, $statement->temporaryWords);
         $layout->undefaulted = $undefaulted;
-        $layout->implicitCollations = array_fill_keys(array_map(static fn ($column): string => mb_strtolower($column->name), array_filter($definition->columns, static fn ($column): bool => $column->implicitCollation)), true);
+        $text = new \MySqlMemory\Command\Show\ColumnText($definition->declaration->profile->grammar);
+        $layout->implicitCollations = array_fill_keys(array_map(static fn ($column): string => mb_strtolower($column->name), array_filter($definition->columns, static fn ($column): bool => $column->implicitCollation || !$text->explicit($elements[strtolower($column->name)] ?? null))), true);
         $layout->reportedLengths = $lengths;
         $layout->names = array_map(static fn ($column): string => $column->name, $definition->columns);
         $layout->original = $definition->name;
@@ -152,6 +137,39 @@ final class TableLayout
         }
 
         return $layout;
+    }
+
+    /**
+     * Retains declared columns, source positions, absent defaults and reported widths for rebuilding.
+     *
+     * @param array<string, ColumnElement> $elements The original column declarations by lowercase name
+     * @return array{list<array{ColumnElement, int}>, array<string, true>, array<string, int>}
+     *
+     * @throws \MySqlMemory\Error\SqlError When a stored SQL column has no retained declaration
+     */
+    public static function retained(TableDefinition $definition, array $elements): array
+    {
+        $columns = [];
+        $undefaulted = [];
+        $lengths = [];
+        foreach ($definition->columns as $position => $column) {
+            if ($column->functional !== null) {
+                continue;
+            }
+            $element = $elements[strtolower($column->name)] ?? null;
+            if ($element === null) {
+                throw StatementError::NotSupportedYet->error('ALTER TABLE of a table created by a query');
+            }
+            if ($column->domain->kind === Kind::Double && $column->domain->display !== null) {
+                $lengths[mb_strtolower($column->name)] = $column->domain->display;
+            }
+            $collation = $column->domain->kind === Kind::String && !$column->domain->collation->bytes() ? $column->domain->collation->name : null;
+            $columns[] = [self::unkeyed($element, $collation, !$column->nullable()), $position];
+            if (!$column->default->declared && $column->nullable() && !$column->autoIncrement) {
+                $undefaulted[mb_strtolower($column->name)] = true;
+            }
+        }
+        return [$columns, $undefaulted, $lengths];
     }
 
     /**
@@ -216,7 +234,11 @@ final class TableLayout
         $parts = [];
         foreach ($key->columns as $index => $position) {
             $prefix = $key->prefixes[$index] ?? null;
-            $parts[] = new ColumnPart(new Name($definition->columns[$position]->name), $prefix === null ? null : new Numeral((string) $prefix), ($key->descending[$index] ?? false) ? Direction::Descending : null);
+            $column = $definition->columns[$position];
+            $direction = ($key->descending[$index] ?? false) ? Direction::Descending : null;
+            $parts[] = $column->functional === null
+                ? new ColumnPart(new Name($column->name), $prefix === null ? null : new Numeral((string) $prefix), $direction)
+                : new \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart($column->functional->expression, $direction);
         }
         $kind = match ($key->kind) {
             KeyKind::Primary => IndexKind::Primary,
@@ -311,6 +333,7 @@ final class TableLayout
         $columns = $elements;
         foreach ($this->keys as [$element, $key]) {
             if ($key === null || !$element instanceof IndexDefinition) {
+                $element = $element instanceof IndexDefinition ? (new Constraint\IndexLayout())->added($element) : $element;
                 $adapted = $constraints->adapted($this->original === '' ? $element : $constraints->renamed($element, $this->original, $this->name->name->value), $renamed);
                 if ($adapted !== null) {
                     $elements[] = $adapted;
@@ -320,6 +343,11 @@ final class TableLayout
             }
             $parts = [];
             foreach ($key->columns as $index => $position) {
+                if ($element->parts[$index] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart) {
+                    (new Constraint\IndexLayout())->dependencies($element->parts[$index], $renamed);
+                    $parts[] = $element->parts[$index];
+                    continue;
+                }
                 $name = $this->covered($position);
                 if ($name !== null) {
                     $prefix = $key->prefixes[$index] ?? null;

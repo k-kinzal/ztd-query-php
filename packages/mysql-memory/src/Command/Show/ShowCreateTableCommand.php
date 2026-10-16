@@ -87,7 +87,7 @@ final class ShowCreateTableCommand implements Command
     public function statement(StoredTable $stored): string
     {
         $table = $stored->definition;
-        $lines = array_map(fn (ColumnDefinition $column): string => '  ' . $this->column($column, $table), $table->columns);
+        $lines = array_map(fn (ColumnDefinition $column): string => '  ' . $this->column($column, $table), array_filter($table->columns, static fn (ColumnDefinition $column): bool => $column->functional === null));
         foreach ((new Keys())->ordered($table) as $key) {
             $lines[] = '  ' . $this->key($key, $table);
         }
@@ -154,7 +154,7 @@ final class ShowCreateTableCommand implements Command
         if ($text->legacy()) {
             return $collation->name === $table->collation ? '' : ' CHARACTER SET ' . $collation->charset->nameIn($this->release) . ($collation->charset->defaultCollation($this->release)->name === $collation->name ? '' : ' COLLATE ' . $collation->nameIn($this->release));
         }
-        if ($collation->name !== $table->collation || $text->explicit($text->element($table, $column))) {
+        if ($collation->name !== $table->collation || (!$column->implicitCollation && $text->explicit($text->element($table, $column)))) {
             $implicit = $column->implicitCollation && $collation->charset->defaultCollation($this->release)->name === $collation->name;
 
             return ' CHARACTER SET ' . $collation->charset->name . ($implicit ? '' : ' COLLATE ' . $collation->name);
@@ -171,7 +171,8 @@ final class ShowCreateTableCommand implements Command
         $parts = [];
         foreach ($key->columns as $index => $position) {
             $prefix = $key->prefixes[$index] ?? null;
-            $parts[] = $this->name($table->columns[$position]->name) . ($prefix === null ? '' : '(' . $prefix . ')') . (($key->descending[$index] ?? false) ? ' DESC' : '');
+            $column = $table->columns[$position];
+            $parts[] = ($column->functional !== null ? '(' . $column->expression . ')' : $this->name($column->name)) . ($prefix === null ? '' : '(' . $prefix . ')') . (($key->descending[$index] ?? false) ? ' DESC' : '');
         }
         $columns = '(' . implode(',', $parts) . ')' . ($key->algorithm === null ? '' : ' USING ' . $key->algorithm->value) . ($key->visible ? '' : ' /*!80000 INVISIBLE */');
 

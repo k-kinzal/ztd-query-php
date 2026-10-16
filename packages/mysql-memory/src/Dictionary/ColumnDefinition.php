@@ -28,9 +28,10 @@ final class ColumnDefinition
      * @param string $comment The comment of the column
      * @param bool $stored Whether a generated column is STORED rather than VIRTUAL
      * @param string $expression The expression of a generated column as SHOW CREATE TABLE writes it
-     * @param bool $implicitCollation Whether a computed CREATE TABLE SELECT column omits its default collation in SHOW CREATE TABLE
+     * @param bool $implicitCollation Whether the collation was inferred or inherited rather than explicitly declared for the column
      * @param SpatialKind|null $spatialKind The geometric subtype resolved from the column declaration
      * @param int|null $srid The required spatial reference identifier, or null for unrestricted values
+     * @param \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart|null $functional The typed index expression of an internal slot, absent for SQL columns
      */
     public function __construct(
         public readonly string $name,
@@ -47,6 +48,7 @@ final class ColumnDefinition
         public readonly bool $implicitCollation = false,
         public readonly ?SpatialKind $spatialKind = null,
         public readonly ?int $srid = null,
+        public readonly ?\SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart $functional = null,
     ) {
     }
 
@@ -55,7 +57,7 @@ final class ColumnDefinition
      */
     public function withDomain(Domain $domain): self
     {
-        return new self($this->name, $domain, $this->default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation, $this->spatialKind, $this->srid);
+        return new self($this->name, $domain, $this->default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation, $this->spatialKind, $this->srid, $this->functional);
     }
 
     /**
@@ -63,7 +65,7 @@ final class ColumnDefinition
      */
     public function withDefault(Fill $default): self
     {
-        return new self($this->name, $this->domain, $default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation, $this->spatialKind, $this->srid);
+        return new self($this->name, $this->domain, $default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation, $this->spatialKind, $this->srid, $this->functional);
     }
 
     /**
@@ -71,7 +73,7 @@ final class ColumnDefinition
      */
     public function withOnUpdate(bool $onUpdate): self
     {
-        return new self($this->name, $this->domain, $this->default, $this->autoIncrement, $onUpdate, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation, $this->spatialKind, $this->srid);
+        return new self($this->name, $this->domain, $this->default, $this->autoIncrement, $onUpdate, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation, $this->spatialKind, $this->srid, $this->functional);
     }
 
     /**
@@ -79,7 +81,7 @@ final class ColumnDefinition
      */
     public function withGeneration(Evaluable $generated, bool $stored, string $expression): self
     {
-        return new self($this->name, $this->domain, Fill::none(), false, false, $generated, $this->invisible, $this->declaration, $this->comment, $stored, $expression, $this->implicitCollation, $this->spatialKind, $this->srid);
+        return new self($this->name, $this->domain, Fill::none(), false, false, $generated, $this->invisible, $this->declaration, $this->comment, $stored, $expression, $this->implicitCollation, $this->spatialKind, $this->srid, $this->functional);
     }
 
     /**
@@ -87,7 +89,7 @@ final class ColumnDefinition
      */
     public function withImplicitCollation(bool $implicit): self
     {
-        return new self($this->name, $this->domain, $this->default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $implicit, $this->spatialKind, $this->srid);
+        return new self($this->name, $this->domain, $this->default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $implicit, $this->spatialKind, $this->srid, $this->functional);
     }
 
     /**

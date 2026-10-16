@@ -39,6 +39,9 @@ final class KeyColumnUsage implements SystemRows
                 $located = ['TABLE_CATALOG' => 'def', 'TABLE_SCHEMA' => $schema->name, 'TABLE_NAME' => $name];
                 foreach (Constraints::keys($definition, $reading->dictionary()) as $key) {
                     foreach ($key->columns as $sequence => $position) {
+                        if ($definition->columns[$position]->functional !== null) {
+                            continue;
+                        }
                         $rows[] = $base + ['CONSTRAINT_NAME' => $key->name] + $located + ['COLUMN_NAME' => $definition->columns[$position]->name, 'ORDINAL_POSITION' => $sequence + 1];
                     }
                 }

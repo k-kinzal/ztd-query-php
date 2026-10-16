@@ -15,6 +15,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class StatisticsTest extends TestCase
 {
+    public function testKeysRetainsTheRequestedDictionaryOrderForExpressionIndexes(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, KEY z ((a+1)), KEY A(a))');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $statistics = new Statistics();
+        self::assertSame(['A', 'z'], array_map(static fn ($key): string => $key->name, $statistics->keys($table->definition, true)));
+        self::assertSame(['z', 'A'], array_map(static fn ($key): string => $key->name, $statistics->keys($table->definition, false)));
+    }
+
     public function testRowsListsTheColumnsOfEachIndex(): void
     {
         $s = (new Instance())->connect();
