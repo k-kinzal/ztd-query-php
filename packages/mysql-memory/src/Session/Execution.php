@@ -90,7 +90,7 @@ final class Execution
         (new Access\DefaultDatabase())->referenced($operation, $session);
         $hints->report($session);
         foreach ($session->replayed || $this->undeclared($operation) ? [] : $late as $warning) {
-            $session->diagnostics->warning(($warning instanceof Deprecation || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName) ? $warning->code() : 1105, $warning->message());
+            $session->diagnostics->warning($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning ? $warning->code() : 1105, $warning->message());
         }
         (new \MySqlMemory\System\Guard())->check($operation->statement, $session);
         (new \MySqlMemory\Concurrency\Access())->check($operation, $session);
@@ -237,7 +237,7 @@ final class Execution
                 }
                 continue;
             }
-            $session->diagnostics->warning(($warning instanceof Deprecation || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion || $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName) ? $warning->code() : 1105, $warning->message());
+            $session->diagnostics->warning($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning ? $warning->code() : 1105, $warning->message());
             if ($warning instanceof Deprecation && $warning->aborts) {
                 break;
             }

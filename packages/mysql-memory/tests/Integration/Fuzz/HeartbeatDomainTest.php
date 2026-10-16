@@ -39,6 +39,19 @@ final class HeartbeatDomainTest extends TestCase
                 $statements[] = "CHANGE MASTER TO MASTER_COMPRESSION_ALGORITHMS='text',MASTER_HEARTBEAT_PERIOD=4294967.5";
                 $statements[] = 'CHANGE MASTER TO SOURCE_HEARTBEAT_PERIOD=4294967.5';
             }
+            $prefix = $legacy ? 'MASTER_' : 'SOURCE_';
+            $timeout = $legacy ? 'slave_net_timeout' : 'replica_net_timeout';
+            $channel = $release === '5.6.51' ? ',INVALID' : " FOR CHANNEL '\n'";
+            foreach (['0.0001', '100', '100, ' . $prefix . 'HEARTBEAT_PERIOD=0', '100, ' . $prefix . 'HEARTBEAT_PERIOD=100'] as $period) {
+                $statements[] = $source . 'HEARTBEAT_PERIOD=' . $period . $channel;
+            }
+            $statements[] = 'SET GLOBAL ' . $timeout . '=200';
+            $statements[] = $source . 'HEARTBEAT_PERIOD=100' . $channel;
+            $statements[] = 'SET GLOBAL ' . $timeout . '=10';
+            $statements[] = $source . 'HEARTBEAT_PERIOD=100' . $channel;
+            if (version_compare($release, '8.4', '>=')) {
+                $statements[] = 'SHOW PARSE_TREE ' . $source . 'HEARTBEAT_PERIOD=100' . $channel;
+            }
             yield $release => [$release, $statements];
         }
     }

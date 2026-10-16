@@ -1418,6 +1418,12 @@
         "construct": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecated",
         "text": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\HeartbeatCondition": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\HeartbeatPeriod": {
+        "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\HeartbeatCondition"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Notice\\NameConversion": {
         "legacy": "bool",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
@@ -3191,6 +3197,7 @@
         "noZeroInDate": "bool",
         "parameters": "array",
         "program": "array",
+        "replicaNetTimeout": "?int",
         "schemas": "array",
         "server": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
         "strict": "bool",

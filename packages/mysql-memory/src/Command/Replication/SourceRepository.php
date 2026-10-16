@@ -27,12 +27,18 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 final class SourceRepository
 {
     /**
-     * Retains a supplied nonzero port before compression and repository validation.
+     * Retains connection parameters before compression and repository validation.
      *
      * @param array<string, SourceOption> $options The final setting of each kind
      */
-    public function update(array $options, Replication $state): void
+    public function update(array $options, Replication $state, string $channel, float $defaultHeartbeat): void
     {
+        $heartbeat = $options[SourceOptionKind::HeartbeatPeriod->value]->value ?? null;
+        $state->heartbeatPeriods[$channel] ??= min($defaultHeartbeat, 4294967.0);
+        if ($heartbeat instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral) {
+            $period = (float) $heartbeat->text;
+            $state->heartbeatPeriods[$channel] = $period < 0.001 ? 0.0 : $period;
+        }
         $value = $options[SourceOptionKind::Port->value]->value ?? null;
         if ($value instanceof Numeral) {
             $number = (new Literals())->number($value);

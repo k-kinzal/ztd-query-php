@@ -99,7 +99,7 @@ final class PrivilegeInput
         if ($boundary === null) {
             return null;
         }
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile());
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile(), $session->resolution()->replicaNetTimeout);
 
         return (new ModernWarnings())->recorded(array_column($notices, 1), QueryError::NoDatabase->error(), $session);
     }

@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * The session variables of a MySQL session that change the types statements resolve to.
+ * The MySQL session settings that determine resolved domains and input notices.
  *
  * The connection collation types string literals; div_precision_increment widens the scale of a
  * division; the collations of the schemas give a table its default; group_concat_max_len bounds
@@ -24,6 +24,9 @@ use SqlSemantics\Statement\Snapshot;
  * AES_ENCRYPT. Calendar mode flags determine whether an ODBC escape denotes a
  * temporal literal or its string operand, including its output type and name. A context without settings resolves as a
  * new session with the server defaults.
+ *
+ * @example Refusing a nonpositive network timeout
+ *     new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), replicaNetTimeout: 0) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @visibility public
  * @example Reading the collation string literals take in a new 8.4 session
@@ -80,6 +83,7 @@ final class Settings implements Session
      * @param bool|null $explicitDefaultsForTimestamp Whether unqualified TIMESTAMP columns are nullable; null when the session does not say
      * @param array<array-key, QualifiedName> $handlers The table names behind open handler aliases
      * @param Collation|null $databaseCollation The session collation_database, which SET may override independently of schema defaults
+     * @param int|null $replicaNetTimeout The global replication network timeout in seconds; null selects the release default
      */
     public function __construct(
         public readonly Collation $connection,
@@ -103,7 +107,9 @@ final class Settings implements Session
         public readonly bool $allowInvalidDates = false,
         array $handlers = [],
         public readonly ?Collation $databaseCollation = null,
+        public readonly ?int $replicaNetTimeout = null,
     ) {
+        Check::input($replicaNetTimeout === null || $replicaNetTimeout > 0, 'The replication network timeout is positive.');
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
         $routines = [];
         foreach ($functions as $name => $domain) {

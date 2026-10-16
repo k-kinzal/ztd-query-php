@@ -26,6 +26,13 @@ populated table histories reuse the same hinted objects on both sides.
 
 Direct submission reports the semantic warnings of a newly submitted statement, including deprecations, just as SQL submission does. Only execution of a previously created stored-program statement suppresses those initial warnings. A separate inventory check requires an explicit command route for every public MySQL statement variant. Internal parser entry points are rejected during input lowering, before a statement is published. Debug-only commands retain their dependency on the server build and produce its native client rejection.
 
+Replication heartbeat notices are resolved against the global network timeout
+supplied in the semantic session snapshot. Every written option retains its own
+notice, even when a later option replaces its value or a later input operand is
+rejected. The consumer records these conditions without recalculating them. A
+native transition test submits the same directly constructed request after
+changing the timeout above and below its period, then restores the timeout.
+
 For MySQL 5.6 and 5.7, `UpgradeDatabaseName` consumes a `LegacyDatabaseName`, whose decoded component excludes the fixed `#mysql50#` marker. Its constructor checks the directory spelling and the character and byte limits; an ordinary database identifier cannot occupy this role. Stored-program constructors reject this instruction, including in an unreachable branch. Its command moves table declarations and data to the upgraded name, retains view and trigger references, and removes stored routines and events. SQL Semantics supplies the 5.7 deprecation fact. Differential histories against isolated servers check the resulting rows, metadata, warnings and errors, including invalid references after the move. A separate test executes the same directly constructed object before creation, against a populated legacy database, and after its successful move, with an unrelated request label.
 
 Engine attributes on columns, indexes, tables and tablespaces share a constructor invariant: quoted text must be empty (reset) or a complete JSON document, with finite numbers and no more than 100 nested containers. An invalid document is rejected even inside an unreachable stored-program instruction. SQL input lowering applies the same rule and retains a typed operand diagnostic before publishing a statement. Memory formats that diagnostic without parsing JSON again. The same directly constructed secondary attribute is tested before its table exists, against a populated table, and after the table is dropped.

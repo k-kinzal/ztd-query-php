@@ -26,6 +26,27 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class SourceSettingsTest extends TestCase
 {
+    public function testWarningResolvesEachOccurrenceAgainstTheGlobalTimeout(): void
+    {
+        $rule = new SourceSettings();
+        $option = new SourceOption(Terminology::Current, SourceOptionKind::HeartbeatPeriod, new NumberLiteral('100'));
+
+        self::assertNull($rule->warning($option, GrammarRelease::MySql847, 200));
+        self::assertSame(1704, $rule->warning($option, GrammarRelease::MySql847, 10)?->code());
+        self::assertNull($rule->warning($option, GrammarRelease::MySql5651));
+        self::assertStringContainsString('slave_net_timeout', $rule->warning($option, GrammarRelease::MySql5744)?->message() ?? '');
+        self::assertSame(1703, $rule->warning(new SourceOption(Terminology::Current, SourceOptionKind::HeartbeatPeriod, new NumberLiteral('0.0001')), GrammarRelease::MySql847)?->code());
+    }
+
+    public function testOptionsRetainsDistinctNoticesForRepeatedSettings(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=100, SOURCE_HEARTBEAT_PERIOD=100, SOURCE_HEARTBEAT_PERIOD=0');
+
+        self::assertCount(2, $operation->facts->warnings);
+        self::assertEquals($operation->facts->warnings[0], $operation->facts->warnings[1]);
+        self::assertNotSame($operation->facts->warnings[0], $operation->facts->warnings[1]);
+    }
+
     public function testOptionsDerivesTheHeartbeatPeriod(): void
     {
         $change = (new Semantics(Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 2.5');

@@ -69,11 +69,17 @@ final class Replication
     public bool $connectionFailure = false;
 
     /**
+     * @var array<string, float> The effective heartbeat period of each configured channel
+     */
+    public array $heartbeatPeriods = [];
+
+    /**
      * Closes the repositories and retains the closed relay log until a change replaces it.
      */
     public function reset(bool $all = false): void
     {
         if ($all) {
+            $this->heartbeatPeriods = [];
             $this->port = 3306;
             $this->connectionFailure = false;
             $this->autoPosition = false;

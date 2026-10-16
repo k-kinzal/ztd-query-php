@@ -171,7 +171,7 @@ final class Reader
             $statement = substr($statement, 0, $lexical->offset);
             $tokens = $parser->tokenize($statement);
         }
-        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $failure->end, $session->semantics()->profile());
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $failure->end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
         if ($target !== null) {
             $notices = array_values(array_filter($notices, static fn (array $notice): bool => !$notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure || !$notice[1]->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption));
         }

@@ -39,7 +39,7 @@ final class LockInput
         if ((new SyntaxLocks())->before($parser, $statement, $end, $semantics->profile()) === []) {
             return $error;
         }
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $semantics->profile());
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $semantics->profile(), $session->resolution()->replicaNetTimeout);
 
         return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);
     }
@@ -63,7 +63,7 @@ final class LockInput
             $context = $semantics->context(searchPath: $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database));
             $failure = (new LockNames())->failure(new Operation($context, new LockTables($prefix)), $session);
             if ($failure !== null) {
-                $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile());
+                $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile(), $session->resolution()->replicaNetTimeout);
 
                 return (new ModernWarnings())->recorded(array_column($notices, 1), $failure[1], $session);
             }

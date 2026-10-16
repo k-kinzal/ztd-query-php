@@ -36,9 +36,9 @@ final class SyntaxWarnings
     /**
      * Returns completion notices raised before the token at the refusal offset.
      *
-     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop}> Input boundaries and semantic notices
+     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|ParseStop}> Input boundaries and semantic notices
      */
-    public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile): array
+    public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile, ?int $replicaNetTimeout = null): array
     {
         $tokens = (new InputTokens())->prefix($parser, $statement);
         $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
@@ -51,7 +51,7 @@ final class SyntaxWarnings
         $arrays = new Routine\Program\SyntaxArrays();
         $header = new Routine\Program\NoticeHeader();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $names, $types, $tokens, $arrays, $header): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $names, $types, $tokens, $arrays, $header, $replicaNetTimeout): void {
                 if ($state->aborted) {
                     return;
                 }
@@ -71,7 +71,7 @@ final class SyntaxWarnings
                     return;
                 }
                 $notice = $arrays->completed($node, $lookahead, $lowering, $state->failedAt) ?? $types->following($node, $lowering, $tokens) ?? ($state->failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
-                $conditions = [...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
+                $conditions = [...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
                     $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
                     $state->record($range[1], $condition instanceof ParseFailure ? $header->scoped($condition) : $condition);
@@ -87,8 +87,8 @@ final class SyntaxWarnings
     /**
      * Orders completed notices and retains only those through the first stopping condition.
      *
-     * @param list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop}> $warnings Completed input notices
-     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop}> Ordered notices up to the stopping boundary
+     * @param list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|ParseStop}> $warnings Completed input notices
+     * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|ParseStop}> Ordered notices up to the stopping boundary
      */
     public function ordered(array $warnings): array
     {

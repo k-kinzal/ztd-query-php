@@ -20,6 +20,14 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class CacheOptionsTest extends TestCase
 {
+    public function testLegacyRetainsACompletedHeartbeatBeforeInvalidInput(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('CHANGE MASTER TO MASTER_HEARTBEAT_PERIOD=0.0001,INVALID');
+
+        self::assertSame([1703, 1064], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testLegacyKeepsAParseErrorWhenNoEarlierConditionExists(): void
     {
         $session = (new Instance('5.7.44'))->connect();

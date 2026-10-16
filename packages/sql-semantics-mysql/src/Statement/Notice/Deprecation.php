@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Notice;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT BINARY 1');
  *     [$query->facts->warnings[0]->construct, $query->facts->warnings[0]->code()] // => [\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator, 1287]
  */
-final class Deprecation implements Warning
+final class Deprecation implements CodedWarning
 {
     use Snapshot;
 

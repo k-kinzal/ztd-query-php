@@ -22,6 +22,20 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 #[Medium]
 final class SyntaxSettingsTest extends TestCase
 {
+    public function testWarnedRetainsAnEarlierPeriodWhenLaterInputFails(): void
+    {
+        $profile = new LanguageProfile(GrammarRelease::MySql847);
+        $parser = new MySqlParser($profile->grammar->value);
+        $sql = "CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=100, SOURCE_HEARTBEAT_PERIOD=100 FOR CHANNEL '\n'";
+        $warnings = (new SyntaxWarnings())->completed($parser, $sql, strlen($sql), $profile, 10);
+
+        self::assertCount(3, $warnings);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod(\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatCondition::AboveReplicaTimeout), $warnings[0][1]);
+        self::assertEquals($warnings[0][1], $warnings[1][1]);
+        self::assertInstanceOf(ParseFailure::class, $warnings[2][1]);
+        self::assertCount(1, (new SyntaxWarnings())->completed($parser, $sql, strlen($sql), $profile, 200));
+    }
+
     public function testRejectedFindsAUuidOutsideItsConstructorDomain(): void
     {
         $profile = new LanguageProfile(GrammarRelease::MySql847);

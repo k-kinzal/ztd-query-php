@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Notice;
 
-use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
@@ -18,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Describing the removed prefix
  *     (new \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName(new \SqlSemantics\Statement\Identifier\Name(' name')))->message() // => "Leading spaces are removed from name ' name'"
  */
-final class TrimmedName implements Warning
+final class TrimmedName implements CodedWarning
 {
     use Snapshot;
 

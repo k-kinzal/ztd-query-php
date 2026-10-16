@@ -64,11 +64,11 @@ final class TemporalInput
     /**
      * Combines semantic input conditions with accepted operator warnings in source order.
      *
-     * @return list<array{int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|\SqlSemantics\Platform\MySql\Statement\Notice\ParseStop}>
+     * @return list<array{int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|\SqlSemantics\Platform\MySql\Statement\Notice\ParseStop}>
      */
     public function notices(ReductionParser $parser, string $statement, int $end, Session $session): array
     {
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
         if (!$session->settings()->legacy()) {
             foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, $end, $parser) as $offset => $notice) {
                 $notices[] = [$offset, $notice];

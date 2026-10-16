@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Notice;
 
-use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
@@ -18,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Describing character conversion
  *     (new \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion(new \SqlSemantics\Statement\Identifier\Name('😀')))->code() // => 1300
  */
-final class NameConversion implements Warning
+final class NameConversion implements CodedWarning
 {
     use Snapshot;
 

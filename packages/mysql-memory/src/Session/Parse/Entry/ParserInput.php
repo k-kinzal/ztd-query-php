@@ -35,7 +35,7 @@ final class ParserInput
             if (strcasecmp($dependency->parser->value, 'ngram') === 0) {
                 continue;
             }
-            $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile());
+            $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile(), $session->resolution()->replicaNetTimeout);
 
             return (new ModernWarnings())->recorded(array_column($notices, 1), AdministrationError::FunctionNotDefined->error($dependency->parser->value), $session);
         }

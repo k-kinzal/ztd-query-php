@@ -49,6 +49,26 @@ final class SyntaxSettings
     }
 
     /**
+     * Retains a heartbeat notice even when a later option cannot be lowered.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod>
+     */
+    public function warned(Node $node, Lowering $lowering, ?int $timeout): array
+    {
+        if (!in_array($node->name, ['source_def', 'master_def'], true)) {
+            return [];
+        }
+        try {
+            $option = (new SourceOptionRule($lowering))->option($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+        } catch (\SqlSemantics\Construction\RejectedInput) {
+            return [];
+        }
+        $warning = (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->warning($option, $lowering->profile->grammar, $timeout);
+
+        return $warning === null ? [] : [$warning];
+    }
+
+    /**
      * Returns a completed value condition. An excessive delay continues parsing;
      * a refused UUID, heartbeat or password stops before subsequent options.
      */

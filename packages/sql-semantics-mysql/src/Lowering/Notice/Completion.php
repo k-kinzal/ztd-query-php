@@ -33,7 +33,7 @@ final class Completion
     public ?int $failedAt = null;
 
     /**
-     * @param list<array{int, Deprecated|Deprecation|NameConversion|ParseFailure|ParseStop}> $warnings Completed notices and their input boundaries
+     * @param list<array{int, Deprecated|Deprecation|NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|ParseStop}> $warnings Completed notices and their input boundaries
      */
     public function __construct(public array $warnings = [])
     {
@@ -42,7 +42,7 @@ final class Completion
     /**
      * Records a notice, including whether its instruction or the whole input stops.
      */
-    public function record(int $end, Deprecated|Deprecation|NameConversion|ParseFailure|ParseStop $notice): void
+    public function record(int $end, Deprecated|Deprecation|NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|ParseStop $notice): void
     {
         $this->warnings[] = [$end, $notice];
         $this->failed = $this->failed || ($notice instanceof ParseFailure && $notice->endsProgramStatement);

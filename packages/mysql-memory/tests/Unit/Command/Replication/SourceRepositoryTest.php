@@ -14,6 +14,23 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class SourceRepositoryTest extends TestCase
 {
+    public function testUpdateRetainsAndResetsHeartbeatPeriodsWithTheConnection(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET GLOBAL replica_net_timeout=200');
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_PORT=3306');
+        $periods = [$session->instance->registry->replication->heartbeatPeriods];
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0.0001');
+        $periods[] = $session->instance->registry->replication->heartbeatPeriods;
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=100');
+        $session->query('RESET REPLICA');
+        $periods[] = $session->instance->registry->replication->heartbeatPeriods;
+        $session->query('RESET REPLICA ALL');
+
+        self::assertSame([['' => 100.0], ['' => 0.0], ['' => 100.0]], $periods);
+        self::assertSame([], $session->instance->registry->replication->heartbeatPeriods);
+    }
+
     public function testUpdateRetainsUnsignedPortsAcrossAFailedFlush(): void
     {
         $session = (new Instance())->connect();

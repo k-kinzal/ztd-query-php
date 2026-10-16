@@ -10,8 +10,6 @@ use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
@@ -19,12 +17,11 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\AnonymousGtids;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
-use SqlSemantics\Statement\Node;
 
 /**
  * Checks replication source settings against the server's GTID mode, accounts and network timeout.
  *
- * Heartbeat warnings precede validation of GTID and privilege-check settings. Credential and
+ * Heartbeat notices are already resolved by SQL Semantics. Credential and
  * position warnings precede compression validation. Repeated options use their final value.
  * This class validates settings; transporting transactions between servers is not implemented.
  * Verified against MySQL 8.0.44 and 8.4.7 through SQL.
@@ -45,7 +42,6 @@ final class SourceChange
             $options[$option->kind->value] = $option;
         }
         $channel = $statement->channel === null ? '' : strtolower((new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($statement->channel));
-        $this->heartbeatSettings($statement, $session);
         $this->channel($channel, $session);
         $this->gtids($options, $session);
         (new SourceSwitches())->check($options, $session, $channel);
@@ -57,7 +53,8 @@ final class SourceChange
                 throw AdministrationError::ReplicationUserMissing->error($channel, $identity->user, $identity->host);
             }
         }
-        (new SourceRepository())->update($options, $session->instance->registry->replication);
+        $timeout = $session->variables->read($session->settings()->legacy() ? 'slave_net_timeout' : 'replica_net_timeout');
+        (new SourceRepository())->update($options, $session->instance->registry->replication, $channel, (float) $timeout / 2);
         $this->warnings($options, $session, $context);
         $compression = $options[SourceOptionKind::CompressionAlgorithms->value]->value ?? null;
         if ($compression instanceof Text) {
@@ -103,37 +100,6 @@ final class SourceChange
         }
         if (mb_strlen($channel, 'UTF-8') > 64) {
             throw AdministrationError::InvalidReplicaChannel->error();
-        }
-    }
-
-    /**
-     * Reports heartbeat notices independently of connection initialization, using the last setting.
-     */
-    public function heartbeatSettings(Node $statement, Session $session): void
-    {
-        $heartbeat = null;
-        foreach ($statement instanceof ChangeReplicationSource ? $statement->options : [] as $option) {
-            if ($option->kind === SourceOptionKind::HeartbeatPeriod) {
-                $heartbeat = $option->value;
-            }
-        }
-        if ($heartbeat instanceof NumberLiteral) {
-            $this->heartbeat((float) $heartbeat->text, $session);
-        }
-    }
-
-    /**
-     * Warns about a positive sub-millisecond heartbeat or one exceeding the global timeout.
-     */
-    public function heartbeat(float $period, Session $session): void
-    {
-        if ($period > 0 && $period < 0.001) {
-            $session->diagnostics->warning(AdministrationError::HeartbeatBelowMinimum, AdministrationError::HeartbeatBelowMinimum->message());
-        }
-        $legacy = in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
-        $name = $legacy ? 'slave_net_timeout' : 'replica_net_timeout';
-        if ($period > (float) $session->variables->read($name)) {
-            $session->diagnostics->warning(AdministrationError::HeartbeatAboveTimeout, AdministrationError::HeartbeatAboveTimeout->message($name));
         }
     }
 

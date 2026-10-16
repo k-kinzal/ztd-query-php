@@ -55,7 +55,7 @@ final class ProgramInput
         }
         $end = $this->boundary($refusal, $session, $offset);
         $syntax = $end < $offset ? $this->error($refusal, $session) : $syntax;
-        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $session->text, $end, $session->semantics()->profile());
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $session->text, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
         $tokens = $parser->tokenize($session->text);
         $warnings = new \MySqlMemory\Session\Parse\ModernWarnings();
         $modifiers = new \MySqlMemory\Session\Parse\Modifiers($tokens, $session->settings()->release());

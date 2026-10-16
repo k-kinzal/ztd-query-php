@@ -83,6 +83,7 @@ final class Assigner
 
             return;
         }
+        (new ReplicationSettings())->timeout($definition->name, $scope, $checked, $this->context);
         foreach ($this->aliases($definition) as $alias) {
             if ($scope === Scope::Global) {
                 $this->variables->globals->set($alias, $checked);
