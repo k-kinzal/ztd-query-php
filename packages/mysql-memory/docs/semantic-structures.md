@@ -841,3 +841,12 @@ instances on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1 (20 comparisons). Negative control
 retain differences in identities, ports, elapsed times, other values, metadata,
 warnings, duplicate rows and termination. The original public-root counterexample
 now passes while both original observations remain available.
+
+At checkpoint `d4f6939be12`, the complete 245-root comparison with seed
+`contract-20261015` reports 99 matching successes, 146 matching SQL errors and
+zero differences, with no generation, profile or infrastructure failures. All
+roots are retained. This passes the sampled SQL-outcome comparison only. The
+146 rejections still require intentional-condition explanations, same-object
+state witnesses or repairs to intrinsic structural contradictions; they do not
+certify the constructible-structure gate. In particular, the privilege-level,
+row/VALUES and functional-index domains remain under investigation.
