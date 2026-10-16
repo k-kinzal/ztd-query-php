@@ -40,7 +40,7 @@ final class ProxiesTest extends TestCase
         self::assertSame([['GRANT USAGE ON *.* TO `u`@`%` WITH GRANT OPTION'], ['GRANT PROXY ON `root`@`%` TO `u`@`%`']], $result->rows);
     }
 
-    public function testGrantCreatesLegacyAccounts(): void
+    public function testGranteeCreatesLegacyAccounts(): void
     {
         $session = (new Instance('5.6.51'))->connect();
         $session->query("GRANT PROXY ON root TO u IDENTIFIED BY 'x'");
@@ -72,7 +72,7 @@ final class ProxiesTest extends TestCase
         self::assertSame([['GRANT USAGE ON *.* TO `u`@`%` WITH GRANT OPTION']], $result->rows);
     }
 
-    public function testRevokeWarnsOfAnAbsentGrantWithIfExists(): void
+    public function testWithdrawWarnsOfAnAbsentGrantWithIfExists(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE USER u');
@@ -129,6 +129,25 @@ final class ProxiesTest extends TestCase
         $session = (new Instance())->connect();
         $session->run("REVOKE IF EXISTS PROXY ON _sqlfaker_identifier @GLOBAL FROM _sfOK1KT @localhost , _sqlfaker_identifier @'a''b'");
         self::assertSame([1285, 1698], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testGrantReportsEveryMissingGranteeAndKeepsModernGrantsAtomic(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE USER a,b');
+        $session->run('GRANT PROXY ON root TO a,missing,b,other_missing WITH GRANT OPTION');
+        self::assertSame([1410, 1410], array_column($session->diagnostics->conditions, 1));
+        self::assertSame([], $session->instance->accounts->find(new Identity('a', '%'))?->grants->proxies);
+        self::assertSame([], $session->instance->accounts->find(new Identity('b', '%'))?->grants->proxies);
+    }
+
+    public function testRevokeKeepsPerRecipientWarningAndErrorOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE USER a,b');
+        $session->run('REVOKE IF EXISTS PROXY ON root FROM a,missing,b,other_missing');
+        self::assertSame(['Warning', 'Error', 'Warning', 'Error'], array_column($session->diagnostics->conditions, 0));
+        self::assertSame([1141, 1141, 1141, 1141], array_column($session->diagnostics->conditions, 1));
     }
 
 }

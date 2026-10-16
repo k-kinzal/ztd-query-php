@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Account;
 
+use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Catalog;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Error\Family\AccountError;
@@ -48,17 +49,40 @@ final class Proxies
         }
         $proxied = $statement->proxied instanceof CurrentUser ? new Identity('', '') : $proxied;
         $found = [];
-        if ((new Catalog($session->settings()->release()))->legacy()) {
-            $found = (new GrantCommand())->accounts($statement, $identities, $session);
-        } else {
-            foreach ($identities as $identity) {
-                $found[] = $session->instance->accounts->find($identity) ?? throw AccountError::CantCreateUserWithGrant->error();
+        $first = null;
+        $legacy = (new Catalog($session->settings()->release()))->legacy();
+        foreach ($identities as $index => $identity) {
+            try {
+                $found[] = $this->grantee($statement, $index, $identity, $session);
+            } catch (SqlError $error) {
+                if (!in_array($error->error, [AccountError::PasswordNoMatch, AccountError::CantCreateUserWithGrant], true)) {
+                    throw $error;
+                }
+                $session->diagnostics->error($error->getCode(), $error->getMessage());
+                $first ??= $error;
             }
         }
-        foreach ($found as $account) {
+        foreach ($first !== null && !$legacy ? [] : $found as $account) {
             $account->grants->proxies[$proxied->key()] = [$proxied, $statement->withGrantOption];
             $account->grants->global->grantOption = $account->grants->global->grantOption || $statement->withGrantOption;
         }
+        if ($first !== null) {
+            throw new SqlError($first->error, $first->getMessage(), $first, recorded: true);
+        }
+    }
+
+    /**
+     * Resolves one grantee, preserving legacy authentication and account creation.
+     *
+     * @throws SqlError When the account cannot be created or its authentication is invalid
+     */
+    public function grantee(GrantProxy $statement, int $index, Identity $identity, Session $session): Account
+    {
+        if ((new Catalog($session->settings()->release()))->legacy()) {
+            $single = new GrantProxy($statement->proxied, [$statement->grantees[$index]], $statement->withGrantOption);
+            return (new GrantCommand())->accounts($single, [$identity], $session)[0];
+        }
+        return $session->instance->accounts->find($identity) ?? throw AccountError::CantCreateUserWithGrant->error();
     }
 
     /**
@@ -77,17 +101,38 @@ final class Proxies
             $names->resolve($names->identity($user->user, $session), $session->diagnostics);
         }
         $proxied = $statement->proxied instanceof CurrentUser ? new Identity('', '') : $proxied;
-        $found = (new RevokeCommand())->found($names->users($statement->users), $statement->ignoreUnknownUser, $session, false);
-        foreach ($found as $account) {
-            if (!isset($account->grants->proxies[$proxied->key()])) {
-                $error = AccountError::NonexistingGrant->error($account->identity->user, $account->identity->host);
-                if (!$statement->ifExists) {
-                    throw $error;
+        $first = null;
+        foreach ($names->users($statement->users) as $user) {
+            try {
+                $found = (new RevokeCommand())->found([$user], $statement->ignoreUnknownUser, $session, false);
+                foreach ($found as $account) {
+                    $this->withdraw($account, $proxied, $statement->ifExists, $session);
                 }
-                $session->diagnostics->warning($error->error, $error->getMessage());
+            } catch (SqlError $error) {
+                $session->diagnostics->error($error->getCode(), $error->getMessage());
+                $first ??= $error;
             }
-            unset($account->grants->proxies[$proxied->key()]);
         }
+        if ($first !== null) {
+            throw new SqlError($first->error, $first->getMessage(), $first, recorded: true);
+        }
+    }
+
+    /**
+     * Removes one account's proxy or reports its absent grant.
+     *
+     * @throws SqlError When the account has no such grant and IF EXISTS is absent
+     */
+    public function withdraw(Account $account, Identity $proxied, bool $ifExists, Session $session): void
+    {
+        if (!isset($account->grants->proxies[$proxied->key()])) {
+            $error = AccountError::NonexistingGrant->error($account->identity->user, $account->identity->host);
+            if (!$ifExists) {
+                throw $error;
+            }
+            $session->diagnostics->warning($error->error, $error->getMessage());
+        }
+        unset($account->grants->proxies[$proxied->key()]);
     }
 
     /**

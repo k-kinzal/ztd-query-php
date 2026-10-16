@@ -42,7 +42,7 @@ use SqlSemantics\Statement\Operation;
  * warning under IF EXISTS); revoking a role that is not granted does nothing. REVOKE ALL, GRANT
  * OPTION keeps the roles and refuses an account that does not exist (ER_REVOKE_GRANTS). REVOKE
  * PROXY requires authority over the proxied account (see Proxies).
- * A failed privilege REVOKE keeps successful changes in 5.x and rolls them back in 8.x and later
+ * A failed privilege or proxy REVOKE keeps successful changes in 5.x and rolls them back in 8.x and later
  * (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html.
  *
@@ -77,7 +77,7 @@ final class RevokeCommand implements Command
                 default => $this->privileges($operation, $session),
             };
         } catch (SqlError $error) {
-            if (!$statement instanceof RevokePrivileges || !$session->settings()->legacy()) {
+            if ((!$statement instanceof RevokePrivileges && !$statement instanceof RevokeProxy) || !$session->settings()->legacy()) {
                 $accounts->restore($saved);
             }
             throw $error;
