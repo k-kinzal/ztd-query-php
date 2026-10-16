@@ -45,6 +45,19 @@ final class ServerCatalogTest extends TestCase
         self::assertNotContains(['SET_USER_ID', 'Server Admin', ''], ServerCatalog::of('8.4.7')->privileges);
     }
 
+    public function testOfRetainsLegacyPluginNamesInsteadOfModernReplacements(): void
+    {
+        $legacy = array_column(ServerCatalog::of('5.6.51')->plugins, 0);
+        $modern = array_column(ServerCatalog::of('8.4.7')->plugins, 0);
+
+        self::assertContains('mysql_old_password', $legacy);
+        self::assertContains('INNODB_SYS_TABLES', $legacy);
+        self::assertNotContains('caching_sha2_password', $legacy);
+        self::assertNotContains('TempTable', $legacy);
+        self::assertNotContains('mysql_old_password', $modern);
+        self::assertContains('caching_sha2_password', $modern);
+    }
+
     public function testOfKeepsOnlyLegacyStaticPrivileges(): void
     {
         $privileges = ServerCatalog::of('5.6.51')->privileges;

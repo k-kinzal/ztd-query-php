@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Operation;
  * library in its plugin directory, so nothing can be installed: a plugin name already taken is
  * ER_UDF_EXISTS, a library named with a path or with more than 64 characters is ER_UDF_NO_PATHS,
  * and any other library cannot be opened (ER_CANT_OPEN_LIBRARY). A built-in plugin cannot be uninstalled (ER_PLUGIN_IS_PERMANENT)
- * and another one does not exist. A component URN without a scheme is ER_COMPONENTS_NO_SCHEME, a
+ * and another one does not exist. MySQL 5.6 warns about a built-in plugin and then reports it missing. A component URN without a scheme is ER_COMPONENTS_NO_SCHEME, a
  * scheme other than file is ER_COMPONENTS_NO_SCHEME_SERVICE, and a file:// URN names the library
  * of its path with `.so` added, which cannot be opened either. UNINSTALL COMPONENT warns that each
  * component was not loaded by the persistent loader, then fails for the first (verified on a
@@ -65,7 +65,7 @@ final class PluginCommand implements Command
             $this->loadable($statement, $session);
         }
         if ($statement instanceof InstallPlugin) {
-            if ($this->builtIn($statement->plugin->value)) {
+            if ($this->builtIn($statement->plugin->value, $session->instance->version)) {
                 throw AdministrationError::FunctionExists->error($statement->plugin->value);
             }
             $library = (new Literals())->bytes($statement->library);
@@ -75,7 +75,13 @@ final class PluginCommand implements Command
             throw $this->unopened($directory, $library, $session->settings()->legacy() ? '2' : '11');
         }
         if ($statement instanceof UninstallPlugin) {
-            throw $this->builtIn($statement->plugin->value) ? AdministrationError::PermanentPlugin->error() : ProgramError::RoutineMissing->error('PLUGIN', $statement->plugin->value);
+            if ($this->builtIn($statement->plugin->value, $session->instance->version)) {
+                if (!str_starts_with($session->instance->version, '5.6.')) {
+                    throw AdministrationError::PermanentPlugin->error();
+                }
+                $session->diagnostics->warning(AdministrationError::PermanentPlugin, AdministrationError::PermanentPlugin->message());
+            }
+            throw ProgramError::RoutineMissing->error('PLUGIN', $statement->plugin->value);
         }
         if ($statement instanceof InstallComponent) {
             foreach ($statement->components as $component) {
@@ -117,9 +123,9 @@ final class PluginCommand implements Command
     /**
      * Tells whether a plugin name, without regard to letter case, is that of a built-in plugin.
      */
-    public function builtIn(string $name): bool
+    public function builtIn(string $name, string $version = '8.4.7'): bool
     {
-        foreach (ServerCatalog::shared()->plugins as [$plugin]) {
+        foreach (ServerCatalog::of($version)->plugins as [$plugin]) {
             if (strcasecmp($plugin, $name) === 0) {
                 return true;
             }

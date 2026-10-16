@@ -765,3 +765,12 @@ separate five-release matrix checks 220 input observations, including long
 identifiers, duplicate aliases, deprecated modes and later syntax errors.
 These histories establish the database/table state transitions for those
 structures, not the remaining whole-model construction gate.
+
+SHOW PLUGINS now projects the same release-specific catalog as
+INFORMATION_SCHEMA.PLUGINS. Installation and removal resolve built-in identities
+against that catalog. Native checks compare both views and quoted removal
+requests on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1. MySQL 5.6 reports warning 1619
+before error 1305 for a built-in removal; later releases report error 1619.
+The original generated SHOW PLUGINS structure now agrees, including metadata,
+without an exception contract. This repairs a consumer catalog mismatch rather
+than establishing the remaining whole-model construction invariants.

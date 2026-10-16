@@ -7,8 +7,8 @@ namespace MySqlMemory\Command\Show\Server;
 /**
  * The storage engines, plugins, privileges, character set descriptions and collation sort lengths of the emulated server.
  *
- * They are those of a MySQL 8.4.7 server without extra plugins, as resources/server.php holds
- * them. A storage engine is named by its name or one of its aliases, without regard to case;
+ * Base values come from a MySQL 8.4.7 server without extra plugins, as resources/server.php holds
+ * them; of() projects plugins from the configured release catalog. A storage engine is named by its name or one of its aliases, without regard to case;
  * one whose support is NO is disabled and unknown to the statements that name an engine.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/storage-engines.html,
  * https://dev.mysql.com/doc/refman/8.4/en/show-plugins.html,
@@ -51,10 +51,10 @@ final class ServerCatalog
     }
 
     /**
-     * Answers the catalog of a release: that of 8.4.7, with the plugins and privileges the release has.
+     * Answers the release catalog, projecting plugins from the same source as INFORMATION_SCHEMA.
      *
-     * The mysql_native_password plugin is active, and listed second, before MySQL 8.4, which disables it by default, and
-     * gone from 9.0, which removed it; a MySQL 8.0 server lists the privileges
+     * The release-specific plugin names, order and status are retained. MySQL 8.4
+     * disables mysql_native_password by default and 9.0 removes it. A MySQL 8.0 server lists the privileges
      * resources/privileges-8.0.php holds (verified on live 8.0, 8.4 and 9.1 servers).
      * Source: https://dev.mysql.com/doc/relnotes/mysql/8.4/en/news-8-4-0.html,
      * https://dev.mysql.com/doc/relnotes/mysql/9.0/en/news-9-0-0.html.
@@ -64,18 +64,8 @@ final class ServerCatalog
     public static function of(string $version): self
     {
         $shared = self::shared();
-        $before = static fn (string $first): bool => version_compare($version, $first, '<');
-        if (!$before('8.4.0') && $before('9.0.0')) {
-            return $shared;
-        }
-        $plugins = [];
-        foreach ($shared->plugins as $plugin) {
-            if ($plugin[0] !== 'mysql_native_password') {
-                $plugins[] = $plugin;
-            } elseif ($before('8.4.0')) {
-                array_splice($plugins, 1, 0, [[$plugin[0], 'ACTIVE', $plugin[2], $plugin[3], $plugin[4]]]);
-            }
-        }
+        $release = \SqlSemantics\Contract\GrammarRelease::tryFrom('mysql-' . $version) ?? \SqlSemantics\Contract\GrammarRelease::MySql847;
+        $plugins = array_map(static fn (array $plugin): array => [$plugin[0], $plugin[2], $plugin[3], $plugin[5], $plugin[9]], \MySqlMemory\System\Server\ServerTables::of($release)->plugins);
         $privileges = $shared->privileges;
         if (str_starts_with($version, '5.')) {
             $privileges = [];

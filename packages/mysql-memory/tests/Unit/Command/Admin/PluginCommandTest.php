@@ -134,6 +134,17 @@ final class PluginCommandTest extends TestCase
         $session->query('UNINSTALL PLUGIN mysql_native_password');
     }
 
+    public function testExecutePreservesLegacyBuiltinWarningsBeforeTheMissingPluginError(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $node = new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin(new \SqlSemantics\Statement\Identifier\Name('mysql_old_password'));
+        $session->text = 'unrelated invalid input';
+        $result = (new \Fuzz\Structure\Audit\Memory())->observe($session, $node);
+
+        self::assertSame([1305, '42000', 'PLUGIN mysql_old_password does not exist'], $result['error'] ?? null);
+        self::assertSame([['Warning', '1619', 'Built-in plugins cannot be deleted'], ['Error', '1305', 'PLUGIN mysql_old_password does not exist']], $result['warnings']);
+    }
+
     public function testExecuteCannotUninstallAMissingPlugin(): void
     {
         $session = (new Instance())->connect();
@@ -173,6 +184,16 @@ final class PluginCommandTest extends TestCase
     public function testBuiltInIgnoresLetterCase(): void
     {
         self::assertSame([true, false], [(new PluginCommand())->builtIn('INNODB'), (new PluginCommand())->builtIn('p')]);
+    }
+
+    public function testBuiltInUsesTheConfiguredRelease(): void
+    {
+        $command = new PluginCommand();
+
+        self::assertTrue($command->builtIn('mysql_old_password', '5.6.51'));
+        self::assertFalse($command->builtIn('mysql_old_password', '5.7.44'));
+        self::assertFalse($command->builtIn('caching_sha2_password', '5.6.51'));
+        self::assertFalse($command->builtIn('mysql_native_password', '9.1.0'));
     }
 
     public function testLoadRefusesASchemeWithoutLoader(): void
