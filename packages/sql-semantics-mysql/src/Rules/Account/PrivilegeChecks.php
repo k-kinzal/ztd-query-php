@@ -39,7 +39,8 @@ use SqlSemantics\Statement\Type\Known;
  * (ER_ILLEGAL_GRANT_FOR_TABLE otherwise); a column list fits a table only
  * (ER_ILLEGAL_GRANT_FOR_TABLE, or a syntax error after FUNCTION or
  * PROCEDURE); FUNCTION and PROCEDURE need a routine name
- * (ER_ILLEGAL_GRANT_FOR_TABLE); a dynamic privilege fits the global level
+ * (ER_ILLEGAL_GRANT_FOR_TABLE), except that global REVOKE ALL in MySQL 8.0
+ * and later ignores the optional FUNCTION or PROCEDURE kind; a dynamic privilege fits the global level
  * only (ER_ILLEGAL_PRIVILEGE_LEVEL, a warning under REVOKE IF EXISTS). ALL
  * fits every level. Role and privilege operands have separate public types.
  * Invalid list operands are refused during lowering before a statement can
@@ -94,6 +95,10 @@ final class PrivilegeChecks
      */
     public function revoke(Derivation $derivation, array $privileges, ObjectKind $kind, PrivilegeLevel $level, bool $ifExists): void
     {
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($level instanceof GlobalLevel && ($privileges[0] ?? null) instanceof AllPrivileges && !$legacy) {
+            return;
+        }
         $this->level($derivation, $privileges, $kind, $level, $ifExists);
         if ($level instanceof ObjectLevel && $kind === ObjectKind::Table) {
             $derivation->target($level, $this->target($derivation, $level, true));

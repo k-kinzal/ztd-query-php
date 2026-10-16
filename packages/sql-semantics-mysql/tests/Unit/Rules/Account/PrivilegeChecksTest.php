@@ -71,4 +71,26 @@ final class PrivilegeChecksTest extends TestCase
     {
         self::assertSame(['GRANT OPTION', 'r@h'], [(new PrivilegeChecks())->describe(new StaticPrivilege(PrivilegeKind::GrantOption)), (new PrivilegeChecks())->describe(new GrantedRole(new AccountName(new Name('r'), new Name('h'))))]);
     }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerGlobalAllReleases(): iterable
+    {
+        yield '5.6' => ['mysql-5.6.51', 1];
+        yield '5.7' => ['mysql-5.7.44', 1];
+        yield '8.0' => ['mysql-8.0.44', 0];
+        yield '8.4' => ['mysql-8.4.7', 0];
+        yield '9.1' => ['mysql-9.1.0', 0];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerGlobalAllReleases')]
+    public function testRevokeGlobalAllHasNoRoutineTargetInModernReleases(string $release, int $count): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $diagnostics = $semantics->analyze('REVOKE ALL ON FUNCTION *.* FROM u')->facts->diagnostics;
+        self::assertCount($count, $diagnostics, $release);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $semantics->analyze('GRANT ALL ON FUNCTION *.* TO u');
+    }
 }
