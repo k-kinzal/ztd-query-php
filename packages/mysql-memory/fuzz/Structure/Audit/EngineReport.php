@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Fuzz\Structure\Audit;
 
 use Fuzz\Target\EngineReports;
+use Fuzz\Target\MutexReports;
 use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowEngineMutex;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowEngineStatus;
 use SqlSemantics\Statement\Scalar;
 
@@ -22,7 +24,11 @@ final class EngineReport
      */
     public function comparable(Statement|Scalar $node, array $observation, bool $memory): array
     {
-        if (!$node instanceof ShowEngineStatus || !in_array(strtoupper($node->engine->value ?? 'ALL'), ['ALL', 'INNODB', 'PERFORMANCE_SCHEMA'], true)) {
+        if (!$node instanceof ShowEngineStatus && !$node instanceof ShowEngineMutex) {
+            return $observation;
+        }
+        $mutex = $node instanceof ShowEngineMutex;
+        if (!in_array(strtoupper($node->engine->value ?? 'ALL'), $mutex ? ['ALL', 'INNODB'] : ['ALL', 'INNODB', 'PERFORMANCE_SCHEMA'], true)) {
             return $observation;
         }
         $results = $observation['results'] ?? null;
@@ -39,12 +45,12 @@ final class EngineReport
                 return $observation;
             }
         }
-        if ($memory ? $rows !== [] : !(new EngineReports())->native($rows)) {
+        if ($memory ? $rows !== [] : !($mutex ? (new MutexReports())->native($rows) : (new EngineReports())->native($rows))) {
             return $observation;
         }
         $results[0]['rows'] = [];
         $observation['results'] = $results;
-        $observation['contracts'] = [EngineReports::CONTRACT];
+        $observation['contracts'] = [$mutex ? MutexReports::CONTRACT : EngineReports::CONTRACT];
 
         return $observation;
     }

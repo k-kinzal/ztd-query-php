@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Fuzz;
 
+use Fuzz\Target\MutexReports;
 use Fuzz\Target\Servers;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -31,7 +32,7 @@ final class MutexBaselineTest extends TestCase
     }
 
     #[DataProvider('providerStatements')]
-    public function testObservationUsesResetCountersWithoutReplacingRows(string $sql): void
+    public function testObservationPreservesSettingsAndContractsPhysicalLatchReports(string $sql): void
     {
         [$target, , $server] = (new Servers())->start(true, true);
         $first = $target->compare($sql);
@@ -40,9 +41,9 @@ final class MutexBaselineTest extends TestCase
 
         self::assertFalse($first->volatile, (string) $first->referenceDifference);
         self::assertNull($first->difference, (string) $first->difference);
-        self::assertSame([], $first->contracts);
+        self::assertSame(MutexReports::handles($sql) ? [MutexReports::CONTRACT] : [], $first->contracts);
         self::assertFalse($again->volatile, (string) $again->referenceDifference);
         self::assertNull($again->difference, (string) $again->difference);
-        self::assertSame([], $again->contracts);
+        self::assertSame(MutexReports::handles($sql) ? [MutexReports::CONTRACT] : [], $again->contracts);
     }
 }

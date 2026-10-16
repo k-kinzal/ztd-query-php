@@ -33,9 +33,10 @@ final class EngineReports
      *
      * @param array<string, mixed> $observation The complete PDO observation
      * @param bool $memory Whether the empty memory report is required
+     * @param bool $mutex Whether to validate an InnoDB physical latch report instead of engine status
      * @return array<string, mixed> The observation with an explicit comparison contract, or unchanged on refusal
      */
-    public function comparable(array $observation, bool $memory): array
+    public function comparable(array $observation, bool $memory, bool $mutex = false): array
     {
         $results = $observation['results'] ?? null;
         if (isset($observation['error']) || !is_array($results) || count($results) !== 1 || !is_array($results[0] ?? null)) {
@@ -52,12 +53,12 @@ final class EngineReports
                 return $observation;
             }
         }
-        if ($memory ? $rows !== [] : !$this->native($rows)) {
+        if ($memory ? $rows !== [] : !($mutex ? (new MutexReports())->native($rows) : $this->native($rows))) {
             return $observation;
         }
         $result['rows'] = [];
         $observation['results'] = [$result];
-        $observation['contracts'] = [self::CONTRACT];
+        $observation['contracts'] = [$mutex ? MutexReports::CONTRACT : self::CONTRACT];
 
         return $observation;
     }

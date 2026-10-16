@@ -261,6 +261,7 @@ final class Differential
         $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
         $observation = $observer->observe($pdo, $sql, $ordered);
         $observation = EngineReports::handles($sql) ? (new EngineReports())->comparable($observation, $dsn === $this->memory) : $observation;
+        $observation = MutexReports::handles($sql) ? (new EngineReports())->comparable($observation, $dsn === $this->memory, true) : $observation;
         $observation = $identities?->comparable($pdo, $observation) ?? $observation;
         $observation = $processes?->comparable($pdo, $observation) ?? $observation;
         $observation = $status?->comparable($observation, $dsn === $this->memory) ?? $observation;
