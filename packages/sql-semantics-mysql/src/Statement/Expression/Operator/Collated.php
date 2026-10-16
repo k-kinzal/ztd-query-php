@@ -41,6 +41,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * statement; its ParseFailure notice follows the warnings of the operand,
  * as the server parses the operand first. An empty name is instead resolved
  * after the operand (verified on live 8.0, 8.4 and 9.1 servers).
+ * MySQL 5.6 and 5.7 defer expression collation lookup in stored instructions
+ * until invocation; the retained name is resolved when that instruction is derived.
  * Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-collate.html.
  * Status: Implemented.
@@ -70,7 +72,8 @@ final class Collated implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $known = Collation::named($this->collation->value) !== null;
-        $problem = $known ? null : new UnknownCollation($this->collation->value);
+        $deferred = $derivation->inProgram() && in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $problem = $known || $deferred ? null : new UnknownCollation($this->collation->value);
         if ($problem !== null && $this->collation->value !== '') {
             $derivation->report($problem);
         }

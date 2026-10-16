@@ -82,6 +82,8 @@ final class Derivation
 
     private int $programs = 0;
 
+    private ?Statement $instruction = null;
+
     /**
      * @var array<int, array{list<Field>, bool}> The columns a statement writes the rows of a query into, and whether an empty row writes the defaults, by the object id of the query
      */
@@ -212,11 +214,14 @@ final class Derivation
      */
     public function program(Statement $node, Environment $environment): void
     {
+        $outer = $this->instruction;
+        $this->instruction = $node;
         $this->programs++;
         try {
             $this->inspected($node, $environment);
         } finally {
             $this->programs--;
+            $this->instruction = $outer;
         }
     }
 
@@ -388,7 +393,7 @@ final class Derivation
      */
     public function warn(Warning $warning, ?Node $at = null, bool $after = true): void
     {
-        $this->warnings->append($warning, $at ?? $this->reading, $after);
+        $this->warnings->append($warning, $at ?? $this->reading, $after, $this->instruction);
     }
 
     /**
@@ -417,6 +422,6 @@ final class Derivation
      */
     public function facts(): Facts
     {
-        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->diagnostics, $this->readingWarnings());
+        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->diagnostics, $this->readingWarnings(), $this->warnings->instructions());
     }
 }

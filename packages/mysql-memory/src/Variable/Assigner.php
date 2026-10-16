@@ -106,7 +106,9 @@ final class Assigner
     }
 
     /**
-     * Records the warning MySQL 5.6 and 5.7 raise as they check the assignment of a variable they deprecate (see DeprecatedVariables), before the value is checked (verified on live 5.6.51 and 5.7.44 servers).
+     * Records assignment deprecations before the value is checked.
+     * Database encoding assignments warn from MySQL 5.7 onward; reading their
+     * values does not warn (verified on live 5.6, 5.7, 8.0, 8.4 and 9.1 servers).
      */
     public function retired(string $name): void
     {
@@ -114,6 +116,9 @@ final class Assigner
         $deprecated = $definition === null ? null : (new \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\DeprecatedVariables())->warning($definition->name, $this->context->modes->release);
         if ($deprecated !== null) {
             $this->context->diagnostics->warning(1287, $deprecated);
+        }
+        if ($definition !== null && in_array($definition->name, ['character_set_database', 'collation_database'], true) && $this->context->modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $this->context->diagnostics->warning(1681, "Updating '" . $definition->name . "' is deprecated. It will be made read-only in a future release.");
         }
     }
 

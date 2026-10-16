@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * `CONVERT TO CHARACTER SET name | DEFAULT [COLLATE name]`: a request to convert every character column and the table default.
  *
  * Mirrors PT_alter_table_convert_to_charset. DEFAULT means the character
- * set of the database. CHARACTER SET and CHARSET are synonyms; CHARACTER
+ * set selected by the session variable character_set_database. CHARACTER SET and CHARSET are synonyms; CHARACTER
  * SET is written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-character-set.
  *
@@ -66,7 +66,8 @@ final class ConvertCharset implements AlterCommand
      */
     public function deriveCollation(Derivation $derivation, \SqlSemantics\Statement\Node $owner): void
     {
-        $charset = $this->charset->name === null ? null : \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($this->charset->name->value);
+        $settings = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context);
+        $charset = $this->charset->name === null ? ($settings->databaseCollation ?? $settings->schema($derivation->context->searchPath[0]->value))->charset : \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($this->charset->name->value);
         $collation = $this->collation?->name === null ? null : \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::forName($this->collation->name->value, $derivation->context->profile->grammar);
         if ($charset !== null && $collation !== null && $charset !== $collation->charset) {
             $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch($collation->name, $charset->name);

@@ -79,6 +79,7 @@
         "queries": "array",
         "relations": "array",
         "scalars": "array",
+        "warningInstructions": "array",
         "warnings": "array"
     },
     "SqlSemantics\\Statement\\Fact\\QueryFact": {

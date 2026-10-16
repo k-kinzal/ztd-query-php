@@ -30,7 +30,7 @@ final class WarningsTest extends TestCase
         self::assertSame([$first, $second], $warnings->all());
     }
 
-    public function testOrderPreservesOutsideAndUnlocatedPositions(): void
+    public function testInstructionsKeepTheirOwnersWhenOrderingOutsideAndUnlocatedPositions(): void
     {
         $scope = new IntegerLiteral('0');
         $early = new IntegerLiteral('1');
@@ -40,8 +40,9 @@ final class WarningsTest extends TestCase
         $two = self::createStub(Warning::class);
         $other = self::createStub(Warning::class);
         $unlocated = self::createStub(Warning::class);
+        $instruction = self::createStub(\SqlSemantics\Statement\Statement::class);
         $warnings = new Warnings(new SourceMap([new Origin($scope, 10, 50), new Origin($early, 20, 1), new Origin($late, 40, 1), new Origin($outside, 80, 1)]));
-        $warnings->append($two, $late);
+        $warnings->append($two, $late, instruction: $instruction);
         $warnings->append($unlocated, null);
         $warnings->append($other, $outside);
         $warnings->append($one, $early);
@@ -49,6 +50,7 @@ final class WarningsTest extends TestCase
         $warnings->order($scope);
 
         self::assertSame([$one, $unlocated, $other, $two], $warnings->all());
+        self::assertSame([[$two, $instruction]], $warnings->instructions());
     }
 
     public function testOrderKeepsTiesStableAndHonorsPrefixBoundaries(): void

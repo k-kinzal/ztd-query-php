@@ -28,6 +28,25 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 #[Small]
 final class VariablesTest extends TestCase
 {
+    public function testDatabaseCollationUpdatesBothDatabaseEncodingVariables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->variables->databaseCollation(Collation::known('latin1_bin'));
+
+        self::assertSame(['latin1', 'latin1_bin'], [$session->variables->read('character_set_database'), $session->variables->read('collation_database')]);
+        self::assertSame('utf8mb4_0900_ai_ci', $session->variables->read('collation_connection'));
+    }
+
+    public function testSetKeepsTheDatabaseCharsetAndCollationTogether(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET character_set_database=latin1');
+        self::assertSame('latin1_swedish_ci', $session->variables->read('collation_database'));
+        $session->query('SET collation_database=utf8mb4_bin');
+
+        self::assertSame('utf8mb4', $session->variables->read('character_set_database'));
+    }
+
     public function testResultCollationRetainsNamesUntilTheResultCharacterSetChanges(): void
     {
         $session = (new Instance())->connect();

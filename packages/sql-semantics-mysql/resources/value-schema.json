@@ -3173,6 +3173,7 @@
         "blockEncryptionMode": "string",
         "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
         "connection": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
+        "databaseCollation": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
         "derivedMerge": "bool",
         "divPrecisionIncrement": "int",
         "explicitDefaultsForTimestamp": "?bool",

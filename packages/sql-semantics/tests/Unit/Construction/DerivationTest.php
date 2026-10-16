@@ -354,6 +354,22 @@ final class DerivationTest extends TestCase
         self::assertFalse($derivation->inProgram());
     }
 
+    public function testStoredInstructionNoticesKeepTheirOwnersWithoutSourceLocations(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
+        $parsed = $semantics->analyze('CREATE PROCEDURE p() BEGIN ALTER TABLE t CONVERT TO CHARSET utf8mb4 COLLATE latin1_bin; ALTER TABLE t CONVERT TO CHARSET missing; END');
+        $operation = new \SqlSemantics\Statement\Operation($parsed->context, $parsed->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Block::class, $operation->statement->body);
+        $instructions = $operation->statement->body->statements;
+        $warnings = $operation->facts->warnings;
+
+        self::assertSame([], $operation->sources->origins);
+        self::assertCount(2, $warnings);
+        self::assertSame($instructions, array_map($operation->facts->warningInstruction(...), $warnings));
+        self::assertSame(array_map(static fn ($warning): string => $warning->message(), $parsed->facts->warnings), array_map(static fn ($warning): string => $warning->message(), $warnings));
+    }
+
     public function testWritesRecordsTheColumnsTheRowsOfAQueryAreWrittenTo(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));

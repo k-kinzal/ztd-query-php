@@ -7,6 +7,7 @@ namespace SqlSemantics\Construction;
 use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Source\SourceMap;
+use SqlSemantics\Statement\Statement;
 
 /**
  * Collects derivation warnings with the input boundaries that order parsing notices.
@@ -19,7 +20,7 @@ use SqlSemantics\Statement\Source\SourceMap;
 final class Warnings
 {
     /**
-     * @var list<array{Warning, int|null}> Recorded warnings and their input byte boundaries
+     * @var list<array{Warning, int|null, Statement|null}> Warnings, input boundaries and enclosing stored instructions
      */
     private array $entries = [];
 
@@ -33,10 +34,27 @@ final class Warnings
     /**
      * Records a warning before or after its occurrence, when a location is available.
      */
-    public function append(Warning $warning, ?Node $at, bool $after = true): void
+    public function append(Warning $warning, ?Node $at, bool $after = true, ?Statement $instruction = null): void
     {
         $origin = $at === null ? null : $this->sources->of($at);
-        $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0)];
+        $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0), $instruction];
+    }
+
+    /**
+     * Keeps instruction ownership independent of input locations and warning order.
+     *
+     * @return list<array{Warning, Statement}>
+     */
+    public function instructions(): array
+    {
+        $instructions = [];
+        foreach ($this->entries as [$warning, , $instruction]) {
+            if ($instruction !== null) {
+                $instructions[] = [$warning, $instruction];
+            }
+        }
+
+        return $instructions;
     }
 
     /**

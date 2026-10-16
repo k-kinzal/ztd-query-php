@@ -86,6 +86,7 @@ final class DatabaseCommand implements Command
         $dictionary->cache->close($name);
         if ($session->variables->database === $name) {
             $session->variables->database = '';
+            $session->variables->databaseCollation(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known((string) $session->variables->read('collation_server')));
         }
 
         return new Completion(count($schema->tables));

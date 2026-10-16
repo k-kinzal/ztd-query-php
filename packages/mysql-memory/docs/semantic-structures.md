@@ -1190,3 +1190,19 @@ Native histories exercise absent and existing events, valid comment changes,
 functions, procedures, triggers, event bodies and unreachable instructions. The
 integer-token and event-change checks are constructor guarantees, not an execution
 eligibility decision supplied by SQL Semantics.
+
+DEFAULT character conversion uses the session's database encoding, which may
+differ from the target table's schema and may be changed by SET. Resolution
+settings retain that collation explicitly. A same-object conversion history
+compares missing tables, table creation, USE and encoding assignments against
+MySQL 5.6, 5.7, 8.0, 8.4 and 9.1. Routine invocation temporarily supplies its
+database encoding and restores the caller's values afterwards.
+
+Semantic facts associate notices with their owning stored instruction. This
+association survives direct construction without source locations. A syntax
+failure in a later instruction does not suppress an earlier instruction's
+contextualization; a failure within the same instruction does. Legacy expression
+collation names are resolved when the stored instruction is invoked. Native
+histories compare creation and invocation, including instructions in an
+unreachable branch. These checks do not replace the whole-model audit or establish
+that every remaining expression role is coherent.

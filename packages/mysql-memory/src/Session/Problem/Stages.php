@@ -56,18 +56,26 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 final class Stages
 {
     /**
-     * Retains modern contextualization conditions only after successful grammar interpretation.
+     * Retains modern contextualization conditions after grammar interpretation of their instruction.
      * Legacy conditions retain their existing order while grammar actions are completed.
+     * A later stored instruction cannot prevent an earlier instruction from contextualizing.
      *
      * @param array<int, Warning> $warnings The semantic notices in written order
      * @return array<int, Warning> The conditions from stages that the input reaches
      */
-    public static function grammar(array $warnings, bool $legacy): array
+    public static function grammar(array $warnings, bool $legacy, ?\SqlSemantics\Statement\Fact\Facts $facts = null): array
     {
-        if ($legacy || array_filter($warnings, static fn (Warning $warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) === []) {
+        if ($legacy) {
             return $warnings;
         }
-        return array_filter($warnings, static fn (Warning $warning): bool => match (true) {
+        $failed = [];
+        foreach ($warnings as $warning) {
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) {
+                $instruction = $facts?->warningInstruction($warning);
+                $failed[$instruction === null ? 0 : spl_object_id($instruction)] = true;
+            }
+        }
+        return array_filter($warnings, static fn (Warning $warning): bool => !isset($failed[($instruction = $facts?->warningInstruction($warning)) === null ? 0 : spl_object_id($instruction)]) || match (true) {
             $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure => $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax,
             $warning instanceof Deprecation => $warning->phase() === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax,
             default => true,

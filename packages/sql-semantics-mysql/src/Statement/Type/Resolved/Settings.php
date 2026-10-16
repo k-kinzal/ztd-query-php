@@ -79,6 +79,7 @@ final class Settings implements Session
      * @param bool $allowInvalidDates Whether bounded dates need not exist in the calendar
      * @param bool|null $explicitDefaultsForTimestamp Whether unqualified TIMESTAMP columns are nullable; null when the session does not say
      * @param array<array-key, QualifiedName> $handlers The table names behind open handler aliases
+     * @param Collation|null $databaseCollation The session collation_database, which SET may override independently of schema defaults
      */
     public function __construct(
         public readonly Collation $connection,
@@ -101,6 +102,7 @@ final class Settings implements Session
         public readonly bool $noZeroInDate = true,
         public readonly bool $allowInvalidDates = false,
         array $handlers = [],
+        public readonly ?Collation $databaseCollation = null,
     ) {
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
         $routines = [];

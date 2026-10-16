@@ -104,7 +104,7 @@ final class AlterTableCommand implements Command
         $table = $this->table($session, $schema, $name->name->value);
         $this->resolve($operation, $session);
         $layout = TableLayout::of($table->definition);
-        $change = new TableChange($layout, $table->definition->name, $database, $session->settings()->release(), $session->instance->dictionary->schema($schema)?->collation);
+        $change = new TableChange($layout, $table->definition->name, $database, $session->settings()->release(), (string) $session->variables->read('collation_database'));
         $change->apply($commands);
         $storage = new StorageOptions();
         $storage->attributes($statement, $storage->engine($layout->statement(), $session->variables));

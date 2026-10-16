@@ -24,6 +24,20 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class FactsTest extends TestCase
 {
+    public function testWarningInstructionDistinguishesAnInstructionFromAnOuterNotice(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
+        $parsed = $semantics->analyze('CREATE PROCEDURE p() BEGIN SELECT FOUND_ROWS(); END');
+        $facts = $parsed->facts;
+        $root = $semantics->analyze('SELECT FOUND_ROWS()')->facts;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $parsed->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Block::class, $parsed->statement->body);
+        self::assertSame($parsed->statement->body->statements[0], $facts->warningInstruction($facts->warnings[0]));
+        self::assertNull($root->warningInstruction($root->warnings[0]));
+        self::assertNull($facts->warningInstruction($root->warnings[0]));
+    }
+
     public function testIndexKeysPairsByNodeIdentity(): void
     {
         $first = new IntegerLiteral('1');

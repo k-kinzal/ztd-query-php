@@ -211,6 +211,21 @@ final class Variables
             return;
         }
         $this->session[$definition->name] = $value;
+        if ($definition->name === 'character_set_database' && is_string($value)) {
+            $this->databaseCollation(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known($value)->defaultCollation(\SqlSemantics\Contract\GrammarRelease::from('mysql-' . $this->instance->version)));
+        } elseif ($definition->name === 'collation_database' && is_string($value)) {
+            $this->databaseCollation(Collation::known($value));
+        }
+    }
+
+    /**
+     * Keeps character_set_database and collation_database as one session encoding.
+     */
+    public function databaseCollation(Collation $collation): void
+    {
+        $release = \SqlSemantics\Contract\GrammarRelease::from('mysql-' . $this->instance->version);
+        $this->session['character_set_database'] = $collation->charset->nameIn($release);
+        $this->session['collation_database'] = $collation->nameIn($release);
     }
 
     /**

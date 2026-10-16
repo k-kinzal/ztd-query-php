@@ -63,6 +63,9 @@ final class AlterDatabaseCommand implements Command
         $session->transaction->commit();
         if ($chosen !== null) {
             $schema->collation = $chosen->name;
+            if ($session->variables->database === $schema->name) {
+                $session->variables->databaseCollation($chosen);
+            }
         }
 
         foreach ($statement->options as $option) {

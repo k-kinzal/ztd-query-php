@@ -419,7 +419,6 @@ final class TableChange
      */
     public function convert(ConvertCharset $command): void
     {
-        $this->copies = $this->copies || in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $default = Collation::forName($this->defaultCollation ?? '', $this->release) ?? Charset::named('utf8mb4')?->defaultCollation($this->release);
         $charset = $command->charset->name === null ? $default?->charset : Charset::named($command->charset->name->value);
         $collation = $command->collation?->name === null ? $charset?->defaultCollation($this->release) : Collation::named($command->collation->name->value);

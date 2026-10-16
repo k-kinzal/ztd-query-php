@@ -15,6 +15,15 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Command\ConvertCharset;
 #[Medium]
 final class ConvertCharsetTest extends TestCase
 {
+    public function testDeriveCollationUsesTheDatabaseSessionEncodingForDefault(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), databaseCollation: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_bin'));
+        $operation = $semantics->analyze('ALTER TABLE other.t CONVERT TO CHARSET DEFAULT COLLATE utf8mb4_bin', $semantics->context([], true, null, $settings));
+
+        self::assertSame("COLLATION 'utf8mb4_bin' is not valid for CHARACTER SET 'latin1'", $operation->facts->warnings[0]->message());
+    }
+
     public function testDeriveCommandAcceptsKnownCharacterSets(): void
     {
         $semantics = new Semantics(Dialect::MySql);

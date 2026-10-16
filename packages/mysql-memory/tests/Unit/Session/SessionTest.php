@@ -377,6 +377,18 @@ final class SessionTest extends TestCase
         self::assertSame([['d']], $result->rows);
     }
 
+    public function testResolutionReceivesTheDatabaseEncodingAfterSelectionAndAssignment(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d CHARACTER SET latin1; USE d');
+        self::assertSame('latin1_swedish_ci', $session->resolution()->databaseCollation?->name);
+        $session->query('SET collation_database=utf8mb4_bin');
+        self::assertSame('utf8mb4_bin', $session->resolution()->databaseCollation->name);
+        $session->use('d');
+
+        self::assertSame('latin1_swedish_ci', $session->resolution()->databaseCollation?->name);
+    }
+
     public function testUseRefusesAnUnknownDatabase(): void
     {
         $session = (new Instance())->connect();

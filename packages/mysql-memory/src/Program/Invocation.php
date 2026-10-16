@@ -62,6 +62,10 @@ final class Invocation
         $saved = [$session->program, $variables->database, $variables->session];
         $session->program = $activation;
         $variables->database = $database;
+        $collation = $session->instance->dictionary->schema($database)?->collation;
+        if ($collation !== null) {
+            $variables->databaseCollation(Collation::known($collation));
+        }
         $variables->session['sql_mode'] = $mode;
         try {
             return (new Interpreter($session, $activation))->statement($body);
@@ -72,10 +76,12 @@ final class Invocation
             }
             $session->program = $saved[0];
             $variables->database = $saved[1];
-            if (array_key_exists('sql_mode', $saved[2])) {
-                $variables->session['sql_mode'] = $saved[2]['sql_mode'];
-            } else {
-                unset($variables->session['sql_mode']);
+            foreach (['sql_mode', 'character_set_database', 'collation_database'] as $name) {
+                if (array_key_exists($name, $saved[2])) {
+                    $variables->session[$name] = $saved[2][$name];
+                } else {
+                    unset($variables->session[$name]);
+                }
             }
         }
     }

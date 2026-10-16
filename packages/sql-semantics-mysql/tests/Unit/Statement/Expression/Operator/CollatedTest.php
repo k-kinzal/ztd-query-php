@@ -26,6 +26,20 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class CollatedTest extends TestCase
 {
+    public function testDeriveScalarDefersLegacyProgramNameLookupUntilTheInstructionIsDerived(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44');
+        $definition = $semantics->analyze("CREATE PROCEDURE p() SELECT 'x' COLLATE missing");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $definition->statement);
+        self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $definition->statement->body);
+        $instruction = new \SqlSemantics\Statement\Operation($definition->context, $definition->statement->body);
+
+        self::assertSame([], $definition->facts->diagnostics);
+        self::assertSame([], $definition->facts->warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $instruction->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $instruction->facts->warnings[0]);
+    }
+
     public function testDeriveScalarMakesCollatedResultsNullableFrom57(): void
     {
         $platform = new Platform();
