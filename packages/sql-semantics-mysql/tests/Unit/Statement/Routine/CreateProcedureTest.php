@@ -24,6 +24,24 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class CreateProcedureTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{\SqlSemantics\Statement\Node}>
+     */
+    public static function providerLegacyUpgradeBodies(): iterable
+    {
+        $upgrade = new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new Name('old-name')));
+        yield 'direct instruction' => [$upgrade];
+        yield 'unreachable branch' => [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ConditionalBranch(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0'), [$upgrade])])];
+    }
+
+    #[DataProvider('providerLegacyUpgradeBodies')]
+    public function testLegacyUpgradeCannotBeAStoredInstruction(\SqlSemantics\Statement\Node $body): void
+    {
+        $this->expectExceptionMessage("Can't drop or alter a DATABASE from within another stored routine");
+
+        new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), $body);
+    }
+
     public function testDeriveStatementResolvesParametersAndLocalVariablesInEveryBodyStatement(): void
     {
         $semantics = new Semantics(Dialect::MySql);

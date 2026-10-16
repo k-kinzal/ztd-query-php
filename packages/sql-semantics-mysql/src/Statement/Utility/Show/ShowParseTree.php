@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Refusing a legacy database upgrade inside modern debug syntax
- *     new \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(new \SqlSemantics\Statement\Identifier\Name('d'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new \SqlSemantics\Statement\Identifier\Name('d')))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the inspected statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW PARSE_TREE SELECT 1');
  *     [$show->facts->diagnostics[0]->rule, $show->shape(), $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly, null, 'SHOW PARSE_TREE SELECT 1']

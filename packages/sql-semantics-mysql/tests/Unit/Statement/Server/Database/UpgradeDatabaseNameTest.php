@@ -25,7 +25,7 @@ final class UpgradeDatabaseNameTest extends TestCase
 
     public function testDeriveStatementHasNoRelationalFacts(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER DATABASE d UPGRADE DATA DIRECTORY NAME');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER DATABASE `#mysql50#d` UPGRADE DATA DIRECTORY NAME');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);
@@ -46,7 +46,7 @@ final class UpgradeDatabaseNameTest extends TestCase
     #[DataProvider('providerWarnings')]
     public function testDeriveStatementWarnsOnlyInMySql57(string $release, array $warnings): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze('ALTER DATABASE d UPGRADE DATA DIRECTORY NAME');
+        $operation = (new Semantics(Dialect::MySql, $release))->analyze('ALTER DATABASE `#mysql50#d` UPGRADE DATA DIRECTORY NAME');
 
         self::assertEquals($warnings, $operation->facts->warnings);
     }

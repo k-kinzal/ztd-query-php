@@ -54,7 +54,7 @@ final class UpgradeDatabaseCommandTest extends TestCase
         $session = (new Instance($release))->connect();
         $session->query('CREATE DATABASE `#mysql50#old-name` COLLATE latin1_bin; CREATE TABLE `#mysql50#old-name`.t(i INT); INSERT INTO `#mysql50#old-name`.t VALUES (2); USE `#mysql50#old-name`');
 
-        $reply = (new Execution())->runIn($session, new UpgradeDatabaseName(new Name('#mysql50#old-name')));
+        $reply = (new Execution())->runIn($session, new UpgradeDatabaseName(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new Name('old-name'))));
         self::assertInstanceOf(Completion::class, $reply);
         self::assertSame(0, $reply->affectedRows);
         self::assertSame($release === '5.7.44' ? 1 : 0, $reply->warnings);

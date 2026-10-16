@@ -2288,6 +2288,10 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\LegacyDatabaseName": {
+        "suffix": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\CharsetConflict": {
         "earlier": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
         "later": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset"
@@ -2295,9 +2299,12 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\InvalidEncryption": {
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\InvalidUpgradeName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\ReadOnlyConflict": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\UpgradeDatabaseName": {
-        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\LegacyDatabaseName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\Flush": {
         "items": "array",

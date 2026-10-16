@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * production is the name it spells, letter case kept; a string or a host
  * name at a name position is the name it holds. The leading dot of
  * `.table` and `.table.column` names the default database and is not kept.
- * Every name is recorded as an operand leaf.
+ * Each consumer records the decoded name or its dedicated name role as an operand leaf.
  * Unquoted FULL in the keyword-as-identifier production also records an input notice in
  * releases that deprecate it, without changing the decoded name. Source:
  * https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-32.html.
@@ -118,12 +118,28 @@ final class NameRule
      */
     public function identifier(Node $name): Name
     {
-        $form = $this->lowering->productions->form($name);
-        while (isset(self::FORWARD[$form->signature])) {
-            $form = $this->lowering->productions->form($form->node(0));
+        $value = $this->lowering->leaves->record($this->decoded($name));
+        $form = $this->identifierForm($name);
+        $deprecated = (new SyntaxNames())->unquoted($form->node, $this->lowering->profile->grammar);
+        if ($deprecated !== null) {
+            $this->lowering->origins->notice($value, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $form->node);
         }
+
+        return $value;
+    }
+
+    /**
+     * Decodes an identifier before its consumer assigns and records a name role.
+     * The ordinary identifier method records a Name; legacy directory lowering
+     * records its dedicated value instead. No source tree enters either value.
+     *
+     * @throws ImplementationGap When the production is not an identifier
+     */
+    public function decoded(Node $name): Name
+    {
+        $form = $this->identifierForm($name);
         if ($form->node->name === 'TEXT_STRING_sys' || $form->node->name === 'TEXT_STRING_validated') {
-            return $this->lowering->leaves->record(new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($this->lowering->literals->bytes($form->node), $this->lowering->client)));
+            return new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($this->lowering->literals->bytes($form->node), $this->lowering->client));
         }
         $kind = self::TOKENS[$form->signature] ?? ($this->keyword($form->signature) ? 'word' : null);
         if ($kind === null) {
@@ -131,13 +147,20 @@ final class NameRule
         }
         $text = $form->token(0)->text;
 
-        $value = $this->lowering->leaves->record(new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($kind === 'identifier' ? (new Identifiers())->decode($text) : $text, $this->lowering->client)));
-        $deprecated = (new SyntaxNames())->unquoted($form->node, $this->lowering->profile->grammar);
-        if ($deprecated !== null) {
-            $this->lowering->origins->notice($value, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $form->node);
+        return new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($kind === 'identifier' ? (new Identifiers())->decode($text) : $text, $this->lowering->client));
+    }
+
+    /**
+     * Follows unit productions to the identifier's token-bearing form.
+     */
+    public function identifierForm(Node $name): Form
+    {
+        $form = $this->lowering->productions->form($name);
+        while (isset(self::FORWARD[$form->signature])) {
+            $form = $this->lowering->productions->form($form->node(0));
         }
 
-        return $value;
+        return $form;
     }
 
     /**

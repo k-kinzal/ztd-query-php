@@ -53,7 +53,7 @@ final class UpgradeDatabaseCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof UpgradeDatabaseName);
-        $source = $this->source($statement->name->value, $session);
+        $source = $this->source($statement->name->identifier()->value, $session);
         $session->transaction->commit();
         $this->move($source, $session, $context, $connection);
 

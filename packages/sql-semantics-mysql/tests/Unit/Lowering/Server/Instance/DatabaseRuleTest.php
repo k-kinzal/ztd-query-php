@@ -20,6 +20,18 @@ final class DatabaseRuleTest extends TestCase
         self::assertSame('DROP DATABASE d', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('drop database d')->toString());
     }
 
+    public function testUpgradeRetainsTheDirectoryRoleAndRejectsOrdinaryNames(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, '5.7.44');
+        $statement = $semantics->analyze('ALTER DATABASE `#mysql50#old-name` UPGRADE DATA DIRECTORY NAME')->statement;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName::class, $statement);
+        self::assertSame('old-name', $statement->name->suffix->value);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Incorrect usage of ALTER DATABASE UPGRADE DATA DIRECTORY NAME and name');
+        $semantics->analyze('ALTER DATABASE ordinary UPGRADE DATA DIRECTORY NAME');
+    }
+
     public function testOptionsLowersTheList(): void
     {
         self::assertSame('CREATE DATABASE d CHARACTER SET latin1 COLLATE latin1_bin', (new Semantics(Dialect::MySql))->analyze('create database d charset latin1 collate latin1_bin')->toString());

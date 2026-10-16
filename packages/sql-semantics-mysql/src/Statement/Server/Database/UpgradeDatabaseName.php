@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -29,9 +27,9 @@ final class UpgradeDatabaseName implements Statement
     use Snapshot;
 
     /**
-     * @param Name $name The database name
+     * @param LegacyDatabaseName $name The legacy database directory identity
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly LegacyDatabaseName $name)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -41,6 +39,7 @@ final class UpgradeDatabaseName implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $this->name->derive($derivation);
         \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UpgradeDatabaseName, $derivation);
     }
 
@@ -49,6 +48,6 @@ final class UpgradeDatabaseName implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'DATABASE')->name($this->name, NameUse::Qualifier)->keyword('UPGRADE', 'DATA', 'DIRECTORY', 'NAME');
+        $out->keyword('ALTER', 'DATABASE')->node($this->name)->keyword('UPGRADE', 'DATA', 'DIRECTORY', 'NAME');
     }
 }

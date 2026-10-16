@@ -77,10 +77,28 @@ final class DatabaseRule
                 $names->optional($form->node(2)),
                 $this->options($form->node(3)),
             ),
-            'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' => new UpgradeDatabaseName($names->identifier($form->node(2))),
+            'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' => $this->upgrade($form),
             'drop: DROP DATABASE if_exists ident', 'drop_database_stmt: DROP DATABASE if_exists ident' => new DropDatabase($options->present($form->node(2)), $names->identifier($form->node(3))),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Separates the legacy directory marker from its decoded name component.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the name has no legacy directory interpretation
+     */
+    public function upgrade(Form $form): UpgradeDatabaseName
+    {
+        $name = $this->lowering->names->decoded($form->node(2));
+        $suffix = substr($name->value, 9);
+        if (!str_starts_with($name->value, '#mysql50#') || !\SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName::valid($suffix)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName($name), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+
+        $legacy = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new \SqlSemantics\Statement\Identifier\Name($suffix)), $form->node(2));
+
+        return new UpgradeDatabaseName($this->lowering->leaves->record($legacy));
     }
 
     /**

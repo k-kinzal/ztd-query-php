@@ -28,6 +28,33 @@ use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 #[Medium]
 final class NameRuleTest extends TestCase
 {
+    public function testDecodedLeavesOperandRecordingToTheNameRole(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $leaves = new Leaves();
+        $rule = new NameRule(new Lowering($platform->productions($profile), $leaves, $profile));
+        $node = new Node('ident', 0, [new Node('IDENT_sys', 1, [new Token(0, 'IDENT_QUOTED', '`#mysql50#old``name`', 0)])]);
+
+        self::assertSame('#mysql50#old`name', $rule->decoded($node)->value);
+        self::assertSame([], $leaves->all());
+        $ordinary = $rule->identifier($node);
+        self::assertSame('#mysql50#old`name', $ordinary->value);
+        self::assertSame([$ordinary], $leaves->all());
+    }
+
+    public function testIdentifierFormUnwrapsTheTokenProduction(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $rule = new NameRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $leaf = new Node('IDENT_sys', 0, [new Token(0, 'IDENT', 'n', 0)]);
+        $form = $rule->identifierForm(new Node('ident', 0, [$leaf]));
+
+        self::assertSame($leaf, $form->node);
+        self::assertSame('IDENT_sys: IDENT', $form->signature);
+    }
+
     public function testIdentifierDecodesEverySpellingOfAName(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT a, `b c`, `d``e`, action, 猫 FROM t');

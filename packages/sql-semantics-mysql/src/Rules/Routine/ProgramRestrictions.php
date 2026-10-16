@@ -106,6 +106,7 @@ final class ProgramRestrictions
             $statement instanceof CreateFunction => new ProgramProblem(ProgramRule::RecursiveCreate, ProgramKind::Function->value),
             $statement instanceof CreateTrigger => new ProgramProblem(ProgramRule::RecursiveCreate, ProgramKind::Trigger->value),
             $statement instanceof CreateEvent, $statement instanceof AlterEvent && $statement->body !== null => new ProgramProblem(ProgramRule::EventRecursion),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName => new ProgramProblem(ProgramRule::NestedAlterOrDrop, 'DATABASE'),
             $statement instanceof AlterRoutine => new ProgramProblem(ProgramRule::NestedAlterOrDrop, $statement->kind->value),
             $statement instanceof DropProgram && ($statement->kind === ProgramKind::Procedure || $statement->kind === ProgramKind::Function) => new ProgramProblem(ProgramRule::NestedAlterOrDrop, $statement->kind->value),
             default => null,
