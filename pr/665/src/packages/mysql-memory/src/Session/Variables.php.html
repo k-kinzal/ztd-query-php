@@ -251,67 +251,82 @@
 <span class="src-line" id="L211" data-diff="added"><a class="ln" href="#L211">211</a>            <span class="tok-kw">return</span>;</span>
 <span class="src-line" id="L212" data-diff="added"><a class="ln" href="#L212">212</a>        }</span>
 <span class="src-line" id="L213" data-diff="added"><a class="ln" href="#L213">213</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">session</span>[<span class="tok-var">$definition</span>-&gt;<span class="tok-id">name</span>] = <span class="tok-var">$value</span>;</span>
-<span class="src-line" id="L214" data-diff="added"><a class="ln" href="#L214">214</a>    }</span>
-<span class="src-line" id="L215" data-diff="added"><a class="ln" href="#L215">215</a></span>
-<span class="src-line" id="L216" data-diff="added"><a class="ln" href="#L216">216</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L217" data-diff="added"><a class="ln" href="#L217">217</a><span class="tok-com">     * Answers the result encoding, retaining SET NAMES&#039; explicit collation independently of the connection collation.</span></span>
-<span class="src-line" id="L218" data-diff="added"><a class="ln" href="#L218">218</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L219" data-diff="added"><a class="ln" href="#L219">219</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">resultCollation</span>(): ?<span class="tok-id">Collation</span></span>
-<span class="src-line" id="L220" data-diff="added"><a class="ln" href="#L220">220</a>    {</span>
-<span class="src-line" id="L221" data-diff="added"><a class="ln" href="#L221">221</a>        <span class="tok-var">$value</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">read</span>(<span class="tok-str">&#039;character_set_results&#039;</span>);</span>
-<span class="src-line" id="L222" data-diff="added"><a class="ln" href="#L222">222</a>        <span class="tok-var">$charset</span> = <span class="tok-id">is_string</span>(<span class="tok-var">$value</span>) ? <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset</span>::<span class="tok-id">named</span>(<span class="tok-var">$value</span>) : <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L223" data-diff="added"><a class="ln" href="#L223">223</a>        <span class="tok-kw">if</span> (<span class="tok-var">$charset</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L224" data-diff="added"><a class="ln" href="#L224">224</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a>        }</span>
-<span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a></span>
-<span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultsCollation</span>?-&gt;<span class="tok-id">charset</span> === <span class="tok-var">$charset</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultsCollation</span> : <span class="tok-var">$charset</span>-&gt;<span class="tok-id">defaultCollation</span>(<span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span>::<span class="tok-id">from</span>(<span class="tok-str">&#039;mysql-&#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">version</span>));</span>
-<span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a>    }</span>
-<span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a></span>
-<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a><span class="tok-com">     * Answers the instant a statement of the session starts at: the `timestamp` the session set, or else the current time.</span></span>
-<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a><span class="tok-com">     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_timestamp.</span></span>
-<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">instant</span>(): <span class="tok-id">float</span></span>
-<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a>    {</span>
-<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a>        <span class="tok-var">$set</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">session</span>[<span class="tok-str">&#039;timestamp&#039;</span>] ?? <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a></span>
-<span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a>        <span class="tok-kw">return</span> <span class="tok-var">$set</span> === <span class="tok-id">null</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">clock</span>() : (float) <span class="tok-var">$set</span>;</span>
-<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a>    }</span>
+<span class="src-line" id="L214" data-diff="added"><a class="ln" href="#L214">214</a>        <span class="tok-kw">if</span> (<span class="tok-var">$definition</span>-&gt;<span class="tok-id">name</span> === <span class="tok-str">&#039;character_set_database&#039;</span> &amp;&amp; <span class="tok-id">is_string</span>(<span class="tok-var">$value</span>)) {</span>
+<span class="src-line" id="L215" data-diff="added"><a class="ln" href="#L215">215</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">databaseCollation</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset</span>::<span class="tok-id">known</span>(<span class="tok-var">$value</span>)-&gt;<span class="tok-id">defaultCollation</span>(<span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span>::<span class="tok-id">from</span>(<span class="tok-str">&#039;mysql-&#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">version</span>)));</span>
+<span class="src-line" id="L216" data-diff="added"><a class="ln" href="#L216">216</a>        } <span class="tok-kw">elseif</span> (<span class="tok-var">$definition</span>-&gt;<span class="tok-id">name</span> === <span class="tok-str">&#039;collation_database&#039;</span> &amp;&amp; <span class="tok-id">is_string</span>(<span class="tok-var">$value</span>)) {</span>
+<span class="src-line" id="L217" data-diff="added"><a class="ln" href="#L217">217</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">databaseCollation</span>(<span class="tok-id">Collation</span>::<span class="tok-id">known</span>(<span class="tok-var">$value</span>));</span>
+<span class="src-line" id="L218" data-diff="added"><a class="ln" href="#L218">218</a>        }</span>
+<span class="src-line" id="L219" data-diff="added"><a class="ln" href="#L219">219</a>    }</span>
+<span class="src-line" id="L220" data-diff="added"><a class="ln" href="#L220">220</a></span>
+<span class="src-line" id="L221" data-diff="added"><a class="ln" href="#L221">221</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L222" data-diff="added"><a class="ln" href="#L222">222</a><span class="tok-com">     * Keeps character_set_database and collation_database as one session encoding.</span></span>
+<span class="src-line" id="L223" data-diff="added"><a class="ln" href="#L223">223</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L224" data-diff="added"><a class="ln" href="#L224">224</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">databaseCollation</span>(<span class="tok-id">Collation</span> <span class="tok-var">$collation</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a>    {</span>
+<span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a>        <span class="tok-var">$release</span> = <span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span>::<span class="tok-id">from</span>(<span class="tok-str">&#039;mysql-&#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">version</span>);</span>
+<span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">session</span>[<span class="tok-str">&#039;character_set_database&#039;</span>] = <span class="tok-var">$collation</span>-&gt;<span class="tok-id">charset</span>-&gt;<span class="tok-id">nameIn</span>(<span class="tok-var">$release</span>);</span>
+<span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">session</span>[<span class="tok-str">&#039;collation_database&#039;</span>] = <span class="tok-var">$collation</span>-&gt;<span class="tok-id">nameIn</span>(<span class="tok-var">$release</span>);</span>
+<span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a>    }</span>
+<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a></span>
+<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a><span class="tok-com">     * Answers the result encoding, retaining SET NAMES&#039; explicit collation independently of the connection collation.</span></span>
+<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">resultCollation</span>(): ?<span class="tok-id">Collation</span></span>
+<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a>    {</span>
+<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a>        <span class="tok-var">$value</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">read</span>(<span class="tok-str">&#039;character_set_results&#039;</span>);</span>
+<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a>        <span class="tok-var">$charset</span> = <span class="tok-id">is_string</span>(<span class="tok-var">$value</span>) ? <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset</span>::<span class="tok-id">named</span>(<span class="tok-var">$value</span>) : <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a>        <span class="tok-kw">if</span> (<span class="tok-var">$charset</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a>        }</span>
 <span class="src-line" id="L241" data-diff="added"><a class="ln" href="#L241">241</a></span>
-<span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a><span class="tok-com">     * Answers the server clock, including elapsed sleeps and waits, independently of SET timestamp.</span></span>
-<span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clock</span>(): <span class="tok-id">float</span></span>
-<span class="src-line" id="L246" data-diff="added"><a class="ln" href="#L246">246</a>    {</span>
-<span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">threads</span>-&gt;<span class="tok-id">now</span>();</span>
-<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a>    }</span>
-<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a></span>
-<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a><span class="tok-com">     * Reads a system variable of the session by name, or null when the server has none of that name or the variable holds NULL.</span></span>
-<span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">string</span>|<span class="tok-id">int</span>|<span class="tok-id">null</span></span>
-<span class="src-line" id="L254" data-diff="added"><a class="ln" href="#L254">254</a>    {</span>
-<span class="src-line" id="L255" data-diff="added"><a class="ln" href="#L255">255</a>        <span class="tok-var">$definition</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultsCollation</span>?-&gt;<span class="tok-id">charset</span> === <span class="tok-var">$charset</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">resultsCollation</span> : <span class="tok-var">$charset</span>-&gt;<span class="tok-id">defaultCollation</span>(<span class="tok-id">\SqlSemantics\Contract\GrammarRelease</span>::<span class="tok-id">from</span>(<span class="tok-str">&#039;mysql-&#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">version</span>));</span>
+<span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a>    }</span>
+<span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a></span>
+<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L246" data-diff="added"><a class="ln" href="#L246">246</a><span class="tok-com">     * Answers the instant a statement of the session starts at: the `timestamp` the session set, or else the current time.</span></span>
+<span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a><span class="tok-com">     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_timestamp.</span></span>
+<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">instant</span>(): <span class="tok-id">float</span></span>
+<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>    {</span>
+<span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a>        <span class="tok-var">$set</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">session</span>[<span class="tok-str">&#039;timestamp&#039;</span>] ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a></span>
+<span class="src-line" id="L254" data-diff="added"><a class="ln" href="#L254">254</a>        <span class="tok-kw">return</span> <span class="tok-var">$set</span> === <span class="tok-id">null</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">clock</span>() : (float) <span class="tok-var">$set</span>;</span>
+<span class="src-line" id="L255" data-diff="added"><a class="ln" href="#L255">255</a>    }</span>
 <span class="src-line" id="L256" data-diff="added"><a class="ln" href="#L256">256</a></span>
-<span class="src-line" id="L257" data-diff="added"><a class="ln" href="#L257">257</a>        <span class="tok-kw">return</span> <span class="tok-var">$definition</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-var">$this</span>-&gt;<span class="tok-id">system</span>(<span class="tok-var">$definition</span>, <span class="tok-id">Scope</span>::<span class="tok-id">Session</span>);</span>
-<span class="src-line" id="L258" data-diff="added"><a class="ln" href="#L258">258</a>    }</span>
-<span class="src-line" id="L259" data-diff="added"><a class="ln" href="#L259">259</a></span>
-<span class="src-line" id="L260" data-diff="added"><a class="ln" href="#L260">260</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L261" data-diff="added"><a class="ln" href="#L261">261</a><span class="tok-com">     * Reads a system variable of the session as a count: an unsigned value beyond the largest integer, which the variable holds as a negative one, counts as the largest integer.</span></span>
-<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L263" data-diff="added"><a class="ln" href="#L263">263</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">count</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">int</span> <span class="tok-var">$default</span>): <span class="tok-id">int</span></span>
-<span class="src-line" id="L264" data-diff="added"><a class="ln" href="#L264">264</a>    {</span>
-<span class="src-line" id="L265" data-diff="added"><a class="ln" href="#L265">265</a>        <span class="tok-var">$value</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>);</span>
-<span class="src-line" id="L266" data-diff="added"><a class="ln" href="#L266">266</a>        <span class="tok-kw">if</span> (<span class="tok-var">$value</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L267" data-diff="added"><a class="ln" href="#L267">267</a>            <span class="tok-kw">return</span> <span class="tok-var">$default</span>;</span>
-<span class="src-line" id="L268" data-diff="added"><a class="ln" href="#L268">268</a>        }</span>
-<span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a>        <span class="tok-var">$number</span> = (int) <span class="tok-var">$value</span>;</span>
-<span class="src-line" id="L270" data-diff="added"><a class="ln" href="#L270">270</a></span>
-<span class="src-line" id="L271" data-diff="added"><a class="ln" href="#L271">271</a>        <span class="tok-kw">return</span> <span class="tok-var">$number</span> &lt; <span class="tok-num">0</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$name</span>)?-&gt;<span class="tok-id">shape</span> === <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape</span>::<span class="tok-id">Unsigned</span> ? <span class="tok-id">PHP_INT_MAX</span> : <span class="tok-var">$number</span>;</span>
-<span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a>    }</span>
-<span class="src-line" id="L273" data-diff="added"><a class="ln" href="#L273">273</a>}</span>
+<span class="src-line" id="L257" data-diff="added"><a class="ln" href="#L257">257</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L258" data-diff="added"><a class="ln" href="#L258">258</a><span class="tok-com">     * Answers the server clock, including elapsed sleeps and waits, independently of SET timestamp.</span></span>
+<span class="src-line" id="L259" data-diff="added"><a class="ln" href="#L259">259</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L260" data-diff="added"><a class="ln" href="#L260">260</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clock</span>(): <span class="tok-id">float</span></span>
+<span class="src-line" id="L261" data-diff="added"><a class="ln" href="#L261">261</a>    {</span>
+<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">threads</span>-&gt;<span class="tok-id">now</span>();</span>
+<span class="src-line" id="L263" data-diff="added"><a class="ln" href="#L263">263</a>    }</span>
+<span class="src-line" id="L264" data-diff="added"><a class="ln" href="#L264">264</a></span>
+<span class="src-line" id="L265" data-diff="added"><a class="ln" href="#L265">265</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L266" data-diff="added"><a class="ln" href="#L266">266</a><span class="tok-com">     * Reads a system variable of the session by name, or null when the server has none of that name or the variable holds NULL.</span></span>
+<span class="src-line" id="L267" data-diff="added"><a class="ln" href="#L267">267</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L268" data-diff="added"><a class="ln" href="#L268">268</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">string</span>|<span class="tok-id">int</span>|<span class="tok-id">null</span></span>
+<span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a>    {</span>
+<span class="src-line" id="L270" data-diff="added"><a class="ln" href="#L270">270</a>        <span class="tok-var">$definition</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L271" data-diff="added"><a class="ln" href="#L271">271</a></span>
+<span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a>        <span class="tok-kw">return</span> <span class="tok-var">$definition</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-var">$this</span>-&gt;<span class="tok-id">system</span>(<span class="tok-var">$definition</span>, <span class="tok-id">Scope</span>::<span class="tok-id">Session</span>);</span>
+<span class="src-line" id="L273" data-diff="added"><a class="ln" href="#L273">273</a>    }</span>
 <span class="src-line" id="L274" data-diff="added"><a class="ln" href="#L274">274</a></span>
+<span class="src-line" id="L275" data-diff="added"><a class="ln" href="#L275">275</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L276" data-diff="added"><a class="ln" href="#L276">276</a><span class="tok-com">     * Reads a system variable of the session as a count: an unsigned value beyond the largest integer, which the variable holds as a negative one, counts as the largest integer.</span></span>
+<span class="src-line" id="L277" data-diff="added"><a class="ln" href="#L277">277</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L278" data-diff="added"><a class="ln" href="#L278">278</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">count</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">int</span> <span class="tok-var">$default</span>): <span class="tok-id">int</span></span>
+<span class="src-line" id="L279" data-diff="added"><a class="ln" href="#L279">279</a>    {</span>
+<span class="src-line" id="L280" data-diff="added"><a class="ln" href="#L280">280</a>        <span class="tok-var">$value</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L281" data-diff="added"><a class="ln" href="#L281">281</a>        <span class="tok-kw">if</span> (<span class="tok-var">$value</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L282" data-diff="added"><a class="ln" href="#L282">282</a>            <span class="tok-kw">return</span> <span class="tok-var">$default</span>;</span>
+<span class="src-line" id="L283" data-diff="added"><a class="ln" href="#L283">283</a>        }</span>
+<span class="src-line" id="L284" data-diff="added"><a class="ln" href="#L284">284</a>        <span class="tok-var">$number</span> = (int) <span class="tok-var">$value</span>;</span>
+<span class="src-line" id="L285" data-diff="added"><a class="ln" href="#L285">285</a></span>
+<span class="src-line" id="L286" data-diff="added"><a class="ln" href="#L286">286</a>        <span class="tok-kw">return</span> <span class="tok-var">$number</span> &lt; <span class="tok-num">0</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$name</span>)?-&gt;<span class="tok-id">shape</span> === <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape</span>::<span class="tok-id">Unsigned</span> ? <span class="tok-id">PHP_INT_MAX</span> : <span class="tok-var">$number</span>;</span>
+<span class="src-line" id="L287" data-diff="added"><a class="ln" href="#L287">287</a>    }</span>
+<span class="src-line" id="L288" data-diff="added"><a class="ln" href="#L288">288</a>}</span>
+<span class="src-line" id="L289" data-diff="added"><a class="ln" href="#L289">289</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

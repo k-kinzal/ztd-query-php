@@ -58,8 +58,10 @@
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * Rule: MYSQL-ORDINARY-COLUMN-001. The attributes are kept in written order,</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * because the server applies them in that order (a later NULL cancels an</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * earlier NOT NULL). An inline REFERENCES clause is parsed and ignored by</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * the server; it is kept as a request. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-com"> * earlier NOT NULL). An inline REFERENCES clause is parsed and ignored by</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com"> * the server; it is kept as a request. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * earlier NOT NULL). An inline REFERENCES clause is ignored through MySQL 8.4 and declares a</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * foreign key from MySQL 9.0 onward; the reference request is retained. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/ansi-diff-foreign-keys.html. Status: Implemented.</span></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * @visibility public</span></span>
