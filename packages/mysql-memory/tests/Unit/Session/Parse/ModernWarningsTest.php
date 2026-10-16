@@ -138,4 +138,14 @@ final class ModernWarningsTest extends TestCase
         self::assertSame($error, (new ModernWarnings())->reported($error, 'SELECT !?', (new Instance('5.7.44'))->connect()));
         self::assertSame($other, (new ModernWarnings())->reported($other, 'SELECT !?', (new Instance())->connect()));
     }
+
+    public function testNoteRecordsOnlyNonAbortingConditions(): void
+    {
+        $session = (new Instance())->connect();
+        $notices = new ModernWarnings();
+        self::assertTrue($notices->note(new \MySqlMemory\Session\Parse\Entry\InputNote(\MySqlMemory\Error\Family\SchemaError::DuplicatedValueInType, 'duplicate'), $session));
+        self::assertTrue($notices->note(Deprecated::BinaryOperator, $session));
+        self::assertFalse($notices->note(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::MissingReturn, 'f')), $session));
+        self::assertSame(['Note', 'Warning'], array_column($session->diagnostics->conditions, 0));
+    }
 }

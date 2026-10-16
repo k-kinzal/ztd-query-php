@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u')->statement;
  *     [$create->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel, $create->body instanceof \SqlSemantics\Platform\MySql\Statement\Statement] // => [true, false]
  */
-final class DeferredGrantLevel implements ProgramStatement
+final class DeferredGrantLevel implements ProgramStatement, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\PrivilegeChange
 {
     use Snapshot;
 

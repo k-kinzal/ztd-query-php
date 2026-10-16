@@ -29,6 +29,9 @@ use SqlSemantics\Statement\Snapshot;
  * context. The facts follow MYSQL-TRIGGER-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html.
  *
+ * @example Rejecting RETURN outside a function declaration
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Insert, new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading a trigger definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET @changed = 1');
@@ -66,6 +69,7 @@ final class CreateTrigger implements Statement
     ) {
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
         $this->body = (new StatementSequence())->member($body);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Trigger, $name);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

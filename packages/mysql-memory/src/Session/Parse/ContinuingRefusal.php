@@ -76,6 +76,7 @@ final class ContinuingRefusal
         foreach ($operators as $offset => $notice) {
             $notices[] = [$offset, $notice];
         }
+        $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session)];
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($parser->parse($statement), $session->semantics()->profile());
         if ($target !== null && $target->schema === null && $session->variables->database === '') {

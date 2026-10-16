@@ -17,8 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
@@ -61,13 +59,9 @@ final class CreateEventTest extends TestCase
 
     public function testDeriveStatementReportsANestedEventDefinition(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO CREATE EVENT f ON SCHEDULE AT NOW() DO SELECT 1');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
-
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::EventRecursion, $problem->rule);
-        self::assertSame('Recursion of EVENT DDL statements is forbidden when body is present', $problem->message());
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Recursion of EVENT DDL statements is forbidden when body is present');
+        (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO CREATE EVENT f ON SCHEDULE AT NOW() DO SELECT 1');
     }
 
     /**
@@ -84,9 +78,9 @@ final class CreateEventTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body);
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body);
     }
 
     /**

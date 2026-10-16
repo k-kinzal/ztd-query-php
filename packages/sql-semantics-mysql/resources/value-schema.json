@@ -2104,6 +2104,17 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\RefusedProgramBody": {
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "nameEnd": "int",
+        "parameters": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem",
+        "returns": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName",
+        "typeEnds": "array"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\RefusedSignalItems": {
         "prefix": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Resignal",
         "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedTemporalLiteral"

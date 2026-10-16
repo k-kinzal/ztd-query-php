@@ -932,11 +932,30 @@ releases. Twenty type-generated target instructions produce 80 direct
 observations, reusing each CREATE and CALL object across absence, definition,
 invocation and duplicate definition. None is discarded. The existing twenty
 AS instructions also pass again on three modern releases. The full related
-regression run passes 80 tests and 167 assertions. Function and trigger bodies
-still need a constructor-level restriction on privilege commands: native MySQL
-rejects their implicit commit even inside an unreachable branch. These
-procedure tests do not close that separate body-kind constraint, or the later
-account-dependent priority of database-level static privilege refusals.
+regression run passes 80 tests and 167 assertions. These procedure tests do not
+close the later account-dependent priority of database-level static privilege
+refusals.
+
+Stored-program declaration constructors now check the body against its kind,
+including instructions in unreachable branches and handlers. Functions and
+triggers reject privilege changes that imply a commit, dynamic SQL, returned
+result sets, transaction boundaries, RESET and FLUSH. Other program kinds reject
+RETURN, and functions require a RETURN instruction somewhere in their body.
+Restrictions shared by every program kind are checked before these body-wide
+conditions. This describes a language structure; it does not ask Semantics to
+certify execution eligibility.
+
+SQL lowering publishes a typed `RefusedProgramBody` diagnostic instead of an
+invalid declaration. Its retained header, field types and numeric completion
+positions preserve earlier definer, database and type conditions, including
+ENUM/SET notes interleaved with later grammar warnings. It contains neither
+source SQL nor a parser tree. A five-release matrix compares 747 SQL observations
+covering body kinds, condition priority, existing definitions, both strictness
+settings and headers without a selected database. A separate constructor-only
+sample retains 100 generated declarations across all five body-bearing roots,
+without generation or profile failures. These checks do not close the remaining
+lexical-scope constraints, other implicit-commit statements, external-language
+declarations, or the whole-model construction gate.
 
 Program expressions preserve MySQL 5.6 diagnostic history until they raise a
 new condition, including control predicates, defaults and table-reading

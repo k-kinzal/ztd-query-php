@@ -87,12 +87,15 @@ final class TriggerRule
         $time = $this->lowering->form($parts['trg_action_time']);
         $event = $this->lowering->form($parts['trg_event']);
 
+        $name = $this->lowering->names->qualified($parts['sp_name']);
+        $body = (new StatementRule($this->lowering))->statement($parts['sp_proc_stmt']);
+        (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0);
         return new CreateTrigger(
-            $this->lowering->names->qualified($parts['sp_name']),
+            $name,
             self::TIMES[$time->signature] ?? throw ImplementationGap::production($time),
             self::EVENTS[$event->signature] ?? throw ImplementationGap::production($event),
             new TriggerTable($this->lowering->names->qualified($parts['table_ident'])),
-            (new StatementRule($this->lowering))->statement($parts['sp_proc_stmt']),
+            $body,
             isset($parts['trigger_follows_precedes_clause']) ? $this->order($parts['trigger_follows_precedes_clause']) : null,
             $definer,
             isset($parts['opt_if_not_exists']) && $this->lowering->options->present($parts['opt_if_not_exists']),

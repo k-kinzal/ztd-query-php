@@ -45,7 +45,7 @@ final class RoutineEnumerationStateTest extends TestCase
         $body = new Evaluation([new SelectExpression(new NumberLiteral('1'))]);
         $statements = [
             new CreateFunction(new QualifiedName(new Name('f')), new ParameterList([]), $enum, new ReturnStatement(new NumberLiteral('1')), characteristics: [new Determinism(true)]),
-            new CreateFunction(new QualifiedName(new Name('g')), new ParameterList([]), $set, $body),
+            new CreateFunction(new QualifiedName(new Name('g')), new ParameterList([]), $set, new ReturnStatement(new NumberLiteral('1')), characteristics: [new Determinism(true)]),
             new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([new Parameter(new Name('a'), $enum)]), $body),
         ];
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.4.7', '9.1.0'] as $release) {

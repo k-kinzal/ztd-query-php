@@ -31,6 +31,9 @@ use SqlSemantics\Statement\Snapshot;
  * context. The facts follow MYSQL-EVENT-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-event.html.
  *
+ * @example Rejecting RETURN outside a function declaration
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), body: new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading the changes of an event
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');
@@ -69,6 +72,9 @@ final class AlterEvent implements Statement
         Check::input($name->catalog === null && $newName?->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
         $this->body = $body === null ? null : (new StatementSequence())->member($body);
+        if ($this->body !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Event, $name);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

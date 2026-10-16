@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Revoking a role
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('revoke if exists r from u, v')->toString() // => 'REVOKE IF EXISTS r FROM u, v'
  */
-final class RevokeRoles implements Statement
+final class RevokeRoles implements Statement, PrivilegeChange
 {
     use Snapshot;
 

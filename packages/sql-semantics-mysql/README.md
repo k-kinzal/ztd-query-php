@@ -383,6 +383,26 @@ The original spelling of an unquoted `FULL` identifier produces warning 4119 in 
 
 Deprecated type attributes produce warnings in written order, including integer display widths, `ASCII`, `UNICODE`, `BINARY` and national character types. These checks do not establish complete validation of every type or table option.
 
+## Stored program body structure
+
+Routine declarations check the kinds of instructions they can contain, including
+unreachable branches and handlers. A stored function must contain a `RETURN`
+instruction; this does not require every runtime path to reach it. Procedures,
+triggers and events cannot contain `RETURN`. Function and trigger bodies reject
+result-producing statements, dynamic SQL, explicit transaction boundaries,
+privilege changes, RESET and FLUSH. Instructions prohibited in all stored
+programs are also refused before a declaration is published.
+
+Direct PHP construction raises `InvalidConstruction` for these contradictory
+combinations. SQL lowering raises `Construction\RejectedInput` with
+`Statement\Routine\Problem\RefusedProgramBody`. The diagnostic holds the typed
+name, definer, parameter and return declarations, and the body constraint. Its
+numeric completion positions allow input diagnostics to preserve ordering; it
+retains neither SQL text nor a parser node. Database selection, SQL mode and
+other state remain the consumer's responsibility. These body checks do not
+certify that a routine can execute or establish every implicit-commit DDL and
+lexical-scope constraint.
+
 ## Limitations
 
 `CAST(... AT LOCAL AS ...)` has no public expression type: every supported

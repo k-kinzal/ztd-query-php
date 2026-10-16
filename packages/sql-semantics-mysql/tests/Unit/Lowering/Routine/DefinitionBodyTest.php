@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Lowering\Routine;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Platform\MySql\Lowering\Routine\DefinitionBody;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
+
+#[CoversClass(DefinitionBody::class)]
+#[Small]
+final class DefinitionBodyTest extends TestCase
+{
+    public function testCheckRefusesAFunctionWithoutReturn(): void
+    {
+        $this->expectException(RejectedInput::class);
+        $this->expectExceptionMessage('No RETURN found in FUNCTION f');
+        (new DefinitionBody())->check(new Block(), ProgramKind::Function, new QualifiedName(new Name('f')), null, 80);
+    }
+
+    public function testTypeEndsPublishesOnlyCompletedDeclarationBoundaries(): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION f(a INT,b INT) RETURNS INT BEGIN END');
+            self::fail('A function without RETURN must not be published.');
+        } catch (RejectedInput $error) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $error->problem);
+            self::assertSame([23, 29, 42], $error->problem->typeEnds);
+        }
+    }
+}

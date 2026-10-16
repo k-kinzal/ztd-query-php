@@ -69,9 +69,9 @@ final class AlterEventTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $alter = (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ' . $body);
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ' . $body);
     }
 
     public function testDeriveStatementAcceptsANestedAlterationWithoutABody(): void

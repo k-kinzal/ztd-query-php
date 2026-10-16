@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER');
  *     [$operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $operation->toString(), $operation->statement->body->problem()->error] // => [true, 'CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER', 'ER_UNSUPPORTED_USE_OF_GRANT_AS']
  */
-final class DeferredGrantAs implements ProgramStatement
+final class DeferredGrantAs implements ProgramStatement, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\PrivilegeChange
 {
     use Snapshot;
 

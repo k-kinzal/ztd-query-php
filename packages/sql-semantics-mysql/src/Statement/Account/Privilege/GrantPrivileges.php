@@ -46,7 +46,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Granting table privileges with the grant option
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('grant select, insert on table shop.t to app@localhost with grant option')->toString() // => 'GRANT SELECT, INSERT ON shop.t TO app@localhost WITH GRANT OPTION'
  */
-final class GrantPrivileges implements Statement
+final class GrantPrivileges implements Statement, PrivilegeChange
 {
     use Snapshot;
 

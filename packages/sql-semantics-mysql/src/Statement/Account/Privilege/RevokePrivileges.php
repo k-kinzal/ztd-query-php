@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Revoking a privilege
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('revoke if exists execute on procedure p from u ignore unknown user')->toString() // => 'REVOKE IF EXISTS EXECUTE ON PROCEDURE p FROM u IGNORE UNKNOWN USER'
  */
-final class RevokePrivileges implements Statement
+final class RevokePrivileges implements Statement, PrivilegeChange
 {
     use Snapshot;
 

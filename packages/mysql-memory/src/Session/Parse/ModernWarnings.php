@@ -64,7 +64,7 @@ final class ModernWarnings
     /**
      * Records typed conditions in order, retaining the first error as the reply.
      *
-     * @param list<Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop> $notices The completed semantic notices
+     * @param list<Entry\InputNote|Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure|ParseStop> $notices The completed semantic notices
      * @param bool $append Whether the final refusal follows the recorded notices or is already among them
      */
     public function recorded(array $notices, SqlError $syntax, Session $session, bool $append = true): SqlError
@@ -85,12 +85,8 @@ final class ModernWarnings
                 }
                 continue;
             }
-            if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion) {
-                $session->diagnostics->warning($notice->code(), $notice->message());
-                continue;
-            }
-            if ($notice instanceof Deprecated) {
-                $session->diagnostics->warning($notice->code(), $notice->value);
+            if (!$notice instanceof ParseFailure) {
+                $this->note($notice, $session);
                 continue;
             }
             $failure = (new Errors())->error($notice->problem, $session);
@@ -113,6 +109,23 @@ final class ModernWarnings
         $first ??= $syntax;
 
         return new SqlError($first->error, $first->getMessage(), $syntax, [], null, null, true);
+    }
+
+    /**
+     * Records a non-aborting input note or grammar warning.
+     */
+    public function note(Entry\InputNote|Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|ParseFailure $notice, Session $session): bool
+    {
+        if ($notice instanceof Entry\InputNote) {
+            $session->diagnostics->note($notice->code, $notice->message);
+        } elseif ($notice instanceof Deprecated) {
+            $session->diagnostics->warning($notice->code(), $notice->value);
+        } elseif ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion) {
+            $session->diagnostics->warning($notice->code(), $notice->message());
+        } else {
+            return false;
+        }
+        return true;
     }
 
     /**

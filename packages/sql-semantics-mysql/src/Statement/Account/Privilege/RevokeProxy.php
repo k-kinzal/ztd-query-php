@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Revoking a proxy
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE PROXY ON root FROM app')->toString() // => 'REVOKE PROXY ON root FROM app'
  */
-final class RevokeProxy implements Statement
+final class RevokeProxy implements Statement, PrivilegeChange
 {
     use Snapshot;
 

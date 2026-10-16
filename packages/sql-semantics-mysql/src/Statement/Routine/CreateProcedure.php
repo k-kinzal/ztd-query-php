@@ -25,6 +25,9 @@ use SqlSemantics\Statement\Snapshot;
  * context. The facts follow MYSQL-ROUTINE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
+ * @example Rejecting RETURN outside a function declaration
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading a procedure definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE shop.p(IN a INT) DETERMINISTIC SELECT a');
@@ -64,6 +67,7 @@ final class CreateProcedure implements Statement
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
         $this->body = (new ProgramFacts())->body($body);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Procedure, $name);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

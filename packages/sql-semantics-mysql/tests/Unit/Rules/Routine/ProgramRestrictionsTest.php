@@ -25,9 +25,9 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementNoStoredProgramMayContain(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
     }
 
     /**
@@ -90,9 +90,9 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementAStoredFunctionOrTriggerMayNotContain(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
     }
 
     /**
@@ -168,9 +168,9 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementWhereverItIsNested(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
     }
 
     /**
@@ -194,9 +194,9 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementInEveryRelease(string $release, string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql, $release);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
     }
 
     /**
@@ -206,12 +206,30 @@ final class ProgramRestrictionsTest extends TestCase
     {
         yield 'RESET MASTER in a 5.6 function' => ['mysql-5.6.51', 'CREATE FUNCTION f() RETURNS INT BEGIN RESET MASTER; RETURN 1; END', ['RESET is not allowed in stored function or trigger']];
         yield 'RESET QUERY CACHE in a 5.7 trigger' => ['mysql-5.7.44', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RESET QUERY CACHE', ['RESET is not allowed in stored function or trigger']];
-        yield 'RESET SLAVE in a 5.7 procedure' => ['mysql-5.7.44', 'CREATE PROCEDURE p() RESET SLAVE', []];
         yield 'a SELECT in an 8.0 trigger' => ['mysql-8.0.44', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SELECT a FROM t', ['Not allowed to return a result set from a trigger']];
         yield 'LOCK TABLES in a 5.6 procedure' => ['mysql-5.6.51', 'CREATE PROCEDURE p() LOCK TABLES t WRITE', ['LOCK is not allowed in stored procedures']];
         yield 'a 5.7 union with a locked middle operand in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3; RETURN 1; END', ['Not allowed to return a result set from a function']];
-        yield 'a 5.7 union with a locked middle operand INTO in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3 INTO @a; RETURN 1; END', []];
         yield 'LOAD XML in an 8.4 event' => ['mysql-8.4.7', "CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO LOAD XML INFILE 'f' INTO TABLE t", ['LOAD XML is not allowed in stored procedures']];
+    }
+
+    /**
+     * @return iterable<string, array{string, string, list<string>}>
+     */
+    public static function providerCheckAcceptsReleaseSpecificBodies(): iterable
+    {
+        yield 'RESET SLAVE in a 5.7 procedure' => ['mysql-5.7.44', 'CREATE PROCEDURE p() RESET SLAVE', []];
+        yield 'a 5.7 union with a locked middle operand INTO in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3 INTO @a; RETURN 1; END', []];
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerCheckAcceptsReleaseSpecificBodies')]
+    public function testCheckAcceptsReleaseSpecificBodies(string $release, string $sql, array $messages): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     #[DataProvider('providerAnywhereAnswersTheProblemOfTheStatement')]

@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Revoking everything
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL, GRANT OPTION FROM u'
  */
-final class RevokeAll implements Statement
+final class RevokeAll implements Statement, PrivilegeChange
 {
     use Snapshot;
 

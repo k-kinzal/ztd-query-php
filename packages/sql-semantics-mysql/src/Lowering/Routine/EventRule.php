@@ -94,10 +94,15 @@ final class EventRule
         }
         $completion = $this->lowering->form($form->node($first + 6));
 
+        $name = $this->lowering->names->qualified($form->node($first + 2));
+        $schedule = $this->schedule($form->node($first + 5));
+        $body = (new StatementRule($this->lowering))->event($form->node($first + 10));
+        (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node($first + 2))[1] ?? 0);
+
         return new CreateEvent(
-            $this->lowering->names->qualified($form->node($first + 2)),
-            $this->schedule($form->node($first + 5)),
-            (new StatementRule($this->lowering))->event($form->node($first + 10)),
+            $name,
+            $schedule,
+            $body,
             match ($completion->signature) {
                 'opt_ev_on_completion:' => null,
                 'opt_ev_on_completion: ev_on_completion' => $this->completion($completion->node(0)),
@@ -132,8 +137,19 @@ final class EventRule
         $rename = $this->lowering->form($form->node(5));
         $body = $this->lowering->form($form->node(8));
 
+        $name = $this->lowering->names->qualified($form->node(3));
+        $definer = $this->lowering->users->definer($form->node(1));
+        $instruction = match ($body->signature) {
+            'opt_ev_sql_stmt:' => null,
+            'opt_ev_sql_stmt: DO_SYM ev_sql_stmt' => (new StatementRule($this->lowering))->event($body->node(1)),
+            default => throw ImplementationGap::production($body),
+        };
+        if ($instruction !== null) {
+            (new DefinitionBody())->check($instruction, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node(3))[1] ?? 0);
+        }
+
         return new AlterEvent(
-            $this->lowering->names->qualified($form->node(3)),
+            $name,
             $schedule,
             $completion,
             match ($rename->signature) {
@@ -143,12 +159,8 @@ final class EventRule
             },
             $this->status($form->node(6)),
             $this->comment($form->node(7)),
-            match ($body->signature) {
-                'opt_ev_sql_stmt:' => null,
-                'opt_ev_sql_stmt: DO_SYM ev_sql_stmt' => (new StatementRule($this->lowering))->event($body->node(1)),
-                default => throw ImplementationGap::production($body),
-            },
-            $this->lowering->users->definer($form->node(1)),
+            $instruction,
+            $definer,
         );
     }
 

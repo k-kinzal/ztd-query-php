@@ -25,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineComment;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SqlSecurity;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -116,23 +117,10 @@ final class RoutineCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When an enumeration repeats a member under strict mode
      */
-    public function types(CreateProcedure|CreateFunction $statement, Session $session, Context $context): void
+    public function types(CreateProcedure|CreateFunction|RefusedProgramBody $statement, Session $session, Context $context): void
     {
-        $settings = $session->settings();
-        $database = ProgramSource::database($statement->name->schema, $session);
-        $declared = new Declared($settings->resolution()->schema($database), $settings->release());
-        $types = array_map(static fn ($parameter): array => [$parameter->type, $parameter->collation], $statement->parameters->parameters);
-        if ($statement instanceof CreateFunction) {
-            $types[] = [$statement->returns, $statement->collation];
-        }
-        foreach ($types as [$type, $name]) {
-            $collation = $name?->name === null ? null : Collation::named($name->name->value);
-            $domain = $declared->domain($type, $collation);
-            if ($collation !== null) {
-                $domain = $domain->withCollation($collation, $domain->coercibility);
-            }
-            (new \MySqlMemory\Command\Definition\EnumerationMembers())->check($domain, '', $context);
-        }
+        $types = new RoutineDeclarations();
+        $types->check($statement->name, $types->items($statement), $session, $context);
     }
 
     /**

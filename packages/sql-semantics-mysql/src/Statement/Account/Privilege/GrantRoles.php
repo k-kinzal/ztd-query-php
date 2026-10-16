@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Granting roles with the admin option
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("grant r1, 'r2'@'%' to u with admin option")->toString() // => 'GRANT r1, r2@`%` TO u WITH ADMIN OPTION'
  */
-final class GrantRoles implements Statement
+final class GrantRoles implements Statement, PrivilegeChange
 {
     use Snapshot;
 

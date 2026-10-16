@@ -144,6 +144,7 @@ final class Reader
      */
     public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
+        $failure = (new Entry\ProgramInput())->stopped($failure, $session);
         $parser = $session->semantics()->parser();
         $partition = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
         if ($partition && (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($parser, $statement, $session->semantics()->profile()) !== null) {
@@ -184,6 +185,7 @@ final class Reader
                 $notices[] = [$offset, $notice];
             }
         }
+        $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session)];
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
         return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);
