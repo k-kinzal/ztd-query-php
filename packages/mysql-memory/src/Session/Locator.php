@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
@@ -27,7 +26,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
@@ -116,11 +114,6 @@ final class Locator
      * @var list<array{Cast, string, list<int>}> Each cast to an array outside a functional index, of a type a multi-valued index takes, with the clause and the resolution order it is read at
      */
     public array $arrays = [];
-
-    /**
-     * @var array<int, true> The casts that are the expression of a functional key part, by object id
-     */
-    public array $keyed = [];
 
     /**
      * @param bool $operandFirst Whether the operand of IN, ANY and ALL over a subquery is resolved before the subquery, and the width of the subquery checked after both, as MySQL 8.0 does
@@ -269,8 +262,8 @@ final class Locator
     /**
      * Records what a node read in a clause at an order tells, before its children are visited.
      *
-     * A functional key part marks its cast, ungrouped, as keyed; a cast to an array of a type a
-     * multi-valued index takes, outside a key part, is recorded with its place; a column name,
+     * A scalar cast to an array is recorded with its place; array index parts
+     * carry their element target separately and do not contain a scalar array cast; a column name,
      * select list position or function call is located, and so is a clock call; a window function
      * or aggregate call, and the window names, are recorded as windowed() records them.
      *
@@ -278,14 +271,7 @@ final class Locator
      */
     public function record(Node $node, string $clause, array $order): void
     {
-        if ($node instanceof ExpressionPart) {
-            $keyed = $node->expression;
-            while ($keyed instanceof Grouped) {
-                $keyed = $keyed->operand;
-            }
-            $this->keyed[spl_object_id($keyed)] = true;
-        }
-        if ($node instanceof Cast && $node->array && !isset($this->keyed[spl_object_id($node)])) {
+        if ($node instanceof Cast && $node->array) {
             $this->arrays[] = [$node, $clause, $order];
         }
         if ($node instanceof ColumnUse || $node instanceof OutputOrdinal || $node instanceof FunctionCall) {

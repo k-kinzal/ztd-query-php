@@ -32,6 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey as ForeignKeyElement;
@@ -337,7 +338,7 @@ final class Definitions
         $prefixes = [];
         $descending = [];
         foreach ($index->parts as $part) {
-            \SqlSemantics\Diagnostic\Check::invariant($part instanceof ColumnPart || $part instanceof ExpressionPart, 'An index part names a column or supplies its expression.');
+            \SqlSemantics\Diagnostic\Check::invariant($part instanceof ColumnPart || $part instanceof ExpressionPart || $part instanceof ArrayPart, 'An index part names a column or supplies its expression.');
             $name = $part instanceof ColumnPart ? $part->column->value : (new Constraint\FunctionalKeys())->name($part);
             $position = null;
             foreach ($columns as $candidate => $column) {

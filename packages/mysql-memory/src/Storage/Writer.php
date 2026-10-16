@@ -88,13 +88,14 @@ final class Writer
             if (!$key->unique()) {
                 continue;
             }
-            $wanted = $this->key($row, $key);
-            if ($wanted === null) {
+            $entries = new IndexEntries();
+            $wanted = $entries->keys($row, $key, $definition);
+            if ($wanted === []) {
                 continue;
             }
             foreach ([$rows, $earlier] as $candidates) {
                 foreach ($candidates as $number => $existing) {
-                    if ($existing !== null && $number !== $except && $this->key($existing, $key) === $wanted) {
+                    if ($existing !== null && $number !== $except && array_intersect($entries->keys($existing, $key, $definition), $wanted) !== []) {
                         return [$number, $key];
                     }
                 }
@@ -165,7 +166,12 @@ final class Writer
     {
         $values = [];
         foreach ($key->columns as $position) {
-            $domain = $this->table->definition->columns[$position]->domain;
+            $column = $this->table->definition->columns[$position];
+            $domain = $column->domain;
+            if ($column->generated instanceof \MySqlMemory\Evaluation\Index\ArrayConversion && $row[$position] !== null) {
+                $values[] = (new IndexEntries())->shown((string) $row[$position], $column->generated->elementDomain);
+                continue;
+            }
             $values[] = Convert::shown((string) Convert::toText($row[$position], $domain), $domain->kind === Kind::String && $domain->collation->charset !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::binary() ? $domain->collation->charset : null);
         }
 
@@ -265,7 +271,8 @@ final class Writer
                 continue;
             }
             $frame->row = $row;
-            $value = $store->value($column->generated->evaluate($frame), $column->generated->domain(), $column);
+            $computed = $column->generated instanceof \MySqlMemory\Evaluation\Index\ArrayConversion ? $column->generated->at($frame, $store->row) : $column->generated->evaluate($frame);
+            $value = $store->value($computed, $column->generated->domain(), $column);
             array_splice($row, $position, 1, [$value === null && !$column->nullable() && $notNull !== null ? $notNull($position, $value) : $value]);
         }
 

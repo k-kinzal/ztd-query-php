@@ -201,7 +201,8 @@ final class Rows
         foreach ($this->table->definition->columns as $position => $column) {
             $frame->row = $row;
             if ($column->generated !== null) {
-                $value = $store->value($column->generated->evaluate($frame), $column->generated->domain(), $column);
+                $computed = $column->generated instanceof \MySqlMemory\Evaluation\Index\ArrayConversion ? $column->generated->at($frame, $number) : $column->generated->evaluate($frame);
+                $value = $store->value($computed, $column->generated->domain(), $column);
                 array_splice($row, $position, 1, [$this->notNull($value, $position, $store, $number, $single)]);
             } elseif (!isset($named[$position])) {
                 array_splice($row, $position, 1, [$this->defaulted($position, $frame, $store, $number, false)]);

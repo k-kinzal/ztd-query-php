@@ -33,6 +33,12 @@ final class BodyArraysTest extends TestCase
         self::assertNull($rules->problem(new ReturnStatement(new StringLiteral(['CAST(1 AS SIGNED ARRAY)']))));
     }
 
+    public function testProblemRejectsAnArrayKeyInAStoredInstruction(): void
+    {
+        $key = new \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex(new \SqlSemantics\Statement\Identifier\Name('k'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart(new NumberLiteral('1'), new CastTarget(CastKind::Signed))]);
+        self::assertSame(ProgramRule::ArrayCast, (new BodyArrays())->problem($key)?->rule);
+    }
+
     public function testProblemInspectsUnreachableOperandsWithoutExecutingThem(): void
     {
         $body = new Block(statements: [new IfStatement([new ConditionalBranch(new NumberLiteral('0'), [new ReturnStatement(new Cast(new NumberLiteral('1'), new CastTarget(CastKind::Unsigned), true))])])]);

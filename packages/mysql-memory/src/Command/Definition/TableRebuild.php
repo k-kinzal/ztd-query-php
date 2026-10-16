@@ -184,8 +184,7 @@ final class TableRebuild
             }
             $entries = [];
             foreach ($table->data->rows as $number => $row) {
-                $entry = $writer->key($row, $key);
-                if ($entry !== null) {
+                foreach ((new \MySqlMemory\Storage\IndexEntries())->keys($row, $key, $table->definition) as $entry) {
                     $entries[] = [$entry, $number];
                 }
             }
@@ -194,7 +193,8 @@ final class TableRebuild
                 if ($index === 0 || $entries[$index][0] !== $entries[$index - 1][0]) {
                     continue;
                 }
-                $first = $entries[$index - 1][1];
+                $array = array_filter($key->columns, static fn (int $position): bool => $table->definition->columns[$position]->generated instanceof \MySqlMemory\Evaluation\Index\ArrayConversion) !== [];
+                $first = $entries[$array ? $index : $index - 1][1];
                 $row = $table->data->rows[$first];
                 if (($resequenced[$first] ?? false) || ($resequenced[$entries[$index][1]] ?? false)) {
                     [$value, $name] = $writer->entry($row, $key);

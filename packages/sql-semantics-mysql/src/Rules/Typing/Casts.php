@@ -73,6 +73,19 @@ final class Casts
     }
 
     /**
+     * Resolves each entry of a multi-valued index separately from its JSON document.
+     * An implicit character target uses the JSON binary collation.
+     */
+    public function array(?Domain $operand, CastTarget $target): Domain
+    {
+        $domain = $this->cast($operand ?? JsonResults::json($this->release), $target);
+
+        return $target->kind === CastKind::Char && $target->charset === null
+            ? $domain->withCollation(Collation::known('utf8mb4_0900_bin'), $domain->coercibility)
+            : $domain;
+    }
+
+    /**
      * Resolves an integer conversion, retaining legacy string precision for arithmetic.
      */
     public function integer(Domain $operand, bool $unsigned): Domain

@@ -54,6 +54,17 @@ final class Origins
     }
 
     /**
+     * Removes the range of an intermediate occurrence replaced during lowering.
+     *
+     * Children retain their own ranges. Publication still checks that every
+     * remaining range belongs to the final statement structure.
+     */
+    public function forget(Node $value): void
+    {
+        unset($this->origins[spl_object_id($value)]);
+    }
+
+    /**
      * Records a spelling-dependent warning after the final token of its input production.
      */
     public function notice(Node|\SqlSemantics\Statement\Identifier\Name $subject, \SqlSemantics\Statement\Fact\Warning $warning, ParseNode $source): void

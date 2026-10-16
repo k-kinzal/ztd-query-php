@@ -164,6 +164,7 @@ final class ChangeCommand implements Command
                 continue;
             }
             $transaction?->access->lock($table, $number, LockMode::Exclusive);
+            (new \MySqlMemory\Storage\IndexEntries())->refresh($frame->row, $table->definition, $context, $context->row);
             $matched[] = [$number, $values];
         }
         $numbers = array_map(static fn (array $match): int => $match[0], $this->sorted($matched, $keys));
@@ -239,6 +240,7 @@ final class ChangeCommand implements Command
             if ($old === null) {
                 continue;
             }
+            $old = (new \MySqlMemory\Storage\IndexEntries())->refresh($old, $table->definition, $context, $index + 1);
             $store = new Store($context, $index + 1, $target);
             [$row, $assigned] = $this->assigned($old, $compiled, $table, $writer, $store, $statement->ignore);
             $triggers = new Triggers($references->session, $table);
@@ -356,12 +358,13 @@ final class ChangeCommand implements Command
     public function delete(StoredTable $table, array $matched, References $references, bool $ignore): int
     {
         $deleted = 0;
-        foreach ($matched as $number) {
+        foreach ($matched as $ordinal => $number) {
             $row = $table->data->rows[$number] ?? null;
             if ($row === null) {
                 continue;
             }
             $triggers = new Triggers($references->session, $table);
+            $row = (new \MySqlMemory\Storage\IndexEntries())->refresh($row, $table->definition, $references->context, $ordinal + 1);
             $triggers->before('DELETE', null, $row, $references->context);
             try {
                 $references->deleting($table, $row);

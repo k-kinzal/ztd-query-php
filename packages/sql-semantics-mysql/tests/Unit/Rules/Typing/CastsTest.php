@@ -26,6 +26,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CastsTest extends TestCase
 {
+    public function testArrayResolvesEntryTypesWithoutTheDocumentWidthOrConnectionCollation(): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_swedish_ci')), GrammarRelease::MySql847);
+        $text = $casts->array(null, new CastTarget(CastKind::Char, '5'));
+        $number = $casts->array(null, new CastTarget(CastKind::Signed));
+        self::assertSame([Kind::String, 5, 'utf8mb4_0900_bin'], [$text->kind, $text->length, $text->collation->name]);
+        self::assertSame([Kind::Integer, Field::LongLong, false], [$number->kind, $number->field, $number->unsigned]);
+    }
+
     public function testCastRetainsTheUtf8BoundOfLegacyJsonConversions(): void
     {
         $casts = new Casts(new Settings(Collation::known('latin1_swedish_ci')), GrammarRelease::MySql5744);

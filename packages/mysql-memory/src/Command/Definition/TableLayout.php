@@ -238,7 +238,9 @@ final class TableLayout
             $direction = ($key->descending[$index] ?? false) ? Direction::Descending : null;
             $parts[] = $column->functional === null
                 ? new ColumnPart(new Name($column->name), $prefix === null ? null : new Numeral((string) $prefix), $direction)
-                : new \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart($column->functional->expression, $direction);
+                : ($column->functional instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart
+                    ? new \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart($column->functional->expression, $column->functional->target, $direction)
+                    : new \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart($column->functional->expression, $direction));
         }
         $kind = match ($key->kind) {
             KeyKind::Primary => IndexKind::Primary,
@@ -343,7 +345,7 @@ final class TableLayout
             }
             $parts = [];
             foreach ($key->columns as $index => $position) {
-                if ($element->parts[$index] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart) {
+                if ($element->parts[$index] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart || $element->parts[$index] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart) {
                     (new Constraint\IndexLayout())->dependencies($element->parts[$index], $renamed);
                     $parts[] = $element->parts[$index];
                     continue;

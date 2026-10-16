@@ -173,6 +173,9 @@ final class TableDefinition
     {
         $flags = 0;
         foreach ($this->keys as $key) {
+            if (in_array($position, $key->columns, true)) {
+                $flags |= ColumnFlag::PartKey->value;
+            }
             if ($key->kind === KeyKind::Primary && in_array($position, $key->columns, true)) {
                 $flags |= 2;
             } elseif ($key->kind === KeyKind::Unique && in_array($position, $key->columns, true)) {

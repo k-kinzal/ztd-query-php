@@ -120,7 +120,7 @@ final class TableDefinitionTest extends TestCase
         $table = $session->instance->dictionary->table('d', 't');
 
         self::assertNotNull($table);
-        self::assertSame([514, 4100, 8, 16, 8192], [$table->definition->flags(0), $table->definition->flags(1), $table->definition->flags(2), $table->definition->flags(3), $table->definition->flags(4)]);
+        self::assertSame([16898, 20484, 16392, 16, 8192], [$table->definition->flags(0), $table->definition->flags(1), $table->definition->flags(2), $table->definition->flags(3), $table->definition->flags(4)]);
     }
 
     public function testZeroFillPreservesDeclaredNumericAttributesInResultFlags(): void

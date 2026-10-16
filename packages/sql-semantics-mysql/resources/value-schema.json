@@ -2817,6 +2817,11 @@
         "source": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "temporaryWords": "int"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ArrayPart": {
+        "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\CheckConstraint": {
         "condition": "SqlSemantics\\Statement\\Scalar",
         "enforced": "?bool",

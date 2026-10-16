@@ -13,6 +13,7 @@ use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 
@@ -50,7 +51,7 @@ final class FunctionalKeys
                 continue;
             }
             foreach ($index->parts as $part) {
-                if (!$part instanceof ExpressionPart) {
+                if (!$part instanceof ExpressionPart && !$part instanceof ArrayPart) {
                     continue;
                 }
                 $this->check($part, $index, $definition->engine);
@@ -59,8 +60,14 @@ final class FunctionalKeys
                 $rules->grouped($part->expression);
                 $this->references($part, $expressions, $definition, $owner);
                 $value = $expressions->compiled($part->expression, $scope);
-                $this->result($value->domain());
-                $columns[] = new ColumnDefinition($this->name($part), $value->domain(), Fill::none(), generated: $value, invisible: true, expression: $text->text($part->expression), functional: $part);
+                $written = $text->text($part->expression);
+                if ($part instanceof ArrayPart) {
+                    $value = new \MySqlMemory\Evaluation\Index\ArrayConversion($value, $planner->compiler->domain($part), $owner);
+                    $written = 'cast(' . $written . ' as ' . strtolower($part->target->kind->value) . ($part->target->length === null ? '' : '(' . $part->target->length . ($part->target->scale === null ? '' : ', ' . $part->target->scale) . ')') . ' array)';
+                } else {
+                    $this->result($value->domain());
+                }
+                $columns[] = new ColumnDefinition($this->name($part), $value->domain(), Fill::none(), generated: $value, invisible: true, expression: $written, functional: $part);
             }
         }
 
@@ -70,7 +77,7 @@ final class FunctionalKeys
     /**
      * Identifies a computed slot without allocating a name in the SQL identifier domain.
      */
-    public function name(ExpressionPart $part): string
+    public function name(ExpressionPart|ArrayPart $part): string
     {
         return "\0index:" . spl_object_id($part);
     }
@@ -90,7 +97,7 @@ final class FunctionalKeys
                 continue;
             }
             foreach ($index->parts as $part) {
-                if ($part instanceof ExpressionPart) {
+                if ($part instanceof ExpressionPart || $part instanceof ArrayPart) {
                     return true;
                 }
             }
@@ -104,7 +111,7 @@ final class FunctionalKeys
      *
      * @throws \MySqlMemory\Error\SqlError When the index kind, expression or storage engine is forbidden
      */
-    public function check(ExpressionPart $part, IndexDefinition $index, string $engine): void
+    public function check(ExpressionPart|ArrayPart $part, IndexDefinition $index, string $engine): void
     {
         if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalFullText->error();
@@ -115,11 +122,20 @@ final class FunctionalKeys
         if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalPrimary->error();
         }
+        if ($part instanceof ArrayPart && $part->target->charset !== null) {
+            throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('specifying charset for multi-valued index');
+        }
+        if ($part instanceof ArrayPart && $part->direction !== null) {
+            throw \MySqlMemory\Error\Family\StatementError::WrongUsage->error('multi-valued index', 'explicit index order');
+        }
+        if (count(array_filter($index->parts, static fn ($candidate): bool => $candidate instanceof ArrayPart)) > 1) {
+            throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('more than one multi-valued key part per index');
+        }
         $expression = $part->expression;
         while ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
             $expression = $expression->operand;
         }
-        if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
+        if ($part instanceof ExpressionPart && $expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalColumn->error();
         }
         if (strcasecmp($engine, 'InnoDB') !== 0) {
@@ -132,7 +148,7 @@ final class FunctionalKeys
      *
      * @throws \MySqlMemory\Error\SqlError When a referenced column is missing or generates its value through AUTO_INCREMENT
      */
-    public function references(ExpressionPart $part, TableExpressions $expressions, TableDefinition $definition, string $owner): void
+    public function references(ExpressionPart|ArrayPart $part, TableExpressions $expressions, TableDefinition $definition, string $owner): void
     {
         foreach ($expressions->references($part->expression, $definition->columns) as $reference) {
             if (is_string($reference)) {

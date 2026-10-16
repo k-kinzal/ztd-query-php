@@ -40,6 +40,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
@@ -308,7 +309,7 @@ final class AlterTableCommand implements Command
     public function misordered(IndexDefinition $index): bool
     {
         $hashed = $index->algorithm === IndexAlgorithm::Hash || array_filter($index->options, static fn ($option): bool => $option instanceof IndexUsing && $option->algorithm === IndexAlgorithm::Hash) !== [];
-        $ordered = array_filter($index->parts, static fn ($part): bool => ($part instanceof ColumnPart || $part instanceof ExpressionPart) && $part->direction !== null) !== [];
+        $ordered = array_filter($index->parts, static fn ($part): bool => ($part instanceof ColumnPart || $part instanceof ExpressionPart || $part instanceof ArrayPart) && $part->direction !== null) !== [];
 
         return $ordered && ($hashed || $index->kind === IndexKind::FullText || $index->kind === IndexKind::Spatial);
     }

@@ -8,6 +8,7 @@ use Closure;
 use MySqlMemory\Error\Family\ConstraintError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 
@@ -28,7 +29,7 @@ final class IndexLayout
      * @param Closure(string): (string|false|null) $renamed The current name of an old column, false when dropped, or null when not previously declared
      * @throws \MySqlMemory\Error\SqlError When an expression loses one of its dependencies
      */
-    public function dependencies(ExpressionPart $part, Closure $renamed): void
+    public function dependencies(ExpressionPart|ArrayPart $part, Closure $renamed): void
     {
         foreach ((new Walker())->find($part->expression, ColumnUse::class) as $use) {
             $name = $renamed($use->name->value);

@@ -1070,8 +1070,9 @@ no database state or invocation can make that arrangement valid. Input lowering
 preserves the corresponding error at cast completion, earlier declared types
 and instruction errors, and the different continuation behavior of early MySQL
 8 releases. Event schedules remain outside the stored body and retain their
-separate expression restrictions. These checks do not yet separate array casts
-from the general scalar interface or establish all functional-index behavior.
+separate expression restrictions. Array index declarations now use the separate key role described below. General
+scalar ARRAY casts and other intrinsic operand domains still require further
+work; these checks do not establish the whole-model construction property.
 
 Ordinary functional indexes now retain their typed expression parts in the
 dictionary. Their computed values participate in inserts, updates, uniqueness
@@ -1090,4 +1091,32 @@ invalid input throughout direct execution. Separate SQL histories compare
 dependency errors, inferred result-type restrictions, populated table changes
 and dictionary metadata on MySQL 8.0, 8.4 and 9.1. These witnesses close the
 tested ordinary-index execution gaps; they do not establish the intrinsic
-construction domains of all key parts or implement multi-valued ARRAY indexes.
+construction domains of all key parts.
+
+Multi-valued indexes use `ArrayPart`, which is a key part and an `Operand`, but
+not a `Scalar`. It retains the document expression, element target and written
+ordering. Semantics resolves the document against the indexed table and gives
+the entry its own type fact. Planning consumes that fact without reconstructing
+SQL. The dictionary retains the typed part through ALTER and LIKE. Storage
+converts, sorts and deduplicates its entries and compares overlapping entries
+across rows, including composite unique keys and indexes added to existing data.
+
+The array-index state witness reuses one `CreateIndex` object across a missing
+table, missing document column, overlapping stored arrays, deletion of the
+conflicting row, and an already existing index. Conversion histories also check
+SQL NULL, JSON null, empty arrays, nested documents, scalar documents, binary
+and character entries, and numeric and temporal targets. Current-row conversion
+notes and their row ordinals remain exact.
+
+There is a narrowly observed diagnostic exception for reusing a deleted primary
+key after a decimal array conversion. Fresh native instances executing the same
+history have reported either zero or four old rounding notes on a later integral
+array insertion. The live logical table is empty at that point. The retained
+`ArrayIndexRetiredRowsTest` runs two fresh native instances and memory. Only its
+final integral insertion permits zero or four copies of the exact Note 3751
+message for the previously deleted index entries; results, errors and every
+other statement remain exact. Memory reports zero such historical notes. Normal
+conversion cases use fresh primary keys to avoid mixing this history into their
+oracle. No general warning suppression is applied to SQL Faker or direct
+structure comparisons. This observed variation is consistent with retired
+physical index entries; it does not establish the server's internal mechanism.

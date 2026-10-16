@@ -31,7 +31,7 @@ final class ColumnDefinition
      * @param bool $implicitCollation Whether the collation was inferred or inherited rather than explicitly declared for the column
      * @param SpatialKind|null $spatialKind The geometric subtype resolved from the column declaration
      * @param int|null $srid The required spatial reference identifier, or null for unrestricted values
-     * @param \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart|null $functional The typed index expression of an internal slot, absent for SQL columns
+     * @param \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart|\SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart|null $functional The typed index expression of an internal slot, absent for SQL columns
      */
     public function __construct(
         public readonly string $name,
@@ -48,7 +48,7 @@ final class ColumnDefinition
         public readonly bool $implicitCollation = false,
         public readonly ?SpatialKind $spatialKind = null,
         public readonly ?int $srid = null,
-        public readonly ?\SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart $functional = null,
+        public readonly \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart|\SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart|null $functional = null,
     ) {
     }
 

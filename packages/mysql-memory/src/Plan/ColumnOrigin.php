@@ -28,7 +28,7 @@ final class ColumnOrigin
      */
     public function unkeyed(): self
     {
-        return new self($this->schema, $this->table, $this->originalTable, $this->column, $this->flags & ~(2 | 4 | 8), $this->exact);
+        return new self($this->schema, $this->table, $this->originalTable, $this->column, $this->flags & ~(2 | 4 | 8 | \MySqlMemory\Result\ColumnFlag::PartKey->value), $this->exact);
     }
 
 }

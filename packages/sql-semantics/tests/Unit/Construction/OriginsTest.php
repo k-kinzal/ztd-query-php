@@ -26,6 +26,22 @@ final class OriginsTest extends TestCase
         self::assertSame([2, 22], [$origins->publish()->of($value)?->offset, $origins->publish()->of($value)?->length]);
     }
 
+    public function testForgetRemovesOnlyTheReplacedOccurrenceFromFutureSnapshots(): void
+    {
+        $origins = new Origins();
+        $source = (new Semantics(Dialect::Sqlite))->parser()->parse('SELECT 1');
+        $replaced = new IntegerLiteral('1');
+        $retained = new IntegerLiteral('2');
+        $origins->record($replaced, $source);
+        $origins->record($retained, $source);
+        $before = $origins->publish();
+        $origins->forget($replaced);
+
+        self::assertNotNull($before->of($replaced));
+        self::assertNull($origins->publish()->of($replaced));
+        self::assertNotNull($origins->publish()->of($retained));
+    }
+
     public function testPublishDoesNotChangeWhenMoreOccurrencesAreRecorded(): void
     {
         $origins = new Origins();

@@ -44,6 +44,11 @@ enum ConstraintError: int implements ErrorCode
     case WindowFunctionContext = 3593;
     case DropReferencedTable = 3730;
     case ForeignColumnMissing = 3734;
+    case FunctionalTruncated = 3751;
+    case FunctionalRange = 3752;
+    case FunctionalJsonCast = 3903;
+    case FunctionalTooLong = 3907;
+    case FunctionalNested = 3908;
     case FunctionalJsonGeometry = 3753;
     case FunctionalAutoIncrement = 3754;
     case FunctionalPrimary = 3756;
