@@ -25,6 +25,19 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StagesTest extends TestCase
 {
+    public function testGrammarRetainsOnlyConditionsFromReachedStages(): void
+    {
+        $call = new Deprecation(Deprecated::FoundRows);
+        $syntax = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation('missing'));
+        $operator = new Deprecation(Deprecated::BangNot);
+        $context = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+        $warnings = [$call, $syntax, $operator, $context];
+
+        self::assertSame([1 => $syntax, 2 => $operator], Stages::grammar($warnings, false));
+        self::assertSame($warnings, Stages::grammar($warnings, true));
+        self::assertSame([$call, $operator, $context], Stages::grammar([$call, $operator, $context], false));
+    }
+
     public function testPlannedLeavesWindowOptionsAndFramesToThePlanner(): void
     {
         self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::IgnoreNulls)));

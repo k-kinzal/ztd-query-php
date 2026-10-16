@@ -56,6 +56,25 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 final class Stages
 {
     /**
+     * Retains modern contextualization conditions only after successful grammar interpretation.
+     * Legacy conditions retain their existing order while grammar actions are completed.
+     *
+     * @param array<int, Warning> $warnings The semantic notices in written order
+     * @return array<int, Warning> The conditions from stages that the input reaches
+     */
+    public static function grammar(array $warnings, bool $legacy): array
+    {
+        if ($legacy || array_filter($warnings, static fn (Warning $warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) === []) {
+            return $warnings;
+        }
+        return array_filter($warnings, static fn (Warning $warning): bool => match (true) {
+            $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure => $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax,
+            $warning instanceof Deprecation => $warning->phase() === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax,
+            default => true,
+        });
+    }
+
+    /**
      * Tells whether the command of a statement raises every problem of it itself, before any stored program is checked: an account statement, INSTALL COMPONENT and FLUSH TABLES.
      */
     public static function selfChecked(\SqlSemantics\Statement\Statement $statement): bool

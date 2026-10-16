@@ -17,6 +17,12 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 #[Medium]
 final class DeprecationTest extends TestCase
 {
+    public function testPhaseSeparatesFunctionContextualizationFromGrammarWarnings(): void
+    {
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, (new Deprecation(Deprecated::FoundRows))->phase());
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, (new Deprecation(Deprecated::BangNot))->phase());
+    }
+
     public function testRaiseRecordsTheWarningOnlyInReleasesThatWarn(): void
     {
         $modern = new Derivation((new Semantics(Dialect::MySql))->context([]));

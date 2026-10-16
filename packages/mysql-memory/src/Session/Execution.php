@@ -201,7 +201,9 @@ final class Execution
      * problem of the hint comment after its first keyword, the warnings, the problems of its
      * other hint comments, the names after a leading dot once a warning that is not raised at the head of
      * the statement comes, and the error of each problem found while parsing, up to one that
-     * stops the parse; the first of those errors then fails the statement.
+     * stops the parse; the first of those errors then fails the statement. Modern
+     * contextualization is not reached when grammar interpretation reported an error.
+     * Syntax notices elsewhere in the statement still retain their written order.
      *
      * @param array<int, \SqlSemantics\Statement\Fact\Warning> $warnings The warnings raised while the statement is read
      *
@@ -210,7 +212,7 @@ final class Execution
     public function parsing(Operation $operation, array $warnings): void
     {
         $session = $this->session;
-        $warnings = (new Parse\SpatialWarnings())->accepted($operation, $warnings);
+        $warnings = Stages::grammar((new Parse\SpatialWarnings())->accepted($operation, $warnings), $session->settings()->legacy());
         $dots = $session->dots;
         $failure = null;
         foreach ($session->hinted as [$message, $leading]) {
