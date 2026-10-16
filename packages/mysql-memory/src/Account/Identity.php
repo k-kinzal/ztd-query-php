@@ -9,9 +9,9 @@ namespace MySqlMemory\Account;
  *
  * The user name is compared exactly; the host is held in lower case, as the server folds it when
  * it reads an account name, and a name written without a host names the host `%`. The server
- * writes an account name three ways: quoted as a string ('u'@'h') in the messages of CREATE USER,
- * DROP USER and the like, quoted as identifiers (`u`@`h`) in SHOW GRANTS and the messages about
- * roles, and plain (u@h) in a column name.
+ * writes account names as quoted strings in CREATE USER diagnostics, as escaped
+ * identifiers in SHOW GRANTS and role-cycle diagnostics, as unescaped backtick
+ * labels in authorization and role-membership errors, and plain in column names.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/account-names.html.
  *
  * @visibility MySqlMemory
@@ -70,7 +70,7 @@ final class Identity
     }
 
     /**
-     * Writes the name quoted as identifiers, as SHOW GRANTS and the messages about roles write it.
+     * Writes the name quoted as identifiers, as SHOW GRANTS and role-cycle diagnostics write it.
      *
      * @example A name with a backtick
      *     \MySqlMemory\Account\Identity::of('a`b', '%')->backquoted() // => '`a``b`@`%`'
@@ -78,6 +78,16 @@ final class Identity
     public function backquoted(): string
     {
         return '`' . str_replace('`', '``', $this->user) . '`@`' . str_replace('`', '``', $this->host) . '`';
+    }
+
+    /**
+     * Labels decoded identities in authorization lookup and role-membership diagnostics.
+     * Error numbers 3523 and 3530 retain embedded backticks once in each component.
+     * Observed through MySQL 8.0.44, 8.4.7 and 9.1.0.
+     */
+    public function authorization(): string
+    {
+        return '`' . $this->user . '`@`' . $this->host . '`';
     }
 
     /**

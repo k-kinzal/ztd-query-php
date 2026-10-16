@@ -254,11 +254,11 @@ final class GrantCommand implements Command
                     throw AccountError::AnonymousRoleGrantee->error();
                 }
                 if ($accounts->find($user) === null) {
-                    throw AccountError::UnknownAuthorizationId->error($user->backquoted());
+                    throw AccountError::UnknownAuthorizationId->error($user->authorization());
                 }
                 foreach ($roles as $role) {
                     if ($accounts->find($role) === null) {
-                        throw AccountError::UnknownAuthorizationId->error($role->backquoted());
+                        throw AccountError::UnknownAuthorizationId->error($role->authorization());
                     }
                     if ($role->user === '') {
                         throw AccountError::FailedRoleGrant->error($role->backquoted(), $user->backquoted());

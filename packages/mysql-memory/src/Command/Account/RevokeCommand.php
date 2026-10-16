@@ -257,7 +257,7 @@ final class RevokeCommand implements Command
         foreach ($statement->users as $user) {
             $identity = $names->identity($user, $session);
             if ($accounts->find($identity) === null && !$statement->ignoreUnknownUser) {
-                throw AccountError::UnknownAuthorizationId->error($identity->backquoted());
+                throw AccountError::UnknownAuthorizationId->error($identity->authorization());
             }
         }
         $roles = [];
@@ -266,7 +266,7 @@ final class RevokeCommand implements Command
             $identity = $names->identity($role, $session);
             if ($accounts->find($identity) === null) {
                 if (!$statement->ifExists) {
-                    throw AccountError::UnknownAuthorizationId->error($identity->backquoted());
+                    throw AccountError::UnknownAuthorizationId->error($identity->authorization());
                 }
                 $unknown[] = $identity;
                 continue;
@@ -282,7 +282,7 @@ final class RevokeCommand implements Command
             }
             $existing[] = $user;
             foreach ($unknown as $role) {
-                $session->diagnostics->warning(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($role->backquoted()));
+                $session->diagnostics->warning(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($role->authorization()));
             }
         }
         $found = $this->found($existing, true, $session, false);

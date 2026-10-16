@@ -51,4 +51,9 @@ final class IdentityTest extends TestCase
     {
         self::assertSame('a\\"\\\'\\\\\\Z\\0\\n\\r', Identity::escape("a\"'\\\x1A\0\n\r"));
     }
+    public function testAuthorizationRetainsDecodedBackticksInBothComponents(): void
+    {
+        self::assertSame('`a`b`@`h`h`', Identity::of('a`b', 'H`H')->authorization());
+    }
+
 }

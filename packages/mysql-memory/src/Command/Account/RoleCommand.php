@@ -69,7 +69,7 @@ final class RoleCommand implements Command
         foreach ($users as $user) {
             $identity = $names->identity($user, $session);
             if ($statement->roles->set === RoleSet::All && $accounts->find($identity) === null) {
-                throw new SqlError(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($identity->backquoted()), null, [[AccountError::FailedDefaultRoles->value, AccountError::FailedDefaultRoles->message()]]);
+                throw new SqlError(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($identity->authorization()), null, [[AccountError::FailedDefaultRoles->value, AccountError::FailedDefaultRoles->message()]]);
             }
             $chosen[] = [$identity, $this->selected($statement->roles, $identity, $session)];
         }
@@ -103,7 +103,7 @@ final class RoleCommand implements Command
         };
         foreach ($selection->set === RoleSet::Named ? $roles : [] as $role) {
             if (!isset($granted[$role->key()])) {
-                throw AccountError::RoleNotGranted->error($role->backquoted(), $account->backquoted());
+                throw AccountError::RoleNotGranted->error($role->authorization(), $account->authorization());
             }
         }
         usort($roles, static fn (Identity $a, Identity $b): int => strcmp($a->backquoted(), $b->backquoted()));
