@@ -61,7 +61,7 @@ final class ShowEventsCommand implements Command
         $total = array_sum(array_map(static fn ($schema): int => count($schema->events), $session->instance->dictionary->schemas));
 
         $headings = $session->settings()->legacy() ? $this->legacyHeadings($session->settings()->release() === GrammarRelease::MySql5651)
-            : $this->headings($total === 0 || ($total === 1 && !$statement->filter instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike), $session->settings()->release() === GrammarRelease::MySql8044);
+            : $this->headings($total === 0 || ($total === 1 && !$statement->filter instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike), in_array($session->settings()->release(), [GrammarRelease::MySql8044, GrammarRelease::MySql810], true));
 
         return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
     }
@@ -69,10 +69,10 @@ final class ShowEventsCommand implements Command
     /**
      * Answers the columns of the statement, as the server describes them when it reads the events as a constant table and otherwise.
      *
-     * MySQL 8.0 sends Status as the ENUM column of the events it is, of 18 characters; later
+     * MySQL 8.0 and 8.1 send Status as the ENUM column of the events it is, of 18 characters; later
      * releases compute it, as a string of 21 (verified on live 8.0 and 8.4 servers).
      *
-     * @param bool $enumerated Whether Status is the ENUM column of the events, as in MySQL 8.0
+     * @param bool $enumerated Whether Status is the ENUM column of the events, as in MySQL 8.0 and 8.1
      * @return list<Heading>
      */
     public function headings(bool $constant, bool $enumerated = false): array

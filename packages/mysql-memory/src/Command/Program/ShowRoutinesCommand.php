@@ -48,7 +48,7 @@ final class ShowRoutinesCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowProcedureStatus || $statement instanceof ShowFunctionStatus);
         $function = $statement instanceof ShowFunctionStatus;
-        $language = !in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql810], true);
+        $language = !in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044], true);
         $rows = [];
         foreach ($session->instance->dictionary->schemas as $schema) {
             foreach (RoutineCommand::routines($schema, $function) as $routine) {
@@ -66,7 +66,7 @@ final class ShowRoutinesCommand implements Command
     /**
      * Answers the columns of the statement, as the server describes them.
      *
-     * @param bool $language Whether the release lists the language of each routine, as MySQL 8.2 and later do (verified on live 8.0, 8.4 and 9.1 servers)
+     * @param bool $language Whether the release lists the language of each routine, as MySQL 8.1 and later do (verified on live 8.0, 8.4 and 9.1 servers)
      * @return list<Heading>
      */
     public function headings(bool $language = true, GrammarRelease $release = GrammarRelease::MySql847, bool $direct = false): array
