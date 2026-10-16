@@ -20,7 +20,8 @@ use SqlSemantics\Platform\MySql\Statement\Name\CurrentUser;
  * GRANT OPTION. A grant with that option also sets the grantee's global GRANT OPTION. Revoking
  * PROXY leaves that global option unchanged; REVOKE ALL leaves the PROXY grants unchanged.
  * In the ON position CURRENT_USER checks the current identity but stores or removes the
- * empty user and host mapping. These transitions were verified on MySQL 5.6.51 and 8.4.7 through SQL.
+ * empty user and host mapping. Authority is checked after the proxied hostname and before
+ * any grantee hostname is resolved. Observed through MySQL 5.6.51 through 9.1.0 SQL.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/proxy-users.html.
  *
  * @visibility MySqlMemory
@@ -38,13 +39,13 @@ final class Proxies
         $names->check([$statement->proxied, ...$names->users($statement->grantees)]);
         $proxied = $names->identity($statement->proxied, $session);
         $names->resolve($proxied, $session->diagnostics);
+        $this->check($proxied, $session);
         $identities = [];
         foreach ($statement->grantees as $grantee) {
             $identity = $names->identity($grantee->user, $session);
             $names->resolve($identity, $session->diagnostics);
             $identities[] = $identity;
         }
-        $this->check($proxied, $session);
         $proxied = $statement->proxied instanceof CurrentUser ? new Identity('', '') : $proxied;
         $found = [];
         if ((new Catalog($session->settings()->release()))->legacy()) {
@@ -71,10 +72,10 @@ final class Proxies
         $names->check([$statement->proxied, ...$names->users($statement->users)]);
         $proxied = $names->identity($statement->proxied, $session);
         $names->resolve($proxied, $session->diagnostics);
+        $this->check($proxied, $session);
         foreach ($statement->users as $user) {
             $names->resolve($names->identity($user->user, $session), $session->diagnostics);
         }
-        $this->check($proxied, $session);
         $proxied = $statement->proxied instanceof CurrentUser ? new Identity('', '') : $proxied;
         $found = (new RevokeCommand())->found($names->users($statement->users), $statement->ignoreUnknownUser, $session, false);
         foreach ($found as $account) {

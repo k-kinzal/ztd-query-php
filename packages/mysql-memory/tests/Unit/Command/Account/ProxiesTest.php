@@ -117,4 +117,18 @@ final class ProxiesTest extends TestCase
 
         self::assertCount(1, $instance->accounts->find(new Identity('root', '%'))?->grants->proxies ?? []);
     }
+    public function testGrantStopsBeforeGranteeHostWarningsWhenAuthorityIsMissing(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('GRANT PROXY ON missing@remote TO u@localhost, v@anotherhost');
+        self::assertSame([1285, 1698], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testRevokeStopsBeforeGranteeHostWarningsWhenAuthorityIsMissing(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("REVOKE IF EXISTS PROXY ON _sqlfaker_identifier @GLOBAL FROM _sfOK1KT @localhost , _sqlfaker_identifier @'a''b'");
+        self::assertSame([1285, 1698], array_column($session->diagnostics->conditions, 1));
+    }
+
 }
