@@ -10,6 +10,7 @@ use Fuzz\Structure\Profiles;
 use Fuzz\Structure\Reference;
 use Fuzz\Target\DisposableMySql;
 use mysqli;
+use RuntimeException;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Scalar;
@@ -25,13 +26,12 @@ use Testcontainers\Testcontainers;
 final class Comparison
 {
     /**
-     * @return array{sql: string, profile: string, mode: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>} Both original observations, equality and explicit comparison contracts
+     * @return array{sql: string, profile: string, mode: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>, transitions: list<array{sql: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>}>} Original observations and any database-selection history, without replacing the original structure
      */
     public function compare(Statement|Scalar $node, LanguageProfile $profile, ?string $mode = null, ?int $port = null): array
     {
         $release = substr($profile->grammar->value, 6);
         $mode ??= (new Profiles())->mode($profile);
-        $sql = (new Reference())->sql($node, $profile, '?');
         $definition = new DisposableMySql($release);
         if ($port !== null) {
             $definition->withPortStrategy(new StaticPortStrategy($port));
@@ -46,19 +46,61 @@ final class Comparison
                 $session = (new Fixture())->session($endpoint, $native, $release, $definition->supervised());
                 $session->text = 'unrelated invalid input';
                 (new SessionSetup())->apply($session, $mode);
-                $status = Status\Listing::capture($node, $native, $session, $sql);
-                $password = Password\Contract::capture($node, $endpoint, $session);
-                $process = Process\Listing::capture($node, $native, $session, $sql);
-                $actual = (new Memory())->observe($session, $node, $this->parameters($node, $session));
-                $expected = (new Native())->observe($native, $sql, count((new Bindings())->nulls($node)));
+                $observation = $this->observe($node, $profile, $native, $session, $endpoint);
+                $error = $observation['native']['error'] ?? null;
+                $history = $observation['matches'] && is_array($error) && ($error[0] ?? null) === 1046
+                    ? $this->selected($node, $profile, $native, $session, $endpoint) : [];
 
-                return ['sql' => $sql, 'profile' => $profile->grammar->value, 'mode' => $mode, 'native' => $expected, 'memory' => $actual, ...(new Observations())->compare($node, $release, $expected, $actual, $status, password: $password, process: $process)];
+                return [...$observation, 'profile' => $profile->grammar->value, 'mode' => $mode, 'matches' => $observation['matches'] && !in_array(false, array_column($history, 'matches'), true), 'transitions' => $history];
             } finally {
                 $native->close();
             }
         } finally {
             $container->stop();
         }
+    }
+
+    /**
+     * Executes the supplied object directly and compares its complete native rendering.
+     *
+     * @return array{sql: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>}
+     */
+    public function observe(Statement|Scalar $node, LanguageProfile $profile, mysqli $native, \MySqlMemory\Session\Session $session, Endpoint $endpoint): array
+    {
+        $sql = (new Reference())->sql($node, $profile, '?');
+        $status = Status\Listing::capture($node, $native, $session, $sql);
+        $password = Password\Contract::capture($node, $endpoint, $session);
+        $process = Process\Listing::capture($node, $native, $session, $sql);
+        $actual = (new Memory())->observe($session, $node, $this->parameters($node, $session));
+        $expected = (new Native())->observe($native, $sql, count((new Bindings())->nulls($node)));
+
+        return ['sql' => $sql, 'native' => $expected, 'memory' => $actual, ...(new Observations())->compare($node, $session->instance->version, $expected, $actual, $status, password: $password, process: $process)];
+    }
+
+    /**
+     * Resolves an initial missing database, then repeats the exact original object.
+     * Every setup observation remains part of the comparison. A later SQL error is
+     * retained for classification; selecting a database does not certify the structure.
+     *
+     * @return list<array{sql: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>}>
+     * @throws RuntimeException When a matching fixture error prevents the state transition
+     */
+    public function selected(Statement|Scalar $node, LanguageProfile $profile, mysqli $native, \MySqlMemory\Session\Session $session, Endpoint $endpoint): array
+    {
+        $database = new \SqlSemantics\Statement\Identifier\Name('structure_fixture');
+        $steps = [new \SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase(true, $database), new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase($database), $node];
+        $history = [];
+        foreach ($steps as $index => $step) {
+            $observation = $this->observe($step, $profile, $native, $session, $endpoint);
+            $history[] = $observation;
+            if (!$observation['matches']) {
+                break;
+            }
+            if ($index < 2 && isset($observation['native']['error'])) {
+                throw new RuntimeException('The database selection fixture could not be established: ' . serialize($history));
+            }
+        }
+        return $history;
     }
 
     /**

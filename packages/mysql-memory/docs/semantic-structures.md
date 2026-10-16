@@ -76,8 +76,8 @@ separate administrative connection before the generated statement runs. It
 never imports that statement's response or any routine implementation.
 
 The summary distinguishes `matchedSuccess`, `matchedError`, `different` and
-`failed`. Exit status 0 requires exactly one complete native match for every
-requested trial. A SQL error is accepted only with that native evidence. For
+`failed`. Exit status 0 requires a complete native match for every
+requested trial, including every recorded transition. A SQL error is accepted only with that native evidence. For
 example, `SIGNAL SQLSTATE '45000'` is a valid structure whose intended outcome is
 an error; treating it as an implementation failure would make the property
 impossible. A native success, different error, missing warning or metadata
@@ -87,6 +87,17 @@ This exit status establishes native agreement for the sampled outcomes. It does
 not establish the separate constructible-structure gate: matching rejections
 still require an intentional-condition explanation, a state-transition witness,
 or a structural repair. See the [acceptance contract](acceptance.md).
+
+When both initial observations agree on error 1046 (no database selected), the
+runner creates and selects `structure_fixture` on both sides, then submits the
+same original object again. The `transitions` field retains all three complete
+observations, including the two fixture commands. No generated node is replaced
+or discarded. A difference at any step fails the trial; an unsuccessful fixture
+is an infrastructure failure. The summary's `databaseTransitions` counts the
+structures, observations and differences separately from the initial outcomes.
+This removes one known state barrier across the entire root inventory. It does
+not resolve table or account dependencies, or classify a later matching error as
+structurally valid. Those later conditions remain visible for investigation.
 
 Each trial has a fresh native server so partial effects cannot leak into another
 trial. `MYSQL_MEMORY_STRUCTURE_NATIVE_PORT` optionally fixes its published port;

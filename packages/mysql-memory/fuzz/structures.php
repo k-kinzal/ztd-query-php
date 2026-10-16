@@ -37,6 +37,7 @@ $audit = ($argv[6] ?? '') === 'native';
 $compare = ($argv[6] ?? '') === 'compare';
 $auditCounts = ['matchingError' => 0, 'different' => 0, 'failed' => 0];
 $comparisons = ['matchedSuccess' => 0, 'matchedError' => 0, 'different' => 0, 'failed' => 0];
+$transitions = ['structures' => 0, 'observations' => 0, 'different' => 0];
 if ($count === false || $start === false) {
     fwrite(STDERR, "Usage: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START] [native|compare]\n");
     exit(2);
@@ -81,6 +82,10 @@ for ($trial = 0; $trial < $count; $trial++) {
             $profile ??= new LanguageProfile(GrammarRelease::from('mysql-' . $release), parameters: (new Execution())->parameters($node));
             $port = filter_var(getenv('MYSQL_MEMORY_STRUCTURE_NATIVE_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
             $observed = (new Fuzz\Structure\Audit\Comparison())->compare($node, $profile, $mode, $port === false ? null : $port);
+            $history = $observed['transitions'];
+            $transitions['structures'] += $history === [] ? 0 : 1;
+            $transitions['observations'] += count($history);
+            $transitions['different'] += count(array_filter($history, static fn (array $step): bool => !$step['matches']));
             $error = isset($observed['memory']['error']);
             $counts[$error ? 'sql_error' : 'passed']++;
             $comparisons[$observed['matches'] === true ? ($error ? 'matchedError' : 'matchedSuccess') : 'different']++;
@@ -110,6 +115,6 @@ for ($trial = 0; $trial < $count; $trial++) {
         }
     }
 }
-echo json_encode(['seed' => $seed, 'release' => $release, 'counts' => $counts, 'nativeAudit' => $auditCounts, 'comparisons' => $comparisons], JSON_THROW_ON_ERROR) . "\n";
+echo json_encode(['seed' => $seed, 'release' => $release, 'counts' => $counts, 'nativeAudit' => $auditCounts, 'comparisons' => $comparisons, 'databaseTransitions' => $transitions], JSON_THROW_ON_ERROR) . "\n";
 $success = $compare ? $comparisons['matchedSuccess'] + $comparisons['matchedError'] === $count : $counts['passed'] === $count;
 exit($counts['generation'] + $counts['exhausted'] > 0 ? 2 : ($success ? 0 : 1));
