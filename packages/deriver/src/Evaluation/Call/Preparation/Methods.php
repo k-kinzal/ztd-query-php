@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call\Preparation;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Access;
+use Deriver\ControlFlow\Hierarchy\Builtins;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\CallResolution;
-use Deriver\Evaluation\Call\Creation\Builtins;
-use Deriver\Evaluation\Call\Dispatch;
-use Deriver\Evaluation\Call\Member\Access;
 use Deriver\Evaluation\Call\Member\Invocation;
 use Deriver\Evaluation\Call\MethodInvocation;
 use Deriver\Evaluation\Call\Native\Properties;
@@ -21,7 +21,7 @@ use Deriver\Value\Term;
 
 /**
  * Checks method access and obtains argument modes before argument effects begin.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Methods
 {

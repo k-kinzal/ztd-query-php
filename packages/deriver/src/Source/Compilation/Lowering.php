@@ -15,7 +15,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Coordinates parser-specific lowering without leaking AST nodes into the solver.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class Lowering
 {

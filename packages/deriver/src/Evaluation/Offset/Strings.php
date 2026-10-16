@@ -12,7 +12,7 @@ use Deriver\Value\Term;
 
 /**
  * PHP 8.3 byte offsets, including context-dependent diagnostics and assignment results.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Strings
 {

@@ -9,7 +9,7 @@ use PhpParser\Node\Expr;
 
 /**
  * Detects potentially interacting effects in expressions without ordered semantics.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class EffectInspection
 {

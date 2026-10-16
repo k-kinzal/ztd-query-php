@@ -25,6 +25,7 @@ final class CandidateCollection implements Countable, IteratorAggregate, JsonSer
 {
     /**
      * @param list<Candidate> $candidates
+     * @visibility Deriver\Analysis\Candidates
      */
     public function __construct(
         public readonly array $candidates,

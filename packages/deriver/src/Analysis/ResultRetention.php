@@ -9,7 +9,7 @@ use WeakMap;
 
 /**
  * Keeps a bounded working set; callers retain ownership of larger or older result graphs.
- * @visibility root
+ * @visibility namespace
  */
 final class ResultRetention
 {

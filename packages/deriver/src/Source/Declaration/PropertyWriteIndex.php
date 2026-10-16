@@ -10,7 +10,7 @@ use PhpParser\Node\Expr;
 
 /**
  * Selects possible property writers from syntax before lowering any body.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class PropertyWriteIndex
 {

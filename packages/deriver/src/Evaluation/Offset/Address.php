@@ -8,7 +8,7 @@ use Deriver\Value\Term;
 
 /**
  * Retains the evaluated key before container-dependent offset conversion.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Address
 {

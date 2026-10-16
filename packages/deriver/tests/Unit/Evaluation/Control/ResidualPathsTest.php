@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Evaluation\Control;
 
 use Deriver\Evaluation\Control\ResidualPaths;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -21,12 +21,12 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Havoc::class)]
 #[UsesClass(State::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]

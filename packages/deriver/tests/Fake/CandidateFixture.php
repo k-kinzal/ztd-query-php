@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Fake;
 
 use Deriver\Analysis\Session;
+use Deriver\Candidate\Cache;
+use Deriver\Candidate\Context;
+use Deriver\Candidate\Derivation;
+use Deriver\Candidate\Frame;
+use Deriver\Candidate\Index;
 use Deriver\ControlFlow\Instruction;
-use Deriver\Evaluation\Candidate\Cache;
-use Deriver\Evaluation\Candidate\Context;
-use Deriver\Evaluation\Candidate\Derivation;
-use Deriver\Evaluation\Candidate\Frame;
-use Deriver\Evaluation\Candidate\Index;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
@@ -63,7 +63,7 @@ final class CandidateFixture
      */
     public static function value(Derivation $evaluator): \Deriver\Value\Term
     {
-        $alternatives = (new \Deriver\Evaluation\Candidate\Choices())->alternatives($evaluator->returns(self::frame($evaluator), 64));
+        $alternatives = (new \Deriver\Candidate\Choices())->alternatives($evaluator->returns(self::frame($evaluator), 64));
         $values = [];
         foreach ($alternatives as [$value, $_]) {
             $values[(new \Deriver\Value\Identity())->key($value)] = $value;

@@ -15,7 +15,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Indexes declarations without traversing or evaluating callable bodies.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class DeclarationScanner
 {

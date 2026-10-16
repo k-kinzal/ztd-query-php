@@ -6,13 +6,13 @@ namespace Deriver\Evaluation\Call\Native;
 
 use Deriver\ControlFlow\Program;
 use Deriver\ControlFlow\PropertyDeclaration;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Keeps native throwable properties in the same heap as source object state.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Properties
 {

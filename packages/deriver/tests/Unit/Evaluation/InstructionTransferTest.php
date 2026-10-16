@@ -9,11 +9,11 @@ use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Control\Handler;
 use Deriver\Evaluation\InstructionTransfer;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Offset\Address;
 use Deriver\Evaluation\Offset\Protocol;
 use Deriver\Evaluation\Offset\ProtocolAccess;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Model\State\StateSlot;
 use Deriver\Project\Configuration;
 use Deriver\Reference\SourceRef;
@@ -27,12 +27,12 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\SolverFixture;
 
 #[CoversClass(InstructionTransfer::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
 #[UsesClass(\Deriver\Analysis\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Constraint\Constraints::class)]
+#[UsesClass(\Deriver\Evaluation\Constraints::class)]
 #[UsesClass(\Deriver\ControlFlow\Argument::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
@@ -54,9 +54,9 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Call\Closure\Binding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Closure\Capture::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Creation\Access::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Member\Access::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Builtins::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Access::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Member\Constants::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Member\Invocation::class)]
 #[UsesClass(\Deriver\Evaluation\Call\MethodInvocation::class)]
@@ -85,7 +85,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Control\IteratorCursor::class)]
 #[UsesClass(\Deriver\Evaluation\Control\LoopConvergence::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Cell::class)]
@@ -126,12 +126,12 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Transfer\PropertyTransfer::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Memory\LiveArray::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\LiveArray::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Builtin\TypePredicates::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]

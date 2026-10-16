@@ -9,8 +9,8 @@ use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Control\ExceptionChain;
 use Deriver\Evaluation\Control\Handler;
 use Deriver\Evaluation\Control\Unwinding;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -24,18 +24,18 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\ControlFlow\ClassDeclaration::class)]
 #[UsesClass(ExceptionRegion::class)]
 #[UsesClass(\Deriver\ControlFlow\PropertyDeclaration::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Builtins::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Native\Properties::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Native\Signatures::class)]
 #[UsesClass(Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
 #[UsesClass(Handler::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(Unwinding::class)]
 #[UsesClass(State::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]

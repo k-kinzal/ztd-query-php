@@ -9,16 +9,16 @@ use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
+use Deriver\Evaluation\Memory\ReferenceConstraint;
 use Deriver\Evaluation\Offset\Path;
 use Deriver\Evaluation\Offset\Transfer;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
-use Deriver\Memory\ReferenceConstraint;
 use Deriver\Value\Term;
 
 /**
  * Applies property type, visibility, initialization, and implicit call semantics.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PropertyTransfer
 {

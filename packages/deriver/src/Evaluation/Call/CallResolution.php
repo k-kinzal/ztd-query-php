@@ -20,7 +20,7 @@ use Deriver\Reference\SourceRef;
 
 /**
  * Selects ordinary source bodies before optional replacement models.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CallResolution
 {

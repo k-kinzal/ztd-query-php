@@ -16,7 +16,7 @@ use PhpParser\NodeVisitorAbstract;
 
 /**
  * Rejects newer grammar forms that the upstream parser accepts under older emulation profiles.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class TargetSyntax extends NodeVisitorAbstract
 {

@@ -9,7 +9,8 @@ use Deriver\Source\Compilation\EffectInspection;
 
 /**
  * Lists attached PHPDoc from captured syntax without compiling callable bodies.
- * @visibility root
+ * @visibility Deriver\Source
+ * @visibility Deriver\Analysis
  */
 final class Comments
 {

@@ -10,7 +10,7 @@ use Deriver\Evaluation\State;
 
 /**
  * Query-local dynamic dependency graph and deterministic specialization registry.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Table
 {

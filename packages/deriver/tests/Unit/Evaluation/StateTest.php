@@ -13,9 +13,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(State::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
 #[UsesClass(\Deriver\Analysis\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
@@ -30,7 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallExecutor::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Creation\Access::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Member\Invocation::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Native\Invocation::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Native\Signatures::class)]
@@ -43,7 +43,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Discovery::class)]
@@ -65,11 +65,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Transfer\PropertyTransfer::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Memory\Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Location::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
@@ -160,7 +160,7 @@ final class StateTest extends TestCase
         $state = new State();
         $array = $state->local('a');
         $state->memory->write($array, Term::fromNative([1, 2]));
-        $state->unknownAlias($state->local('v'), new \Deriver\Memory\Location($array->root, unknown: true));
+        $state->unknownAlias($state->local('v'), new \Deriver\Evaluation\Memory\Location($array->root, unknown: true));
         self::assertTrue($state->local('v')->unknown);
         self::assertSame([1, 2], $state->snapshot()['a']->native());
         $state->memory->write($state->local('v'), Term::constant(9));
@@ -170,12 +170,12 @@ final class StateTest extends TestCase
     {
         $state = new State();
         $state->memory->write($state->local('a'), Term::fromNative([1, 2]));
-        $state->alias($state->local('v'), new \Deriver\Memory\Location($state->local('a')->root, unknown: true));
+        $state->alias($state->local('v'), new \Deriver\Evaluation\Memory\Location($state->local('a')->root, unknown: true));
         $state->memory->write($state->local('v'), Term::constant(9));
         self::assertNotSame(9, $state->memory->read($state->local('a'))->literal);
         self::assertSame('opaque', $state->memory->read($state->local('a'))->kind);
-        $state->alias(new \Deriver\Memory\Location($state->local('b')->root, ['k']), new \Deriver\Memory\Location($state->local('a')->root, unknown: true));
-        self::assertSame('UNKNOWN_REFERENCE', $state->memory->read(new \Deriver\Memory\Location($state->local('b')->root, ['k']))->literal);
+        $state->alias(new \Deriver\Evaluation\Memory\Location($state->local('b')->root, ['k']), new \Deriver\Evaluation\Memory\Location($state->local('a')->root, unknown: true));
+        self::assertSame('UNKNOWN_REFERENCE', $state->memory->read(new \Deriver\Evaluation\Memory\Location($state->local('b')->root, ['k']))->literal);
     }
     public function testValueKeepsUncomputedDistinctFromAnEvaluatedNull(): void
     {

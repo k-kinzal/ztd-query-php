@@ -15,7 +15,7 @@ use PhpParser\NodeVisitorAbstract;
 
 /**
  * Checks relative class references only where PHP fixes the lexical class at compile time.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class ClassScope extends NodeVisitorAbstract
 {

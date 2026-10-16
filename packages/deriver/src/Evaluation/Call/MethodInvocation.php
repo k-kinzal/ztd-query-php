@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Call;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Access;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
-use Deriver\Evaluation\Call\Member\Access;
 use Deriver\Evaluation\Call\Member\Invocation;
 use Deriver\Evaluation\Constant\ClassNames;
+use Deriver\Evaluation\Constraints;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\State;
 use Deriver\Model\Provider\DispatchDecision;
@@ -18,7 +19,7 @@ use Deriver\Value\Term;
 
 /**
  * Resolves known receivers and retains open-world alternatives for declared types.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class MethodInvocation
 {

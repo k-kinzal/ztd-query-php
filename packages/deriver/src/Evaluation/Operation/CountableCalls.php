@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Operation;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\CallExecutor;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\UnknownCall;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Machine;
@@ -16,7 +16,7 @@ use Deriver\Value\Term;
 
 /**
  * Executes Countable::count using the captured receiver and ordinary source effects.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CountableCalls
 {

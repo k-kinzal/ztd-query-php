@@ -13,7 +13,7 @@ use Deriver\Value\Term;
 
 /**
  * Seals unexplored execution with inclusive normal and exceptional completions.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ResidualPaths
 {

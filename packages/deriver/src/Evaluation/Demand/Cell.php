@@ -10,7 +10,7 @@ use Deriver\Evaluation\Summary\CompletionRecord;
 
 /**
  * Separates computation progress from the current, possibly empty approximation.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Cell
 {

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Fake;
 
 use Deriver\Evaluation\Context;
-use Deriver\Evaluation\Control\Resources;
 use Deriver\Query\ResourceLimits;
+use Deriver\Query\Resources;
 use Deriver\Reference\SourceRef;
 
 /**

@@ -11,7 +11,7 @@ use Deriver\Model\Provider\DispatchRequest;
 
 /**
  * Combines provider candidates while keeping completeness and provenance explicit.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ProviderDispatch
 {

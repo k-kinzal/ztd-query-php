@@ -14,7 +14,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Preserves statement control, state, and exceptional completion.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class StatementLowering
 {

@@ -12,7 +12,7 @@ use Deriver\Reference\SourceRef;
 
 /**
  * Rebinds source-owned immutable IR references when unchanged files enter a new snapshot.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class SnapshotRebase
 {

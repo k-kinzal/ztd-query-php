@@ -16,7 +16,7 @@ use PhpParser\Node;
 
 /**
  * Builds explicit blocks and SSA temporaries for one callable.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class GraphBuilder
 {

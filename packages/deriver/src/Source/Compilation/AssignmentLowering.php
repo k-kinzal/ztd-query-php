@@ -10,7 +10,7 @@ use PhpParser\Node\Expr;
 
 /**
  * Lowers assignments without conflating values and reference addresses.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class AssignmentLowering
 {

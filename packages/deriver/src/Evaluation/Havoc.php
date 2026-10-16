@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation;
 
-use Deriver\Memory\Location;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Value\Term;
 use WeakMap;
 
 /**
  * Invalidates only reachable mutable state, plus exposed globals and statics.
- * @visibility root
+ * @visibility namespace
  */
 final class Havoc
 {

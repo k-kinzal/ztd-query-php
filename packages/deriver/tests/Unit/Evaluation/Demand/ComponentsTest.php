@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\ControlFlow\Terminator::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Cell::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Key::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Table::class)]

@@ -6,8 +6,8 @@ namespace Tests\Unit\Evaluation\Control;
 
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Control\StateJoin;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Query\Budget;
 use Deriver\Value\Term;
 use JsonException;
@@ -17,12 +17,12 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(StateJoin::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
 #[UsesClass(\Deriver\Analysis\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Constraint\Constraints::class)]
+#[UsesClass(\Deriver\Evaluation\Constraints::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\ControlFlow\Terminator::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentOrder::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ParameterBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeCheck::class)]
@@ -39,7 +39,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Context::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ResidualPaths::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Cell::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Components::class)]
@@ -63,10 +63,10 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
@@ -121,7 +121,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(\Deriver\Evaluation\Control\PathJoin::class)]
-#[UsesClass(\Deriver\Value\Lattice::class)]
+#[UsesClass(\Deriver\Model\Operations\Lattice::class)]
 #[UsesClass(\Deriver\Value\StringPrefix::class)]
 #[UsesClass(Term::class)]
 #[Small]
@@ -150,8 +150,8 @@ final class StateJoinTest extends TestCase
         $states = (new StateJoin($context))->completed([$a, $b], $body);
         self::assertCount(1, $states);
         self::assertSame('abstract', $states[0]->completion->value?->kind);
-        self::assertTrue((new \Deriver\Value\Lattice())->contains($states[0]->completion->value, Term::constant(1)));
-        self::assertTrue((new \Deriver\Value\Lattice())->contains($states[0]->completion->value, Term::constant('last')));
+        self::assertTrue((new \Deriver\Model\Operations\Lattice())->contains($states[0]->completion->value, Term::constant(1)));
+        self::assertTrue((new \Deriver\Model\Operations\Lattice())->contains($states[0]->completion->value, Term::constant('last')));
         self::assertCount(2, $context->frontiers);
     }
 

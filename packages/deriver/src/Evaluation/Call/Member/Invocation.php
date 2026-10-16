@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call\Member;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Access;
+use Deriver\ControlFlow\Hierarchy\Builtins;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\ControlFlow\Parameter;
 use Deriver\Evaluation\Call\ArgumentOrder;
 use Deriver\Evaluation\Call\CallExecutor;
-use Deriver\Evaluation\Call\Creation\Builtins;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\MethodInvocation;
 use Deriver\Evaluation\Call\Native\Invocation as NativeInvocation;
 use Deriver\Evaluation\Call\PassedArgument;
@@ -22,7 +23,7 @@ use Deriver\Value\Term;
 
 /**
  * Applies visibility, instance binding, and magic dispatch before invoking a method body.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Invocation
 {

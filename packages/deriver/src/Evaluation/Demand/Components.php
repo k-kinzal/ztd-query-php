@@ -6,7 +6,7 @@ namespace Deriver\Evaluation\Demand;
 
 /**
  * Finds strongly connected demand components in deterministic dependency order.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Components
 {

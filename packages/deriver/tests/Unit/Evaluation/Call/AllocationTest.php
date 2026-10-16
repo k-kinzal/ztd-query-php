@@ -7,9 +7,9 @@ namespace Tests\Unit\Evaluation\Call;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\Allocation;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Model\StateStorage;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Model\State\StateSlot;
 use Deriver\Project\Configuration;
 use Deriver\Reference\SourceRef;
@@ -24,9 +24,9 @@ use Tests\Fake\SolverFixture;
 use Tests\Fake\SummaryFixture;
 
 #[CoversClass(Allocation::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
 #[UsesClass(\Deriver\Analysis\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\ControlFlow\Argument::class)]
@@ -46,9 +46,9 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Evaluation\Call\CallExecutor::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallResolution::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Creation\Access::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Member\Access::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Builtins::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Access::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Member\Invocation::class)]
 #[UsesClass(\Deriver\Evaluation\Call\MethodInvocation::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Native\Invocation::class)]
@@ -73,7 +73,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Evaluation\Control\ExceptionMatch::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Handler::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Cell::class)]
@@ -109,10 +109,10 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchRequest::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
@@ -176,7 +176,7 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Increment::class)]
-#[UsesClass(\Deriver\Value\Lattice::class)]
+#[UsesClass(\Deriver\Model\Operations\Lattice::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Transfer;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Constant\ClassNames;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
@@ -14,7 +14,7 @@ use Deriver\Value\Term;
 
 /**
  * Captures callable identity and lexical values without executing closure bodies.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CallableTransfer
 {

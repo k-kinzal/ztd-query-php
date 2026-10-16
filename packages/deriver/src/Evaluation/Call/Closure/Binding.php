@@ -16,7 +16,7 @@ use Deriver\Value\Term;
 
 /**
  * Restores acquisition scope for first-class callables without changing the invoking frame.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Binding
 {

@@ -7,8 +7,8 @@ namespace Tests\Unit\Evaluation\Call\Preparation;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\Preparation\Transfer;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -27,8 +27,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Call\CallResolution::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallableCheck::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Creation\Access::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Builtins::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Member\Invocation::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Native\Signatures::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Preparation\Creation::class)]
@@ -36,12 +36,12 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Call\Preparation\Target::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Havoc::class)]
 #[UsesClass(Machine::class)]
 #[UsesClass(State::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
 #[UsesClass(\Deriver\Model\Builtin\Library::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]

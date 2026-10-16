@@ -36,7 +36,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Instruction::class)]
 #[UsesClass(Terminator::class)]
 #[UsesClass(Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]

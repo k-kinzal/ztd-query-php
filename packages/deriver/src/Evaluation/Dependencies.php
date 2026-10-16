@@ -9,7 +9,7 @@ use Deriver\Result\Derivation;
 
 /**
  * Records concrete definition, storage, call, and control dependencies as graph IDs.
- * @visibility root
+ * @visibility namespace
  */
 final class Dependencies
 {

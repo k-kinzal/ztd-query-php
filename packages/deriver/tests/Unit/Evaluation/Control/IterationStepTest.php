@@ -7,8 +7,8 @@ namespace Tests\Unit\Evaluation\Control;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Control\IterationStep;
 use Deriver\Evaluation\Control\IteratorCursor;
+use Deriver\Evaluation\Memory\LiveArray;
 use Deriver\Evaluation\State;
-use Deriver\Memory\LiveArray;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
 use JsonException;
@@ -18,12 +18,12 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(IterationStep::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
 #[UsesClass(\Deriver\Analysis\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Constraint\Constraints::class)]
+#[UsesClass(\Deriver\Evaluation\Constraints::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\ControlFlow\Terminator::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentOrder::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
@@ -39,7 +39,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(IteratorCursor::class)]
 #[UsesClass(\Deriver\Evaluation\Control\LoopConvergence::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Discovery::class)]
@@ -57,11 +57,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
 #[UsesClass(LiveArray::class)]
-#[UsesClass(\Deriver\Memory\Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Location::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Builtin\TypePredicates::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
@@ -400,7 +400,7 @@ final class IterationStepTest extends TestCase
         $state = new State();
         $root = $state->local('rows');
         $state->memory->write($root, Term::array([]));
-        $state->addresses['element'] = new \Deriver\Memory\Location($root->root, ['k']);
+        $state->addresses['element'] = new \Deriver\Evaluation\Memory\Location($root->root, ['k']);
         $instruction = new Instruction('i', 'iterator', new SourceRef('test', 'a.php', 0, 1), 'it', ['element'], attributes:['byReference' => true]);
         (new IterationStep(\Tests\Fake\SolverFixture::context()))->initialize($instruction, $state);
         self::assertSame(['k' => null], $state->memory->materialize($state->memory->read($root))->native());

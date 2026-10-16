@@ -16,7 +16,7 @@ use Deriver\Value\Term;
 
 /**
  * Applies offset operations after container, access, and reference validation.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Transfer
 {

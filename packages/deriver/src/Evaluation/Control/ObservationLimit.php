@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Control;
 
 use Deriver\Evaluation\Context;
+use Deriver\Model\Operations\Lattice;
 use Deriver\Reference\SourceRef;
 use Deriver\Result\Alternative;
 use Deriver\Result\Exceptional;
 use Deriver\Result\StorageSnapshot;
-use Deriver\Value\Lattice;
 use Deriver\Value\Term;
 
 /**
  * Bounds exported observations with inclusive value and state joins.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ObservationLimit
 {

@@ -11,7 +11,7 @@ use Deriver\Value\Identity;
 
 /**
  * Keeps one correlated isolated return or exception with its final local state.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CompletionRecord
 {

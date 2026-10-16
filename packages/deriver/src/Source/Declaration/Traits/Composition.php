@@ -16,7 +16,7 @@ use PhpParser\NodeVisitor\CloningVisitor;
 
 /**
  * Imports trait declarations into their lexical consuming classes before lazy body lowering.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class Composition
 {

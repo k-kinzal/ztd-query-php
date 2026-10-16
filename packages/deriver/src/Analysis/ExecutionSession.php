@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Analysis;
 
+use Deriver\Analysis\Execution\QueryExecution;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;

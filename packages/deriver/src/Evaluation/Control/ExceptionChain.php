@@ -7,13 +7,13 @@ namespace Deriver\Evaluation\Control;
 use Deriver\ControlFlow\Program;
 use Deriver\Evaluation\Call\Native\Signatures;
 use Deriver\Evaluation\Completion;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Appends exceptions displaced by finally using PHP's previous-chain identity rules.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ExceptionChain
 {

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Evaluation\Model;
 
 use Deriver\ControlFlow\Instruction;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Model\StateStorage;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Model\State\StateSlot;
 use Deriver\Project\Configuration;
 use Deriver\Reference\SourceRef;
@@ -26,10 +26,10 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(Instruction::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(State::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
@@ -59,7 +59,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
-#[UsesClass(\Deriver\Value\Lattice::class)]
+#[UsesClass(\Deriver\Model\Operations\Lattice::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]

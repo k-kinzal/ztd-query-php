@@ -9,7 +9,7 @@ use Deriver\Value\Term;
 /**
  * A pending completion that a finally block can resume or replace.
  *
- * @visibility root
+ * @visibility namespace
  */
 final class Completion
 {

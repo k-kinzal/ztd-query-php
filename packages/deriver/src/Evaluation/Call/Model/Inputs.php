@@ -19,7 +19,7 @@ use Deriver\Value\Term;
 
 /**
  * Exposes evaluated call metadata without allowing models to access mutable solver state.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Inputs
 {

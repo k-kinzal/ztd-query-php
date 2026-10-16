@@ -9,13 +9,13 @@ use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\InstructionTransfer;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Freezes value arguments and exposes reference cells at their source evaluation point.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Arguments
 {

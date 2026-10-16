@@ -8,9 +8,9 @@ use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Havoc;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Offset\Address;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Arrays;
 use Deriver\Value\Increment;
 use Deriver\Value\Operations;
@@ -18,7 +18,7 @@ use Deriver\Value\Term;
 
 /**
  * Transfers reads, writes, aliases, and static/global bindings.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class MemoryStep
 {

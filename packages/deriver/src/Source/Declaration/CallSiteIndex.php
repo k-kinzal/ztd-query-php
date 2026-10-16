@@ -12,7 +12,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Selects callable owners from syntax before materializing their control-flow graphs.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class CallSiteIndex
 {

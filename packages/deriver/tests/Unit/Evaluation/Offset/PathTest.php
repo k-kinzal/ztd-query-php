@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Evaluation\Offset;
 
 use Deriver\ControlFlow\Instruction;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Offset\Address;
 use Deriver\Evaluation\Offset\Path;
 use Deriver\Evaluation\Offset\ProtocolAccess;
 use Deriver\Evaluation\Offset\StringAccess;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,13 +28,13 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
 #[UsesClass(Instruction::class)]
 #[UsesClass(\Deriver\ControlFlow\Terminator::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Builtins::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(Address::class)]
 #[UsesClass(ProtocolAccess::class)]
 #[UsesClass(\Deriver\Evaluation\Offset\Reader::class)]
@@ -43,8 +43,8 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(State::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]

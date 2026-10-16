@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Control;
 
+use Deriver\ControlFlow\Hierarchy\Builtins;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Program;
-use Deriver\Evaluation\Call\Creation\Builtins;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Value\Term;
 
 /**
  * Partitions throwable bounds in catch order without inventing a runtime class.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ExceptionMatch
 {

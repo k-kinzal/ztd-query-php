@@ -10,7 +10,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Lowers source calls and closure creation to the common invocation protocol.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class CallLowering
 {

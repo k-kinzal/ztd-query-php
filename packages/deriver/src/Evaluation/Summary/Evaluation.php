@@ -14,7 +14,7 @@ use Deriver\Evaluation\State;
 
 /**
  * Solves reusable isolated call demands with monotone cyclic approximations.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Evaluation
 {

@@ -6,8 +6,8 @@ namespace Tests\Unit\Evaluation;
 
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Dependencies;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Reference\SourceRef;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Instruction::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(State::class)]
 #[UsesClass(Location::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]

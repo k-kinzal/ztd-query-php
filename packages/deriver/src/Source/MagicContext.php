@@ -13,7 +13,7 @@ use PhpParser\NodeVisitorAbstract;
 
 /**
  * Captures lexical magic names before closures and initializers become separate graphs.
- * @visibility root
+ * @visibility namespace
  */
 final class MagicContext extends NodeVisitorAbstract
 {

@@ -9,7 +9,7 @@ use PhpParser\Node\Expr;
 
 /**
  * Lowers match arms while keeping the default independent of source order.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class MatchLowering
 {

@@ -12,7 +12,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Selects trait method implementations before rebinding them into a consuming class.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class Members
 {

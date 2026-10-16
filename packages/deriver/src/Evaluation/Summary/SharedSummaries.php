@@ -11,7 +11,8 @@ use Deriver\Result\Derivation;
 
 /**
  * Bounded session reuse of closed, isolated function completions across observation queries.
- * @visibility root
+ * @visibility Deriver\Evaluation
+ * @visibility Deriver\Analysis
  */
 final class SharedSummaries
 {

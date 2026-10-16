@@ -9,7 +9,7 @@ use Deriver\Source\Declaration\CallableSource;
 
 /**
  * A source-only graph and lexical declarations discovered while lowering it.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class GraphTemplate
 {

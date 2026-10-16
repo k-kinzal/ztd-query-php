@@ -14,7 +14,7 @@ use PhpParser\NodeVisitorAbstract;
 
 /**
  * Rejects destructuring forms that PHP diagnoses before program execution.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class AssignmentPatterns extends NodeVisitorAbstract
 {

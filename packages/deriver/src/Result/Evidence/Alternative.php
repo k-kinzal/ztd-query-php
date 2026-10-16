@@ -18,6 +18,7 @@ final class Alternative
 {
     /**
      * Owns a derivation root, context root and immutable snapshot manifest.
+     * @visibility Deriver\Analysis\Candidates
      */
     public function __construct(public readonly Node $root, public readonly Node $contextRoot, public readonly ProjectSnapshot $snapshot)
     {

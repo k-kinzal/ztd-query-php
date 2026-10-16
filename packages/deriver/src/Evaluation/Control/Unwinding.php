@@ -7,14 +7,14 @@ namespace Deriver\Evaluation\Control;
 use Deriver\ControlFlow\Program;
 use Deriver\Evaluation\Call\Native\Properties;
 use Deriver\Evaluation\Completion;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Identity;
 use Deriver\Value\Term;
 
 /**
  * Routes pending normal, return, throw, and jump completions through finally.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Unwinding
 {

@@ -8,16 +8,16 @@ use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Memory\Location;
+use Deriver\Evaluation\Memory\ReferenceConstraint;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Transfer\ReferenceAssignment;
-use Deriver\Memory\Location;
-use Deriver\Memory\ReferenceConstraint;
 use Deriver\Value\Arrays;
 use Deriver\Value\Term;
 
 /**
  * Resolves evaluated offset chains while preserving partial array creation on failure.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Path
 {

@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call\Preparation;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Builtins;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\CallResolution;
 use Deriver\Evaluation\Call\Creation\Access;
-use Deriver\Evaluation\Call\Creation\Builtins;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\Native\Signatures;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\State;
 
 /**
  * Checks constructor access and argument modes before evaluating constructor arguments.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Creation
 {

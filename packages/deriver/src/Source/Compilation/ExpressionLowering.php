@@ -12,7 +12,7 @@ use PhpParser\Node\Scalar;
 
 /**
  * Dispatches expression lowering to operations with explicit effects.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class ExpressionLowering
 {

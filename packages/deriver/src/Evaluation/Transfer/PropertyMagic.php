@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Transfer;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\CallExecutor;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\PassedArgument;
+use Deriver\Evaluation\Constraints;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\Offset\Transfer;
 use Deriver\Evaluation\State;
@@ -17,7 +17,7 @@ use Deriver\Value\Term;
 
 /**
  * Connects inaccessible property reads and writes to ordinary source magic methods.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PropertyMagic
 {

@@ -28,7 +28,8 @@ use PhpParser\Node\Stmt;
 
 /**
  * Captures declarations eagerly and compiles callable control flow on demand.
- * @visibility root
+ * @visibility Deriver\Source
+ * @visibility Deriver\Analysis
  */
 final class ProjectIndex implements Program
 {

@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ProviderDispatch::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Model\Provider\DispatchDecision::class)]
 #[UsesClass(DispatchRequest::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]

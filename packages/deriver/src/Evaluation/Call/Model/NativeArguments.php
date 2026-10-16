@@ -12,7 +12,7 @@ use Deriver\Value\Term;
 
 /**
  * Applies PHP 8.3's deprecated null coercion for non-nullable internal scalar parameters.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class NativeArguments
 {

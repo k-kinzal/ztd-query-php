@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Evaluation\Control;
 
 use Deriver\Evaluation\Control\ObservationLimit;
+use Deriver\Model\Operations\Lattice;
 use Deriver\Query\Budget;
 use Deriver\Reference\SourceRef;
 use Deriver\Result\Alternative;
 use Deriver\Result\Exceptional;
 use Deriver\Result\StorageSnapshot;
-use Deriver\Value\Lattice;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ObservationLimit::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableIdentity::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]

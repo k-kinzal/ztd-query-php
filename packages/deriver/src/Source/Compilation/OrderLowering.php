@@ -9,7 +9,7 @@ use PhpParser\Node\Expr;
 
 /**
  * Explores both operand orders while keeping one source observation per expression.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class OrderLowering
 {

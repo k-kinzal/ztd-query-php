@@ -12,7 +12,7 @@ use PhpParser\Node\Expr;
 
 /**
  * Lowers conditional expressions into branches and Phi selections.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class ConditionalLowering
 {

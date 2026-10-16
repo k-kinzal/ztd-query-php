@@ -15,7 +15,7 @@ use WeakMap;
 
 /**
  * Safely merges excess partitions rather than retaining only the first candidates.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class StateJoin
 {

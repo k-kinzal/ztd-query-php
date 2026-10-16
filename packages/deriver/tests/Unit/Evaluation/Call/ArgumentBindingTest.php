@@ -10,9 +10,9 @@ use Deriver\ControlFlow\PropertyDeclaration;
 use Deriver\Evaluation\Call\ArgumentBinding;
 use Deriver\Evaluation\Call\PassedArgument;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Transfer\PropertySlot;
-use Deriver\Memory\Location;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
 use JsonException;
@@ -23,9 +23,9 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\SolverFixture;
 
 #[CoversClass(ArgumentBinding::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
 #[UsesClass(\Deriver\Analysis\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(Argument::class)]
@@ -40,7 +40,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Call\CallExecutor::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallResolution::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallableCheck::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ParameterBinding::class)]
 #[UsesClass(PassedArgument::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Preparation\Arguments::class)]
@@ -53,7 +53,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Cell::class)]
@@ -78,9 +78,9 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]

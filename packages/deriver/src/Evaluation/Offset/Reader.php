@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Offset;
 
+use Deriver\ControlFlow\Hierarchy\Builtins;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
-use Deriver\Evaluation\Call\Creation\Builtins;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
 use Deriver\Value\Arrays;
@@ -16,7 +16,7 @@ use Deriver\Value\Term;
 
 /**
  * Reads offsets using the runtime container category and original key.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Reader
 {

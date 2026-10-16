@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Operation;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\PassedArgument;
 use Deriver\Evaluation\Call\UnknownCall;
+use Deriver\Evaluation\Constraints;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\State;
 use Deriver\Model\Builtin\TypePredicates;
@@ -18,7 +18,7 @@ use Deriver\Value\Term;
 
 /**
  * Joins known array shapes and known heads of symbolic merges without losing string fragments around unknown elements.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class StringJoining
 {

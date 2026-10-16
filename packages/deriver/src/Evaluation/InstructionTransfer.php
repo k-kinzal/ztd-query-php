@@ -37,7 +37,7 @@ use Deriver\Value\Term;
 
 /**
  * Connects shared instruction semantics to the abstract machine.
- * @visibility root
+ * @visibility namespace
  */
 final class InstructionTransfer
 {

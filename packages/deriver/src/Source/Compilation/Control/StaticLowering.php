@@ -11,7 +11,7 @@ use PhpParser\Node\StaticVar;
 
 /**
  * Keeps dynamic function-static initializers behind their one-time storage test.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class StaticLowering
 {

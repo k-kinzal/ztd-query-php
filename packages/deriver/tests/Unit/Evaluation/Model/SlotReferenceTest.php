@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Evaluation\Model;
 
 use Deriver\ControlFlow\Instruction;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Model\SlotReference;
 use Deriver\Evaluation\Model\StateStorage;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Model\State\StateSlot;
 use Deriver\Project\Configuration;
 use Deriver\Value\Term;
@@ -30,13 +30,13 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(StateStorage::class)]
 #[UsesClass(State::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
@@ -72,7 +72,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
 #[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
-#[UsesClass(\Deriver\Value\Lattice::class)]
+#[UsesClass(\Deriver\Model\Operations\Lattice::class)]
 #[UsesClass(\Deriver\Value\NumericString::class)]
 #[UsesClass(Term::class)]
 #[Small]

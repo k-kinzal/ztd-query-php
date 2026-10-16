@@ -11,7 +11,7 @@ use PhpParser\Node\Scalar;
 
 /**
  * Retains ordered array entries, references, unpacking, and interpolated parts.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class AggregateLowering
 {

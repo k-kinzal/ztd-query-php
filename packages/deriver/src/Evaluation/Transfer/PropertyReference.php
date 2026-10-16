@@ -10,14 +10,14 @@ use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\InstructionTransfer;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
+use Deriver\Evaluation\Memory\ReferenceConstraint;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
-use Deriver\Memory\ReferenceConstraint;
 use Deriver\Value\Term;
 
 /**
  * Applies property checks to reference reads and increment writes.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PropertyReference
 {

@@ -10,7 +10,7 @@ use PhpParser\Node\Scalar;
 
 /**
  * Builds flat, effect-free literal arrays once, retaining every scalar's source observation.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class LiteralArrayLowering
 {

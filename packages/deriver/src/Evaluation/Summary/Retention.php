@@ -10,7 +10,7 @@ use WeakMap;
 
 /**
  * Bounds shared summary retention and removes storage belonging to previous callers.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Retention
 {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Analysis;
 
+use Deriver\Analysis\Selection\CallObservations;
 use Deriver\AnalysisSession;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Model\Provider\ObservationProvider;
@@ -42,7 +43,7 @@ final class Session implements AnalysisSession
      */
     public function expression(string $path, int $start, int $end, string $role = 'value'): \Deriver\Reference\ExpressionRef
     {
-        return (new Candidates\Targets())->expression($this->program, $path, $start, $end, $role);
+        return (new Selection\Targets())->expression($this->program, $path, $start, $end, $role);
     }
     /**
      * @return \Deriver\Model\Metadata\DeclarationLookup Captured declaration facts
@@ -98,8 +99,8 @@ final class Session implements AnalysisSession
      * @var array<string, list<Observation>> Cached source call inventories
      */
     private array $calls = [];
-    private readonly \Deriver\Evaluation\Candidate\Index $candidateIndex;
-    private readonly \Deriver\Evaluation\Candidate\Cache $candidateCache;
+    private readonly \Deriver\Candidate\Index $candidateIndex;
+    private readonly \Deriver\Candidate\Cache $candidateCache;
     /**
      * Captured provider contributions.
      */
@@ -160,8 +161,8 @@ final class Session implements AnalysisSession
         if ($validateSource) {
             $this->validateSource();
         }
-        $this->candidateIndex = new \Deriver\Evaluation\Candidate\Index($this->program);
-        $this->candidateCache = new \Deriver\Evaluation\Candidate\Cache($configuration->candidateCacheEntries);
+        $this->candidateIndex = new \Deriver\Candidate\Index($this->program);
+        $this->candidateCache = new \Deriver\Candidate\Cache($configuration->candidateCacheEntries);
         $this->manifest = new ProjectSnapshot($id, $sources, $models, $configuration->target, $configuration->closedWorld, $configuration->environmentVersion, $this->program->diagnostics(), $dependencies, $sourceModes);
     }
 

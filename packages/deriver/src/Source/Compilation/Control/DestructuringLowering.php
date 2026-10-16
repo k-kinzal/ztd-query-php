@@ -11,7 +11,7 @@ use PhpParser\Node\Expr;
 
 /**
  * Preserves array snapshots and shared cells while lowering assignment patterns.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class DestructuringLowering
 {

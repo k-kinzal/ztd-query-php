@@ -33,6 +33,7 @@ final class Candidate
 
      * @param non-empty-list<Alternative> $evidence OR-related derivations
 
+     * @visibility Deriver\Analysis\Candidates
      */
     public function __construct(public readonly Term $term, public readonly array $evidence)
     {

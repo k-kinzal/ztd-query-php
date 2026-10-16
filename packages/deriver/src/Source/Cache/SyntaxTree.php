@@ -11,7 +11,7 @@ use PhpParser\NodeVisitor\CloningVisitor;
 
 /**
  * Parsed declarations and source-relative diagnostics, independent of any snapshot.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class SyntaxTree
 {

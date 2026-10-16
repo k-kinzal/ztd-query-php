@@ -11,7 +11,7 @@ use Deriver\Value\Term;
 
 /**
  * Captures runtime constant definitions without defining constants in the host process.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Definitions
 {

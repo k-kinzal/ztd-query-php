@@ -11,7 +11,7 @@ use stdClass;
 
 /**
  * Uses native JSON scalars when lossless and the existing PHP graph codec otherwise.
- * @visibility root
+ * @visibility Deriver\Result
  */
 final class Encoding
 {

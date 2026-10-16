@@ -10,7 +10,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Lowers labels and goto to explicit jumps that release iterators and run finally blocks.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class GotoLowering
 {

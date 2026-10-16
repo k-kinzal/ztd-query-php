@@ -14,7 +14,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Builds loop backedges and preserves multi-level break and continue targets.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class LoopLowering
 {

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Deriver\Evaluation;
 
 use Deriver\ControlFlow\Program;
-use Deriver\Evaluation\Control\Resources;
 use Deriver\Evaluation\Demand\Table;
 use Deriver\Model\Registration\Registry;
 use Deriver\Project\Configuration;
 use Deriver\Query\Query;
+use Deriver\Query\Resources;
 use Deriver\Reference\SourceRef;
 use Deriver\Result\Alternative;
 use Deriver\Result\Derivation;
@@ -21,7 +21,8 @@ use WeakMap;
 
 /**
  * Query-local work budget, dependency evidence, observations, and model registry.
- * @visibility root
+ * @visibility namespace
+ * @visibility Deriver\Analysis\Execution
  */
 final class Context
 {

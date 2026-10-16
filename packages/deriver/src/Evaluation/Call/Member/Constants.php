@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call\Member;
 
 use Deriver\ControlFlow\ClassConstant;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Program;
-use Deriver\Evaluation\Call\Dispatch;
 
 /**
  * Resolves inherited constant ownership and PHP visibility without host reflection.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Constants
 {

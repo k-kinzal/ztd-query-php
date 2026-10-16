@@ -13,7 +13,7 @@ use Deriver\Value\Term;
 
 /**
  * Applies an explicit model's unresolved write footprint with normal and exceptional continuations.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Effects
 {

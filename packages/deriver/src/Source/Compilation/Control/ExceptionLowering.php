@@ -12,7 +12,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Lowers try/catch/finally to exception regions and resumable completion.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class ExceptionLowering
 {

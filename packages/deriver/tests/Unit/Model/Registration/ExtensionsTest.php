@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Extensions::class)]
 #[UsesClass(\Deriver\Model\Contract\DomainLaws::class)]
 #[UsesClass(\Deriver\Model\Domain\DomainFact::class)]
-#[UsesClass(\Deriver\Model\Domain\DomainOperations::class)]
+#[UsesClass(\Deriver\Model\Operations\DomainOperations::class)]
 #[UsesClass(IntrinsicDescriptor::class)]
 #[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Project\SourceLimits::class)]

@@ -117,7 +117,7 @@ final class CandidateExpansionTest extends TestCase
         self::assertCount(2, $result);
         self::assertSame('partials', $result->candidates[1]->type);
         self::assertSame('unexpanded-choice', $result->candidates[1]->term->kind);
-        $values = iterator_to_array((new \Deriver\Evaluation\Candidate\Choices())->alternatives($result->candidates[1]->term->operands[0]), false);
+        $values = iterator_to_array((new \Deriver\Candidate\Choices())->alternatives($result->candidates[1]->term->operands[0]), false);
         self::assertSame([20, 30], array_map(static fn ($row) => array_values($row[0]->operands)[0]->native(), $values));
     }
 }

@@ -6,7 +6,7 @@ namespace Deriver\Source;
 
 /**
  * Maps byte offsets without rescanning file prefixes for every IR instruction.
- * @visibility root
+ * @visibility namespace
  */
 final class LineMap
 {

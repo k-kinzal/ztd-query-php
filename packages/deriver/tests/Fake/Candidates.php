@@ -97,7 +97,7 @@ final class Candidates
      */
     public static function contained(DerivationResult $result, string|int $value): bool
     {
-        return array_filter(self::values($result), static fn (Term $candidate): bool => (new \Deriver\Value\Lattice())->contains($candidate, Term::constant($value))) !== [];
+        return array_filter(self::values($result), static fn (Term $candidate): bool => (new \Deriver\Model\Operations\Lattice())->contains($candidate, Term::constant($value))) !== [];
     }
 
     /**

@@ -51,7 +51,7 @@ final class Extensions
             $this->manifest['intrinsic:' . $descriptor->id] = hash('sha256', serialize([$descriptor->version, $descriptor->operation, $descriptor->arity, $descriptor->dependencies]));
         }
         foreach ($configuration->domains as $domain) {
-            [$id, $version] = (new \Deriver\Model\Domain\DomainOperations())->registration($domain);
+            [$id, $version] = (new \Deriver\Model\Operations\DomainOperations())->registration($domain);
             if ($id === '' || $version === '' || isset($this->domains[$id])) {
                 throw new InvalidInputException('MODEL_CONFLICT: invalid or repeated domain identity.');
             }

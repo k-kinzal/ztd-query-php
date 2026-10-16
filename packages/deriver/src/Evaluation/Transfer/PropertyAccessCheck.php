@@ -7,14 +7,14 @@ namespace Deriver\Evaluation\Transfer;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Offset\Path;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Checks receiver categories and readonly mutations before accessing property storage.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PropertyAccessCheck
 {

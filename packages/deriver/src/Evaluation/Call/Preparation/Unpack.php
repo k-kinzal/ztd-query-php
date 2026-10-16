@@ -10,13 +10,13 @@ use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Control\StateJoin;
 use Deriver\Evaluation\Havoc;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Freezes unpacked values and prepares only the reference elements required by the signature.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Unpack
 {

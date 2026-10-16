@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Analysis\Candidates;
 
-use Deriver\Evaluation\Candidate\Context;
+use Deriver\Candidate\Context;
 use Deriver\Project\ProjectSnapshot;
 use Deriver\Query\Query;
 use Deriver\Reference\ResultRef;
@@ -16,7 +16,7 @@ use JsonException;
 
 /**
  * Reports candidate multiplicity, residual dependencies, and stopped expansion separately.
- * @visibility root
+ * @visibility parent
  */
 final class ResultBuilder
 {
@@ -27,17 +27,17 @@ final class ResultBuilder
     public function build(Query $query, Term $graph, Context $context, ProjectSnapshot $snapshot, float $start): \Deriver\Result\Candidates\CandidateCollection
     {
         $grouped = [];
-        $contexts = new \Deriver\Evaluation\Candidate\Evidence\Contexts();
-        $cursor = new \Deriver\Evaluation\Candidate\Enumeration\Cursor($graph);
+        $contexts = new \Deriver\Candidate\Evidence\Contexts();
+        $cursor = new \Deriver\Candidate\Enumeration\Cursor($graph);
         while (($row = $cursor->next()) !== null) {
             [$tuple, $guard] = $row;
             if (count($grouped) === $query->budget()->maxCandidates - 1 && $cursor->hasRemaining()) {
                 $remainder = $cursor->remainder($row);
-                $tuple = new Term('unexpanded-choice', operands: [$remainder], attributes: ['reason' => 'CANDIDATE_LIMIT'], evidence: (new \Deriver\Evaluation\Candidate\Evidence\Forest())->root($remainder));
+                $tuple = new Term('unexpanded-choice', operands: [$remainder], attributes: ['reason' => 'CANDIDATE_LIMIT'], evidence: (new \Deriver\Candidate\Evidence\Forest())->root($remainder));
             }
             $value = $tuple->kind === 'tuple' ? (count($tuple->operands) === 1 ? array_values($tuple->operands)[0] : Term::array($tuple->operands)) : $tuple;
             if ($tuple->evidence !== null) {
-                $value = \Deriver\Evaluation\Candidate\Evidence\Provenance::attach($value, $tuple->evidence);
+                $value = \Deriver\Candidate\Evidence\Provenance::attach($value, $tuple->evidence);
             }
             if ($value->kind === 'throwable') {
                 $value = new Term('no-value', $value->literal, [$value], ['type' => 'never', 'reason' => 'NO_VALUE_DEFINITION'], evidence: $value->evidence);
@@ -63,7 +63,7 @@ final class ResultBuilder
      */
     public function observation(Query $query, Term $value, Context $context, ProjectSnapshot $snapshot): \Deriver\Result\Evidence\Node
     {
-        $owner = (new \Deriver\Analysis\QueryValidation($context->index->program, $snapshot->id))->owner($query);
+        $owner = (new \Deriver\Analysis\Selection\QueryValidation($context->index->program, $snapshot->id))->owner($query);
         $source = match (true) {
             $query instanceof \Deriver\Query\ValueQuery => $query->expression->source,
             $query instanceof \Deriver\Query\StateQuery, $query instanceof \Deriver\Query\TupleQuery => $query->point->source,
@@ -75,7 +75,7 @@ final class ResultBuilder
             $query instanceof \Deriver\Query\StateQuery => $query->variable,
             default => $owner,
         };
-        return new \Deriver\Result\Evidence\Node('observation', ['value' => (new \Deriver\Evaluation\Candidate\Evidence\Forest())->root($value)], $source, ['query' => (new QueryEncoding())->key($query), 'owner' => $owner, 'target' => $target, 'role' => $query::class]);
+        return new \Deriver\Result\Evidence\Node('observation', ['value' => (new \Deriver\Candidate\Evidence\Forest())->root($value)], $source, ['query' => (new QueryEncoding())->key($query), 'owner' => $owner, 'target' => $target, 'role' => $query::class]);
     }
 
 }

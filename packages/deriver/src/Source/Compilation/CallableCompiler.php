@@ -18,7 +18,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Compiles function signatures, captures, and bodies to parser-independent IR.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class CallableCompiler
 {

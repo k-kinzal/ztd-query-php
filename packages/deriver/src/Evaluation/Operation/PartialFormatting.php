@@ -15,7 +15,7 @@ use Deriver\Value\Term;
 
 /**
  * Keeps the formatted known prefix of a dynamic sprintf format in front of an explicit residual for the unknown rest.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PartialFormatting
 {

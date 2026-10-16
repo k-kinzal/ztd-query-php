@@ -1,77 +1,308 @@
-# Source syntax is confined to source capture and graph construction.
+# Layers follow the directories under src/, and the order follows the life of a query.
+#
+# A caller describes a project and a query with the public vocabulary, the facade
+# opens a session, the session validates and selects the target, the candidate
+# engine expands the selected definition backwards into a graph of alternatives,
+# and the pipeline enumerates that graph into a candidate collection. Every layer
+# may use only the layers below it, so no step can skip ahead or reach back:
+#
+#   Facade (Analyzer, Replay)
+#     Analysis (Session, ExecutionSession)
+#       Analysis\Candidates ---- Analysis\Execution
+#         Analysis\Selection
+#         Candidate (engine) --- Evaluation (ordered execution)
+#           Model\Registration, Model\Compilation, Model\Operations, Model\Builtin
+#           Source
+#             ControlFlow
+#               Public vocabulary: Session, Model, Project, Query, Result, Evidence, Value, Reference, Exception
+#
+# The two engines never see each other, and neither sees the sessions or the
+# result pipelines. Only Analysis\Candidates turns an engine graph into
+# candidates, and only the engine selects definitions or reads storage.
 deptrac:
-  paths: [./src]
+  paths:
+    - ./src
   analyser:
-    types: [class, use]
+    types:
+      - class
+      - use
   layers:
-    - name: Analysis
+    # --- Public vocabulary -------------------------------------------------------
+    # The types a caller constructs or receives. They refer to each other, and to
+    # nothing else: no engine, no source model, no session.
+    - name: Exception
+      collectors:
+        - type: directory
+          value: 'src/Exception/.*'
+    # Source coordinates, symbols and result handles.
+    - name: Reference
+      collectors:
+        - type: directory
+          value: 'src/Reference/.*'
+    # Terms, projections and the value algebra shared by every layer above.
+    - name: Value
+      collectors:
+        - type: directory
+          value: 'src/Value/.*'
+    # Content-addressed derivation nodes. A term carries its evidence, so this
+    # sits below Value although it is exported with the results.
+    - name: Evidence
+      collectors:
+        - type: directory
+          value: 'src/Result/Evidence/.*'
+    # Queries, budgets and the runtime resource monitor that enforces them.
+    - name: Query
+      collectors:
+        - type: directory
+          value: 'src/Query/.*'
+    # Captured files, entry points, target profile, snapshot and configuration.
+    - name: Project
+      collectors:
+        - type: directory
+          value: 'src/Project/.*'
+    # The contract model authors implement: descriptors, decisions, plans,
+    # providers, domains, intrinsics and expansion rules.
+    - name: Model
+      collectors:
+        - type: directory
+          value: 'src/Model/(?!Builtin/|Compilation/|Operations/|Registration/).*'
+    # Candidate collections, execution results and their serialization.
+    - name: Result
+      collectors:
+        - type: directory
+          value: 'src/Result/(?!Evidence/).*'
+        # PHPStan local type aliases that deptrac resolves as class names.
+        - type: classLike
+          value: '^Deriver\\Result\\Serialization\\(ValueRecord|ScalarRecord|QueryRecord)$'
+    # The session interface a caller holds.
+    - name: Session
       collectors:
         - type: classLike
-          value: '^Deriver\\(Analyzer$|Analysis\\)'
-    - name: Contracts
-      collectors:
-        - type: classLike
-          value: '^Deriver\\(AnalysisSession$|(Project|Query|Reference|Exception)\\|Result\\(?!Serialization\\)|Model\\(?!Compilation\\|Registration\\|Builtin\\|Domain\\DomainOperations$|Intrinsic\\IntrinsicEvaluation$)|Value\\(Term$|Projection$))'
-    - name: Serialization
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Result\\Serialization\\'
-    - name: Source
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Source\\'
+          value: '^Deriver\\AnalysisSession$'
+
+    # --- Intermediate representation -----------------------------------------------
+    # Programs, callable graphs, instructions, and the class hierarchy queries over them.
     - name: ControlFlow
       collectors:
-        - type: classLike
-          value: '^Deriver\\ControlFlow\\'
-    - name: Evaluation
+        - type: directory
+          value: 'src/ControlFlow/.*'
+
+    # --- Source capture ------------------------------------------------------------
+    # Parses captured PHP with nikic/php-parser and lowers it to control flow graphs.
+    - name: Source
       collectors:
-        - type: classLike
-          value: '^Deriver\\Evaluation\\'
-    - name: Memory
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Memory\\'
-    - name: Constraint
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Constraint\\'
-    - name: ValueOperations
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Value\\(?!Term$|Projection$)'
-    - name: ModelCompilation
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Model\\Compilation\\'
-    - name: ModelRegistration
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Model\\Registration\\'
-    - name: ModelOperations
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Model\\(Domain\\DomainOperations$|Intrinsic\\IntrinsicEvaluation$)'
-    - name: Builtin
-      collectors:
-        - type: classLike
-          value: '^Deriver\\Model\\Builtin\\'
+        - type: directory
+          value: 'src/Source/.*'
     - name: PhpParser
       collectors:
+        - type: classNameRegex
+          value: '/^PhpParser\\/'
+
+    # --- Model machinery -----------------------------------------------------------
+    # Standard library models.
+    - name: ModelBuiltin
+      collectors:
+        - type: directory
+          value: 'src/Model/Builtin/.*'
+    # Applies domains and intrinsics to terms; the lattice over registered domains.
+    - name: ModelOperations
+      collectors:
+        - type: directory
+          value: 'src/Model/Operations/.*'
+    # Compiles semantic plans into callable graphs.
+    - name: ModelCompilation
+      collectors:
+        - type: directory
+          value: 'src/Model/Compilation/.*'
+    # Assembles the configured models, providers and state slots into a registry.
+    - name: ModelRegistration
+      collectors:
+        - type: directory
+          value: 'src/Model/Registration/.*'
+
+    # --- Candidate engine ----------------------------------------------------------
+    # Backward expansion of a selected definition into a graph of alternatives.
+    # The core holds the engine, its index, frames and the shared expansion steps;
+    # each handler namespace adds the rules for one language area and calls back
+    # into the core, never into a sibling that sits above it.
+    - name: Candidate
+      collectors:
+        - type: directory
+          value: 'src/Candidate/[^/]+$'
+    # Evidence construction: provenance wrappers, forests and context projection.
+    - name: CandidateEvidence
+      collectors:
+        - type: directory
+          value: 'src/Candidate/Evidence/.*'
+    # Enumerating alternatives, and suspending expansion into a residual.
+    - name: CandidateEnumeration
+      collectors:
+        - type: directory
+          value: 'src/Candidate/Enumeration/.*'
+    # Control dependencies of a definition.
+    - name: CandidateControl
+      collectors:
+        - type: directory
+          value: 'src/Candidate/Control/.*'
+    # Calls: override rules, argument binding, body selection, dispatch, callbacks.
+    - name: CandidateInvocation
+      collectors:
+        - type: directory
+          value: 'src/Candidate/Invocation/.*'
+    # Storage: aliases, elements, properties, globals, statics, captures, mutations.
+    - name: CandidateMemory
+      collectors:
+        - type: directory
+          value: 'src/Candidate/Memory/.*'
+    # Expressions, constants, coercions, catches, finalizers, callbacks.
+    - name: CandidateLanguage
+      collectors:
+        - type: directory
+          value: 'src/Candidate/Language/.*'
+    # Loop-carried definitions and their invariants.
+    - name: CandidateRecurrence
+      collectors:
+        - type: directory
+          value: 'src/Candidate/Recurrence/.*'
+
+    # --- Ordered execution engine --------------------------------------------------
+    # Forward execution kept for ExecutionSession. It never calls the candidate engine.
+    - name: Evaluation
+      collectors:
+        - type: directory
+          value: 'src/Evaluation/.*'
+
+    # --- Analysis ------------------------------------------------------------------
+    # Target selection: resolving expression references, validating a query against
+    # the captured program, and projecting call sites into observations.
+    - name: AnalysisSelection
+      collectors:
+        - type: directory
+          value: 'src/Analysis/Selection/.*'
+    # The candidate pipeline: validate, open a context, place the demand, build candidates.
+    - name: AnalysisCandidates
+      collectors:
+        - type: directory
+          value: 'src/Analysis/Candidates/(?!Replay\.php$).*'
+    # The ordered execution pipeline behind ExecutionSession.
+    - name: AnalysisExecution
+      collectors:
+        - type: directory
+          value: 'src/Analysis/Execution/.*'
+    # Sessions: result retention, caching and the public session methods.
+    - name: Analysis
+      collectors:
+        - type: directory
+          value: 'src/Analysis/[^/]+$'
+    # Entry points. Replay is public API that re-runs the facade, so it lives here
+    # although its file sits with the candidate pipeline.
+    - name: Facade
+      collectors:
         - type: classLike
-          value: '^PhpParser\\'
+          value: '^Deriver\\Analyzer$'
+        - type: classLike
+          value: '^Deriver\\Analysis\\Candidates\\Replay$'
   ruleset:
-    Analysis: [Contracts, Serialization, Source, ControlFlow, Evaluation, ModelRegistration, ValueOperations]
-    Contracts: [Serialization]
-    Serialization: [Contracts, ValueOperations]
-    Source: [Contracts, ControlFlow, PhpParser]
-    ControlFlow: [Contracts]
-    Evaluation: [Contracts, ControlFlow, Memory, Constraint, ValueOperations, ModelCompilation, ModelRegistration, ModelOperations, Builtin]
-    Memory: [Contracts, ValueOperations]
-    Constraint: [Contracts, Evaluation, ValueOperations]
-    ValueOperations: [Contracts, ModelOperations]
-    ModelCompilation: [Contracts, ControlFlow, ValueOperations]
-    ModelRegistration: [Contracts, ControlFlow, ValueOperations, ModelOperations, Builtin]
-    ModelOperations: [Contracts, ValueOperations]
-    Builtin: [Contracts, ValueOperations]
+    Exception: []
+    Reference: [Exception]
+    Value: [Exception, Evidence]
+    Evidence: [Reference, Project]
+    Query: [Exception, Reference, Value, Project]
+    Project: [Exception, Value, Query, Model, Result]
+    Model: [Exception, Reference, Value, Query, Project, Session]
+    Result: [Exception, Reference, Value, Evidence, Query]
+    Session: [Exception, Reference, Query, Project, Model, Result, Evidence]
+    ControlFlow: [Reference, Value, Result]
+    Source: [Exception, Reference, Value, Project, Result, ControlFlow, PhpParser]
     PhpParser: []
+    ModelBuiltin: [Exception, Value, Model]
+    ModelOperations: [Exception, Value, Project, Model]
+    ModelCompilation: [Exception, Reference, Value, Model, ControlFlow]
+    ModelRegistration: [Exception, Value, Project, Model, ControlFlow, ModelBuiltin, ModelOperations]
+    Candidate:
+      - Exception
+      - Reference
+      - Value
+      - Evidence
+      - Query
+      - Project
+      - Model
+      - Result
+      - ControlFlow
+      - ModelBuiltin
+      - ModelOperations
+      - ModelCompilation
+      - ModelRegistration
+      - CandidateEvidence
+      - CandidateEnumeration
+      - CandidateControl
+      - CandidateInvocation
+      - CandidateMemory
+      - CandidateLanguage
+      - CandidateRecurrence
+    CandidateEvidence: [Reference, Value, Evidence]
+    CandidateEnumeration: [Value, ControlFlow, Candidate, CandidateEvidence]
+    CandidateControl: [Candidate]
+    CandidateInvocation: [Exception, Value, Evidence, Model, ControlFlow, Candidate, CandidateEvidence]
+    CandidateMemory: [Value, ControlFlow, Candidate, CandidateInvocation]
+    CandidateLanguage: [Value, ControlFlow, ModelBuiltin, Candidate, CandidateEvidence, CandidateInvocation]
+    CandidateRecurrence: [Value, ControlFlow, Candidate, CandidateMemory]
+    Evaluation:
+      - Exception
+      - Reference
+      - Value
+      - Query
+      - Project
+      - Model
+      - Result
+      - ControlFlow
+      - ModelBuiltin
+      - ModelOperations
+      - ModelCompilation
+      - ModelRegistration
+    AnalysisSelection: [Exception, Reference, Query, ControlFlow, Source, ModelBuiltin, ModelRegistration]
+    AnalysisCandidates:
+      - Exception
+      - Reference
+      - Value
+      - Evidence
+      - Query
+      - Project
+      - Model
+      - Result
+      - ModelRegistration
+      - Candidate
+      - CandidateEvidence
+      - CandidateEnumeration
+      - AnalysisSelection
+    AnalysisExecution:
+      - Exception
+      - Reference
+      - Value
+      - Query
+      - Project
+      - Model
+      - Result
+      - ControlFlow
+      - ModelRegistration
+      - Evaluation
+      - AnalysisSelection
+    Analysis:
+      - Exception
+      - Reference
+      - Value
+      - Query
+      - Project
+      - Model
+      - Result
+      - Evidence
+      - Session
+      - ControlFlow
+      - Source
+      - ModelRegistration
+      - Candidate
+      - Evaluation
+      - AnalysisSelection
+      - AnalysisCandidates
+      - AnalysisExecution
+    Facade: [Exception, Query, Project, Source, Session, Analysis]

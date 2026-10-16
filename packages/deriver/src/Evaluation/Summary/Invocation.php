@@ -12,7 +12,7 @@ use Deriver\Value\Identity;
 
 /**
  * Captures only relevant local inputs for a proven isolated callable specialization.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Invocation
 {

@@ -10,7 +10,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Preserves switch comparison order and body fall-through.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class SwitchLowering
 {
