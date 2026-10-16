@@ -160,7 +160,7 @@ final class ProgramInput
             return $failure;
         }
         $end = $this->boundary($failure->problem, $session, $failure->end);
-        return new \SqlSemantics\Construction\RejectedInput($failure->problem, $end, $end < $failure->end);
+        return new \SqlSemantics\Construction\RejectedInput($failure->problem, $end, $failure->aborts || $end < $failure->end);
     }
 
     /**

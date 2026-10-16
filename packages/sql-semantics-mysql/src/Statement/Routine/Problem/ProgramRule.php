@@ -49,4 +49,5 @@ enum ProgramRule: string
     case OldRowUpdate = 'Updating of OLD row is not allowed in trigger';
     case AfterRowUpdate = 'Updating of NEW row is not allowed in after trigger';
     case NoNewRow = 'There is no NEW row in on DELETE trigger';
+    case ArrayCast = 'Incorrect usage of CAST( .. AS .. ARRAY) and stored routines';
 }

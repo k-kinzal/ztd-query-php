@@ -42,49 +42,44 @@ final class SyntaxWarnings
     {
         $tokens = (new InputTokens())->prefix($parser, $statement);
         $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
-        $warnings = (new Account\SyntaxResourceNames())->completed($parser, $statement, $end);
+        $state = new Notice\Completion((new Account\SyntaxResourceNames())->completed($parser, $statement, $end));
         $ranges = new SourceRanges();
         $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');
         $lowering = new Lowering($productions, new Leaves(), $profile);
-        $aborted = false;
-        $failed = false;
         $names = new Utility\Set\SyntaxNames();
         $types = new Routine\DeclarationPrefix();
+        $arrays = new Routine\Program\SyntaxArrays();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use (&$warnings, &$aborted, &$failed, $ranges, $end, $lowering, $parser, $statement, $names, $types, $tokens): void {
-                if ($aborted) {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $names, $types, $tokens, $arrays): void {
+                if ($state->aborted) {
                     return;
                 }
-                $warnings = [...$warnings, ...(new Type\SyntaxNotices())->collation($node, $lowering, $end)];
+                $state->warnings = [...$state->warnings, ...(new Type\SyntaxNotices())->collation($node, $lowering, $end)];
                 if ($lookahead->offset > $end) {
                     return;
                 }
                 $derived = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? (new Query\Legacy\DerivedAliases())->rejected($node, $lowering) : null;
                 $log = $derived ?? (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
                 if ($log !== null && $log->end <= $end) {
-                    $warnings[] = [$log->end, new ParseFailure($log->problem, true)];
-                    $aborted = true;
+                    $state->record($log->end, new ParseFailure($log->problem, true));
                     return;
                 }
-                if ($failed && in_array($node->name, ['sp_proc_stmt', 'ev_sql_stmt_inner'], true)) {
-                    $warnings[] = [($ranges->span($node, true)[1] ?? 0), ParseStop::ProgramStatement];
-                    $aborted = true;
+                if ($state->failed && in_array($node->name, ['sp_proc_stmt', 'ev_sql_stmt_inner'], true)) {
+                    $state->record($ranges->span($node, true)[1] ?? 0, ParseStop::ProgramStatement);
                     return;
                 }
-                $notice = $types->following($node, $lowering, $tokens) ?? ($failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
+                $notice = $arrays->completed($node, $lookahead, $lowering, $state->failedAt) ?? $types->following($node, $lowering, $tokens) ?? ($state->failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
                 $conditions = [...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
                     $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
-                    $warnings[] = [$range[1], $condition];
-                    $failed = $failed || ($condition instanceof ParseFailure && $condition->endsProgramStatement);
-                    $aborted = ($condition instanceof ParseFailure || $condition instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation) && $condition->aborts;
+                    $state->record($range[1], $condition);
                 }
             });
         } catch (SourceException) {
             // Completed reductions precede the original refusal; the caller owns that error.
         }
 
-        return $this->ordered($warnings);
+        return $this->ordered($state->warnings);
     }
 
     /**
@@ -127,18 +122,24 @@ final class SyntaxWarnings
         }
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
         $pending = [$tree];
+        $scopes = [false];
         while ($pending !== []) {
             $condition = array_pop($pending);
-            $failure = (new RejectedOperand())->of($condition, $lowering);
+            $body = array_pop($scopes) === true || in_array($condition->name, ['sp_proc_stmt', 'stored_routine_body', 'ev_sql_stmt'], true);
+            $failure = ($body ? (new Routine\Program\SyntaxDefinitions())->rejected($condition) ?? (new Routine\Program\SyntaxArrays())->rejected($condition, $lowering) : null) ?? (new RejectedOperand())->of($condition, $lowering);
             if ($failure !== null) {
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) {
                     $failure = new \SqlSemantics\Construction\RejectedInput((new Utility\Set\SyntaxNames())->scoped($tree, $failure->problem, $lowering), $failure->end, $failure->aborts);
+                }
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && in_array($failure->problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ArrayCast, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::RecursiveCreate, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::EventRecursion], true)) {
+                    $failure = (new Routine\RefusedBodyHeader())->wrap($tree, $failure, $lowering);
                 }
                 return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
             }
             foreach (array_reverse($condition->children) as $child) {
                 if ($child instanceof Node) {
                     $pending[] = $child;
+                    $scopes[] = $body;
                 }
             }
         }

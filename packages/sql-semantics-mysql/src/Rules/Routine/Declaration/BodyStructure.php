@@ -39,6 +39,7 @@ final class BodyStructure
         $problem = $this->problem($body, $kind, $name);
         Check::input($problem === null, $problem?->message() ?? 'The body fits its declaration kind.');
         (new BodyBindings())->check($body, $kind);
+        (new BodyArrays())->check($body);
     }
 
     /**
@@ -105,7 +106,7 @@ final class BodyStructure
             ProgramRule::CursorAfterHandler, ProgramRule::BadSqlState, ProgramRule::ZeroErrorCode, ProgramRule::DuplicateHandler,
             ProgramRule::SignalConditionKind, ProgramRule::DuplicateSignalItem, ProgramRule::BadStatement, ProgramRule::RecursiveCreate,
             ProgramRule::NestedAlterOrDrop, ProgramRule::EventRecursion, ProgramRule::OldRowUpdate, ProgramRule::AfterRowUpdate,
-            ProgramRule::NoNewRow => 5,
+            ProgramRule::NoNewRow, ProgramRule::ArrayCast => 5,
         };
     }
 }

@@ -31,6 +31,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Rejecting a body that contradicts its language
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(), [new \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage(new \SqlSemantics\Statement\Identifier\Name('JAVASCRIPT'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
+ * @example Rejecting a multi-valued index cast in a stored body
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading a procedure definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE shop.p(IN a INT) DETERMINISTIC SELECT a');

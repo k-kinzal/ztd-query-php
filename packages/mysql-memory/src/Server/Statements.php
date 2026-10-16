@@ -83,8 +83,7 @@ final class Statements
         \MySqlMemory\Session\State\StatementCounters::received($session, false);
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         try {
-            $session->split($sql);
-            $operation = $session->analyze($sql, true);
+            $operation = (new \MySqlMemory\Session\Access\Preparation())->read($sql, $session);
             (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($operation->statement));
             (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
             $tokens = $session->semantics()->parser()->tokenize($sql);

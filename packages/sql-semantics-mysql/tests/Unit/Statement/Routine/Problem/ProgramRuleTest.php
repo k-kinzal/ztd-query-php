@@ -47,6 +47,7 @@ final class ProgramRuleTest extends TestCase
             'Updating of OLD row is not allowed in trigger',
             'Updating of NEW row is not allowed in after trigger',
             'There is no NEW row in on DELETE trigger',
+            'Incorrect usage of CAST( .. AS .. ARRAY) and stored routines',
         ], array_map(static fn (ProgramRule $rule): string => $rule->value, ProgramRule::cases()));
     }
 
@@ -83,6 +84,7 @@ final class ProgramRuleTest extends TestCase
             'OldRowUpdate',
             'AfterRowUpdate',
             'NoNewRow',
+            'ArrayCast',
         ], array_map(static fn (ProgramRule $rule): string => $rule->name, ProgramRule::cases()));
     }
 }

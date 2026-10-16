@@ -1062,3 +1062,13 @@ protocol behavior is separate from rebinding a semantic value: explicit direct
 execution always retains that value. Planning receives the newly published
 structure after protocol repreparation, without access to either request SQL or
 parser nodes.
+
+Stored program constructors also exclude multi-valued index casts throughout
+their bodies, including local defaults, cursor queries, unreachable branches
+and nested index definitions. This is an intrinsic declaration restriction;
+no database state or invocation can make that arrangement valid. Input lowering
+preserves the corresponding error at cast completion, earlier declared types
+and instruction errors, and the different continuation behavior of early MySQL
+8 releases. Event schedules remain outside the stored body and retain their
+separate expression restrictions. These checks do not yet separate array casts
+from the general scalar interface or establish all functional-index behavior.

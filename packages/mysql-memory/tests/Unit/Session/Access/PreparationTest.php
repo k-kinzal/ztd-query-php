@@ -14,6 +14,43 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testReadKeepsTheProgramArrayErrorBeforeMalformedPreparedSyntax(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->query('USE d');
+        $this->expectExceptionCode(1221);
+        $this->expectExceptionMessage('Incorrect usage of CAST( .. AS .. ARRAY) and stored routines');
+
+        (new Preparation())->read('CREATE PROCEDURE p() SELECT CAST(1 AS SIGNED ARRAY),', $session);
+    }
+
+    public function testReadRefusesMultipleStatementsAtTheSecondStatement(): void
+    {
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("near 'SELECT 2' at line 2");
+
+        (new Preparation())->read("SELECT 1;\nSELECT 2", (new Instance())->connect());
+    }
+
+    public function testDefinitionsKeepsEventPreparationSeparateFromScheduleEvaluation(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->query('USE d');
+        $operation = $session->analyze('CREATE EVENT e ON SCHEDULE AT CAST(1 AS SIGNED ARRAY) DO SELECT 1', true);
+        $this->expectExceptionCode(1295);
+
+        (new Preparation())->definitions($operation, $session);
+    }
+
+    public function testCheckRequiresADatabaseBeforeRefusingPreparedRoutineDeletion(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('DROP PROCEDURE IF EXISTS p', true);
+        $this->expectExceptionCode(1046);
+
+        (new Preparation())->check($operation, $session);
+    }
+
     public function testProgramRefusesPreparationBeforeLookingUpTheRoutineDatabase(): void
     {
         $session = (new Instance())->connect();

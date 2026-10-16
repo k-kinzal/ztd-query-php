@@ -70,6 +70,7 @@ final class ProgramErrors
         'OldRowUpdate' => ProgramError::TriggerRowChange,
         'AfterRowUpdate' => ProgramError::TriggerRowChange,
         'NoNewRow' => ProgramError::TriggerRowMissing,
+        'ArrayCast' => Family\StatementError::WrongUsage,
     ];
 
     /**

@@ -75,13 +75,7 @@ final class PreparedCommand implements Command
             [$value, $domain] = $session->variables->user($statement->source->name->value);
             $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
         }
-        $statements = $session->split($text);
-        if (count($statements) > 1) {
-            $offset = (int) strpos($text, ltrim($statements[1]), strlen($statements[0]));
-
-            throw StatementError::ParseError->error(mb_strcut(substr($text, $offset), 0, 80, 'UTF-8'), substr_count(substr($text, 0, $offset), "\n") + 1);
-        }
-        $prepared = $session->analyze($text, true);
+        $prepared = (new \MySqlMemory\Session\Access\Preparation())->read($text, $session);
         if ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate) {
             throw StatementError::UnsupportedPreparedStatement->error();
         }

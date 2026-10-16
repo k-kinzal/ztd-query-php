@@ -75,6 +75,18 @@ final class ProgramInputTest extends TestCase
         self::assertSame($failure, (new ProgramInput())->stopped($failure, (new Instance())->connect()));
     }
 
+    public function testStoppedPreservesAnImmediateBodyRefusal(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $problem = new RefusedProgramBody(new QualifiedName(new Name('p')), ProgramKind::Procedure, new ProgramProblem(ProgramRule::RecursiveCreate, 'FUNCTION'));
+        $failure = new \SqlSemantics\Construction\RejectedInput($problem, 40, true);
+        $stopped = (new ProgramInput())->stopped($failure, $session);
+
+        self::assertTrue($stopped->aborts);
+        self::assertSame(40, $stopped->end);
+        self::assertSame($problem, $stopped->problem);
+    }
+
     public function testCompletedEmitsNoHeaderNotesForAnotherDiagnostic(): void
     {
         self::assertSame([], (new ProgramInput())->completed(new ProgramProblem(ProgramRule::MissingReturn, 'f'), (new Instance())->connect()));

@@ -36,6 +36,7 @@ final class Preparation
         $this->program($operation, $session);
         (new Reading())->read($operation, $session);
         (new DefaultDatabase())->check($operation->statement, $session);
+        $this->definitions($operation, $session);
         (new DefaultDatabase())->referenced($operation, $session);
         $application = (new Hints())->apply($operation->statement, $session, true);
         try {
@@ -84,5 +85,46 @@ final class Preparation
             }
         }
         throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
+    }
+
+    /**
+     * Applies protocol restrictions after header reading and before schedule evaluation.
+     *
+     * @throws SqlError When the object command has no prepared protocol form
+     */
+    public function definitions(Operation $operation, Session $session): void
+    {
+        $statement = $operation->statement;
+        $dropEvent = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && $statement->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event;
+        $event = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent || $dropEvent;
+        $modern = in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true);
+        if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && !$dropEvent) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine || ($event && !$modern)) {
+            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
+        }
+    }
+
+    /**
+     * Reads prepared input while retaining completed conditions before malformed syntax.
+     *
+     * @throws SqlError When splitting or semantic interpretation refuses the input
+     */
+    public function read(string $sql, Session $session): Operation
+    {
+        try {
+            $statements = $session->split($sql);
+        } catch (SqlError $error) {
+            $previous = $session->text;
+            try {
+                $failure = (new \MySqlMemory\Session\Parse\Reader())->refused($error, $sql, true, $session);
+                throw new SqlError($failure->error, $failure->getMessage(), $failure, [], $failure->signalled, $failure->getCode(), true);
+            } finally {
+                $session->text = $previous;
+            }
+        }
+        if (count($statements) > 1) {
+            $offset = (int) strpos($sql, ltrim($statements[1]), strlen($statements[0]));
+            throw \MySqlMemory\Error\Family\StatementError::ParseError->error(mb_strcut(substr($sql, $offset), 0, 80, 'UTF-8'), substr_count(substr($sql, 0, $offset), "\n") + 1);
+        }
+        return $session->analyze($sql, true);
     }
 }

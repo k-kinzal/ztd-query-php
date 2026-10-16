@@ -35,7 +35,7 @@ final class RoutinePrefix
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
         $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
         $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
-        if (strtoupper($tokens[0]->text ?? '') !== 'CREATE') {
+        if (!in_array(strtoupper($tokens[0]->text ?? ''), ['CREATE', 'ALTER', 'DROP'], true)) {
             return null;
         }
         $missing = false;

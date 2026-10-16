@@ -25,6 +25,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class InputPrefixTest extends TestCase
 {
+    public function testImmediateLeavesFunctionReturnsAndDeferredResultSetsToTheirDeclaration(): void
+    {
+        $rule = new InputPrefix(new Lowering(Productions::load(__DIR__ . '/../../../../../resources/productions/mysql-8.4.7.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql847)));
+        $body = new Block(statements: [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ReturnOutsideFunction, $rule->immediate($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Procedure)?->rule);
+        self::assertNull($rule->immediate($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Function));
+    }
+
     /**
      * @return iterable<string, array{string, string|null}>
      */

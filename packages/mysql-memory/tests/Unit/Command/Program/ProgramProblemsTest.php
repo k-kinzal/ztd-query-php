@@ -25,6 +25,16 @@ use SqlSemantics\Statement\Reference\Column\MissingColumn;
 #[Small]
 final class ProgramProblemsTest extends TestCase
 {
+    public function testScheduleRefusesAnArrayCastBeforeEvaluatingTheTime(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $this->expectExceptionCode(1235);
+        $this->expectExceptionMessage(\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast::ARRAY_OUTSIDE_INDEX);
+
+        $session->query('CREATE EVENT e ON SCHEDULE AT CAST(1 AS SIGNED ARRAY) DO SELECT 1');
+    }
+
     public function testStoresTellsTheStatementsThatStoreABody(): void
     {
         $session = (new Instance())->connect();

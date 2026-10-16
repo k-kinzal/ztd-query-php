@@ -34,6 +34,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Rejecting RETURN outside a function declaration
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), body: new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
+ * @example Rejecting a multi-valued index cast in a stored body
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), body: new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading the changes of an event
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');

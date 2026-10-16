@@ -200,6 +200,11 @@ final class ProgramProblems
         if ($walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) !== [] || $walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable::class) !== [] || $calls !== []) {
             throw StatementError::NotSupportedYet->error('Usage of subqueries or stored function calls as part of this statement');
         }
+        foreach ($walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast::class) as $cast) {
+            if ($cast->array) {
+                throw StatementError::NotSupportedYet->error(\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast::ARRAY_OUTSIDE_INDEX);
+            }
+        }
     }
 
     /**

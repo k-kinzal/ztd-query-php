@@ -72,7 +72,7 @@ final class InputPrefix
                 if ($parameters instanceof RejectedInput) {
                     return $parameters;
                 }
-                $problem = $this->diagnostic($frame->body(), $parameters);
+                $problem = $this->diagnostic($frame->body(), $parameters) ?? $this->immediate($frame->body(), $tree->find('sf_tail') !== [] ? ProgramKind::Function : ProgramKind::Procedure);
                 if ($problem !== null) {
                     return new RejectedInput($problem, $range[1]);
                 }
@@ -90,6 +90,17 @@ final class InputPrefix
         }
 
         return null;
+    }
+
+    /**
+     * Preserves completed instruction restrictions before a later invalid operand.
+     * Body-wide return and result-set requirements await the complete declaration.
+     */
+    public function immediate(Block $body, ProgramKind $kind): ?ProgramProblem
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->problem($body, $kind, new QualifiedName(new Name('prefix')));
+
+        return $problem !== null && in_array($problem->rule, [ProgramRule::ReturnOutsideFunction, ProgramRule::BadStatement, ProgramRule::RecursiveCreate, ProgramRule::NestedAlterOrDrop, ProgramRule::EventRecursion], true) ? $problem : null;
     }
 
     /**
