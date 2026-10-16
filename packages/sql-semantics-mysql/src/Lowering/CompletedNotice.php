@@ -40,7 +40,7 @@ final class CompletedNotice
      */
     public function operands(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
     {
-        $load = (new Dml\SyntaxLoadInput())->completed($node, $lowering);
+        $load = (new Leaf\SyntaxJsonAttribute())->completed($node, $lowering) ?? (new Dml\SyntaxLoadInput())->completed($node, $lowering);
         if ($load !== null) {
             return $load;
         }

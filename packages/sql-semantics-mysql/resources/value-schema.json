@@ -2984,6 +2984,12 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\NullablePrimaryKey": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\RefusedJsonAttribute": {
+        "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "deep": "bool",
+        "position": "int",
+        "reason": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\UnknownKeyColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },

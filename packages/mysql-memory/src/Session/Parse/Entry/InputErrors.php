@@ -51,11 +51,12 @@ final class InputErrors
     }
 
     /**
-     * Formats numeric, source-option and role input refusals.
+     * Formats literal, numeric, source-option and role input refusals.
      */
     public function source(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute => (new Json\AttributeInput())->error($diagnostic),
             $diagnostic instanceof RefusedSourceNumber => (new SourceNumberInput())->error($diagnostic, $session->text),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount => (new SourceNumberInput())->fileCount($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions => (new Load\Options())->error($diagnostic, $session),

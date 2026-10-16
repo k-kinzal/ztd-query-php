@@ -70,7 +70,6 @@ final class Reading
      */
     public function parsed(Operation $operation, Session $session): void
     {
-        (new EngineAttributes())->check($operation->statement);
         (new Identifiers())->check($operation->statement, $session->settings()->release());
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof UnknownCollation && $diagnostic->name !== '' || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset) {

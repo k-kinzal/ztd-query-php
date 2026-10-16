@@ -106,6 +106,8 @@ final class AlterTableCommand implements Command
         $layout = TableLayout::of($table->definition);
         $change = new TableChange($layout, $table->definition->name, $database, $session->settings()->release(), $session->instance->dictionary->schema($schema)?->collation);
         $change->apply($commands);
+        $storage = new StorageOptions();
+        $storage->attributes($statement, $storage->engine($layout->statement(), $session->variables));
         $change->copies = $change->copies || ($change->referencing && $session->variables->read('foreign_key_checks') !== 'OFF');
         $target = $layout->name->schema->value ?? $schema;
         $renamed = $target !== $schema || $layout->name->name->value !== $table->definition->name;

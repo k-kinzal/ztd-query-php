@@ -64,6 +64,9 @@ final class RejectedOperand
     public function lowered(Node $node, Lowering $lowering): ?RejectedInput
     {
         try {
+            if ($node->name === 'json_attribute') {
+                return (new Leaf\SyntaxJsonAttribute())->rejected($node, $lowering);
+            }
             if ($node->name === 'function_call_generic') {
                 (new Call\FunctionRule($lowering))->call($lowering->form($node));
             } elseif ($node->name === 'partition_entry') {

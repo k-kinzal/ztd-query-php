@@ -27,6 +27,7 @@ final class EngineAttributeOption implements StorageOption
      */
     public function __construct(public readonly Text $attribute)
     {
+        \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($attribute);
     }
 
     /**
