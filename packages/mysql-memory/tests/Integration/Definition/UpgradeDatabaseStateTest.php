@@ -68,4 +68,31 @@ final class UpgradeDatabaseStateTest extends TestCase
             $container->stop();
         }
     }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease}>
+     */
+    public static function providerAliases(): iterable
+    {
+        yield '5.6' => [\SqlSemantics\Contract\GrammarRelease::MySql5651];
+        yield '5.7' => [\SqlSemantics\Contract\GrammarRelease::MySql5744];
+    }
+
+    #[DataProvider('providerAliases')]
+    public function testSameStructureSeesTheDestinationCollisionAfterCreatingItsLegacyAlias(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $node = new UpgradeDatabaseName(new LegacyDatabaseName(new Name('x')));
+        $observation = (new \Fuzz\Structure\Audit\Comparison())->compare($node, new \SqlSemantics\Contract\LanguageProfile($release));
+
+        self::assertTrue($observation['matches'], serialize($observation));
+        $initial = $observation['native']['error'];
+        self::assertIsArray($initial);
+        self::assertSame(1049, $initial[0]);
+        self::assertCount(3, $observation['transitions']);
+        self::assertSame([true, true, true], array_column($observation['transitions'], 'matches'));
+        $later = $observation['transitions'][2]['native']['error'];
+        self::assertIsArray($later);
+        self::assertSame(1007, $later[0]);
+        self::assertSame($observation['sql'], $observation['transitions'][2]['sql']);
+    }
+
 }

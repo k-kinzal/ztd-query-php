@@ -126,4 +126,14 @@ final class UpgradeDatabaseCommandTest extends TestCase
         $this->expectExceptionMessage("View 'old-name.v'");
         $session->query('SELECT * FROM `old-name`.v');
     }
+    public function testSourceRefusesTheSameDirectoryWhenTheLegacySpellingWasCreatedFirst(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE `#mysql50#x`');
+        $this->expectExceptionCode(1007);
+        $this->expectExceptionMessage("Can't create database 'x'; database exists");
+
+        (new UpgradeDatabaseCommand())->source('#mysql50#x', $session);
+    }
+
 }

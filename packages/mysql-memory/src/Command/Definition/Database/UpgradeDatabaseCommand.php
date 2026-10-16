@@ -63,6 +63,8 @@ final class UpgradeDatabaseCommand implements Command
     /**
      * Finds the legacy source before checking its destination.
      * An ASCII name needing no directory encoding also names its existing directory with the prefix.
+     * The destination already exists when both spellings identify that same directory,
+     * including a source originally created with its legacy prefix.
      *
      * @throws \MySqlMemory\Error\SqlError When the name cannot be upgraded
      */
@@ -80,7 +82,8 @@ final class UpgradeDatabaseCommand implements Command
         if ($source === null) {
             throw QueryError::BadDatabase->error($name);
         }
-        if ($dictionary->schema($destination) !== null) {
+        $files = new FileName();
+        if ($dictionary->schema($destination) !== null || $files->encoded($source->name) === $files->encoded($destination)) {
             throw SchemaError::DatabaseExists->error($destination);
         }
 
