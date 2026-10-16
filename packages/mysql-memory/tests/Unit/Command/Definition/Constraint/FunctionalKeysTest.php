@@ -72,7 +72,7 @@ final class FunctionalKeysTest extends TestCase
         $part = new ExpressionPart(new NumberLiteral('1'));
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3756);
-        (new FunctionalKeys())->check($part, new IndexDefinition(IndexKind::Primary, [$part]), 'InnoDB');
+        (new FunctionalKeys())->check($part, new IndexDefinition(IndexKind::Primary, [$part]));
     }
 
     public function testCheckRejectsAColumnOnlyExpression(): void
@@ -80,15 +80,15 @@ final class FunctionalKeysTest extends TestCase
         $part = new ExpressionPart(new ColumnUse(new Name('a')));
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3762);
-        (new FunctionalKeys())->check($part, new IndexDefinition(IndexKind::Index, [$part]), 'InnoDB');
+        (new FunctionalKeys())->check($part, new IndexDefinition(IndexKind::Index, [$part]));
     }
 
-    public function testCheckRejectsAnEngineWithoutComputedIndexes(): void
+    public function testStorageRejectsAnEngineWithoutComputedIndexes(): void
     {
         $part = new ExpressionPart(new NumberLiteral('1'));
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1478);
-        (new FunctionalKeys())->check($part, new IndexDefinition(IndexKind::Index, [$part]), 'MEMORY');
+        (new FunctionalKeys())->storage(new IndexDefinition(IndexKind::Index, [$part]), 'MEMORY');
     }
     public function testReferencesRejectsAnAutoIncrementDependency(): void
     {

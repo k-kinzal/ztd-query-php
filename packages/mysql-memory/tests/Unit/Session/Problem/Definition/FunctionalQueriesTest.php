@@ -29,6 +29,7 @@ final class FunctionalQueriesTest extends TestCase
         yield 'existing target before expression' => ['CREATE TABLE present(a INT,INDEX i(missing,((TABLE present))))', 1050, "Table 'present' already exists"];
         yield 'missing target database before expression' => ['CREATE TABLE absent_db.t(a INT,INDEX i(missing,((TABLE present))))', 1049, "Unknown database 'absent_db'"];
         yield 'projection checked later' => ['CREATE TABLE t(a INT,INDEX i(((SELECT unknown FROM present))))', 3758, "Expression of functional index 'i' contains a disallowed function."];
+        yield 'primary key before subquery refusal' => ['CREATE TABLE t(a INT,PRIMARY KEY (((SELECT 1))))', 3756, 'The primary key cannot be a functional index'];
         yield 'explicit row widths' => ['CREATE TABLE t(a INT,INDEX i(((1,2)=(3,4,5) AND EXISTS(TABLE absent))))', 1241, 'Operand should contain 2 column(s)'];
     }
 

@@ -54,11 +54,12 @@ final class FunctionalKeys
                 if (!$part instanceof ExpressionPart && !$part instanceof ArrayPart) {
                     continue;
                 }
-                $this->check($part, $index, $definition->engine);
+                $this->check($part, $index);
                 $owner = $index->name?->column->value ?? $index->constraint?->name?->column->value ?? 'functional_index';
                 $rules->forbidden($part->expression, ExpressionRole::Functional, $owner);
                 $rules->grouped($part->expression);
                 $this->references($part, $expressions, $definition, $owner);
+                $this->storage($index, $definition->engine);
                 $value = $expressions->compiled($part->expression, $scope);
                 $written = $text->text($part->expression);
                 if ($part instanceof ArrayPart) {
@@ -111,14 +112,8 @@ final class FunctionalKeys
      *
      * @throws \MySqlMemory\Error\SqlError When the index kind, expression or storage engine is forbidden
      */
-    public function check(ExpressionPart|ArrayPart $part, IndexDefinition $index, string $engine): void
+    public function check(ExpressionPart|ArrayPart $part, IndexDefinition $index): void
     {
-        if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText) {
-            throw \MySqlMemory\Error\Family\ConstraintError::FunctionalFullText->error();
-        }
-        if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Spatial) {
-            throw \MySqlMemory\Error\Family\ConstraintError::FunctionalSpatial->error();
-        }
         if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalPrimary->error();
         }
@@ -137,6 +132,21 @@ final class FunctionalKeys
         }
         if ($part instanceof ExpressionPart && $expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalColumn->error();
+        }
+    }
+
+    /**
+     * Checks index and engine capabilities after the functional operand resolves.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the kind or engine cannot store the resolved expression
+     */
+    public function storage(IndexDefinition $index, string $engine): void
+    {
+        if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText) {
+            throw \MySqlMemory\Error\Family\ConstraintError::FunctionalFullText->error();
+        }
+        if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Spatial) {
+            throw \MySqlMemory\Error\Family\ConstraintError::FunctionalSpatial->error();
         }
         if (strcasecmp($engine, 'InnoDB') !== 0) {
             throw \MySqlMemory\Error\Family\SchemaError::IllegalCreateOption->error($engine, 'Index on virtual generated column');

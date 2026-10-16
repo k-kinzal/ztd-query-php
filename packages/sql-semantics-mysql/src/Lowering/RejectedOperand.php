@@ -64,6 +64,9 @@ final class RejectedOperand
     public function lowered(Node $node, Lowering $lowering): ?RejectedInput
     {
         try {
+            if ($node->name === 'key_part') {
+                return (new TableDefinition\Key\SyntaxPrefixes())->rejected($node, $lowering);
+            }
             if ($node->name === 'json_attribute') {
                 return (new Leaf\SyntaxJsonAttribute())->rejected($node, $lowering);
             }

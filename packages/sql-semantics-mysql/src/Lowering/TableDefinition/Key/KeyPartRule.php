@@ -141,6 +141,10 @@ final class KeyPartRule
      */
     public function length(Node $part): Numeral
     {
+        $failure = (new SyntaxPrefixes())->rejected($part, $this->lowering);
+        if ($failure !== null) {
+            throw $failure;
+        }
         return $this->lowering->numbers->token($this->lowering->productions->form($part)->token(2));
     }
 }

@@ -350,7 +350,7 @@ final class Definitions
                 throw SchemaError::KeyColumnMissing->error($name);
             }
             $positions[] = $position;
-            $prefixes[] = !$part instanceof ColumnPart || $part->length === null ? null : (int) $part->length->text;
+            $prefixes[] = $part instanceof ColumnPart ? (new Constraint\ColumnPrefixes())->length($part, $columns[$position]->domain, $index->kind) : null;
             $descending[] = $part->direction === Direction::Descending;
         }
         $kind = match ($index->kind) {

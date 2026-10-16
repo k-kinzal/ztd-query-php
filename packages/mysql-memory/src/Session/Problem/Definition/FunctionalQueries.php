@@ -67,6 +67,7 @@ final class FunctionalQueries
         foreach ($indexes as $index) {
             foreach ($index->parts as $part) {
                 if ($part instanceof ExpressionPart) {
+                    (new \MySqlMemory\Command\Definition\Constraint\FunctionalKeys())->check($part, $index);
                     (new ExpressionRules())->forbidden($part->expression, ExpressionRole::Functional, $index->name?->column->value ?? $index->constraint?->name?->column->value ?? 'functional_index');
                 }
             }

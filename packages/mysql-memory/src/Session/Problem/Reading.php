@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Operation;
  * Raises the first problem the server finds while it reads a statement, before it checks the INTO variables and opens any table.
  *
  * A nonempty unknown collation after COLLATE comes first of all, as the server looks it up while it
- * parses the statement, and so does a key part of length 0 (ER_KEY_PART_0) after it. MySQL 5.6
+ * parses the statement. MySQL 5.6
  * and 5.7 then refuse WITH CUBE (ER_NOT_SUPPORTED_YET), WITH ROLLUP with DISTINCT or ORDER BY in
  * the same block (ER_WRONG_USAGE), then an INTO variable no stored program declares, while they
  * parse the query block, before the problems of a union or a write (verified on live 5.6.51 and
@@ -64,7 +64,7 @@ final class Reading
     }
 
     /**
-     * Raises the problems the server finds first of all, while it parses the statement: a name that is too long (see Identifiers), a nonempty unknown collation after COLLATE, then a key part of length 0 (ER_KEY_PART_0).
+     * Raises the problems the server finds first of all, while it parses the statement: a name that is too long (see Identifiers), or an unknown character set or collation.
      *
      * @throws SqlError When the operation has such a problem
      */
@@ -74,11 +74,6 @@ final class Reading
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof UnknownCollation && $diagnostic->name !== '' || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
-            }
-        }
-        foreach ((new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart::class) as $part) {
-            if ($part->length !== null && !$part->length->hexadecimal && (int) $part->length->text === 0) {
-                throw \MySqlMemory\Error\Family\SchemaError::KeyPartZeroLength->error($part->column->value);
             }
         }
     }

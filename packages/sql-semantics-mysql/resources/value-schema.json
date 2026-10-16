@@ -3001,6 +3001,9 @@
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "refusal": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\KindRefusal"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\ZeroKeyPrefix": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery": {
         "duplicate": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
         "query": "SqlSemantics\\Statement\\Query"

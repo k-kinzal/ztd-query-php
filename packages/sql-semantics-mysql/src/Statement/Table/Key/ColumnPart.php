@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * index is ascending without one. Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html#create-index-column-prefixes,
  * https://dev.mysql.com/doc/refman/8.4/en/descending-indexes.html.
  *
- * A prefix length uses decimal digits no greater than 2147483647. Whether
+ * A prefix length uses positive decimal digits no greater than 2147483647. Whether
  * the length fits the column's data type is checked against its declaration.
  *
  * @visibility public
@@ -33,6 +33,8 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1', true)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a prefix length outside the integer token range
  *     new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2147483648')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an empty prefix independently of table state
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('000')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ColumnPart implements KeyPart
 {
@@ -46,6 +48,7 @@ final class ColumnPart implements KeyPart
     public function __construct(public readonly Name $column, public readonly ?Numeral $length = null, public readonly ?Direction $direction = null)
     {
         Check::input($length === null || $length->isIntegerToken(), 'A key prefix length is a decimal integer token no greater than 2147483647.');
+        Check::input($length === null || (int) $length->text > 0, 'A key prefix length must be positive.');
     }
 
     /**

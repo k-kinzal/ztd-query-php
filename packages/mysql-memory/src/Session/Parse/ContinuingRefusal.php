@@ -64,6 +64,10 @@ final class ContinuingRefusal
         $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile());
         $warnings = new ModernWarnings();
         $tokens = $parser->tokenize($statement);
+        $prefix = $session->settings()->legacy() ? (new CommandPrefix())->before($tokens, $statement, $failure->end, $session) : null;
+        if ($prefix !== null) {
+            return $prefix;
+        }
         $error = (new Errors())->error($failure->problem, $session);
         if ($session->settings()->legacy()) {
             [$operators, $conflict] = (new Modifiers($tokens, $session->settings()->release()))->scan($end, $end);

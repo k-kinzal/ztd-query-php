@@ -1141,3 +1141,20 @@ the same first diagnostic as native MySQL when names and operand widths both
 fail. Tests compare standalone expressions, reached stored-program instructions
 and unreachable branches. General row and aggregate construction domains remain
 unresolved; matching these input diagnostics does not establish that property.
+
+
+Column index parts require a positive decimal prefix within the integer token
+range. Zero is an intrinsic contradiction, including unreachable instructions
+and an existing CREATE TABLE IF NOT EXISTS target. Lowering reports
+`ZeroKeyPrefix` with the decoded column identity, without publishing an invalid
+key part. The input boundary preserves the earlier legacy database requirement
+and later grammar errors or warnings. These constraints apply to every role
+that uses `ColumnPart`, including foreign-key column lists.
+
+Positive lengths remain subject to the current column declaration. A direct
+history reuses one CreateIndex object across a missing table, a missing column,
+an integer column, a string column with duplicate prefixes, deletion of the
+conflicting row, and an existing index. MySQL and memory agree on all six stages
+on 5.6, 5.7, 8.0, 8.4 and 9.1. The same structure is never replaced and its memory
+request label is unrelated invalid input. These observations distinguish the
+constructor's intrinsic bound from column-type and row-state dependencies.

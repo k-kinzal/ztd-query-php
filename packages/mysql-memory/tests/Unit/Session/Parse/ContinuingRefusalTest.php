@@ -16,6 +16,16 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class ContinuingRefusalTest extends TestCase
 {
+    public function testErrorRespectsTheLegacyDatabaseDependencyBeforeAKeyPrefix(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $reply = $session->run('CREATE TABLE t(a TEXT, KEY(a(0)))')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1046, $reply->getCode());
+        self::assertSame([1046], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testUnfinishedRetainsTheFirstPrecisionErrorBeforeAnUnpreparedMarker(): void
     {
         $session = (new Instance('5.7.44'))->connect();
