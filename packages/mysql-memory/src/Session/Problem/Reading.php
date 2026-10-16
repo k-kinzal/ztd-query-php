@@ -54,6 +54,7 @@ final class Reading
         }
         (new \MySqlMemory\Command\Explain\ExplainCommand())->format($operation->statement);
         $this->parsed($operation, $session);
+        (new \MySqlMemory\Command\Access\HandlerPreparation())->database($operation, $session);
         $this->grouping($operation, $session);
         $this->variables($operation, $session);
         $this->legacyWrites($operation, $session);

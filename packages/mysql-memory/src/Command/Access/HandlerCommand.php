@@ -109,6 +109,7 @@ final class HandlerCommand implements Command
      */
     public function read(HandlerScan|HandlerIndexRead|HandlerIndexSeek $statement, Operation $operation, Session $session, Context $context, Connection $connection): ResultSet
     {
+        (new HandlerPreparation())->check($operation, $session);
         $handler = $this->handler($session, $statement->handler->name->value);
         $table = $session->instance->dictionary->table($handler->schema, $handler->table);
         (new \MySqlMemory\Session\Access\OpenedTables())->open($handler->schema, $handler->table, $session);

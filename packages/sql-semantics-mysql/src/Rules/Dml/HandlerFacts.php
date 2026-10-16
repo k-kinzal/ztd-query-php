@@ -35,6 +35,7 @@ final class HandlerFacts
      */
     public function read(OpenHandler $handler, array $values, ?Scalar $where, ?Limit $limit, Derivation $derivation): void
     {
+        $this->functions([...$values, ...($where === null ? [] : [$where])], $derivation);
         $base = $derivation->environment();
         $fact = $derivation->relation($handler, $base);
         foreach ($values as $position => $value) {
@@ -54,4 +55,32 @@ final class HandlerFacts
         }
         $derivation->output(new QueryFact($fields, $derivation->context->columnNames));
     }
+
+    /**
+     * Reports stored-function interpretation in key values or a handler predicate.
+     * The restriction precedes handler lookup, even when the routine is absent.
+     * Native calls remain expressions of the handler's ordinary resolution scope.
+     *
+     * @param list<\SqlSemantics\Statement\Node> $operands The key and predicate operands
+     */
+    public function functions(array $operands, Derivation $derivation): void
+    {
+        $pending = $operands;
+        while ($pending !== []) {
+            $node = array_pop($pending);
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall && !$node->native($derivation->context->profile->grammar)) {
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('stored functions in HANDLER ... READ'));
+
+                return;
+            }
+            foreach (get_object_vars($node) as $value) {
+                foreach (is_array($value) ? $value : [$value] as $child) {
+                    if ($child instanceof \SqlSemantics\Statement\Node) {
+                        $pending[] = $child;
+                    }
+                }
+            }
+        }
+    }
+
 }

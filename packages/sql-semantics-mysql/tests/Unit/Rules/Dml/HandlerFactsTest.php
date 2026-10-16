@@ -15,6 +15,22 @@ use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
 #[Medium]
 final class HandlerFactsTest extends TestCase
 {
+    public function testFunctionsReportsNestedStoredCallsBeforeRelationResolution(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (1) WHERE ABS(d.f())');
+        $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet));
+
+        self::assertCount(1, $problems);
+        self::assertSame('stored functions in HANDLER ... READ', $problems[0]->feature);
+    }
+
+    public function testFunctionsKeepsNativeCallsAsOrdinaryHandlerExpressions(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (ABS(1)) WHERE ABS(2)');
+
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
     public function testReadResolvesDefaultAgainstTheOpenHandlerState(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (DEFAULT)');
