@@ -44,6 +44,9 @@ final class ShowBinaryLogStatus implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->terminology === Terminology::Legacy) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ShowMasterStatus, $derivation);
+        }
         (new ShowFacts())->rows($derivation, Report::LogStatus);
     }
 

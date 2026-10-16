@@ -181,6 +181,7 @@ final class TableChange
         }
         $this->layout->keys = [...$this->layout->keys, ...$added];
         foreach ($placed as [$element, $position, $origin]) {
+            $this->referencing = $this->referencing || (new Constraint\ColumnReferences())->key($element, $this->release) !== null;
             $this->columns->place($element, $position, $origin);
         }
         if ($this->layout->columns === []) {

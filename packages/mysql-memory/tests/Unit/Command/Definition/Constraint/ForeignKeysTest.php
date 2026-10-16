@@ -95,6 +95,17 @@ final class ForeignKeysTest extends TestCase
         $session->query('CREATE TABLE c (a INT, b INT, FOREIGN KEY (a, b) REFERENCES p(id))');
     }
 
+    public function testReferencedColumnsFollowTheParentPrimaryKeyAndSessionChecks(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p(a INT PRIMARY KEY); CREATE TABLE c(a INT, FOREIGN KEY(a) REFERENCES p)');
+        self::assertSame(['a'], $session->instance->dictionary->table('d', 'c')?->definition->foreignKeys[0]->parentColumns);
+        $session->query('DROP TABLE c; SET foreign_key_checks=0');
+        $this->expectExceptionCode(1239);
+        $this->expectException(SqlError::class);
+        $session->query('CREATE TABLE c(a INT, FOREIGN KEY(a) REFERENCES p)');
+    }
+
     public function testUncheckedKeepsAKeyToAMissingTableWithoutForeignKeyChecks(): void
     {
         $session = (new Instance())->connect();

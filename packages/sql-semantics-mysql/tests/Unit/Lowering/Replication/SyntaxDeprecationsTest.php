@@ -29,6 +29,14 @@ final class SyntaxDeprecationsTest extends TestCase
         self::assertSame('START_SYM', (new SyntaxDeprecations())->preceding($replica, $parser, $sql)?->name);
     }
 
+    public function testBinaryLogsKeepTheirKeywordNoticeBeforeAnInvalidOperand(): void
+    {
+        $sql = 'PURGE /* gap */ MASTER LOGS TO';
+        $warnings = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.2.0'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql820));
+
+        self::assertEquals([new Deprecation(Deprecated::PurgeMasterLogs)], array_column($warnings, 1));
+    }
+
     /**
      * @return iterable<string, array{GrammarRelease, string, list<Deprecation>}>
      */

@@ -37,6 +37,10 @@ final class SyntaxDeprecations
         if (!$first instanceof Token) {
             return null;
         }
+        $log = $this->binaryLogs($node, $first, $preceding);
+        if ($log !== null && $log->warnedIn($lowering->profile->grammar)) {
+            return new Deprecation($log);
+        }
         if ($node->name === 'change_replication_source' && $first->name === 'MASTER_SYM') {
             $old = 'CHANGE MASTER';
             $replacement = 'CHANGE REPLICATION SOURCE';
@@ -55,11 +59,25 @@ final class SyntaxDeprecations
     }
 
     /**
+     * Identifies the completed legacy binary-log command vocabulary.
+     */
+    public function binaryLogs(Node $node, Token $first, ?Token $preceding): ?Deprecated
+    {
+        return match (true) {
+            $node->name === 'master_or_binary_logs_and_gtids' && $first->name === 'MASTER_SYM' => Deprecated::ResetMaster,
+            $node->name === 'master_or_binary' && $first->name === 'MASTER_SYM' && $preceding?->name === 'SHOW' => Deprecated::ShowMasterLogs,
+            $node->name === 'master_or_binary' && $first->name === 'MASTER_SYM' && $preceding?->name === 'PURGE' => Deprecated::PurgeMasterLogs,
+            $node->name === 'show_master_status_stmt' => Deprecated::ShowMasterStatus,
+            default => null,
+        };
+    }
+
+    /**
      * Reads the preceding accepted keyword while the syntax tree is still transient.
      */
     public function preceding(Node $node, \SqlParser\Parser\SqlParser $parser, string $sql, ?Token $lookahead = null): ?Token
     {
-        if (!in_array($node->name, ['replica', 'opt_replica_reset_options'], true)) {
+        if (!in_array($node->name, ['replica', 'opt_replica_reset_options', 'master_or_binary'], true)) {
             return null;
         }
         $range = (new \SqlSemantics\Construction\SourceRanges())->span($node, true);

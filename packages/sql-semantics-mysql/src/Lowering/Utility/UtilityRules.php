@@ -56,17 +56,19 @@ final class UtilityRules
     }
 
     /**
-     * Confirms that a node is `master_or_binary`, whose MASTER and BINARY are the same keyword before LOGS.
+     * Confirms `master_or_binary` and answers whether its deprecated MASTER synonym was written.
      *
      * The writer emits BINARY, which every release accepts (UtilityNoise).
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function binaryLogsWord(Node $word): void
+    public function binaryLogsWord(Node $word): bool
     {
         $form = $this->lowering->form($word);
         if ($form->signature !== 'master_or_binary: MASTER_SYM' && $form->signature !== 'master_or_binary: BINARY' && $form->signature !== 'master_or_binary: BINARY_SYM') {
             throw ImplementationGap::production($form);
         }
+
+        return $form->signature === 'master_or_binary: MASTER_SYM';
     }
 }

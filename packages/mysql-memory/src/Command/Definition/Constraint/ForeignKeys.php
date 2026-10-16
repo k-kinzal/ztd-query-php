@@ -30,8 +30,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * columns that admit NULL. A temporary table has no foreign keys. The child table gets an index
  * on the referencing columns unless one starts with them, named after the index or constraint
  * name written, else after its first column; an index the server added that another index starts
- * with is dropped. A REFERENCES clause written after a column declares nothing (verified on live
- * 8.0.44 and 8.4.7 servers).
+ * with is dropped. A REFERENCES clause written after a column declares a foreign
+ * key from MySQL 9.0 onward; earlier releases ignore it (verified on live 8.0–9.1 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html.
  *
  * @visibility MySqlMemory
@@ -59,6 +59,7 @@ final class ForeignKeys
         $number = $this->base;
         $written = [];
         foreach ($this->create->elements as $element) {
+            $element = (new ColumnReferences())->key($element, $this->planner->settings->release());
             if ($element instanceof ForeignKeyElement) {
                 $name = $element->constraint?->name?->column->value;
                 $written[] = [$element, $name ?? $table . '_ibfk_' . ++$number, $name === null || Constraints::generated($name, $table, '_ibfk_')];
@@ -164,13 +165,13 @@ final class ForeignKeys
             throw ConstraintError::CannotAddForeign->error();
         }
         $columns = $this->implicit($element, $definition->columns)->columns;
-        $written = $element->references->columns ?? [];
-        if (count($written) !== count($columns)) {
-            throw ConstraintError::WrongForeignKey->error($element->constraint?->name?->column->value ?? 'foreign key without name', "Key reference and table reference don't match");
-        }
         $reference = $element->references->table;
         $schema = $reference->schema->value ?? $definition->schema;
         $parent = $schema === $definition->schema && $reference->name->value === $definition->name ? $definition : $this->planner->dictionary->schema($schema)?->table($reference->name->value)?->definition;
+        $written = $this->referencedColumns($element, $parent);
+        if (count($written) !== count($columns)) {
+            throw ConstraintError::WrongForeignKey->error($element->constraint?->name?->column->value ?? 'foreign key without name', "Key reference and table reference don't match");
+        }
         if ($parent === null && (isset($this->kept[mb_strtolower($name)]) || $this->planner->compiler->connection->variables->read('foreign_key_checks') === 'OFF')) {
             return $this->unchecked($element, $name, $generated, $columns, $schema);
         }
@@ -193,6 +194,24 @@ final class ForeignKeys
         $this->indexed($parent, $referenced, $name, $reference->name->value);
 
         return new ForeignKey($name, $columns, $schema, $parent->name, array_map(static fn (int $position): string => $parent->columns[$position]->name, $referenced), $actions[ReferenceEvent::Delete->value], $actions[ReferenceEvent::Update->value], $generated);
+    }
+
+    /**
+     * Resolves an omitted referenced-column list to the parent's primary key on MySQL 9.
+     * With foreign_key_checks disabled the parent is not consulted, even when it exists.
+     *
+     * @return list<\SqlSemantics\Statement\Identifier\Name>
+     */
+    public function referencedColumns(ForeignKeyElement $element, ?TableDefinition $parent): array
+    {
+        if ($element->references->columns !== null) {
+            return $element->references->columns;
+        }
+        if ($parent === null || !in_array($this->planner->settings->release(), [GrammarRelease::MySql901, GrammarRelease::MySql910], true) || $this->planner->compiler->connection->variables->read('foreign_key_checks') === 'OFF') {
+            return [];
+        }
+
+        return array_map(static fn (int $position): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($parent->columns[$position]->name), $parent->primaryKey()->columns ?? []);
     }
 
     /**

@@ -78,6 +78,10 @@ enum Deprecated: string
     case LowPriorityWrite = "'LOW_PRIORITY WRITE' is deprecated and will be removed in a future release. Please use WRITE instead";
     case AlterIgnore = "'IGNORE' is deprecated and will be removed in a future release.";
     case UpgradeDatabaseName = "'UPGRADE DATA DIRECTORY NAME' is deprecated and will be removed in a future release.";
+    case ResetMaster = "'RESET MASTER' is deprecated and will be removed in a future release. Please use RESET BINARY LOGS AND GTIDS instead";
+    case PurgeMasterLogs = "'PURGE MASTER LOGS TO' is deprecated and will be removed in a future release. Please use PURGE BINARY LOGS TO instead";
+    case ShowMasterLogs = "'SHOW MASTER LOGS' is deprecated and will be removed in a future release. Please use SHOW BINARY LOGS instead";
+    case ShowMasterStatus = "'SHOW MASTER STATUS' is deprecated and will be removed in a future release. Please use SHOW BINARY LOG STATUS instead";
 
     /**
      * Answers the error number the warning is raised with.
@@ -88,7 +92,7 @@ enum Deprecated: string
     public function code(): int
     {
         return match ($this) {
-            self::SuperPrivilege, self::ReplicationSpelling => 1287,
+            self::SuperPrivilege, self::ReplicationSpelling, self::ResetMaster, self::PurgeMasterLogs, self::ShowMasterLogs, self::ShowMasterStatus => 1287,
             self::InsertDelayed, self::ReplaceDelayed => 3005,
             self::UnquotedFull => 4119,
             self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
@@ -109,6 +113,9 @@ enum Deprecated: string
      */
     public function warnedIn(GrammarRelease $release): bool
     {
+        if (in_array($this, [self::ResetMaster, self::PurgeMasterLogs, self::ShowMasterLogs, self::ShowMasterStatus], true)) {
+            return in_array($release, [GrammarRelease::MySql820, GrammarRelease::MySql830], true);
+        }
         if ($this === self::ReplicationSpelling) {
             return in_array($release, [GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830], true);
         }
@@ -125,7 +132,10 @@ enum Deprecated: string
         if ($this === self::DisableOnSlave) {
             return $release !== GrammarRelease::MySql8044;
         }
-        if ($this === self::WaitUntilSqlThreadAfterGtids || $this === self::LowPriorityWrite) {
+        if ($this === self::LowPriorityWrite) {
+            return in_array($release, [GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830], true);
+        }
+        if ($this === self::WaitUntilSqlThreadAfterGtids) {
             return $release === GrammarRelease::MySql8044 || $release === GrammarRelease::MySql810;
         }
 

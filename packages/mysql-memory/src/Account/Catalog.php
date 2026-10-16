@@ -84,15 +84,19 @@ final class Catalog
         if ($this->legacy()) {
             return [];
         }
-        if ($this->release === GrammarRelease::MySql8044) {
-            $names = array_values(array_diff(self::DYNAMIC, ['ALLOW_NONEXISTENT_DEFINER', 'FLUSH_PRIVILEGES', 'OPTIMIZE_LOCAL_TABLE', 'SET_ANY_DEFINER', 'TRANSACTION_GTID_TAG']));
+        $absent = match ($this->release) {
+            GrammarRelease::MySql8044, GrammarRelease::MySql810 => ['ALLOW_NONEXISTENT_DEFINER', 'FLUSH_PRIVILEGES', 'OPTIMIZE_LOCAL_TABLE', 'SET_ANY_DEFINER', 'TRANSACTION_GTID_TAG'],
+            GrammarRelease::MySql820 => ['FLUSH_PRIVILEGES', 'OPTIMIZE_LOCAL_TABLE', 'TRANSACTION_GTID_TAG'],
+            GrammarRelease::MySql830 => ['FLUSH_PRIVILEGES', 'OPTIMIZE_LOCAL_TABLE'],
+            GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910, GrammarRelease::PostgreSql166, GrammarRelease::PostgreSql172, GrammarRelease::Sqlite3472 => [],
+        };
+        $names = array_values(array_diff(self::DYNAMIC, $absent));
+        if (in_array($this->release, [GrammarRelease::MySql8044, GrammarRelease::MySql810], true)) {
             $names[] = 'SET_USER_ID';
             sort($names, SORT_STRING);
-
-            return $names;
         }
 
-        return self::DYNAMIC;
+        return $names;
     }
 
     /**

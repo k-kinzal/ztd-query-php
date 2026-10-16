@@ -110,11 +110,13 @@ final class ResetRule
             return new ResetReplica($replica, self::ALL[$all->signature] ?? throw ImplementationGap::production($all), $channel, $form->signature === 'reset_option: SLAVE opt_replica_reset_options opt_channel');
         }
         $terminology = self::BINARY_LOGS[$form->signature] ?? throw ImplementationGap::production($form);
+        $master = false;
         if ($form->signature === 'reset_option: master_or_binary_logs_and_gtids source_reset_options') {
             $words = $this->lowering->form($form->node(0));
             if ($words->signature !== 'master_or_binary_logs_and_gtids: MASTER_SYM' && $words->signature !== 'master_or_binary_logs_and_gtids: BINARY_SYM LOGS_SYM AND_SYM GTIDS_SYM') {
                 throw ImplementationGap::production($words);
             }
+            $master = $words->signature === 'master_or_binary_logs_and_gtids: MASTER_SYM';
         }
         $children = $form->node->children;
         $last = $children[count($children) - 1];
@@ -125,7 +127,13 @@ final class ResetRule
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
 
-        return new ResetBinaryLogs($terminology, $number);
+        $target = new ResetBinaryLogs($terminology, $number);
+        $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ResetMaster;
+        if ($master && $notice->warnedIn($this->lowering->profile->grammar)) {
+            $this->lowering->origins->notice($target, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice), $form->node(0));
+        }
+
+        return $target;
     }
 
     /**

@@ -79,6 +79,11 @@ final class ServerCatalog
             /** @var list<array{string, string, string}> $privileges */
             $privileges = require dirname(__DIR__, 4) . '/resources/privileges-8.0.php';
         }
+        $file = dirname(__DIR__, 4) . '/resources/privileges-' . substr($release->value, 6) . '.php';
+        if (is_file($file)) {
+            /** @var list<array{string, string, string}> $privileges */
+            $privileges = require $file;
+        }
 
         return new self($shared->engines, $plugins, $privileges, $shared->charsets, $shared->collations);
     }

@@ -35,7 +35,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey as ForeignKeyElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption;
@@ -114,7 +113,7 @@ final class Definitions
         $expressions->forbidden();
         $constraints = new Constraints($this->planner, $create, $this->checkBase, $this->foreignBase, $this->keptForeign);
         $constraints->forbidden();
-        if ($elements === [] && in_array($this->planner->settings->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
+        if ($elements === [] && in_array($this->planner->settings->release(), [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830, \SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
             throw SchemaError::NoVisibleColumn->error();
         }
         $columns = (new Constraint\FunctionalKeys())->columns($create, new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine), $this->planner);
@@ -153,8 +152,9 @@ final class Definitions
             } elseif ($element instanceof IndexDefinition) {
                 $keys[] = $this->key($element, $columns, $engine);
             }
-            if ($element instanceof ForeignKeyElement) {
-                $keys[] = $implicit[] = $foreign->implicit($element, $columns);
+            $reference = (new Constraint\ColumnReferences())->key($element, $this->planner->settings->release());
+            if ($reference !== null) {
+                $keys[] = $implicit[] = $foreign->implicit($reference, $columns);
             }
         }
         return $this->named($foreign->pruned($keys, $implicit), $columns);

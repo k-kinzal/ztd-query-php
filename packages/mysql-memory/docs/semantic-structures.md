@@ -1206,3 +1206,19 @@ collation names are resolved when the stored instruction is invoked. Native
 histories compare creation and invocation, including instructions in an
 unreachable branch. These checks do not replace the whole-model audit or establish
 that every remaining expression role is coherent.
+
+MySQL 9.0 and 9.1 enforce column-level REFERENCES clauses, including their
+implicit child indexes. An omitted parent column list resolves to the parent's
+primary key while foreign_key_checks is enabled. It remains unresolved when the
+parent or primary key is absent, or when checks are disabled. Direct histories
+reuse one column-level or table-level reference through those state transitions;
+the semantic request is unchanged and retains no input SQL. Earlier supported
+releases ignore column-level references. The versioned wire histories also check
+populated INSERT and ALTER TABLE behavior and result metadata.
+
+Release-specific catalog fixtures cover every supported MySQL release, including
+8.1, 8.2 and 8.3. Replication vocabulary notices retain the release in which their
+legacy spelling is deprecated, including when a later operand is rejected.
+Native catalog tests establish the same account password and proxy-grant fixture
+on both servers before comparing SHOW GRANTS; container installation differences
+are not treated as SQL-result exceptions.

@@ -18,8 +18,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Rule: MYSQL-ORDINARY-COLUMN-001. The attributes are kept in written order,
  * because the server applies them in that order (a later NULL cancels an
- * earlier NOT NULL). An inline REFERENCES clause is parsed and ignored by
- * the server; it is kept as a request. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
+ * earlier NOT NULL). An inline REFERENCES clause is ignored through MySQL 8.4 and declares a
+ * foreign key from MySQL 9.0 onward; the reference request is retained. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/ansi-diff-foreign-keys.html. Status: Implemented.
  *
  * @visibility public

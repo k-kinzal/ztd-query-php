@@ -72,7 +72,7 @@ final class PluginCommand implements Command
             if (str_contains($library, '/') || mb_strlen($library) > 64) {
                 throw AdministrationError::PathsForbidden->error();
             }
-            throw $this->unopened($directory, $library, $session->settings()->legacy() ? '2' : '11');
+            throw $this->unopened($directory, $library, $session->settings()->legacy() || in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true) ? '2' : '11');
         }
         if ($statement instanceof UninstallPlugin) {
             if ($this->builtIn($statement->plugin->value, $session->instance->version)) {
