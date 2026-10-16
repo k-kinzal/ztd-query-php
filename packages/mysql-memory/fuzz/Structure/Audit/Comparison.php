@@ -45,11 +45,7 @@ final class Comparison
                 $native->query("SET SESSION sql_mode = '" . $native->real_escape_string($mode) . "', collation_connection = 'utf8mb4_bin', timestamp = 1700000000");
                 $session = (new Fixture())->session($endpoint, $native, $release, $definition->supervised());
                 $session->text = 'unrelated invalid input';
-                $session->variables->session['sql_mode'] = $mode;
-                $session->variables->session['timestamp'] = 1700000000;
-                foreach (['character_set_client' => 'utf8mb4', 'character_set_connection' => 'utf8mb4', 'character_set_results' => 'utf8mb4', 'collation_connection' => 'utf8mb4_bin'] as $key => $value) {
-                    $session->variables->session[$key] = $value;
-                }
+                (new SessionSetup())->apply($session, $mode);
                 $actual = (new Memory())->observe($session, $node, $this->parameters($node, $session));
                 $expected = (new Native())->observe($native, $sql, count((new Bindings())->nulls($node)));
 

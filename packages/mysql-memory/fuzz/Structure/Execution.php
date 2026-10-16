@@ -55,6 +55,10 @@ final class Execution
      */
     public function runIn(Session $session, Statement|Scalar|\SqlSemantics\Statement\Query $node, array $parameters = []): Reply
     {
+        if ($session->running->using === []) {
+            $session->activity->begin();
+            \MySqlMemory\Session\State\StatementCounters::received($session);
+        }
         $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot($node instanceof \SqlSemantics\Statement\Query ? $node : new Select([], [new SelectExpression($node)]));
         $domains = array_map(static fn (array $parameter): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $parameter[1]->resolved(), $parameters);
         $semantics = new Semantics(Dialect::MySql, 'mysql-' . $session->instance->version, Mode::fromString((string) $session->variables->read('sql_mode')), $this->parameters($statement));

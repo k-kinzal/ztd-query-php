@@ -21,6 +21,8 @@ use SqlSemantics\Statement\Scalar;
 /**
  * Observes direct construction without submitting rendered SQL to memory.
  * Only SQL errors are outcomes; internal exceptions escape to the campaign.
+ * A direct SHOW WARNINGS mirrors the native observer after saving the response,
+ * including its effects on subsequent request counters and session state.
  */
 final class Memory
 {
@@ -38,6 +40,9 @@ final class Memory
         $observation = $this->replies($replies);
         $observation['warnings'] = $session->released ? null : array_map(static fn (array $condition): array => [$condition[0], (string) $condition[1], $condition[2]], $session->diagnostics->conditions);
         $observation['disconnected'] = $session->released;
+        if (!$session->released) {
+            (new Execution())->runIn($session, new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings());
+        }
 
         return $observation;
     }

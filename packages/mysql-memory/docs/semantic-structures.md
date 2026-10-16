@@ -781,3 +781,14 @@ listing before table creation, after a populated write and read, and after
 FLUSH TABLES on five releases (35 observations including the initial complete
 listing). The original generated open-table request agrees from that shared
 baseline. Cache contents after user requests remain part of the comparison.
+
+Direct execution starts a client request's activity and request counters before
+semantic derivation. The comparison fixture executes its encoding and variable
+setup as two constructed SET statements, matching the native setup history.
+After saving the target response, the direct observer also executes a constructed
+SHOW WARNINGS, mirroring the native diagnostic read. No source SQL is submitted
+to memory for these operations. Native histories compare the same status objects
+before and after successful scalar requests and intentional SIGNAL errors on
+five releases (110 observations), retaining exact Questions and command counts.
+This closes those request-history discrepancies; it does not exempt physical
+status values or establish all remaining status-listing contracts.
