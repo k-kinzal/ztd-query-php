@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Session\Parse;
+namespace Tests\Unit\Session\Parse\Notice;
 
 use MySqlMemory\Instance;
-use MySqlMemory\Session\Parse\HeartbeatWarnings;
+use MySqlMemory\Session\Parse\Notice\HeartbeatWarnings;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;

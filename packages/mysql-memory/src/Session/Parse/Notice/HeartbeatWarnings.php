@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Session\Parse;
+namespace MySqlMemory\Session\Parse\Notice;
 
 use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
 use SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod;
