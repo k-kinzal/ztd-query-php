@@ -850,3 +850,13 @@ roots are retained. This passes the sampled SQL-outcome comparison only. The
 state witnesses or repairs to intrinsic structural contradictions; they do not
 certify the constructible-structure gate. In particular, the privilege-level,
 row/VALUES and functional-index domains remain under investigation.
+
+
+Nested row constructors remain valid comparison operands. The consumer checks
+the arity of every nested pair before comparing corresponding leaves in their
+original order. This preserves lexicographic ordering, null-safe equality and
+unknown values in ordinary equality and IN lists. Direct tests compare 58
+constructed expressions on each of five releases (290 native observations),
+including nested grouping and NULL in different positions, without submitting
+SQL to memory. This consumer repair does not close the separate public-type
+defect that still permits a Row at ordinary scalar positions.

@@ -81,6 +81,24 @@ final class RowsTest extends TestCase
         self::assertSame([['2']], $result->rows);
     }
 
+    public function testPairedComparesNestedRowsInDepthFirstOrder(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT ROW(ROW(1,2),3) = ROW(ROW(1,2),3), ROW(ROW(1,2),3) < ROW(ROW(2,1),2), ROW(ROW(1,NULL),3) = ROW(ROW(1,2),4)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', '0']], $result->rows);
+    }
+
+    public function testPairedRefusesDifferentNestedShapes(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1241);
+        $this->expectExceptionMessage('Operand should contain 2 column(s)');
+
+        $session->query('SELECT ROW(ROW(1,2),3) = ROW(1,ROW(2,3))');
+    }
+
     public function testCompareRefusesRowsOfDifferentWidths(): void
     {
         $session = (new Instance())->connect();

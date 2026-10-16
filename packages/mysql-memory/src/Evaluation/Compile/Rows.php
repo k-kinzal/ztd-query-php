@@ -83,21 +83,45 @@ final class Rows
         if ($this->subquery($left) !== null || $this->subquery($right) !== null) {
             return $this->subqueried($operator, $left, $right, $scope);
         }
-        $one = $this->elements($left) ?? [$left];
-        $two = $this->elements($right) ?? [$right];
-        if (count($one) !== count($two)) {
-            throw QueryError::OperandColumns->error(count($one));
-        }
         $pairs = [];
         $nullable = false;
-        foreach ($one as $index => $element) {
-            $first = $this->compiler->compile($element, $scope);
-            $second = $this->compiler->compile($two[$index], $scope);
+        foreach ($this->paired($left, $right) as [$one, $two]) {
+            $first = $this->compiler->compile($one, $scope);
+            $second = $this->compiler->compile($two, $scope);
             $pairs[] = [$first, $second, Comparator::of($first->domain(), $second->domain(), $operator->value, $this->compiler->settings->connectionCollation, $this->compiler->settings->release())];
             $nullable = $nullable || $first->domain()->nullable || $second->domain()->nullable;
         }
 
         return new RowCompare($operator, $pairs, $this->compiler->operators->truth($nullable && $operator !== ComparisonOperator::NullSafeEqual));
+    }
+
+    /**
+     * Pairs corresponding leaves while retaining the arity of every nested row.
+     * Depth-first order preserves row comparison short-circuiting and NULL behavior.
+     *
+     * @return list<array{Scalar, Scalar}>
+     * @throws \MySqlMemory\Error\SqlError When corresponding rows have different shapes
+     */
+    public function paired(Scalar $left, Scalar $right): array
+    {
+        $one = $this->elements($left);
+        $two = $this->elements($right);
+        if ($one === null && $two === null) {
+            return [[$left, $right]];
+        }
+        $one ??= [$left];
+        $two ??= [$right];
+        if (count($one) !== count($two)) {
+            throw QueryError::OperandColumns->error(count($one));
+        }
+        $pairs = [];
+        foreach ($one as $index => $first) {
+            foreach ($this->paired($first, $two[$index]) as $pair) {
+                $pairs[] = $pair;
+            }
+        }
+
+        return $pairs;
     }
 
     /**
