@@ -17,6 +17,7 @@ use SqlSemantics\Contract\GrammarRelease;
 /**
  * Shares installation inputs before a generated structure is observed.
  * The remote root fixture has no PROXY grants on either server, independently of image defaults.
+ * Administrative discovery is followed by an empty open-table cache on both sides.
  * No target SQL, target response, implementation, or stored routine body is imported.
  */
 final class Fixture
@@ -42,6 +43,9 @@ final class Fixture
                 $account->hash = $credentials->hash($account->plugin, $endpoint->password);
             }
         }
+
+        $bootstrap->exec('FLUSH TABLES');
+        $instance->dictionary->cache->close();
 
         return $instance->connect($endpoint->username, $host, threadId: $native->thread_id);
     }

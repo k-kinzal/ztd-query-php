@@ -774,3 +774,10 @@ before error 1305 for a built-in removal; later releases report error 1619.
 The original generated SHOW PLUGINS structure now agrees, including metadata,
 without an exception contract. This repairs a consumer catalog mismatch rather
 than establishing the remaining whole-model construction invariants.
+The direct comparison fixture closes administrative setup handles before the
+first generated request, on both servers. It does not remove SHOW OPEN TABLES
+from comparison or exempt its rows. Native histories reuse one constructed
+listing before table creation, after a populated write and read, and after
+FLUSH TABLES on five releases (35 observations including the initial complete
+listing). The original generated open-table request agrees from that shared
+baseline. Cache contents after user requests remain part of the comparison.
