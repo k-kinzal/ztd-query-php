@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion;
 #[Medium]
 final class TimeZoneConversionTest extends TestCase
 {
-    public function testResolvedOperandAndZoneConditionsRemainDistinct(): void
+    public function testMessageDistinguishesResolvedOperandAndZoneConditions(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $type = $semantics->analyze("SELECT CAST(1 AT TIME ZONE 'bad' AS DATETIME)")->facts->diagnostics[0];
