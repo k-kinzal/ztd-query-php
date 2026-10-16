@@ -19,7 +19,7 @@ final class Observations
      * @param array<string, mixed> $actual The complete memory observation
      * @return array{matches: bool, contracts: list<string>} Equality and the exceptions validated independently on both sides
      */
-    public function compare(Statement|Scalar $node, string $release, array $expected, array $actual, ?Status\Listing $status = null, ?Password\Contract $password = null): array
+    public function compare(Statement|Scalar $node, string $release, array $expected, array $actual, ?Status\Listing $status = null, ?Password\Contract $password = null, ?Process\Listing $process = null): array
     {
         $library = new LibraryErrors();
         $left = $library->comparable($expected, $release);
@@ -29,6 +29,8 @@ final class Observations
         $right = $status?->comparable($right, true) ?? $right;
         $left = $password?->comparable($left, false) ?? $left;
         $right = $password?->comparable($right, true) ?? $right;
+        $left = $process?->comparable($left, false) ?? $left;
+        $right = $process?->comparable($right, true) ?? $right;
         $left = (new EngineReport())->comparable($node, (new CatalogRows())->comparable($node, $left), false);
         $right = (new EngineReport())->comparable($node, (new CatalogRows())->comparable($node, $right), true);
         $leftContracts = $left['contracts'] ?? [];

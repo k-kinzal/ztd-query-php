@@ -9,7 +9,7 @@ The work is complete only when all of these gates pass on the same revision:
 
 | Gate | Required evidence |
 | --- | --- |
-| Source independence | The semantic value schema excludes retained source SQL and parser ASTs; dependency checks prevent planning and execution from accessing the parser or input text. Direct construction executes with no SQL submitted to memory. |
+| Source independence | The semantic value schema excludes retained source SQL and parser ASTs; dependency checks prevent planning and execution from accessing the parser or input text. Direct construction executes without parsing input text. Observable request labels are runtime context, kept outside semantic values and compared exactly. |
 | Constructible structure | Type-driven generation visits every public MySQL statement and scalar root. Every accepted construction has a coherent language interpretation and all information required by its consumer. Intrinsically contradictory operands must be excluded by types or constructor invariants. Exhaustion, unsupported generator metadata, profile failures, internal exceptions and missing implementation remain failures. |
 | SQL outcomes | Every generated structure is compared with MySQL, including successful results, result metadata, SQL errors and warnings. Catching a SQL error is not sufficient. A native success cannot confirm an emulator's unsupported-feature error. Profile failures and internal exceptions cannot become SQL outcomes. |
 | State transitions | When an error is explained as state-dependent, preserve the same structure and demonstrate the relevant transition against MySQL. Include populated fixtures and histories so that an empty database does not hide all downstream behavior. |

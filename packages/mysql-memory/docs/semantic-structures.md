@@ -57,7 +57,9 @@ php fuzz/structures.php 245 all-model-roots @each auto 0 compare
 This mode requires `mysqli`. It compares buffered rows, column names and origins, protocol
 types, lengths, flags, character sets, decimals, affected rows, insert IDs, errors
 and stored warnings. Memory receives the original constructed object with
-unrelated invalid session text. Only the native side receives rendered SQL.
+unrelated invalid session text. Only the native side parses rendered SQL. A
+process-list request also receives its observable request label as runtime context
+on both sides; memory does not parse that label or retain it in semantic values.
 Parameter occurrences become native prepared markers and receive explicit NULL
 values; their fixture types follow the release's preparation rules. Quoted text
 that resembles a marker remains unchanged. Both connections use UTF-8 and the
@@ -825,3 +827,17 @@ Twelve native cases execute the same original structures against two independent
 instances on MySQL 8.0, 8.4 and 9.1 (24 comparisons), covering implicit and explicit
 current users and both retention choices. Four properties exercise missing
 primaries, forged passwords, broken retention and incomplete validation responses.
+
+Direct process-list comparisons bracket each instance with independent identity,
+clock and process-table samples. Allocated identities, stable TCP peer ports and
+bounded elapsed times use the shared SQL fuzzing contract. A direct memory call
+has no TCP peer port and must report that empty physical quantity. Every row and
+all other fields remain exact, including `Info`: the fixture supplies the same
+request label out of band. This label belongs to the running connection, not the
+semantic structure. A property reuses one SHOW PROCESSLIST object with unrelated,
+invalid and multibyte labels, proving that execution does not parse the label.
+Ten native cases compare the same FULL or ordinary listing against two independent
+instances on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1 (20 comparisons). Negative controls
+retain differences in identities, ports, elapsed times, other values, metadata,
+warnings, duplicate rows and termination. The original public-root counterexample
+now passes while both original observations remain available.

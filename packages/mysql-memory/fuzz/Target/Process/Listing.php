@@ -31,9 +31,10 @@ final class Listing
 
     /**
      * @param Sample $before The independent sample preceding the listing
-     * @param int $guard The repair connection's independently sampled identity
+     * @param int|null $guard The repair connection's independently sampled identity, or no repair connection
+     * @param bool $direct Whether these clients use the direct interface, which has no TCP peer port
      */
-    public function __construct(public readonly Sample $before, public readonly int $guard)
+    public function __construct(public readonly Sample $before, public readonly ?int $guard, public readonly bool $direct = false)
     {
     }
 
@@ -130,8 +131,8 @@ final class Listing
     public function rows(array $rows, Sample $after): ?array
     {
         $before = $this->before;
-        $expected = $before->scheduler === 'ON' ? 3 : 2;
-        if ($before->current !== $after->current || $before->current === $this->guard || $before->scheduler !== $after->scheduler || count($rows) !== $expected || array_keys($rows) !== array_keys($before->rows) || array_keys($rows) !== array_keys($after->rows) || !isset($rows[$before->current], $rows[$this->guard])) {
+        $expected = 1 + ($this->guard === null ? 0 : 1) + ($before->scheduler === 'ON' ? 1 : 0);
+        if ($before->current !== $after->current || $before->current === $this->guard || $before->scheduler !== $after->scheduler || count($rows) !== $expected || array_keys($rows) !== array_keys($before->rows) || array_keys($rows) !== array_keys($after->rows) || (!isset($rows[$before->current]) || ($this->guard !== null && !isset($rows[$this->guard])))) {
             return null;
         }
         $result = [];
@@ -165,6 +166,9 @@ final class Listing
         }
         if ($role === 'daemon') {
             return $row[2] === 'localhost' ? $row[2] : null;
+        }
+        if ($this->direct) {
+            return $row[2] !== '' && !str_contains($row[2], ':') ? $row[2] . ':{' . self::CONTRACT . ':port}' : null;
         }
         if (preg_match('/\A(.+):([1-9][0-9]*)\z/', $row[2], $parts) !== 1 || (int) $parts[2] > 65535) {
             return null;
