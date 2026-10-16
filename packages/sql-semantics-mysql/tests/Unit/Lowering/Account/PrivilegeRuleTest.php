@@ -17,6 +17,14 @@ use SqlSemantics\Statement\Fact\Warning;
 #[Medium]
 final class PrivilegeRuleTest extends TestCase
 {
+    public function testColumnKindRejectsAColumnListOnARoutine(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Column privileges apply only to tables.');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT(a) ON PROCEDURE d.p TO u');
+    }
+
     public function testRolesRefusesAnOperandBeforePublishingTheStatement(): void
     {
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);

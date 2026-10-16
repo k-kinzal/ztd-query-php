@@ -48,6 +48,21 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 final class PrivilegeRule
 {
     /**
+     * Refuses a column list on a routine before constructing the grant.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $items The lowered privileges
+     * @throws \SqlSemantics\Construction\RejectedInput When a routine kind carries column privileges
+     */
+    public function columnKind(array $items, ObjectKind $kind, PrivilegeLevel $level, int $end): void
+    {
+        foreach ($items as $item) {
+            if ($kind !== ObjectKind::Table && $item instanceof StaticPrivilege && $item->columns !== []) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege($end, $level instanceof ObjectLevel), $end);
+            }
+        }
+    }
+
+    /**
      * The static privilege productions of every release, by the privilege they write.
      */
     private const STATIC = [

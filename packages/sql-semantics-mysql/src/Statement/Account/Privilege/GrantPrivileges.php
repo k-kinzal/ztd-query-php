@@ -34,7 +34,14 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html,
  * https://dev.mysql.com/doc/refman/5.7/en/grant.html. Status: Implemented.
  *
+ * A standalone AS clause requires the global level. Stored program instructions
+ * that defer this condition use DeferredGrantAs instead.
+ *
  * @visibility public
+ * @example Refusing AS at a database privilege level
+ *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel(new \SqlSemantics\Statement\Identifier\Name('d')), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())], as: new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing column privileges on a routine
+ *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Granting table privileges with the grant option
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('grant select, insert on table shop.t to app@localhost with grant option')->toString() // => 'GRANT SELECT, INSERT ON shop.t TO app@localhost WITH GRANT OPTION'
  */
@@ -79,8 +86,10 @@ final class GrantPrivileges implements Statement
         $this->grantees = array_map(Grantee::from(...), Check::listOf($grantees, \SqlSemantics\Statement\Node::class, 'GRANT names at least one account.', 1));
         $this->options = Check::listOf($options, WithOption::class, 'The WITH clause lists options.');
         foreach ($this->privileges as $privilege) {
+            Check::input($kind === ObjectKind::Table || !$privilege instanceof Item\StaticPrivilege || $privilege->columns === [], 'Column privileges apply only to tables.');
             Check::input(!$privilege instanceof AllPrivileges || count($this->privileges) === 1, 'ALL is the only item of its list.');
         }
+        Check::input($as === null || $level instanceof Level\GlobalLevel, 'GRANT AS applies only at the global privilege level.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -89,9 +98,6 @@ final class GrantPrivileges implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        if ($this->as !== null && !$this->level instanceof Level\GlobalLevel) {
-            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('AS clause', $this->level->describe(), 'ER_UNSUPPORTED_USE_OF_GRANT_AS'));
-        }
         (new PrivilegeChecks())->grant($derivation, $this->privileges, $this->kind, $this->level);
         (new AccountChecks())->tls($derivation, $this->tls);
     }

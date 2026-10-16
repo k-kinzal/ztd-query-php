@@ -81,13 +81,20 @@ final class LegacyGrantRule
         $this->table($command);
         $privileges = new PrivilegeRule($this->lowering);
 
+        $items = $privileges->privileges($command->node(0));
+        $level = $privileges->level($command->node(3));
+        $users = $lists->granted($command->node(5));
+        $tls = $clauses->tls($command->node(6));
+        $options = $clauses->grantOptions($command->node(7));
+        $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+
         return new GrantPrivileges(
-            $privileges->privileges($command->node(0)),
+            $items,
             $kind,
-            $privileges->level($command->node(3)),
-            $lists->granted($command->node(5)),
-            $clauses->tls($command->node(6)),
-            $clauses->grantOptions($command->node(7)),
+            $level,
+            $users,
+            $tls,
+            $options,
         );
     }
 

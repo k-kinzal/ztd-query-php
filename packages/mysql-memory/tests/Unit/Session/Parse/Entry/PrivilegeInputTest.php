@@ -15,6 +15,27 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PrivilegeInputTest extends TestCase
 {
+    public function testPlacementFormatsOnlyImmediateGrantAsRefusals(): void
+    {
+        $input = new PrivilegeInput();
+
+        self::assertSame(3835, $input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('AS clause', 'database', 'ER_UNSUPPORTED_USE_OF_GRANT_AS'))?->getCode());
+        self::assertNull($input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('SELECT', 'routine', 'ER_ILLEGAL_GRANT_FOR_TABLE')));
+    }
+
+    public function testColumnsReportsTheDeferredInputPosition(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->text = "GRANT\nSELECT(a) ON FUNCTION d.p TO u";
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege(strlen($session->text), true);
+        $error = (new PrivilegeInput())->columns($problem, $session);
+
+        self::assertSame(1064, $error->getCode());
+        self::assertStringContainsString("near '' at line 2", $error->getMessage());
+        $session->text .= ';';
+        self::assertSame($error->getMessage(), (new PrivilegeInput())->columns($problem, $session)->getMessage());
+    }
+
     public function testDatabasePrecedesAnInvalidPrivilegeAndRecipient(): void
     {
         $session = (new Instance())->connect();

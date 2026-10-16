@@ -105,6 +105,10 @@ final class StatementRule
         if ($evaluation !== null) {
             return $evaluation;
         }
+        $grant = (new PrivilegeGrant())->read($node, $this->lowering);
+        if ($grant !== null) {
+            return $grant;
+        }
         $statement = $this->lowering->statement($node);
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);

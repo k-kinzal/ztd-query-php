@@ -30,9 +30,10 @@ final class GrantPrivilegesTest extends TestCase
 
     public function testDeriveStatementRefusesAsOutsideTheGlobalLevel(): void
     {
-        $grant = (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON db.* TO root AS CURRENT_USER');
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('AS clause cannot be granted at database db (ER_UNSUPPORTED_USE_OF_GRANT_AS).');
 
-        self::assertSame('AS clause cannot be granted at database db (ER_UNSUPPORTED_USE_OF_GRANT_AS).', $grant->facts->diagnostics[0]->message());
+        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON db.* TO root AS CURRENT_USER');
     }
 
     public function testRenderWritesEveryClause(): void

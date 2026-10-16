@@ -223,6 +223,10 @@
         "offset": "?int",
         "roleExpected": "bool"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RoutineColumnPrivilege": {
+        "object": "bool",
+        "offset": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\UnknownGrantColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
@@ -2120,6 +2124,10 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredEvaluation": {
         "items": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredGrantAs": {
+        "as": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantAs",
+        "grant": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantPrivileges"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\ConditionalBranch": {
         "condition": "SqlSemantics\\Statement\\Scalar",

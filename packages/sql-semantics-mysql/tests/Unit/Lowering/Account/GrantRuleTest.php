@@ -15,6 +15,20 @@ use SqlSemantics\Platform\MySql\Lowering\Account\GrantRule;
 #[Medium]
 final class GrantRuleTest extends TestCase
 {
+    public function testRequestKeepsTheProgramOnlyInterpretation(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON d.t TO u AS CURRENT_USER')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs::class, $create->body);
+    }
+
+    public function testCheckedRefusesAnImmediateNonGlobalAsClause(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT ALL ON d.* TO u AS CURRENT_USER');
+    }
+
     public function testGrantLowersEveryForm(): void
     {
         self::assertSame('GRANT PROXY ON a TO b', (new Semantics(Dialect::MySql))->analyze('grant proxy on a to b')->toString());

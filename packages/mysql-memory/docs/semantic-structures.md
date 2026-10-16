@@ -860,3 +860,21 @@ constructed expressions on each of five releases (290 native observations),
 including nested grouping and NULL in different positions, without submitting
 SQL to memory. This consumer repair does not close the separate public-type
 defect that still permits a Row at ordinary scalar positions.
+
+
+Standalone privilege grants admit AS only at the global privilege level. The
+constructor rejects a non-global AS clause and column privileges on routines.
+Stored programs use `DeferredGrantAs` for the distinct instruction that native
+MySQL accepts at definition time and rejects only when reached. The value retains
+the typed grant and AS operands and implements `ProgramStatement`, not the
+standalone statement interface. Definition-time binding and program restrictions
+still derive from the retained grant. SQL lowering reports an immediate typed
+refusal before publishing a contradictory standalone grant.
+
+A type-driven property retains all twenty generated deferred grants on three
+releases. The same CREATE and CALL objects are executed before definition, after
+definition and after duplicate definition, without SQL input to memory: 240 native
+observations match. Another 189 observations exercise immediate, invoked, skipped
+and handled conditions, and 70 observations check routine column privileges and
+competing input boundaries on five releases. These tests close these grant
+constraints; other privilege-level restrictions remain separate obligations.

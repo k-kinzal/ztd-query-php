@@ -27,6 +27,8 @@ final class InputErrors
     public function error(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege => (new PrivilegeInput())->columns($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege => (new PrivilegeInput())->placement($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption => \MySqlMemory\Error\Family\StatementError::CantUseOptionHere->error($diagnostic->option->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard => (new EvaluationInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral && $diagnostic->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp => \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::error($diagnostic->text, $session->modes()),

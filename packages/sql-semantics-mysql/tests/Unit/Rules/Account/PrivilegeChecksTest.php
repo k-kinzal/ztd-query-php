@@ -47,7 +47,14 @@ final class PrivilegeChecksTest extends TestCase
 
         self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT EXECUTE ON t TO u')->facts->diagnostics[0]);
         self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT SELECT ON PROCEDURE p TO u')->facts->diagnostics[0]);
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT SELECT (a) ON PROCEDURE p TO u')->facts->diagnostics[0]);
+    }
+
+    public function testColumnPrivilegesOnRoutinesAreRefusedBeforeDerivation(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Column privileges apply only to tables.');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT (a) ON PROCEDURE p TO u');
     }
 
 
