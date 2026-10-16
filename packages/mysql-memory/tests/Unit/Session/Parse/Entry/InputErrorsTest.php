@@ -64,6 +64,16 @@ final class InputErrorsTest extends TestCase
         self::assertSame('', $session->text);
     }
 
+    public function testErrorFormatsRefusedConnectionOptionsWithoutInputText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $errors = array_map(static fn (bool $analyze): ?int => (new InputErrors())->error(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain($analyze), $session)?->getCode(), [true, false]);
+
+        self::assertSame([1235, 6009], $errors);
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testErrorLeavesOtherDiagnosticsToTheirFamily(): void
     {
         self::assertNull((new InputErrors())->error(new NotSupportedYet('feature'), (new Instance())->connect()));

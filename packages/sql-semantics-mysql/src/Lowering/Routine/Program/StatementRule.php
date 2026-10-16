@@ -109,7 +109,14 @@ final class StatementRule
         if ($grant !== null) {
             return $grant;
         }
-        $statement = $this->lowering->statement($node);
+        try {
+            $statement = $this->lowering->statement($node);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), $failure->end);
+            }
+            throw $failure;
+        }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
         }

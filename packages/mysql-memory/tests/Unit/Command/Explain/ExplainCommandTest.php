@@ -74,19 +74,14 @@ final class ExplainCommandTest extends TestCase
         $session->query('EXPLAIN FOR SCHEMA nodb SELECT * FROM nosuch');
     }
 
-    public function testCheckRefusesIntoAndAnalyzeForAConnection(): void
+    public function testInputRefusesAnalyzeForAConnection(): void
     {
         $session = (new Instance())->connect();
-        $into = $session->analyze('EXPLAIN FORMAT=JSON INTO @v FOR CONNECTION 0')->statement;
-        $analyze = $session->analyze('EXPLAIN ANALYZE FORMAT=TRADITIONAL FOR CONNECTION 0')->statement;
-
-        self::assertInstanceOf(ExplainConnection::class, $into);
-        self::assertInstanceOf(ExplainConnection::class, $analyze);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
         $this->expectExceptionMessage("This version of MySQL doesn't yet support 'EXPLAIN ANALYZE FOR CONNECTION'");
 
-        (new ExplainCommand())->check($analyze, $session);
+        $session->analyze('EXPLAIN ANALYZE FORMAT=TRADITIONAL FOR CONNECTION 0');
     }
 
     public function testExecuteExplainsAStatementWithoutTables(): void

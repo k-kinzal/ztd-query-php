@@ -878,3 +878,16 @@ observations match. Another 189 observations exercise immediate, invoked, skippe
 and handled conditions, and 70 observations check routine column privileges and
 competing input boundaries on five releases. These tests close these grant
 constraints; other privilege-level restrictions remain separate obligations.
+
+
+`ExplainConnection` retains only a connection identity, format and legacy
+modifier. ANALYZE and INTO cannot inhabit that public statement type because no
+connection state makes either option valid. Lowering reports their typed input
+refusal before constructing a statement; a stored definition preserves its
+non-standalone refusal and earlier format or numeric-token errors. MySQL 9.1
+reports the ANALYZE refusal before INTO when both are written. Input comparisons
+check 162 observations on six releases, including conflicting formats, malformed
+identities and stored definitions. Another thirty direct observations on four
+releases reuse each original request while its target connection is alive and
+after disconnection. The first state completes, the second reports unknown thread
+identity, and memory executes with unrelated input text throughout.

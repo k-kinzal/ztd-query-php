@@ -41,12 +41,8 @@ final class ExplainConnectionTest extends TestCase
     public function testRefusesAModifierWithOptions(): void
     {
         $this->expectExceptionMessage('EXTENDED and PARTITIONS are written alone.');
-        new ExplainConnection(new Numeral('1'), new Name('JSON'), false, ExplainModifier::Extended);
+        new ExplainConnection(new Numeral('1'), new Name('JSON'), ExplainModifier::Extended);
     }
-    public function testRefusesAnIntoWithTraditionalFormat(): void
-    {
-        $this->expectExceptionMessage('EXPLAIN INTO has an explicit JSON format.');
-        new ExplainConnection(new Numeral('1'), new Name('TRADITIONAL'), into: new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('p')));
-    }
+
 
 }

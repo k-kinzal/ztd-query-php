@@ -3148,11 +3148,9 @@
         "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainConnection": {
-        "analyze": "bool",
         "connection": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "connectionId": "int",
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
-        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier": {
@@ -3170,6 +3168,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\ProgramVariable": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedConnectionExplain": {
+        "analyze": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedExplainInto": {
         "analyze": "bool",

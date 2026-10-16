@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Statement;
-use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
@@ -27,6 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Connection identifiers are integer tokens: decimal digits within the unsigned 64-bit
  * range or a hexadecimal literal. Fractional and exponent forms have no connection operand.
+ * ANALYZE and INTO have no connection-explanation form; those options belong to Explain.
  *
  * @visibility public
  * @example Refusing a format outside the public format domain
@@ -51,21 +51,16 @@ final class ExplainConnection implements Statement
     /**
      * @param Numeral $connection The connection identifier
      * @param Name|null $format The format name after FORMAT =
-     * @param bool $analyze Whether ANALYZE is written
      * @param ExplainModifier|null $modifier The EXTENDED or PARTITIONS keyword of MySQL 5.7
-     * @param UserVariable|null $into The variable after INTO
      */
     public function __construct(
         public readonly Numeral $connection,
         public readonly ?Name $format = null,
-        public readonly bool $analyze = false,
         public readonly ?ExplainModifier $modifier = null,
-        public readonly ?UserVariable $into = null,
     ) {
         $this->connectionId = (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->connection($connection);
         Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
-        Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');
-        Check::input($modifier === null || ($format === null && !$analyze && $into === null), 'EXTENDED and PARTITIONS are written alone.');
+        Check::input($modifier === null || $format === null, 'EXTENDED and PARTITIONS are written alone.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -74,7 +69,7 @@ final class ExplainConnection implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
+        (new ExplainFacts())->derive($derivation, $this->format, false, $this->modifier, null);
     }
 
     /**
@@ -83,17 +78,11 @@ final class ExplainConnection implements Statement
     public function render(Output $out): void
     {
         $out->keyword('EXPLAIN');
-        if ($this->analyze) {
-            $out->keyword('ANALYZE');
-        }
         if ($this->modifier !== null) {
             $out->keyword($this->modifier->value);
         }
         if ($this->format !== null) {
             $out->keyword('FORMAT')->symbol('=')->name($this->format, NameUse::Label);
-        }
-        if ($this->into !== null) {
-            $out->keyword('INTO')->node($this->into);
         }
         $out->keyword('FOR', 'CONNECTION')->node($this->connection);
     }

@@ -257,6 +257,7 @@ final class Lowering
      * statement they contain through this method.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand is outside the semantic domain
      */
     public function statement(Node $statement): Statement
     {
@@ -297,6 +298,7 @@ final class Lowering
 
     /**
      * Hands the node of a statement rule to the family that owns the rule.
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand has no semantic interpretation
      */
     public function routed(Family $family, Node $statement): Statement
     {

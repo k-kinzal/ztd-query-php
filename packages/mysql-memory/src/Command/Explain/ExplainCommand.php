@@ -82,7 +82,7 @@ final class ExplainCommand implements Command
     /**
      * Raises the error of the format and options of an EXPLAIN, before the server prepares the statement it explains.
      *
-     * For an EXPLAIN FOR CONNECTION, ANALYZE is refused once the format and INTO are checked.
+     * Connection explanations carry only options admitted by their semantic structure.
      *
      * @throws \MySqlMemory\Error\SqlError When the server refuses the format or the options
      */
@@ -95,20 +95,13 @@ final class ExplainCommand implements Command
         if ($statement->format !== null && !in_array($format, self::FORMATS, true)) {
             throw StatementError::UnknownExplainFormat->error($statement->format->value);
         }
-        if ($statement->analyze && $statement instanceof Explain && $format !== null && $format !== 'TREE') {
+        if ($statement instanceof Explain && $statement->analyze && $format !== null && $format !== 'TREE') {
             throw StatementError::NotSupportedYet->error('EXPLAIN ANALYZE with ' . $format . ' format');
         }
-        if ($statement->into !== null && $format !== 'JSON') {
+        if ($statement instanceof Explain && $statement->into !== null && $format !== 'JSON') {
             throw $format === null ? StatementError::ExplainIntoImplicitFormat->error() : StatementError::ExplainIntoFormat->error($format);
         }
         if ($statement instanceof ExplainConnection) {
-            if ($statement->into !== null) {
-                throw StatementError::ExplainIntoForConnection->error();
-            }
-            if ($statement->analyze) {
-                throw StatementError::NotSupportedYet->error('EXPLAIN ANALYZE FOR CONNECTION');
-            }
-
             return;
         }
         if ($statement->database !== null && $session->instance->dictionary->schema($statement->database->value) === null) {

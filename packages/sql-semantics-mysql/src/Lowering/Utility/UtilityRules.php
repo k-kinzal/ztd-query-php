@@ -41,6 +41,7 @@ final class UtilityRules
      * Lowers a utility statement: a node of one of the statement rules this family owns.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand has no semantic interpretation
      */
     public function statement(Node $statement): Statement
     {

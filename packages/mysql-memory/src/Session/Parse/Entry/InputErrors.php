@@ -29,10 +29,11 @@ final class InputErrors
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege => (new PrivilegeInput())->columns($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege => (new PrivilegeInput())->placement($diagnostic),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto => (new ExplainInput())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption => \MySqlMemory\Error\Family\StatementError::CantUseOptionHere->error($diagnostic->option->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard => (new EvaluationInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral && $diagnostic->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp => \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::error($diagnostic->text, $session->modes()),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto => $diagnostic->analyze ? \MySqlMemory\Error\Family\StatementError::ExplainAnalyzeInto->error() : ($diagnostic->format === null ? \MySqlMemory\Error\Family\StatementError::ExplainIntoImplicitFormat->error() : \MySqlMemory\Error\Family\StatementError::ExplainIntoFormat->error(strtoupper($diagnostic->format->value))),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName => match ($diagnostic->kind) {
                 \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Database => SchemaError::WrongDatabaseName->error(''),
                 \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Table => SchemaError::WrongTableName->error(''),
