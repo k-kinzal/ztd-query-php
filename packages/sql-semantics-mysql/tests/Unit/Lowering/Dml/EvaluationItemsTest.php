@@ -45,4 +45,15 @@ final class EvaluationItemsTest extends TestCase
         self::assertSame(true, $reader->requiresDatabase([new SelectExpression(new FunctionCall(new Name('missing')))]));
         self::assertSame(false, $reader->requiresDatabase([new SelectExpression(new FunctionCall(new Name('missing'), schema: new Name('d')))]));
     }
+
+    public function testStoredKeepsTheDeferredOperandAsAProgramMember(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $operation = $semantics->analyze('CREATE PROCEDURE p() DO (1, 2) COLLATE missing');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation::class, $operation->statement->body);
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame('CREATE PROCEDURE p() DO (1, 2) COLLATE missing', $operation->toString());
+    }
+
 }

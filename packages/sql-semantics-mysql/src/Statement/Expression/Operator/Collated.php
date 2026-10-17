@@ -12,8 +12,6 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
-use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
@@ -36,11 +34,10 @@ use SqlSemantics\Statement\Type\Nullability;
  * the collation is part of the comparison semantics the server applies, and
  * the character set of the operand must admit it, which needs the
  * collation catalog of the server and is not checked. A collation the
- * server does not know is reported before the operand is derived, whatever
- * the operand is, as the server looks the name up while it parses the
- * statement; its ParseFailure notice follows the warnings of the operand,
- * as the server parses the operand first. An empty name is instead resolved
- * after the operand (verified on live 8.0, 8.4 and 9.1 servers).
+ * server does not know is resolved during preparation in MySQL 5.6 and 5.7,
+ * after operand dependencies. Later releases look up a nonempty name during
+ * parsing; its ParseFailure notice follows the operand warnings. An empty
+ * name is resolved after the operand (verified on live legacy and modern servers).
  * MySQL 5.6 and 5.7 defer expression collation lookup in stored instructions
  * until invocation; the retained name is resolved when that instruction is derived.
  * Terminates: the operand is a strict part.
@@ -71,18 +68,8 @@ final class Collated implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $known = Collation::named($this->collation->value) !== null;
-        $deferred = $derivation->inProgram() && in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
-        $problem = $known || $deferred ? null : new UnknownCollation($this->collation->value);
-        if ($problem !== null && $this->collation->value !== '') {
-            $derivation->report($problem);
-        }
-        $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
-        if ($problem !== null && $this->collation->value === '') {
-            $derivation->report($problem);
-        } elseif ($problem !== null) {
-            $derivation->warn(new ParseFailure($problem));
-        }
+        $known = Collation::forName($this->collation->value, $derivation->context->profile->grammar) !== null;
+        $fact = (new Operands())->single((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CollationLookup())->derive($this->operand, $this->collation, $derivation, $environment), $derivation);
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null || !$known ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation, $this);
 

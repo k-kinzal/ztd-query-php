@@ -35,7 +35,7 @@ final class OperandRuleTest extends TestCase
         $source = (new Semantics(Dialect::MySql))->parser()->parse('SELECT ROW(1,2) COLLATE zz');
         $this->expectException(RejectedInput::class);
         $this->expectExceptionMessage("Unknown collation: 'zz'");
-        (new OperandRule())->collated(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), new \SqlSemantics\Statement\Identifier\Name('zz'), $source);
+        (new OperandRule())->collated(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), new \SqlSemantics\Statement\Identifier\Name('zz'), $source, \SqlSemantics\Contract\GrammarRelease::MySql847);
     }
 
     public function testGroupedKeepsTheRowRole(): void

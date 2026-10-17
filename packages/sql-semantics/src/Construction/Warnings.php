@@ -7,7 +7,6 @@ namespace SqlSemantics\Construction;
 use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Source\SourceMap;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Collects derivation warnings with the input boundaries that order parsing notices.
@@ -20,7 +19,7 @@ use SqlSemantics\Statement\Statement;
 final class Warnings
 {
     /**
-     * @var list<array{Warning, int|null, Statement|null}> Warnings, input boundaries and enclosing stored instructions
+     * @var list<array{Warning, int|null, Node|null}> Warnings, input boundaries and enclosing stored instructions
      */
     private array $entries = [];
 
@@ -34,7 +33,7 @@ final class Warnings
     /**
      * Records a warning before or after its occurrence, when a location is available.
      */
-    public function append(Warning $warning, ?Node $at, bool $after = true, ?Statement $instruction = null): void
+    public function append(Warning $warning, ?Node $at, bool $after = true, ?Node $instruction = null): void
     {
         $origin = $at === null ? null : $this->sources->of($at);
         $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0), $instruction];
@@ -43,7 +42,7 @@ final class Warnings
     /**
      * Keeps instruction ownership independent of input locations and warning order.
      *
-     * @return list<array{Warning, Statement}>
+     * @return list<array{Warning, Node}>
      */
     public function instructions(): array
     {

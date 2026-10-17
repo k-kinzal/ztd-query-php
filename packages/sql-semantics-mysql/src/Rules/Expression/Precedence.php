@@ -217,7 +217,7 @@ final class Precedence
             $expression instanceof Like, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredLike => [self::PREDICATE, self::BIT_XOR, $expression->operand, $expression->escape ?? $expression->pattern],
             $expression instanceof Regexp, $expression instanceof SoundsLike => [self::PREDICATE, self::PREDICATE, $expression->operand, $expression->pattern],
             $expression instanceof IntervalArithmetic => [self::ADDITIVE, self::ADDITIVE, $expression->operand, null],
-            $expression instanceof Collated => [self::COLLATION, self::COLLATION, $expression->operand, null],
+            $expression instanceof Collated, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated => [self::COLLATION, self::COLLATION, $expression->operand, null],
             default => null,
         };
     }

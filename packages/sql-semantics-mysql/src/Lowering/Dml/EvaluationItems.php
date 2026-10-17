@@ -66,10 +66,19 @@ final class EvaluationItems
         }
         $form = $this->lowering->form($current);
         if ($form->signature === 'do: DO_SYM expr_list') {
-            return (new InvocationRule($this->lowering))->evaluation($form);
+            $items = array_map(static fn ($value) => $value instanceof \SqlSemantics\Statement\Scalar ? new SelectExpression($value) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($value), (new \SqlSemantics\Platform\MySql\Lowering\Expression\ListRule($this->lowering))->operands($form->node(1)));
+            return $this->stored($items);
         }
         $list = $form->signature === 'do_stmt: DO_SYM empty_select_options select_item_list' ? $form->node(2) : $form->node(1);
-        $items = $this->lowering->queries->selectItems($list);
+        $items = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->items($list);
+        return $this->stored($items);
+    }
+
+    /**
+     * @param list<SelectExpression|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection|\SqlSemantics\Platform\MySql\Statement\Query\Star|TableWildcard> $items Complete DO items
+     */
+    public function stored(array $items): \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation
+    {
         $wildcards = array_filter($items, static fn ($item): bool => !$item instanceof SelectExpression);
 
         return $wildcards === [] ? new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation(array_values(array_filter($items, static fn ($item): bool => $item instanceof SelectExpression))) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation($items);

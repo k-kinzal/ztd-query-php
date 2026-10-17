@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A stored DO instruction whose wildcard expansion is deferred until invocation.
+ * A stored DO instruction retaining wildcard or non-scalar preparation until invocation.
  *
  * MySQL accepts this program definition, then raises the wildcard error when
  * control reaches it. This is a program member, never a top-level statement.
@@ -39,17 +39,22 @@ final class DeferredEvaluation implements ProgramStatement
     use Snapshot;
 
     /**
-     * @var non-empty-list<SelectExpression|Star|TableWildcard> The program instruction's items
+     * @var non-empty-list<SelectExpression|DeferredProjection|Star|TableWildcard> The program instruction's items
      */
     public readonly array $items;
 
     /**
-     * @param list<SelectExpression|Star|TableWildcard> $items Items including a wildcard whose check is deferred
+     * @param list<SelectExpression|DeferredProjection|Star|TableWildcard> $items Items including a wildcard or non-scalar whose check is deferred
      */
     public function __construct(array $items)
     {
-        $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'A deferred DO has at least one item.');
-        Check::input(array_filter($this->items, static fn ($item): bool => !$item instanceof SelectExpression) !== [], 'A deferred DO contains a wildcard; ordinary expressions use Evaluation.');
+        $list = [];
+        foreach (Check::listOf($items, \SqlSemantics\Statement\Node::class, 'A deferred DO has at least one item.', 1) as $position => $item) {
+            Check::input($item instanceof SelectExpression || $item instanceof DeferredProjection || $item instanceof TableWildcard || ($item instanceof Star && $position === 0), 'A select list item is an expression or a qualified star, and an unqualified star comes first.');
+            $list[] = $item;
+        }
+        $this->items = $list;
+        Check::input(array_filter($this->items, static fn ($item): bool => !$item instanceof SelectExpression) !== [], 'A deferred DO retains a wildcard or non-scalar; ordinary expressions use Evaluation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -58,22 +63,33 @@ final class DeferredEvaluation implements ProgramStatement
      */
     public function deriveProgram(Derivation $derivation, ProgramScope $scope): void
     {
-        (new Projection())->items($this->items, $derivation, $scope->environment, new JoinedInput(new RelationFact(new RowShape([])), [], []));
+        foreach ($this->items as $item) {
+            if ($item instanceof DeferredProjection) {
+                $derivation->scalar($item->expression, $scope->environment);
+            } else {
+                (new Projection())->items([$item], $derivation, $scope->environment, new JoinedInput(new RelationFact(new RowShape([])), [], []));
+            }
+        }
     }
 
     /**
-     * Answers the first wildcard expansion that fails when the instruction is reached.
+     * Answers the retained condition; operand dependencies still require preparation.
      *
      * @throws LogicException If the constructor invariant has been bypassed
      */
-    public function problem(): EvaluationWildcard
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
         foreach ($this->items as $item) {
-            if (!$item instanceof SelectExpression) {
+            if ($item instanceof Star || $item instanceof TableWildcard) {
                 return new EvaluationWildcard($item instanceof TableWildcard ? $item->table : null);
             }
         }
-        throw new LogicException('The deferred DO constructor requires a wildcard.');
+        foreach ($this->items as $item) {
+            if ($item instanceof DeferredProjection) {
+                return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$item->expression]);
+            }
+        }
+        throw new LogicException('The deferred DO constructor requires a wildcard or non-scalar.');
     }
 
     /**

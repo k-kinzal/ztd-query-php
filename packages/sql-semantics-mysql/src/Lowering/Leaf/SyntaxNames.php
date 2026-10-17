@@ -49,9 +49,9 @@ final class SyntaxNames
             if ($form->signature !== 'simple_expr: simple_expr COLLATE_SYM ident_or_text') {
                 return null;
             }
-            $name = $lowering->names->identifier($form->node(2))->value;
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CollationLookup())->parsed($lowering->names->identifier($form->node(2)), $lowering->profile->grammar);
 
-            return $name !== '' && Collation::forName($name, $lowering->profile->grammar) === null ? new ParseFailure(new UnknownCollation($name)) : null;
+            return $problem === null ? null : new ParseFailure($problem);
         }
         if (!in_array($node->name, ['collation_name', 'charset_name', 'old_or_new_charset_name'], true)) {
             return null;

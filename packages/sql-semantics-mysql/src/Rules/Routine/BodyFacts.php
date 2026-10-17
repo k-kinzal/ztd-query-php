@@ -55,7 +55,7 @@ final class BodyFacts
     public function statement(Node $statement, Derivation $derivation, ProgramScope $scope): void
     {
         if ($statement instanceof ProgramStatement) {
-            $statement->deriveProgram($derivation, $scope);
+            $derivation->stored($statement, fn () => $statement->deriveProgram($derivation, $scope));
 
             return;
         }

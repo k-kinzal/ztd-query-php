@@ -7,6 +7,7 @@ namespace Tests\Unit\Construction;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Facade\Semantics;
@@ -420,6 +421,48 @@ final class DerivationTest extends TestCase
         $derivation->orderWarnings($node);
 
         self::assertSame([$before, $after], $derivation->facts()->warnings);
+    }
+
+
+    public function testStoredKeepsProgramMemberOwnershipAndRestoresTheOuterContext(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $outer = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block();
+        $inner = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block();
+        $first = self::createStub(Warning::class);
+        $second = self::createStub(Warning::class);
+        $third = self::createStub(Warning::class);
+        $derivation->stored($outer, static function () use ($derivation, $inner, $first, $second, $third): void {
+            self::assertTrue($derivation->inProgram());
+            $derivation->warn($first);
+            $derivation->stored($inner, static function () use ($derivation, $second): void {
+                $derivation->warn($second);
+            });
+            self::assertTrue($derivation->inProgram());
+            $derivation->warn($third);
+        });
+        self::assertFalse($derivation->inProgram());
+        self::assertSame($outer, $derivation->facts()->warningInstruction($first));
+        self::assertSame($inner, $derivation->facts()->warningInstruction($second));
+        self::assertSame($outer, $derivation->facts()->warningInstruction($third));
+    }
+
+    public function testStoredRestoresScopeWhenTheMemberCannotBeDerived(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $member = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block();
+        $warning = self::createStub(Warning::class);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('scope exit');
+        try {
+            $derivation->stored($member, static function (): void {
+                throw new RuntimeException('scope exit');
+            });
+        } finally {
+            self::assertFalse($derivation->inProgram());
+            $derivation->warn($warning);
+            self::assertNull($derivation->facts()->warningInstruction($warning));
+        }
     }
 
 }

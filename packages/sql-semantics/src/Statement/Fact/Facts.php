@@ -12,7 +12,6 @@ use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Every context-dependent fact an operation derived, keyed by the statement node it is about.
@@ -65,7 +64,7 @@ final class Facts
     public readonly array $warnings;
 
     /**
-     * @var list<array{Warning, Statement}> The stored instruction owning each nested notice
+     * @var list<array{Warning, Node}> The stored instruction owning each nested notice
      */
     private readonly array $warningInstructions;
 
@@ -77,7 +76,7 @@ final class Facts
      * @param QueryFact|null $output The rows the statement returns, when it returns rows
      * @param list<Diagnostic> $diagnostics The semantic problems of the statement
      * @param list<Warning> $warnings The conditions the statement raises without failing
-     * @param list<array{Warning, Statement}> $warningInstructions Explicit instruction ownership, independent of source locations
+     * @param list<array{Warning, Node}> $warningInstructions Explicit instruction ownership, independent of source locations
      * @param list<array{QualifiedName, Relation}> $references Names bound to particular input occurrences
      */
     public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics, array $warnings = [], array $warningInstructions = [], array $references = [])
@@ -89,7 +88,7 @@ final class Facts
         $this->declarations = Check::listOf($declarations, Table::class, 'Provided declarations are tables.');
         $this->diagnostics = Check::listOf($diagnostics, Diagnostic::class, 'Diagnostics are diagnostic values.');
         $this->warnings = Check::listOf($warnings, Warning::class, 'Warnings are warning values.');
-        $this->warningInstructions = Check::pairs($warningInstructions, Warning::class, Statement::class, 'Notice instructions are ordered pairs of warnings and statements.');
+        $this->warningInstructions = Check::pairs($warningInstructions, Warning::class, Node::class, 'Notice instructions are ordered pairs of warnings and statements.');
         $seen = [];
         foreach ($this->warningInstructions as [$warning]) {
             Check::input(in_array($warning, $this->warnings, true) && !isset($seen[spl_object_id($warning)]), 'Each notice instruction identifies a distinct recorded warning.');
@@ -100,7 +99,7 @@ final class Facts
     /**
      * Answers the stored instruction that owns a notice, or null for the outer request.
      */
-    public function warningInstruction(Warning $warning): ?Statement
+    public function warningInstruction(Warning $warning): ?Node
     {
         foreach ($this->warningInstructions as [$candidate, $instruction]) {
             if ($candidate === $warning) {

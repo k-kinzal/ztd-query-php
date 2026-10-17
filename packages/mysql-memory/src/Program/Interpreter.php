@@ -169,7 +169,9 @@ final class Interpreter
      */
     public function deferredCondition(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel $statement): ?Jump
     {
-        $jump = $this->instruction(fn () => throw (new \MySqlMemory\Session\Problem\Errors())->error($statement->problem(), $this->session));
+        $jump = $this->instruction(fn () => $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation
+            ? (new Expression\EvaluationUse())->raise($statement, $this->session)
+            : throw (new \MySqlMemory\Session\Problem\Errors())->error($statement->problem(), $this->session));
 
         return $jump?->flow === Flow::Resume ? null : $jump;
     }

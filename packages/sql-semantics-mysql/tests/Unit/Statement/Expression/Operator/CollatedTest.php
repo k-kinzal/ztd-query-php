@@ -37,7 +37,7 @@ final class CollatedTest extends TestCase
         self::assertSame([], $definition->facts->diagnostics);
         self::assertSame([], $definition->facts->warnings);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $instruction->facts->diagnostics[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $instruction->facts->warnings[0]);
+        self::assertSame([], $instruction->facts->warnings);
     }
 
     public function testDeriveScalarMakesCollatedResultsNullableFrom57(): void

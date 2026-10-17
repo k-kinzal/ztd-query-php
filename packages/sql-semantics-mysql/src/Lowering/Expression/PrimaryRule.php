@@ -89,7 +89,7 @@ final class PrimaryRule
         foreach (array_reverse($pending) as $operation) {
             $result = $operation->signature === 'simple_expr: simple_expr OR_OR_SYM simple_expr'
                 ? new Concatenation((new OperandRule())->scalar($result, $operation->node(0)), $this->lowering->expressions->simpleExpression($operation->node(2)))
-                : (new OperandRule())->collated($result, $this->lowering->names->identifier($operation->node(2)), $operation->node(2));
+                : (new OperandRule())->collated($result, $this->lowering->names->identifier($operation->node(2)), $operation->node(2), $this->lowering->profile->grammar);
         }
 
         return $this->lowering->origins->record($result, $expression);

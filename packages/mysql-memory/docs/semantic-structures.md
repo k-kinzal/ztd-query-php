@@ -1532,3 +1532,17 @@ as evidence of constructor validity. Legacy materialized UNION fields retain
 the first result name and integer storage widths. Focused enclosure and integer
 metadata tests pass, while a broader mixed-domain probe still has 155 metadata
 differences among 584 observations; that surface remains unresolved.
+
+Stored language members and ordinary SQL instructions now share the derivation's
+program scope and explicit notice ownership. Nested derivations restore their
+outer instruction even on failure. Legacy expression COLLATE binds operand
+dependencies before looking up the collation name, and defers that lookup inside
+stored definitions. Modern nonempty names retain their parsing phase. A row or
+deferred operand under COLLATE is represented by `DeferredCollated`, never by
+`Scalar`. Stored DO items similarly retain `DeferredProjection` without losing
+ordinary items or wildcard roles. Memory prepares those dependencies when the
+instruction is reached. Native comparisons across 5.6, 5.7, 8.0, 8.4 and 9.1
+match 975 SQL observations and 240 creation/invocation observations for 60
+directly constructed routines. The same CALL structure is skipped, reached and
+skipped again with unrelated request text. This establishes the repaired
+composition and phase behavior, not the remaining whole-model invariant gate.

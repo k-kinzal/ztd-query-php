@@ -85,9 +85,7 @@ final class Derivation
 
     private ?Environment $base = null;
 
-    private int $programs = 0;
-
-    private ?Statement $instruction = null;
+    private readonly InstructionScope $instructions;
 
     /**
      * @var array<int, array{list<Field>, bool}> The columns a statement writes the rows of a query into, and whether an empty row writes the defaults, by the object id of the query
@@ -102,6 +100,7 @@ final class Derivation
     public function __construct(public AnalysisContext $context, public readonly \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap(), private readonly array $parameters = [])
     {
         $this->warnings = new Warnings($sources);
+        $this->instructions = new InstructionScope();
     }
 
     /**
@@ -214,20 +213,21 @@ final class Derivation
      *
      * The statement is stored for later: while it is derived, inProgram() answers true, so rules
      * that the server applies only when a statement runs can leave it alone.
-     *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the environment holds other declarations or another profile
      */
     public function program(Statement $node, Environment $environment): void
     {
-        $outer = $this->instruction;
-        $this->instruction = $node;
-        $this->programs++;
-        try {
-            $this->inspected($node, $environment);
-        } finally {
-            $this->programs--;
-            $this->instruction = $outer;
-        }
+        $this->stored($node, fn () => $this->inspected($node, $environment));
+    }
+
+    /**
+     * Derives a stored language member with explicit instruction ownership.
+     *
+     * @param Closure(): void $derive Derives this member in its dialect's program scope
+     * @param-immediately-invoked-callable $derive
+     */
+    public function stored(Node $node, Closure $derive): void
+    {
+        $this->instructions->within($node, $derive);
     }
 
     /**
@@ -235,7 +235,7 @@ final class Derivation
      */
     public function inProgram(): bool
     {
-        return $this->programs > 0;
+        return $this->instructions->current() !== null;
     }
 
     /**
@@ -403,7 +403,7 @@ final class Derivation
      */
     public function warn(Warning $warning, ?Node $at = null, bool $after = true): void
     {
-        $this->warnings->append($warning, $at ?? $this->reading, $after, $this->instruction);
+        $this->warnings->append($warning, $at ?? $this->reading, $after, $this->instructions->current());
     }
 
     /**

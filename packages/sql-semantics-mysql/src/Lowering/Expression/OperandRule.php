@@ -49,16 +49,19 @@ final class OperandRule
     }
 
     /**
-     * Resolves an explicit collation before refusing a row in its scalar position.
+     * Resolves parse-time names and retains invocation-time operand preparation.
      *
-     * @throws RejectedInput When the collation is unknown or its operand is a row
+     * @throws RejectedInput When a modern expression collation is unknown
      */
-    public function collated(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \SqlSemantics\Statement\Identifier\Name $collation, Node $source): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated
+    public function collated(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \SqlSemantics\Statement\Identifier\Name $collation, Node $source, \SqlSemantics\Contract\GrammarRelease $release): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated
     {
-        if ($operand instanceof RowOperand && $collation->value !== '' && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($collation->value) === null) {
-            throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($collation->value), (new SourceRanges())->span($source)[1] ?? 0, false);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CollationLookup())->parsed($collation, $release);
+        if (!$operand instanceof Scalar && $problem !== null) {
+            throw new RejectedInput($problem, (new SourceRanges())->span($source)[1] ?? 0, false);
         }
-        return new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated($this->scalar($operand, $source), $collation);
+        return $operand instanceof Scalar
+            ? new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated($operand, $collation)
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated($operand, $collation);
     }
 
     /**
