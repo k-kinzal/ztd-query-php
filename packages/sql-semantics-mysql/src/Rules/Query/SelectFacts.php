@@ -172,7 +172,7 @@ final class SelectFacts
      * @param list<Field|OpenStar> $items
      * @return list<Field>
      */
-    public function aliases(Select $select, array $items, LanguageProfile $profile): array
+    public function aliases(Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $select, array $items, LanguageProfile $profile): array
     {
         $aliased = [];
         $naming = new ItemNaming($profile);

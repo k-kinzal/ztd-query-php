@@ -60,21 +60,13 @@ final class TriggerCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof CreateTrigger);
         $session->transaction->commit();
-        $database = ProgramSource::database($statement->name->schema, $session);
-        $located = $statement->table->name->schema->value ?? $database;
-        $schema = $session->instance->dictionary->schema($located);
-        if ($schema === null) {
-            throw QueryError::BadDatabase->error($located);
-        }
-        $table = $statement->table->name->name->value;
-        if (isset($schema->views[$table])) {
-            throw SchemaError::WrongObject->error($located, $table, 'BASE TABLE');
-        }
-        if ($schema->table($table) === null) {
-            throw QueryError::NoSuchTable->error($located, $table);
-        }
-        if ($located !== $database) {
-            throw ProgramError::TriggerInWrongSchema->error();
+        [$database, $table, $schema] = $this->target($statement, $session);
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            foreach ($schema->triggers as $trigger) {
+                if ($trigger->table === $table && $trigger->time === $statement->time->value && $trigger->event === $statement->event->value) {
+                    throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('multiple triggers with the same action time and event for one table');
+                }
+            }
         }
         $name = $statement->name->name->value;
         foreach ($schema->triggers as $trigger) {
@@ -97,6 +89,33 @@ final class TriggerCommand implements Command
         array_splice($schema->triggers, $position, 0, [$trigger]);
 
         return new Completion();
+    }
+
+    /**
+     * Resolves the trigger's table before checking that the two schema names agree.
+     * Legacy releases report the missing table even when its schema is absent.
+     *
+     * @return array{string, string, Schema} Trigger database, table name and owning schema
+     */
+    public function target(CreateTrigger $statement, Session $session): array
+    {
+        $database = ProgramSource::database($statement->name->schema, $session);
+        $located = $statement->table->name->schema->value ?? $database;
+        $table = $statement->table->name->name->value;
+        $schema = $session->instance->dictionary->schema($located);
+        if ($schema === null) {
+            throw $session->settings()->legacy() ? QueryError::NoSuchTable->error($located, $table) : QueryError::BadDatabase->error($located);
+        }
+        if (isset($schema->views[$table])) {
+            throw SchemaError::WrongObject->error($located, $table, 'BASE TABLE');
+        }
+        if ($schema->table($table) === null) {
+            throw QueryError::NoSuchTable->error($located, $table);
+        }
+        if ($located !== $database) {
+            throw ProgramError::TriggerInWrongSchema->error();
+        }
+        return [$database, $table, $schema];
     }
 
     /**

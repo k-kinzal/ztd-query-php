@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program\Expression;
 
-use MySqlMemory\Error\Family\QueryError;
+use LogicException;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
@@ -70,11 +70,47 @@ final class SelectionUse
                 $planner->compiler->compile($item->expression, $scope);
             }
         }
-        $scope->grouping = null;
-        if ($selection->where !== null && !$selection->where instanceof Scalar) {
-            (new RowUse())->prepare($selection->where, $planner->compiler, $scope->inClause('where clause'));
-            throw (new RowUse())->error($selection->where);
-        }
-        throw QueryError::OperandColumns->error(1);
+        $this->clauses($selection, $planner, $scope);
+
     }
+    /**
+     * Prepares filters and sort items in their native order before any rows are read.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a dependency or retained operand is refused
+     * @throws LogicException When no retained operand raises its preparation condition
+     */
+    public function clauses(DeferredSelection $selection, \MySqlMemory\Plan\Planner $planner, \MySqlMemory\Evaluation\Scope $scope): never
+    {
+        $ungrouped = clone $scope;
+        $ungrouped->grouping = null;
+        if ($selection->where !== null) {
+            $this->operand($selection->where, $planner->compiler, $ungrouped->inClause('where clause'));
+        }
+        foreach ($selection->groupBy->items ?? [] as $item) {
+            $this->operand($item->expression, $planner->compiler, $ungrouped->inClause('group statement'));
+        }
+        if ($selection->having !== null) {
+            $this->operand($selection->having, $planner->compiler, $scope->inClause('having clause'));
+        }
+        foreach ($selection->orderBy as $item) {
+            $this->operand($item->expression, $planner->compiler, $scope->inClause('order clause'));
+        }
+        throw new LogicException('A deferred selection must retain a preparation condition.');
+    }
+
+    /**
+     * Resolves a scalar or ordinal, or raises a deferred use after preparing its dependencies.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a dependency or retained operand is refused
+     */
+    public function operand(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|\SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal $operand, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
+    {
+        if ($operand instanceof Scalar || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal) {
+            $compiler->compile($operand, $scope);
+            return;
+        }
+        (new RowUse())->prepare($operand, $compiler, $scope);
+        throw (new RowUse())->error($operand);
+    }
+
 }

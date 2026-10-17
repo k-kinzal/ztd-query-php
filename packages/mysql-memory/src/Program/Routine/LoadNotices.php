@@ -47,16 +47,10 @@ final class LoadNotices
         if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $session->diagnostics->stale = true;
         }
-        foreach ((new Walker())->find($routine->statement, CollationName::class) as $collation) {
-            $notice = $collation->deprecation($session->settings()->release());
+        foreach ((new Walker())->find($routine->statement, \SqlSemantics\Statement\Node::class) as $node) {
+            $notice = $this->notice($node, $session->settings()->release());
             if ($notice !== null) {
                 $session->diagnostics->warning($notice->code(), $notice->message());
-            }
-        }
-        foreach ((new Walker())->find($routine->statement, \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem::class) as $item) {
-            $notice = $item->deprecation($session->settings()->release());
-            if ($notice !== null) {
-                $session->diagnostics->warning($notice->code(), $notice->value);
             }
         }
         if ($routine->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction && $routine->statement->nameCollision($session->settings()->release())) {
@@ -66,6 +60,29 @@ final class LoadNotices
         if ($session->diagnostics->stale) {
             $session->diagnostics->stale = $stale;
         }
+    }
+    /**
+     * Reads load-time notices from typed occurrences in their written order.
+     * The utf8 alias warns again on loading; ucs2 and utf8mb3 deprecations do not.
+     */
+    public function notice(\SqlSemantics\Statement\Node $node, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation
+    {
+        if ($node instanceof CollationName) {
+            return $node->deprecation($release);
+        }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem) {
+            $notice = $node->deprecation($release);
+            return $notice === null ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice);
+        }
+        $name = match (true) {
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Name\CharsetName => $node->name,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute => $node->charset,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral => $node->introducer,
+            default => null,
+        };
+        $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias;
+        return strtolower($name->value ?? '') === 'utf8' && $notice->warnedIn($release) ? new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice) : null;
     }
     /**
      * Recognizes the MySQL 5.6 load whose suppressed notice replaces prior conditions.

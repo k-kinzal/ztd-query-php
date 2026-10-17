@@ -34,7 +34,7 @@ final class SelectOptions
     /**
      * Raises the warnings of the modifiers of a block and the first conflict of its query cache modifiers.
      */
-    public function raise(Select $select, Derivation $derivation): void
+    public function raise(Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $select, Derivation $derivation): void
     {
         foreach ($this->notices($select, $derivation->context->profile->grammar) as $notice) {
             if ($notice instanceof ParseFailure) {
@@ -49,7 +49,7 @@ final class SelectOptions
      *
      * @return list<Deprecation|ParseFailure> Conditions through the first aborting conflict
      */
-    public function notices(Select $select, GrammarRelease $grammar): array
+    public function notices(Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $select, GrammarRelease $grammar): array
     {
         $notices = [];
         $previous = null;

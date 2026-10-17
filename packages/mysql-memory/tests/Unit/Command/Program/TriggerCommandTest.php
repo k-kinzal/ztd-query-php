@@ -17,6 +17,19 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 #[Small]
 final class TriggerCommandTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', 1146])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.7.44', 1146])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['8.4.7', 1049])]
+    public function testTargetPreservesTheVersionedMissingSchemaCondition(string $release, int $code): void
+    {
+        $session = (new Instance($release))->connect();
+        $create = new CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('tr'), new \SqlSemantics\Statement\Identifier\Name('x')), \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Update, new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block([], []));
+        $session->text = 'unrelated invalid input';
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode($code);
+        (new TriggerCommand())->target($create, $session);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new TriggerCommand())->clearsDiagnostics());

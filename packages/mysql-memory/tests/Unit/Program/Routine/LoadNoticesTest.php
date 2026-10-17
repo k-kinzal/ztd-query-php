@@ -14,6 +14,16 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class LoadNoticesTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\TestWith(['utf8', 3719])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['ucs2', null])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['utf8mb3', null])]
+    public function testNoticeDistinguishesAliasLoadingFromDeprecation(string $charset, ?int $code): void
+    {
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new \SqlSemantics\Statement\Identifier\Name($charset));
+        $notice = (new LoadNotices())->notice($name, \SqlSemantics\Contract\GrammarRelease::MySql847);
+        self::assertSame($code, $notice?->code());
+    }
+
     #[\PHPUnit\Framework\Attributes\TestWith(['1'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['(1,2)'])]
     public function testDiscardsLegacyOldPasswordOnlyOnTheFirstLoadAndAfterInvalidation(string $operand): void

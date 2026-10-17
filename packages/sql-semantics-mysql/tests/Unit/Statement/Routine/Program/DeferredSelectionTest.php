@@ -28,6 +28,16 @@ final class DeferredSelectionTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
+    public function testDeferredKeepsPreparationOrderAcrossTheClauses(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t WHERE (1,2) GROUP BY (3,4) HAVING (5,6) ORDER BY (7,8)')->statement;
+        self::assertInstanceOf(CreateProcedure::class, $create);
+        self::assertInstanceOf(DeferredSelection::class, $create->body);
+        self::assertCount(4, $create->body->deferred());
+        self::assertSame($create->body->where, $create->body->deferred()[0]);
+        self::assertSame($create->body->having, $create->body->deferred()[2]);
+    }
+
     public function testRenderKeepsTheInputAndPredicate(): void
     {
         self::assertSame('CREATE PROCEDURE p() SELECT 1 FROM DUAL WHERE (2, 3)', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 FROM DUAL WHERE (2,3)')->toString());

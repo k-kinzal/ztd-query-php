@@ -42,7 +42,7 @@ final class OperandCompletion
      */
     public function completed(Node $node, Token $lookahead, Lowering $lowering, Completion $state, array $tokens): Deprecated|ParseFailure|null
     {
-        return $this->names->charset($node, $lowering, $tokens)
+        return (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxCharsets())->completed($node, $lowering, $tokens)
             ?? $this->privileges->completed($node, $lowering)
             ?? $this->arrays->completed($node, $lookahead, $lowering, $state->failedAt)
             ?? $this->types->following($node, $lowering, $tokens)

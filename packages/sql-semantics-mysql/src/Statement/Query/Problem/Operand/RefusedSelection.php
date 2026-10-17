@@ -42,14 +42,6 @@ final class RefusedSelection implements Diagnostic
      */
     public function problem(): Diagnostic
     {
-        $operand = $this->selection->where;
-        foreach ($this->selection->items as $item) {
-            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection) {
-                $operand = $item->expression;
-                break;
-            }
-        }
-        \SqlSemantics\Diagnostic\Check::invariant($operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand, 'A deferred selection contains a deferred projection or predicate.');
-        return $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand ? $operand->problem() : new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, count((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->parts($operand) ?? []));
+        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem($this->selection->deferred());
     }
 }

@@ -2284,7 +2284,12 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection": {
         "from": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource|SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual|null",
+        "groupBy": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\Grouping|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredGrouping|null",
+        "having": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "items": "array",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "options": "array",
+        "orderBy": "array",
         "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Branching\\DeferredCase": {
@@ -2434,6 +2439,14 @@
         "domains": "array",
         "names": "array",
         "relation": "SqlSemantics\\Statement\\Relation"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredGrouping": {
+        "items": "array",
+        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\GroupingModifier"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredOrderItem": {
+        "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredKill": {
         "process": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",

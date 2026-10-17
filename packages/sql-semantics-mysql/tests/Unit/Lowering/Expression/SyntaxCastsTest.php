@@ -41,6 +41,8 @@ final class SyntaxCastsTest extends TestCase
         yield 'national array' => ['SELECT CAST(1 AS NCHAR ARRAY),?', [Deprecated::National, new ParseFailure(new NotSupportedYet('specifying charset for multi-valued index'), true)]];
         yield 'national target completes first' => ['SELECT CAST(1 AS NCHAR,?', [Deprecated::National]];
         yield 'valid target' => ['SELECT CAST(1 AS SIGNED),?', []];
+        yield 'deferred conversion notices' => ['SELECT CONVERT(1 USING ucs2), CONVERT((1,2) USING utf8),?', [Deprecated::Ucs2, Deprecated::Utf8Alias]];
+        yield 'conversion alias' => ['SELECT CONVERT(1 USING utf8mb3),?', [Deprecated::Utf8mb3]];
     }
 
     /**

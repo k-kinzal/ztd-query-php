@@ -35,6 +35,18 @@ final class StoredSelectionsTest extends TestCase
         self::assertSame('CREATE PROCEDURE p() SELECT 1 ORDER BY 1', $semantics->analyze('CREATE PROCEDURE p() SELECT 1 ORDER BY 1')->toString());
     }
 
+    public function testDeferredKeepsAGroupPredicateOutsideTheScalarQueryDomain(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t HAVING (a,2)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $create->body);
+    }
+
+    public function testClausePreservesEveryRepresentedClause(): void
+    {
+        self::assertSame('CREATE PROCEDURE p() SELECT DISTINCT (a, 2) FROM t WHERE a GROUP BY a HAVING 1 ORDER BY a LIMIT 0', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT DISTINCT (a,2) FROM t WHERE a GROUP BY a HAVING 1 ORDER BY a LIMIT 0')->toString());
+    }
+
     public function testFrontierPreservesClausesOwnedByOtherQueryRules(): void
     {
         self::assertSame('CREATE PROCEDURE p() SELECT 1 LIMIT 1', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 LIMIT 1')->toString());
