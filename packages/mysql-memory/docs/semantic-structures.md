@@ -1475,3 +1475,16 @@ rejection and invocation-time conversion conditions. Other compositions, includi
 CASE, character-set conversions
 and additional SELECT clauses, still require equivalent treatment. These tests
 do not establish the whole-model construction gate.
+
+Window count and offset literals retain their unsigned 64-bit integer-token
+role. Fractional, exponent and out-of-range decimal literals are rejected by
+`WindowFunction` construction. A `FrameBound` cannot carry an INTERVAL unit
+without an offset. Variable operands remain state-dependent: the same directly
+constructed NTILE query is compared over populated tables while its referenced
+variable changes between zero, positive counts and NULL. Ranking functions
+resolve to unsigned BIGINT; stored window outputs and their parents retain the
+result column's name and storage flags separately from direct expression
+metadata. Native tests include literal boundaries inside unreached instructions,
+all window function families, aliases, arithmetic parents, empty input and
+ordinary populated input on MySQL 8.0.44, 8.4.7 and 9.1.0. These checks do not
+close the remaining whole-model constructor invariant gate.

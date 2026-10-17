@@ -160,6 +160,21 @@ final class OriginsTest extends TestCase
         self::assertSame(['t', 'id'], [$aggregate->columns[0]->originalTable, $aggregate->columns[0]->originalName]);
     }
 
+    public function testOriginsNameStoredWindowOutputsAndTheirParents(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a INT); INSERT INTO t VALUES(1),(2)');
+        $stored = $session->query('SELECT NTILE(2) OVER() AS n, (LEAD(a) OVER())+0 AS v FROM t')[0];
+        $empty = $session->query('SELECT NTILE(2) OVER() AS n, (LEAD(a) OVER())+0 AS v FROM t WHERE FALSE')[0];
+        self::assertInstanceOf(ResultSet::class, $stored);
+        self::assertInstanceOf(ResultSet::class, $empty);
+
+        self::assertSame(['n', 'v'], array_column($stored->columns, 'originalName'));
+        self::assertSame([32801, 32768], array_column($stored->columns, 'flags'));
+        self::assertSame(['', ''], array_column($empty->columns, 'originalName'));
+        self::assertSame([32929, 32896], array_column($empty->columns, 'flags'));
+    }
+
     public function testOriginsDropTheKeyFlagsOfABufferedResult(): void
     {
         $session = (new Instance())->connect();

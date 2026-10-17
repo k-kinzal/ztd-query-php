@@ -92,7 +92,7 @@ final class WindowResultsTest extends TestCase
         self::assertSame([WindowingLimit::IgnoreNulls, WindowingLimit::FromLast], [$diagnostics[0]->limit, $diagnostics[1]->limit]);
     }
 
-    public function testResolvedTypesRankingAsSignedBigintAndValuesAsTheTemporaryTableHoldsThem(): void
+    public function testResolvedTypesRankingAsUnsignedBigintAndValuesAsTheTemporaryTableHoldsThem(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
@@ -100,7 +100,7 @@ final class WindowResultsTest extends TestCase
         $column = Domain::column(Field::Long, 11);
         $text = Domain::string(10, Collation::known('utf8mb4_0900_ai_ci'), Field::String);
 
-        self::assertEquals(Domain::integer(Field::LongLong, 21), $results->resolved(new WindowFunction(WindowFunctionKind::RowNumber, [], new Name('w')), [], $derivation));
+        self::assertEquals(Domain::integer(Field::LongLong, 21, true), $results->resolved(new WindowFunction(WindowFunctionKind::RowNumber, [], new Name('w')), [], $derivation));
         self::assertEquals(Domain::double(23), $results->resolved(new WindowFunction(WindowFunctionKind::CumulativeDistribution, [], new Name('w')), [], $derivation));
         self::assertSame([Field::LongLong, 11], [$results->resolved(new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new Name('w')), [$column], $derivation)?->field, $results->resolved(new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new Name('w')), [$column], $derivation)?->length]);
         self::assertSame([Field::VarString, 0], [$results->resolved(new WindowFunction(WindowFunctionKind::LastValue, [new NumberLiteral('1')], new Name('w')), [$text], $derivation)?->field, $results->resolved(new WindowFunction(WindowFunctionKind::LastValue, [new NumberLiteral('1')], new Name('w')), [$text], $derivation)?->decimals]);

@@ -60,7 +60,7 @@ final class Origins
         $supplied = $implicit ? $this->supplied($select->from) : [];
         $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => match (true) {
             $this->storedAssignment($select, $field, $storedWindows) => new ColumnOrigin('', '<temporary>', '', '', $this->planner->materialized([$domain])[0]->flags ?? 0),
-            $storedWindows && $field->expression !== null && (new Windowing($this->planner))->reads($field->expression) => $this->planner->materialized([$domain])[0],
+            $storedWindows && $field->expression !== null && (new Windowing($this->planner))->reads($field->expression) => new ColumnOrigin('', '', '', $this->planner->blocks->name($field, $select), $this->planner->materialized([$domain])[0]->flags ?? 0),
             $this->storedAggregate($select, $field, $domain) => $this->planner->materialized([$domain])[0],
             $rolled => $materialized ? $this->planner->materialized([$domain])[0] : $this->rollup($select, $field, $scope),
             $implicit => $this->kept($field, $scope, $this->origin($field, $scope), $supplied),

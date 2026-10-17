@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Type\NullOnly;
  * The result of a function that is only a window function.
  *
  * Rule: MYSQL-WINDOW-RESULT-001. ROW_NUMBER, RANK, DENSE_RANK and NTILE are
- * BIGINT, CUME_DIST and PERCENT_RANK DOUBLE; none of them is NULL.
+ * unsigned BIGINT, CUME_DIST and PERCENT_RANK DOUBLE; none of them is NULL.
  * LEAD and LAG have the aggregated type of the value and the default
  * (MYSQL-TYPE-AGGREGATION-001), JSON for a JSON value and a JSON or NULL
  * default; FIRST_VALUE, LAST_VALUE and NTH_VALUE retain the type of the
@@ -86,7 +86,7 @@ final class WindowResults
     public function resolved(WindowFunction $call, array $arguments, Derivation $derivation, bool $materialized = true): ?Domain
     {
         $domain = match ($call->kind) {
-            WindowFunctionKind::RowNumber, WindowFunctionKind::Rank, WindowFunctionKind::DenseRank, WindowFunctionKind::Tile => Domain::integer(Field::LongLong, 21),
+            WindowFunctionKind::RowNumber, WindowFunctionKind::Rank, WindowFunctionKind::DenseRank, WindowFunctionKind::Tile => Domain::integer(Field::LongLong, 21, true),
             WindowFunctionKind::CumulativeDistribution, WindowFunctionKind::PercentRank => Domain::double(23),
             WindowFunctionKind::FirstValue, WindowFunctionKind::LastValue, WindowFunctionKind::NthValue => $arguments[0],
             WindowFunctionKind::Lead, WindowFunctionKind::Lag => $this->shifted($call, $arguments, $derivation, false),
