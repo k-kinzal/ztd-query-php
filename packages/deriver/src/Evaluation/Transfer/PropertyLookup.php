@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Transfer;
 
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Program;
 use Deriver\ControlFlow\PropertyDeclaration;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\Native\Properties;
 
 /**
  * Resolves inherited properties and access rights under PHP 8.3 declaration scope.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PropertyLookup
 {

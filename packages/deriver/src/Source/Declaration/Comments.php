@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Deriver\Source\Declaration;
 
 use Deriver\Reference\SourceComment;
-use Deriver\Source\Compilation\EffectInspection;
+use Deriver\Source\Lowering\EffectInspection;
 
 /**
  * Lists attached PHPDoc from captured syntax without compiling callable bodies.
- * @visibility root
+ * @visibility Deriver\Source
+ * @visibility Deriver\Session
  */
 final class Comments
 {

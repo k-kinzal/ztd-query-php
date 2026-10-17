@@ -8,7 +8,7 @@ use PhpParser\Node;
 
 /**
  * Captured parser nodes for a callable compiled only when demanded.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class CallableSource
 {

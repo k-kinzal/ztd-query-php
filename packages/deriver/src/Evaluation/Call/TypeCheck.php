@@ -9,7 +9,7 @@ use Deriver\Value\Term;
 /**
  * A normal coerced value together with possible argument-type failure.
  *
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class TypeCheck
 {

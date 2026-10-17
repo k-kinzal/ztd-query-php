@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Model\Builtin;
 
 use Deriver\Model\CallModel;
-use Deriver\Model\Signature\Parameter;
+use Deriver\Project\Declaration\Parameter;
 use Deriver\Value\Term;
 
 /**

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Semantic;
 
-use Deriver\Result\Alternative;
-use Deriver\Result\Exceptional;
+use Deriver\Result\Execution\Alternative;
+use Deriver\Result\Execution\Exceptional;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProviderExternal;

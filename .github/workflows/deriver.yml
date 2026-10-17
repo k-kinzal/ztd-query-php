@@ -7,10 +7,12 @@ on:
   pull_request:
     paths:
       - 'packages/deriver/**'
+      - 'packages/requirements/**'
       - '.github/workflows/deriver.yml'
       - '.github/workflows/deriver-fuzz.yml'
       - '!packages/**/README.md'
       - '!packages/**/docs/**'
+      - 'packages/deriver/docs/pipeline.md'
 
 permissions:
   contents: read
@@ -128,3 +130,47 @@ jobs:
         run: composer fuzz:semantic
       - name: Run bounded parser and solver fuzzing
         run: composer fuzz:smoke
+
+  requirements:
+    name: Requirements
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          extensions: dom, mbstring, xml, xmlwriter
+          coverage: none
+      - name: Install the traceability tool
+        run: composer install --working-dir=../requirements --no-interaction --prefer-dist
+      - name: Validate the pipeline specification against its document
+        run: |
+          php ../requirements/bin/requirements lint
+          php ../requirements/bin/requirements format --check
+          php ../requirements/bin/requirements check
+      - name: Enforce coverage and keep the checked-in coverage snapshot reproducible
+        run: |
+          php ../requirements/bin/requirements coverage --write-snapshot /tmp/current-snapshot.json
+          cmp requirements-snapshot.json /tmp/current-snapshot.json
+      - name: Enforce coverage of changed source units
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          snapshot="origin/$BASE_REF:packages/deriver/requirements-snapshot.json"
+          if git cat-file -e "$snapshot" 2>/dev/null; then
+            git show "$snapshot" > /tmp/base-snapshot.json
+            php ../requirements/bin/requirements coverage --snapshot /tmp/base-snapshot.json --min-diff-coverage 100
+          else
+            echo 'Initial adoption: review the scope and enforce the configured total coverage gate.'
+          fi
+      - name: Install dependencies for linked unit tests
+        run: composer install --no-interaction --prefer-dist
+      - name: Run every linked test and require one for each specification
+        run: php ../requirements/bin/requirements spec --strict

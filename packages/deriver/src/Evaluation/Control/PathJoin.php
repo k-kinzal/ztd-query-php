@@ -6,10 +6,10 @@ namespace Deriver\Evaluation\Control;
 
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Offset\Address;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
-use Deriver\Value\Lattice;
+use Deriver\Model\Operations\Lattice;
 use Deriver\Value\Term;
 use WeakMap;
 
@@ -19,7 +19,7 @@ use WeakMap;
  * Paths are joined only when they share their control position, aliases, objects, and handlers, and differ only in
  * plain values. Differing values are widened, so the joined path contains every input path; guards keep their common
  * entries and constraints are dropped.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PathJoin
 {

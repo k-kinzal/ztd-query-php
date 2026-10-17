@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Offset;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Completion;
+use Deriver\Evaluation\Constraints;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
 use Deriver\Value\Arrays;
@@ -14,7 +14,7 @@ use Deriver\Value\Term;
 
 /**
  * Enumerates finite array slots under correlated key predicates, retaining absence.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ReadCandidates
 {

@@ -9,7 +9,7 @@ use Deriver\Value\Term;
 
 /**
  * Validates argument order and maps values by the selected signature's names.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ArgumentOrder
 {

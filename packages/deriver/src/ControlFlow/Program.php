@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\ControlFlow;
 
-use Deriver\Result\Frontier;
+use Deriver\Diagnostic\Frontier;
 
 /**
  * Parser-independent access to lazily compiled callable graphs.

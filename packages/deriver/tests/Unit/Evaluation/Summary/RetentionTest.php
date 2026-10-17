@@ -45,9 +45,9 @@ final class RetentionTest extends TestCase
         $state = new State();
         $state->evidence = ['result'];
         $nodes = [
-            'caller' => new \Deriver\Result\Derivation('caller', 'call', $at),
-            'input' => new \Deriver\Result\Derivation('input', 'data', $at),
-            'result' => new \Deriver\Result\Derivation('result', 'data', $at, ['input']),
+            'caller' => new \Deriver\Result\Execution\Derivation('caller', 'call', $at),
+            'input' => new \Deriver\Result\Execution\Derivation('input', 'data', $at),
+            'result' => new \Deriver\Result\Execution\Derivation('result', 'data', $at, ['input']),
         ];
         $retained = (new Retention())->evidence([new CompletionRecord($state, 0)], $nodes);
         self::assertNotNull($retained);

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Operation;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Completion;
+use Deriver\Evaluation\Constraints;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
 use Deriver\Value\Operations;
@@ -14,7 +14,7 @@ use Deriver\Value\Term;
 
 /**
  * Retains runtime error paths for scalar operations whose operands remain symbolic.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ScalarErrors
 {

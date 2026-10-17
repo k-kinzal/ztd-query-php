@@ -10,7 +10,7 @@ use Deriver\Evaluation\Completion;
 /**
  * Dynamic phase of one exception region and its saved completion.
  *
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Handler
 {

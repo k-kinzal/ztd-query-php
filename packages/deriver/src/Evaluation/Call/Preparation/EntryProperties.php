@@ -7,17 +7,18 @@ namespace Deriver\Evaluation\Call\Preparation;
 use Deriver\ControlFlow\CallableGraph;
 use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Transfer\ObjectAccess;
 use Deriver\Evaluation\Transfer\PropertyLookup;
 use Deriver\Evaluation\Transfer\ReferenceAssignment;
 use Deriver\Exception\InvalidInputException;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Installs explicitly supplied receiver property values as an entry object's initial state.
- * @visibility root
+ * @visibility Deriver\Evaluation
+ * @visibility Deriver\Analysis\Execution
  */
 final class EntryProperties
 {

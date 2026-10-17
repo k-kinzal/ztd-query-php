@@ -8,16 +8,16 @@ use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\Parameter;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
+use Deriver\Evaluation\Memory\ReferenceConstraint;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Transfer\ReferenceAssignment;
-use Deriver\Memory\Location;
-use Deriver\Memory\ReferenceConstraint;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
 
 /**
  * Evaluates defaults only on omission and connects reference cells at entry.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ParameterBinding
 {

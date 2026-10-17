@@ -8,7 +8,7 @@ use Deriver\Project\Configuration;
 use Deriver\Project\EntryPoint;
 use Deriver\Query\QueryScope;
 use Deriver\Query\ValueQuery;
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -29,7 +29,7 @@ final class FrameworkCallbackContractTest extends TestCase
      */
     public function testModelInvokesARouteCallbackOnATypedFrameworkReceiver(): void
     {
-        $session = Analysis::session('<?php function routes(Slim\App $app, PDO $pdo, string $table) { $app->get("/", function () use ($pdo, $table) { $pdo->query("SELECT * FROM $table"); }); }', new Configuration(models: [RouteModels::get()]));
+        $session = Analysis::session('<?php function routes(Slim\App $app, PDO $pdo, string $table) { $app->get("/", function () use ($pdo, $table) { $pdo->query("SELECT * FROM $table"); }); }', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [RouteModels::get()]));
         $scope = QueryScope::fromEntrypoints([new EntryPoint('routes', [Term::parameter('app', 'Slim\App'), Term::parameter('pdo', 'PDO'), Term::constant('users')])]);
         [$sql, $receiver] = RouteModels::observe($session, $scope);
         self::assertSame(['SELECT * FROM users'], array_map(static fn (Alternative $outcome) => $outcome->values['value']->native(), $sql));
@@ -41,7 +41,7 @@ final class FrameworkCallbackContractTest extends TestCase
      */
     public function testModelInvokesARouteCallbackOnAFrameworkObjectCreatedInTheEntrypoint(): void
     {
-        $session = Analysis::session('<?php function routes(PDO $pdo) { $table = "users"; $app = new Slim\App(); $app->get("/", function () use ($pdo, $table) { $pdo->query("SELECT * FROM $table"); }); }', new Configuration(models: [RouteModels::get(), RouteModels::construct()]));
+        $session = Analysis::session('<?php function routes(PDO $pdo) { $table = "users"; $app = new Slim\App(); $app->get("/", function () use ($pdo, $table) { $pdo->query("SELECT * FROM $table"); }); }', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [RouteModels::get(), RouteModels::construct()]));
         [$sql, $receiver] = RouteModels::observe($session, QueryScope::fromEntrypoints([new EntryPoint('routes', [Term::parameter('pdo', 'PDO')])]));
         self::assertSame(['SELECT * FROM users'], array_map(static fn (Alternative $outcome) => $outcome->values['value']->native(), $sql));
         self::assertSame([['parameter', 'PDO']], array_map(static fn (Alternative $outcome): array => [$outcome->values['value']->kind, $outcome->values['value']->attributes['type'] ?? ''], $receiver));

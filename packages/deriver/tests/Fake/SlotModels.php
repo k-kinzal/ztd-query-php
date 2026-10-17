@@ -9,10 +9,10 @@ use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
+use Deriver\Model\Registration\Contributions;
 use Deriver\Model\State\StateSlot;
-use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Value\Term;
 
 /**
@@ -23,11 +23,11 @@ final class SlotModels
 {
     /**
      * @param StateSlot $slot Tested initialization and lifecycle policy
-     * @return Configuration Four modeled operations over one abstract object slot
+     * @return Contributions Four modeled operations over one abstract object slot
      */
-    public static function configuration(StateSlot $slot): Configuration
+    public static function contributions(StateSlot $slot): Contributions
     {
-        return new Configuration(models: [
+        return new Contributions(models: [
             new PlanModel(new ModelDescriptor('slot.read', '1', 'Box::read'), new SemanticPlan([Action::returns(Expression::state($slot->id))], reads: [$slot->id])),
             new PlanModel(new ModelDescriptor('slot.write', '1', 'Box::write', new Signature([new Parameter('value')])), new SemanticPlan([Action::write($slot->id, Expression::parameter('value')), Action::returns(Expression::receiver())], writes: [$slot->id])),
             new PlanModel(new ModelDescriptor('slot.reference', '1', 'Box::reference', new Signature(byReference: true)), new SemanticPlan([Action::returnReference(LocationRef::state($slot->id))], writes: [$slot->id])),

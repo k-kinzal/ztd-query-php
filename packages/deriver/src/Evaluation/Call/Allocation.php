@@ -5,21 +5,22 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\Creation\Access;
 use Deriver\Evaluation\Call\Native\Invocation;
 use Deriver\Evaluation\Call\Native\Properties;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Model\StateStorage;
 use Deriver\Evaluation\Operation\Conversions;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Allocates distinct object identities and applies shallow clone semantics.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Allocation
 {

@@ -10,7 +10,7 @@ use Deriver\ControlFlow\Instruction;
 
 /**
  * Rebinds already lowered trait property initializers into consuming class scope.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class PropertyScope
 {

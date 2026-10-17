@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Call;
 
-use Deriver\Memory\Location;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * A once-evaluated actual argument and its optional PHP reference address.
  *
- * @visibility root
+ * @visibility Deriver\Evaluation
+ * @visibility Deriver\Analysis\Execution
  */
 final class PassedArgument
 {

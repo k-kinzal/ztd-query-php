@@ -15,7 +15,7 @@ use Deriver\Value\Term;
 
 /**
  * Resolves argument reference modes without invoking the selected body.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Resolution
 {

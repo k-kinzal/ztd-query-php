@@ -71,7 +71,7 @@ final class CatalogStandardFunctionsTest extends TestCase
     public function testBackedEnumParametersEnumerateCasesAndConstantExpressions(): void
     {
         $result = Analysis::returns('<?php enum Status:string {case A="a";case B="b"."c";} function target(Status $status){return $status->value;}');
-        self::assertEqualsCanonicalizing(['a','bc'], array_map(static fn (\Deriver\Result\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes));
+        self::assertEqualsCanonicalizing(['a','bc'], array_map(static fn (\Deriver\Result\Execution\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes));
         self::assertSame([], $result->frontiers);
     }
 

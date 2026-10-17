@@ -26,10 +26,10 @@ use RuntimeException;
 use Tests\Fake\SolverFixture;
 
 #[CoversClass(IntrinsicTransfer::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
-#[UsesClass(\Deriver\Analysis\Session::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
+#[UsesClass(\Deriver\Session\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\ControlFlow\Argument::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
@@ -43,7 +43,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Call\CallExecutor::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallResolution::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallableCheck::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Model\Inputs::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Model\NativeArguments::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ParameterBinding::class)]
@@ -60,7 +60,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Context::class)]
 #[UsesClass(\Deriver\Evaluation\Control\CollectionCalls::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Cell::class)]
@@ -86,10 +86,10 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Memory\Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Location::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
 #[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
 #[UsesClass(\Deriver\Model\Builtin\FunctionModel::class)]
@@ -102,18 +102,18 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Model\Compilation\PlanFootprints::class)]
 #[UsesClass(\Deriver\Model\Compilation\PlanValidation::class)]
 #[UsesClass(IntrinsicDescriptor::class)]
-#[UsesClass(\Deriver\Model\Intrinsic\IntrinsicEvaluation::class)]
+#[UsesClass(\Deriver\Model\Operations\IntrinsicEvaluation::class)]
 #[UsesClass(\Deriver\Model\ModelDecision::class)]
 #[UsesClass(\Deriver\Model\ModelDescriptor::class)]
 #[UsesClass(\Deriver\Model\Plan\Action::class)]
 #[UsesClass(\Deriver\Model\Plan\Expression::class)]
 #[UsesClass(\Deriver\Model\Plan\SemanticPlan::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
-#[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
+#[UsesClass(\Deriver\Model\Registration\ProviderExpansion::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
-#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
-#[UsesClass(\Deriver\Model\Signature\Signature::class)]
+#[UsesClass(\Deriver\Project\Declaration\Parameter::class)]
+#[UsesClass(\Deriver\Project\Declaration\Signature::class)]
 #[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Project\EntryPoint::class)]
 #[UsesClass(\Deriver\Project\ProjectInput::class)]
@@ -123,43 +123,44 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphCache::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphTemplate::class)]
-#[UsesClass(\Deriver\Source\Cache\SnapshotRebase::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
-#[UsesClass(\Deriver\Source\Compilation\AggregateLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\CallLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
-#[UsesClass(\Deriver\Source\Compilation\EffectInspection::class)]
-#[UsesClass(\Deriver\Source\Compilation\ExpressionLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
-#[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\StatementLowering::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
+#[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
+#[UsesClass(\Deriver\Source\Parsing\SourceParser::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParsedFile::class)]
+#[UsesClass(\Deriver\Source\Lowering\AggregateLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\CallLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\CallableLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\EffectInspection::class)]
+#[UsesClass(\Deriver\Source\Lowering\ExpressionLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\InstructionEmitter::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringScope::class)]
+#[UsesClass(\Deriver\Source\Lowering\StatementLowering::class)]
 #[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
 #[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
 #[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
-#[UsesClass(\Deriver\Source\LineMap::class)]
-#[UsesClass(\Deriver\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Lowering\LineMap::class)]
+#[UsesClass(\Deriver\Source\Parsing\MagicContext::class)]
+#[UsesClass(\Deriver\Source\Parsing\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Parsing\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Parsing\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Parsing\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
@@ -190,7 +191,7 @@ final class IntrinsicTransferTest extends TestCase
         $intrinsic = self::createMock(PureIntrinsic::class);
         $intrinsic->method('descriptor')->willReturn(new IntrinsicDescriptor('second', '1', 'custom', 2, [0,1]));
         $intrinsic->expects(self::once())->method('evaluate')->with([$a,$b], self::identicalTo($target))->willReturn($result);
-        $context = SolverFixture::context(configuration:new Configuration(target:$target, intrinsics:[$first,$intrinsic]));
+        $context = SolverFixture::context(configuration:new Configuration(target:$target), contributions: new \Deriver\Model\Registration\Contributions(intrinsics:[$first,$intrinsic]));
         $source = new SourceRef('snapshot', 'model:intrinsic', 9, 15);
         $instruction = new Instruction('intrinsic', 'intrinsic', $source, 'result', ['a','b'], 'custom');
         $state = new State();
@@ -209,7 +210,7 @@ final class IntrinsicTransferTest extends TestCase
         $intrinsic = self::createStub(PureIntrinsic::class);
         $intrinsic->method('descriptor')->willReturn(new IntrinsicDescriptor('model', '1', 'custom', 1, [0]));
         $intrinsic->method('evaluate')->willReturn($result);
-        $context = SolverFixture::context(configuration:new Configuration(intrinsics:[$intrinsic]));
+        $context = SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(intrinsics:[$intrinsic]));
         $source = new SourceRef('snapshot', 'model:intrinsic', 9, 15);
         $instruction = new Instruction('intrinsic', 'intrinsic', $source, 'result', ['input'], 'custom');
         $input = Term::constant(17);
@@ -236,7 +237,7 @@ final class IntrinsicTransferTest extends TestCase
         $intrinsic = self::createStub(PureIntrinsic::class);
         $intrinsic->method('descriptor')->willReturn(new IntrinsicDescriptor('broken', '1', 'custom', 1, [0]));
         $intrinsic->method('evaluate')->willThrowException(new RuntimeException('failed'));
-        $context = SolverFixture::context(configuration:new Configuration(intrinsics:[$intrinsic]));
+        $context = SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(intrinsics:[$intrinsic]));
         $source = new SourceRef('snapshot', 'model:intrinsic', 9, 15);
         $instruction = new Instruction('intrinsic', 'intrinsic', $source, 'result', ['input'], 'custom');
         $input = Term::constant(17, true);

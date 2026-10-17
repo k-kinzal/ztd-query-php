@@ -12,15 +12,15 @@ use Deriver\Evaluation\Call\Member\Invocation as MemberInvocation;
 use Deriver\Evaluation\Call\PassedArgument;
 use Deriver\Evaluation\Call\UnknownCall;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
-use Deriver\Value\Lattice;
+use Deriver\Model\Operations\Lattice;
 use Deriver\Value\Operations;
 use Deriver\Value\Term;
 
 /**
  * Applies native throwable constructors and getters using source-compatible heap state.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Invocation
 {

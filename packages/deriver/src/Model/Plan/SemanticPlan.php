@@ -7,7 +7,7 @@ namespace Deriver\Model\Plan;
 /**
  * Acyclic API semantics lowered to the source evaluator control-flow representation.
  *
- * @visibility public
+ * @visibility root
  * @example Inspecting the contract
  *     (new \Deriver\Model\Plan\SemanticPlan([]))->actions // => []
  */

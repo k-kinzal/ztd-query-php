@@ -14,7 +14,7 @@ use PhpParser\NodeVisitorAbstract;
 
 /**
  * Freezes trait-origin magic names while allowing self and __CLASS__ to bind to consumers.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class LexicalConstants extends NodeVisitorAbstract
 {

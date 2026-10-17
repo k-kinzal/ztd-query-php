@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\AnalysisSession;
 use Deriver\Model\Provider\DeclarationProvider;
 use Deriver\Model\Provider\DispatchDecision;
 use Deriver\Model\Provider\DispatchProvider;
@@ -13,6 +12,7 @@ use Deriver\Model\Provider\DispatchTarget;
 use Deriver\Model\Provider\EntryPointProvider;
 use Deriver\Model\Provider\EnvironmentProvider;
 use Deriver\Model\Provider\ObservationProvider;
+use Deriver\Project\CapturedProject;
 use Deriver\Project\EntryPoint;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
@@ -81,11 +81,11 @@ final class MiniContainer implements DeclarationProvider, DispatchProvider, Envi
         return [new EntryPoint('entry')];
     }
     /**
-     * @param AnalysisSession $session Captured project
+     * @param CapturedProject $session Captured project
      * @return array<string, Query> Named observations
      */
     #[Override]
-    public function queries(AnalysisSession $session): array
+    public function queries(CapturedProject $session): array
     {
         return ['entry-return' => new ReturnQuery('entry', QueryScope::fromEntrypoints($session->entrypoints()))];
     }

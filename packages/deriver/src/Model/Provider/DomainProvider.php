@@ -6,7 +6,7 @@ namespace Deriver\Model\Provider;
 
 /**
  * Registers immutable domain facts with checked lattice contracts.
- * @visibility public
+ * @visibility root
  * @example Providers are installed explicitly
  *     (new \Deriver\Project\Configuration())->providers // => []
  */

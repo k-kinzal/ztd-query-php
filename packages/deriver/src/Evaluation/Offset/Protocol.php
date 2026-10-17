@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Offset;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\CallExecutor;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\PassedArgument;
+use Deriver\Evaluation\Constraints;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Transfer\MemoryStep;
 use Deriver\Evaluation\Transfer\ReferenceAssignment;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Executes ArrayAccess methods through source semantics and shared reference storage.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Protocol
 {

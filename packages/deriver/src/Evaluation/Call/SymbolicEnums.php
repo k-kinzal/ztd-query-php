@@ -13,7 +13,7 @@ use Deriver\Evaluation\Transfer\ConstantTransfer;
 
 /**
  * Enumerates the closed set of declared enum cases for a symbolic parameter.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class SymbolicEnums
 {

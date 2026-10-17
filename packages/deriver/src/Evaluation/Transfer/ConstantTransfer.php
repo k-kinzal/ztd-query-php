@@ -17,7 +17,7 @@ use Deriver\Value\Term;
 
 /**
  * Evaluates captured constant expressions without loading application PHP.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ConstantTransfer
 {

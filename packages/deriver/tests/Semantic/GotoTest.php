@@ -6,7 +6,7 @@ namespace Tests\Semantic;
 
 use Deriver\Query\ReturnQuery;
 use Deriver\Query\ValueQuery;
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\ModelContract;
 
 use Deriver\Analyzer;
-use Deriver\Model\Expansion\Rule;
 use Deriver\Project\Configuration;
+use Deriver\Project\Expansion\Rule;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;

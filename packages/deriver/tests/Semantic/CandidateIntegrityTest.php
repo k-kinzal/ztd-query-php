@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Semantic;
 
 use Deriver\Project\Configuration;
+use Deriver\Project\ResourceLimits;
 use Deriver\Query\Budget;
-use Deriver\Query\ResourceLimits;
 use Deriver\Query\ReturnQuery;
 use Deriver\Query\TupleQuery;
 use Deriver\Query\ValueQuery;
@@ -171,7 +171,7 @@ final class CandidateIntegrityTest extends TestCase
         foreach ([1, 2] as $version) {
             $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('answer', (string) $version, 'answer'), new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(\Deriver\Value\Term::constant($version)))]));
             $input = new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('source.php', '<?php function target(){return answer();}')]);
-            $session = $analyzer->open($input, new Configuration(models: [$model]));
+            $session = new \Deriver\Session\Session($input, new Configuration(), new \Deriver\Model\Registration\Contributions(models: [$model]));
             $results[] = CandidateContractTest::native($session->derive(new ReturnQuery('target')), 'return');
             $snapshots[] = $session->snapshot()->id;
             $changed = $analyzer->open(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('source.php', '<?php function target(){return ' . $version . ';}')]));

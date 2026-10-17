@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Constant;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Builtins;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
-use Deriver\Evaluation\Call\Creation\Builtins;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
 use Deriver\Value\Term;
 
 /**
  * Separates lexical class references from runtime class strings and object names.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ClassNames
 {

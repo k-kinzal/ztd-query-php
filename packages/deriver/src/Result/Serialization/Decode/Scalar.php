@@ -9,7 +9,7 @@ use stdClass;
 
 /**
  * Decodes canonical byte strings, target integers, and IEEE binary64 payloads.
- * @visibility root
+ * @visibility Deriver\Result
  */
 final class Scalar
 {

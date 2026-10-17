@@ -39,7 +39,7 @@ final class Term
         public readonly array $operands = [],
         public readonly array $attributes = [],
         public readonly bool $secret = false,
-        public readonly ?\Deriver\Result\Evidence\Node $evidence = null,
+        public readonly ?\Deriver\Evidence\Node $evidence = null,
     ) {
     }
 

@@ -14,7 +14,7 @@ use Deriver\Value\Term;
 
 /**
  * Captures call signatures and early failures before argument evaluation begins.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Transfer
 {

@@ -9,13 +9,13 @@ use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Memory\ReferenceConstraint;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Transfer\ReferenceAssignment;
-use Deriver\Memory\ReferenceConstraint;
 
 /**
  * Checks an abstract slot's type before binding it to an existing reference cell.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class SlotReference
 {

@@ -43,14 +43,15 @@ final class Registry
 
     /**
      * @param Configuration $configuration Trusted explicit model configuration
+     * @param Contributions $contributions Models, providers, domains, intrinsics and state slots to register
      * @throws InvalidInputException If matching models conflict or identifiers repeat
      */
-    public function __construct(public readonly Configuration $configuration)
+    public function __construct(public readonly Configuration $configuration, public readonly Contributions $contributions = new Contributions())
     {
-        $this->extensions = new Extensions($configuration);
-        $this->state = new StateRegistry($configuration->stateSlots);
+        $this->extensions = new Extensions($contributions);
+        $this->state = new StateRegistry($contributions->stateSlots);
         $candidates = [];
-        foreach ($configuration->models as $model) {
+        foreach ($contributions->models as $model) {
             $descriptor = $model->descriptor();
             $this->register($descriptor);
             $candidates[(new CallableIdentity())->key($descriptor->symbol)][$descriptor->id] = $model;

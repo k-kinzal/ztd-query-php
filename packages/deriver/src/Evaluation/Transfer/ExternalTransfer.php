@@ -12,7 +12,7 @@ use Deriver\Value\Term;
 
 /**
  * Distinguishes stable explicit environment inputs from fresh nondeterministic events.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ExternalTransfer
 {

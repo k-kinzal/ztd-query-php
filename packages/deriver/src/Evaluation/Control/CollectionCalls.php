@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Control;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\CallableCheck;
 use Deriver\Evaluation\Call\CallExecutor;
 use Deriver\Evaluation\Call\PassedArgument;
 use Deriver\Evaluation\Call\UnknownCall;
+use Deriver\Evaluation\Constraints;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\State;
 use Deriver\Value\Term;
 
 /**
  * Connects finite collection callbacks to the ordinary call and exception evaluator.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CollectionCalls
 {

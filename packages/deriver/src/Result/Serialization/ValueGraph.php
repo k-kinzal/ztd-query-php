@@ -12,7 +12,7 @@ use Deriver\Value\Term;
  *
  * @phpstan-type ScalarRecord array{type: string, value: string|bool|null}
  * @phpstan-type ValueRecord array{kind: string, literal: ScalarRecord, operands: list<array{key: ScalarRecord, value: string}>, attributes: list<array{key: string, value: ScalarRecord}>, redacted: bool, secret: bool}
- * @visibility root
+ * @visibility Deriver\Result
  */
 final class ValueGraph
 {

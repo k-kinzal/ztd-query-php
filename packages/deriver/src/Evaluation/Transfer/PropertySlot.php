@@ -9,7 +9,7 @@ use Deriver\Value\Term;
 
 /**
  * Keeps property declaration and lexical access facts beside an address register.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PropertySlot
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Havoc;
 use Deriver\Evaluation\State;
@@ -15,7 +16,7 @@ use Deriver\Value\Term;
 
 /**
  * Checks runtime declaration types separately from symbolic value knowledge.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class TypeBinding
 {

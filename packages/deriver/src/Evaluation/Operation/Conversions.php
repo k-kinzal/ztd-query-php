@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Operation;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\CallExecutor;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\Native\Invocation;
 use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Completion;
@@ -19,7 +19,7 @@ use Deriver\Value\Term;
 
 /**
  * Routes object string conversion through captured source methods and records opaque protocols.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Conversions
 {

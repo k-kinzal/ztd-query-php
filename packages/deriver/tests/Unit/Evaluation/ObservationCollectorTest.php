@@ -31,11 +31,11 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ObservationCollector::class)]
-#[UsesClass(\Deriver\Analysis\CallObservations::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
-#[UsesClass(\Deriver\Analysis\Session::class)]
+#[UsesClass(\Deriver\Analysis\Selection\CallObservations::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
+#[UsesClass(\Deriver\Session\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\ControlFlow\Argument::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
@@ -47,8 +47,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentOrder::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallResolution::class)]
 #[UsesClass(\Deriver\Evaluation\Call\CallableCheck::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Builtins::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\PassedArgument::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Preparation\Arguments::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Preparation\Modes::class)]
@@ -59,7 +59,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Context::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ExceptionMatch::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Discovery::class)]
@@ -75,17 +75,17 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Transfer\MemoryStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Memory\Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Location::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Builtin\Library::class)]
 #[UsesClass(\Deriver\Model\Contract\DomainLaws::class)]
 #[UsesClass(\Deriver\Model\Domain\DomainFact::class)]
-#[UsesClass(\Deriver\Model\Domain\DomainOperations::class)]
+#[UsesClass(\Deriver\Model\Operations\DomainOperations::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
-#[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
+#[UsesClass(\Deriver\Model\Registration\ProviderExpansion::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
 #[UsesClass(StateSlot::class)]
@@ -98,7 +98,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(StateQuery::class)]
 #[UsesClass(TupleQuery::class)]
@@ -108,41 +108,42 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(PointRef::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphCache::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphTemplate::class)]
-#[UsesClass(\Deriver\Source\Cache\SnapshotRebase::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
-#[UsesClass(\Deriver\Source\Compilation\AssignmentLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\CallLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
-#[UsesClass(\Deriver\Source\Compilation\Control\DestructuringLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\EffectInspection::class)]
-#[UsesClass(\Deriver\Source\Compilation\ExpressionLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
-#[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\StatementLowering::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
+#[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
+#[UsesClass(\Deriver\Source\Parsing\SourceParser::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParsedFile::class)]
+#[UsesClass(\Deriver\Source\Lowering\AssignmentLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\CallLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\CallableLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\Control\DestructuringLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\EffectInspection::class)]
+#[UsesClass(\Deriver\Source\Lowering\ExpressionLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\InstructionEmitter::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringScope::class)]
+#[UsesClass(\Deriver\Source\Lowering\StatementLowering::class)]
 #[UsesClass(\Deriver\Source\Declaration\CallSiteIndex::class)]
 #[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
 #[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
 #[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
-#[UsesClass(\Deriver\Source\LineMap::class)]
-#[UsesClass(\Deriver\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Lowering\LineMap::class)]
+#[UsesClass(\Deriver\Source\Parsing\MagicContext::class)]
+#[UsesClass(\Deriver\Source\Parsing\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Parsing\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Parsing\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Parsing\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Arithmetic::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Increment::class)]
@@ -231,10 +232,10 @@ final class ObservationCollectorTest extends TestCase
 
     public function testProjectCarriesConfidentialityThroughAbstractSlots(): void
     {
-        $config = new Configuration(stateSlots:[new StateSlot('example.cache', 'array')]);
+        $config = new \Deriver\Model\Registration\Contributions(stateSlots:[new StateSlot('example.cache', 'array')]);
         $state = new State();
         $state->memory->cells['model:box'] = Term::array(['example.cache' => Term::fromNative(['keep' => 'selected'])]);
-        $value = (new ObservationCollector(\Tests\Fake\SolverFixture::context(configuration:$config)))->project(new Term('object', 'box', secret:true), ['keep'], $state, 'example.cache');
+        $value = (new ObservationCollector(\Tests\Fake\SolverFixture::context(contributions:$config)))->project(new Term('object', 'box', secret:true), ['keep'], $state, 'example.cache');
         self::assertSame('selected', $value->native());
         self::assertTrue($value->isSecret());
     }
@@ -256,9 +257,9 @@ final class ObservationCollectorTest extends TestCase
 
     public function testProjectDelegatesRegisteredDomainProjectionWithoutErasingConfidentiality(): void
     {
-        $config = new Configuration(domains:[new \Tests\Fake\PolicyDomain()]);
+        $config = new \Deriver\Model\Registration\Contributions(domains:[new \Tests\Fake\PolicyDomain()]);
         $input = new Term('domain', 'example.policy', ['representation' => Term::fromNative(['keep' => 'selected'])], secret:true);
-        $value = (new ObservationCollector(\Tests\Fake\SolverFixture::context(configuration:$config)))->project($input, ['keep'], new State());
+        $value = (new ObservationCollector(\Tests\Fake\SolverFixture::context(contributions:$config)))->project($input, ['keep'], new State());
         self::assertSame('domain', $value->kind);
         self::assertSame('example.policy', $value->literal);
         self::assertSame('selected', $value->operands['representation']->native());

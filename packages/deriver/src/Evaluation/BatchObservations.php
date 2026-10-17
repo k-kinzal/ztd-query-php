@@ -14,7 +14,8 @@ use Deriver\Query\ValueQuery;
 
 /**
  * Collects separate observation results from one execution with one shared budget.
- * @visibility root
+ * @visibility namespace
+ * @visibility Deriver\Analysis\Execution
  */
 final class BatchObservations
 {

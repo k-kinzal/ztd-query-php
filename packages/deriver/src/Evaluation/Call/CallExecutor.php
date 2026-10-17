@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\Closure\Binding;
 use Deriver\Evaluation\Completion;
@@ -15,7 +16,7 @@ use Deriver\Value\Term;
 
 /**
  * Resolves and evaluates source bodies and semantic plans through one machine.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CallExecutor
 {

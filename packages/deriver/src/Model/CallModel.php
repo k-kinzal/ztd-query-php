@@ -9,7 +9,7 @@ use Deriver\Exception\ModelException;
 /**
  * Supplies API meaning as a declarative plan; the core binds and evaluates calls.
  *
- * @visibility public
+ * @visibility root
  * @example Describing a model identity
  *     (new \Deriver\Model\ModelDescriptor('keys', '1', 'key'))->id // => 'keys'
  */

@@ -13,7 +13,7 @@ use Deriver\Evaluation\State;
 
 /**
  * Retains declared argument binding while preserving an external implementation's unknown effects.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ExternalBody
 {

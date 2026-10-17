@@ -8,7 +8,7 @@ use Deriver\Value\Term;
 
 /**
  * An ArrayAccess receiver and the remaining evaluated offset chain.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ProtocolAccess
 {

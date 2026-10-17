@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Deriver\Analyzer;
 use Deriver\Exception\ModelException;
 use Deriver\Model\CallModel;
 use Deriver\Model\Domain\AbstractDomain;
@@ -42,7 +41,7 @@ final class ExtensionFailureTest extends TestCase
         $failure = new ModelException('Provider export failed');
         $provider->method('declarations')->willThrowException($failure);
         $this->expectExceptionObject($failure);
-        (new Analyzer())->open(new ProjectInput([]), new Configuration(providers: [$provider]));
+        new \Deriver\Session\Session(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(providers: [$provider]));
     }
 
     /**
@@ -56,7 +55,7 @@ final class ExtensionFailureTest extends TestCase
         $failure = new ModelException('Provider export failed');
         $provider->method('environment')->willThrowException($failure);
         $this->expectExceptionObject($failure);
-        (new Analyzer())->open(new ProjectInput([]), new Configuration(providers: [$provider]));
+        new \Deriver\Session\Session(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(providers: [$provider]));
     }
 
     /**
@@ -70,7 +69,7 @@ final class ExtensionFailureTest extends TestCase
         $failure = new ModelException('Provider export failed');
         $provider->method('entries')->willThrowException($failure);
         $this->expectExceptionObject($failure);
-        (new Analyzer())->open(new ProjectInput([]), new Configuration(providers: [$provider]));
+        new \Deriver\Session\Session(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(providers: [$provider]));
     }
 
     /**
@@ -84,7 +83,7 @@ final class ExtensionFailureTest extends TestCase
         $failure = new ModelException('Provider export failed');
         $provider->method('domains')->willThrowException($failure);
         $this->expectExceptionObject($failure);
-        (new Analyzer())->open(new ProjectInput([]), new Configuration(providers: [$provider]));
+        new \Deriver\Session\Session(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(providers: [$provider]));
     }
 
     /**
@@ -96,7 +95,7 @@ final class ExtensionFailureTest extends TestCase
         $failure = new ModelException('Provider implementation error');
         $provider->method('id')->willThrowException($failure);
         $this->expectExceptionObject($failure);
-        (new Analyzer())->open(new ProjectInput([]), new Configuration(providers: [$provider]));
+        new \Deriver\Session\Session(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(providers: [$provider]));
     }
 
     /**
@@ -108,7 +107,7 @@ final class ExtensionFailureTest extends TestCase
         $failure = new ModelException('Model descriptor implementation error');
         $model->method('descriptor')->willThrowException($failure);
         $this->expectExceptionObject($failure);
-        (new Analyzer())->open(new ProjectInput([]), new Configuration(models: [$model]));
+        new \Deriver\Session\Session(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(models: [$model]));
     }
 
     /**
@@ -120,7 +119,7 @@ final class ExtensionFailureTest extends TestCase
         $failure = new ModelException('Intrinsic descriptor implementation error');
         $intrinsic->method('descriptor')->willThrowException($failure);
         $this->expectExceptionObject($failure);
-        (new Analyzer())->open(new ProjectInput([]), new Configuration(intrinsics: [$intrinsic]));
+        new \Deriver\Session\Session(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(intrinsics: [$intrinsic]));
     }
 
     /**
@@ -132,7 +131,7 @@ final class ExtensionFailureTest extends TestCase
         $failure = new ModelException('Domain implementation error');
         $domain->method('bottom')->willThrowException($failure);
         $this->expectExceptionObject($failure);
-        (new Analyzer())->open(new ProjectInput([]), new Configuration(domains: [$domain]));
+        new \Deriver\Session\Session(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(domains: [$domain]));
     }
 
     /**
@@ -144,7 +143,7 @@ final class ExtensionFailureTest extends TestCase
         $model->method('descriptor')->willReturn(new ModelDescriptor('broken', '1', 'external'));
         $failure = new ModelException('Model implementation error');
         $model->method('describe')->willThrowException($failure);
-        $session = Analysis::session('<?php function target(){try{return external();}catch(Throwable $e){return "hidden";}}', new Configuration(models: [$model]));
+        $session = Analysis::session('<?php function target(){try{return external();}catch(Throwable $e){return "hidden";}}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $this->expectExceptionObject($failure);
         $session->derive(new ReturnQuery('target'));
     }
@@ -159,7 +158,7 @@ final class ExtensionFailureTest extends TestCase
         $provider->method('version')->willReturn('1');
         $failure = new ModelException('Cannot obtain observations');
         $provider->method('queries')->willThrowException($failure);
-        $session = Analysis::session('<?php function target(){return 1;}', new Configuration(providers: [$provider]));
+        $session = Analysis::session('<?php function target(){return 1;}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers: [$provider]));
         $this->expectExceptionObject($failure);
         $session->observations();
     }
@@ -174,7 +173,7 @@ final class ExtensionFailureTest extends TestCase
         $provider->method('version')->willReturn('1');
         $failure = new ModelException('Dispatch implementation error');
         $provider->method('resolve')->willThrowException($failure);
-        $session = Analysis::session('<?php interface Service {function value();} function target(Service $service){return $service->value();}', new Configuration(providers: [$provider]));
+        $session = Analysis::session('<?php interface Service {function value();} function target(Service $service){return $service->value();}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers: [$provider]));
         $this->expectExceptionObject($failure);
         $session->derive(new ReturnQuery('target'));
     }
@@ -189,7 +188,7 @@ final class ExtensionFailureTest extends TestCase
         $provider->method('version')->willReturn('1');
         $failure = new ModelException('Refinement implementation error');
         $provider->method('refine')->willThrowException($failure);
-        $session = Analysis::session('<?php function target(bool $flag){return $flag ? 1 : 2;}', new Configuration(providers: [$provider]));
+        $session = Analysis::session('<?php function target(bool $flag){return $flag ? 1 : 2;}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers: [$provider]));
         $this->expectExceptionObject($failure);
         $session->derive(new ReturnQuery('target'));
     }

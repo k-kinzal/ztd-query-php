@@ -10,7 +10,7 @@ use Deriver\Model\Domain\DomainFact;
 /**
  * Finite contract checks for third-party domains; samples do not prove arbitrary laws.
  *
- * @visibility public
+ * @visibility root
  * @example Domain checks return named counterexamples
  *     method_exists(\Deriver\Model\Contract\DomainLaws::class, 'violations') // => true
  */

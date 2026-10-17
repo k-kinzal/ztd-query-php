@@ -13,7 +13,7 @@ use Deriver\Evaluation\State;
 
 /**
  * Reads compound-assignment storage after the right operand has completed.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CompoundAssignment
 {

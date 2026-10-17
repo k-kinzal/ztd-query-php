@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Analysis\Session;
+use Deriver\Candidate\Cache;
+use Deriver\Candidate\Context;
+use Deriver\Candidate\Derivation;
+use Deriver\Candidate\Frame;
+use Deriver\Candidate\Index\DefinitionIndex;
 use Deriver\ControlFlow\Instruction;
-use Deriver\Evaluation\Candidate\Cache;
-use Deriver\Evaluation\Candidate\Context;
-use Deriver\Evaluation\Candidate\Derivation;
-use Deriver\Evaluation\Candidate\Frame;
-use Deriver\Evaluation\Candidate\Index;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\Budget;
+use Deriver\Session\Session;
 use JsonException;
 use LogicException;
 
@@ -28,10 +28,10 @@ final class CandidateFixture
      * Creates a query context without advancing a program state.
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public static function evaluator(string $source = 'function target($x){return $x+2;}', Configuration $configuration = new Configuration(), Budget $budget = new Budget()): Derivation
+    public static function evaluator(string $source = 'function target($x){return $x+2;}', Configuration $configuration = new Configuration(), Budget $budget = new Budget(), \Deriver\Model\Registration\Contributions $contributions = new \Deriver\Model\Registration\Contributions()): Derivation
     {
-        $session = new Session(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration);
-        return new Derivation(new Context(new Index($session->program), $configuration, $session->models, $budget, new Cache()));
+        $session = new Session(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration, $contributions);
+        return new Derivation(new Context(new DefinitionIndex($session->program), $configuration, $session->models, $budget, new Cache()));
     }
 
     /**
@@ -63,7 +63,7 @@ final class CandidateFixture
      */
     public static function value(Derivation $evaluator): \Deriver\Value\Term
     {
-        $alternatives = (new \Deriver\Evaluation\Candidate\Choices())->alternatives($evaluator->returns(self::frame($evaluator), 64));
+        $alternatives = (new \Deriver\Candidate\Choices())->alternatives($evaluator->returns(self::frame($evaluator), 64));
         $values = [];
         foreach ($alternatives as [$value, $_]) {
             $values[(new \Deriver\Value\Identity())->key($value)] = $value;

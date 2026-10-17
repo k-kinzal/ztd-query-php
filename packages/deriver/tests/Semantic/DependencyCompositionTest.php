@@ -78,7 +78,7 @@ final class DependencyCompositionTest extends TestCase
     public function testReplacementCannotBeBypassedThroughPropertyOrigins(string $symbol, string $entry): void
     {
         $model = new PlanModel(new ModelDescriptor('replacement', '1', $symbol), new SemanticPlan([]));
-        $session = CandidateContractTest::session('class Box{public $table="ledger";function __construct(){$this->table="source_only";}function change(){$this->table="method_only";}function tableName(){return $this->table;}}function target(){return (new Box)->tableName();}', new Configuration(models: [$model]));
+        $session = CandidateContractTest::session('class Box{public $table="ledger";function __construct(){$this->table="source_only";}function change(){$this->table="method_only";}function tableName(){return $this->table;}}function target(){return (new Box)->tableName();}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery($entry));
         self::assertArrayNotHasKey($symbol, $result->statistics->expandedBodies);
         $values = CandidateContractTest::native($result, 'return');
@@ -105,7 +105,7 @@ final class DependencyCompositionTest extends TestCase
         $symbol = 'Box::'.$method;
         $call = $method === '__construct' ? 'new Box("'.$mode.'")' : '(new Box)->change("'.$mode.'")';
         $source = 'class Box{public $value="initial";function '.$method.'($mode){$this->value="source_only";}function get(){return $this->value;}}function target(){'.$call.';}';
-        $session = CandidateContractTest::session($source, new Configuration(models: [new \Tests\Fake\PropertyDecisionModel($symbol)]));
+        $session = CandidateContractTest::session($source, new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [new \Tests\Fake\PropertyDecisionModel($symbol)]));
         $result = $session->derive(new ReturnQuery('Box::get'));
         self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
         if ($mode === 'source') {
@@ -151,7 +151,7 @@ final class DependencyCompositionTest extends TestCase
     public function testPropertyOriginDispatchHonorsTheChildReplacement(): void
     {
         $model = new PlanModel(new ModelDescriptor('child-change', '1', 'ChildBox::change'), new SemanticPlan([]));
-        $session = CandidateContractTest::session('class Box{public $value="initial";function change(){$this->value="parent_source";}function get(){return $this->value;}}class ChildBox extends Box{function change(){$this->value="child_source";}}function apply(Box $box){$box->change();}function target(){apply(new ChildBox);}', new Configuration(models: [$model]));
+        $session = CandidateContractTest::session('class Box{public $value="initial";function change(){$this->value="parent_source";}function get(){return $this->value;}}class ChildBox extends Box{function change(){$this->value="child_source";}}function apply(Box $box){$box->change();}function target(){apply(new ChildBox);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('Box::get'));
         self::assertSame(['initial'], CandidateContractTest::native($result, 'return'));
         self::assertSame([], $result->statistics->expandedBodies);

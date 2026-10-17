@@ -9,8 +9,8 @@ require getenv('DERIVER_BENCH_AUTOLOAD') ?: dirname(__DIR__) . '/vendor/autoload
 use Deriver\Analyzer;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
+use Deriver\Project\ResourceLimits;
 use Deriver\Project\SourceFile;
-use Deriver\Query\ResourceLimits;
 use Deriver\Query\ReturnQuery;
 use Deriver\Query\ValueQuery;
 

@@ -10,14 +10,14 @@ use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Call\TypeCheck;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Memory\ReferenceConstraint;
 use Deriver\Evaluation\State;
-use Deriver\Memory\ReferenceConstraint;
 use Deriver\Value\Identity;
 use Deriver\Value\Term;
 
 /**
  * Enforces all live property declarations when their shared cell is written indirectly.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ReferenceAssignment
 {

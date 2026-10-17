@@ -6,7 +6,7 @@ namespace Deriver\Evaluation\Demand;
 
 /**
  * Names one computation in a snapshot, projection, state, and constraint partition.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Key
 {

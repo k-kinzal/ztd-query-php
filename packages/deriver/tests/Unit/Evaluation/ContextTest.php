@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation;
 
+use Deriver\Diagnostic\Frontier;
 use Deriver\Evaluation\Context;
 use Deriver\Model\Provider\Provider;
 use Deriver\Model\Registration\Registry;
+use Deriver\Project\CancellationToken;
 use Deriver\Project\Configuration;
 use Deriver\Project\EntryPoint;
+use Deriver\Project\ResourceLimits;
 use Deriver\Query\Budget;
-use Deriver\Query\CancellationToken;
 use Deriver\Query\QueryScope;
-use Deriver\Query\ResourceLimits;
 use Deriver\Query\ReturnQuery;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Derivation;
-use Deriver\Result\Frontier;
+use Deriver\Result\Execution\Derivation;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -25,10 +25,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Context::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
-#[UsesClass(\Deriver\Analysis\Session::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
+#[UsesClass(\Deriver\Session\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
@@ -37,13 +37,13 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\ControlFlow\Terminator::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\ArgumentOrder::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeBinding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\TypeCheck::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ResidualPaths::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Cell::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Components::class)]
@@ -65,11 +65,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Summary\Isolation::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
-#[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
+#[UsesClass(\Deriver\Model\Registration\ProviderExpansion::class)]
 #[UsesClass(Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
 #[UsesClass(Configuration::class)]
@@ -86,39 +86,40 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
 #[UsesClass(Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
 #[UsesClass(Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphCache::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphTemplate::class)]
-#[UsesClass(\Deriver\Source\Cache\SnapshotRebase::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
-#[UsesClass(\Deriver\Source\Compilation\AssignmentLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
-#[UsesClass(\Deriver\Source\Compilation\Control\DestructuringLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\ExpressionLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
-#[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\StatementLowering::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
+#[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
+#[UsesClass(\Deriver\Source\Parsing\SourceParser::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParsedFile::class)]
+#[UsesClass(\Deriver\Source\Lowering\AssignmentLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\CallableLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\Control\DestructuringLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\ExpressionLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\InstructionEmitter::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringScope::class)]
+#[UsesClass(\Deriver\Source\Lowering\StatementLowering::class)]
 #[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
 #[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
 #[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
-#[UsesClass(\Deriver\Source\LineMap::class)]
-#[UsesClass(\Deriver\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Lowering\LineMap::class)]
+#[UsesClass(\Deriver\Source\Parsing\MagicContext::class)]
+#[UsesClass(\Deriver\Source\Parsing\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Parsing\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Parsing\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Parsing\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(Term::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
@@ -177,10 +178,11 @@ final class ContextTest extends TestCase
         $provider = self::createStub(Provider::class);
         $provider->method('id')->willReturn('project.contracts');
         $provider->method('version')->willReturn('4');
-        $config = new Configuration(closedWorld:true, environmentVersion:'deployment-7', providers:[$provider]);
+        $config = new Configuration(closedWorld:true, environmentVersion:'deployment-7');
+        $contributions = new \Deriver\Model\Registration\Contributions(providers:[$provider]);
         $fixture = \Tests\Fake\SolverFixture::context();
         $query = new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('target')]));
-        $context = new Context($fixture->program, $query, $config, new Registry($config));
+        $context = new Context($fixture->program, $query, $config, new Registry($config, $contributions));
         self::assertTrue($context->available(new SourceRef('test', 'fixture.php', 0, 1)));
         self::assertSame(['target:php-8.3-64bit','scope:entrypoint','world:closed','environment:deployment-7','provider:project.contracts@4'], $context->assumptions);
         self::assertSame([], $context->frontiers);

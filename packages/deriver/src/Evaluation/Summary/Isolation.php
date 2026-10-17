@@ -16,7 +16,7 @@ use WeakMap;
 
 /**
  * Proves that a source call tree only mutates its own reference-free local storage.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Isolation
 {

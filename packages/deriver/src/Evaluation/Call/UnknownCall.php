@@ -13,7 +13,7 @@ use Deriver\Value\Term;
 
 /**
  * Preserves normal and exceptional residuals and conservatively invalidates effects.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class UnknownCall
 {

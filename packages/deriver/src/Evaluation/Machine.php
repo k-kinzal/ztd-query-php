@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\CallableIdentity;
 use Deriver\ControlFlow\Instruction;
@@ -15,13 +14,14 @@ use Deriver\Evaluation\Control\ResidualPaths;
 use Deriver\Evaluation\Control\StateJoin;
 use Deriver\Evaluation\Control\Unwinding;
 use Deriver\Evaluation\Demand\Discovery;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Summary\Evaluation;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Executes demanded control-flow graphs over correlated abstract states.
- * @visibility root
+ * @visibility namespace
+ * @visibility Deriver\Analysis\Execution
  */
 final class Machine
 {

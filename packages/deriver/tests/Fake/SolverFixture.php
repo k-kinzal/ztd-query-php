@@ -23,12 +23,13 @@ final class SolverFixture
      * Creates independent query-local state without running application code.
      * @param string $source Fixture source bytes
      * @param Budget $budget Logical test budget
-     * @param Configuration $configuration Captured test models and assumptions
+     * @param Configuration $configuration Captured test assumptions
+     * @param \Deriver\Model\Registration\Contributions $contributions Captured test models
      * @return Context Fresh solver context
      */
-    public static function context(string $source = '<?php function target(){return 1;}', Budget $budget = new Budget(), Configuration $configuration = new Configuration()): Context
+    public static function context(string $source = '<?php function target(){return 1;}', Budget $budget = new Budget(), Configuration $configuration = new Configuration(), \Deriver\Model\Registration\Contributions $contributions = new \Deriver\Model\Registration\Contributions()): Context
     {
         $program = new ProjectIndex('test', new ProjectInput([new SourceFile('fixture.php', $source)]), $configuration->target);
-        return new Context($program, new ReturnQuery('target', budget: $budget), $configuration, new Registry($configuration));
+        return new Context($program, new ReturnQuery('target', budget: $budget), $configuration, new Registry($configuration, $contributions));
     }
 }

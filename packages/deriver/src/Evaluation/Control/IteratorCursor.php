@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Control;
 
-use Deriver\Memory\Location;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * A foreach snapshot or a live reference to its iterable.
  *
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class IteratorCursor
 {

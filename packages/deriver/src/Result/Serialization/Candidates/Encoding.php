@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Deriver\Result\Serialization\Candidates;
 
-use Deriver\Result\Candidates\CandidateCollection;
+use Deriver\Result\CandidateCollection;
 use Deriver\Result\Serialization\JsonText;
 use Deriver\Result\Serialization\ValueGraph;
 use stdClass;
 
 /**
  * Uses native JSON scalars when lossless and the existing PHP graph codec otherwise.
- * @visibility root
+ * @visibility Deriver\Result
  */
 final class Encoding
 {

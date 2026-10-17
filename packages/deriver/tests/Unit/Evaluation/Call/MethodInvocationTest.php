@@ -8,14 +8,14 @@ use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\Member\Invocation;
 use Deriver\Evaluation\Call\MethodInvocation;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Model\Provider\DispatchDecision;
 use Deriver\Model\Provider\DispatchProvider;
 use Deriver\Model\Provider\DispatchTarget;
 use Deriver\Project\Configuration;
 use Deriver\Query\ReturnQuery;
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -25,17 +25,17 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\SolverFixture;
 
 #[CoversClass(MethodInvocation::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
 #[UsesClass(\Deriver\Model\Registration\SignatureIdentity::class)]
 #[UsesClass(\Deriver\Model\Registration\ModelPrecedence::class)]
 #[UsesClass(\Deriver\Model\Registration\Declarations::class)]
 #[UsesClass(\Deriver\Evaluation\Call\SymbolicEnums::class)]
-#[UsesClass(\Deriver\Analysis\QueryExecution::class)]
-#[UsesClass(\Deriver\Analysis\QueryValidation::class)]
-#[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
-#[UsesClass(\Deriver\Analysis\Session::class)]
+#[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
+#[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
+#[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
+#[UsesClass(\Deriver\Session\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
-#[UsesClass(\Deriver\Constraint\Constraints::class)]
+#[UsesClass(\Deriver\Evaluation\Constraints::class)]
 #[UsesClass(\Deriver\ControlFlow\Argument::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
@@ -57,9 +57,9 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Call\Closure\Binding::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Closure\Capture::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Creation\Access::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Dispatch::class)]
-#[UsesClass(\Deriver\Evaluation\Call\Member\Access::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Builtins::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Dispatch::class)]
+#[UsesClass(\Deriver\ControlFlow\Hierarchy\Access::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Member\Constants::class)]
 #[UsesClass(Invocation::class)]
 #[UsesClass(\Deriver\Evaluation\Call\Model\Inputs::class)]
@@ -87,7 +87,7 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Control\ExceptionMatch::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Handler::class)]
 #[UsesClass(\Deriver\Evaluation\Control\ObservationLimit::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(\Deriver\Evaluation\Control\StateJoin::class)]
 #[UsesClass(\Deriver\Evaluation\Control\Unwinding::class)]
 #[UsesClass(\Deriver\Evaluation\Demand\Cell::class)]
@@ -120,10 +120,10 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Evaluation\Transfer\PureStep::class)]
 #[UsesClass(\Deriver\Evaluation\Transfer\ReferenceAssignment::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
-#[UsesClass(\Deriver\Memory\ReferenceConstraint::class)]
-#[UsesClass(\Deriver\Memory\StorageCapture::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
 #[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
 #[UsesClass(\Deriver\Model\Builtin\FunctionModel::class)]
@@ -143,11 +143,11 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Model\Provider\DispatchRequest::class)]
 #[UsesClass(DispatchTarget::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
-#[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
+#[UsesClass(\Deriver\Model\Registration\ProviderExpansion::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
-#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
-#[UsesClass(\Deriver\Model\Signature\Signature::class)]
+#[UsesClass(\Deriver\Project\Declaration\Parameter::class)]
+#[UsesClass(\Deriver\Project\Declaration\Signature::class)]
 #[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Project\EntryPoint::class)]
 #[UsesClass(\Deriver\Project\ProjectInput::class)]
@@ -157,46 +157,47 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
 #[UsesClass(Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphCache::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphTemplate::class)]
-#[UsesClass(\Deriver\Source\Cache\SnapshotRebase::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
-#[UsesClass(\Deriver\Source\Compilation\AggregateLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\AssignmentLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\CallLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
-#[UsesClass(\Deriver\Source\Compilation\Control\DestructuringLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\Control\ExceptionLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\ExpressionLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
-#[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\StatementLowering::class)]
-#[UsesClass(\Deriver\Source\ConstantSignatures::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
+#[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
+#[UsesClass(\Deriver\Source\Parsing\SourceParser::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParsedFile::class)]
+#[UsesClass(\Deriver\Source\Lowering\AggregateLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\AssignmentLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\CallLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\CallableLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\Control\DestructuringLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\Control\ExceptionLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\ExpressionLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\InstructionEmitter::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringScope::class)]
+#[UsesClass(\Deriver\Source\Lowering\StatementLowering::class)]
+#[UsesClass(\Deriver\Source\Declaration\ConstantSignatures::class)]
 #[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
 #[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
 #[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
-#[UsesClass(\Deriver\Source\LineMap::class)]
-#[UsesClass(\Deriver\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Lowering\LineMap::class)]
+#[UsesClass(\Deriver\Source\Parsing\MagicContext::class)]
+#[UsesClass(\Deriver\Source\Parsing\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Parsing\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Parsing\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Parsing\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
@@ -362,7 +363,7 @@ final class MethodInvocationTest extends TestCase
         $provider->method('id')->willReturn('example.dispatch');
         $provider->method('version')->willReturn('1');
         $provider->method('resolve')->willReturn(new DispatchDecision([new DispatchTarget('provided')], true));
-        $context = SolverFixture::context('<?php class Box{static function run(){return 1;}}function provided(){return 2;}function target(){}', configuration:new Configuration(providers:[$provider]));
+        $context = SolverFixture::context('<?php class Box{static function run(){return 1;}}function provided(){return 2;}function target(){}', configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers:[$provider]));
         $caller = $context->program->callable('target');
         self::assertNotNull($caller);
         $state = new State();
@@ -403,17 +404,17 @@ final class MethodInvocationTest extends TestCase
     public function testModeledInvokesUserModelsOnATypeBoundWithoutSource(): void
     {
         $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.missing-run', '1', 'Missing::run'), new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(Term::constant(7)))]));
-        $session = \Tests\Fake\Analysis::session('<?php function target(?Missing $value){return $value->run();}', new Configuration(closedWorld:true, models:[$model]));
+        $session = \Tests\Fake\Analysis::session('<?php function target(?Missing $value){return $value->run();}', new Configuration(closedWorld:true), contributions: new \Deriver\Model\Registration\Contributions(models:[$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([7], array_map(static fn (Alternative $a): int|float|string|bool|null => $a->values['return']->literal, $result->normalOutcomes));
-        self::assertContains('Error', array_map(static fn (\Deriver\Result\Exceptional $e): mixed => $e->exception->literal, $result->exceptionalOutcomes));
+        self::assertContains('Error', array_map(static fn (\Deriver\Result\Execution\Exceptional $e): mixed => $e->exception->literal, $result->exceptionalOutcomes));
         self::assertSame([], $result->frontiers);
     }
 
     public function testModeledLeavesSelectedSourceImplementationsAndUnmodeledTypesToDispatch(): void
     {
         $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.missing-run', '1', 'Missing::run'), new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(Term::constant(7)))]));
-        $context = SolverFixture::context(configuration:new Configuration(models:[$model]));
+        $context = SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$model]));
         $caller = $context->program->callable('target');
         self::assertNotNull($caller);
         $invocation = new MethodInvocation(new Machine($context));

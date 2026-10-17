@@ -9,7 +9,7 @@ use Deriver\Evaluation\Call\Model\Inputs;
 use Deriver\Evaluation\Call\PassedArgument;
 use Deriver\Evaluation\State;
 use Deriver\Model\ModelDescriptor;
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -30,16 +30,16 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(PassedArgument::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(State::class)]
-#[UsesClass(\Deriver\Memory\Location::class)]
-#[UsesClass(\Deriver\Memory\Materialization::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Location::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Materialization::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
 #[UsesClass(\Deriver\Model\Binding\ArgumentBindings::class)]
 #[UsesClass(\Deriver\Model\Binding\BoundArgument::class)]
 #[UsesClass(\Deriver\Model\Binding\LocationRef::class)]
 #[UsesClass(\Deriver\Model\Compilation\PlanCompiler::class)]
 #[UsesClass(ModelDescriptor::class)]
 #[UsesClass(\Deriver\Model\Plan\SemanticPlan::class)]
-#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
+#[UsesClass(\Deriver\Project\Declaration\Parameter::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(SourceRef::class)]
 #[UsesClass(Term::class)]
@@ -48,7 +48,7 @@ final class InputsTest extends TestCase
 {
     public function testBindingsNormalizesNamedDefaultsAndVariadicKeys(): void
     {
-        $descriptor = new ModelDescriptor('sample', '1', 'sample', new Signature([new \Deriver\Model\Signature\Parameter('id', default: Term::constant(3)), new \Deriver\Model\Signature\Parameter('rest', variadic: true)]));
+        $descriptor = new ModelDescriptor('sample', '1', 'sample', new Signature([new \Deriver\Project\Declaration\Parameter('id', default: Term::constant(3)), new \Deriver\Project\Declaration\Parameter('rest', variadic: true)]));
         $instruction = new Instruction('call', 'invoke', new SourceRef('test', 'fixture.php', 0, 1));
         $bindings = (new Inputs())->bindings($descriptor, $instruction, [new PassedArgument(Term::constant(2), 'named')], new State());
         self::assertTrue($bindings->evaluated);
@@ -58,7 +58,7 @@ final class InputsTest extends TestCase
     }
     public function testBindingsReadsCurrentReferenceCellWithoutExposingItsIdentity(): void
     {
-        $descriptor = new ModelDescriptor('sample', '1', 'sample', new Signature([new \Deriver\Model\Signature\Parameter('id', byReference: true)]));
+        $descriptor = new ModelDescriptor('sample', '1', 'sample', new Signature([new \Deriver\Project\Declaration\Parameter('id', byReference: true)]));
         $instruction = new Instruction('call', 'invoke', new SourceRef('test', 'fixture.php', 0, 1));
         $state = new State();
         $address = $state->local('source');
@@ -80,7 +80,7 @@ final class InputsTest extends TestCase
         $location = $state->local('source');
         $state->memory->write($location, Term::constant(4));
         $actual = new PassedArgument(Term::fromNative(['key' => 1]), elements: ['key' => new PassedArgument(Term::constant(1), location: $location)]);
-        $value = (new Inputs())->value(new \Deriver\Model\Signature\Parameter('items', byReference: true, variadic: true), $actual, $state);
+        $value = (new Inputs())->value(new \Deriver\Project\Declaration\Parameter('items', byReference: true, variadic: true), $actual, $state);
         self::assertSame(['key' => 4], $value->native());
     }
 }

@@ -9,7 +9,7 @@ use Deriver\Value\Term;
 /**
  * An immutable fact owned by a registered abstract domain.
  *
- * @visibility public
+ * @visibility root
  * @example Inspecting the contract
  *     (new \Deriver\Model\Domain\DomainFact('policy', \Deriver\Value\Term::array([])))->domain // => 'policy'
  */

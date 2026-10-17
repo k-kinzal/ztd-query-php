@@ -15,7 +15,7 @@ use Deriver\Query\ValueQuery;
 
 /**
  * Discovers backward SSA dependencies while retaining all possible state and exit effects.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Discovery
 {

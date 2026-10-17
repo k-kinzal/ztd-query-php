@@ -11,7 +11,7 @@ use Deriver\Evaluation\State;
 
 /**
  * Matches argument positions and names to a captured reference signature.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Modes
 {

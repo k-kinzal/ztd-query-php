@@ -14,7 +14,7 @@ use Deriver\Value\Term;
 
 /**
  * Evaluates the supported callable predicate and retains unmodeled overload effects.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CallablePredicate
 {

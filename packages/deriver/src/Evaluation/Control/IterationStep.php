@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Control;
 
-use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\Instruction;
+use Deriver\Evaluation\Constraints;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Havoc;
+use Deriver\Evaluation\Memory\LiveArray;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
 use Deriver\Evaluation\Transfer\MemoryStep;
-use Deriver\Memory\LiveArray;
-use Deriver\Memory\Location;
 use Deriver\Model\Builtin\TypePredicates;
 use Deriver\Value\Arrays;
 use Deriver\Value\Term;
 
 /**
  * Evaluates finite foreach cursors, known heads of symbolic merges, and referenced element addresses.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class IterationStep
 {

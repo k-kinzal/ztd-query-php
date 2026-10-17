@@ -11,7 +11,7 @@ use Deriver\Model\Provider\DispatchRequest;
 
 /**
  * Combines provider candidates while keeping completeness and provenance explicit.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ProviderDispatch
 {
@@ -32,7 +32,7 @@ final class ProviderDispatch
         $targets = [];
         $exhaustive = false;
         $assumptions = [];
-        foreach ($this->context->configuration->providers as $provider) {
+        foreach ($this->context->models->contributions->providers as $provider) {
             if (!$provider instanceof DispatchProvider) {
                 continue;
             }

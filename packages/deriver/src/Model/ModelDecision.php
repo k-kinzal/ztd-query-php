@@ -9,7 +9,7 @@ use Deriver\Model\Plan\SemanticPlan;
 /**
  * Distinguishes a handled call, a declined matcher, and an unsupported overload.
  *
- * @visibility public
+ * @visibility root
  * @example Declining an unrelated call
  *     \Deriver\Model\ModelDecision::declined()->kind // => 'declined'
  */

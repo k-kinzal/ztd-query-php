@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Differential;
 
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -32,7 +32,7 @@ final class CatalogFeedbackTest extends TestCase
         $runtime = RuntimeOracle::observe($source);
         $result = Analysis::returns($source);
         if ($runtime['exception'] !== '') {
-            self::assertContains($runtime['exception'], array_map(static fn (\Deriver\Result\Exceptional $outcome) => $outcome->exception->attributes['class'] ?? $outcome->exception->literal, $result->exceptionalOutcomes));
+            self::assertContains($runtime['exception'], array_map(static fn (\Deriver\Result\Execution\Exceptional $outcome) => $outcome->exception->attributes['class'] ?? $outcome->exception->literal, $result->exceptionalOutcomes));
         } else {
             self::assertContains($runtime['value']->native(), array_map(static fn (Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes));
         }

@@ -5,23 +5,24 @@ declare(strict_types=1);
 namespace Deriver\Evaluation;
 
 use Deriver\ControlFlow\Program;
-use Deriver\Evaluation\Control\Resources;
+use Deriver\Diagnostic\Frontier;
 use Deriver\Evaluation\Demand\Table;
 use Deriver\Model\Registration\Registry;
 use Deriver\Project\Configuration;
 use Deriver\Query\Query;
+use Deriver\Query\Resources;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Alternative;
-use Deriver\Result\Derivation;
-use Deriver\Result\Exceptional;
-use Deriver\Result\Frontier;
+use Deriver\Result\Execution\Alternative;
+use Deriver\Result\Execution\Derivation;
+use Deriver\Result\Execution\Exceptional;
 use Deriver\Value\Identity;
 use Deriver\Value\Term;
 use WeakMap;
 
 /**
  * Query-local work budget, dependency evidence, observations, and model registry.
- * @visibility root
+ * @visibility namespace
+ * @visibility Deriver\Analysis\Execution
  */
 final class Context
 {
@@ -121,7 +122,7 @@ final class Context
         $this->resources = $resources ?? new Resources($configuration->resources);
         $this->identity = new Identity();
         $this->assumptions = ['target:' . $configuration->target->id(), 'scope:' . $query->scope()->mode, 'world:' . ($configuration->closedWorld ? 'closed' : 'open'), 'environment:' . $configuration->environmentVersion];
-        foreach ($configuration->providers as $provider) {
+        foreach ($models->contributions->providers as $provider) {
             [$id, $version] = [$provider->id(), $provider->version()];
             $this->assumptions[] = 'provider:' . $id . '@' . $version;
         }

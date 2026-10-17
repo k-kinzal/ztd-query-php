@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Evaluation\Model;
 
 use Deriver\ControlFlow\Instruction;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\Model\StateStorage;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Model\State\StateSlot;
 use Deriver\Project\Configuration;
 use Deriver\Reference\SourceRef;
@@ -26,10 +26,10 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(Instruction::class)]
 #[UsesClass(\Deriver\Evaluation\Completion::class)]
 #[UsesClass(\Deriver\Evaluation\Context::class)]
-#[UsesClass(\Deriver\Evaluation\Control\Resources::class)]
+#[UsesClass(\Deriver\Query\Resources::class)]
 #[UsesClass(State::class)]
 #[UsesClass(Location::class)]
-#[UsesClass(\Deriver\Memory\Memory::class)]
+#[UsesClass(\Deriver\Evaluation\Memory\Memory::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
@@ -41,25 +41,26 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
+#[UsesClass(\Deriver\Source\Parsing\SourceParser::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParsedFile::class)]
 #[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
 #[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Source\Declaration\ProjectIndex::class)]
 #[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
-#[UsesClass(\Deriver\Source\LineMap::class)]
-#[UsesClass(\Deriver\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Lowering\LineMap::class)]
+#[UsesClass(\Deriver\Source\Parsing\MagicContext::class)]
+#[UsesClass(\Deriver\Source\Parsing\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Parsing\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Parsing\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Parsing\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Arrays::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
-#[UsesClass(\Deriver\Value\Lattice::class)]
+#[UsesClass(\Deriver\Model\Operations\Lattice::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Term::class)]
 #[Small]
@@ -67,7 +68,7 @@ final class StateStorageTest extends TestCase
 {
     public function testAddressDoesNotExposeAnOrdinaryProperty(): void
     {
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
         $state = new State();
         $storage = new StateStorage($context);
 
@@ -81,7 +82,7 @@ final class StateStorageTest extends TestCase
     }
     public function testInitializeDoesNotAssumeAnExternalReceiverHasItsNewObjectDefaults(): void
     {
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
         $state = new State();
         $storage = new StateStorage($context);
 
@@ -91,7 +92,7 @@ final class StateStorageTest extends TestCase
     }
     public function testInitializeCopiesTheCurrentValueOnClone(): void
     {
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
         $state = new State();
         $storage = new StateStorage($context);
 
@@ -102,7 +103,7 @@ final class StateStorageTest extends TestCase
     }
     public function testObserveSelectsTheRegisteredAbstractRecord(): void
     {
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
         $state = new State();
         $storage = new StateStorage($context);
         $storage->initialize($state, 'a');
@@ -112,7 +113,7 @@ final class StateStorageTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidAddress')]
     public function testAddressRejectsInvalidReceiversAndUnknownSlots(Term $receiver, string $slot): void
     {
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots:[new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots:[new StateSlot('example.slot', 'int', Term::constant(1))]));
         $state = new State();
         $state->registers['receiver'] = $receiver;
         $source = new SourceRef('test', 'model:test', 3, 8);
@@ -142,7 +143,7 @@ final class StateStorageTest extends TestCase
     public function testAddressInitializesAcceptedExternalIdentitiesWithSymbolicState(string $kind): void
     {
         $slot = new StateSlot('example.slot', 'int', Term::constant(1));
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots:[$slot]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots:[$slot]));
         $state = new State();
         $state->registers['receiver'] = new Term($kind, 'box');
         $instruction = new Instruction('i', 'model-state-address', new SourceRef('test', 'model:test', 3, 8), 'address', ['receiver'], 'example.slot');
@@ -179,7 +180,7 @@ final class StateStorageTest extends TestCase
         $copy = new StateSlot('example.copy', 'int', Term::constant(1));
         $reset = new StateSlot('example.reset', 'int', Term::constant(2), clone:'reset');
         $symbolic = new StateSlot('example.input', 'string', clone:'reset');
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots:[$copy, $reset, $symbolic]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots:[$copy, $reset, $symbolic]));
         $state = new State();
         $storage = new StateStorage($context);
         $storage->initialize($state, 'original');
@@ -201,7 +202,7 @@ final class StateStorageTest extends TestCase
 
     public function testInitializeCloningAnUnobservedSourceRetainsItsStateIdentity(): void
     {
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots:[new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots:[new StateSlot('example.slot', 'int', Term::constant(1))]));
         $state = new State();
         (new StateStorage($context))->initialize($state, 'clone', 'external');
         $value = $state->memory->read(new Location('model:clone', ['example.slot']));

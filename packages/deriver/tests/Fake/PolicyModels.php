@@ -9,9 +9,9 @@ use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
-use Deriver\Project\Configuration;
+use Deriver\Model\Registration\Contributions;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 
 /**
  * Installs a complete independent model pack using public contracts only.
@@ -20,11 +20,11 @@ use Deriver\Project\Configuration;
 final class PolicyModels
 {
     /**
-     * @return Configuration Explicit policy pack
+     * @return Contributions Explicit policy pack
      */
-    public static function configuration(): Configuration
+    public static function contributions(): Contributions
     {
-        return new Configuration(models: [self::model('compose'), self::model('override'), self::model('uncertain_tags')], intrinsics: [new PolicyOperation('compose'), new PolicyOperation('override'), new PolicyOperation('uncertain-tags')], domains: [new PolicyDomain()]);
+        return new Contributions(models: [self::model('compose'), self::model('override'), self::model('uncertain_tags')], intrinsics: [new PolicyOperation('compose'), new PolicyOperation('override'), new PolicyOperation('uncertain-tags')], domains: [new PolicyDomain()]);
     }
     /**
      * @param string $operation External API operation

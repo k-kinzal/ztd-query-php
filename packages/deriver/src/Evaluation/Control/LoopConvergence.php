@@ -8,13 +8,13 @@ use Deriver\ControlFlow\CallableGraph;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Havoc;
 use Deriver\Evaluation\State;
+use Deriver\Model\Operations\Lattice;
 use Deriver\Value\Arrays;
-use Deriver\Value\Lattice;
 use Deriver\Value\Term;
 
 /**
  * Bounds precise loop expansion and retains an explicit residual state.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class LoopConvergence
 {

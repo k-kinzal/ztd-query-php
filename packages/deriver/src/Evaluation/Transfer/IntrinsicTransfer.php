@@ -19,7 +19,7 @@ use Deriver\Value\Term;
 
 /**
  * Executes declared pure intrinsics and synchronous collection callback semantics.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class IntrinsicTransfer
 {
@@ -42,7 +42,7 @@ final class IntrinsicTransfer
         $values = array_map(fn (string $register): Term => $state->value($register), $instruction->operands);
         foreach ($this->machine->context->models->extensions->intrinsics as $operation => $intrinsic) {
             if ($operation === $instruction->name) {
-                $result = (new \Deriver\Model\Intrinsic\IntrinsicEvaluation())->evaluate($intrinsic, $values, $this->machine->context->configuration->target);
+                $result = (new \Deriver\Model\Operations\IntrinsicEvaluation())->evaluate($intrinsic, $values, $this->machine->context->configuration->target);
                 $state->registers[$instruction->result] = $result;
                 return [$state];
             }

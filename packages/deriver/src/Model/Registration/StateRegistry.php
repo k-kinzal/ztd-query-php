@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Deriver\Model\Registration;
 
 use Deriver\Exception\InvalidInputException;
+use Deriver\Model\Operations\Lattice;
 use Deriver\Model\State\StateSlot;
 use Deriver\Value\Identity;
-use Deriver\Value\Lattice;
 use Deriver\Value\Term;
 
 /**

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Deriver\Analysis\Session;
 use Deriver\AnalysisSession;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Project\Configuration;
 use Deriver\Query\ReturnQuery;
 use Deriver\Reference\ResultRef;
+use Deriver\Session\Session;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
@@ -71,7 +71,7 @@ final class AnalysisSessionTest extends TestCase
      */
     public function testEntrypointsUsesOnlyExplicitProviderContributions(): void
     {
-        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(providers: [new \Tests\Fake\MiniContainer()]));
+        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers: [new \Tests\Fake\MiniContainer()]));
         self::assertSame('entry', $session->entrypoints()[0]->symbol);
         self::assertSame([], \Tests\Fake\Analysis::session('<?php function entry(){}')->entrypoints());
     }
@@ -80,7 +80,7 @@ final class AnalysisSessionTest extends TestCase
      */
     public function testObservationsCreatesQueriesUsingTheCapturedEntries(): void
     {
-        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(providers: [new \Tests\Fake\MiniContainer()]));
+        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers: [new \Tests\Fake\MiniContainer()]));
         $query = $session->observations()['entry-return'];
         self::assertSame('entrypoint', $query->scope()->mode);
         self::assertSame('entry', $query->scope()->entries[0]->symbol);

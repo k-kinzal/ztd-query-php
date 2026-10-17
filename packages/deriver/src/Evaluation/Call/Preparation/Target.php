@@ -8,7 +8,7 @@ use Deriver\ControlFlow\CallableGraph;
 
 /**
  * Signature and access result captured before evaluating call arguments.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Target
 {

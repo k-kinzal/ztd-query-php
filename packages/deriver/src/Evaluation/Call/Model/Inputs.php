@@ -14,12 +14,12 @@ use Deriver\Model\Binding\LocationRef;
 use Deriver\Model\Compilation\PlanCompiler;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
+use Deriver\Project\Declaration\Parameter;
 use Deriver\Value\Term;
 
 /**
  * Exposes evaluated call metadata without allowing models to access mutable solver state.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Inputs
 {

@@ -19,6 +19,6 @@ final class SymbolicEnumsTest extends TestCase
     public function testBindEnumeratesUnitEnumNamesWithoutNonCaseConstants(): void
     {
         $result = \Tests\Fake\Analysis::returns('<?php enum Status{case A;case B;const META=1;}function target(Status $s){return $s->name;}');
-        self::assertEqualsCanonicalizing(['A','B'], array_map(static fn (\Deriver\Result\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes));
+        self::assertEqualsCanonicalizing(['A','B'], array_map(static fn (\Deriver\Result\Execution\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes));
     }
 }

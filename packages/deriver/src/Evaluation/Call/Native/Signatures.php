@@ -6,17 +6,17 @@ namespace Deriver\Evaluation\Call\Native;
 
 use Deriver\ControlFlow\BasicBlock;
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\ControlFlow\Parameter;
 use Deriver\ControlFlow\Program;
 use Deriver\ControlFlow\Terminator;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
 
 /**
  * Captures PHP 8.3 throwable method signatures without loading host classes.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Signatures
 {

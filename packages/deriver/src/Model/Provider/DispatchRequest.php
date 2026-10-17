@@ -10,7 +10,7 @@ use Deriver\Value\Term;
 
 /**
  * Evaluated receiver and method metadata supplied to a trusted dispatch provider.
- * @visibility public
+ * @visibility root
  * @example A dispatch decision keeps its completeness explicit
  *     (new \Deriver\Model\Provider\DispatchDecision())->exhaustive // => false
  */

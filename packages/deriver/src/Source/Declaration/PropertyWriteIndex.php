@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Deriver\Source\Declaration;
 
-use Deriver\Source\Compilation\EffectInspection;
+use Deriver\Source\Lowering\EffectInspection;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 
 /**
  * Selects possible property writers from syntax before lowering any body.
- * @visibility root
+ * @visibility Deriver\Source
  */
 final class PropertyWriteIndex
 {

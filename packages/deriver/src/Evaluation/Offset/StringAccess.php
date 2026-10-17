@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Offset;
 
-use Deriver\Memory\Location;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * A byte position whose assignment updates the containing string cell.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class StringAccess
 {

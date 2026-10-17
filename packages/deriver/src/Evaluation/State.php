@@ -6,13 +6,14 @@ namespace Deriver\Evaluation;
 
 use Deriver\Evaluation\Control\Handler;
 use Deriver\Evaluation\Control\IteratorCursor;
-use Deriver\Memory\Location;
-use Deriver\Memory\Memory;
+use Deriver\Evaluation\Memory\Location;
+use Deriver\Evaluation\Memory\Memory;
 use Deriver\Value\Term;
 
 /**
  * One correlated execution path; forks copy state without sharing mutable memory.
- * @visibility root
+ * @visibility namespace
+ * @visibility Deriver\Analysis\Execution
  */
 final class State
 {

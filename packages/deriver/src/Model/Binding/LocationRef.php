@@ -8,7 +8,7 @@ use Deriver\Model\Plan\Expression;
 
 /**
  * A declarative reference to model storage, resolved by the core after argument binding.
- * @visibility public
+ * @visibility root
  * @example Naming a reference parameter
  *     \Deriver\Model\Binding\LocationRef::parameter('value')->name // => 'value'
  */

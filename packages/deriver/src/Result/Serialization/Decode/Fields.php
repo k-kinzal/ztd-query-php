@@ -9,7 +9,7 @@ use stdClass;
 
 /**
  * Narrows JSON fields before they enter the typed report decoder.
- * @visibility root
+ * @visibility Deriver\Result
  */
 final class Fields
 {

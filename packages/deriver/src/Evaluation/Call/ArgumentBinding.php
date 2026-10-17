@@ -9,13 +9,14 @@ use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\Model\NativeArguments;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Machine;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Value\Term;
 
 /**
  * Binds positional, named, variadic, unpacked, default, and reference arguments.
- * @visibility root
+ * @visibility Deriver\Evaluation
+ * @visibility Deriver\Analysis\Execution
  */
 final class ArgumentBinding
 {

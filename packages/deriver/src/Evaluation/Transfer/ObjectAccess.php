@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Transfer;
 
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\ControlFlow\PropertyDeclaration;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Model\Builtin\TypePredicates;
 use Deriver\Value\Term;
 
 /**
  * Resolves property storage using object identity and lexical declaration scope.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class ObjectAccess
 {

@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Call;
 
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\Evaluation\Context;
 use Deriver\Model\Builtin\Library;
 use Deriver\Value\Term;
 
 /**
  * Checks callable identities against captured declarations without host reflection.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class CallableCheck
 {

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call\Creation;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Access as MemberAccess;
+use Deriver\ControlFlow\Hierarchy\Builtins;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
-use Deriver\Evaluation\Call\Dispatch;
-use Deriver\Evaluation\Call\Member\Access as MemberAccess;
 use Deriver\Evaluation\Call\Member\Invocation;
 use Deriver\Evaluation\Call\Native\Signatures;
 use Deriver\Evaluation\Call\PassedArgument;
@@ -18,7 +19,7 @@ use Deriver\Value\Term;
 
 /**
  * Validates class and lifecycle access before applying object initialization effects.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Access
 {

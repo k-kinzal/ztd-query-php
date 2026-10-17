@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Analysis\Session;
+use Deriver\Evidence\Node;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\ProjectSnapshot;
@@ -12,9 +12,9 @@ use Deriver\Project\SourceFile;
 use Deriver\Project\TargetProfile;
 use Deriver\Query\Budget;
 use Deriver\Query\ReturnQuery;
-use Deriver\Result\Candidates\CandidateCollection;
-use Deriver\Result\Evidence\Alternative;
-use Deriver\Result\Evidence\Node;
+use Deriver\Result\Alternative;
+use Deriver\Result\CandidateCollection;
+use Deriver\Session\Session;
 use JsonException;
 
 /**
@@ -25,17 +25,17 @@ final class CandidateApi
     /**
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public static function session(string $source = 'function target(){return 42;}', Configuration $configuration = new Configuration()): Session
+    public static function session(string $source = 'function target(){return 42;}', Configuration $configuration = new Configuration(), \Deriver\Model\Registration\Contributions $contributions = new \Deriver\Model\Registration\Contributions()): Session
     {
-        return new Session(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration);
+        return new Session(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration, $contributions);
     }
 
     /**
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public static function returns(string $source = 'function target(){return 42;}', Configuration $configuration = new Configuration(), Budget $budget = new Budget()): CandidateCollection
+    public static function returns(string $source = 'function target(){return 42;}', Configuration $configuration = new Configuration(), Budget $budget = new Budget(), \Deriver\Model\Registration\Contributions $contributions = new \Deriver\Model\Registration\Contributions()): CandidateCollection
     {
-        return self::session($source, $configuration)->derive(new ReturnQuery('target', budget: $budget));
+        return self::session($source, $configuration, $contributions)->derive(new ReturnQuery('target', budget: $budget));
     }
 
     /**

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Deriver\Evaluation\Call\Closure;
 
 use Deriver\ControlFlow\CallableGraph;
+use Deriver\ControlFlow\Hierarchy\Dispatch;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Call\CallableCheck;
-use Deriver\Evaluation\Call\Dispatch;
 use Deriver\Evaluation\Call\MethodInvocation;
 use Deriver\Evaluation\Call\Preparation\Transfer;
 use Deriver\Evaluation\Machine;
@@ -16,7 +16,7 @@ use Deriver\Value\Term;
 
 /**
  * Validates first-class callable acquisition and freezes its receiver and access scope.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class Capture
 {

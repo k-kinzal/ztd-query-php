@@ -7,8 +7,8 @@ namespace Tests\Fake;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Project\TargetProfile;
-use Deriver\Source\Compilation\Lowering;
 use Deriver\Source\Declaration\ProjectIndex;
+use Deriver\Source\Lowering\LoweringScope;
 
 /**
  * Supplies captured syntax and independent graph builders for compiler tests.
@@ -26,11 +26,11 @@ final class SourceFixture
     }
 
     /**
-     * @return Lowering New compiler context
+     * @return LoweringScope New compiler context
      */
-    public static function lowering(): Lowering
+    public static function lowering(): LoweringScope
     {
         $index = self::index();
-        return new Lowering($index->builder('fixture.php'), $index, 'target');
+        return new LoweringScope($index->builder('fixture.php'), $index, 'target');
     }
 }

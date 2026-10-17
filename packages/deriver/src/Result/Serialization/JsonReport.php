@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Deriver\Result\Serialization;
 
-use Deriver\Result\DerivationResult;
-use Deriver\Result\Frontier;
-use Deriver\Result\StorageSnapshot;
+use Deriver\Diagnostic\Frontier;
+use Deriver\Result\Execution\DerivationResult;
+use Deriver\Result\Execution\StorageSnapshot;
 use JsonException;
 
 /**
  * Serializes a derivation as versioned JSON without native PHP object serialization.
  *
- * @visibility public
+ * @visibility Deriver\Result
  * @example Encoding a symbolic term as a result uses DerivationResult::toJson()
  *     (new \Deriver\Query\ReturnQuery('run'))->symbol // => 'run'
  */

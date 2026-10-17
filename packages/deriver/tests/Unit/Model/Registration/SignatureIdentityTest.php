@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Registration;
 
 use Deriver\Model\Registration\SignatureIdentity;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;

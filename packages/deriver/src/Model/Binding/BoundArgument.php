@@ -8,7 +8,7 @@ use Deriver\Value\Term;
 
 /**
  * One signature-normalized argument and its optional reference-capable model location.
- * @visibility public
+ * @visibility root
  * @example Describing a supplied argument
  *     (new \Deriver\Model\Binding\BoundArgument('id', \Deriver\Value\Term::constant(2), supplied: true))->supplied // => true
  */

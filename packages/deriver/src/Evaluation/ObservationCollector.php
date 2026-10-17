@@ -8,22 +8,23 @@ use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\CallableIdentity;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Control\ObservationLimit;
+use Deriver\Evaluation\Memory\Location;
+use Deriver\Evaluation\Memory\StorageCapture;
 use Deriver\Evaluation\Model\StateStorage;
-use Deriver\Memory\Location;
-use Deriver\Memory\StorageCapture;
 use Deriver\Query\ReturnQuery;
 use Deriver\Query\StateQuery;
 use Deriver\Query\TupleQuery;
 use Deriver\Query\ValueQuery;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Alternative;
-use Deriver\Result\Exceptional;
+use Deriver\Result\Execution\Alternative;
+use Deriver\Result\Execution\Exceptional;
 use Deriver\Value\Projection;
 use Deriver\Value\Term;
 
 /**
  * Observes evaluated registers and memory; it never re-evaluates query expressions.
- * @visibility root
+ * @visibility namespace
+ * @visibility Deriver\Analysis\Execution
  */
 final class ObservationCollector
 {
@@ -158,7 +159,7 @@ final class ObservationCollector
         }
         if ($value->kind === 'domain' && is_string($value->literal) && $path !== []) {
             $domain = $this->context->models->extensions->domains[$value->literal] ?? null;
-            return $domain === null ? new Term('projection', operands: [$value], attributes: ['type' => 'mixed']) : (new \Deriver\Model\Domain\DomainOperations())->apply($domain, 'project', $value, projection: new Projection($path));
+            return $domain === null ? new Term('projection', operands: [$value], attributes: ['type' => 'mixed']) : (new \Deriver\Model\Operations\DomainOperations())->apply($domain, 'project', $value, projection: new Projection($path));
         }
         $secret = false;
         foreach ($path as $key) {

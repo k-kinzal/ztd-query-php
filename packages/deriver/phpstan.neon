@@ -7,10 +7,66 @@ parameters:
     toolkit:
         # Trusted extension callbacks are the boundary: failures become ModelContractException.
         broadCatchAllowedPaths:
-            - src/Evaluation/Candidate/Invocation/Rules.php
-            - src/Evaluation/Candidate/Models.php
+            - src/Candidate/Invocation/Rules.php
+            - src/Candidate/Models.php
         visibilityExemptNamespacePrefixes:
             - 'Tests'
+        # The toolkit defaults plus Builder: a stage is named by what it analyses or produces, never by how it is assembled.
+        forbiddenClassLikeNameSuffixes:
+            - Helper
+            - Helpers
+            - Manager
+            - Managers
+            - Util
+            - Utils
+            - Utility
+            - Utilities
+            - Common
+            - Shared
+            - General
+            - Misc
+            - Miscellaneous
+            - Stuff
+            - Things
+            - Thing
+            - Object
+            - Objects
+            - Data
+            - Info
+            - Information
+            - Detail
+            - Details
+            - Value
+            - Values
+            - Type
+            - Types
+            - Base
+            - Abstract
+            - Generic
+            - Default
+            - Standard
+            - Simple
+            - Basic
+            - Custom
+            - Special
+            - Temp
+            - Temporary
+            - Wrapper
+            - Wrappers
+            - Service
+            - Services
+            - Engine
+            - Engines
+            - System
+            - Systems
+            - Evidence
+            - Evidences
+            - Outcome
+            - Outcomes
+            - Probe
+            - Probes
+            - Builder
+            - Builders
     phpVersion: 80100
     level: max
     paths:

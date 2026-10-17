@@ -6,14 +6,14 @@ namespace Deriver\Evaluation\Model;
 
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Context;
+use Deriver\Evaluation\Memory\Location;
 use Deriver\Evaluation\State;
-use Deriver\Memory\Location;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
 
 /**
  * Maintains modeled object state separately from PHP properties and magic accessors.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class StateStorage
 {

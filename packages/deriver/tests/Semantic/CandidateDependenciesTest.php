@@ -8,10 +8,10 @@ use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
 use Deriver\Model\State\StateSlot;
 use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Project\EntryPoint;
 use Deriver\Query\Budget;
 use Deriver\Query\QueryScope;
@@ -69,7 +69,7 @@ final class CandidateDependenciesTest extends TestCase
      */
     public function testDemandModelSelectsWithOnlyItsRequestedInput(): void
     {
-        $session = CandidateContractTest::session('function heavy($mode,$unused){return body();}function ignored(){return slow();}function target(){observe(heavy("fast",ignored())+5);}', new Configuration(models: [new SelectiveModel()]));
+        $session = CandidateContractTest::session('function heavy($mode,$unused){return body();}function ignored(){return slow();}function target(){observe(heavy("fast",ignored())+5);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [new SelectiveModel()]));
         $result = CandidateContractTest::argument($session);
         self::assertSame([15], CandidateContractTest::native($result));
         self::assertSame(0, $result->statistics->bodyExpansions);
@@ -80,7 +80,7 @@ final class CandidateDependenciesTest extends TestCase
      */
     public function testDemandModelDeclinesExplicitlyBeforeSourceExpansion(): void
     {
-        $session = CandidateContractTest::session('function heavy($mode,$unused){return 3;}function target(){observe(heavy("source",unknown()));}', new Configuration(models: [new SelectiveModel()]));
+        $session = CandidateContractTest::session('function heavy($mode,$unused){return 3;}function target(){observe(heavy("source",unknown()));}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [new SelectiveModel()]));
         $result = CandidateContractTest::argument($session);
         self::assertSame([3], CandidateContractTest::native($result));
         self::assertSame(['heavy' => 1], $result->statistics->expandedBodies);
@@ -117,7 +117,7 @@ final class CandidateDependenciesTest extends TestCase
     {
         $set = new PlanModel(new ModelDescriptor('builder.table', '1', 'Builder::table', new Signature([new Parameter('table')])), new SemanticPlan([Action::write('builder.table', Expression::parameter('table')), Action::returns(Expression::receiver())], writes: ['builder.table']));
         $get = new PlanModel(new ModelDescriptor('builder.sql', '1', 'Builder::sql'), new SemanticPlan([Action::returns(Expression::binary('.', Expression::literal(Term::constant('SELECT ')), Expression::state('builder.table')))], reads: ['builder.table']));
-        $session = CandidateContractTest::session('class Builder{}function target(){$a=new Builder;$b=new Builder;$a->table("users");$b->table("orders");observe($a->sql());}', new Configuration(models: [$set,$get], stateSlots: [new StateSlot('builder.table', 'string', Term::constant('default'))]));
+        $session = CandidateContractTest::session('class Builder{}function target(){$a=new Builder;$b=new Builder;$a->table("users");$b->table("orders");observe($a->sql());}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$set,$get], stateSlots: [new StateSlot('builder.table', 'string', Term::constant('default'))]));
         $result = CandidateContractTest::argument($session);
         self::assertSame(['SELECT users'], CandidateContractTest::native($result));
         self::assertSame(0, $result->statistics->bodyExpansions);
@@ -196,7 +196,7 @@ final class CandidateDependenciesTest extends TestCase
     public function testAReplacementAlsoSuppressesTheSourceReferenceWrite(): void
     {
         $model = new PlanModel(new ModelDescriptor('change', '1', 'change', new Signature([new Parameter('x')])), new SemanticPlan([Action::returns(Expression::literal(Term::constant(10)))]));
-        $session = CandidateContractTest::session('function change(&$x){$x=7;}function target(){$x=1;change($x);observe($x);}', new Configuration(models: [$model]));
+        $session = CandidateContractTest::session('function change(&$x){$x=7;}function target(){$x=1;change($x);observe($x);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = CandidateContractTest::argument($session);
         self::assertSame([1], CandidateContractTest::native($result));
         self::assertSame(0, $result->statistics->bodyExpansions);

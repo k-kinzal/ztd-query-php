@@ -6,7 +6,7 @@ namespace Deriver\Model\Provider;
 
 /**
  * Separates additional candidates from an explicit exhaustive-world contract.
- * @visibility public
+ * @visibility root
  * @example Partial dispatch remains open
  *     (new \Deriver\Model\Provider\DispatchDecision())->exhaustive // => false
  */

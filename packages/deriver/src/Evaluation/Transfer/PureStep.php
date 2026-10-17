@@ -14,7 +14,7 @@ use Deriver\Value\Term;
 
 /**
  * Transfers pure instructions using the target PHP semantics.
- * @visibility root
+ * @visibility Deriver\Evaluation
  */
 final class PureStep
 {

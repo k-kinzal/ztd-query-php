@@ -8,10 +8,10 @@ use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
+use Deriver\Model\Registration\Contributions;
 use Deriver\Model\State\StateSlot;
-use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 
 /**
  * Describes an independent mutable builder using ordinary state slots.
@@ -20,11 +20,11 @@ use Deriver\Project\Configuration;
 final class BuilderModels
 {
     /**
-     * @return Configuration Explicit mutable builder semantics
+     * @return Contributions Explicit mutable builder semantics
      */
-    public static function configuration(): Configuration
+    public static function contributions(): Contributions
     {
-        return new Configuration(models: [
+        return new Contributions(models: [
             new PlanModel(new ModelDescriptor('builder.from', '1', 'MiniBuilder::from', new Signature([new Parameter('table', 'string')])), new SemanticPlan([Action::write('example.builder.table', Expression::parameter('table')), Action::returns(Expression::receiver())], writes: ['example.builder.table'])),
             new PlanModel(new ModelDescriptor('builder.table', '1', 'MiniBuilder::tableName'), new SemanticPlan([Action::returns(Expression::state('example.builder.table'))], reads: ['example.builder.table'])),
         ], stateSlots: [new StateSlot('example.builder.table', 'string')]);

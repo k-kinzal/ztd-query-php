@@ -9,8 +9,8 @@ use Deriver\Model\DemandModel;
 use Deriver\Model\ModelDecision;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Override;
 
 /**

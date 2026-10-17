@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(StateRegistry::class)]
 #[UsesClass(StateSlot::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
-#[UsesClass(\Deriver\Value\Lattice::class)]
+#[UsesClass(\Deriver\Model\Operations\Lattice::class)]
 #[UsesClass(\Deriver\Value\SecretFingerprint::class)]
 #[UsesClass(Term::class)]
 #[Small]
