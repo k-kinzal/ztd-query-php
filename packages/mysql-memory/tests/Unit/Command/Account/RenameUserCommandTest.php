@@ -58,4 +58,32 @@ final class RenameUserCommandTest extends TestCase
 
         $session->query('RENAME USER nobody TO r');
     }
+    public function testRenameKeepsCacheAndGrantRowIdentitiesApart(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE USER 'a'@'猫'");
+        $command = new RenameUserCommand();
+        self::assertTrue($command->rename(new \MySqlMemory\Account\Identity('a', 'é'), new \MySqlMemory\Account\Identity('b', 'ö'), $session));
+        $account = $session->instance->accounts->find(new \MySqlMemory\Account\Identity('a', '猫'));
+        self::assertNotNull($account);
+        self::assertSame('b', $account->storageIdentity()->user);
+        self::assertNull($session->instance->accounts->find(new \MySqlMemory\Account\Identity('b', 'ö')));
+    }
+
+    public function testConversionsFollowGrantReadsBeforeEachWrite(): void
+    {
+        $session = (new Instance())->connect();
+        $account = new \MySqlMemory\Account\Account(new \MySqlMemory\Account\Identity('a', '猫'));
+        $account->grants->database('d')->add(['SELECT']);
+        $account->grants->dynamic['BACKUP_ADMIN'] = false;
+        (new RenameUserCommand())->conversions($account->identity, new \MySqlMemory\Account\Identity('b', '犬'), $account, $session);
+        $messages = array_column($session->diagnostics->conditions, 2);
+
+        self::assertCount(11, $messages);
+        self::assertStringContainsString('\\xE7\\x8C\\xAB', $messages[0]);
+        self::assertStringContainsString('\\xE7\\x8A\\xAC', $messages[1]);
+        self::assertStringContainsString("column 'HOST'", $messages[9]);
+        self::assertStringContainsString("column 'HOST'", $messages[10]);
+    }
+
 }

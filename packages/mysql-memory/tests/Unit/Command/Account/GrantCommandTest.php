@@ -204,4 +204,26 @@ final class GrantCommandTest extends TestCase
             ['Warning', '1287', 'Using GRANT for creating new user is deprecated and will be removed in future release. Create new user with CREATE USER statement.'],
         ], $warnings->rows);
     }
+    public function testIdentitiesKeepRoutineGrantsOutsideHostResolutionWarnings(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->semantics()->analyze("GRANT EXECUTE ON PROCEDURE d.p TO a@'猫'")->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $statement);
+        $identities = (new GrantCommand())->identities($statement, 'PROCEDURE', $session);
+
+        self::assertSame('猫', $identities[0]->host);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testConversionsDistinguishOrdinaryAndDynamicGrantColumns(): void
+    {
+        $session = (new Instance())->connect();
+        (new GrantCommand())->conversions(new Identity('a', '猫'), 'DATABASE', 2, $session);
+        $conditions = $session->diagnostics->conditions;
+
+        self::assertCount(5, $conditions);
+        self::assertStringContainsString("column 'Host'", $conditions[2][2]);
+        self::assertStringContainsString("column 'HOST'", $conditions[3][2]);
+    }
+
 }

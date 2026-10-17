@@ -52,13 +52,13 @@ final class ShowCreateUserCommand implements Command
         $names = new Names($session->settings()->release());
         $names->check([$statement->user]);
         $identity = $names->identity($statement->user, $session);
-        if (!$session->settings()->legacy()) {
-            $names->ascii($identity, 1, $context->diagnostics);
-        }
         $accounts = $session->instance->accounts;
         $account = $accounts->find($identity);
         if ($account === null) {
             throw (new Names($session->settings()->release()))->failure('SHOW CREATE USER', $identity->quoted());
+        }
+        if (!$session->settings()->legacy()) {
+            $names->ascii($identity, 1, $context->diagnostics);
         }
         $legacy = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744;
         $results = $session->variables->read('character_set_results');

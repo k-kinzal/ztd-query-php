@@ -29,6 +29,11 @@ final class Account
     public bool $stored = true;
 
     /**
+     * The grant-row identity when a lossy-host rename leaves the cache name unchanged.
+     */
+    public ?Identity $storedName = null;
+
+    /**
      * @var array{string, string|null}|null The retained authentication string and known password, or null without a secondary password
      */
     public ?array $secondary = null;
@@ -71,6 +76,16 @@ final class Account
         public ?string $attributes = null,
         public Grants $grants = new Grants(),
     ) {
+    }
+
+    /**
+     * Answers the mysql.user row identity independently of the live cache spelling.
+     *
+     * @param bool $ascii Whether host storage uses ASCII (MySQL 8+)
+     */
+    public function storageIdentity(bool $ascii = true): Identity
+    {
+        return $this->storedName ?? ($ascii ? $this->identity->stored() : $this->identity);
     }
 
     /**

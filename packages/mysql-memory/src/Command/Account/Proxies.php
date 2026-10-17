@@ -63,6 +63,7 @@ final class Proxies
             }
         }
         foreach ($first !== null && !$legacy ? [] : $found as $account) {
+            $names->ascii($account->identity, 3, $session->diagnostics);
             $account->grants->proxies[$proxied->key()] = [$proxied, $statement->withGrantOption];
             $account->grants->global->grantOption = $account->grants->global->grantOption || $statement->withGrantOption;
         }

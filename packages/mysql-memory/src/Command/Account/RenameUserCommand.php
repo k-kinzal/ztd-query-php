@@ -74,11 +74,10 @@ final class RenameUserCommand implements Command
         foreach ($statement->renamings as $renaming) {
             $from = $names->identity($renaming->from, $session);
             $to = $names->identity($renaming->to, $session);
-            if ($accounts->find($from) === null || $accounts->find($to) !== null) {
+            if (!$this->rename($from, $to, $session)) {
                 $failed[] = $from;
                 continue;
             }
-            $accounts->rename($from, $to);
             if (!$session->settings()->legacy() && $session->variables->definer->key() === $from->key()) {
                 $session->variables->definer = $to;
             }
@@ -86,10 +85,61 @@ final class RenameUserCommand implements Command
         if ($failed !== []) {
             if (!$session->settings()->legacy()) {
                 $accounts->restore($saved);
+                $accounts->reload();
             }
             throw (new Names($session->settings()->release()))->failure('RENAME USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
 
         return new Completion(0, 0, $context->diagnostics->raised());
     }
+    /**
+     * Checks destination grant rows before reading and rewriting the source rows.
+     *
+     * ASCII conversion warnings follow the grant-table accesses, including a
+     * failed rename. A destination found in mysql.user stops the lookup after
+     * that table. Observed on MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
+     */
+    public function rename(Identity $from, Identity $to, Session $session): bool
+    {
+        $accounts = $session->instance->accounts;
+        $names = new Names($session->settings()->release());
+        $target = $session->settings()->legacy() ? $accounts->find($to) : $accounts->stored($to->stored());
+        $names->ascii($to, $target === null ? 7 : 1, $session->diagnostics);
+        if ($target !== null) {
+            return false;
+        }
+        $source = $accounts->find($from);
+        $stored = $session->settings()->legacy() ? $source : $accounts->stored($from->stored());
+        $this->conversions($from, $to, $stored, $session);
+        if ($source === null && $stored === null) {
+            return false;
+        }
+        if ($stored !== null && !$session->settings()->legacy()) {
+            $stored->storedName = $to->stored();
+        }
+        $accounts->rename($from, $to);
+        return true;
+    }
+
+    /**
+     * Preserves lookup and write warning order for all seven grant-table phases.
+     * A Unicode source keeps its routine and proxy cache grants without writing
+     * those stored rows during rename, as observed through native SQL histories.
+     */
+    public function conversions(Identity $from, Identity $to, ?\MySqlMemory\Account\Account $account, Session $session): void
+    {
+        $names = new Names($session->settings()->release());
+        $grants = $account?->grants;
+        $ascii = $from->key() === $from->stored()->key();
+        $writes = [$account === null ? 0 : 1, count($grants->databases ?? []), $ascii ? count($grants->routines ?? []) : 0,
+            count($grants->tables ?? []), array_sum(array_map(static fn (array $table): int => count($table[2]->columns), $grants->tables ?? [])),
+            $ascii ? count($grants->proxies ?? []) : 0, 0];
+        foreach ($writes as $count) {
+            $names->ascii($from, 1, $session->diagnostics);
+            $names->ascii($to, $count, $session->diagnostics);
+        }
+        $names->ascii($from, count($grants->dynamic ?? []), $session->diagnostics, 'HOST');
+        $names->ascii($to, count($grants->dynamic ?? []), $session->diagnostics, 'HOST');
+    }
+
 }

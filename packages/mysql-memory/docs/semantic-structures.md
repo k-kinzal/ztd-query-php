@@ -1792,3 +1792,36 @@ to Memory. The profile metadata test also preserves the release-specific
 warning behavior of a zero LIMIT and its offset. These checks strengthen the
 construction contract; ordinary window and nested-query constraints remain
 separate unresolved work.
+
+Account renames now retain the grant-row identity independently of the cached
+account spelling. Modern lossy host names can refer to the same stored identity;
+renaming that row through another spelling can leave the original cache entry
+until a refresh. Failed modern renames restore stored state and refresh the
+cache. Legacy refreshes preserve Unicode hostnames. Conversion warnings follow
+the destination lookup, then source reads and the rows each grant scope writes;
+dynamic privilege columns retain their distinct `HOST` label. SHOW CREATE USER
+checks the cached identity before reading the stored row.
+
+The account-host comparison replays 194 statements on five releases (970
+observations), including missing and occupied destinations, failed statements,
+Unicode aliases and FLUSH PRIVILEGES. Direct construction reuses nine histories
+of eight semantic statements on each release (360 observations), with unrelated
+request text; both comparisons pass. A recorded 935-observation input replay,
+including the unseeded RENAME USER failure on `2f79d41a51f`, also matches.
+The broader grant-scope history test passes on MySQL 8.0, 8.4 and 9.1 but still
+fails on 5.6 and 5.7: SHOW GRANTS returns different column and grant ordering.
+Two independent native executions of each complete legacy history (808 native
+observations) agree exactly, so this difference is not classified as volatile.
+The failing cases remain in the test. Further probes retain unresolved cached
+PROXY updates and default-role conversion warnings.
+
+The complete constructor campaign on `2f79d41a51f` visits all 244 selected roots:
+97 matching successes and 147 matching SQL errors, with no construction,
+generation, profile or comparison failure. All 162 database-selection observations
+for 54 structures match. This is not completion of the intrinsic structure gate:
+ordinary window and nested-query constraints remain open. A 336-observation
+window probe also finds 54 PREPARE/view differences. Its unsupported options
+cannot simply be rejected while lowering stored definitions: a skipped stored
+instruction is valid, while missing tables, columns and named windows can
+precede the reached option refusal. The final construction, supplied-seed and
+900-second unseeded gates must still pass together after those repairs.

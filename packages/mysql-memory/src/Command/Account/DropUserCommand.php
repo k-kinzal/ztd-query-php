@@ -61,15 +61,18 @@ final class DropUserCommand implements Command
             if ($statement instanceof DropUser) {
                 (new Authentication\DefinerReferences())->record($identity, $session, $context);
             }
+            $stored = $session->settings()->legacy() ? $accounts->find($identity) : $accounts->stored($identity->stored());
+            $names->ascii($identity, count($stored?->grants->dynamic ?? []), $context->diagnostics, 'HOST');
             $names->ascii($identity, 7, $context->diagnostics);
-            if (($accounts->find($identity) === null && $accounts->stored($identity) === null) || isset($dropped[$identity->key()])) {
+            $key = $session->settings()->legacy() ? $identity->key() : $identity->stored()->key();
+            if (($accounts->find($identity) === null && $stored === null) || isset($dropped[$key])) {
                 $missing[] = $identity;
                 if ($statement->ifExists) {
                     $context->diagnostics->note(AccountError::UserDoesNotExist, $names->existence($identity, false));
                 }
                 continue;
             }
-            $dropped[$identity->key()] = $identity;
+            $dropped[$key] = $identity;
         }
         if ($missing !== [] && !$statement->ifExists) {
             $operation = $statement instanceof DropUser ? 'DROP USER' : 'DROP ROLE';

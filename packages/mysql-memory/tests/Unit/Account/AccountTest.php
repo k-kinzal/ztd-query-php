@@ -30,4 +30,15 @@ final class AccountTest extends TestCase
 
         self::assertSame([[], false], [$account->grants->global->names, $account->locked]);
     }
+    public function testStorageIdentityRetainsARowRenamedThroughAnotherHostSpelling(): void
+    {
+        $account = new Account(new Identity('a', '猫'));
+        self::assertSame('?', $account->storageIdentity()->host);
+        $account->storedName = new Identity('b', '?');
+        $account->identity = new Identity('c', '犬');
+
+        self::assertSame('b', $account->storageIdentity()->user);
+        self::assertSame('c', $account->identity->user);
+    }
+
 }

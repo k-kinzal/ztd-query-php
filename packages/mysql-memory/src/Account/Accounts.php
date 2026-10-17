@@ -106,7 +106,7 @@ final class Accounts
     public function stored(Identity $identity): ?Account
     {
         foreach ($this->accounts as $account) {
-            if ($account->stored && $account->identity->stored()->key() === $identity->key()) {
+            if ($account->stored && $account->storageIdentity()->key() === $identity->key()) {
                 return $account;
             }
         }
@@ -116,14 +116,17 @@ final class Accounts
 
     /**
      * Reloads account identities from the grant table after FLUSH PRIVILEGES.
+     *
+     * @param bool $ascii Whether the release stores hostnames in ASCII (MySQL 8+)
      */
-    public function reload(): void
+    public function reload(bool $ascii = true): void
     {
         foreach (array_values($this->accounts) as $account) {
             if (!$account->stored) {
                 unset($this->accounts[$account->identity->key()]);
-            } elseif ($account->identity->key() !== $account->identity->stored()->key()) {
-                $this->rename($account->identity, $account->identity->stored());
+            } elseif ($ascii && $account->identity->key() !== $account->storageIdentity()->key()) {
+                $this->rename($account->identity, $account->storageIdentity());
+                $account->storedName = null;
             }
         }
     }
@@ -142,7 +145,7 @@ final class Accounts
     public function drop(Identity $identity): void
     {
         foreach ($this->accounts as $account) {
-            if ($account->identity->stored()->key() === $identity->stored()->key()) {
+            if ($account->storageIdentity()->key() === $identity->stored()->key()) {
                 $account->stored = false;
             }
         }

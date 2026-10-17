@@ -173,8 +173,9 @@ final class Names
      * MySQL 5.6 and 5.7 retain Unicode hosts without ASCII conversion warnings.
      *
      * @param int $tables The number of grant tables the statement writes or reads
+     * @param string $column The grant table column label, Host or HOST for dynamic privileges
      */
-    public function ascii(Identity $identity, int $tables, Diagnostics $diagnostics): void
+    public function ascii(Identity $identity, int $tables, Diagnostics $diagnostics, string $column = 'Host'): void
     {
         if (in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) || preg_match('/[\x80-\xFF]/', $identity->host, $match, PREG_OFFSET_CAPTURE) !== 1) {
             return;
@@ -182,7 +183,7 @@ final class Names
         $rest = substr($identity->host, $match[0][1]);
         $quoted = (string) preg_replace_callback('/[^\x20-\x7E]/', static fn (array $byte): string => sprintf('\\x%02X', ord($byte[0])), substr($rest, 0, 6));
         for ($i = 0; $i < $tables; $i++) {
-            $diagnostics->warning(DataError::TruncatedWrongValueForField, DataError::TruncatedWrongValueForField->message('string', $quoted . (strlen($rest) > 6 ? '...' : ''), 'Host', 1));
+            $diagnostics->warning(DataError::TruncatedWrongValueForField, DataError::TruncatedWrongValueForField->message('string', $quoted . (strlen($rest) > 6 ? '...' : ''), $column, 1));
         }
     }
 

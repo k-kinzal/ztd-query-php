@@ -102,7 +102,7 @@ final class FlushCommand implements Command
     {
         foreach ($statement->items as $item) {
             if ($item->option === FlushOption::Privileges) {
-                $session->instance->accounts->reload();
+                $session->instance->accounts->reload(!$session->settings()->legacy());
             }
             if ($item->option === FlushOption::Status) {
                 $this->status($session);

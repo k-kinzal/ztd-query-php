@@ -89,12 +89,7 @@ final class GrantCommand implements Command
         $names->check([...$names->users($statement->grantees), $statement->as?->user, ...$statement->as->roles->roles ?? []]);
         $levels = new Levels($session->settings()->release());
         $target = $levels->target($statement->kind, $statement->level, $session);
-        $grantees = [];
-        foreach ($statement->grantees as $grantee) {
-            $identity = $names->identity($grantee->user, $session);
-            $names->resolve($identity, $context->diagnostics);
-            $grantees[] = $identity;
-        }
+        $grantees = $this->identities($statement, $target[0], $session);
         $levels->parsed($operation, $session);
         $levels->objects($operation, $session, $statement->privileges, $target);
         if ($statement->as !== null) {
@@ -124,9 +119,41 @@ final class GrantCommand implements Command
         $named = $static !== [] || $columns !== [] || $all || $option || ($dynamic === [] && array_filter($statement->privileges, static fn ($privilege): bool => $privilege instanceof StaticPrivilege) !== []);
         $option = $option || array_filter($statement->options, static fn ($with): bool => $with instanceof GrantOptionRight) !== [];
         foreach ($found as $account) {
+            $this->conversions($account->identity, $target[0], count($dynamic), $session);
             $this->grant($account, $target, $static, $columns, $dynamic, $option, $all, $named);
             $session->databaseGrants->remember($account, $target);
         }
+    }
+
+    /**
+     * Resolves recipient hostnames except for routine grants, which do not consult name resolution.
+     *
+     * @return list<Identity> The complete recipients in written order
+     */
+    public function identities(GrantPrivileges $statement, string $kind, Session $session): array
+    {
+        $names = new Names($session->settings()->release());
+        $grantees = [];
+        foreach ($statement->grantees as $grantee) {
+            $identity = $names->identity($grantee->user, $session);
+            if (!in_array($kind, ['PROCEDURE', 'FUNCTION'], true)) {
+                $names->resolve($identity, $session->diagnostics);
+            }
+            $grantees[] = $identity;
+        }
+        return $grantees;
+    }
+
+    /**
+     * Records the recipient Host conversion at each grant-row access.
+     */
+    public function conversions(Identity $identity, string $kind, int $dynamic, Session $session): void
+    {
+        $names = new Names($session->settings()->release());
+        $names->ascii($identity, match ($kind) {
+            'DATABASE' => 3, 'TABLE' => 2, default => 1
+        }, $session->diagnostics);
+        $names->ascii($identity, $dynamic, $session->diagnostics, 'HOST');
     }
 
     /**
