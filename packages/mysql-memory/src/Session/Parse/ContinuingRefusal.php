@@ -34,7 +34,7 @@ final class ContinuingRefusal
     {
         $parser = $session->semantics()->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         if (array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure) === []) {
             return null;
         }
@@ -61,7 +61,7 @@ final class ContinuingRefusal
         $parser = $session->semantics()->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
         $end = strlen($statement);
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         $warnings = new ModernWarnings();
         $tokens = $parser->tokenize($statement);
         $prefix = $session->settings()->legacy() ? (new CommandPrefix())->before($tokens, $statement, $failure->end, $session) : null;

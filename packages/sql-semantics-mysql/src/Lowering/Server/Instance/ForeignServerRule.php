@@ -87,7 +87,7 @@ final class ForeignServerRule
 
         $identifier = $names->identifier($form->node($name));
         if ($identifier->value === '') {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Server), (new \SqlSemantics\Construction\SourceRanges())->span($form->node($name))[1] ?? 0);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Server), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
         return new CreateServer($identifier, $names->identifier($form->node($name + 4)), $this->options($form->node($name + 7)));
     }

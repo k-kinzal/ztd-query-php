@@ -35,7 +35,7 @@ final class ParserInput
             if ($dependency->problem($session->resolution()) === null) {
                 continue;
             }
-            $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile(), $session->resolution()->replicaNetTimeout);
+            $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
 
             return (new ModernWarnings())->recorded(array_column($notices, 1), AdministrationError::FunctionNotDefined->error($dependency->parser->value), $session);
         }

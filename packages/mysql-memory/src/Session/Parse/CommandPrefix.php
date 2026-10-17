@@ -106,7 +106,7 @@ final class CommandPrefix
         $semantics = $session->semantics();
         $parser = $semantics->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
-        foreach ((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $semantics->profile(), $session->resolution()->replicaNetTimeout) as [$offset, $notice]) {
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $semantics->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client) as [$offset, $notice]) {
             if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat) {
                 return (new \MySqlMemory\Session\Problem\Errors())->error($notice->problem, $session);
             }

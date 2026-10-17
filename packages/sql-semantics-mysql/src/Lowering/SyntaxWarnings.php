@@ -38,14 +38,14 @@ final class SyntaxWarnings
      *
      * @return list<array{int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|ParseStop}> Input boundaries and semantic notices
      */
-    public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile, ?int $replicaNetTimeout = null): array
+    public function completed(ReductionParser $parser, string $statement, int $end, LanguageProfile $profile, ?int $replicaNetTimeout = null, ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null): array
     {
         $tokens = (new InputTokens())->prefix($parser, $statement);
         $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
         $state = new Notice\Completion((new Account\SyntaxResourceNames())->completed($parser, $statement, $end));
         $ranges = new SourceRanges();
         $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');
-        $lowering = new Lowering($productions, new Leaves(), $profile);
+        $lowering = new Lowering($productions, new Leaves(), $profile, client: $client);
         $operands = new Notice\OperandCompletion();
         $passwords = new Account\Authentication\SyntaxPasswords();
         $header = new Routine\Program\NoticeHeader();
@@ -75,7 +75,7 @@ final class SyntaxWarnings
                     return;
                 }
                 $notice = $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
-                $conditions = [...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
+                $conditions = [...(new Server\Instance\SyntaxForeignStrings())->converted($node, $lowering, $tokens), ...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
                     $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
                     $state->record($range[1], $condition instanceof ParseFailure ? $header->scoped($condition) : $condition);

@@ -1760,3 +1760,18 @@ creation, with populated input, and after removal, while the consumer receives
 unrelated request text. These bounded tests exercise sufficiency of the retained
 result and origin information; they do not establish the unresolved ordinary
 window and nested-query constructor invariants.
+
+Foreign-server operands retain their decoded names and client-byte text without
+retaining input SQL. Conversion warnings are derived before command execution;
+completed operands keep those warnings when a later input token is refused.
+Names used as either identifiers or strings can render embedded NUL bytes through
+the string alternative. The foreign-server field tests compare 874 statements per
+release under Latin-1 and UTF-8 clients, including stored rows and metadata. The
+direct construction tests reuse 54 histories per release, each with eight
+observations across missing, existing and removed definitions. Both tests run on
+MySQL 5.6, 5.7, 8.0, 8.4 and 9.1. Storage distinguishes the cached creation values
+from values read back after ALTER, which affects whether a lossy Host conversion
+warns again. These tests do not close the full structure contract. Additional
+probes still expose differences in NUL-containing server-name lookup on MySQL
+5.7 and physical row reuse/order on MySQL 5.6; independent native replays matched,
+so those differences have not been classified as volatile exceptions.

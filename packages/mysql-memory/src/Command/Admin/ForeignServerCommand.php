@@ -59,21 +59,23 @@ final class ForeignServerCommand implements Command
         $registry = $session->instance->registry;
         $affected = 1;
         $session->transaction->commit();
-        $original = $statement instanceof CreateServer || $statement instanceof AlterServer || $statement instanceof DropServer ? $statement->name->value : '';
-        $name = mb_substr($original, 0, 64, 'UTF-8');
-        $cached = array_key_first(array_filter($registry->servers, static fn (ForeignServer $server): bool => Registry::key($server->lookupName) === Registry::key($original)));
+        $operand = $statement instanceof CreateServer || $statement instanceof AlterServer || $statement instanceof DropServer ? $statement->name->value : '';
+        $original = preg_replace('/[\xF0-\xF4][\x80-\xBF]{3}/', '?', $operand) ?? $operand;
+        $name = rtrim(mb_substr($original, 0, 64, 'UTF-8'), ' ');
+        $cached = array_key_first(array_filter($registry->servers, static fn (ForeignServer $server): bool => $server->lookupName !== null && Registry::key($session->settings()->legacy() ? $server->lookupName : rtrim($server->lookupName, ' ')) === Registry::key($session->settings()->legacy() ? $original : rtrim($original, ' '))));
         $text = new \MySqlMemory\Error\DiagnosticText();
-        $missing = $text->bytes($original, 64, $session->settings()->legacy());
+        $missing = $text->bytes(explode("\0", $original, 2)[0], 64, $session->settings()->legacy());
         if ($statement instanceof CreateServer) {
             if (isset($registry->servers[Registry::key($name)])) {
-                throw new \MySqlMemory\Error\SqlError(AdministrationError::ForeignServerExists, $text->bytes(AdministrationError::ForeignServerExists->error($original)->getMessage(), 511, $session->settings()->legacy()));
+                throw new \MySqlMemory\Error\SqlError(AdministrationError::ForeignServerExists, $text->bytes(AdministrationError::ForeignServerExists->error(explode("\0", $original, 2)[0])->getMessage(), 511, $session->settings()->legacy()));
             }
-            $registry->servers[Registry::key($name)] = new ForeignServer($original, $statement->wrapper->value, $this->options($statement->options));
+            $registry->servers[Registry::key($name)] = new ForeignServer($original, (new Foreign\Fields())->wrapper($statement->wrapper->value, $session), (new Foreign\Fields())->options($this->options($statement->options), $session), $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651, (new Foreign\Fields())->cached($this->options($statement->options), $session));
         } elseif ($statement instanceof AlterServer) {
             $server = $cached === null ? throw AdministrationError::ForeignServerMissing->error($missing) : $registry->servers[$cached];
-            $server->options = [...$server->options, ...$this->options($statement->options)];
+            $server->options = [...$server->options, ...(new Foreign\Fields())->options((new Foreign\Fields())->changed($this->options($statement->options), $server->cachedOptions, $session), $session)];
             foreach ($registry->servers as $stored) {
-                $stored->lookupName = $stored->name;
+                $stored->cachedOptions = $stored->options;
+                $stored->lookupName = str_contains($stored->name, "\0") ? null : $stored->name;
             }
         } elseif ($statement instanceof DropServer) {
             $key = Registry::key($name);

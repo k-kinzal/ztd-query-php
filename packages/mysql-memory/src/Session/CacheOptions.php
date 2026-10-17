@@ -113,7 +113,7 @@ final class CacheOptions
         $end ??= $cause?->token->offset ?? strlen($statement);
         $parser = $session->semantics()->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
-        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         $boundary = $end;
         foreach ($notices as [$offset, $notice]) {
             if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->aborts) {
@@ -226,7 +226,7 @@ final class CacheOptions
     /**
      * Records the warnings MySQL 5.6 and 5.7 raise while they parse a statement they refuse, in the order of their tokens, and the error the statement fails with, which it answers: the refusal of a conflict of modifiers, or the error given.
      *
-     * @param array<int, Deprecated|SqlError|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod> $warned The warnings, by the offset of their token
+     * @param array<int, Deprecated|SqlError|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion> $warned The warnings, by the offset of their token
      * @param array{string, string}|null $conflict The conflict of modifiers found, if any
      * @param SqlError|null $previous The error the answered error reports
      * @param bool $clear Whether the conditions recorded before are removed

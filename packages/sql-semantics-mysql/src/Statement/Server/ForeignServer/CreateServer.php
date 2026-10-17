@@ -54,10 +54,11 @@ final class CreateServer implements Statement
     }
 
     /**
-     * Has nothing to derive: a server is no relation.
+     * Derives the character conversion of system-string operands.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\ForeignStrings())->derive($this, $derivation);
     }
 
     /**
@@ -65,7 +66,7 @@ final class CreateServer implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('CREATE', 'SERVER')->name($this->name, NameUse::Identifier)->keyword('FOREIGN', 'DATA', 'WRAPPER')->name($this->wrapper, NameUse::Identifier);
+        $out->keyword('CREATE', 'SERVER')->name($this->name, NameUse::Label)->keyword('FOREIGN', 'DATA', 'WRAPPER')->name($this->wrapper, NameUse::Label);
         $out->keyword('OPTIONS')->symbol('(')->list($this->options)->symbol(')');
     }
 }

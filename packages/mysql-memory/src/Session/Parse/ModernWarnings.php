@@ -52,7 +52,7 @@ final class ModernWarnings
             $error = (new CommandPrefix())->before($tokens, $statement, $end, $session) ?? $error;
             $end = (new CacheOptions())->cause($error)?->token->offset ?? $end;
         }
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         foreach ($this->before($tokens, $statement, $end, $parser) as $offset => $notice) {
             $notices[] = [$offset, $notice];
         }

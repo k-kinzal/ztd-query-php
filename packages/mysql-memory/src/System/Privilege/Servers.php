@@ -28,7 +28,9 @@ final class Servers implements SystemRows
             $option = static fn (string $name): string => (string) ($server->options[$name] ?? '');
             $rows[] = ['Server_name' => $server->name, 'Host' => $option('host'), 'Db' => $option('database'), 'Username' => $option('user'), 'Password' => $option('password'), 'Port' => (int) ($server->options['port'] ?? 0), 'Socket' => $option('socket'), 'Wrapper' => $server->wrapper, 'Owner' => $option('owner')];
         }
-        usort($rows, static fn (array $left, array $right): int => $left['Server_name'] <=> $right['Server_name']);
+        if ($reading->release !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            usort($rows, static fn (array $left, array $right): int => $left['Server_name'] <=> $right['Server_name']);
+        }
 
         return $rows;
     }

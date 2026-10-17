@@ -68,7 +68,7 @@ final class TemporalInput
      */
     public function notices(ReductionParser $parser, string $statement, int $end, Session $session): array
     {
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         if (!$session->settings()->legacy()) {
             foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, $end, $parser) as $offset => $notice) {
                 $notices[] = [$offset, $notice];

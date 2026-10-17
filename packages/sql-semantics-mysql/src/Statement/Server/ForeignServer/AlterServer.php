@@ -46,10 +46,11 @@ final class AlterServer implements Statement
     }
 
     /**
-     * Has nothing to derive: a server is no relation.
+     * Derives the character conversion of system-string operands.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\ForeignStrings())->derive($this, $derivation);
     }
 
     /**
@@ -57,6 +58,6 @@ final class AlterServer implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'SERVER')->name($this->name, NameUse::Identifier)->keyword('OPTIONS')->symbol('(')->list($this->options)->symbol(')');
+        $out->keyword('ALTER', 'SERVER')->name($this->name, NameUse::Label)->keyword('OPTIONS')->symbol('(')->list($this->options)->symbol(')');
     }
 }

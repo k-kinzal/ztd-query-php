@@ -37,10 +37,11 @@ final class DropServer implements Statement
     }
 
     /**
-     * Has nothing to derive: a server is no relation.
+     * Derives the character conversion of system-string operands.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\ForeignStrings())->derive($this, $derivation);
     }
 
     /**
@@ -52,6 +53,6 @@ final class DropServer implements Statement
         if ($this->ifExists) {
             $out->keyword('IF', 'EXISTS');
         }
-        $out->name($this->name, NameUse::Identifier);
+        $out->name($this->name, NameUse::Label);
     }
 }
