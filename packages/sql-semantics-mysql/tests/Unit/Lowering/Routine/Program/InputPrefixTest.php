@@ -40,6 +40,14 @@ final class InputPrefixTest extends TestCase
     public static function providerPrefixes(): iterable
     {
         yield 'unbound condition' => ['SIGNAL missing_condition;', 'Undefined CONDITION: missing_condition'];
+        yield 'undefined cursor open' => ['OPEN c;', 'Undefined CURSOR: c'];
+        yield 'undefined cursor close' => ['CLOSE c;', 'Undefined CURSOR: c'];
+        yield 'undefined cursor fetch' => ['DECLARE x INT; FETCH c INTO x;', 'Undefined CURSOR: c'];
+        yield 'declared cursor' => ['DECLARE c CURSOR FOR SELECT 1; OPEN c;', null];
+        yield 'outer cursor' => ['DECLARE c CURSOR FOR SELECT 1; BEGIN CLOSE c; END;', null];
+        yield 'closed cursor scope' => ['BEGIN DECLARE c CURSOR FOR SELECT 1; END; OPEN c;', 'Undefined CURSOR: c'];
+        yield 'cursor in loop' => ['LOOP OPEN c; END LOOP;', 'Undefined CURSOR: c'];
+        yield 'outer cursor in loop' => ['DECLARE c CURSOR FOR SELECT 1; LOOP OPEN c; END LOOP;', null];
         yield 'duplicate variable' => ['DECLARE x INT; DECLARE x INT;', 'Duplicate variable: x'];
         yield 'unknown system variable' => ['SELECT @@missing_variable;', "Unknown system variable 'missing_variable'"];
         yield 'declared condition' => ["DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c;", null];
