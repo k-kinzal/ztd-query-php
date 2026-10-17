@@ -65,10 +65,13 @@ final class NoticeHeader
     }
 
     /**
-     * Attaches the typed header to a refused view column or empty event instruction.
+     * Attaches the typed header to refused instruction operands.
      */
     public function scoped(ParseFailure $notice): ParseFailure
     {
+        if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget && $this->kind !== null) {
+            return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget($notice->problem->targets, $this->name), $notice->aborts, $notice->phase);
+        }
         if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns && $this->kind !== null) {
             return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns($notice->problem->view, $notice->problem->column, $this->name), $notice->aborts, $notice->phase);
         }

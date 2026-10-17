@@ -31,6 +31,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading a multiple-table DELETE
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE t.* , u FROM t JOIN u ON t.a = u.a WHERE t.b = 1');
  *     [count($delete->statement->targets), $delete->toString()] // => [2, 'DELETE t, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
+ * @example Rejecting an intrinsically repeated target before deriving an operation
+ *     $target = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+ *     new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(null, [], [$target, $target], \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::BeforeFrom, [new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($target)]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class MultipleDelete implements Explainable
 {
@@ -64,7 +67,7 @@ final class MultipleDelete implements Explainable
      * @param list<Relation> $tables The table references; at least one; unparenthesized comma lists are flattened
      * @param Scalar|null $where The row predicate
      * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
-     * @throws InvalidConstruction When there is no table to delete from or no table reference
+     * @throws InvalidConstruction When a target is intrinsically repeated, or targets or table references are empty
      */
     public function __construct(
         public readonly ?WithClause $with,
@@ -81,6 +84,7 @@ final class MultipleDelete implements Explainable
         foreach ($this->targets as $target) {
             Check::input($target->catalog === null, 'A table is qualified by at most a database.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) === null, 'A multiple-table DELETE cannot repeat an identical target.');
         $members = [];
         foreach (Check::listOf($tables, Relation::class, 'A multiple-table DELETE names at least one table reference.', 1) as $table) {
             array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));

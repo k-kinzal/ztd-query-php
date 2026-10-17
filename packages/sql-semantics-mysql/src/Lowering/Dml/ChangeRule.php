@@ -34,7 +34,7 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * https://dev.mysql.com/doc/refman/8.4/en/delete.html,
  * https://dev.mysql.com/doc/refman/5.6/en/delete.html. Status: Implemented.
  *
- * @visibility SqlSemantics\Platform\MySql\Lowering\Dml
+ * @visibility SqlSemantics\Platform\MySql\Lowering
  */
 final class ChangeRule
 {
@@ -120,7 +120,7 @@ final class ChangeRule
         return new MultipleDelete(
             $with === null ? null : $queries->with($form->node($with)),
             $this->options($form->node($options)),
-            $this->lowering->dml->deleteTargets($form->node($targets)),
+            $this->targets($form->node($targets)),
             $spelling,
             $queries->tables($form->node($tables)),
             $queries->where($form->node($where)),
@@ -151,8 +151,8 @@ final class ChangeRule
                 $queries->ordering($body->node(4)),
                 $this->limit($body->node(5)),
             ),
-            'single_multi: table_wild_list FROM join_table_list where_clause' => new MultipleDelete(null, $options, $this->wildTargets($body->node(0)), MultipleDeleteForm::BeforeFrom, $queries->tables($body->node(2)), $queries->where($body->node(3))),
-            'single_multi: FROM table_alias_ref_list USING join_table_list where_clause' => new MultipleDelete(null, $options, $this->lowering->dml->deleteTargets($body->node(1)), MultipleDeleteForm::Using, $queries->tables($body->node(3)), $queries->where($body->node(4))),
+            'single_multi: table_wild_list FROM join_table_list where_clause' => new MultipleDelete(null, $options, $this->targets($body->node(0)), MultipleDeleteForm::BeforeFrom, $queries->tables($body->node(2)), $queries->where($body->node(3))),
+            'single_multi: FROM table_alias_ref_list USING join_table_list where_clause' => new MultipleDelete(null, $options, $this->targets($body->node(1)), MultipleDeleteForm::Using, $queries->tables($body->node(3)), $queries->where($body->node(4))),
             default => throw ImplementationGap::production($body),
         };
     }
@@ -204,6 +204,47 @@ final class ChangeRule
             'delete_limit_clause: LIMIT limit_option' => new RowLimit($this->lowering->queries->limitValue($form->node(1))),
             default => $this->lowering->queries->limit($clause),
         };
+    }
+
+    /**
+     * Lowers deletion targets, refusing intrinsic repetitions before relation operands.
+     *
+     * @return list<QualifiedName>
+     * @throws \SqlSemantics\Construction\RejectedInput When a target is intrinsically repeated
+     */
+    public function targets(Node $list): array
+    {
+        $targets = $this->lowering->dml->deleteTargets($list);
+        $position = (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($targets);
+        if ($position !== null) {
+            $items = (new ListRule($this->lowering))->items($list, [
+                'table_wild_list: table_wild_one', 'table_wild_list: table_wild_list , table_wild_one',
+                'table_alias_ref_list: table_alias_ref', 'table_alias_ref_list: table_alias_ref_list , table_alias_ref',
+                'table_alias_ref_list: table_ident_opt_wild', 'table_alias_ref_list: table_alias_ref_list , table_ident_opt_wild',
+            ]);
+            $legacy = $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget(array_slice($targets, 0, $position + 1), $this->lowering->programName), (new \SqlSemantics\Construction\SourceRanges())->span($items[$position])[1] ?? 0, $legacy);
+        }
+
+        return $targets;
+    }
+
+    /**
+     * MySQL 5.6 DELETE lists refuse a repetition before reading a later suffix.
+     * In this release the list productions belong only to DELETE.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || !in_array($node->name, ['table_wild_list', 'table_alias_ref_list'], true)) {
+            return null;
+        }
+        try {
+            $this->targets($node);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
+        }
+
+        return null;
     }
 
     /**

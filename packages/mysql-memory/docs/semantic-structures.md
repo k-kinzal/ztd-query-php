@@ -1281,6 +1281,17 @@ rows and a datetime column. These checks establish diagnostic ownership and the
 observed state transitions; they do not close the outstanding general row and
 VALUES constructor domains.
 
+A multiple-table DELETE cannot retain two exactly identical qualified target
+names. This constructor invariant applies before `Operation` construction;
+case comparison and resolving omitted database names remain contextual. SQL
+input that violates the invariant produces `RepeatedDeleteTarget`, holding only
+the typed prefix through the first repetition and the enclosing declaration
+identity. This preserves default-database precedence without retaining source
+text or an AST. Native checks on 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 include
+populated tables, unknown aliases, qualified program headers and unreachable
+stored instructions. Only 5.6 reports the completed repeated target before a
+later syntax error; later releases finish parsing first.
+
 Multiple-table DELETE targets bind to input occurrence identities in Semantics.
 An unqualified target uses the current database unless it names an explicit
 alias. A qualified target selects its database even when another input has the

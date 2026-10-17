@@ -67,6 +67,7 @@ final class InputErrors
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration => (new Event\Alteration())->error($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget => (new Dml\Targets())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ZeroKeyPrefix => SchemaError::KeyPartZeroLength->error($diagnostic->column->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute => (new Json\AttributeInput())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns => ($diagnostic->program ?? $diagnostic->view)->schema === null && $session->variables->database === '' ? \MySqlMemory\Error\Family\QueryError::NoDatabase->error() : SchemaError::WrongColumnName->error($diagnostic->column->value),

@@ -1002,6 +1002,10 @@
         "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadConflict",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RepeatedDeleteTarget": {
+        "program": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "targets": "array"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\UnknownDeleteTable": {
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },

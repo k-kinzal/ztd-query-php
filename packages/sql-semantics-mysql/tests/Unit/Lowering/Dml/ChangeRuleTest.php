@@ -53,4 +53,20 @@ final class ChangeRuleTest extends TestCase
     {
         self::assertSame('DELETE db.t, u FROM db.t, u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete db.t.*, u from db.t, u')->toString());
     }
+
+    public function testTargetsRefusesAnIntrinsicRepetitionBeforeReadingRelations(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Not unique table/alias: 'a'");
+        (new Semantics(Dialect::MySql))->analyze('DELETE a, a FROM missing');
+    }
+
+    public function testCompletedKeepsTheLegacyPrefixBeforeAnInvalidSuffix(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser('mysql-5.6.51'), 'DELETE d.a,d.a FROM', 18, $semantics->profile());
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[0][1]);
+        self::assertSame("Not unique table/alias: 'a'", $notices[0][1]->problem->message());
+    }
 }
