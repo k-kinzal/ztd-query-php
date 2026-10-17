@@ -105,8 +105,20 @@ final class ChangeFacts
     {
         $base = $this->base($delete->with, $derivation, $outer);
         $visible = $this->references($delete->tables, $derivation, $base);
+        $this->targets($delete->targets, $visible, $derivation);
+        $this->clauses($delete->where, [], null, $derivation, $base, new Environment($derivation->context, $base, $visible));
+    }
+
+    /**
+     * Resolves the ordered target namespace independently of statement publication.
+     *
+     * @param list<QualifiedName> $targets The requested deletion targets
+     * @param list<VisibleRelation> $visible The complete input namespace
+     */
+    public function targets(array $targets, array $visible, Derivation $derivation): void
+    {
         $projection = new Projection();
-        foreach ($delete->targets as $target) {
+        foreach ($targets as $target) {
             $found = null;
             foreach ($visible as $relation) {
                 $name = $relation->alias === null ? new QualifiedName($target->name, $target->schema ?? $derivation->context->searchPath[0]) : $target;
@@ -121,7 +133,6 @@ final class ChangeFacts
                 $derivation->bindReference($target, $found->relation);
             }
         }
-        $this->clauses($delete->where, [], null, $derivation, $base, new Environment($derivation->context, $base, $visible));
     }
 
     /**

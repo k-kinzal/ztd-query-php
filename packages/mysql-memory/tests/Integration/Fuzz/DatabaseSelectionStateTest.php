@@ -42,8 +42,8 @@ final class DatabaseSelectionStateTest extends TestCase
     {
         $table = new QualifiedName(new Name('t'), new Name('selection_domain'));
         $statements = [
-            new MultipleDelete(null, [], [new QualifiedName(new Name('t'))], MultipleDeleteForm::BeforeFrom, [new TableReference($table)]),
-            new MultipleDelete(null, [], [new QualifiedName(new Name('x'))], MultipleDeleteForm::BeforeFrom, [new TableReference($table)]),
+            new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new TableReference($table)], [new QualifiedName(new Name('t'))]), MultipleDeleteForm::BeforeFrom),
+            new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new TableReference($table)], [new QualifiedName(new Name('T'))]), MultipleDeleteForm::BeforeFrom),
             new ShowFunctionCode(new QualifiedName(new Name('f'))),
             new ShowProcedureCode(new QualifiedName(new Name('p'))),
             new CreateEvent(new QualifiedName(new Name('e')), new RecurringSchedule(new NumberLiteral('1'), IntervalUnit::Day), new Evaluation([new SelectExpression(new NumberLiteral('0'))])),

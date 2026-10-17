@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Dml;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -15,6 +16,29 @@ use SqlSemantics\Platform\MySql\Lowering\Dml\ChangeRule;
 #[Medium]
 final class ChangeRuleTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerTargetRefusalReleases(): iterable
+    {
+        yield '5.6' => ['mysql-5.6.51', true];
+        yield '5.7' => ['mysql-5.7.44', false];
+        yield '8.0' => ['mysql-8.0.44', true];
+        yield '8.4' => ['mysql-8.4.7', true];
+        yield '9.1' => ['mysql-9.1.0', true];
+    }
+
+    #[DataProvider('providerTargetRefusalReleases')]
+    public function testMultipleKeepsTheReleaseSpecificInputStoppingRule(string $release, bool $aborts): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze('DELETE x FROM t AS y');
+            self::fail('An absent target must be refused.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame($aborts, $failure->aborts);
+        }
+    }
+
     public function testUpdateLowersEveryGeneration(): void
     {
         self::assertSame('UPDATE t SET a = 1 WHERE b ORDER BY c LIMIT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('update t set a = 1 where b order by c limit 1')->toString());
@@ -69,4 +93,11 @@ final class ChangeRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[0][1]);
         self::assertSame("Not unique table/alias: 'a'", $notices[0][1]->problem->message());
     }
+    public function testMultipleRefusesAnUnmatchedTargetWithoutPublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Unknown table 'x' in MULTI DELETE");
+        (new Semantics(Dialect::MySql))->analyze('DELETE x FROM t AS y');
+    }
+
 }

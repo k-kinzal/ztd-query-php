@@ -53,7 +53,7 @@ final class DeleteListsTest extends TestCase
             $session->query('INSERT INTO a VALUES (' . $row . '); INSERT INTO b VALUES (' . $row . '); INSERT INTO c VALUES (' . $row . ')');
         }
         $list = new TableList([new TableReference(new QualifiedName(new Name('b'))), new TableReference(new QualifiedName(new Name('c')))]);
-        $statement = new MultipleDelete(null, [], [new QualifiedName(new Name('a')), new QualifiedName(new Name('b'))], $form, [new TableReference(new QualifiedName(new Name('a'))), $nested ? new NestedRelation($list) : $list]);
+        $statement = new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new TableReference(new QualifiedName(new Name('a'))), $nested ? new NestedRelation($list) : $list], [new QualifiedName(new Name('a')), new QualifiedName(new Name('b'))]), $form);
         $session->text = 'unrelated invalid input';
         $reply = (new Execution())->runIn($session, $statement);
         $remaining = $session->query('SELECT (SELECT COUNT(*) FROM a), (SELECT COUNT(*) FROM b), (SELECT COUNT(*) FROM c)')[0];

@@ -69,6 +69,10 @@ final class NoticeHeader
      */
     public function scoped(ParseFailure $notice): ParseFailure
     {
+        if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets && $this->kind !== null) {
+            $problem = $notice->problem;
+            return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets($problem->targets, $problem->tables, $problem->with, $problem->where, $this->name), $notice->aborts, $notice->phase);
+        }
         if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget && $this->kind !== null) {
             return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget($notice->problem->targets, $this->name), $notice->aborts, $notice->phase);
         }

@@ -22,6 +22,22 @@ A rejected constructor keeps its completed arguments so the next trial can resam
 
 Explicit SHOW database identities must be nonempty; the empty database operand of SHOW OPEN TABLES remains a listing filter. View column lists have a release-dependent domain: legacy releases accept names that modern releases reject, including an empty name or trailing whitespace. Composition checks exclude combining that legacy column domain with modern query forms. Modern input lowering retains a typed column refusal, the view identity and its enclosing stored-program identity. The consumer can therefore resolve the default-database dependency without consulting SQL. CREATE/DROP VIEW also carry the function/trigger restriction imposed by their implicit transaction boundary.
 
+`MultipleDelete` takes a `DeletionInput` that couples its input occurrences with
+its target namespace. An explicit target list must be nonempty, contain no
+identical repetitions, and name occurrences that the input can expose. Omitting
+that list selects every visible input occurrence, retaining aliases and explicit
+database qualification. Nested query tables do not become outer DELETE targets.
+An omitted database and case comparison remain context-dependent; a target
+absent under every supported comparison is rejected before an `Operation` exists.
+Input lowering reports such SQL through `RefusedDeleteTargets`, which retains
+typed relations, predicates, common tables and the enclosing program name for
+diagnostic ordering. It is not a statement and retains no source SQL or AST.
+
+This namespace constraint does not yet establish the entire deletion domain:
+for example, the updatability of a derived-table target also needs its ordinary
+statement and deferred stored-instruction roles distinguished. A matching native
+refusal does not close that remaining construction issue.
+
 The generated root is a MySQL statement or an ordinary expression placed in a SELECT item. The runner derives its semantic facts against a fresh in-memory session and sends the result directly to statement execution. Every parameter occurrence receives an explicit NULL value and its type before derivation, so the fixture supplies bindings without relying on unresolved parameter types. Separate properties exercise non-NULL bindings and their occurrence order. The generator has no list of supported SQL commands and does not use execution success or semantic diagnostics to select inputs.
 
 Typed optimizer hints are read from the original structure independently of the
@@ -54,7 +70,7 @@ php fuzz/structures.php 1 example-seed - 8.4.7 22
 The arguments are `COUNT [SEED] [CLASS|-|@each] [RELEASE] [START] [native|compare]`. Omitting the seed chooses a random seed and prints it before the first trial. An explicit class selects a root from the same discovered inventory. `@each` visits the sorted root inventory in order, wrapping after its end; the initial record reports the number of root types. Use at least that many trials to exercise construction of every root type. This enumerates model types and does not measure SQL Faker grammar coverage. Reproduction requires the same revision because changes to types and constructors change deterministic choices.
 
 ```sh
-composer fuzz:structures -- 245 all-model-roots @each
+composer fuzz:structures -- 244 all-model-roots @each
 ```
 
 The constructor search shares one 2,000-attempt cap across each root and its
@@ -68,7 +84,7 @@ execution failures remain failures.
 The default `auto` release selects a compatible test environment before execution. To state that selection explicitly:
 
 ```sh
-composer fuzz:structures -- 245 all-model-roots @each auto
+composer fuzz:structures -- 244 all-model-roots @each auto
 ```
 
 This mode renders the already constructed model under candidate grammar releases and lexical modes, parses and lowers that rendering, and checks structural correspondence. It does not derive facts or execute statements while selecting a profile. A retained observable spelling fixes the candidate profile; otherwise the candidate modes cover the interpretations of `NOT` and `||`. Named parameter markers select the named-parameter extension. If no candidate preserves the structure, the trial fails in the `profile` phase and the failure records each candidate's reason. Inputs are never regenerated because of this result. Once selected, the profile is used for one execution; an execution error does not cause another profile to be tried. The memory executor receives the constructed structure directly, without parsing the rendered SQL. An explicit release keeps the previous fixed-environment behavior.
@@ -84,7 +100,7 @@ Use `compare` to check **every** generated structure against an isolated
 Testcontainers MySQL server, including structures that return successful results:
 
 ```sh
-php fuzz/structures.php 245 all-model-roots @each auto 0 compare
+php fuzz/structures.php 244 all-model-roots @each auto 0 compare
 ```
 
 This mode requires `mysqli`. It compares buffered rows, column names and origins, protocol

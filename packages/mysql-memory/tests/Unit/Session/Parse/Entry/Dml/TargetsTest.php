@@ -17,6 +17,22 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class TargetsTest extends TestCase
 {
+    public function testUnmatchedUsesTheRetainedHeaderAndInputWithoutSqlText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $target = new QualifiedName(new Name('x'));
+        $table = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')), new Name('y'));
+        $refusal = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([$target], [$table]);
+        $program = new QualifiedName(new Name('p'), new Name('d'));
+        $input = new Targets();
+
+        self::assertSame(1046, $input->unmatched($refusal, $session)->getCode());
+        self::assertSame(1109, $input->unmatched(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([$target], [$table], program: $program), $session)->getCode());
+        self::assertSame(1066, $input->unmatched(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([$target], [$table, new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')), new Name('y'))], program: $program), $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testErrorResolvesPrefixDependenciesWithoutReadingInput(): void
     {
         $session = (new Instance())->connect();

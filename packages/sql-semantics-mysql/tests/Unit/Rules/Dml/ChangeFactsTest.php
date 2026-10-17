@@ -73,11 +73,11 @@ final class ChangeFactsTest extends TestCase
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
     }
 
-    public function testDeleteMultipleChecksTheTargets(): void
+    public function testTargetsChecksTheContextualNames(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->analyze('DELETE t FROM t AS x', [$t]);
+        $operation = $semantics->analyze('DELETE X FROM t AS x', [$t]);
 
         self::assertInstanceOf(UnknownDeleteTable::class, $operation->facts->diagnostics[0]);
     }

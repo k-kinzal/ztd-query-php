@@ -83,7 +83,7 @@ final class DeleteBindingTest extends TestCase
     #[DataProvider('providerReleases')]
     public function testSameTargetRespondsToTheCurrentDatabase(string $release): void
     {
-        $node = new MultipleDelete(null, [], [new QualifiedName(new Name('t'))], MultipleDeleteForm::BeforeFrom, [new TableReference(new QualifiedName(new Name('t'), new Name('d')))]);
+        $node = new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new TableReference(new QualifiedName(new Name('t'), new Name('d')))], [new QualifiedName(new Name('t'))]), MultipleDeleteForm::BeforeFrom);
         $container = Testcontainers::run(new DisposableMySql($release));
         try {
             $endpoint = $container->getData(Endpoint::class);

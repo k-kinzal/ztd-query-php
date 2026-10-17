@@ -117,7 +117,8 @@ final class ChangeRule
         }
         [$spelling, $with, $options, $targets, $tables, $where] = self::MULTIPLE[$form->signature] ?? throw ImplementationGap::production($form);
 
-        return new MultipleDelete(
+        return $this->multiple(
+            $form->node,
             $with === null ? null : $queries->with($form->node($with)),
             $this->options($form->node($options)),
             $this->targets($form->node($targets)),
@@ -151,10 +152,28 @@ final class ChangeRule
                 $queries->ordering($body->node(4)),
                 $this->limit($body->node(5)),
             ),
-            'single_multi: table_wild_list FROM join_table_list where_clause' => new MultipleDelete(null, $options, $this->targets($body->node(0)), MultipleDeleteForm::BeforeFrom, $queries->tables($body->node(2)), $queries->where($body->node(3))),
-            'single_multi: FROM table_alias_ref_list USING join_table_list where_clause' => new MultipleDelete(null, $options, $this->targets($body->node(1)), MultipleDeleteForm::Using, $queries->tables($body->node(3)), $queries->where($body->node(4))),
+            'single_multi: table_wild_list FROM join_table_list where_clause' => $this->multiple($body->node, null, $options, $this->targets($body->node(0)), MultipleDeleteForm::BeforeFrom, $queries->tables($body->node(2)), $queries->where($body->node(3))),
+            'single_multi: FROM table_alias_ref_list USING join_table_list where_clause' => $this->multiple($body->node, null, $options, $this->targets($body->node(1)), MultipleDeleteForm::Using, $queries->tables($body->node(3)), $queries->where($body->node(4))),
             default => throw ImplementationGap::production($body),
         };
+    }
+
+    /**
+     * Constructs a deletion only after its targets can belong to its input namespace.
+     *
+     * @param list<DeleteOption> $options The written modifiers
+     * @param list<QualifiedName> $targets The deletion targets
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Relation\TableSource> $tables The complete inputs
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> $hints The optimizer hints
+     * @throws \SqlSemantics\Construction\RejectedInput When an input occurrence cannot supply a target
+     */
+    public function multiple(Node $source, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $options, array $targets, MultipleDeleteForm $form, array $tables, ?\SqlSemantics\Statement\Scalar $where = null, array $hints = []): MultipleDelete
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($targets, $tables) !== null) {
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets($targets, $tables, $with, $where, $this->lowering->programName);
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744);
+        }
+        return new MultipleDelete($with, $options, new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets), $form, $where, $hints);
     }
 
     /**

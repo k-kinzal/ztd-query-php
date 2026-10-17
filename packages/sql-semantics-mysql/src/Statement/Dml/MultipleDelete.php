@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  *     [count($delete->statement->targets), $delete->toString()] // => [2, 'DELETE t, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
  * @example Rejecting an intrinsically repeated target before deriving an operation
  *     $target = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
- *     new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(null, [], [$target, $target], \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::BeforeFrom, [new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($target)]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($target)], [$target, $target]), \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::BeforeFrom) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class MultipleDelete implements Explainable
 {
@@ -62,34 +62,24 @@ final class MultipleDelete implements Explainable
     /**
      * @param WithClause|null $with The common tables (MySQL 8.0 and later)
      * @param list<DeleteOption> $options The modifiers
-     * @param list<QualifiedName> $targets The tables rows are deleted from; at least one
+     * @param Target\DeletionInput $input The coupled target and input namespace
      * @param MultipleDeleteForm $form Where the tables to delete from are written
-     * @param list<Relation> $tables The table references; at least one; unparenthesized comma lists are flattened
      * @param Scalar|null $where The row predicate
      * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
-     * @throws InvalidConstruction When a target is intrinsically repeated, or targets or table references are empty
+     * @throws InvalidConstruction When a target is repeated or absent from the input namespace, or targets or references are empty
      */
     public function __construct(
         public readonly ?WithClause $with,
         array $options,
-        array $targets,
+        Target\DeletionInput $input,
         public readonly MultipleDeleteForm $form,
-        array $tables,
         public readonly ?Scalar $where = null,
         array $hints = [],
     ) {
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
-        $this->targets = Check::listOf($targets, QualifiedName::class, 'A multiple-table DELETE names at least one table to delete from.', 1);
-        foreach ($this->targets as $target) {
-            Check::input($target->catalog === null, 'A table is qualified by at most a database.');
-        }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) === null, 'A multiple-table DELETE cannot repeat an identical target.');
-        $members = [];
-        foreach (Check::listOf($tables, Relation::class, 'A multiple-table DELETE names at least one table reference.', 1) as $table) {
-            array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));
-        }
-        $this->tables = $members;
+        $this->targets = $input->targets;
+        $this->tables = $input->tables;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

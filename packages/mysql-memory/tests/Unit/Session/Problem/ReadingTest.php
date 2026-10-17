@@ -309,7 +309,7 @@ final class ReadingTest extends TestCase
     public function testTargetsRequiresADatabaseBeforeInspectingTheInputRelations(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('DELETE x FROM (SELECT 1) AS y')->statement;
+        $statement = $session->analyze('DELETE y FROM (SELECT 1) AS y')->statement;
         $session->text = 'unrelated invalid input';
         $this->expectExceptionCode(1046);
         (new Reading())->targets($statement, $session);
