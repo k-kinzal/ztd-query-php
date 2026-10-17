@@ -119,4 +119,14 @@ final class SyntaxTableNamesTest extends TestCase
         self::assertSame([null, 'd'], array_map(static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): ?string => $name->schema?->value, $names));
     }
 
+    public function testDeletedRequiresTheCompleteTargetListBeforeTheRefusal(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tree = $semantics->parser()->parse('DELETE a, d.b FROM (SELECT ABS()) AS x');
+        $rule = new SyntaxTableNames();
+
+        self::assertSame([], $rule->deleted($tree, $semantics->profile(), 11));
+        self::assertCount(2, $rule->deleted($tree, $semantics->profile(), 13));
+    }
+
 }

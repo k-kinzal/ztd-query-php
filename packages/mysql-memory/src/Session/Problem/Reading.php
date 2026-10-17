@@ -53,12 +53,12 @@ final class Reading
             throw (new \MySqlMemory\Command\InternalCommand())->error($operation);
         }
         (new \MySqlMemory\Command\Explain\ExplainCommand())->format($operation->statement);
+        $this->targets($operation->statement, $session);
         $this->parsed($operation, $session);
         (new \MySqlMemory\Command\Access\HandlerPreparation())->database($operation, $session);
         $this->grouping($operation, $session);
         $this->variables($operation, $session);
         $this->legacyWrites($operation, $session);
-        $this->targets($operation->statement, $session);
         $this->diagnosed($operation, $session);
         (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session);
         (new \MySqlMemory\Command\Explain\ExplainCommand())->check($operation->statement, $session);
@@ -272,13 +272,13 @@ final class Reading
     }
 
     /**
-     * Raises the error of a table a multiple-table DELETE names twice in the list of the tables it deletes from (ER_NONUNIQ_TABLE).
+     * Resolves the default database and rejects repeated multiple-table DELETE targets.
      *
      * The server reads the list before the tables of FROM or USING, so the error comes before
      * theirs. Two names are the same table when they name the same database, the current one
      * when none is written (verified on a live 8.4 server).
      *
-     * @throws SqlError When the list names a table twice
+     * @throws SqlError When an unqualified target has no current database or a table is named twice
      */
     public function targets(Node $statement, Session $session): void
     {
@@ -287,6 +287,9 @@ final class Reading
         }
         $seen = [];
         foreach ($statement->targets as $target) {
+            if ($target->schema === null && $session->variables->database === '') {
+                throw QueryError::NoDatabase->error();
+            }
             $key = ($target->schema->value ?? $session->variables->database) . "\0" . $target->name->value;
             if (isset($seen[$key])) {
                 throw QueryError::NonUniqueTable->error($target->name->value);

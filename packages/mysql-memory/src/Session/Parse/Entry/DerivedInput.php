@@ -24,23 +24,23 @@ use SqlSemantics\Diagnostic\Check;
 final class DerivedInput
 {
     /**
-     * Resolves an outer DELETE target before a contextual derived-option refusal.
+     * Resolves an outer DELETE target before a later input-operand refusal.
      */
     public function refusal(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
     {
-        return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict ? $this->targets($statement, $session) : null;
+        return $this->targets($statement, $session, $failure->end);
     }
 
     /**
      * Answers a missing database on outer DELETE targets before relation lowering.
      */
-    public function targets(string $statement, Session $session): ?SqlError
+    public function targets(string $statement, Session $session, int $end = PHP_INT_MAX): ?SqlError
     {
         if ($session->variables->database !== '') {
             return null;
         }
         try {
-            $names = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->deleted($session->semantics()->parser()->parse($statement), $session->semantics()->profile());
+            $names = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->deleted($session->semantics()->parser()->parse($statement), $session->semantics()->profile(), $end);
         } catch (SourceException) {
             return null;
         }

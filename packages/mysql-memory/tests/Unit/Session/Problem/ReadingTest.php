@@ -306,6 +306,15 @@ final class ReadingTest extends TestCase
         (new Reading())->variables($session->analyze('SELECT 1 INTO v'), $session);
     }
 
+    public function testTargetsRequiresADatabaseBeforeInspectingTheInputRelations(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('DELETE x FROM (SELECT 1) AS y')->statement;
+        $session->text = 'unrelated invalid input';
+        $this->expectExceptionCode(1046);
+        (new Reading())->targets($statement, $session);
+    }
+
     public function testDiagnosedRaisesATableAMultipleTableDeleteLacks(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

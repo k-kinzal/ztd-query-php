@@ -84,10 +84,11 @@ final class SyntaxTableNames
     /**
      * Reads multiple-DELETE targets independently of rejected relation operands.
      * Only the outer command owns these names; stored bodies are not inspected.
+     * A completed target list must precede the supplied refusal boundary.
      *
      * @return list<\SqlSemantics\Statement\Identifier\QualifiedName> The independently lowered target names
      */
-    public function deleted(Node $tree, \SqlSemantics\Contract\LanguageProfile $profile): array
+    public function deleted(Node $tree, \SqlSemantics\Contract\LanguageProfile $profile, int $end = PHP_INT_MAX): array
     {
         $node = $tree->find('delete_stmt')[0] ?? $tree->find('delete')[0] ?? null;
         if ($node === null || ($tree->tokens()[0] ?? null) !== ($node->tokens()[0] ?? null)) {
@@ -97,7 +98,7 @@ final class SyntaxTableNames
         $node = $node->find('single_multi')[0] ?? $node;
         foreach ($node->children as $child) {
             if ($child instanceof Node && in_array($child->name, ['table_alias_ref_list', 'table_wild_list'], true)) {
-                return $lowering->dml->deleteTargets($child);
+                return ((new \SqlSemantics\Construction\SourceRanges())->span($child)[1] ?? PHP_INT_MAX) <= $end ? $lowering->dml->deleteTargets($child) : [];
             }
         }
 

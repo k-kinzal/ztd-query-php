@@ -58,4 +58,13 @@ final class DerivedInputTest extends TestCase
         self::assertSame(1046, (new DerivedInput())->refusal($failure, 'DELETE a FROM (SELECT HIGH_PRIORITY 1) d', $session)?->getCode());
     }
 
+    public function testTargetsDoesNotOverrideARefusalBeforeTheTargetListCompletes(): void
+    {
+        $session = (new Instance())->connect();
+        $input = new DerivedInput();
+
+        self::assertNull($input->targets('DELETE a, d.b FROM (SELECT ABS()) AS x', $session, 11));
+        self::assertSame(1046, $input->targets('DELETE a, d.b FROM (SELECT ABS()) AS x', $session, 13)?->getCode());
+    }
+
 }
