@@ -23,6 +23,21 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class CompletedNoticeTest extends TestCase
 {
+    public function testAccountDispatchesNumericOptionRefusals(): void
+    {
+        $parser = new MySqlParser('mysql-8.4.7');
+        $lowering = new Lowering(Productions::load(__DIR__ . '/../../../resources/productions/mysql-8.4.7.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql847));
+        $notices = [];
+        $parser->parse('CREATE USER u PASSWORD_LOCK_TIME 00032768', static function (\SqlParser\Parser\Node $node) use ($lowering, &$notices): void {
+            $notice = (new CompletedNotice())->account($node, $lowering);
+            if ($notice !== null) {
+                $notices[] = $notice;
+            }
+        });
+
+        self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange('PASSWORD_LOCK_TIME', '32768', 'ER_WRONG_VALUE'), true)], $notices);
+    }
+
     public function testOperandsReadsThePrimitiveNameRefusal(): void
     {
         $parser = new MySqlParser('mysql-5.7.44');

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Account;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
+use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 
@@ -62,12 +64,46 @@ final class NumberChecks
      */
     public function range(Derivation $derivation, Numeral $number, string $option, string $minimum, ?string $maximum): void
     {
-        $value = $this->value($number);
-        if ($value === null) {
-            $derivation->report(new NumberOutOfRange($option, $number->text, 'ER_ONLY_INTEGERS_ALLOWED'));
-        } elseif ($this->compare($value, $minimum) < 0 || ($maximum !== null && $this->compare($value, $maximum) > 0)) {
-            $derivation->report(new NumberOutOfRange($option, $number->text, 'ER_WRONG_VALUE'));
+        $problem = $this->problem($number, $option, $minimum, $maximum);
+        if ($problem !== null) {
+            $derivation->report($problem);
         }
     }
 
+    /**
+     * Answers an intrinsic integer-token or range problem, using the converted value for a range diagnostic.
+     * Hexadecimal integer operands saturate at the signed 64-bit maximum; decimal tokens allow unsigned 64-bit values.
+     */
+    public function problem(Numeral $number, string $option, string $minimum, ?string $maximum): ?NumberOutOfRange
+    {
+        $value = $this->value($number);
+        if ($value === null || !(new Magnitudes())->integral($number)) {
+            return new NumberOutOfRange($option, $number->text, 'ER_ONLY_INTEGERS_ALLOWED');
+        }
+        if ($number->hexadecimal && $this->compare($value, Magnitudes::LARGEST) > 0) {
+            $value = Magnitudes::LARGEST;
+        }
+
+        return $this->compare($value, $minimum) < 0 || ($maximum !== null && $this->compare($value, $maximum) > 0) ? new NumberOutOfRange($option, $value, 'ER_WRONG_VALUE') : null;
+    }
+
+    /**
+     * Checks the numeric domain shared by direct account-option construction and SQL lowering.
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the option takes no number
+     */
+    public function option(AccountOptionKind $kind, Numeral $number): ?NumberOutOfRange
+    {
+        [$name, $minimum, $maximum] = match ($kind) {
+            AccountOptionKind::ExpireInterval => ['DAY', '1', '65535'],
+            AccountOptionKind::FailedLoginAttempts => ['FAILED_LOGIN_ATTEMPTS', '0', '32767'],
+            AccountOptionKind::LockTime => ['PASSWORD_LOCK_TIME', '0', '32767'],
+            AccountOptionKind::HistoryCount, AccountOptionKind::ReuseInterval => [implode(' ', $kind->words()), '0', null],
+            AccountOptionKind::AccountUnlock, AccountOptionKind::AccountLock, AccountOptionKind::ExpireNow,
+            AccountOptionKind::ExpireNever, AccountOptionKind::ExpireDefault, AccountOptionKind::HistoryDefault,
+            AccountOptionKind::ReuseDefault, AccountOptionKind::RequireCurrent, AccountOptionKind::RequireCurrentDefault,
+            AccountOptionKind::RequireCurrentOptional, AccountOptionKind::LockTimeUnbounded => throw new \SqlSemantics\Diagnostic\InvalidConstruction('This account option takes no number.'),
+        };
+
+        return $this->problem($number, $name, $minimum, $maximum);
+    }
 }

@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Account\AccountChecks;
 use SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege;
@@ -98,7 +97,6 @@ final class GrantPrivileges implements Statement, PrivilegeChange
     public function deriveStatement(Derivation $derivation): void
     {
         (new PrivilegeChecks())->grant($derivation, $this->privileges, $this->kind, $this->level);
-        (new AccountChecks())->tls($derivation, $this->tls);
     }
 
     /**

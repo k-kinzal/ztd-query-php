@@ -32,7 +32,7 @@ final class CompletedNotice
             return new ParseFailure($entry->problem, true);
         }
         $replication = new Replication\SyntaxDeprecations();
-        return $this->operands($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? $lowering->numbers->completed($node) ?? (new Server\Transaction\SyntaxXids())->completed($node, $lowering) ?? (new Account\SyntaxRoles())->deprecation($node, $lowering->profile->grammar) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering) ?? (new Account\SyntaxFactors())->completed($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement, $lookahead)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
+        return $this->operands($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? $lowering->numbers->completed($node) ?? (new Server\Transaction\SyntaxXids())->completed($node, $lowering) ?? $this->account($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement, $lookahead)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
     }
 
     /**
@@ -49,6 +49,14 @@ final class CompletedNotice
             return $load;
         }
         return (new Utility\Explain\SyntaxFormats())->modifier($node, $lowering) ?? (new Server\Maintenance\SyntaxKeywords())->completed($node, $lowering) ?? (new Call\SyntaxCalls())->completed($node, $lowering) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Leaf\SyntaxTableNames())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Routine\DeclarationPrefix())->completed($node, $lowering);
+    }
+
+    /**
+     * Interprets account clauses in grammar completion order, including privileges and authentication factors.
+     */
+    public function account(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
+    {
+        return (new Account\SyntaxRoles())->deprecation($node, $lowering->profile->grammar) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering) ?? (new Account\SyntaxFactors())->completed($node, $lowering) ?? (new Account\ClauseRule($lowering))->completed($node);
     }
 
 }

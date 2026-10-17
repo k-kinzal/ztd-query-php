@@ -10,7 +10,6 @@ use MySqlMemory\Account\Credentials;
 use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind;
@@ -190,19 +189,10 @@ final class Options
     }
 
     /**
-     * Answers the value of a number an option takes: the number in 64 bits, saturated, of which the server keeps the low 32 bits (verified on a live 8.4 server).
+     * Answers the value of a number an option takes: the low 32 bits after decimal unsigned or hexadecimal signed saturation (verified through native SQL).
      */
     public function number(Numeral $number): int
     {
-        $value = (new NumberChecks())->value($number) ?? '0';
-        if (strlen($value) > 20 || (strlen($value) === 20 && strcmp($value, '18446744073709551615') > 0)) {
-            $value = '18446744073709551615';
-        }
-        $kept = 0;
-        foreach (str_split($value) as $digit) {
-            $kept = ($kept * 10 + (int) $digit) % 4294967296;
-        }
-
-        return $kept;
+        return (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($number);
     }
 }

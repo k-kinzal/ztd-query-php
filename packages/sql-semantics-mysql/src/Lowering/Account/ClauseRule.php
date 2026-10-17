@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind;
@@ -21,7 +24,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantOptionRight;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 
 /**
  * Lowers the account clauses shared by CREATE USER, ALTER USER and GRANT.
@@ -135,17 +140,23 @@ final class ClauseRule
      * Lowers the conditions of a require_list, confirming the optional AND between them.
      *
      * @return list<TlsCondition>
+     * @throws RejectedInput When a TLS property occurs more than once
      * @throws ImplementationGap When a production has no rule
      */
     public function conditions(Node $list): array
     {
         $conditions = [];
+        $seen = [];
         foreach ($this->spine($list) as $item) {
             $form = $this->lowering->form($item);
             if ($form->signature === 'opt_and:' || $form->signature === 'opt_and: AND_SYM') {
                 continue;
             }
             $attribute = self::CONDITIONS[$form->signature] ?? throw ImplementationGap::production($form);
+            if (isset($seen[$attribute->value])) {
+                throw new RejectedInput(new RepeatedTlsAttribute($attribute), (new SourceRanges())->span($item)[1] ?? 0);
+            }
+            $seen[$attribute->value] = true;
             $conditions[] = new TlsCondition($attribute, $this->string($form, 1));
         }
 
@@ -256,6 +267,7 @@ final class ClauseRule
     /**
      * Lowers one password or locking option.
      *
+     * @throws RejectedInput When the option's number is outside its domain
      * @throws ImplementationGap When the production has no rule
      */
     public function option(Node $option): AccountOption
@@ -270,7 +282,31 @@ final class ClauseRule
         }
         [$kind, $position] = self::NUMBERED[$form->signature] ?? throw ImplementationGap::production($form);
 
-        return new AccountOption($kind, $this->lowering->numbers->numeral($form->node($position)));
+        $number = $this->lowering->numbers->integral($form->node($position));
+        $problem = (new NumberChecks())->option($kind, $number);
+        if ($problem !== null) {
+            throw new RejectedInput($problem, (new SourceRanges())->span($option)[1] ?? 0);
+        }
+
+        return new AccountOption($kind, $number);
+    }
+
+    /**
+     * Keeps intrinsic account-clause refusals before later options or malformed input.
+     */
+    public function completed(Node $node): ?ParseFailure
+    {
+        try {
+            if ($node->name === 'opt_account_lock_password_expire_option') {
+                $this->option($node);
+            } elseif ($node->name === 'require_list') {
+                $this->conditions($node);
+            }
+        } catch (RejectedInput $failure) {
+            return new ParseFailure($failure->problem, $failure->aborts);
+        }
+
+        return null;
     }
 
     /**

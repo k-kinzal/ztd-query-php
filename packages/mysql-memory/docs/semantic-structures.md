@@ -32,6 +32,17 @@ These diagnostics retain neither SQL text nor parser objects. Empty rows remain
 available as direct INSERT sources, where MySQL interprets them as default rows.
 The restriction does not yet establish every query's read-role invariant.
 
+Account password and lock options enforce their numeric domains before ordinary
+statement construction. Decimal integer tokens allow the unsigned 64-bit range;
+hexadecimal option operands saturate at the signed 64-bit maximum. Expiry
+intervals require 1–65535 days, and failed-login/lock-time values require
+0–32767. TLS requirements contain each property at most once. SQL lowering
+retains typed refusals in clause order, including inside skipped stored
+instructions. A range diagnostic uses the converted decimal value; an invalid
+integer token retains its spelling for the input adapter. Direct comparisons
+reuse the same CREATE/ALTER values with an absent, present and removed account,
+and check the persisted options through SHOW CREATE USER.
+
 CREATE TRIGGER histories distinguish an absent database, an absent table, a populated target and a repeated definition. Legacy releases report a missing target table even when its database does not exist; modern releases report the missing database. MySQL 5.6 also rejects a second trigger for the same table, timing and event. These are observations of database state, not constructor rejection rules.
 
 Explicit SHOW database identities must be nonempty; the empty database operand of SHOW OPEN TABLES remains a listing filter. View column lists have a release-dependent domain: legacy releases accept names that modern releases reject, including an empty name or trailing whitespace. Composition checks exclude combining that legacy column domain with modern query forms. Modern input lowering retains a typed column refusal, the view identity and its enclosing stored-program identity. The consumer can therefore resolve the default-database dependency without consulting SQL. CREATE/DROP VIEW also carry the function/trigger restriction imposed by their implicit transaction boundary.

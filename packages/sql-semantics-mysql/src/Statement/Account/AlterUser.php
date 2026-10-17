@@ -96,8 +96,6 @@ final class AlterUser implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $checks = new AccountChecks();
-        $checks->tls($derivation, $this->tls);
-        $checks->options($derivation, $this->options);
         $checks->comment($derivation, $this->comment);
     }
 

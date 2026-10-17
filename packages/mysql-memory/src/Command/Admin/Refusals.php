@@ -52,7 +52,7 @@ final class Refusals
      */
     public static function handles(Diagnostic $diagnostic): bool
     {
-        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong || $diagnostic instanceof StorageProblem || $diagnostic instanceof SpatialProblem || $diagnostic instanceof PriorityOutOfRange || $diagnostic instanceof RefusedSetting || $diagnostic instanceof NumberOutOfRange || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong || $diagnostic instanceof StorageProblem || $diagnostic instanceof SpatialProblem || $diagnostic instanceof PriorityOutOfRange || $diagnostic instanceof RefusedSetting || $diagnostic instanceof NumberOutOfRange || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
     }
 
     /**
@@ -73,6 +73,7 @@ final class Refusals
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber => new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number->text, '/') . '/') . "' at line 1"),
             $diagnostic instanceof PriorityOutOfRange => $this->priority($diagnostic),
             $diagnostic instanceof RefusedSetting => $this->setting($diagnostic, $statement, $text, $legacy),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute => StatementError::DuplicateArgument->error($diagnostic->attribute->value),
             $diagnostic instanceof NumberOutOfRange => $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number, '/') . '/') . "' at line 1"),
             default => new SqlError(StatementError::UnknownError, $diagnostic->message()),
         };
