@@ -221,7 +221,11 @@ final class Planner
         $distinct = $operation->quantifier !== SetQuantifier::All;
         $retain = !$this->compiler->settings->legacy() || $kind !== SetKind::Union || $distinct;
 
-        return new QueryPlan(new SetPath($kind, $distinct, $this->settled($left, $domains), $this->settled($right, $domains), $domains, $retain), $domains, $left->names, $this->materialized($domains));
+        $origins = $this->materialized($domains);
+        if ($this->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || ($this->settings->legacy() && $distinct)) {
+            $origins = array_map(static fn (?ColumnOrigin $origin, string $name): ColumnOrigin => new ColumnOrigin('', '', '', $name, $origin->flags ?? 0), $origins, $left->names);
+        }
+        return new QueryPlan(new SetPath($kind, $distinct, $this->settled($left, $domains), $this->settled($right, $domains), $domains, $retain), $domains, $left->names, $origins);
     }
 
     /**

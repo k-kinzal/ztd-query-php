@@ -56,4 +56,16 @@ final class SetOperandsTest extends TestCase
 
         self::assertSame($left, $union->left);
     }
+    public function testUnenclosedOnlyOwnsTheFirstMissingEnclosure(): void
+    {
+        $one = static fn (): Select => new Select([], [new SelectExpression(new NumberLiteral('1'))]);
+        $enclosed = static fn (): \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery => new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one());
+        $invalid = new SetOperation($enclosed(), SetOperator::Union, null, $one());
+        $rules = new SetOperands();
+        $check = static fn (SetOperation $query): bool => $rules->unenclosed($query->left, $query->operator, $query->right);
+        self::assertTrue($check($invalid));
+        self::assertFalse($check(new SetOperation($invalid, SetOperator::Union, null, $one())));
+        self::assertFalse($check(new SetOperation($one(), SetOperator::Union, null, $enclosed())));
+        self::assertTrue($check(new SetOperation(new SetOperation($enclosed(), SetOperator::Union, null, $enclosed()), SetOperator::Union, null, $one())));
+    }
 }

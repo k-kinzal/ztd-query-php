@@ -302,4 +302,13 @@ final class PlannerTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $derived);
         self::assertSame([[['1'], ['2.5'], ['x']], [['1'], ['2.5'], ['x']], [['1.0'], ['2.5'], ['x']]], [$nested->rows, $parenthesized->rows, $derived->rows]);
     }
+    public function testSetRetainsLegacyTemporaryColumnNamesAndFlags(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query('SELECT 1 AS n UNION SELECT 2')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame('n', $result->columns[0]->originalName);
+        self::assertSame(32769, $result->columns[0]->flags);
+    }
+
 }

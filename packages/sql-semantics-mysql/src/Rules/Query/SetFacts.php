@@ -57,6 +57,11 @@ final class SetFacts
      */
     public function operands(Query|LeadingUnion $leftQuery, SetOperator $operator, Query $rightQuery, Derivation $derivation, Environment $outer): QueryFact
     {
+        if ($derivation->context->profile->grammar === GrammarRelease::MySql5651 && (new Structure\SetOperands())->unenclosed($leftQuery, $operator, $rightQuery)) {
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion();
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $rightQuery);
+        }
         $left = $leftQuery instanceof LeadingUnion ? $this->leading($leftQuery, $derivation, $outer) : $derivation->query($leftQuery, $outer);
         $tables = new CommonTables();
         $pending = $tables->pending($outer, $rightQuery, $derivation);

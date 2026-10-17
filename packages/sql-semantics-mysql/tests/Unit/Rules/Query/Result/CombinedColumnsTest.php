@@ -43,13 +43,15 @@ final class CombinedColumnsTest extends TestCase
         self::assertEquals(new Domain(Kind::Bit, Field::Bit, 64, 0, true), $result);
     }
 
-    public function testResolveUsesLegacyBigintStorageWidthOnlyForMatchingFields(): void
+    public function testResolveUsesLegacyBigintStorageWidthForALaterOperand(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context());
         $rules = new CombinedColumns();
 
         self::assertEquals(Domain::integer(Field::LongLong, 20), $rules->resolve([Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 3)], $derivation));
         self::assertEquals(Domain::integer(Field::LongLong, 4), $rules->resolve([Domain::integer(Field::LongLong, 2), Domain::integer(Field::Tiny, 4)], $derivation));
+        self::assertEquals(Domain::integer(Field::LongLong, 20), $rules->resolve([Domain::integer(Field::Tiny, 4), Domain::integer(Field::LongLong, 2)], $derivation));
+        self::assertEquals(Domain::null(), $rules->resolve([], $derivation));
     }
 
     public function testResolvePreservesWiderLegacyIntegerExpressionBounds(): void

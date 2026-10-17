@@ -41,7 +41,7 @@ final class Reader
         $semantics = $session->semantics();
         $tree = $this->tree($statement, $prepared, $session);
         try {
-            $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
+            $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->enclosures($tree, $semantics->profile()) ?? (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
         } catch (AnalysisException $failure) {
             throw $this->refusal($tree, $failure, $statement, $session->variables->database, $session);
         }

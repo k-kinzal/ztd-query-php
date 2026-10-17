@@ -132,4 +132,20 @@ final class InputErrorsTest extends TestCase
         self::assertSame('unrelated invalid input', $session->text);
     }
 
+    public function testUnionFormatsADirectConditionWithoutReadingTheRequestLabel(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->text = 'unrelated invalid input';
+        $error = (new InputErrors())->union(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion(), $session);
+        self::assertSame(1064, $error->getCode());
+        self::assertStringContainsString("near '' at line 1", $error->getMessage());
+    }
+
+    public function testQueryMapsTheRetainedModifierPlacement(): void
+    {
+        $session = (new Instance())->connect();
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority);
+        self::assertSame(1234, (new InputErrors())->query($problem, $session)?->getCode());
+    }
+
 }

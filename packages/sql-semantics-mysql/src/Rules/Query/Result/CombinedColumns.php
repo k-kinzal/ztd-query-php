@@ -20,8 +20,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * A temporal NULLIF evaluates as a temporal value but contributes a string to
  * a set operation. Modern sets write such values in the connection collation;
  * legacy sets retain their numeric coercibility and latin1 collation. BIT
- * fields remain BIT when combined with one another. Legacy identical BIGINT
- * fields use at least the storage width, preserving wider expression bounds.
+ * fields remain BIT when combined with one another. Legacy BIGINT
+ * fields added after the first operand contribute at least their storage width,
+ * preserving wider expression bounds. The initial operand keeps its own width.
  * Legacy releases allocate the integer storage width when replacing a leading NULL
  * field. Verified through SQL on MySQL 5.6, 5.7, 8.0 and 8.4.
  *
@@ -43,9 +44,10 @@ final class CombinedColumns
         $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $operands = array_map(fn (Domain $domain): Domain => $this->operand($domain, $derivation, $legacy), $domains);
         $result = (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($operands, 'UNION', $derivation);
-        $same = $present !== [] && count(array_filter($present, static fn (Domain $domain): bool => $domain->field === Field::LongLong)) === count($present);
+        $last = $domains[count($domains) - 1] ?? null;
+        $storageWidth = $last?->field === Field::LongLong || ($last?->kind === Kind::Null && $present !== [] && $present[0]->field === Field::LongLong);
 
-        if ($legacy && $same && $result?->field === Field::LongLong) {
+        if ($legacy && $storageWidth && $result?->field === Field::LongLong) {
             $replaceNull = $domains[0]->kind === Kind::Null;
             $length = count($present) === 1 ? $present[0]->length : max(20, ...array_map(static fn (Domain $domain): int => $domain->length, $present));
 

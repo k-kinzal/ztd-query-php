@@ -1696,6 +1696,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedSelection": {
         "selection": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\UnenclosedUnion": {
+        "offset": "?int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Option\\RestrictedSelectOption": {
         "option": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption"
     },

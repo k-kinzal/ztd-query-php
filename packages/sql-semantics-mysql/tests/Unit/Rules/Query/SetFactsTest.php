@@ -89,4 +89,15 @@ final class SetFactsTest extends TestCase
 
         new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($union));
     }
+    public function testDerivePublishesTheLegacyConditionFromDirectOperands(): void
+    {
+        $one = new Select([], [new SelectExpression(new NumberLiteral('1'))]);
+        $query = new SetOperation(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one), SetOperator::Union, null, new Select([], [new SelectExpression(new NumberLiteral('2'))]));
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
+        $derivation->query($query, $derivation->environment());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion::class, $derivation->facts()->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
+    }
+
 }

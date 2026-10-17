@@ -27,7 +27,6 @@ final class InputErrors
     public function error(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => $this->selection($diagnostic->selection, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName => str_starts_with($diagnostic->name->value, '#mysql50#') ? ($diagnostic->identifierTooLong() ? SchemaError::TooLongIdentifier : SchemaError::WrongDatabaseName)->error((new \MySqlMemory\Error\DiagnosticText())->bytes($diagnostic->name->value, 100, true)) : \MySqlMemory\Error\Family\StatementError::WrongUsage->error('ALTER DATABASE UPGRADE DATA DIRECTORY NAME', 'name'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody => (new ProgramInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege => (new PrivilegeInput())->columns($diagnostic, $session),
@@ -36,7 +35,6 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel => (new PrivilegeInput())->placement($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto => (new ExplainInput())->error($diagnostic),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption => \MySqlMemory\Error\Family\StatementError::CantUseOptionHere->error($diagnostic->option->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard => (new EvaluationInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral && $diagnostic->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp => \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::error($diagnostic->text, $session->modes()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName => $this->name($diagnostic),
@@ -45,7 +43,20 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier => (new XaInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedLogSubquery => (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($diagnostic->offset, $session->text, $session->following, new RuntimeException($diagnostic->message()), true, $session->semantics()->parser()),
-            default => $this->source($diagnostic, $session),
+            default => $this->query($diagnostic, $session) ?? $this->source($diagnostic, $session),
+        };
+    }
+
+    /**
+     * Maps typed query-input conditions before resolving other input families.
+     */
+    public function query(Diagnostic $diagnostic, Session $session): ?SqlError
+    {
+        return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => $this->selection($diagnostic->selection, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption => \MySqlMemory\Error\Family\StatementError::CantUseOptionHere->error($diagnostic->option->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion => $this->union($diagnostic, $session),
+            default => null,
         };
     }
 
@@ -105,4 +116,17 @@ final class InputErrors
     {
         return $diagnostic->scope !== null && $diagnostic->scope->schema === null && $session->variables->database === '' ? \MySqlMemory\Error\Family\QueryError::NoDatabase->error() : (new \MySqlMemory\Error\TypeErrors())->columnAttribute($diagnostic);
     }
+    /**
+     * Formats an enclosure condition; direct structures have no input excerpt.
+     */
+    public function union(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion $problem, Session $session): SqlError
+    {
+        if ($problem->offset === null) {
+            return \MySqlMemory\Error\Family\StatementError::ParseError->error('', 1);
+        }
+        $suffix = ltrim(substr($session->text, $problem->offset), " \t\n\r\f\v");
+        $offset = strlen($session->text) - (rtrim($suffix) === ';' ? 0 : strlen($suffix));
+        return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($offset, $session->text, $session->following, new RuntimeException($problem->message()), true, $session->semantics()->parser());
+    }
+
 }

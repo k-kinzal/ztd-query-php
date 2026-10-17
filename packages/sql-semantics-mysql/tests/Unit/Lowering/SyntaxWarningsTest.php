@@ -159,5 +159,12 @@ final class SyntaxWarningsTest extends TestCase
 
         self::assertEquals([new ParseFailure(new UnknownCharset('missing'), true)], array_column($notices, 1));
     }
+    public function testEnclosuresLeavesARepresentableStructureWithAVersionedDiagnostic(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51');
+        $operation = $semantics->analyze('(SELECT 1) UNION SELECT 2');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion::class, $operation->facts->diagnostics[0]);
+        self::assertSame('(SELECT 1) UNION SELECT 2', $operation->toString());
+    }
 
 }

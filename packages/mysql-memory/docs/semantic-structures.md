@@ -1517,3 +1517,18 @@ The repair snapshot passed 8,329 Semantics tests and 17,934 Memory unit,
 property and documentation tests, static checks for both packages, and all seven
 native modifier/default tests. The outstanding construction and full-fuzz gates
 remain required by the acceptance contract.
+
+Legacy UNION enclosure requirements are derived from typed query operands. In
+MySQL 5.6, an enclosed first operand requires the following operands to be
+enclosed too. Directly constructed structures retain the versioned diagnostic
+without requiring source SQL; input lowering separately retains the completed
+operand position for native syntax-error excerpts. The publication replay can
+therefore inspect the structure without throwing an input-lowering exception.
+Native tests compare absent, populated and dropped table histories using an
+unchanged constructed query and unrelated request text. MySQL 5.7 admits the
+mixed enclosure form and responds to the table state; 5.6 keeps its structural
+rejection in all three states. These matching intrinsic errors are not counted
+as evidence of constructor validity. Legacy materialized UNION fields retain
+the first result name and integer storage widths. Focused enclosure and integer
+metadata tests pass, while a broader mixed-domain probe still has 155 metadata
+differences among 584 observations; that surface remains unresolved.

@@ -117,6 +117,16 @@ final class SyntaxWarnings
     }
 
     /**
+     * Locates a versioned query enclosure refusal for the input adapter.
+     * Ordinary semantic construction retains the query and derives its diagnostic.
+     */
+    public function enclosures(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
+    {
+        $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
+        return (new Query\Legacy\UnionEnclosures())->tree($tree, $lowering);
+    }
+
+    /**
      * Finds a rejected operand of a parsed input, retaining earlier program-scope refusals.
      */
     public function rejected(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
