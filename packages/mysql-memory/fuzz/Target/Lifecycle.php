@@ -9,6 +9,7 @@ use JsonException;
 use MySqlMemory\Server\Server;
 use PDO;
 use PDOException;
+use RuntimeException;
 use Testcontainers\Testcontainers;
 
 /**
@@ -32,6 +33,7 @@ final class Lifecycle
      * Compares a lifecycle input, even when a regular campaign uses an externally supplied DSN.
      *
      * @throws JsonException When an observation cannot be serialized
+     * @throws RuntimeException When the native fixture cannot serve SQL within its startup budget
      */
     public function compare(string $sql, string $version): Comparison
     {
@@ -44,7 +46,7 @@ final class Lifecycle
         try {
             $endpoint = $container->getData(Endpoint::class);
             $dsn = 'mysql:host=' . $endpoint->host . ';port=' . $endpoint->port;
-            $native = new PDO($dsn, $endpoint->username, $endpoint->password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $native = $this->reconnect($dsn, $endpoint->username, $endpoint->password, true) ?? throw new RuntimeException('The native lifecycle fixture did not become ready within thirty seconds.');
             $globals = [];
             foreach ((new Servers())->rows($native, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
                 $globals[strtolower($name)] = $value;
@@ -120,7 +122,7 @@ final class Lifecycle
     }
 
     /**
-     * Attempts one usable SQL connection, or retries for up to thirty seconds after restart.
+     * Attempts one usable SQL connection, or waits up to thirty seconds for startup or restart.
      * Authentication alone can succeed while a server is shutting down.
      */
     public function reconnect(string $dsn, string $user, string $password, bool $wait): ?PDO
