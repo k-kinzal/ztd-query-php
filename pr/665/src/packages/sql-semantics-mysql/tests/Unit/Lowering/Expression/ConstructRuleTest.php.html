@@ -107,8 +107,8 @@
 <span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>        <span class="tok-var">$zone</span> = (<span class="tok-kw">new</span> <span class="tok-id">ConstructRule</span>(<span class="tok-var">$lowering</span>))-&gt;<span class="tok-id">zone</span>(<span class="tok-var">$platform</span>-&gt;<span class="tok-id">productions</span>(<span class="tok-var">$profile</span>)-&gt;<span class="tok-id">form</span>(<span class="tok-var">$platform</span>-&gt;<span class="tok-id">parser</span>(<span class="tok-var">$profile</span>)-&gt;<span class="tok-id">parse</span>(<span class="tok-str">&quot;SELECT CAST(1 AT TIME ZONE INTERVAL &#039;+00:00&#039; AS DATETIME(2))&quot;</span>)-&gt;<span class="tok-id">find</span>(<span class="tok-str">&#039;simple_expr&#039;</span>)[<span class="tok-num">0</span>]));</span>
 <span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a></span>
 <span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;+00:00&#039;</span>, <span class="tok-id">true</span>, <span class="tok-str">&#039;2&#039;</span>], [<span class="tok-var">$zone</span>-&gt;<span class="tok-id">zone</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$zone</span>-&gt;<span class="tok-id">interval</span>, <span class="tok-var">$zone</span>-&gt;<span class="tok-id">precision</span>]);</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    }</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a></span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    }</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a></span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     * @return iterable&lt;string, array{string, bool}&gt;</span></span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     */</span></span>
@@ -191,8 +191,8 @@
 <span class="src-line" id="L150" data-diff="added"><a class="ln" href="#L150">150</a>        <span class="tok-id">self</span>::<span class="tok-id">assertEquals</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet</span>(<span class="tok-var">$problem</span>), <span class="tok-var">$failure</span>-&gt;<span class="tok-id">problem</span>);</span>
 <span class="src-line" id="L151" data-diff="added"><a class="ln" href="#L151">151</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$aborts</span>, <span class="tok-var">$failure</span>-&gt;<span class="tok-id">aborts</span>);</span>
 <span class="src-line" id="L152" data-diff="added"><a class="ln" href="#L152">152</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">strlen</span>(<span class="tok-str">&#039;SELECT CAST(NULL AS &#039;</span> . <span class="tok-var">$type</span> . <span class="tok-str">&#039; ARRAY)&#039;</span>), <span class="tok-var">$failure</span>-&gt;<span class="tok-id">end</span>);</span>
-<span class="src-line" id="L153" data-diff="same"><a class="ln" href="#L153">153</a>    }</span>
-<span class="src-line" id="L154" data-diff="same"><a class="ln" href="#L154">154</a></span>
+<span class="src-line" id="L153" data-diff="added"><a class="ln" href="#L153">153</a>    }</span>
+<span class="src-line" id="L154" data-diff="added"><a class="ln" href="#L154">154</a></span>
 <span class="src-line" id="L155" data-diff="same"><a class="ln" href="#L155">155</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testOptionalLowersTheOperandAndTheElseOfCase</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L156" data-diff="same"><a class="ln" href="#L156">156</a>    {</span>
 <span class="src-line" id="L157" data-diff="same"><a class="ln" href="#L157">157</a>        <span class="tok-var">$platform</span> = <span class="tok-kw">new</span> <span class="tok-id">Platform</span>();</span>
@@ -269,9 +269,23 @@
 <span class="src-line" id="L228" data-diff="same"><a class="ln" href="#L228">228</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">OptionalWords</span>::<span class="tok-id">Omitted</span>, <span class="tok-var">$search</span>-&gt;<span class="tok-id">parentheses</span>);</span>
 <span class="src-line" id="L229" data-diff="same"><a class="ln" href="#L229">229</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">OptionalWords</span>::<span class="tok-id">Written</span>, <span class="tok-var">$search</span>-&gt;<span class="tok-id">stated</span>);</span>
 <span class="src-line" id="L230" data-diff="same"><a class="ln" href="#L230">230</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">FullTextMode</span>::<span class="tok-id">NaturalLanguage</span>, <span class="tok-var">$search</span>-&gt;<span class="tok-id">mode</span>);</span>
-<span class="src-line" id="L231" data-diff="same"><a class="ln" href="#L231">231</a>    }</span>
-<span class="src-line" id="L232" data-diff="same"><a class="ln" href="#L232">232</a>}</span>
-<span class="src-line" id="L233" data-diff="same"><a class="ln" href="#L233">233</a></span>
+<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a>    }</span>
+<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a></span>
+<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCharsetRetainsARowAsAStoredOperand</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>    {</span>
+<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Dialect</span>::<span class="tok-id">MySql</span>);</span>
+<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a>        <span class="tok-var">$operation</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE PROCEDURE p() SELECT CONVERT((1,2) USING utf8mb4)&#039;</span>);</span>
+<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;CREATE PROCEDURE p() SELECT CONVERT((1, 2) USING utf8mb4)&#039;</span>, <span class="tok-var">$operation</span>-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a>    }</span>
+<span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a></span>
+<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCaseExpressionRetainsAnUnselectedRowResult</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L241" data-diff="added"><a class="ln" href="#L241">241</a>    {</span>
+<span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Dialect</span>::<span class="tok-id">MySql</span>);</span>
+<span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a>        <span class="tok-var">$operation</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1,2) END&#039;</span>);</span>
+<span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1, 2) END&#039;</span>, <span class="tok-var">$operation</span>-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L245" data-diff="same"><a class="ln" href="#L245">245</a>    }</span>
+<span class="src-line" id="L246" data-diff="same"><a class="ln" href="#L246">246</a>}</span>
+<span class="src-line" id="L247" data-diff="same"><a class="ln" href="#L247">247</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
