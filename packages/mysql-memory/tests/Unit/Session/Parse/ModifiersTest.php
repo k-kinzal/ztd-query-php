@@ -16,6 +16,22 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class ModifiersTest extends TestCase
 {
+    public function testScanTreatsAnUpdateRelationAsANestedQueryBlock(): void
+    {
+        $sql = 'UPDATE { RESTORE ({ DO ({ SLAVE (SELECT SQL_BIG_RESULT SQL_CACHE ?) AS x }, t) }, t) } SET a=1';
+        $tokens = (new Instance('5.6.51'))->connect()->semantics()->parser()->tokenize($sql);
+
+        self::assertSame([[], ['SQL_CACHE', '']], (new Modifiers($tokens, GrammarRelease::MySql5651))->scan(strlen($sql)));
+    }
+
+    public function testScanLeavesExpressionSubqueryQuantifiersUntilTheirExpressionCompletes(): void
+    {
+        $sql = 'UPDATE t SET a=(SELECT ALL DISTINCT SQL_CACHE ?)';
+        $tokens = (new Instance('5.6.51'))->connect()->semantics()->parser()->tokenize($sql);
+
+        self::assertSame([[], null], (new Modifiers($tokens, GrammarRelease::MySql5651))->scan(strlen($sql)));
+    }
+
     public function testScanRetainsTheBoundaryOfAnAbortingModifierConflict(): void
     {
         $tokens = (new Instance('5.7.44'))->connect()->semantics()->parser()->tokenize('SELECT SQL_CACHE SQL_CACHE CAST(NULL AS TIME(7)),?');

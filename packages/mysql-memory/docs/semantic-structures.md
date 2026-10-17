@@ -1629,7 +1629,16 @@ also retains its enabled native-password plugin instead of inheriting 8.4's
 disabled default. All 230 SQL observations across five releases matched. Another
 48 directly constructed alterations were reused with the account absent,
 present and removed: all 144 observations matched, with unrelated request text.
-Both packages' static checks, 8,367 Semantics MySQL tests, 17,964 Memory
+Both packages' static checks, 8,367 Semantics MySQL tests, 17,965 Memory
 unit/property/doctests and nine native integration tests passed. These repairs
 close the account-authentication examples; the combined acceptance gate remains
 open for the other recorded domains and the final complete fuzz campaigns.
+
+The legacy UPDATE modifier campaign on `/cache159-work-20261017` preserves
+the outer UPDATE query block when derived relations, joins or ODBC enclosures
+contain SELECT modifiers. Expression subqueries retain their distinct error
+precedence. All 148 SQL observations on MySQL 5.6.51 and 5.7.44 matched. Static
+checks and 17,967 unit/property/doctests passed. Replaying the 54 previously
+failing supplied-seed inputs matched 53; the remaining 5.6 table-status
+`Row_format` mismatch is still unresolved. This focused replay is not a new
+complete supplied-seed campaign.

@@ -162,6 +162,10 @@ final class Modifiers
     public function read(int $index, Token $token, bool $modifier): void
     {
         $construct = $this->deprecated($token->name, $this->before, $this->release);
+        if ($token->name === 'UPDATE_SYM' && !in_array($this->before, ['FOR_SYM', 'KEY_SYM'], true)) {
+            $this->blocks++;
+            $this->clauses[$this->depth] = true;
+        }
         $this->before = $token->name;
         $this->depth += match ($token->text) {
             '(' => 1,
@@ -171,7 +175,7 @@ final class Modifiers
         $after = $this->operand;
         $this->operand = $token->name === 'UNION_SYM' || ($this->operand && in_array($token->text, ['(', 'ALL', 'DISTINCT'], true));
         $this->union = $token->name === 'UNION_SYM' ? $this->depth : $this->union;
-        if (in_array($token->name, ['FROM', 'WHERE', 'GROUP_SYM', 'HAVING', 'ORDER_SYM', 'LIMIT', 'SELECT_SYM'], true)) {
+        if (in_array($token->name, ['FROM', 'WHERE', 'GROUP_SYM', 'HAVING', 'ORDER_SYM', 'LIMIT', 'SELECT_SYM', 'SET'], true)) {
             $this->clauses[$this->depth] = $token->name === 'FROM';
         }
         if ($token->name === 'SELECT_SYM') {
@@ -190,8 +194,8 @@ final class Modifiers
      */
     public function select(int $index, bool $after): void
     {
-        $this->checked = $this->release !== GrammarRelease::MySql5651 || !$after || $this->union === null || $this->union === 0;
         $this->nested = $this->subquery($this->tokens, $index, $this->clauses, $this->depth);
+        $this->checked = $this->release !== GrammarRelease::MySql5651 || (!$this->nested && (!$after || $this->union === null || $this->union === 0));
         $this->blocks += $this->nested ? 0 : 1;
         [$this->listing, $this->first, $this->previous, $this->written, $this->operand] = [true, null, null, [], false];
     }
@@ -274,7 +278,8 @@ final class Modifiers
             return false;
         }
 
-        return !(in_array($before->name, ['FROM', 'JOIN_SYM', 'STRAIGHT_JOIN', 'AS', 'UNION_SYM'], true) || $before->text === ')'
+        return !(in_array($before->name, ['FROM', 'JOIN_SYM', 'STRAIGHT_JOIN', 'AS', 'UNION_SYM', 'UPDATE_SYM', 'LOW_PRIORITY', 'IGNORE_SYM'], true) || $before->text === ')'
+            || (($tokens[$index - $opened - 2]->text ?? null) === '{')
             || (in_array($before->text, ['ALL', 'DISTINCT'], true) && ($tokens[$index - $opened - 2]->name ?? null) === 'UNION_SYM')
             || ($before->text === ',' && ($clauses[$depth - $opened] ?? false))
             || ($opened === 1 && $before->name === 'IDENT'));
