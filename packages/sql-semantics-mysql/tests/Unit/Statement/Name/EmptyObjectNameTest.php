@@ -17,6 +17,7 @@ final class EmptyObjectNameTest extends TestCase
     public function testMessageNamesTheInvalidRole(): void
     {
         self::assertSame("Incorrect table name ''", (new EmptyObjectName(ObjectNameKind::Table))->message());
+        self::assertSame("Incorrect server name value: ''", (new EmptyObjectName(ObjectNameKind::Server))->message());
         self::assertSame("Incorrect database name ''", (new EmptyObjectName(ObjectNameKind::Database))->message());
     }
 }

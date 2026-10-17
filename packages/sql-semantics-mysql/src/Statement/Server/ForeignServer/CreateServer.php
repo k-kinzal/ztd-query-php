@@ -25,6 +25,8 @@ use SqlSemantics\Statement\Snapshot;
  * Status: Implemented.
  *
  * @visibility public
+ * @example Refusing a definition with an empty server name
+ *     new \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer(new \SqlSemantics\Statement\Identifier\Name(''), new \SqlSemantics\Statement\Identifier\Name('mysql'), [new \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption(\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('localhost'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Defining a server
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create server s foreign data wrapper mysql options (host 'db', port 3307)");
  *     [$create->toString(), $create->statement->options[1]->kind] // => ["CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'db', PORT 3307)", \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port]
@@ -46,6 +48,7 @@ final class CreateServer implements Statement
      */
     public function __construct(public readonly Name $name, public readonly Name $wrapper, array $options)
     {
+        Check::input($name->value !== '', 'A created foreign server has a nonempty name.');
         $this->options = Check::listOf($options, ServerOption::class, 'CREATE SERVER takes at least one option.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

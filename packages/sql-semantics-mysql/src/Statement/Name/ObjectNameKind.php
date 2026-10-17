@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
 /**
- * The object role of an empty name refused before a table reference is published.
+ * The object role of an empty name refused before a reference or definition is published.
  * Correlation names and listing filters have separate domains.
  *
  * @visibility public
@@ -16,4 +16,5 @@ enum ObjectNameKind: string
 {
     case Database = 'database';
     case Table = 'table';
+    case Server = 'server';
 }

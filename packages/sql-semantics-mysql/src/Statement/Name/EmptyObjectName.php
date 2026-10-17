@@ -8,7 +8,7 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * An empty table name or explicit empty database qualifier has no table identity.
+ * An empty table name, explicit database qualifier or created server name is invalid.
  *
  * The role supplies the diagnostic meaning; no invalid statement or SQL is retained.
  * Observed on native MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
@@ -33,6 +33,6 @@ final class EmptyObjectName implements Diagnostic
      */
     public function message(): string
     {
-        return 'Incorrect ' . $this->kind->value . " name ''";
+        return $this->kind === ObjectNameKind::Server ? "Incorrect server name value: ''" : 'Incorrect ' . $this->kind->value . " name ''";
     }
 }

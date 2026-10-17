@@ -25,6 +25,13 @@ final class ForeignServerRuleTest extends TestCase
         self::assertSame("CREATE SERVER s FOREIGN DATA WRAPPER w OPTIONS (USER 'u')", (new Semantics(Dialect::MySql))->analyze("create server 's' foreign data wrapper w options (user 'u')")->toString());
     }
 
+    public function testCreateRefusesAnEmptyNameBeforeConstructingTheDefinition(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect server name value: ''");
+        (new Semantics(Dialect::MySql))->analyze("CREATE SERVER '' FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'h')");
+    }
+
     public function testOptionsLowersThePort(): void
     {
         self::assertSame('CREATE SERVER s FOREIGN DATA WRAPPER w OPTIONS (PORT 3306)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('create server s foreign data wrapper w options (port 3306)')->toString());

@@ -63,12 +63,12 @@ final class InputErrorsTest extends TestCase
         self::assertStringContainsString('Illegal authorization identifier', (new InputErrors())->error($problem, $session)?->getMessage() ?? '');
     }
 
-    public function testErrorNamesTheEmptyObjectRoleWithoutInputText(): void
+    public function testNameFormatsTheEmptyObjectRoleWithoutInputText(): void
     {
         $session = (new Instance())->connect();
         $errors = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind $kind): ?int => (new InputErrors())->error(new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName($kind), $session)?->getCode(), \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::cases());
 
-        self::assertSame([1102, 1103], $errors);
+        self::assertSame([1102, 1103, 1525], $errors);
         self::assertSame('', $session->text);
     }
 

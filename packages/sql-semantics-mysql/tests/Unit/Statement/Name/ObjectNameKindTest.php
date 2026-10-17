@@ -16,6 +16,6 @@ final class ObjectNameKindTest extends TestCase
 {
     public function testCasesSupplyDistinctObjectRoles(): void
     {
-        self::assertSame(["Incorrect database name ''", "Incorrect table name ''"], array_map(static fn (ObjectNameKind $kind): string => (new EmptyObjectName($kind))->message(), ObjectNameKind::cases()));
+        self::assertSame(["Incorrect database name ''", "Incorrect table name ''", "Incorrect server name value: ''"], array_map(static fn (ObjectNameKind $kind): string => (new EmptyObjectName($kind))->message(), ObjectNameKind::cases()));
     }
 }

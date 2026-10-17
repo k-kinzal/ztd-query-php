@@ -78,13 +78,18 @@ final class ForeignServerRule
     /**
      * Lowers CREATE SERVER from the position of its name.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the definition name is empty
      * @throws ImplementationGap When a production has no rule
      */
     public function create(Form $form, int $name): CreateServer
     {
         $names = $this->lowering->names;
 
-        return new CreateServer($names->identifier($form->node($name)), $names->identifier($form->node($name + 4)), $this->options($form->node($name + 7)));
+        $identifier = $names->identifier($form->node($name));
+        if ($identifier->value === '') {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Server), (new \SqlSemantics\Construction\SourceRanges())->span($form->node($name))[1] ?? 0);
+        }
+        return new CreateServer($identifier, $names->identifier($form->node($name + 4)), $this->options($form->node($name + 7)));
     }
 
     /**
