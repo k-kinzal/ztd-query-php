@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Analysis\Session;
 use Deriver\Candidate\Cache;
 use Deriver\Candidate\Context;
 use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Frame;
-use Deriver\Candidate\Index;
+use Deriver\Candidate\Index\DefinitionIndex;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\Budget;
+use Deriver\Session\Session;
 use JsonException;
 use LogicException;
 
@@ -31,7 +31,7 @@ final class CandidateFixture
     public static function evaluator(string $source = 'function target($x){return $x+2;}', Configuration $configuration = new Configuration(), Budget $budget = new Budget()): Derivation
     {
         $session = new Session(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration);
-        return new Derivation(new Context(new Index($session->program), $configuration, $session->models, $budget, new Cache()));
+        return new Derivation(new Context(new DefinitionIndex($session->program), $configuration, $session->models, $budget, new Cache()));
     }
 
     /**

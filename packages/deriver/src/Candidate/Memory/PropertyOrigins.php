@@ -8,8 +8,8 @@ use Deriver\Candidate\Calls;
 use Deriver\Candidate\Choices;
 use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Frame;
-use Deriver\Candidate\Graph;
 use Deriver\Candidate\Guards;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\Candidate\Invocation\Bodies;
 use Deriver\Candidate\Invocation\Dispatch;
 use Deriver\Candidate\Invocation\Origin;
@@ -38,7 +38,7 @@ final class PropertyOrigins
     {
         $identity = $property->className . '::$' . $property->name;
         if ($property->default !== null) {
-            return $this->engine->returns(new Frame(new Graph($property->default), 'default:' . $identity), $depth);
+            return $this->engine->returns(new Frame(new BodyIndex($property->default), 'default:' . $identity), $depth);
         }
         return new Term('reference', $identity, attributes: ['type' => $property->type, 'reason' => 'UNINITIALIZED_PROPERTY']);
     }
@@ -71,7 +71,7 @@ final class PropertyOrigins
      * Selects models before entering any source origin, then reuses reaching-write semantics.
      * @return list<array{Term, array<string, bool>}>
      */
-    public function writes(Frame $request, Graph $source, PropertyDeclaration $property, int $depth): array
+    public function writes(Frame $request, BodyIndex $source, PropertyDeclaration $property, int $depth): array
     {
         $sites = $this->engine->context->index->callers($source->body->symbol);
         if ($sites === []) {
@@ -107,9 +107,9 @@ final class PropertyOrigins
         }
         $values = [];
         foreach ($graph->definitions as $write) {
-            $address = Mutations::root($graph, $write);
+            $address = $graph->root($write);
             $declared = $address === null ? null : $this->engine->context->index->declaredProperty($graph, $address);
-            if (!Mutations::writes($write) || $declared?->className !== $property->className || $declared->name !== $property->name) {
+            if (!BodyIndex::writes($write) || $declared?->className !== $property->className || $declared->name !== $property->name) {
                 continue;
             }
             if ($graph->body->symbol !== $request->graph->body->symbol) {

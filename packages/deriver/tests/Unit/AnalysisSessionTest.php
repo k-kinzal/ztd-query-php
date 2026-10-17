@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Deriver\Analysis\Session;
 use Deriver\AnalysisSession;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Project\Configuration;
 use Deriver\Query\ReturnQuery;
 use Deriver\Reference\ResultRef;
+use Deriver\Session\Session;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;

@@ -39,7 +39,7 @@ final class Choices
      */
     public function alternatives(Term $value): Generator
     {
-        $cursor = new Enumeration\Cursor($value);
+        $cursor = new Enumeration\Enumerator($value);
         while (($next = $cursor->next()) !== null) {
             yield $next;
         }

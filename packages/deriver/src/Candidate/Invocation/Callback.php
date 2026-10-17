@@ -7,7 +7,7 @@ namespace Deriver\Candidate\Invocation;
 use Deriver\Candidate\Calls;
 use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Frame;
-use Deriver\Candidate\Graph;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\Argument;
 use Deriver\ControlFlow\BasicBlock;
 use Deriver\ControlFlow\CallableGraph;
@@ -52,7 +52,7 @@ final class Callback
         $call = new Instruction('callback-call', 'invoke', $at->source, 'callback-result', ['callback:0'], arguments: $actuals);
         $definitions[] = $call;
         $graph = new CallableGraph($owner->graph->body->symbol, [], [new BasicBlock(0, $definitions, new Terminator('return', $call->result))], $at->source, className: $owner->graph->body->className);
-        $frame = new Frame(new Graph($graph), $identity, calls: $owner->calls, origin: $owner->origin, calledClass: $owner->calledClass);
+        $frame = new Frame(new BodyIndex($graph), $identity, calls: $owner->calls, origin: $owner->origin, calledClass: $owner->calledClass);
         $engine->context->frames[$identity] = $frame;
         return (new Calls($engine))->value($frame, $call, $depth);
     }

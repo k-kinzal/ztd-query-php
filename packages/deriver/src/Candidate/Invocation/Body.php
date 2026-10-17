@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Candidate\Invocation;
 
 use Deriver\Candidate\Context;
-use Deriver\Candidate\Graph;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\Value\Term;
 
 /**
@@ -17,7 +17,7 @@ final class Body
     /**
      * Captures replacement semantics independently of the requested output.
      */
-    public function __construct(public readonly Graph|Term|null $implementation, public readonly bool $replacement)
+    public function __construct(public readonly BodyIndex|Term|null $implementation, public readonly bool $replacement)
     {
     }
 
@@ -26,7 +26,7 @@ final class Body
      */
     public function enter(Context $context): void
     {
-        if (!$this->replacement && $this->implementation instanceof Graph) {
+        if (!$this->replacement && $this->implementation instanceof BodyIndex) {
             $context->bodyExpansions++;
             $symbol = $this->implementation->body->symbol;
             $context->bodies[$symbol] = ($context->bodies[$symbol] ?? 0) + 1;

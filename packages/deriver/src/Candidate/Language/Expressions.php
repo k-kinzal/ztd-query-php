@@ -7,7 +7,7 @@ namespace Deriver\Candidate\Language;
 use Deriver\Candidate\Choices;
 use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Frame;
-use Deriver\Candidate\Graph;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Value\Term;
 
@@ -56,7 +56,7 @@ final class Expressions
                 }
                 $body = $index->program->constant($resolved . '::' . $name->literal);
                 if ($body !== null) {
-                    return $this->engine->returns(new Frame(new Graph($body), $frame->identity . ':constant:' . $body->symbol, calledClass: $frame->calledClass), $depth);
+                    return $this->engine->returns(new Frame(new BodyIndex($body), $frame->identity . ':constant:' . $body->symbol, calledClass: $frame->calledClass), $depth);
                 }
                 array_push($pending, $declaration->parent ?? '', ...($declaration->interfaces ?? []));
             }

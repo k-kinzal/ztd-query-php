@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Deriver;
 
-use Deriver\Analysis\Session;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
-use Deriver\Source\Cache\GraphCache;
-use Deriver\Source\Cache\SyntaxCache;
+use Deriver\Session\Session;
+use Deriver\Source\Lowering\LoweringCache;
+use Deriver\Source\Parsing\ParseCache;
 use JsonException;
 
 /**
@@ -25,16 +25,16 @@ final class Analyzer
     /**
      * Source-only caches are bounded and shared by sessions opened with this analyzer.
      */
-    private readonly SyntaxCache $syntax;
-    private readonly GraphCache $lowered;
+    private readonly ParseCache $syntax;
+    private readonly LoweringCache $lowered;
 
     /**
      * Creates an analyzer with isolated in-memory source and graph caches.
      */
     public function __construct()
     {
-        $this->syntax = new SyntaxCache();
-        $this->lowered = new GraphCache();
+        $this->syntax = new ParseCache();
+        $this->lowered = new LoweringCache();
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate;
 
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\CallableIdentity;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Model\Binding\ArgumentBindings;
@@ -35,7 +36,7 @@ final class Models
      * Retrieves indexed semantics without evaluating source instructions.
      * @throws \Deriver\Exception\ModelContractException If a model violates its contract
      */
-    public function graph(Frame $caller, Instruction $call, string $target, int $depth): Graph|Term|null
+    public function graph(Frame $caller, Instruction $call, string $target, int $depth): BodyIndex|Term|null
     {
         $context = $this->engine->context;
         $key = (new CallableIdentity())->key($target);
@@ -67,7 +68,7 @@ final class Models
         }
         $source = new SourceRef($call->source->snapshotId, 'model:' . $descriptor->id . '@' . $descriptor->version, 0, 0);
         $declaration = $descriptor->useSourceSignature ? $context->index->program->callable($target) : null;
-        return new Graph((new PlanCompiler($source))->compile($descriptor, $decision->plan, $declaration), new \Deriver\Result\Evidence\Node('model-application', Evidence\Provenance::inputs(array_map(static fn (BoundArgument $argument): Term => $argument->value, $description->arguments->arguments)), $call->source, ['id' => $descriptor->id, 'version' => $descriptor->version, 'operation' => $call->operation, 'name' => $target]));
+        return new BodyIndex((new PlanCompiler($source))->compile($descriptor, $decision->plan, $declaration), new \Deriver\Result\Evidence\Node('model-application', Evidence\Provenance::inputs(array_map(static fn (BoundArgument $argument): Term => $argument->value, $description->arguments->arguments)), $call->source, ['id' => $descriptor->id, 'version' => $descriptor->version, 'operation' => $call->operation, 'name' => $target]));
     }
 
     /**

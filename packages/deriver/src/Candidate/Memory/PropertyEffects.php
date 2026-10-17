@@ -7,7 +7,7 @@ namespace Deriver\Candidate\Memory;
 use Deriver\Candidate\Calls;
 use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Frame;
-use Deriver\Candidate\Graph;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\Candidate\Invocation\Bodies;
 use Deriver\Candidate\Invocation\Dispatch;
 use Deriver\Candidate\Storage;
@@ -26,7 +26,7 @@ final class PropertyEffects
      */
     public function address(Frame $owner, Term $receiver, string $name): array
     {
-        $graph = new Graph($owner->graph->body, $owner->graph->modelEvidence);
+        $graph = new BodyIndex($owner->graph->body, $owner->graph->modelEvidence);
         $key = 'property-observation:' . hash('sha256', (string) $receiver->literal . ':' . $name);
         $source = $owner->graph->body->source;
         $graph->definitions[$key . ':receiver'] = new Instruction($key . ':receiver', 'constant', $source, $key . ':receiver', constant: $receiver);

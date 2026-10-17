@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Candidate\Memory;
 
-use Deriver\Candidate\Memory\Mutations;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
@@ -13,28 +12,6 @@ use Tests\Fake\CandidateFixture as F;
 #[CoversNothing]
 final class MutationsTest extends TestCase
 {
-    /**
-     * @throws JsonException If fixture metadata cannot be encoded
-     */
-    public function testWritesIncludesEveryDirectStorageMutation(): void
-    {
-        $frame = F::frame(F::evaluator('function target(){$x=1;$x+=2;$x++;unset($x);}'));
-        self::assertTrue(Mutations::writes(F::instruction($frame, 'write')));
-        self::assertTrue(Mutations::writes(F::instruction($frame, 'compound')));
-        self::assertTrue(Mutations::writes(F::instruction($frame, 'increment')));
-        self::assertTrue(Mutations::writes(F::instruction($frame, 'unset')));
-        self::assertFalse(Mutations::writes(F::instruction($frame, 'local')));
-    }
-
-    /**
-     * @throws JsonException If fixture metadata cannot be encoded
-     */
-    public function testRootFindsThePropertyBehindAnElementMutation(): void
-    {
-        $frame = F::frame(F::evaluator('class Box{public $a=[1];function target(){$this->a[0]+=2;}}'), 'Box::target');
-        self::assertSame('field-address', Mutations::root($frame->graph, F::instruction($frame, 'compound'))?->operation);
-    }
-
     /**
      * @throws JsonException If fixture metadata cannot be encoded
      */

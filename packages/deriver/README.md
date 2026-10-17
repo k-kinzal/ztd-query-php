@@ -114,13 +114,17 @@ Global inputs can be supplied through `Configuration::$environment`, for example
 
 Within a session, matching dependency expansions share a bounded cache. `release()` clears session-owned results and evaluations. Caller-owned candidates and their evidence remain usable and serializable after release. `explain($result->reference)` requires retaining the result object. The declaration index and compiled graphs have the session's lifetime.
 
+## How a query is answered
+
+Opening a session runs the project stages once: provider expansion, parsing, declaration scanning, model registration, snapshot identity and definition indexing. Each query then runs the query stages: target selection, demand, backward expansion and collection. [docs/pipeline.md](docs/pipeline.md) describes every stage, its artifact and what it never does; the specification in `requirements/pipeline.yaml` traces each of those statements to the tests that verify it.
+
 ## Evidence and revalidation
 
 Normal JSON is an array of candidate records with exactly `type`, `type_name`, `result`, and `evidence`. Partial expressions and non-JSON-native PHP values use a lossless value graph. The [candidate schema](resources/schema/candidates-v2.json) documents the format. Secret values remain redacted unless `toJson(includeSecrets: true)` is requested explicitly.
 
 Each evidence alternative owns a derivation root, a context root, all referenced DAG nodes, and a snapshot manifest. Nodes describe definitions, argument binding, operations, choices, calls, models and expansion stops. Source locations retain the file hash, byte range and line/byte-column coordinates. `$candidates->forCaller('callerName')` projects the set by caller context without choosing one value.
 
-`Deriver\Analysis\Candidates\Replay::verify($json, $input, $configuration, $query)` rederives the candidate set from captured bytes and compares the complete export. It detects changed candidates, omitted derivations and changed source or model manifests. It is deterministic revalidation by this analyzer, not an independent proof of PHP semantics. Keep the source bytes, query, target profile and versioned rule implementations with an exported result.
+`Deriver\Replay::verify($json, $input, $configuration, $query)` rederives the candidate set from captured bytes and compares the complete export. It detects changed candidates, omitted derivations and changed source or model manifests. It is deterministic revalidation by this analyzer, not an independent proof of PHP semantics. Keep the source bytes, query, target profile and versioned rule implementations with an exported result.
 
 See [candidate dependency guarantees](docs/candidate-dependencies.md) for correlation, storage, partial expressions and the scope of verification.
 
@@ -128,7 +132,7 @@ See [candidate dependency guarantees](docs/candidate-dependencies.md) for correl
 
 `Analyzer::open()->derive()` now returns `CandidateCollection`. Iterate its candidates or read `candidates`; replace `normalOutcomes[*]->values['return']` with each candidate's `result` or `term`. Inspect each candidate's evidence instead of a global `frontiers` or `candidateGraph` field. Normal JSON no longer includes execution states, normal/exceptional outcomes or an assessment wrapper.
 
-Applications intentionally using ordered execution analysis can construct `Deriver\Analysis\ExecutionSession($input, $configuration)` explicitly. That API retains `DerivationResult` and `ExecutionResultSet`; `Configuration::forExecution()` and the `analysisContract` option have been removed. The candidate engine never switches to execution analysis automatically.
+Applications intentionally using ordered execution analysis can construct `Deriver\ExecutionSession($input, $configuration)` explicitly. The former names `Deriver\Analysis\ExecutionSession` and `Deriver\Analysis\Candidates\Replay` remain as deprecated aliases of `Deriver\ExecutionSession` and `Deriver\Replay` for one minor release. That API retains `DerivationResult` and `ExecutionResultSet`; `Configuration::forExecution()` and the `analysisContract` option have been removed. The candidate engine never switches to execution analysis automatically.
 
 ## License
 

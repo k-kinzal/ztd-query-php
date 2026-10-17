@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Candidate\Control;
 
 use Deriver\Candidate\Context;
-use Deriver\Candidate\Graph;
+use Deriver\Candidate\Index\BodyIndex;
 
 /**
  * Indexes selecting edges using immediate postdominators, without path enumeration.
@@ -17,7 +17,7 @@ final class Dependencies
      * Associates each block with branches that select it.
      * @return array<int, list<array{int, int}>>|null Selecting edges, or an interrupted index
      */
-    public function build(Graph $graph, ?Context $context = null): ?array
+    public function build(BodyIndex $graph, ?Context $context = null): ?array
     {
         $post = $this->postdominators($graph, $context);
         if ($post === null) {
@@ -46,7 +46,7 @@ final class Dependencies
      * Finds immediate dominators of the reversed graph in reverse postorder.
      * @return array<int, int>|null Immediate postdominator map, or interruption
      */
-    public function postdominators(Graph $graph, ?Context $context): ?array
+    public function postdominators(BodyIndex $graph, ?Context $context): ?array
     {
         $order = $this->order($graph);
         $rank = array_flip($order);
@@ -80,7 +80,7 @@ final class Dependencies
      * Computes reverse postorder without recursive host calls or quadratic node sets.
      * @return list<int> Reverse-graph traversal rooted at the virtual exit
      */
-    public function order(Graph $graph): array
+    public function order(BodyIndex $graph): array
     {
         $reverse = [];
         foreach ($graph->body->blocks as $id => $_) {

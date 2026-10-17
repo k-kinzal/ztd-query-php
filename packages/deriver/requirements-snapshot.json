@@ -1,0 +1,45 @@
+{
+    "version": 1,
+    "type": "requirements-snapshot",
+    "units": {
+        "16bd42addbcd524b71d5709a04476b7b0e08c35936ae76ad5b640edbd97ee355": {
+            "fingerprint": "8b91e12ee0ba26749b88cd5f434e7907ea00b52935b1c4a4bc807ff372e251c1"
+        },
+        "1fd93b0f48ec971cd16050eb9be477ab6dfb05ee978288485b650c214dc4111f": {
+            "fingerprint": "e0202ec08b69661dd1b487df2f00c39f585368ef606ce3c70ab1ca2accd83bc8"
+        },
+        "2ae67e2baab6bb632b8f242f65e6370786b8ece9d24772553aed1ac937598974": {
+            "fingerprint": "f26bc3893a573ec4e0d89dae35e4c91831078ca5b99f1256957baba6681b799b"
+        },
+        "467953aff4d02e88aeb058a7967854942b578b7111a1adb7bf78f0460da4491b": {
+            "fingerprint": "9559195e16a58e352124fd89fe8719af0852b964508cd08d9384080916fa07af"
+        },
+        "473fbcb27d8c3f06ca3b93ff9bd75f8cf19fab0139f29f1738b236a4f354098f": {
+            "fingerprint": "7fe6616cb1552a1311b903793fe776a31df24952128d5ef6b9255f51e0099186"
+        },
+        "60e1330b4cf34855407543c259bb836c608c1930d4e3ec22d4009570d2cc6650": {
+            "fingerprint": "dc5c6fe04c4879ee55fe08bf6b75db57e3993656885b11eb6c2b7c688fd52e53"
+        },
+        "6503e5f8e801811fb280646ce75de2f732e1c6b6a7016ef2106bc168e66b7857": {
+            "fingerprint": "4bbce8932628760db2cc1e300ee2b718aef79bca2f44118c0986b5a4b6db9053"
+        },
+        "67ec81068d9d3bef6f309f1c5edc4573da33871b165ef05c801506c55bb6cb74": {
+            "fingerprint": "0e3237de4d9f6326b67afb56180a5ac68e2565ac2bb77e7959fe06e74625ce72"
+        },
+        "7660a33ff8e48e48cde5005a0f1eb72300addf7c29503d84009eda6a1b2bfb43": {
+            "fingerprint": "f6f3b0d4fd62d1456f04628a7410058639dcec0ef726d136f23408a7532b0ef6"
+        },
+        "96cd3971525ad7d666bbc630be82f4b708804406c0b5bb832bc7e8e34314cf59": {
+            "fingerprint": "b8b9f5295959803a619c3716bb12b1c5c2b1a9f92ef0ea189cb5a8c6f353a133"
+        },
+        "997120b4663c35a1270951c6ed96ed09d825214217312d39d535ebd4ed4ec994": {
+            "fingerprint": "8949077ef5398331de7e43723cd42adb3bb50ad000d6a4a9476690c478bff154"
+        },
+        "b414840de5ac17299d931050dce393dbf322033d5e8cb14d77b6e9765bcc6314": {
+            "fingerprint": "176afc9dd57a2f072d2b64bc93678f8c54a2abc51387b528ae85be23ebccb28a"
+        },
+        "e428a7688231013c4d5d6654c5cac2e9b6ae85babf118386173b54fb36dec24e": {
+            "fingerprint": "6e20feab1c4f3fd0534f02eb5779f446c811a18d084c43cd544a245244b630e7"
+        }
+    }
+}

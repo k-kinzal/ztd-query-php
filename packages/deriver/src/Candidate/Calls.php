@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate;
 
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Value\Term;
 
@@ -67,7 +68,7 @@ final class Calls
     {
         $context = $this->engine->context;
         $graph = $body->implementation;
-        if (!$graph instanceof Graph) {
+        if (!$graph instanceof BodyIndex) {
             return $graph ?? $this->missing($frame, $instruction, $target, $receiver, $depth);
         }
         if (!(new \Deriver\ControlFlow\Hierarchy\Access($context->index->program))->allows($graph->body, $frame->graph->body->className)) {
@@ -100,7 +101,7 @@ final class Calls
     /**
      * Checks declaration constraints that can change the requested call result.
      */
-    public function signature(Frame $caller, Instruction $call, Graph $graph, int $depth): ?Term
+    public function signature(Frame $caller, Instruction $call, BodyIndex $graph, int $depth): ?Term
     {
         $bound = $this->bind($caller, $call, $graph, depth: $depth);
         foreach ($graph->body->parameters as $parameter) {
@@ -170,7 +171,7 @@ final class Calls
     public function stableEnvironment(Frame $frame): bool
     {
         foreach ($frame->graph->definitions as $definition) {
-            if (Memory\Mutations::writes($definition) && Memory\Mutations::root($frame->graph, $definition)?->operation !== 'local') {
+            if (BodyIndex::writes($definition) && $frame->graph->root($definition)?->operation !== 'local') {
                 return false;
             }
             if (in_array($definition->operation, ['global', 'static-local', 'invoke-method', 'invoke-static', 'new', 'alias', 'external', 'external-body'], true) || $definition->operation === 'invoke' && $this->engine->context->index->target($frame->graph, $definition) !== $frame->graph->body->symbol) {
@@ -183,7 +184,7 @@ final class Calls
     /**
      * Maps actual arguments to lazy formal bindings.
      */
-    public function bind(Frame $caller, Instruction $call, Graph $graph, ?Term $receiver = null, ?int $depth = null): Frame
+    public function bind(Frame $caller, Instruction $call, BodyIndex $graph, ?Term $receiver = null, ?int $depth = null): Frame
     {
         $bindings = (new Invocation\Arguments($this->engine))->bind($caller, $call, $graph->body->parameters, $depth ?? $this->engine->context->budget->maxDepth);
         if ($call->operation === 'invoke-method' || $receiver !== null) {

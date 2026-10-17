@@ -10,6 +10,7 @@ use WeakMap;
 /**
  * Bounded immutable node results; eviction cannot mutate caller-owned graphs.
  * @visibility namespace
+ * @visibility Deriver\Session
  * @visibility Deriver\Analysis
  */
 final class Cache

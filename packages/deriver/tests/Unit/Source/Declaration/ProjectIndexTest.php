@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
 #[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
 #[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
-#[UsesClass(\Deriver\Analysis\Session::class)]
+#[UsesClass(\Deriver\Session\Session::class)]
 #[UsesClass(\Deriver\Analyzer::class)]
 #[UsesClass(\Deriver\ControlFlow\BasicBlock::class)]
 #[UsesClass(\Deriver\ControlFlow\CallableGraph::class)]
@@ -66,7 +66,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Evaluation\Memory\ReferenceConstraint::class)]
 #[UsesClass(\Deriver\Evaluation\Memory\StorageCapture::class)]
 #[UsesClass(\Deriver\Model\Registration\Extensions::class)]
-#[UsesClass(\Deriver\Model\Registration\ProviderInputs::class)]
+#[UsesClass(\Deriver\Model\Registration\ProviderExpansion::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
 #[UsesClass(\Deriver\Project\Configuration::class)]
@@ -92,30 +92,31 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
 #[UsesClass(\Deriver\Result\StorageSnapshot::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphCache::class)]
-#[UsesClass(\Deriver\Source\Cache\GraphTemplate::class)]
-#[UsesClass(\Deriver\Source\Cache\SnapshotRebase::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxCache::class)]
-#[UsesClass(\Deriver\Source\Cache\SyntaxTree::class)]
-#[UsesClass(\Deriver\Source\Compilation\AssignmentLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\CallableCompiler::class)]
-#[UsesClass(\Deriver\Source\Compilation\Control\DestructuringLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\EffectInspection::class)]
-#[UsesClass(\Deriver\Source\Compilation\ExpressionLowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\GraphBuilder::class)]
-#[UsesClass(\Deriver\Source\Compilation\Lowering::class)]
-#[UsesClass(\Deriver\Source\Compilation\StatementLowering::class)]
-#[UsesClass(\Deriver\Source\ConstantSignatures::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
+#[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
+#[UsesClass(\Deriver\Source\Parsing\SourceParser::class)]
+#[UsesClass(\Deriver\Source\Parsing\ParsedFile::class)]
+#[UsesClass(\Deriver\Source\Lowering\AssignmentLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\CallableLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\Control\DestructuringLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\EffectInspection::class)]
+#[UsesClass(\Deriver\Source\Lowering\ExpressionLowering::class)]
+#[UsesClass(\Deriver\Source\Lowering\InstructionEmitter::class)]
+#[UsesClass(\Deriver\Source\Lowering\LoweringScope::class)]
+#[UsesClass(\Deriver\Source\Lowering\StatementLowering::class)]
+#[UsesClass(\Deriver\Source\Declaration\ConstantSignatures::class)]
 #[UsesClass(\Deriver\Source\Declaration\CallSiteIndex::class)]
 #[UsesClass(\Deriver\Source\Declaration\CallableSource::class)]
 #[UsesClass(\Deriver\Source\Declaration\DeclarationScanner::class)]
 #[UsesClass(\Deriver\Source\Declaration\Traits\Composition::class)]
-#[UsesClass(\Deriver\Source\LineMap::class)]
-#[UsesClass(\Deriver\Source\MagicContext::class)]
-#[UsesClass(\Deriver\Source\SyntaxSize::class)]
-#[UsesClass(\Deriver\Source\Validation\AssignmentPatterns::class)]
-#[UsesClass(\Deriver\Source\Validation\ClassScope::class)]
-#[UsesClass(\Deriver\Source\Validation\TargetSyntax::class)]
+#[UsesClass(\Deriver\Source\Lowering\LineMap::class)]
+#[UsesClass(\Deriver\Source\Parsing\MagicContext::class)]
+#[UsesClass(\Deriver\Source\Parsing\SyntaxSize::class)]
+#[UsesClass(\Deriver\Source\Parsing\AssignmentPatterns::class)]
+#[UsesClass(\Deriver\Source\Parsing\ClassScope::class)]
+#[UsesClass(\Deriver\Source\Parsing\TargetSyntax::class)]
 #[UsesClass(\Deriver\Value\Identity::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
@@ -125,7 +126,7 @@ final class ProjectIndexTest extends TestCase
     /**
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public function testParsePreservesTheSemanticContract(): void
+    public function testScanPreservesTheSemanticContract(): void
     {
         $result = \Tests\Fake\Analysis::returns('<?php function target() { $x="before"; $x="after"; return $x . ":done"; }');
         self::assertSame('after:done', $result->normalOutcomes[0]->values['return']->native());
@@ -201,13 +202,13 @@ final class ProjectIndexTest extends TestCase
         self::assertSame(0, $index->graphCount());
         self::assertTrue($index->declarations[$symbol]->strict);
     }
-    public function testParseRejectsCombinedSyntaxSizeInsteadOfReturningAPartialWorld(): void
+    public function testScanRejectsCombinedSyntaxSizeInsteadOfReturningAPartialWorld(): void
     {
         $input = new ProjectInput([new SourceFile('a.php', '<?php return 1;'),new SourceFile('b.php', '<?php return 2;')]);
         $this->expectException(InvalidInputException::class);
         new ProjectIndex('test', $input, new TargetProfile(), limits: new SourceLimits(nodes: 3));
     }
-    public function testParseNormalizesPathsAndKeepsFilesHashesAndDeclarationsInStableOrder(): void
+    public function testScanNormalizesPathsAndKeepsFilesHashesAndDeclarationsInStableOrder(): void
     {
         $first = '<?php function Z(){}';
         $second = '<?php function A(){}';
@@ -222,7 +223,7 @@ final class ProjectIndexTest extends TestCase
         self::assertSame(0, $index->graphCount());
     }
 
-    public function testParsePreservesScriptRangesStrictnessAndCaseSensitiveFileIdentities(): void
+    public function testScanPreservesScriptRangesStrictnessAndCaseSensitiveFileIdentities(): void
     {
         $upper = '<?php declare(strict_types=1);return 1;';
         $lower = '<?php return 2;';
@@ -242,14 +243,14 @@ final class ProjectIndexTest extends TestCase
         self::assertSame([], $index->diagnostics());
     }
 
-    public function testParseAdmitsTheExactCombinedSyntaxNodeLimit(): void
+    public function testScanAdmitsTheExactCombinedSyntaxNodeLimit(): void
     {
         $index = new ProjectIndex('snapshot', new ProjectInput([new SourceFile('a.php', '<?php return 1;'),new SourceFile('b.php', '<?php return 2;')]), new TargetProfile(), limits:new SourceLimits(nodes:4));
         self::assertSame(4, $index->syntaxNodes);
         self::assertSame(['script:a.php','script:b.php'], $index->symbols());
     }
 
-    public function testParseReportsEveryInvalidFileWithItsOwnSourceCoordinates(): void
+    public function testScanReportsEveryInvalidFileWithItsOwnSourceCoordinates(): void
     {
         $index = new ProjectIndex('snapshot', new ProjectInput([new SourceFile('a.php', "<?php\nfunction broken("),new SourceFile('b.php', '<?php function other(')]), new TargetProfile());
         $issues = $index->diagnostics();

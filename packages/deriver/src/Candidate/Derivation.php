@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate;
 
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Model\Builtin\ScalarFunctions;
 use Deriver\Value\Operations;
@@ -244,7 +245,7 @@ final class Derivation
         }
         $body = $this->context->index->program->constant($instruction->name);
         if ($body !== null) {
-            return $this->returns(new Frame(new Graph($body), 'constant:' . $instruction->name), $depth);
+            return $this->returns(new Frame(new BodyIndex($body), 'constant:' . $instruction->name), $depth);
         }
         return (new Language\Constants($this))->value($frame, $instruction, $depth);
     }

@@ -42,8 +42,10 @@ final class ContextTest extends TestCase
         $f = CandidateFixture::frame($e);
         $i = CandidateFixture::instruction($f, 'binary');
         $e->context->record($f, $i);
-        self::assertCount(1, $e->context->evidence);
-        self::assertSame('binary', array_values($e->context->evidence)[0]->operation);
+        self::assertCount(1, $e->context->recorded);
+        self::assertSame(1, $e->context->constructedNodes);
+        $e->context->record($f, $i);
+        self::assertSame(1, $e->context->constructedNodes);
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded

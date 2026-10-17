@@ -40,6 +40,9 @@ The repository is also an experiment in how AI agents can build something this c
 
 - [packages/bison-parser/README.md](packages/bison-parser/README.md) - Reading GNU Bison grammar files into a lossless syntax tree, and printing it back
 - [packages/container/README.md](packages/container/README.md) - Container definitions for testcontainers-php used across the repository, their image versions, and how to use them
+- [packages/deriver/README.md](packages/deriver/README.md) - Deriving candidate values of PHP expressions without executing application code: requirements, queries, models, bounds, evidence and replay
+- [packages/deriver/docs/candidate-dependencies.md](packages/deriver/docs/candidate-dependencies.md) - The dependencies each kind of selected expression opens, what is retained when they cannot be resolved, and what verification establishes
+- [packages/deriver/docs/pipeline.md](packages/deriver/docs/pipeline.md) - The project and query stages that turn captured source into candidates, their artifacts, and what each stage never does
 - [packages/lemon-parser/README.md](packages/lemon-parser/README.md) - Reading Lemon grammar files into a lossless syntax tree, and printing it back
 - [packages/requirements/README.md](packages/requirements/README.md) - Linking source text, EARS specifications, and tests; requirements and getting started
 - [packages/requirements/docs/cli.md](packages/requirements/docs/cli.md) - Commands, options, exit codes, coverage and test results, and CI gates

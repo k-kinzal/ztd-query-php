@@ -9,6 +9,7 @@ use Deriver\Candidate\Choices;
 use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Frame;
 use Deriver\Candidate\Guards;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\Candidate\Invocation\Bodies;
 use Deriver\Candidate\Invocation\Dispatch;
 use Deriver\ControlFlow\Instruction;
@@ -96,7 +97,7 @@ final class Slots
             }
             foreach ($graph->definitions as $write) {
                 $address = $graph->definitions[$write->operands[0] ?? ''] ?? null;
-                if (Mutations::writes($write) && $address?->operation === 'model-state-address' && $address->name === $slot) {
+                if (BodyIndex::writes($write) && $address?->operation === 'model-state-address' && $address->name === $slot) {
                     $changed = true;
                     $bound = (new Calls($this->engine))->bind($frame, $call, $graph, $receiver);
                     $body->enter($this->engine->context);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate;
 
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Value\Term;
 
@@ -36,7 +37,7 @@ final class Origins
         }
         $type = $parameter->type ?? ($local->name === 'this' ? $frame->graph->body->className : 'mixed');
         if ($frame->invocation && $parameter?->default !== null) {
-            return $this->engine->returns(new Frame(new Graph($parameter->default), $frame->identity . ':default:' . $local->name), $depth);
+            return $this->engine->returns(new Frame(new BodyIndex($parameter->default), $frame->identity . ':default:' . $local->name), $depth);
         }
         if (array_key_exists($local->name, $frame->graph->body->captures)) {
             $captured = (new Memory\Captures())->value($this->engine, $frame, $local->name, $depth);

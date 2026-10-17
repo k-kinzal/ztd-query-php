@@ -8,6 +8,7 @@ use Deriver\Candidate\Binding;
 use Deriver\Candidate\Calls;
 use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Frame;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\Candidate\Invocation\Bodies;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Value\Term;
@@ -46,8 +47,8 @@ final class Globals
         $bindings['global:' . $name] = new Binding($caller, $address, position: $caller->graph->positions[$call->result]);
         $bound = new Frame($graph, $bound->identity, $bindings, $bound->properties, $bound->calls, true, origin: $bound->origin, calledClass: $bound->calledClass);
         foreach ($graph->definitions as $write) {
-            $local = Mutations::root($graph, $write);
-            if (Mutations::writes($write) && $local?->operation === 'local' && $local->name === $name) {
+            $local = $graph->root($write);
+            if (BodyIndex::writes($write) && $local?->operation === 'local' && $local->name === $name) {
                 $body->enter($engine->context);
                 return (new Calls($engine))->finalStorage($bound, $local->result, $depth);
             }
@@ -87,8 +88,8 @@ final class Globals
             }
             $owner = new Frame($graph, 'source:' . $symbol);
             foreach ($graph->definitions as $definition) {
-                $local = Mutations::root($graph, $definition);
-                if (!Mutations::writes($definition) || $local?->operation !== 'local' || $local->name !== $name) {
+                $local = $graph->root($definition);
+                if (!BodyIndex::writes($definition) || $local?->operation !== 'local' || $local->name !== $name) {
                     continue;
                 }
                 [$block, $offset] = $graph->positions[$definition->result];

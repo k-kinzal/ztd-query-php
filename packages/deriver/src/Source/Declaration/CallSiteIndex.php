@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Source\Declaration;
 
 use Deriver\ControlFlow\CallableIdentity;
-use Deriver\Source\Compilation\EffectInspection;
+use Deriver\Source\Lowering\EffectInspection;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;

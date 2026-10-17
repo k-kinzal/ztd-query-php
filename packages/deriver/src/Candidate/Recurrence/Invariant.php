@@ -6,7 +6,7 @@ namespace Deriver\Candidate\Recurrence;
 
 use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Frame;
-use Deriver\Candidate\Memory\Mutations;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\Candidate\Storage;
 
 /**
@@ -36,8 +36,8 @@ final class Invariant
                 if ($write->operation === 'alias') {
                     return false;
                 }
-                if (Mutations::writes($write)) {
-                    $root = Mutations::root($frame->graph, $write);
+                if (BodyIndex::writes($write)) {
+                    $root = $frame->graph->root($write);
                     if ($root !== null && ($storage->key($frame, $root->result) === $wanted || $root->operation === 'dynamic-local')) {
                         return false;
                     }

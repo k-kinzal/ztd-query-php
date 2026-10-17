@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Analysis\ExecutionSession;
+use Deriver\ExecutionSession;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;

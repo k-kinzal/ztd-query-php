@@ -41,13 +41,13 @@ final class RouteModels
 
     /**
      * Derives the SQL argument and the receiver of the first query() call.
-     * @param \Deriver\Analysis\ExecutionSession $session Analysis session
+     * @param \Deriver\ExecutionSession $session Analysis session
      * @param QueryScope $scope Entrypoint scope
      * @return array{list<Alternative>, list<Alternative>} SQL and receiver observations
      * @throws RuntimeException If the fixture has no method call to query()
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public static function observe(\Deriver\Analysis\ExecutionSession $session, QueryScope $scope): array
+    public static function observe(\Deriver\ExecutionSession $session, QueryScope $scope): array
     {
         $call = $session->callsTo('query')[0] ?? null;
         if ($call?->receiver === null) {

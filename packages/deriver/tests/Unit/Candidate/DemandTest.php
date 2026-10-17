@@ -55,6 +55,15 @@ final class DemandTest extends TestCase
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
      */
+    public function testProjectAppliesThePathOfTheTargetToTheSelectedValue(): void
+    {
+        $s = C::session('function target(){observe([\'a\' => [1, 2]]);}');
+        $r = $s->derive(new \Deriver\Query\ValueQuery($s->callsTo('observe')[0]->argument(0), new \Deriver\Value\Projection(['a', 1])));
+        self::assertSame([2], C::native($r));
+    }
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
     public function testSelectKeepsAMissingSymbolAsAnUnexpandedReference(): void
     {
         $r = C::session('function target(){return 1;}')->derive(new \Deriver\Query\ReturnQuery('target'));

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate;
 
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\Value\Term;
 
 /**
@@ -19,7 +20,7 @@ final class Frame
      * @param array<int, int> $iterations Selected versions of loop-carried definitions
      */
     public function __construct(
-        public readonly Graph $graph,
+        public readonly BodyIndex $graph,
         public readonly string $identity,
         public readonly array $bindings = [],
         public readonly array $properties = [],

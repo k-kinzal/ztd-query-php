@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate;
 
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\Instruction;
-use Deriver\Query\ParameterQuery;
-use Deriver\Query\Query;
-use Deriver\Query\ReturnQuery;
-use Deriver\Query\StateQuery;
-use Deriver\Query\TupleQuery;
-use Deriver\Query\ValueQuery;
 use Deriver\Value\Term;
 
 /**
- * Places a query's demand on the engine: the selected expression, return, tuple, or storage definition in each entry frame.
+ * Places a selected target's demand on the engine: the selected expression, return, tuple, or storage definition in each entry frame.
  * Nothing outside the engine selects definitions or reads storage directly; the result is one candidate graph.
  * @visibility namespace
  * @visibility Deriver\Analysis\Candidates
@@ -32,15 +27,15 @@ final class Demand
      * Expands the selected definition of the owning symbol in every frame the query scope supplies.
      * A symbol without captured source stays an unexpanded reference.
      */
-    public function select(string $symbol, Query $query): Term
+    public function select(Target $target): Term
     {
-        $graph = $this->engine->context->index->graph($symbol);
+        $graph = $this->engine->context->index->graph($target->owner);
         if ($graph === null) {
-            return (new Choices())->make([[new Term('reference', $symbol, attributes: ['reason' => 'MISSING_SOURCE', 'scope' => $symbol]), []]]);
+            return (new Choices())->make([[new Term('reference', $target->owner, attributes: ['reason' => 'MISSING_SOURCE', 'scope' => $target->owner]), []]]);
         }
         $rows = [];
-        foreach ($this->frames($graph, $query) as $frame) {
-            $rows[] = [$this->observe($frame, $query), []];
+        foreach ($this->frames($graph, $target) as $frame) {
+            $rows[] = [$this->observe($frame, $target), []];
         }
         return (new Choices())->make($rows);
     }
@@ -49,10 +44,10 @@ final class Demand
      * Builds the entry frames the query scope declares for a graph, or one source frame without explicit bindings.
      * @return list<Frame>
      */
-    public function frames(Graph $graph, Query $query): array
+    public function frames(BodyIndex $graph, Target $target): array
     {
         $frames = [];
-        foreach ($query->scope()->entries as $entry) {
+        foreach ($target->query->scope()->entries as $entry) {
             if (strcasecmp($entry->symbol, $graph->body->symbol) !== 0) {
                 continue;
             }
@@ -73,52 +68,58 @@ final class Demand
     /**
      * Selects the requested expression, return, tuple, or storage definition.
      */
-    public function observe(Frame $frame, Query $query): Term
+    public function observe(Frame $frame, Target $target): Term
     {
-        $depth = $query->budget()->maxDepth;
-        if ($query instanceof ParameterQuery) {
-            $parameter = array_values(array_filter($frame->graph->body->parameters, static fn ($parameter): bool => $parameter->name === $query->parameter))[0];
-            $local = new Instruction('parameter:' . $query->parameter, 'local', $parameter->source ?? $frame->graph->body->source, name: $query->parameter);
+        $depth = $target->query->budget()->maxDepth;
+        if ($target->kind === 'parameter') {
+            $parameter = array_values(array_filter($frame->graph->body->parameters, static fn ($parameter): bool => $parameter->name === $target->parameter))[0];
+            $local = new Instruction('parameter:' . $target->parameter, 'local', $parameter->source ?? $frame->graph->body->source, name: (string) $target->parameter);
             return $this->tuple(['value' => (new Origins($this->engine))->parameter($frame, $local, $depth)]);
         }
-        if ($query instanceof ReturnQuery) {
+        if ($target->kind === 'return') {
             return $this->returns($frame, $depth);
         }
-        if ($query instanceof ValueQuery) {
-            $value = $this->engine->value($frame, $query->expression->register, $depth);
-            if ($query->projection->slot !== null) {
-                [$block, $offset] = $frame->graph->positions[$query->expression->register];
-                $value = (new Memory\Slots($this->engine))->before($frame, $value, $query->projection->slot, $block, $offset, $depth);
-            }
-            foreach ($query->projection->path as $key) {
-                $value = $this->engine->operation('array-read', '', [$value, Term::constant($key)]);
-            }
-            return $this->tuple(['value' => $value]);
+        if ($target->kind === 'value' && $target->register !== null) {
+            $value = $this->engine->value($frame, $target->register, $depth);
+            [$block, $offset] = $frame->graph->positions[$target->register];
+            return $this->tuple(['value' => $this->project($frame, $value, $target, $block, $offset, $depth)]);
         }
-        if ($query instanceof TupleQuery) {
+        if ($target->kind === 'tuple') {
             $values = [];
-            foreach ($query->values as $name => $reference) {
-                $values[$name] = $this->engine->value($frame, $reference->register, $depth);
+            foreach ($target->registers as $name => $register) {
+                $values[$name] = $this->engine->value($frame, $register, $depth);
             }
             return $this->tuple($values);
         }
-        if ($query instanceof StateQuery) {
-            $register = $frame->graph->instructions[$query->point->instruction];
+        if ($target->kind === 'state' && $target->point !== null) {
+            $register = $frame->graph->instructions[$target->point->instruction];
             [$block, $offset] = $frame->graph->positions[$register];
+            $offset += $target->point->phase === 'after' ? 1 : 0;
             foreach ($frame->graph->definitions as $definition) {
-                if ($definition->operation === 'local' && $definition->name === $query->variable) {
-                    $value = (new Storage($this->engine))->search($frame, $definition->result, $block, $offset + ($query->point->phase === 'after' ? 1 : 0), $depth);
-                    if ($query->projection->slot !== null) {
-                        $value = (new Memory\Slots($this->engine))->before($frame, $value, $query->projection->slot, $block, $offset + ($query->point->phase === 'after' ? 1 : 0), $depth);
-                    }
-                    foreach ($query->projection->path as $key) {
-                        $value = $this->engine->operation('array-read', '', [$value, Term::constant($key)]);
-                    }
-                    return $this->tuple(['state' => $value]);
+                if ($definition->operation === 'local' && $definition->name === $target->variable) {
+                    $value = (new Storage($this->engine))->search($frame, $definition->result, $block, $offset, $depth);
+                    return $this->tuple(['state' => $this->project($frame, $value, $target, $block, $offset, $depth)]);
                 }
             }
         }
         return $this->tuple(['value' => new Term('reference', 'observation', attributes: ['reason' => 'UNRESOLVED_OBSERVATION'])]);
+    }
+
+    /**
+     * Applies the target's slot and path projection to a selected value at its observation position.
+     */
+    public function project(Frame $frame, Term $value, Target $target, int $block, int $offset, int $depth): Term
+    {
+        if ($target->projection === null) {
+            return $value;
+        }
+        if ($target->projection->slot !== null) {
+            $value = (new Memory\Slots($this->engine))->before($frame, $value, $target->projection->slot, $block, $offset, $depth);
+        }
+        foreach ($target->projection->path as $key) {
+            $value = $this->engine->operation('array-read', '', [$value, Term::constant($key)]);
+        }
+        return $value;
     }
 
     /**

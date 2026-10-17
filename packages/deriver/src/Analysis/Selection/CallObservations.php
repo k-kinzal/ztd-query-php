@@ -18,6 +18,7 @@ use Deriver\Reference\SourceRef;
 /**
  * Projects source call instructions into stable public observation references.
  * @visibility parent
+ * @visibility Deriver\Session
  */
 final class CallObservations
 {

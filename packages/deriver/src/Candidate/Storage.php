@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate;
 
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Value\Term;
 
@@ -158,7 +159,7 @@ final class Storage
         if (in_array($write->operation, ['invoke', 'invoke-method', 'invoke-static'], true)) {
             return (new Calls($this->engine))->effect($frame, $write, $address, $depth);
         }
-        if (!Memory\Mutations::writes($write)) {
+        if (!BodyIndex::writes($write)) {
             return null;
         }
         $aliases = new Memory\Aliases();

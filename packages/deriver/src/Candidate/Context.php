@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate;
 
+use Deriver\Candidate\Index\DefinitionIndex;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Model\Registration\Registry;
 use Deriver\Project\Configuration;
 use Deriver\Query\Budget;
 use Deriver\Query\Resources;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Derivation;
 use Deriver\Value\Term;
 
 /**
@@ -53,9 +53,9 @@ final class Context
      */
     public array $references = [];
     /**
-     * @var array<string, Derivation>
+     * @var array<string, true> Instruction expansions already counted for this query
      */
-    public array $evidence = [];
+    public array $recorded = [];
     /**
      * @var array<string, true>
      */
@@ -140,7 +140,7 @@ final class Context
     /**
      * Captures the dependencies used by this component.
      */
-    public function __construct(public readonly Index $index, public readonly Configuration $configuration, public readonly Registry $models, public readonly Budget $budget, public readonly Cache $cache)
+    public function __construct(public readonly DefinitionIndex $index, public readonly Configuration $configuration, public readonly Registry $models, public readonly Budget $budget, public readonly Cache $cache)
     {
         $this->resources = new Resources($configuration->resources);
     }
@@ -184,7 +184,7 @@ final class Context
     public function record(Frame $frame, Instruction $instruction): void
     {
         $key = $frame->identity . ':' . $instruction->result;
-        $this->evidence[$key] = new Derivation($key, 'dependency', $instruction->source, array_map(static fn (string $register): string => $frame->identity . ':' . $register, $instruction->operands), $instruction->operation);
-        $this->constructedNodes = count($this->evidence);
+        $this->recorded[$key] = true;
+        $this->constructedNodes = count($this->recorded);
     }
 }

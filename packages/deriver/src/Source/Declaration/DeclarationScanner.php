@@ -6,8 +6,7 @@ namespace Deriver\Source\Declaration;
 
 use Deriver\ControlFlow\ClassDeclaration;
 use Deriver\ControlFlow\PropertyDeclaration;
-use Deriver\Source\Compilation\CallableCompiler;
-use Deriver\Source\ConstantSignatures;
+use Deriver\Source\Lowering\CallableLowering;
 use Deriver\Value\Term;
 use PhpParser\Node;
 use PhpParser\Node\Scalar;
@@ -166,7 +165,7 @@ final class DeclarationScanner
     public function properties(Stmt\Property $node, string $path, string $class, bool $readonlyClass = false): array
     {
         $result = [];
-        $compiler = new CallableCompiler($this->index);
+        $compiler = new CallableLowering($this->index);
         foreach ($node->props as $property) {
             $name = $property->name->toString();
             $default = $property->default === null ? null : $compiler->expression($property->default, $path, $class . '::$' . $name, $class);
@@ -217,7 +216,7 @@ final class DeclarationScanner
                 continue;
             }
             $name = $parameter->var->name;
-            $properties[$name] = new PropertyDeclaration($name, $class, (new CallableCompiler($this->index))->type($parameter->type), $parameter->isPrivate() ? 'private' : ($parameter->isProtected() ? 'protected' : 'public'), readonly: $readonlyClass || $parameter->isReadonly(), docComment: $parameter->getDocComment()?->getText() ?? '');
+            $properties[$name] = new PropertyDeclaration($name, $class, (new CallableLowering($this->index))->type($parameter->type), $parameter->isPrivate() ? 'private' : ($parameter->isProtected() ? 'protected' : 'public'), readonly: $readonlyClass || $parameter->isReadonly(), docComment: $parameter->getDocComment()?->getText() ?? '');
         }
         return $properties;
     }

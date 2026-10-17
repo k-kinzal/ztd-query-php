@@ -34,6 +34,7 @@ use JsonException;
 /**
  * Normalizes public queries and runs only their declared entry contexts.
  * @visibility parent
+ * @visibility Deriver\Session
  */
 final class QueryExecution
 {

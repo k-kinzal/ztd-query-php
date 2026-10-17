@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Candidate\Invocation;
 
 use Deriver\Candidate\Frame;
-use Deriver\Candidate\Graph;
+use Deriver\Candidate\Index\BodyIndex;
 use Deriver\ControlFlow\Argument;
 use Deriver\ControlFlow\BasicBlock;
 use Deriver\ControlFlow\CallableGraph;
@@ -22,7 +22,7 @@ final class Origin
      * Builds an input-only frame; source instructions are never executed to select a model.
      * @return array{Frame, Instruction}
      */
-    public function call(Graph $graph): array
+    public function call(BodyIndex $graph): array
     {
         $source = $graph->body;
         $instructions = [];
@@ -35,6 +35,6 @@ final class Origin
             $arguments[] = new Argument($read, $parameter->name);
         }
         $body = new CallableGraph($source->symbol, $source->parameters, [new BasicBlock(0, $instructions, new Terminator('return'))], $source->source, className: $source->className);
-        return [new Frame(new Graph($body), 'origin-input:' . $source->symbol), new Instruction('origin-call:' . $source->symbol, 'invoke', $source->source, arguments: $arguments)];
+        return [new Frame(new BodyIndex($body), 'origin-input:' . $source->symbol), new Instruction('origin-call:' . $source->symbol, 'invoke', $source->source, arguments: $arguments)];
     }
 }

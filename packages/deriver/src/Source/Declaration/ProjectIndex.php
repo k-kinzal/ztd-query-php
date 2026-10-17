@@ -15,13 +15,12 @@ use Deriver\Project\SourceLimits;
 use Deriver\Project\TargetProfile;
 use Deriver\Reference\SourceRef;
 use Deriver\Result\Frontier;
-use Deriver\Source\Cache\GraphCache;
-use Deriver\Source\Cache\SyntaxCache;
-use Deriver\Source\Compilation\CallableCompiler;
-use Deriver\Source\Compilation\GraphBuilder;
-use Deriver\Source\Compilation\Lowering;
 use Deriver\Source\Declaration\Traits\Composition;
-use Deriver\Source\LineMap;
+use Deriver\Source\Lowering\CallableLowering;
+use Deriver\Source\Lowering\InstructionEmitter;
+use Deriver\Source\Lowering\LineMap;
+use Deriver\Source\Lowering\LoweringCache;
+use Deriver\Source\Parsing\ParseCache;
 use Override;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
@@ -29,6 +28,7 @@ use PhpParser\Node\Stmt;
 /**
  * Captures declarations eagerly and compiles callable control flow on demand.
  * @visibility Deriver\Source
+ * @visibility Deriver\Session
  * @visibility Deriver\Analysis
  */
 final class ProjectIndex implements Program
@@ -86,12 +86,12 @@ final class ProjectIndex implements Program
      * @param string $snapshotId Manifest identity
      * @param ProjectInput $input Source contents
      * @param TargetProfile $profile Target PHP semantics
-     * @param SyntaxCache $syntax Shared bounded syntax cache
-     * @param GraphCache $lowered Shared bounded source-IR cache
+     * @param ParseCache $syntax Shared bounded syntax cache
+     * @param LoweringCache $lowered Shared bounded source-IR cache
      * @param SourceLimits $limits Deterministic source admission policy
      * @throws InvalidInputException If the complete project exceeds admission limits
      */
-    public function __construct(public readonly string $snapshotId, ProjectInput $input, public readonly TargetProfile $profile, public readonly SyntaxCache $syntax = new SyntaxCache(), public readonly GraphCache $lowered = new GraphCache(), public readonly SourceLimits $limits = new SourceLimits())
+    public function __construct(public readonly string $snapshotId, ProjectInput $input, public readonly TargetProfile $profile, public readonly ParseCache $syntax = new ParseCache(), public readonly LoweringCache $lowered = new LoweringCache(), public readonly SourceLimits $limits = new SourceLimits())
     {
         $limits->check($input);
         foreach ($input->files as $file) {
@@ -105,7 +105,7 @@ final class ProjectIndex implements Program
         $ordered = array_values($this->files);
         usort($ordered, static fn (SourceFile $a, SourceFile $b): int => [$a->declarationsOnly, $a->path] <=> [$b->declarationsOnly, $b->path]);
         foreach ($ordered as $file) {
-            $this->parse($file, $profile);
+            $this->scan($file, $profile);
         }
         $traits = new Composition($this, hash('sha256', serialize($this->fileHashes)));
         foreach (array_keys($this->classIndex) as $class) {
@@ -116,12 +116,12 @@ final class ProjectIndex implements Program
     }
 
     /**
-     * Parses source bytes without executing user PHP.
+     * Reads the parsed file and indexes its declarations without executing user PHP.
      * @param SourceFile $file Captured source
      * @param TargetProfile $profile Grammar profile
      * @throws InvalidInputException If parser output violates its top-level contract
      */
-    public function parse(SourceFile $file, TargetProfile $profile): void
+    public function scan(SourceFile $file, TargetProfile $profile): void
     {
         $tree = $this->syntax->read($file, $profile, $this->limits);
         $this->syntaxNodes += $tree->size;
@@ -170,11 +170,11 @@ final class ProjectIndex implements Program
     /**
      * Creates a graph builder associated with captured source bytes.
      * @param string $path Captured source path
-     * @return GraphBuilder New graph builder
+     * @return InstructionEmitter New graph builder
      */
-    public function builder(string $path): GraphBuilder
+    public function builder(string $path): InstructionEmitter
     {
-        return new GraphBuilder($this->snapshotId, $path, $this->files[$path]->contents, $this->lineMaps[$path]);
+        return new InstructionEmitter($this->snapshotId, $path, $this->files[$path]->contents, $this->lineMaps[$path]);
     }
 
     /**
@@ -274,7 +274,7 @@ final class ProjectIndex implements Program
         if ($source === null || !$source->node instanceof Expr) {
             return null;
         }
-        return $this->graphs['constant:' . $key] ??= (new CallableCompiler($this))->expression($source->node, $source->path, 'constant:' . $symbol, $source->className);
+        return $this->graphs['constant:' . $key] ??= (new CallableLowering($this))->expression($source->node, $source->path, 'constant:' . $symbol, $source->className);
     }
     /**
      * Identifies source owners without eagerly lowering unrelated functions.

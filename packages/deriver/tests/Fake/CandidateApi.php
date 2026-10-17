@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Analysis\Session;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\ProjectSnapshot;
@@ -15,6 +14,7 @@ use Deriver\Query\ReturnQuery;
 use Deriver\Result\Candidates\CandidateCollection;
 use Deriver\Result\Evidence\Alternative;
 use Deriver\Result\Evidence\Node;
+use Deriver\Session\Session;
 use JsonException;
 
 /**

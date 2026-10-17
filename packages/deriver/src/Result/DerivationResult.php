@@ -62,7 +62,7 @@ final class DerivationResult
      * The closed assessment alone does not establish this: a closed result may still carry PHP_WARNING frontiers, exceptional outcomes, or several alternatives.
      * @return Alternative|null The only normal outcome when every observed value is concrete and the result has no frontiers, exceptional outcomes, or project diagnostics; null otherwise
      * @example An undefined variable reads null, but its warning prevents a definite value
-     *     $result = (new \Deriver\Analysis\ExecutionSession(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f() { return $missing; }')]),new \Deriver\Project\Configuration()))->derive(new \Deriver\Query\ReturnQuery('f'));
+     *     $result = (new \Deriver\ExecutionSession(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f() { return $missing; }')]),new \Deriver\Project\Configuration()))->derive(new \Deriver\Query\ReturnQuery('f'));
      *     [$result->assessment->closure, $result->definite()] // => ['closed', null]
      */
     public function definite(): ?Alternative

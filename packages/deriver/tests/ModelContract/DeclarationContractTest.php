@@ -88,7 +88,7 @@ final class DeclarationContractTest extends TestCase
      */
     public function testExternalDefaultsAreEvaluatedPerInvocation(): void
     {
-        $session = new \Deriver\Analysis\ExecutionSession(new ProjectInput([new SourceFile('app.php', '<?php class Token{function __construct(){throw new RuntimeException();}}function target(){try{external();}catch(RuntimeException $e){return 1;}}'), new SourceFile('stubs.php', '<?php function external($value = new Token) {}', true)]), new Configuration());
+        $session = new \Deriver\ExecutionSession(new ProjectInput([new SourceFile('app.php', '<?php class Token{function __construct(){throw new RuntimeException();}}function target(){try{external();}catch(RuntimeException $e){return 1;}}'), new SourceFile('stubs.php', '<?php function external($value = new Token) {}', true)]), new Configuration());
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame(1, $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);

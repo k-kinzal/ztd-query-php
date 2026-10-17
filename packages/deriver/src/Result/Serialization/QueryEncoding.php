@@ -20,6 +20,7 @@ use JsonException;
  * @phpstan-type QueryRecord array{kind: string, symbol?: string, parameter?: string, expression?: \Deriver\Reference\ExpressionRef, point?: \Deriver\Reference\PointRef, variable?: string, projection?: \Deriver\Value\Projection, values?: object, scope: array{mode: string, entries: list<EntryRecord>}, budget: \Deriver\Query\Budget}
  * @visibility Deriver\Result
  * @visibility Deriver\Analysis
+ * @visibility Deriver\Session
  */
 final class QueryEncoding
 {
