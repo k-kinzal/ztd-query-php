@@ -27,6 +27,8 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility public
+ * @example Rejecting a forbidden line feed before deriving an operation
+ *     new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a heartbeat that every supported release rejects
  *     new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::HeartbeatPeriod, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('4294967.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding a typed option value
@@ -54,6 +56,7 @@ final class SourceOption implements Node
         Check::input($terminology !== Terminology::Legacy || (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->option(\SqlSemantics\Contract\GrammarRelease::MySql5744, $kind), 'A legacy replication option exists in MySQL 5.6 or 5.7.');
         Check::input(!$synonym || ($terminology === Terminology::Current && $kind->renamed()), 'A replication option synonym is a MASTER spelling of a current SOURCE option.');
         Check::input(!$value instanceof Text || $value->radix === null, 'A replication option string is quoted text.');
+        Check::input(!$value instanceof Text || in_array($kind, [SourceOptionKind::CompressionAlgorithms, SourceOptionKind::AssignGtidsToAnonymousTransactions], true) || (new \SqlSemantics\Platform\MySql\Rules\Literal\LineText())->valid($value), 'This replication option cannot contain a line feed before NUL.');
         Check::input($kind->accepts($value), 'The value of ' . $kind->value . ' is outside the domain of the option.');
     }
 

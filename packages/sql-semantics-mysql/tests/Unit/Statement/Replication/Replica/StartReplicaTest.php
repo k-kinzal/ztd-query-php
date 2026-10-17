@@ -21,9 +21,9 @@ final class StartReplicaTest extends TestCase
 {
     public function testDeriveStatementReportsRefusedConditions(): void
     {
-        $start = (new Semantics(Dialect::MySql))->analyze("START REPLICA SQL_THREAD UNTIL SOURCE_LOG_FILE = 'f' USER = 'u'");
+        $start = (new Semantics(Dialect::MySql))->analyze("START REPLICA SQL_THREAD UNTIL SOURCE_LOG_FILE = 'f', SOURCE_LOG_POS = 4 USER = 'u'");
 
-        self::assertEquals([new RefusedSetting(ReplicationError::UntilCondition), new RefusedSetting(ReplicationError::ApplierWithCredentials)], $start->facts->diagnostics);
+        self::assertEquals([new RefusedSetting(ReplicationError::ApplierWithCredentials)], $start->facts->diagnostics);
     }
 
     public function testDeriveStatementRejectsSlaveAfterItsRemoval(): void

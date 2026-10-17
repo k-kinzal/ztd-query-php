@@ -43,6 +43,8 @@ enum AdministrationError: int implements ErrorCode
     case IncorrectGlobalLocalVariable = 1238;
     case VariableIsNotStruct = 1272;
     case BadReplicaUntil = 1277;
+    case ReplicaUntilRestart = 1278;
+    case ReplicaUntilIgnored = 1279;
     case UnknownKeyCache = 1284;
     case UnknownTargetBinlog = 1373;
     case RelayLogPosition = 1380;
@@ -70,6 +72,7 @@ enum AdministrationError: int implements ErrorCode
     case InvalidReplicaChannel = 3076;
     case ReplicaChannelRepository = 3077;
     case ReplicaChannelRunning = 3081;
+    case ReplicaThreadsRunning = 3083;
     case ReplicaThreadsStopped = 3084;
     case GroupReplicationNotConfigured = 3092;
     case KeyringMissing = 3185;

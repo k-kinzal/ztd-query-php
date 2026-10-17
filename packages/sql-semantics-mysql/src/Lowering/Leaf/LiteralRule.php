@@ -264,6 +264,7 @@ final class LiteralRule
     /**
      * Lowers a string at a position that is not an expression.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a restricted system-text operand contains a line feed
      * @throws ImplementationGap When the production has no rule
      */
     public function text(Node $string): Text
@@ -278,7 +279,13 @@ final class LiteralRule
             return $this->lowering->leaves->record(new Text((new RadixSpelling())->digits($form->token(0)->text), $radix));
         }
 
-        return $this->lowering->leaves->record(new Text($this->bytes($string)));
+        $text = new Text($this->bytes($string));
+        $problem = $string->name === 'TEXT_STRING_sys_nonewline' ? (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->problem($text) : null;
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($string)[1] ?? 0);
+        }
+
+        return $this->lowering->leaves->record($text);
     }
 
     /**

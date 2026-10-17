@@ -36,10 +36,11 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes the statements that control replication: START and STOP REPLICA, CHANGE REPLICATION SOURCE and FILTER, RESET BINARY LOGS AND GTIDS and RESET REPLICA, and START and STOP GROUP_REPLICATION.
  *
- * The emulated server is no replica: its only channel is the default one, unconfigured, and a
+ * The emulated server starts with an unconfigured default channel, and a
  * statement naming another channel fails (ER_REPLICA_CHANNEL_DOES_NOT_EXIST). Each statement but
- * the group replication ones commits the open transaction. START REPLICA cannot start the
- * receiver thread (ER_REPLICA_CONFIGURATION), noting first that USER or PASSWORD credentials are sent in plain text;
+ * the group replication ones commits the open transaction. START REPLICA requires a configured
+ * source host for the receiver, noting first that USER or PASSWORD credentials are sent in plain text;
+ * it records the requested local state without opening a network replication connection.
  * SQL_THREAD requires an initialized connection repository before it starts the applier thread,
  * which STOP REPLICA stops and RESET REPLICA refuses to run beside (ER_REPLICA_CHANNEL_MUST_STOP).
  * STOP REPLICA notes threads that are already stopped. CHANGE REPLICATION SOURCE TO initializes
@@ -138,10 +139,24 @@ final class ReplicaCommand implements Command
         if ($statement->user !== null || $statement->password !== null) {
             $session->diagnostics->note(AccountError::InsecurePlainText, AccountError::InsecurePlainText->message());
         }
-        if ($statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true)) {
-            throw AdministrationError::ReplicaNotConfigured->error();
-        }
         $replication = $session->instance->registry->replication;
+        $receiver = $statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true);
+        $applier = $statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true);
+        if ($receiver) {
+            $replication->initialized = true;
+            if ($replication->host === '') {
+                throw AdministrationError::ReplicaNotConfigured->error();
+            }
+        }
+        if (!$applier || $replication->applying) {
+            if ($statement->until !== null && $receiver) {
+                $session->diagnostics->note(AdministrationError::ReplicaUntilIgnored, AdministrationError::ReplicaUntilIgnored->message());
+            } elseif ($applier && $replication->applying) {
+                $session->diagnostics->note(AdministrationError::ReplicaThreadsRunning, AdministrationError::ReplicaThreadsRunning->message(''));
+            }
+            return;
+        }
+        (new UntilExecution())->check($statement->until, $session);
         if (!$replication->initialized) {
             throw AdministrationError::ReplicaConnectionMetadata->error();
         }

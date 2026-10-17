@@ -1292,6 +1292,25 @@ populated tables, unknown aliases, qualified program headers and unreachable
 stored instructions. Only 5.6 reports the completed repeated target before a
 later syntax error; later releases finish parsing first.
 
+Text operands whose grammar excludes line feeds enforce that domain at
+construction, independently of ordinary string literals. The check stops at the
+first NUL, matching the affected server settings. SQL input that violates the
+domain retains a typed text diagnostic, including when a later parse-tree
+inspection command would otherwise fail. Memory applies the session character
+set and the diagnostic byte limit to that value. Differential histories cover
+Latin-1 and UTF-8 connections, NUL ordering, multibyte truncation and the retained
+unseeded fuzz input on the applicable releases. Spatial-reference attributes also
+exclude repeated roles; lowering preserves the first completed attribute error.
+
+`ReplicaUntil` requires a complete source or relay coordinate, or a GTID or
+gap condition. It excludes combinations of those alternative condition kinds
+before an operation can be constructed. Source configuration and running applier
+state remain execution concerns. Native histories preserve the UNTIL request
+through absent configuration, source configuration, repeated starts, stopping
+and reset. Memory records the configured source host and local replication
+state; it does not open a network replication connection. These bounded checks
+do not replace the outstanding whole-model and SQL Faker campaigns.
+
 Multiple-table DELETE targets bind to input occurrence identities in Semantics.
 An unqualified target uses the current database unless it names an explicit
 alias. A qualified target selects its database even when another input has the

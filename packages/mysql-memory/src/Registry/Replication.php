@@ -64,6 +64,11 @@ final class Replication
     public int $port = 3306;
 
     /**
+     * The effective source host, retained across RESET without ALL.
+     */
+    public string $host = '';
+
+    /**
      * Whether a failed reset prevents opening connection metadata for another change.
      */
     public bool $connectionFailure = false;
@@ -81,6 +86,7 @@ final class Replication
         if ($all) {
             $this->heartbeatPeriods = [];
             $this->port = 3306;
+            $this->host = '';
             $this->connectionFailure = false;
             $this->autoPosition = false;
             $this->requireRowFormat = false;

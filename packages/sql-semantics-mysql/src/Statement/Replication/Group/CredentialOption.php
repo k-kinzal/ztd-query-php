@@ -16,6 +16,8 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-group-replication.html.
  *
  * @visibility public
+ * @example Rejecting a line feed in a group credential
+ *     new \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption(\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::User, new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding a user option
  *     (new \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption(\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::User, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('rpl')))->value->value // => 'rpl'
  */
@@ -30,6 +32,7 @@ final class CredentialOption implements Node
     public function __construct(public readonly Credential $credential, public readonly Text $value)
     {
         Check::input($value->radix === null, 'A group replication credential is a quoted string.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Literal\LineText())->valid($value), 'A group replication credential cannot contain a line feed before NUL.');
     }
 
     /**

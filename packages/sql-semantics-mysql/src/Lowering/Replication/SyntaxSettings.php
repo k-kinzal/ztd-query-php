@@ -26,7 +26,7 @@ final class SyntaxSettings
     public function rejected(Node $node, Lowering $lowering): ?\SqlSemantics\Construction\RejectedInput
     {
         $setting = $this->completed($node, $lowering);
-        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber || ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && in_array($setting->problem->error, [\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::HeartbeatOutOfRange], true))) {
+        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber || ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && in_array($setting->problem->error, [\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::UntilCondition, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::HeartbeatOutOfRange], true))) {
             return new \SqlSemantics\Construction\RejectedInput($setting->problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
         }
 
@@ -43,7 +43,7 @@ final class SyntaxSettings
         if ($node->name !== 'TEXT_STRING_sys_nonewline') {
             return [];
         }
-        $notice = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->conversion($lowering->literals->text($node), $lowering->profile->grammar);
+        $notice = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->conversion(new \SqlSemantics\Platform\MySql\Statement\Literal\Text((new \SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule($lowering))->bytes($node)), $lowering->profile->grammar);
 
         return $notice === null ? [] : [$notice];
     }
@@ -85,8 +85,15 @@ final class SyntaxSettings
                 return new ParseFailure($failure->problem, $failure->aborts);
             }
         }
+        if (in_array($node->name, ['slave_until', 'opt_replica_until'], true)) {
+            try {
+                (new UntilRule($lowering))->until($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return new ParseFailure($failure->problem, $failure->aborts);
+            }
+        }
         if ($node->name === 'TEXT_STRING_sys_nonewline') {
-            $text = $lowering->literals->text($node);
+            $text = new \SqlSemantics\Platform\MySql\Statement\Literal\Text((new \SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule($lowering))->bytes($node));
 
             $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->problem($text);
 

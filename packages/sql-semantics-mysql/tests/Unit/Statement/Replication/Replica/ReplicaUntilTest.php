@@ -21,7 +21,7 @@ final class ReplicaUntilTest extends TestCase
 {
     public function testRenderWritesTheConditionsInOrder(): void
     {
-        self::assertSame("START REPLICA UNTIL SQL_AFTER_GTIDS = 'g', SOURCE_LOG_POS = 4", (new Semantics(Dialect::MySql))->analyze("start replica until sql_after_gtids = 'g', source_log_pos = 4")->toString());
+        self::assertSame("START REPLICA UNTIL SOURCE_LOG_POS = 4, SOURCE_LOG_FILE = 'f.1'", (new Semantics(Dialect::MySql))->analyze("start replica until source_log_pos = 4, source_log_file = 'f.1'")->toString());
     }
 
     public function testPositionsRejectAnOptionThatIsNotAPosition(): void

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
  * https://dev.mysql.com/doc/refman/8.4/en/drop-spatial-reference-system.html.
  * Status: Implemented.
  *
- * @visibility SqlSemantics\Platform\MySql\Lowering\Server
+ * @visibility SqlSemantics\Platform\MySql\Lowering
  */
 final class SpatialRule
 {
@@ -79,19 +79,47 @@ final class SpatialRule
      * Lowers the attribute list: a node of `srs_attributes`.
      *
      * @return list<SpatialAttribute>
+     * @throws \SqlSemantics\Construction\RejectedInput When an attribute is intrinsically invalid or repeated
      * @throws ImplementationGap When a production has no rule
      */
     public function attributes(Node $list): array
     {
-        $attributes = [];
+        $forms = [];
         $form = $this->lowering->form($list);
         while ($form->signature !== 'srs_attributes:') {
-            $kind = self::ATTRIBUTES[$form->signature] ?? throw ImplementationGap::production($form);
-            $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->integral($form->node(5)) : null;
-            array_unshift($attributes, new SpatialAttribute($kind, $this->lowering->literals->text($form->node(2)), $identifier));
+            $forms[] = $form;
             $form = $this->lowering->form($form->node(0));
+        }
+        $attributes = [];
+        $seen = [];
+        foreach (array_reverse($forms) as $attributeForm) {
+            $kind = self::ATTRIBUTES[$attributeForm->signature] ?? throw ImplementationGap::production($attributeForm);
+            $value = $this->lowering->literals->text($attributeForm->node(2));
+            $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->integral($attributeForm->node(5)) : null;
+            if (isset($seen[$kind->value])) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::RepeatedAttribute, $kind), (new \SqlSemantics\Construction\SourceRanges())->span($attributeForm->node)[1] ?? 0);
+            }
+            $seen[$kind->value] = true;
+            $attributes[] = new SpatialAttribute($kind, $value, $identifier);
         }
 
         return $attributes;
+    }
+
+    /**
+     * Preserves a completed attribute refusal before a later invalid operand.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($node->name !== 'srs_attributes') {
+            return null;
+        }
+        try {
+            $this->attributes($node);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
+        }
+
+        return null;
     }
 }

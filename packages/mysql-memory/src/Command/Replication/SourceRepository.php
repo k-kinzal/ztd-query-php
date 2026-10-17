@@ -33,6 +33,10 @@ final class SourceRepository
      */
     public function update(array $options, Replication $state, string $channel, float $defaultHeartbeat): void
     {
+        $host = $options[SourceOptionKind::Host->value]->value ?? null;
+        if ($host instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Text) {
+            $state->host = explode("\0", $host->bytes(), 2)[0];
+        }
         $heartbeat = $options[SourceOptionKind::HeartbeatPeriod->value]->value ?? null;
         $state->heartbeatPeriods[$channel] ??= min($defaultHeartbeat, 4294967.0);
         if ($heartbeat instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral) {

@@ -188,4 +188,18 @@ final class LiteralRuleTest extends TestCase
         self::assertSame('SELECT ?', (new Semantics(Dialect::MySql))->analyze('SELECT ?')->toString());
         self::assertSame('SELECT :id', (new Semantics(Dialect::MySql, null, null, ParameterStyle::Named))->analyze('SELECT :id')->toString());
     }
+
+    public function testTextRefusesARestrictedOperandBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze("START REPLICA UNTIL SOURCE_LOG_FILE = 'a\nb'");
+    }
+
+    public function testTextKeepsBytesAfterNulInRestrictedOperands(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'a\\0b\nc'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Text::class, $operation->statement->options[0]->value);
+        self::assertSame("a\0b\nc", $operation->statement->options[0]->value->value);
+    }
 }

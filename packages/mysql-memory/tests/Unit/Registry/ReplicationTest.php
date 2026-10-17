@@ -25,13 +25,16 @@ final class ReplicationTest extends TestCase
     public function testResetClearsSourceSettingsOnlyWhenAllIsSpecified(): void
     {
         $replication = new Replication();
+        $replication->host = 'source';
         $replication->autoPosition = true;
         $replication->requireRowFormat = true;
         $replication->gtidOnly = true;
         $replication->autoFailover = true;
         $replication->reset();
         $retained = [$replication->autoPosition, $replication->requireRowFormat, $replication->gtidOnly, $replication->autoFailover];
+        self::assertSame('source', $replication->host);
         $replication->reset(true);
+        self::assertSame('', $replication->host);
 
         self::assertSame([true, true, true, true], $retained);
         self::assertSame([false, false, false, false], [$replication->autoPosition, $replication->requireRowFormat, $replication->gtidOnly, $replication->autoFailover]);

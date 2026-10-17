@@ -143,7 +143,7 @@ final class SourceSettings
         if ($kind === SourceOptionKind::AssignGtidsToAnonymousTransactions) {
             return preg_match('/\A[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/', $value->value) === 1 ? null : ReplicationError::InvalidUuid;
         }
-        if ($kind !== SourceOptionKind::CompressionAlgorithms && str_contains($value->value, "\n")) {
+        if ($kind !== SourceOptionKind::CompressionAlgorithms && !(new \SqlSemantics\Platform\MySql\Rules\Literal\LineText())->valid($value)) {
             return ReplicationError::LineFeed;
         }
         if ($kind === SourceOptionKind::Password && $release !== GrammarRelease::MySql5651 && strlen($value->value) > self::PASSWORD) {

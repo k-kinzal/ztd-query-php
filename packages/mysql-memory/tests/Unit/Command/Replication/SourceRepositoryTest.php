@@ -75,4 +75,15 @@ final class SourceRepositoryTest extends TestCase
         self::assertSame([1742, 1380], array_column($session->diagnostics->conditions, 1));
     }
 
+
+    public function testUpdateRetainsTheEffectiveHostAcrossResetWithoutAll(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO SOURCE_HOST='a\\0ignored'");
+        self::assertSame('a', $session->instance->registry->replication->host);
+        $session->query('RESET REPLICA');
+        self::assertSame('a', $session->instance->registry->replication->host);
+        $session->query('RESET REPLICA ALL');
+        self::assertSame('', $session->instance->registry->replication->host);
+    }
 }
