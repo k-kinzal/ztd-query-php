@@ -49,6 +49,14 @@ final class StorageOptionsTest extends TestCase
         self::assertSame([['Error', 1812, 'InnoDB: A general tablespace named `absent` cannot be found.'], ['Error', 1031, "Table storage engine for 't' doesn't have this option"]], $session->diagnostics->conditions);
     }
 
+    public function testTablespaceLookupPrecedesAnExistingModernTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT); INSERT INTO d.t VALUES(1)');
+        $session->run('CREATE TABLE IF NOT EXISTS d.t TABLESPACE absent');
+        self::assertSame([['Error', 3510, "Tablespace absent doesn't exist."]], $session->diagnostics->conditions);
+    }
+
     public function testEngineUsesTheConfiguredDefaultAndResolvesAliases(): void
     {
         $session = (new Instance())->connect();

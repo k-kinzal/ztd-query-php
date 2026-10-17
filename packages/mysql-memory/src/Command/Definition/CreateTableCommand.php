@@ -55,14 +55,8 @@ final class CreateTableCommand implements Command
         if ($create->temporaryWords === 0) {
             $session->transaction->commit();
         }
-        $schemaName = $create->name->schema->value ?? $session->variables->database;
-        if ($schemaName === '') {
-            throw QueryError::NoDatabase->error();
-        }
-        $schema = $session->instance->dictionary->schema($schemaName);
-        if ($schema === null) {
-            throw QueryError::BadDatabase->error($schemaName);
-        }
+        $schema = $this->schema($create, $operation, $session, $connection);
+        $schemaName = $schema->name;
         $name = $create->name->name->value;
         if ($create->temporaryWords > 0 ? $session->temporaries->table($schemaName, $name) !== null : $schema->table($name) !== null || isset($schema->views[$name])) {
             if (!$create->ifNotExists) {
@@ -75,6 +69,7 @@ final class CreateTableCommand implements Command
 
             return new Completion(0, 0, $context->diagnostics->raised());
         }
+        $this->columns($operation, $session, $connection);
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->forbidden($create);
         (new StorageOptions())->check($create, $session, $context);
         if ($create->temporaryWords > 0 && $session->transaction->open) {
@@ -91,6 +86,58 @@ final class CreateTableCommand implements Command
         $this->store($definition, $session, $context, $started);
 
         return new Completion(0, 0, $context->diagnostics->raised());
+    }
+
+    /**
+     * Opens the destination schema after versioned definition and tablespace checks.
+     * Legacy empty definitions fail before schema lookup. Modern tablespace lookup
+     * precedes the existing-table shortcut, including IF NOT EXISTS.
+     */
+    public function schema(CreateTable $create, Operation $operation, Session $session, Connection $connection): \MySqlMemory\Dictionary\Schema
+    {
+        $schemaName = $create->name->schema->value ?? $session->variables->database;
+        if ($schemaName === '') {
+            throw QueryError::NoDatabase->error();
+        }
+        if ($session->settings()->legacy()) {
+            $this->columns($operation, $session, $connection);
+        }
+        $schema = $session->instance->dictionary->schema($schemaName);
+        if ($schema === null) {
+            throw QueryError::BadDatabase->error($schemaName);
+        }
+        if (!$session->settings()->legacy()) {
+            $storage = new StorageOptions();
+            foreach ($create->options as $option) {
+                if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\TablespaceOption) {
+                    $storage->tablespace($option, $create, $storage->engine($create, $session->variables), $session);
+                }
+            }
+        }
+        if (in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830, \SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
+            $this->columns($operation, $session, $connection);
+        }
+        return $schema;
+    }
+
+    /**
+     * Raises the semantic empty-definition condition at the release's preparation phase.
+     */
+    public function columns(Operation $operation, Session $session, Connection $connection): void
+    {
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns) {
+                if ($session->settings()->legacy()) {
+                    throw SchemaError::TableMustHaveColumns->error();
+                }
+                $create = $operation->statement;
+                assert($create instanceof CreateTable);
+                $schema = $session->instance->dictionary->schema($create->name->schema->value ?? $session->variables->database);
+                \SqlSemantics\Diagnostic\Check::invariant($schema !== null, 'The destination schema precedes modern column validation.');
+                $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+                (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schema->name);
+            }
+        }
     }
 
     /**

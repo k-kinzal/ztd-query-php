@@ -44,6 +44,16 @@ final class CreateTableCommandTest extends TestCase
         self::assertLessThanOrEqual(time(), $table->created);
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.7.44'])]
+    public function testSchemaRaisesTheSemanticColumnConditionBeforeStorageOptions(string $release): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT); INSERT INTO d.t VALUES(1)');
+        $session->run('CREATE TABLE IF NOT EXISTS d.t ROW_FORMAT=FIXED');
+        self::assertSame([['Error', 1113, 'A table must have at least 1 column']], $session->diagnostics->conditions);
+    }
+
     public function testExecuteCreatesAnEmptyTableInTheCurrentDatabase(): void
     {
         $session = (new Instance())->connect();
@@ -219,4 +229,20 @@ final class CreateTableCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result3);
         self::assertSame([[], [['1']], [['t']]], [$result1->rows, $result2->rows, $result3->rows]);
     }
+    public function testColumnsPrecedesStorageOptionsForANewModernTable(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->run('CREATE TABLE d.t ROW_FORMAT=FIXED');
+        self::assertSame([['Error', 4028, 'A table must have at least one visible column.']], $session->diagnostics->conditions);
+    }
+
+    public function testSchemaChecksEmptyDefinitionsBeforeTheMySqlNineExistingTableShortcut(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT); INSERT INTO d.t VALUES(1),(2)');
+        $session->run('CREATE TABLE IF NOT EXISTS d.t');
+        self::assertSame([['Error', 4028, 'A table must have at least one visible column.']], $session->diagnostics->conditions);
+    }
+
 }

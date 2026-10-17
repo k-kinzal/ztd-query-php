@@ -1488,3 +1488,15 @@ metadata. Native tests include literal boundaries inside unreached instructions,
 all window function families, aliases, arithmetic parents, empty input and
 ordinary populated input on MySQL 8.0.44, 8.4.7 and 9.1.0. These checks do not
 close the remaining whole-model constructor invariant gate.
+
+Empty table definitions retain their semantic condition while Memory applies
+release-specific preparation order. MySQL 5.6 and 5.7 reject missing columns
+before looking up the database or validating storage options. MySQL 8.0 and
+8.4 can complete an empty `CREATE TABLE IF NOT EXISTS` when the target already
+exists; the same directly constructed object fails when that table is absent
+and succeeds against a populated target. MySQL 9.0 and 9.1 reject the empty
+definition even when that target exists. These latter observations are not
+counted as successful state-transition witnesses for constructor validity.
+Constraint diagnostics and tablespace lookup retain their precedence. The
+ordinary empty-definition and deferred definition domains still need review;
+matching their SQL errors alone does not establish the construction property.
