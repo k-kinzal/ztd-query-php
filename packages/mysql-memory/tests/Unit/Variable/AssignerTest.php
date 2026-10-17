@@ -521,4 +521,24 @@ final class AssignerTest extends TestCase
 
         self::assertSame([5, []], [$session->variables->read('group_concat_max_len'), $session->diagnostics->conditions]);
     }
+
+    public function testDeprecatedFileFormatWarnsOnlyAfterSuccessfulAssignment(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SET GLOBAL innodb_file_format='Antelope'");
+        self::assertSame([['Warning', 131, 'Using innodb_file_format is deprecated and the parameter may be removed in future releases. See http://dev.mysql.com/doc/refman/5.7/en/innodb-file-format.html']], $session->diagnostics->conditions);
+        $session->query('SELECT @@innodb_file_format');
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testStorageFormatKeepsAValidatedDefaultWhenAnUnknownNameIsRefused(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET GLOBAL innodb_default_row_format=1');
+        self::assertSame('compact', $session->variables->read('innodb_default_row_format'));
+        $session->run("SET GLOBAL innodb_default_row_format='bad'");
+        self::assertSame('compact', $session->variables->read('innodb_default_row_format'));
+        self::assertSame([['Error', 1231, "Variable 'innodb_default_row_format' can't be set to the value of 'bad'"]], $session->diagnostics->conditions);
+    }
+
 }

@@ -26,7 +26,7 @@ final class InnoDbOptionsTest extends TestCase
     public function testCheckAcceptsOptionsWhenInnoDbStrictModeIsDisabled(): void
     {
         $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; SET innodb_strict_mode=0; CREATE TABLE d.t(a INT) ROW_FORMAT=FIXED');
+        $session->query("CREATE DATABASE d; SET GLOBAL innodb_default_row_format='compact'; SET innodb_strict_mode=0; CREATE TABLE d.t(a INT) ROW_FORMAT=FIXED");
 
         self::assertSame([['Warning', 1478, 'InnoDB: assuming ROW_FORMAT=DYNAMIC.']], $session->diagnostics->conditions);
         self::assertNotNull($session->instance->dictionary->table('d', 't'));
@@ -49,4 +49,48 @@ final class InnoDbOptionsTest extends TestCase
 
         self::assertSame([['Error', 3184, 'Invalid encryption option.'], ['Error', 1031, "Table storage engine for 't' doesn't have this option"]], $session->diagnostics->conditions);
     }
+
+    public function testRequestedRetainsTheLastExplicitFormat(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT) ROW_FORMAT=COMPACT ROW_FORMAT=REDUNDANT');
+        $statement = $session->instance->dictionary->table('d', 't')?->definition->statement;
+        self::assertNotNull($statement);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Redundant, (new InnoDbOptions())->requested($statement));
+    }
+
+    public function testFormatCapturesTheDefaultAtCreationAndKeepsItAcrossRename(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; SET GLOBAL innodb_default_row_format='COMPACT'; CREATE TABLE d.t(a INT)");
+        $session->query("SET GLOBAL innodb_default_row_format='DYNAMIC'; RENAME TABLE d.t TO d.u");
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact, $session->instance->dictionary->table('d', 'u')?->definition->rowFormat);
+    }
+
+    public function testAntelopeUsesTheCurrentGlobalFormatAndRelease(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $options = new InnoDbOptions();
+        self::assertTrue($options->antelope(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Dynamic, $session->variables));
+        $session->query("SET GLOBAL innodb_file_format='Barracuda'");
+        self::assertFalse($options->antelope(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Dynamic, $session->variables));
+    }
+
+    public function testRefusedFormatReportsAntelopeBeforeTheFallback(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; SET innodb_strict_mode=0; CREATE TABLE d.t(a INT) ROW_FORMAT=DYNAMIC');
+        self::assertSame([['Warning', 1478, 'InnoDB: ROW_FORMAT=DYNAMIC requires innodb_file_format > Antelope.'], ['Warning', 1478, 'InnoDB: assuming ROW_FORMAT=COMPACT.']], $session->diagnostics->conditions);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact, $session->instance->dictionary->table('d', 't')?->definition->rowFormat);
+    }
+
+    public function testRetainedDistinguishesMetadataChangesFromRebuilding(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; SET GLOBAL innodb_default_row_format='COMPACT'; CREATE TABLE d.t(a INT); SET GLOBAL innodb_default_row_format='DYNAMIC'; ALTER TABLE d.t COMMENT='changed'");
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact, $session->instance->dictionary->table('d', 't')?->definition->rowFormat);
+        $session->query('ALTER TABLE d.t FORCE');
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Dynamic, $session->instance->dictionary->table('d', 't')->definition->rowFormat);
+    }
+
 }

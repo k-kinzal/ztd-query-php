@@ -70,6 +70,7 @@ final class Assigner
             throw AdministrationError::VariableIsReadonly->error('SESSION', $definition->name, 'GLOBAL');
         }
         $checked = $domain === null ? ($scope === Scope::Global ? $definition->default : $this->variables->globals->value($definition)) : $this->check($definition, $value, $domain);
+        $this->deprecatedFileFormat($definition->name);
         if ($domain === null && str_starts_with($definition->name, 'innodb_monitor_') && in_array($this->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
             $this->context->diagnostics->warning(1230, 'Default value is not defined for this set option. Please specify correct counter or module name.');
         }
@@ -103,6 +104,17 @@ final class Assigner
         $this->variables->globals->cache($cache, $definition, $value);
         if ($this->context->modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && $this->context->modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
             $this->context->diagnostics->warning(1287, $cache . '.' . $definition->name . ' syntax is deprecated and will be removed in a future release');
+        }
+    }
+
+    /**
+     * Reports successful changes of MySQL 5.7's deprecated file-format settings.
+     * Scope and value failures precede this engine warning; reads do not warn.
+     */
+    public function deprecatedFileFormat(string $name): void
+    {
+        if ($this->context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744 && in_array($name, ['innodb_file_format', 'innodb_file_format_max'], true)) {
+            $this->context->diagnostics->warning(131, 'Using ' . $name . ' is deprecated and the parameter may be removed in future releases. See http://dev.mysql.com/doc/refman/5.7/en/innodb-file-format.html');
         }
     }
 
@@ -147,6 +159,9 @@ final class Assigner
     public function check(Definition $definition, int|float|string|null $value, Domain $domain): string|int|null
     {
         $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
+        if (in_array($definition->name, ['innodb_file_format', 'innodb_file_format_max', 'innodb_default_row_format'], true)) {
+            return $this->storageFormat($definition->name, $value, $domain);
+        }
         $clock = new TimeSettings($this->context);
         if ($definition->name === 'time_zone') {
             return $clock->zone($value, $domain);
@@ -169,6 +184,34 @@ final class Assigner
             ValueShape::Integer, ValueShape::Unsigned => $this->integer($definition, $value, $domain, $text),
             ValueShape::Double, ValueShape::Text => $this->text($definition, $value, $text),
         };
+    }
+
+    /**
+     * Checks engine format variables without admitting names the engine cannot store.
+     * File-format names require text; the default row format also accepts its enum index.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the value or its type is refused
+     */
+    public function storageFormat(string $name, int|float|string|null $value, Domain $domain): string
+    {
+        $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
+        $row = $name === 'innodb_default_row_format';
+        $choices = $row ? ['redundant', 'compact', 'dynamic'] : ['Antelope', 'Barracuda'];
+        if ($value !== null && $domain->kind !== Kind::String && (!$row || $domain->kind !== Kind::Integer)) {
+            throw AdministrationError::WrongTypeForVariable->error($name);
+        }
+        foreach ($choices as $index => $choice) {
+            if ($value !== null && ($domain->kind === Kind::Integer ? $text === (string) $index : strcasecmp($text, $choice) === 0)) {
+                return $choice;
+            }
+        }
+        if ($name === 'innodb_file_format_max' && $value !== null) {
+            if ($text === '0' || $text === '1') {
+                return $choices[(int) $text];
+            }
+            $this->context->diagnostics->warning(1210, 'InnoDB: invalid innodb_file_format_max value; can be any format up to Barracuda or equivalent id of 1');
+        }
+        throw AdministrationError::WrongValueForVariable->error($name, $text);
     }
 
     /**

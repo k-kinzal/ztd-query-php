@@ -181,6 +181,6 @@ final class RenameTableCommand implements Command
         $layout->name = new QualifiedName(new Name($name), new Name($schema));
         $others = array_values(array_filter($session->instance->dictionary->declarations(), static fn ($declaration): bool => $declaration !== $table->definition->declaration));
 
-        return (new TableRebuild($session, $context, $connection))->definition($layout, $others, false);
+        return (new TableRebuild($session, $context, $connection))->definition($layout, $others, false)->withRowFormat($table->definition->rowFormat);
     }
 }

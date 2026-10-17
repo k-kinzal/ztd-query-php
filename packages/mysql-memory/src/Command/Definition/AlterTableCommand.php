@@ -194,6 +194,9 @@ final class AlterTableCommand implements Command
         $needs->followed($table, $layout);
         $origins = array_map(static fn (array $column): ?int => $column[1], $layout->columns);
         $copies = $this->copies($table->definition, $definition, $origins, $change, $context);
+        if ((new InnoDbOptions())->retained($table->definition, $definition, $origins, $change, $context->modes->release)) {
+            $definition = $definition->withRowFormat($table->definition->rowFormat);
+        }
         $data = $rebuild->rows($this->emptied($table, $change->emptied, $context), $definition, $origins);
         if ($change->ordered && $definition->primaryKey() !== null) {
             $context->warning(StatementError::UnknownError, 'ORDER BY ignored as there is a user-defined clustered index in the table \'' . $definition->name . '\'');

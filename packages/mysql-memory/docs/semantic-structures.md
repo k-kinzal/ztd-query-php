@@ -1642,3 +1642,23 @@ checks and 17,967 unit/property/doctests passed. Replaying the 54 previously
 failing supplied-seed inputs matched 53; the remaining 5.6 table-status
 `Row_format` mismatch is still unresolved. This focused replay is not a new
 complete supplied-seed campaign.
+
+The row-format campaign on `/row171-work-20261017` resolves effective InnoDB
+formats at creation and preserves them through dictionary copies and metadata-only
+alterations. Rebuilds and LIKE resolve the applicable settings again. Explicit
+INSTANT alterations retain the existing format; the observed 9.1 default for
+column addition does too. Legacy Antelope restrictions retain ordered warnings.
+A refused FIXED format falls back to the engine's built-in format, independently
+of the configurable default. SHOW output retains the written request where the
+release does, separately from the effective format. Format system variables reject
+invalid names and types without corrupting later definitions.
+
+All 1,155 SQL observations matched across MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7
+and 9.1.0. Another 35 directly constructed table definitions were each reused
+under three engine-setting states, with unrelated request text. All 105
+observations matched, including the resulting stored formats. This direct
+construction test found and retained a regression that single-default SQL probes
+had missed. Static checks, 17,977 unit/property/doctests (74,351 assertions), and
+18 native integration tests (438 assertions) passed. This closes these table
+format examples; the intrinsic window/query domains and complete final-revision
+acceptance campaigns remain open.

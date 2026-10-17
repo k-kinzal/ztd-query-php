@@ -185,4 +185,17 @@ final class TableDefinitionTest extends TestCase
 
         self::assertSame([true, null], [$table->definition->partitioning !== null, $table->definition->withPartitioning(null)->partitioning]);
     }
+
+    public function testWithRowFormatSurvivesAllDefinitionCopies(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT PRIMARY KEY)');
+        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        self::assertNotNull($definition);
+        $format = \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Redundant;
+        $changed = $definition->withRowFormat($format)->withColumns($definition->columns)->withColumnDisplays(['a' => 12])->withConstraints([], [])->withPartitioning(null);
+        self::assertSame($format, $changed->rowFormat);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Dynamic, $definition->rowFormat);
+    }
+
 }

@@ -153,4 +153,15 @@ final class ShowCreateTableCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['t', "CREATE TABLE `t` (\n  `a` varchar(3) DEFAULT NULL,\n  `b` varchar(3) CHARACTER SET utf8mb4 DEFAULT NULL,\n  `c` int(11) DEFAULT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=latin1"]], $result->rows);
     }
+
+    public function testRowFormatSeparatesTheLegacyRequestFromTheEffectiveFormat(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; SET innodb_strict_mode=0; CREATE TABLE d.t(a INT) ROW_FORMAT=FIXED');
+        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        self::assertNotNull($definition);
+        self::assertSame('ROW_FORMAT=FIXED', (new ShowCreateTableCommand(\SqlSemantics\Contract\GrammarRelease::MySql5651))->rowFormat($definition, 'ROW_FORMAT='));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact, $definition->rowFormat);
+    }
+
 }

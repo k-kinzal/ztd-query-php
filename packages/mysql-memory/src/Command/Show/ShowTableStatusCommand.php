@@ -130,14 +130,14 @@ final class ShowTableStatusCommand implements Command
             $definition->name,
             ServerCatalog::shared()->engine($definition->engine) ?? $definition->engine,
             10,
-            $innodb ? 'Dynamic' : 'Fixed',
+            $innodb ? ucfirst(strtolower($definition->rowFormat->value)) : 'Fixed',
             ...array_slice($statistics, 0, 7),
             Temporal::dateTime(...[...$context->local((float) $table->created), 0]),
             is_int($updated) ? Temporal::dateTime(...[...$context->local((float) $updated), 0]) : null,
             null,
             $definition->collation,
             null,
-            '',
+            (new ShowCreateTableCommand($context->modes->release))->rowFormat($definition, 'row_format='),
             (new ShowCreateTableCommand())->comment($definition),
         ];
     }

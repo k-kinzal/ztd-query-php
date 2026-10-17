@@ -7,6 +7,7 @@ namespace MySqlMemory\Dictionary;
 use MySqlMemory\Dictionary\Partition\Partitioning;
 use MySqlMemory\Result\ColumnFlag;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Declaration\Table;
 
@@ -31,6 +32,7 @@ final class TableDefinition
      * @param list<Check> $checks The CHECK constraints, in the order SHOW CREATE TABLE writes them
      * @param list<ForeignKey> $foreignKeys The foreign keys, in the order the table declares them
      * @param Partitioning|null $partitioning How the rows are split into partitions, or null when the table is not partitioned
+     * @param RowFormat $rowFormat The effective InnoDB format selected when this definition was stored
      */
     public function __construct(
         public readonly string $schema,
@@ -46,6 +48,7 @@ final class TableDefinition
         public readonly array $checks = [],
         public readonly array $foreignKeys = [],
         public readonly ?Partitioning $partitioning = null,
+        public readonly RowFormat $rowFormat = RowFormat::Dynamic,
     ) {
     }
 
@@ -56,7 +59,7 @@ final class TableDefinition
      */
     public function withColumns(array $columns): self
     {
-        return new self($this->schema, $this->name, $columns, $this->keys, $this->declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $this->checks, $this->foreignKeys, $this->partitioning);
+        return new self($this->schema, $this->name, $columns, $this->keys, $this->declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $this->checks, $this->foreignKeys, $this->partitioning, $this->rowFormat);
     }
 
     /**
@@ -79,7 +82,7 @@ final class TableDefinition
         $original = $this->declaration;
         $declaration = new Table($original->name, $original->profile, array_values($declared), $original->implicit, $original->complete, $original->kind, $keys, $original->partitions);
 
-        return new self($this->schema, $this->name, $columns, $this->keys, $declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $this->checks, $this->foreignKeys, $this->partitioning);
+        return new self($this->schema, $this->name, $columns, $this->keys, $declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $this->checks, $this->foreignKeys, $this->partitioning, $this->rowFormat);
     }
 
     /**
@@ -90,7 +93,7 @@ final class TableDefinition
      */
     public function withConstraints(array $checks, array $foreignKeys): self
     {
-        return new self($this->schema, $this->name, $this->columns, $this->keys, $this->declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $checks, $foreignKeys, $this->partitioning);
+        return new self($this->schema, $this->name, $this->columns, $this->keys, $this->declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $checks, $foreignKeys, $this->partitioning, $this->rowFormat);
     }
 
     /**
@@ -98,7 +101,15 @@ final class TableDefinition
      */
     public function withPartitioning(?Partitioning $partitioning): self
     {
-        return new self($this->schema, $this->name, $this->columns, $this->keys, $this->declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $this->checks, $this->foreignKeys, $partitioning);
+        return new self($this->schema, $this->name, $this->columns, $this->keys, $this->declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $this->checks, $this->foreignKeys, $partitioning, $this->rowFormat);
+    }
+
+    /**
+     * Keeps the engine's effective format when an operation changes only metadata.
+     */
+    public function withRowFormat(RowFormat $format): self
+    {
+        return new self($this->schema, $this->name, $this->columns, $this->keys, $this->declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $this->checks, $this->foreignKeys, $this->partitioning, $format);
     }
 
     /**

@@ -121,7 +121,7 @@ final class Definitions
         $this->check($columns, $keys);
         $expressions->keyed($columns, $keys);
         usort($keys, static fn (Key $left, Key $right): int => ($right->kind === KeyKind::Primary) <=> ($left->kind === KeyKind::Primary));
-        $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create);
+        $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create, rowFormat: (new InnoDbOptions())->format($create, $this->planner->compiler->connection->variables));
         (new Constraint\IndexOptions())->check($definition);
         $definition = $expressions->computed($definition, $this->planner->settings->connectionCollation->charset->name);
 

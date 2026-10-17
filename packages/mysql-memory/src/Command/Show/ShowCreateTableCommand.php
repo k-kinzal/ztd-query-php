@@ -202,12 +202,32 @@ final class ShowCreateTableCommand implements Command
         if ((!$legacy && $charset->name === 'utf8mb4') || $charset->defaultCollation($legacy ? $this->release : GrammarRelease::MySql847)->name !== $collation->name) {
             $options .= ' COLLATE=' . $collation->nameIn($this->release);
         }
+        $format = $this->rowFormat($table, 'ROW_FORMAT=');
+        if ($format !== '') {
+            $options .= ' ' . $format;
+        }
         $comment = $this->comment($table);
         if ($comment !== '') {
             $options .= ' COMMENT=' . (new ColumnText())->quoted($comment);
         }
 
         return $options;
+    }
+
+    /**
+     * Reports the retained request, except a modern engine's replaced invalid format.
+     */
+    public function rowFormat(TableDefinition $table, string $prefix): string
+    {
+        $format = $table->statement === null ? null : (new \MySqlMemory\Command\Definition\InnoDbOptions())->requested($table->statement);
+        if ($format === null || $format === \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Default) {
+            return '';
+        }
+        if ($format === \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Fixed && !in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && strcasecmp($table->engine, 'InnoDB') === 0) {
+            $format = $table->rowFormat;
+        }
+
+        return $prefix . $format->value;
     }
 
     /**

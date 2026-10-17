@@ -154,6 +154,7 @@ final class TableChange
         $placed = [];
         $added = [];
         foreach ($commands as $command) {
+            $this->storageLayout = $this->storageLayout || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Command\Force;
             if (!$command instanceof AlterModifier && !$command instanceof RenameTo && !$command instanceof ToggleKeys) {
                 $this->changes = true;
             }

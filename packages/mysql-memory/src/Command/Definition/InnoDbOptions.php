@@ -10,6 +10,7 @@ use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Session;
+use MySqlMemory\Session\Variables;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\AutoextendSizeOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat;
@@ -50,11 +51,7 @@ final class InnoDbOptions
         }
         $name = $create->name->name->value;
         $strict = ProgramSource::enabled($session->variables->read('innodb_strict_mode'));
-        $refused = $row === RowFormat::Fixed;
-        if ($refused) {
-            $default = strtoupper((string) ($session->variables->read('innodb_default_row_format') ?? 'COMPACT'));
-            $context->diagnostics->warning(SchemaError::IllegalCreateOption, $strict ? 'InnoDB: invalid ROW_FORMAT specifier.' : "InnoDB: assuming ROW_FORMAT={$default}.");
-        }
+        $refused = $this->refusedFormat($row, $session->variables, $context);
         $compression = $text[TextOptionKind::Compression->value] ?? '';
         if (!in_array(strtolower($compression), ['', 'none', 'zlib', 'lz4'], true)) {
             $context->diagnostics->warning(SchemaError::UnsupportedExtension, "InnoDB: Unsupported compression algorithm '{$compression}'");
@@ -70,6 +67,94 @@ final class InnoDbOptions
         if ($refused && $strict) {
             throw SchemaError::IllegalHa->error($name);
         }
+    }
+
+    /**
+     * Reads the last explicit ROW_FORMAT, retaining DEFAULT separately from omission.
+     */
+    public function requested(CreateTable $create): ?RowFormat
+    {
+        $format = null;
+        foreach ($create->options as $option) {
+            if ($option instanceof RowFormatOption) {
+                $format = $option->format;
+            }
+        }
+
+        return $format;
+    }
+
+    /**
+     * Resolves an accepted definition against the current instance settings.
+     */
+    public function format(CreateTable $create, Variables $variables): RowFormat
+    {
+        $format = $this->requested($create);
+        if ($format === RowFormat::Fixed || $this->antelope($format, $variables)) {
+            return $variables->instance->version === '5.6.51' ? RowFormat::Compact : RowFormat::Dynamic;
+        }
+        if ($format === null || $format === RowFormat::Default) {
+            return RowFormat::from(strtoupper((string) ($variables->read('innodb_default_row_format') ?? 'COMPACT')));
+        }
+
+        return $format;
+    }
+
+    /**
+     * Identifies the formats unavailable under the legacy Antelope file setting.
+     * MySQL 5.7 accepts DYNAMIC independently of that setting.
+     */
+    public function antelope(?RowFormat $format, Variables $variables): bool
+    {
+        return strcasecmp((string) $variables->read('innodb_file_format'), 'Antelope') === 0
+            && ($format === RowFormat::Compressed || $format === RowFormat::Dynamic && $variables->instance->version === '5.6.51');
+    }
+
+    /**
+     * Reports format warnings before strict-mode engine rejection.
+     */
+    public function refusedFormat(?RowFormat $format, Variables $variables, Context $context): bool
+    {
+        $antelope = $this->antelope($format, $variables);
+        if ($format !== RowFormat::Fixed && !$antelope) {
+            return false;
+        }
+        $strict = ProgramSource::enabled($variables->read('innodb_strict_mode'));
+        if ($antelope) {
+            $context->diagnostics->warning(SchemaError::IllegalCreateOption, 'InnoDB: ROW_FORMAT=' . $format?->value . ' requires innodb_file_format > Antelope.');
+        } elseif ($strict) {
+            $context->diagnostics->warning(SchemaError::IllegalCreateOption, 'InnoDB: invalid ROW_FORMAT specifier.');
+        }
+        if (!$strict) {
+            $default = $variables->instance->version === '5.6.51' ? 'COMPACT' : 'DYNAMIC';
+            $context->diagnostics->warning(SchemaError::IllegalCreateOption, "InnoDB: assuming ROW_FORMAT={$default}.");
+        }
+
+        return true;
+    }
+
+    /**
+     * Identifies alterations that retain the existing physical row layout.
+     * MySQL 9.1 selects instant column addition by default; earlier releases
+     * retain the format for that change only with explicit ALGORITHM=INSTANT.
+     *
+     * @param list<int|null> $origins The old column positions, null for additions
+     */
+    public function retained(\MySqlMemory\Dictionary\TableDefinition $before, \MySqlMemory\Dictionary\TableDefinition $after, array $origins, TableChange $change, \SqlSemantics\Contract\GrammarRelease $release): bool
+    {
+        if ($change->storageLayout || $change->copies || $change->algorithm === 'copy') {
+            return false;
+        }
+        foreach ($origins as $position => $origin) {
+            if ($origin !== null && TableRebuild::changed($before->columns[$origin]->domain, $after->columns[$position]->domain)) {
+                return false;
+            }
+        }
+        if (count($origins) === count($before->columns) && !in_array(null, $origins, true)) {
+            return true;
+        }
+
+        return $change->algorithm === 'instant' || $change->algorithm === null && $release === \SqlSemantics\Contract\GrammarRelease::MySql910;
     }
 
     /**

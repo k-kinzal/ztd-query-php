@@ -115,4 +115,15 @@ final class ProgramMetadataTest extends TestCase
         self::assertSame(['tables', 4225], [$base->originalTable, $base->flags]);
         self::assertSame(['information_schema', ''], [$computed->schema, $computed->originalTable]);
     }
+
+    public function testBufferedRetainsTableDictionaryOriginsAfterSorting(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT)');
+        $result = $session->query("SELECT TABLE_NAME,ROW_FORMAT,CREATE_OPTIONS FROM information_schema.tables WHERE table_schema='d' ORDER BY table_name")[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['tables', 'tables', ''], array_map(static fn ($column): string => $column->originalTable, $result->columns));
+        self::assertSame([0, 0, 0], array_map(static fn ($column): int => $column->decimals, $result->columns));
+    }
+
 }

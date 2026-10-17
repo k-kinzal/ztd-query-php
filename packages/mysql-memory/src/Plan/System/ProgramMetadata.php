@@ -37,7 +37,7 @@ final class ProgramMetadata
         }
         foreach ($scope->tables as $definition) {
             $table = $planner->dictionary->system?->table($definition->declaration);
-            if ($table?->schema === 'information_schema' && in_array($table->name, ['ROUTINES', 'PARAMETERS', 'STATISTICS', 'COLUMNS', 'KEY_COLUMN_USAGE'], true)) {
+            if ($table?->schema === 'information_schema' && in_array($table->name, ['ROUTINES', 'PARAMETERS', 'STATISTICS', 'COLUMNS', 'KEY_COLUMN_USAGE', 'TABLES'], true)) {
                 $domains = array_map(self::domain(...), $plan->domains, $plan->origins);
 
                 return new QueryPlan($plan->root, $domains, $plan->names, array_map(self::origin(...), $plan->origins, $domains));
@@ -81,7 +81,7 @@ final class ProgramMetadata
         if ($origin === null) {
             return null;
         }
-        if ($origin->originalTable === 'COLUMNS' && in_array($origin->schema, ['', 'information_schema'], true)) {
+        if (in_array($origin->originalTable, ['COLUMNS', 'TABLES'], true) && in_array($origin->schema, ['', 'information_schema'], true)) {
             return self::columnsOrigin($origin, $domain);
         }
         if ($origin->originalTable === 'KEY_COLUMN_USAGE' && in_array($origin->schema, ['', 'information_schema'], true)) {
@@ -111,7 +111,8 @@ final class ProgramMetadata
             'TABLE_CATALOG' => 'catalogs',
             'TABLE_SCHEMA' => 'schemata',
             'TABLE_NAME' => 'tables',
-            default => 'columns',
+            'TABLE_COLLATION' => 'collations',
+            default => $origin->originalTable === 'TABLES' ? 'tables' : 'columns',
         };
         $flags = $origin->unkeyed()->flags & ~ColumnFlag::PartKey->value;
         if ($origin->schema === '' && $domain->kind !== Kind::String) {
