@@ -125,7 +125,7 @@ final class SetCommand implements Command
             $cache = $item->qualifier?->value;
 
             return static function () use ($assigner, $name, $scope, $value, $domain, $cache): void {
-                $assigner->retired($name);
+                $assigner->retired($name, $value, $domain);
                 (new \MySqlMemory\Variable\Persistence())->assign($assigner, $name, $scope, $value, $domain, $cache);
             };
         }
@@ -147,14 +147,14 @@ final class SetCommand implements Command
         $name = $item->variable->name->value;
         if ($item->variable->scope === null && $domain !== null && $definition !== null && in_array($definition->name, ['transaction_isolation', 'tx_isolation', 'transaction_read_only', 'tx_read_only'], true)) {
             return static function () use ($session, $definition, $assigner, $value, $domain, $name): void {
-                $assigner->retired($name);
+                $assigner->retired($name, $value, $domain);
                 (new Transaction\SetTransactionCommand())->next($session, $definition->name, (string) $assigner->check($definition, $value, $domain));
             };
         }
         $cache = $item->variable->instance?->value;
 
         return static function () use ($assigner, $name, $scope, $value, $domain, $cache): void {
-            $assigner->retired($name);
+            $assigner->retired($name, $value, $domain);
             (new \MySqlMemory\Variable\Persistence())->assign($assigner, $name, $scope, $value, $domain, $cache);
         };
     }
@@ -175,6 +175,9 @@ final class SetCommand implements Command
         }
 
         return static function () use ($assigner, $charset, $collation, $connection, $item, $session): void {
+            if ($item instanceof SetNames && $item->collation?->name !== null) {
+                (new \MySqlMemory\Variable\EncodingSettings($assigner->context))->compatible($charset, $collation);
+            }
             $text = Domain::string(64, Collation::known('utf8mb4_0900_ai_ci'));
             foreach (['character_set_client', 'character_set_results'] as $name) {
                 $assigner->assign($name, VariableScope::Session, $charset, $text);

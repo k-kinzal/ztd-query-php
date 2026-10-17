@@ -46,12 +46,10 @@ final class SyntaxWarnings
         $ranges = new SourceRanges();
         $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');
         $lowering = new Lowering($productions, new Leaves(), $profile);
-        $names = new Utility\Set\SyntaxNames();
-        $types = new Routine\DeclarationPrefix();
-        $arrays = new Routine\Program\SyntaxArrays();
+        $operands = new Notice\OperandCompletion();
         $header = new Routine\Program\NoticeHeader();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $names, $types, $tokens, $arrays, $header, $replicaNetTimeout): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $replicaNetTimeout): void {
                 if ($state->aborted) {
                     return;
                 }
@@ -75,7 +73,7 @@ final class SyntaxWarnings
                     $state->record($ranges->span($node, true)[1] ?? 0, ParseStop::ProgramStatement);
                     return;
                 }
-                $notice = $arrays->completed($node, $lookahead, $lowering, $state->failedAt) ?? $types->following($node, $lowering, $tokens) ?? ($state->failed ? null : $names->completed($node, $lowering)) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
+                $notice = $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
                 $conditions = [...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
                     $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
@@ -135,6 +133,7 @@ final class SyntaxWarnings
             $body = array_pop($scopes) === true || in_array($condition->name, ['sp_proc_stmt', 'stored_routine_body', 'ev_sql_stmt'], true);
             $failure = ($body ? (new Routine\Program\SyntaxDefinitions())->rejected($condition) ?? (new Routine\Program\SyntaxArrays())->rejected($condition, $lowering) : null) ?? (new RejectedOperand())->of($condition, $lowering);
             if ($failure !== null) {
+                $failure = (new Account\Privilege\LegacyColumns())->scoped($tree, $failure, $lowering);
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) {
                     $failure = new \SqlSemantics\Construction\RejectedInput((new Utility\Set\SyntaxNames())->scoped($tree, $failure->problem, $lowering), $failure->end, $failure->aborts);
                 }

@@ -24,8 +24,9 @@ use SqlSemantics\Statement\Type\Known;
  *
  * The server accepts UTC conversions. The INTERVAL keyword and the zone name
  * remain distinct semantic operands; named zones depend on the zone catalog.
- * A literal input is TIMESTAMP or NULL. Other inputs retain their dependencies
- * for resolution against the current schema.
+ * A literal input is TIMESTAMP or NULL. Casts, arithmetic, interval arithmetic
+ * and clocks cannot produce a TIMESTAMP field. Other inputs retain their
+ * dependencies for resolution against the current schema.
  *
  * Rule: MYSQL-AT-TIME-ZONE-001. Facts: a DATETIME of the given precision;
  * Nullable, including for a non-null operand, because conversion can fail. Precision is between zero and six; input lowering
@@ -57,7 +58,7 @@ final class AtTimeZone implements Scalar
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
         Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($operand) !== false, 'An AT TIME ZONE literal has a TIMESTAMP or NULL input role.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->input($operand) !== false, 'An AT TIME ZONE operand must admit a TIMESTAMP or NULL input role.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

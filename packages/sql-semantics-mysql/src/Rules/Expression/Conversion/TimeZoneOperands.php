@@ -24,6 +24,28 @@ use SqlSemantics\Statement\Scalar;
 final class TimeZoneOperands
 {
     /**
+     * Answers an operand's intrinsic TIMESTAMP input role, independently of name resolution.
+     * Casts, arithmetic, interval arithmetic and clocks have a fixed result
+     * family even when their operands are unresolved or NULL. They cannot
+     * produce a TIMESTAMP field. Other compositions retain their dependencies.
+     */
+    public function input(Scalar $operand): ?bool
+    {
+        while ($operand instanceof Grouped) {
+            $operand = $operand->operand;
+        }
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall) {
+            return false;
+        }
+
+        return $this->literal($operand);
+    }
+
+    /**
      * Answers whether a literal has the TIMESTAMP or NULL role; null means it is not a literal.
      */
     public function literal(Scalar $operand): ?bool

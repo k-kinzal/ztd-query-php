@@ -50,7 +50,9 @@ final class PrivilegeInput
         $request = $problem->request;
         $names = new \MySqlMemory\Command\Account\Names($session->settings()->release());
         try {
-            $names->check([...$names->users($request->grantees), $request->as?->user, ...$request->as->roles->roles ?? []]);
+            if (!$session->settings()->legacy() || !$request->columnLevel()) {
+                $names->check([...$names->users($request->grantees), $request->as?->user, ...$request->as->roles->roles ?? []]);
+            }
             (new \MySqlMemory\Command\Account\Levels($session->settings()->release()))->target($request->kind, $request->level, $session);
         } catch (SqlError $error) {
             return $error;
@@ -60,6 +62,16 @@ final class PrivilegeInput
         }
         return $problem->condition->error === 'ER_ILLEGAL_PRIVILEGE_LEVEL'
             ? \MySqlMemory\Error\Family\AccountError::IllegalPrivilegeLevel->error($request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel ? $request->level->name->name->value : strtoupper($problem->condition->privilege))
+            : \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
+    }
+
+    /**
+     * Resolves a completed column target before reading any recipient operands.
+     */
+    public function target(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel $problem, Session $session): SqlError
+    {
+        return $problem->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel && $problem->program?->schema === null && $session->variables->database === ''
+            ? QueryError::NoDatabase->error()
             : \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
     }
 

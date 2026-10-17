@@ -113,13 +113,24 @@ final class PrimaryRule
             $keyword = $prefix === UnaryOperator::Not && $this->negation($form->node(0));
             $operand = $this->lowering->form($form->node(1));
             if ($prefix === UnaryOperator::Not && !$keyword && $this->paired($form, $operand)) {
-                return new Unary(UnaryOperator::PairedNot, $this->lowering->expressions->simpleExpression($operand->node(1)));
+                return $this->unary(UnaryOperator::PairedNot, $operand->node(1), false);
             }
 
-            return new Unary($prefix, $this->lowering->expressions->simpleExpression($form->node(1)), $keyword);
+            return $this->unary($prefix, $form->node(1), $keyword);
         }
 
         return (new FormRule($this->lowering))->lower($form);
+    }
+
+    /**
+     * Preserves the operand's scalar or deferred role under a prefix operator.
+     */
+    public function unary(UnaryOperator $operator, Node $node, bool $keyword): Unary|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary
+    {
+        $operand = $this->simpleExpression($node);
+        return $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary($operator, $operand, $keyword)
+            : new Unary($operator, (new OperandRule())->scalar($operand, $node), $keyword);
     }
 
     /**

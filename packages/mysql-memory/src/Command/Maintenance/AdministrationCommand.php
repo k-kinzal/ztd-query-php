@@ -69,8 +69,8 @@ final class AdministrationCommand implements Command
     /**
      * Runs the operation on each table and answers its rows.
      *
-     * MySQL 5.6 and 5.7 report the warnings raised while the statement is parsed as rows of the
-     * first table, before its own (verified on a live 5.7.44 server).
+     * Input warnings become rows of the first table, before its own report,
+     * including histogram operations (verified on MySQL 5.6 through 9.1).
      */
     #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
@@ -81,21 +81,13 @@ final class AdministrationCommand implements Command
         $names = $this->names($statement);
         $this->validate($statement, $names, $session);
         $session->transaction->commit();
+        $operation = $histogram !== null ? 'histogram' : $this->operation($statement);
+        $rows = $this->notices($names[0][0], $operation, $session);
         if ($histogram !== null && count($names) > 1) {
-            return new ResultSet(self::columns($session), [['', 'histogram', 'Error', 'Only one table can be specified while modifying histogram statistics.']]);
+            return new ResultSet(self::columns($session), [...$rows, ['', 'histogram', 'Error', 'Only one table can be specified while modifying histogram statistics.']]);
         }
-        $operation = $this->operation($statement);
-        $parsed = $session->settings()->legacy() ? $session->diagnostics->conditions : [];
-        if ($parsed !== []) {
-            $session->diagnostics->clear();
-        }
-        $rows = [];
         foreach ($names as [$name, $partitioned]) {
-            $report = $this->report($operation, $histogram, $name, $partitioned, $session);
-            $label = $report[0][0] ?? '';
-            $report = [...array_map(static fn (array $condition): array => [$label, $operation, $condition[0], $condition[2]], $parsed), ...$report];
-            $parsed = [];
-            array_push($rows, ...$report);
+            array_push($rows, ...$this->report($operation, $histogram, $name, $partitioned, $session));
         }
 
         return new ResultSet(self::columns($session), $rows);
@@ -111,9 +103,22 @@ final class AdministrationCommand implements Command
     public function partitions(MaintainPartitions $command, QualifiedName $name, Session $session): ResultSet
     {
         $operation = strtolower($command->kind->value);
-        $rows = $this->report($operation, null, $name, $command->partitions, $session);
+        $rows = [...$this->notices($name, $operation, $session), ...$this->report($operation, null, $name, $command->partitions, $session)];
 
         return new ResultSet(self::columns($session), $rows);
+    }
+
+    /**
+     * Moves input conditions into the first table's report and clears SHOW WARNINGS.
+     *
+     * @return list<array{string, string, string, string}> The already interpreted conditions
+     */
+    public function notices(QualifiedName $name, string $operation, Session $session): array
+    {
+        $label = ($name->schema->value ?? $session->variables->database) . '.' . $name->name->value;
+        $rows = array_map(static fn (array $condition): array => [$label, $operation, $condition[0], $condition[2]], $session->diagnostics->conditions);
+        $session->diagnostics->clear();
+        return $rows;
     }
 
     /**

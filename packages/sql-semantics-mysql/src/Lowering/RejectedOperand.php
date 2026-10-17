@@ -24,13 +24,9 @@ final class RejectedOperand
      */
     public function of(Node $node, Lowering $lowering): ?RejectedInput
     {
-        $load = (new Dml\SyntaxLoadInput())->rejected($node, $lowering);
-        if ($load !== null) {
-            return $load;
-        }
-        $names = (new Utility\Set\SyntaxNames())->assignment($node, $lowering);
-        if ($names !== null) {
-            return $names;
+        $initial = $this->initial($node, $lowering);
+        if ($initial !== null) {
+            return $initial;
         }
         $entry = (new ClientEntry())->generated($node) ?? (new Replication\SyntaxLogMoment())->rejected($node, $lowering->profile->grammar) ?? (new Leaf\SyntaxTableNames())->rejected($node, $lowering) ?? (new Server\Transaction\SyntaxXids())->rejected($node, $lowering) ?? (new Routine\DeclarationPrefix())->rejected($node, $lowering);
         if ($entry !== null) {
@@ -56,6 +52,16 @@ final class RejectedOperand
             return new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($node)[1] ?? 0, false);
         }
         return $this->lowered($node, $lowering);
+    }
+
+    /**
+     * Refuses a completed privilege, LOAD operand or assignment before later clauses.
+     */
+    public function initial(Node $node, Lowering $lowering): ?RejectedInput
+    {
+        return (new Account\Privilege\LegacyColumns())->rejected($node, $lowering)
+            ?? (new Dml\SyntaxLoadInput())->rejected($node, $lowering)
+            ?? (new Utility\Set\SyntaxNames())->assignment($node, $lowering);
     }
 
     /**

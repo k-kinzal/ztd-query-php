@@ -17,9 +17,9 @@ use SqlSemantics\Statement\Snapshot;
  * Observed through SQL on MySQL 8.0.44, 8.4.7 and 9.1.0.
  *
  * @visibility public
- * @example Reading the conversion condition before a later missing column
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE '+00:00' AS DATETIME), missing");
- *     $operation->facts->diagnostics[0]->message() // => 'Cannot cast value to TIMESTAMP WITH TIME ZONE.'
+ * @example Reading the condition retained by a stored conversion
+ *     $conversion = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'));
+ *     $conversion->problem()->message() // => 'Cannot cast value to TIMESTAMP WITH TIME ZONE.'
  */
 final class TimeZoneConversion implements Diagnostic
 {

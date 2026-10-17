@@ -330,7 +330,7 @@ final class PrivilegeRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function level(Node $level): PrivilegeLevel
+    public function level(Node $level): CurrentDatabaseLevel|DatabaseLevel|GlobalLevel|ObjectLevel
     {
         $form = $this->lowering->form($level);
         $names = $this->lowering->names;

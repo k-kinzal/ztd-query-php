@@ -24,6 +24,14 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable
 #[Medium]
 final class SyntaxNamesTest extends TestCase
 {
+    public function testCharsetNoticePrecedesAnIncompleteCollationOperand(): void
+    {
+        $sql = 'SET NAMES utf8 COLLATE';
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias], array_column($notices, 1));
+    }
+
     public function testAssignmentRetainsPositionsWithoutAnExpression(): void
     {
         $profile = new LanguageProfile(GrammarRelease::MySql847);

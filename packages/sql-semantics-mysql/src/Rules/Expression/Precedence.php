@@ -191,8 +191,8 @@ final class Precedence
             $expression instanceof Arithmetic, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
             $expression instanceof Comparison, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredComparison => [self::BOOL_PRI, self::BOOL_PRI, $expression->left, $expression->right],
             $expression instanceof Concatenation => [self::SIMPLE_EXPR, self::SIMPLE_EXPR, $expression->left, $expression->right],
-            $expression instanceof Not => [self::NEGATION, self::NEGATION, null, $expression->operand],
-            $expression instanceof Unary => [self::PRIMARY, self::PREFIX, null, $expression->operand],
+            $expression instanceof Not, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot => [self::NEGATION, self::NEGATION, null, $expression->operand],
+            $expression instanceof Unary, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary => [self::PRIMARY, self::PREFIX, null, $expression->operand],
             $expression instanceof BinaryCast => [self::PRIMARY, self::PRIMARY, null, $expression->operand],
             $expression instanceof IntervalAddition => [self::PRIMARY, self::NEGATION, null, $expression->operand],
             $expression instanceof VariableAssignment => [self::PRIMARY, self::ASSIGNMENT, null, $expression->value],
@@ -209,7 +209,7 @@ final class Precedence
     {
         return match (true) {
             $expression instanceof TruthTest, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest => [self::TRUTH, self::TRUTH, $expression->operand, null],
-            $expression instanceof NullTest => [self::BOOL_PRI, self::BOOL_PRI, $expression->operand, null],
+            $expression instanceof NullTest, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNullTest => [self::BOOL_PRI, self::BOOL_PRI, $expression->operand, null],
             $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate => [$expression->operator === null ? self::PREDICATE : self::BOOL_PRI, $expression->operator === null ? self::PREDICATE : self::BOOL_PRI, $expression->operand, null],
             $expression instanceof QuantifiedComparison => [self::BOOL_PRI, self::BOOL_PRI, $expression->operand, null],
             $expression instanceof InList, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMembership, $expression instanceof InQuery, $expression instanceof MemberOf, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf => [self::PREDICATE, self::PREDICATE, $expression->operand, null],

@@ -32,25 +32,43 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 final class DeferredTimeZoneTest extends TestCase
 {
     /**
-     * @return iterable<string, array{string, int}>
+     * @return iterable<string, array{string, int<0, 19>, string}>
      */
     public static function providerHistories(): iterable
     {
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             for ($seed = 0; $seed < 20; $seed++) {
-                yield $release . ':' . $seed => [$release, $seed];
+                foreach (['plain', 'not', 'minus', 'null', 'not-null', 'cast'] as $form) {
+                    yield $release . ':' . $seed . ':' . $form => [$release, $seed, $form];
+                }
             }
         }
     }
 
     /**
      * Reuses one directly constructed invocation while changing only session history.
+     *
+     * @param int<0, 19> $seed The generated history index
      */
     #[DataProvider('providerHistories')]
-    public function testUnchangedProgramStructurePreservesReachedAndSkippedOutcomes(string $release, int $seed): void
+    public function testUnchangedProgramStructurePreservesReachedAndSkippedOutcomes(string $release, int $seed, string $form): void
     {
         $choices = new Choices('deferred-time-zone:' . $seed);
-        $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new NumberLiteral((string) $choices->integer(0, 1000)), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'), $choices->integer(0, 1) === 1, (string) $choices->integer(0, 6));
+        $operand = new NumberLiteral((string) $choices->integer(0, 1000));
+        $operand = match ($seed % 4) {
+            1 => new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast($operand, new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed)),
+            2 => new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), $operand),
+            3 => new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now),
+            0 => $operand,
+        };
+        $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'), $choices->integer(0, 1) === 1, (string) $choices->integer(0, 6));
+        $value = match ($form) {
+            'cast' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast($value, new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char)),
+            'not' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot($value),
+            'minus' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, $value),
+            'null', 'not-null' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNullTest($value, $form === 'not-null'),
+            default => $value,
+        };
         $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($value)]);
         $branch = new ConditionalBranch(new UserVariable(new Name('run')), [$body]);
         $create = new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), new IfStatement([$branch]));

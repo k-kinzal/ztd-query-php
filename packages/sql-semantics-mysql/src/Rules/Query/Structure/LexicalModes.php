@@ -34,10 +34,10 @@ final class LexicalModes
         if ($value instanceof LanguageProfile) {
             return ($value->lexical->highNotPrecedence ? 2 : 1) | ($value->lexical->pipesAsConcat ? 8 : 4);
         }
-        if ($value instanceof Not) {
+        if ($value instanceof Not || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot) {
             return 1;
         }
-        if ($value instanceof Unary && $value->keyword) {
+        if (($value instanceof Unary || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary) && $value->keyword) {
             return 2;
         }
         if ($value instanceof Logical && $value->symbolic && $value->operator === LogicalOperator::Or) {

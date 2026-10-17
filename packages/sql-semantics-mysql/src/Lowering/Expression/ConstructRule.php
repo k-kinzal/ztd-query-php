@@ -58,7 +58,7 @@ final class ConstructRule
      * @throws ImplementationGap When a production has no rule
      * @throws RejectedInput When the construct has no semantic expression domain
      */
-    public function lower(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone
+    public function lower(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $expressions = $this->lowering->expressions;
 
@@ -79,16 +79,22 @@ final class ConstructRule
      *
      * @throws RejectedInput When the target kind or precision cannot denote a cast
      */
-    public function cast(Form $form): Cast
+    public function cast(Form $form): Cast|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast
     {
-        $operand = $this->lowering->expressions->expression($form->node(2));
+        $operand = $this->lowering->expressions->operand($form->node(2));
         $target = $this->lowering->types->castTarget($form->node(4));
         $array = $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' && $this->flag($form->node(5));
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->target($target, $array);
         if ($problem !== null) {
             throw new RejectedInput($problem, (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
         }
-        return new Cast($operand, $target, $array);
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+            if ($array) {
+                throw new RejectedInput(new NotSupportedYet(Cast::ARRAY_OUTSIDE_INDEX), (new SourceRanges())->span($form->node)[1] ?? 0, false);
+            }
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast($operand, $target);
+        }
+        return new Cast((new OperandRule())->scalar($operand, $form->node(2)), $target, $array);
     }
 
     /**
@@ -106,7 +112,7 @@ final class ConstructRule
             throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision((int) $precision, 'CAST'), (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
         }
 
-        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($operand) === false
+        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->input($operand) === false
             ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, $zone, $this->flag($form->node(6)), $precision)
             : new AtTimeZone($operand, $zone, $this->flag($form->node(6)), $precision);
     }

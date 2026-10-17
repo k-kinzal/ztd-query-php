@@ -54,16 +54,22 @@ final class AtTimeZoneTest extends TestCase
         new AtTimeZone(new NumberLiteral('1'), new Text('00', Radix::Hexadecimal));
     }
 
-    public function testDeriveScalarRetainsTheConversionThatOwnsItsTypeCondition(): void
+    public function testInputRefusalRetainsTheConversionWithoutPublishingAnImpossibleScalar(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
-        $operation = $semantics->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE '+00:00' AS DATETIME), missing");
-        $diagnostic = $operation->facts->diagnostics[0];
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $diagnostic);
-        self::assertSame($operation->field(0)->expression, $diagnostic->expression);
-        self::assertTrue($diagnostic->operand);
-        self::assertSame('Cannot cast value to TIMESTAMP WITH TIME ZONE.', $diagnostic->message());
+        try {
+            $semantics->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE '+00:00' AS DATETIME), missing");
+            self::fail('An intrinsically incompatible conversion must not become an ordinary query.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection::class, $failure->problem);
+            $diagnostic = $failure->problem->problem();
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $diagnostic);
+            $item = $failure->problem->selection->items[0];
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection::class, $item);
+            self::assertSame($item->expression, $diagnostic->expression);
+            self::assertTrue($diagnostic->operand);
+            self::assertSame('Cannot cast value to TIMESTAMP WITH TIME ZONE.', $diagnostic->message());
+        }
     }
 
 }

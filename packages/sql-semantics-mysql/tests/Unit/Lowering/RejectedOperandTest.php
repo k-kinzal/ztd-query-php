@@ -40,4 +40,13 @@ final class RejectedOperandTest extends TestCase
         self::assertSame(strlen('ALTER USER u ADD 01 FACTOR'), $failure->end);
         self::assertTrue($failure->aborts);
     }
+
+    public function testInitialPreservesACompletedColumnTargetBeforeOtherChecks(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $failure = (new SyntaxWarnings())->rejected($semantics->parser()->parse('GRANT SELECT(a) ON *.* TO u'), $semantics->profile());
+        self::assertNotNull($failure);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel::class, $failure->problem);
+        self::assertSame(strlen('GRANT SELECT(a) ON *.*'), $failure->end);
+    }
 }

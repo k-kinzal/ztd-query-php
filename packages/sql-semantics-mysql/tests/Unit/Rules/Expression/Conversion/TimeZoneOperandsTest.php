@@ -26,4 +26,12 @@ final class TimeZoneOperandsTest extends TestCase
         self::assertFalse($rule->literal(new Grouped(new NumberLiteral('1'))));
         self::assertTrue($rule->literal(new Grouped(new TemporalLiteral(TemporalForm::Timestamp, '2024-01-01 01:02:03'))));
     }
+
+    public function testInputDistinguishesFixedResultsFromUnresolvedNames(): void
+    {
+        $rule = new TimeZoneOperands();
+        $cast = new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new ColumnUse(new Name('t')), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::DateTime));
+        self::assertFalse($rule->input(new Grouped($cast)));
+        self::assertNull($rule->input(new Grouped(new ColumnUse(new Name('t')))));
+    }
 }

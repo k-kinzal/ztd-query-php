@@ -59,7 +59,8 @@ final class WarningsCommand implements Command
         $rows = [];
         foreach ($session->diagnostics->conditions as [$level, $code, $message]) {
             if (!$errors || $level === 'Error') {
-                $rows[] = [$level, (string) $code, \MySqlMemory\Value\Diagnostic\Encoding::condition($message, (string) $session->variables->read('character_set_results'))];
+                $charset = (string) $session->variables->read('character_set_results');
+                $rows[] = [\MySqlMemory\Value\Diagnostic\Encoding::condition($level, $charset), (string) $code, \MySqlMemory\Value\Diagnostic\Encoding::condition($message, $charset)];
             }
         }
         if ($statement instanceof ShowWarningCount || $statement instanceof ShowErrorCount) {

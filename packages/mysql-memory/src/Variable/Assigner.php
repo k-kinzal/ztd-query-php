@@ -111,8 +111,9 @@ final class Assigner
      * Database encoding assignments warn from MySQL 5.7 onward; reading their
      * values does not warn (verified on live 5.6, 5.7, 8.0, 8.4 and 9.1 servers).
      */
-    public function retired(string $name): void
+    public function retired(string $name, int|float|string|null $value = null, ?Domain $domain = null): void
     {
+        (new EncodingSettings($this->context))->notices($name, $value, $domain);
         $definition = $this->variables->catalog->find($name);
         $deprecated = $definition === null ? null : (new \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\DeprecatedVariables())->warning($definition->name, $this->context->modes->release);
         if ($deprecated !== null) {
@@ -323,7 +324,8 @@ final class Assigner
             return Ciphers::mode($text) ?? throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
         }
         if (str_starts_with($definition->name, 'collation_')) {
-            $collation = Collation::named($text);
+            $text = (new EncodingSettings($this->context))->name($value, false);
+            $collation = Collation::forName($text, $this->context->modes->release);
             if ($collation === null) {
                 throw SchemaError::UnknownCollation->error($text);
             }
@@ -331,10 +333,12 @@ final class Assigner
             return $collation->name;
         }
         if (str_starts_with($definition->name, 'character_set_')) {
+            $text = (new EncodingSettings($this->context))->name($value, true);
             $charset = Charset::named($text);
             if ($charset === null) {
                 throw (new \MySqlMemory\Error\TypeErrors())->charset($text, in_array($this->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
             }
+            (new EncodingSettings($this->context))->client($definition->name, $charset);
 
             return $charset->name;
         }

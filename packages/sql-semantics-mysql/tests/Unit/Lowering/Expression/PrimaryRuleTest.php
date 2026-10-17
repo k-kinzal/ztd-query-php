@@ -83,4 +83,15 @@ final class PrimaryRuleTest extends TestCase
 
         (new PrimaryRule($lowering))->negation($platform->parser($profile)->parse('SELECT 1 = 2')->find('comp_op')[0]);
     }
+
+    public function testUnaryRetainsADeferredOperand(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT CAST(1 AT TIME ZONE '+00:00' AS DATETIME)")->find('simple_expr')[0];
+        $value = (new PrimaryRule($lowering))->unary(UnaryOperator::Minus, $node, false);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary::class, $value);
+        self::assertSame(UnaryOperator::Minus, $value->operator);
+    }
 }

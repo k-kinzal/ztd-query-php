@@ -18,10 +18,10 @@ final class TimeZoneConversionTest extends TestCase
     public function testMessageDistinguishesResolvedOperandAndZoneConditions(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $type = $semantics->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE 'bad' AS DATETIME)")->facts->diagnostics[0];
+        $conversion = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('bad'));
+        $type = $conversion->problem();
         $zone = $semantics->analyze("SELECT CAST(NULL AT TIME ZONE 'bad' AS DATETIME)")->facts->diagnostics[0];
 
-        self::assertInstanceOf(TimeZoneConversion::class, $type);
         self::assertInstanceOf(TimeZoneConversion::class, $zone);
         self::assertTrue($type->operand);
         self::assertFalse($zone->operand);

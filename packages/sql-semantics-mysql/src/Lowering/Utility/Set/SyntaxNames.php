@@ -40,6 +40,33 @@ final class SyntaxNames
     }
 
     /**
+     * Reads the SET NAMES charset notice before a later COLLATE operand completes.
+     *
+     * @param list<\SqlParser\Lexer\Token> $tokens The temporary input prefix
+     */
+    public function charset(Node $node, Lowering $lowering, array $tokens): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        if ($node->name !== 'charset_name') {
+            return null;
+        }
+        $start = (new SourceRanges())->span($node)[0] ?? 0;
+        $previous = null;
+        foreach ($tokens as $token) {
+            if ($token->offset >= $start) {
+                break;
+            }
+            $previous = $token;
+        }
+        if ($previous?->name !== 'NAMES_SYM') {
+            return null;
+        }
+        $name = $lowering->charsets->charset($node)->name;
+        $notice = $name === null ? null : \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::charsetWarning($name->value);
+
+        return $notice !== null && $notice->warnedIn($lowering->profile->grammar) ? $notice : null;
+    }
+
+    /**
      * Recognizes the refused assignment and its exact operand positions.
      */
     public function assignment(Node $node, Lowering $lowering, ?InputLocals $locals = null): ?RejectedInput

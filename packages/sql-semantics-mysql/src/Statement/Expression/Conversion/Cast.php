@@ -11,12 +11,8 @@ use SqlSemantics\Platform\MySql\Rules\Expression\CastResult;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Typing\Casts;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
-use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
-use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
-use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
@@ -76,17 +72,7 @@ final class Cast implements Scalar
         $grammar = $derivation->context->profile->grammar;
         Check::input(!$this->array || ($grammar !== GrammarRelease::MySql5651 && $grammar !== GrammarRelease::MySql5744), 'A cast to an array needs MySQL 8.0 or later.');
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
-        if ($this->target->kind === CastKind::NationalChar) {
-            Deprecation::raise(Deprecated::National, $derivation);
-        }
-        if ($this->target->charset?->charset !== null) {
-            Deprecation::charset($this->target->charset->charset->value, $derivation);
-            if (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($this->target->charset->charset->value) === null) {
-                $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($this->target->charset->charset->value);
-                $derivation->report($problem);
-                $derivation->warn(new ParseFailure($problem, true));
-            }
-        }
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->derive($this->target, $derivation);
         $result = new CastResult();
         if ($this->array) {
             return new ScalarFact(new Known(new Elementary(ElementaryKind::Json)), $fact->nullability);

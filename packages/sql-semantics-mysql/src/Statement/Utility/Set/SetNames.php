@@ -42,10 +42,17 @@ final class SetNames implements SetItem
     }
 
     /**
-     * Derives nothing: the names are resolved by the server.
+     * Records notices of the explicitly written encoding names.
      */
     public function deriveItem(Derivation $derivation): void
     {
+        if ($this->charset->name !== null) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::charset($this->charset->name->value, $derivation, $this->charset);
+        }
+        $notice = $this->collation?->deprecation($derivation->context->profile->grammar);
+        if ($notice !== null) {
+            $derivation->warn($notice, $this->collation);
+        }
     }
 
     /**

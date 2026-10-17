@@ -95,6 +95,7 @@ final class LegacyGrantRule
 
         $items = $privileges->privileges($command->node(0));
         $level = $privileges->level($command->node(3));
+        (new Privilege\LegacyColumns())->requireTable($items, $level, (new \SqlSemantics\Construction\SourceRanges())->span($command->node(3))[1] ?? 0);
         $users = $lists->granted($command->node(5));
         $tls = $clauses->tls($command->node(6));
         $options = $clauses->grantOptions($command->node(7));
@@ -131,7 +132,10 @@ final class LegacyGrantRule
         $kind = self::KINDS[$command->signature] ?? throw ImplementationGap::production($command);
         $this->table($command);
 
-        return new RevokePrivileges(false, $privileges->privileges($command->node(0)), $kind, $privileges->level($command->node(3)), $this->users($command->node(5)));
+        $items = $privileges->privileges($command->node(0));
+        $level = $privileges->level($command->node(3));
+        (new Privilege\LegacyColumns())->requireTable($items, $level, (new \SqlSemantics\Construction\SourceRanges())->span($command->node(3))[1] ?? 0);
+        return new RevokePrivileges(false, $items, $kind, $level, $this->users($command->node(5)));
     }
 
     /**

@@ -54,6 +54,34 @@ final class AdministrationCommandTest extends TestCase
         self::assertSame([['d.v', 'check', 'Error', "'d.v' is not BASE TABLE"], ['d.v', 'check', 'status', 'Operation failed']], $result->rows);
     }
 
+    public function testNoticesTurnsModernInputWarningsIntoRowsOfTheFirstTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
+        $result = $session->query('ANALYZE TABLE t, full')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([
+            ['d.t', 'analyze', 'Warning', 'Using FULL as unquoted identifier is deprecated, please use quotes or rename the identifier.'],
+            ['d.t', 'analyze', 'status', 'OK'],
+            ['d.full', 'analyze', 'Error', "Table 'd.full' doesn't exist"],
+            ['d.full', 'analyze', 'status', 'Operation failed'],
+        ], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testHistogramTargetFailurePreservesInputWarningsAsRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $result = $session->query('ANALYZE TABLE full, t UPDATE HISTOGRAM ON a')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([
+            ['d.full', 'histogram', 'Warning', 'Using FULL as unquoted identifier is deprecated, please use quotes or rename the identifier.'],
+            ['', 'histogram', 'Error', 'Only one table can be specified while modifying histogram statistics.'],
+        ], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new AdministrationCommand())->clearsDiagnostics());

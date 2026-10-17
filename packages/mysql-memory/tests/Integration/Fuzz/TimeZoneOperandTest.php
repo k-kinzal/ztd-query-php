@@ -213,6 +213,21 @@ final class TimeZoneOperandTest extends TestCase
             'SET @run=0',
             'CALL p17()',
         ];
+        $cast = "CAST(1 AT TIME ZONE '+00:00' AS DATETIME)";
+        foreach (['NOT ' . $cast, '-' . $cast, $cast . ' IS NULL', $cast . ' IS NOT NULL'] as $index => $expression) {
+            $name = 'wrapped' . $index;
+            array_push($statements, 'SELECT ' . $expression, 'CREATE PROCEDURE ' . $name . '() BEGIN IF @run THEN SELECT ' . $expression . '; END IF; END', 'SET @run=0', 'CALL ' . $name . '()', 'SET @run=1', 'CALL ' . $name . '()', 'SET @run=0', 'CALL ' . $name . '()');
+        }
+        foreach (['CAST(NULL AS SIGNED)', 'CAST(NULL AS DATETIME)', 'CAST(missing AS DATETIME)', 'NULL+1', 'CURRENT_TIMESTAMP', 't + INTERVAL 0 SECOND', 'INTERVAL 0 SECOND + t'] as $index => $operand) {
+            $query = 'SELECT CAST(' . $operand . " AT TIME ZONE '+00:00' AS DATETIME) AS v FROM ts";
+            $name = 'fixed_type' . $index;
+            array_push($statements, $query, 'CREATE PROCEDURE ' . $name . '() BEGIN IF @run THEN ' . $query . '; END IF; END', 'SET @run=0', 'CALL ' . $name . '()', 'SET @run=1', 'CALL ' . $name . '()', 'SET @run=0', 'CALL ' . $name . '()');
+        }
+        foreach (['CHAR', 'SIGNED ARRAY', 'CHAR(3) ARRAY', 'DATETIME ARRAY'] as $index => $target) {
+            $expression = "CAST(CAST(1 AT TIME ZONE '+00:00' AS DATETIME) AS " . $target . ')';
+            $name = 'cast_' . $index;
+            array_push($statements, 'SELECT ' . $expression, 'CREATE PROCEDURE ' . $name . '() BEGIN IF @run THEN SELECT ' . $expression . '; END IF; END', 'SET @run=0', 'CALL ' . $name . '()', 'SET @run=1', 'CALL ' . $name . '()', 'SET @run=0', 'CALL ' . $name . '()');
+        }
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

@@ -32,6 +32,9 @@ final class DeferredTimeZoneTest extends TestCase
     public static function providerIncompatible(): iterable
     {
         $values = [new NumberLiteral('1'), new BooleanLiteral(true), new StringLiteral(['2024-01-01 01:02:03']), new TemporalLiteral(TemporalForm::Date, '2024-01-01'), new TemporalLiteral(TemporalForm::Time, '01:02:03')];
+        $values[] = new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::DateTime));
+        $values[] = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new NumberLiteral('1'));
+        $values[] = new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now);
         foreach ($values as $index => $value) {
             yield 'literal:' . $index => [$value];
             yield 'grouped:' . $index => [new Grouped($value)];
@@ -39,12 +42,19 @@ final class DeferredTimeZoneTest extends TestCase
     }
 
     #[DataProvider('providerIncompatible')]
-    public function testOperandsPreserveTheLiteralRequiringDeferredPreparation(Scalar $operand): void
+    public function testOperandsPreserveTheExpressionRequiringDeferredPreparation(Scalar $operand): void
     {
         $value = new DeferredTimeZone($operand, new Text('+00:00'));
         self::assertSame([$operand], $value->operands());
         self::assertSame($value, $value->problem()->expression);
-        self::assertFalse((new TimeZoneOperands())->literal($operand));
+        self::assertFalse((new TimeZoneOperands())->input($operand));
+    }
+
+    #[DataProvider('providerIncompatible')]
+    public function testOrdinaryScalarConstructionRejectsIntrinsicTypeContradictions(Scalar $operand): void
+    {
+        $this->expectExceptionMessage('An AT TIME ZONE operand must admit a TIMESTAMP or NULL input role.');
+        new AtTimeZone($operand, new Text('+00:00'));
     }
 
     public function testProblemRetainsTheOwningConversion(): void

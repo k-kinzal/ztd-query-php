@@ -34,6 +34,33 @@ final class PrivilegeInputTest extends TestCase
         self::assertSame(1144, (new PrivilegeInput())->level($problem, $session)->getCode());
     }
 
+    public function testLevelPreservesLegacyDatabaseAndColumnScopePriorityBeforeRecipientLength(): void
+    {
+        $request = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('_sqlfaker_identifier')))]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel($request);
+        $session = (new Instance('5.6.51'))->connect();
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1046, (new PrivilegeInput())->level($problem, $session)->getCode());
+        $session->variables->database = 'd';
+        self::assertSame(1144, (new PrivilegeInput())->level($problem, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
+    public function testTargetUsesItsTypedDeclarationScope(): void
+    {
+        $privilege = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')]);
+        $level = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel();
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel($privilege, $level);
+        $session = (new Instance('5.6.51'))->connect();
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1046, (new PrivilegeInput())->target($problem, $session)->getCode());
+        $scoped = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel($privilege, $level, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('d')));
+        self::assertSame(1144, (new PrivilegeInput())->target($scoped, $session)->getCode());
+        $session->variables->database = 'd';
+        self::assertSame(1144, (new PrivilegeInput())->target($problem, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testColumnsReportsTheDeferredInputPosition(): void
     {
         $session = (new Instance('8.4.7'))->connect();

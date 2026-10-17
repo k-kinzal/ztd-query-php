@@ -31,6 +31,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName => str_starts_with($diagnostic->name->value, '#mysql50#') ? ($diagnostic->identifierTooLong() ? SchemaError::TooLongIdentifier : SchemaError::WrongDatabaseName)->error((new \MySqlMemory\Error\DiagnosticText())->bytes($diagnostic->name->value, 100, true)) : \MySqlMemory\Error\Family\StatementError::WrongUsage->error('ALTER DATABASE UPGRADE DATA DIRECTORY NAME', 'name'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody => (new ProgramInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege => (new PrivilegeInput())->columns($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel => (new PrivilegeInput())->target($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel => (new PrivilegeInput())->placement($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain,

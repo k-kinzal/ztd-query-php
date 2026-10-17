@@ -35,14 +35,14 @@ final class DeferredTimeZone implements DeferredOperand
     use Snapshot;
 
     /**
-     * @param Scalar $operand The literal that cannot have a TIMESTAMP input role
+     * @param Scalar $operand The expression that cannot have a TIMESTAMP input role
      * @param Text $zone The quoted zone name
      * @param bool $interval Whether INTERVAL precedes the zone
      * @param string|null $precision The fractional seconds precision exactly as written
      */
     public function __construct(public readonly Scalar $operand, public readonly Text $zone, public readonly bool $interval = false, public readonly ?string $precision = null)
     {
-        Check::input((new TimeZoneOperands())->literal($operand) === false, 'A deferred time-zone conversion retains an intrinsically incompatible literal.');
+        Check::input((new TimeZoneOperands())->input($operand) === false, 'A deferred time-zone conversion retains an intrinsically incompatible operand.');
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
         Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');

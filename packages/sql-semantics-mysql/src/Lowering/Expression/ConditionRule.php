@@ -125,7 +125,8 @@ final class ConditionRule
             return $this->boolean($form->node(0));
         }
         if ($form->signature === 'expr: NOT_SYM expr') {
-            return new Not($this->lowering->expressions->expression($form->node(1)));
+            $operand = $this->lowering->expressions->operand($form->node(1));
+            return $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot($operand) : new Not((new OperandRule())->scalar($operand, $form->node(1)));
         }
         [$truth, $negated] = self::TRUTH[$form->signature] ?? throw ImplementationGap::production($form);
         if ($negated) {
@@ -172,14 +173,27 @@ final class ConditionRule
         $predicates = new PredicateRule($this->lowering);
 
         return match ($form->signature) {
-            'bool_pri: bool_pri IS NULL_SYM' => new NullTest((new OperandRule())->scalar($left, $form->node(0))),
-            'bool_pri: bool_pri IS not NULL_SYM' => $this->negatedNull($form, (new OperandRule())->scalar($left, $form->node(0))),
+            'bool_pri: bool_pri IS NULL_SYM' => $this->nullTest($form, $left, false),
+            'bool_pri: bool_pri IS not NULL_SYM' => $this->nullTest($form, $left, true),
             'bool_pri: bool_pri EQUAL_SYM predicate' => (new OperandRule())->comparison(ComparisonOperator::NullSafeEqual, $left, $predicates->predicate($form->node(2)), $form->node),
             'bool_pri: bool_pri comp_op predicate' => (new OperandRule())->comparison($this->operator($form->node(1)), $left, $predicates->predicate($form->node(2)), $form->node),
             'bool_pri: bool_pri comp_op all_or_any ( subselect )' => (new OperandRule())->quantified($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(4)), $form->node),
             'bool_pri: bool_pri comp_op all_or_any table_subquery' => (new OperandRule())->quantified($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(3)), $form->node),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Preserves an intrinsic deferred condition under either NULL-test spelling.
+     */
+    public function nullTest(Form $form, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, bool $negated): NullTest|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNullTest
+    {
+        if ($negated) {
+            $this->lowering->options->skip($form->node(2));
+        }
+        return $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNullTest($operand, $negated)
+            : new NullTest((new OperandRule())->scalar($operand, $form->node(0)), $negated);
     }
 
     /**

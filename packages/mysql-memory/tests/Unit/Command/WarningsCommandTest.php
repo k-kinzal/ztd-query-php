@@ -20,6 +20,19 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
 #[Small]
 final class WarningsCommandTest extends TestCase
 {
+    public function testWarningLevelAndMessageUseTheResultEncoding(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET character_set_results='ucs2'");
+        $result = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame("\0W\0a\0r\0n\0i\0n\0g", $result->rows[0][0]);
+        self::assertSame('1287', $result->rows[0][1]);
+        self::assertNotNull($result->rows[0][2]);
+        self::assertSame(pack('n*', 39, 117, 99, 115, 50), substr($result->rows[0][2], 0, 10));
+    }
+
     public function testColumnsUsesTheLegacyCodeWidth(): void
     {
         $session = (new Instance('5.6.51'))->connect();
