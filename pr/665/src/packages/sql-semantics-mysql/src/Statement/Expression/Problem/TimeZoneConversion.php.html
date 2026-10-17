@@ -57,9 +57,9 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Observed through SQL on MySQL 8.0.44, 8.4.7 and 9.1.0.</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @example Reading the conversion condition before a later missing column</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE &#039;+00:00&#039; AS DATETIME), missing&quot;);</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $operation-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &#039;Cannot cast value to TIMESTAMP WITH TIME ZONE.&#039;</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @example Reading the condition retained by a stored conversion</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $conversion = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;1&#039;), new \SqlSemantics\Platform\MySql\Statement\Literal\Text(&#039;+00:00&#039;));</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $conversion-&gt;problem()-&gt;message() // =&gt; &#039;Cannot cast value to TIMESTAMP WITH TIME ZONE.&#039;</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">TimeZoneConversion</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>{</span>
