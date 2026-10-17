@@ -41,4 +41,21 @@ final class AlterationTest extends TestCase
 
         self::assertStringContainsString("near '; END' at line 1", (new Alteration())->syntax($problem, $session)->getMessage());
     }
+
+    public function testOperandRequiresTheDefaultDatabaseBeforeItsWidthCondition(): void
+    {
+        $this->expectExceptionMessage('No database selected');
+
+        (new Alteration())->operand(new \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand(new QualifiedName(new Name('e')), new \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2), \SqlSemantics\Platform\MySql\Statement\Routine\Event\Clause::At, true)), (new Instance())->connect());
+    }
+
+    public function testOperandUsesTheQualifiedHeaderWithoutReadingRequestText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand(new QualifiedName(new Name('e'), new Name('absent')), new \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2), \SqlSemantics\Platform\MySql\Statement\Routine\Event\Clause::At, true));
+
+        self::assertSame(1241, (new Alteration())->operand($problem, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
 }

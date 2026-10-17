@@ -39,4 +39,19 @@ final class LoadNoticesTest extends TestCase
         self::assertSame([4079], $changed);
         self::assertSame([4079], array_column($second->diagnostics->conditions, 1));
     }
+    public function testRecordLoadsAnUnreachedQueryCacheNoticeOnceUntilRoutineDdl(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; CREATE PROCEDURE d.p() BEGIN IF FALSE THEN FLUSH QUERY CACHE; END IF; END');
+        $session->query('SELECT 1; CALL d.p()');
+        $first = array_column($session->diagnostics->conditions, 1);
+        $session->query('SELECT 1; CALL d.p()');
+        $cached = $session->diagnostics->conditions;
+        $session->query("ALTER PROCEDURE d.p COMMENT 'changed'; SELECT 1; CALL d.p()");
+
+        self::assertSame([1681], $first);
+        self::assertSame([], $cached);
+        self::assertSame([1681], array_column($session->diagnostics->conditions, 1));
+    }
+
 }

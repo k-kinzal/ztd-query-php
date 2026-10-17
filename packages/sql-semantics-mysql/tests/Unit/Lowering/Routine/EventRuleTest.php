@@ -328,4 +328,18 @@ final class EventRuleTest extends TestCase
 
         $rule->comment(new Node('sp_name', 1, []));
     }
+
+    public function testExpressionRetainsTheClauseOfARefusedNestedRow(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e ON SCHEDULE EVERY 1 DAY STARTS ABS((1,2))');
+            self::fail('A row operand must be refused.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand::class, $failure->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth::class, $failure->problem->problem);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Event\Clause::Starts, $failure->problem->problem->clause);
+            self::assertFalse($failure->problem->problem->rowValue);
+        }
+    }
+
 }

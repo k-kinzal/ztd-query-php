@@ -34,6 +34,21 @@ final class Alteration
     }
 
     /**
+     * Resolves the retained header before a schedule operand condition.
+     */
+    public function operand(\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand $problem, Session $session): SqlError
+    {
+        (new Names($session->settings()->release()))->check([$problem->definer]);
+        if ($problem->name->schema === null && $session->variables->database === '') {
+            throw QueryError::NoDatabase->error();
+        }
+        if (!$problem->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth) {
+            return (new \MySqlMemory\Session\Problem\Errors())->error($problem->problem, $session);
+        }
+        return (new OperandConditions())->error($problem->problem, $session->settings()->legacy());
+    }
+
+    /**
      * Formats the refusal after any enclosing program header has supplied its database.
      */
     public function syntax(EmptyEventAlteration $problem, Session $session): SqlError

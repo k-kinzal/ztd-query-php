@@ -27,4 +27,13 @@ final class FlushTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);
     }
+    public function testDeriveStatementReportsEveryQueryCacheOccurrenceOnlyOn57(): void
+    {
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('FLUSH HOSTS, QUERY CACHE, QUERY CACHE');
+        $deprecated = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('FLUSH HOSTS, QUERY CACHE, QUERY CACHE');
+
+        self::assertSame([], $legacy->facts->warnings);
+        self::assertSame(["'FLUSH QUERY CACHE' is deprecated and will be removed in a future release.", "'FLUSH QUERY CACHE' is deprecated and will be removed in a future release."], array_map(static fn ($notice): string => $notice->message(), $deprecated->facts->warnings));
+    }
+
 }

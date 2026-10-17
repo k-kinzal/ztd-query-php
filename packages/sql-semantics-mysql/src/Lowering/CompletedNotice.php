@@ -44,13 +44,7 @@ final class CompletedNotice
         if ($load !== null) {
             return $load;
         }
-        if ($node->name === 'alter' && $lowering->form($node)->signature === 'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' && Deprecated::UpgradeDatabaseName->warnedIn($lowering->profile->grammar)) {
-            return Deprecated::UpgradeDatabaseName;
-        }
-        if ($node->name === 'lock_option' && $lowering->form($node)->signature === 'lock_option: LOW_PRIORITY WRITE_SYM' && Deprecated::LowPriorityWrite->warnedIn($lowering->profile->grammar)) {
-            return Deprecated::LowPriorityWrite;
-        }
-        return (new Call\SyntaxCalls())->completed($node, $lowering) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Leaf\SyntaxTableNames())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Routine\DeclarationPrefix())->completed($node, $lowering);
+        return (new Server\Maintenance\SyntaxKeywords())->completed($node, $lowering) ?? (new Call\SyntaxCalls())->completed($node, $lowering) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Leaf\SyntaxTableNames())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Routine\DeclarationPrefix())->completed($node, $lowering);
     }
 
 }

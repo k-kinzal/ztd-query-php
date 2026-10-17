@@ -2132,6 +2132,10 @@
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Clause": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Completion": {
         "name": "string"
     },
@@ -2140,6 +2144,16 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\OnceSchedule": {
         "at": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Problem\\OperandWidth": {
+        "clause": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Clause",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\OperandColumns",
+        "rowValue": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Problem\\RefusedOperand": {
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Problem\\OperandWidth|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\NotSupportedYet"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\RecurringSchedule": {
         "ends": "?SqlSemantics\\Statement\\Scalar",

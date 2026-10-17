@@ -49,6 +49,7 @@ enum Deprecated: string
     case FloatingDigits = 'Specifying number of digits for floating point data types is deprecated and will be removed in a future release.';
     case UnsignedFraction = 'UNSIGNED for decimal and floating point data types is deprecated and support for it will be removed in a future release.';
     case YearWidth = "'YEAR(4)' is deprecated and will be removed in a future release. Please use YEAR instead";
+    case FlushQueryCache = "'FLUSH QUERY CACHE' is deprecated and will be removed in a future release.";
     case NoCache = "'SQL_NO_CACHE' is deprecated and will be removed in a future release.";
     case Cache = "'SQL_CACHE' is deprecated and will be removed in a future release.";
     case DotColumn = "'.<table>.<column>' is deprecated and will be removed in a future release. Please use the table.column name without a dot prefix instead";
@@ -97,7 +98,7 @@ enum Deprecated: string
             self::ShowProfile, self::ShowProfiles, self::SuperPrivilege, self::ReplicationSpelling, self::ResetMaster, self::PurgeMasterLogs, self::ShowMasterLogs, self::ShowMasterStatus => 1287,
             self::InsertDelayed, self::ReplaceDelayed => 3005,
             self::UnquotedFull => 4119,
-            self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
+            self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::FlushQueryCache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
             self::Utf8Alias => 3719,
             self::Utf8Collation => 3778,
             self::Ucs2Collation => 4079,
@@ -124,7 +125,7 @@ enum Deprecated: string
         if ($this === self::ReplicationSpelling) {
             return in_array($release, [GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830], true);
         }
-        if ($this === self::SpatialFunction || $this === self::UpgradeDatabaseName) {
+        if ($this === self::SpatialFunction || $this === self::UpgradeDatabaseName || $this === self::FlushQueryCache) {
             return $release === GrammarRelease::MySql5744;
         }
         if ($release === GrammarRelease::MySql5651) {

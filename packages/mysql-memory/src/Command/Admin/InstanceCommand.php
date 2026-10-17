@@ -75,7 +75,11 @@ final class InstanceCommand implements Command
             throw StatementError::SyntaxError->error();
         }
         if ($action instanceof RotateMasterKey) {
-            throw strtoupper($action->keyring->value) === 'BINLOG' ? AdministrationError::BinlogEncryptionOff->error() : AdministrationError::KeyringMissing->error();
+            if (strtoupper($action->keyring->value) === 'BINLOG') {
+                throw AdministrationError::BinlogEncryptionOff->error();
+            }
+            $message = AdministrationError::KeyringMissing->message();
+            throw new \MySqlMemory\Error\SqlError(AdministrationError::KeyringMissing, $session->settings()->legacy() ? str_replace('a keyring is', 'a keyring plugin is', $message) : $message);
         }
         if ($action instanceof ReloadKeyring) {
             throw AdministrationError::KeyringReloadFailed->error();

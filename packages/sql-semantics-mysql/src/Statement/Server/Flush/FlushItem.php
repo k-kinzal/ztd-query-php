@@ -37,6 +37,15 @@ final class FlushItem implements Node
     }
 
     /**
+     * Answers the item's definition-time notice for the selected release.
+     */
+    public function deprecation(\SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::FlushQueryCache;
+        return $this->option === FlushOption::QueryCache && $notice->warnedIn($release) ? $notice : null;
+    }
+
+    /**
      * Writes the item.
      */
     public function render(Output $out): void

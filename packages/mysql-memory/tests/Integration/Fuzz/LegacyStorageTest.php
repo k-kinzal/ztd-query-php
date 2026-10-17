@@ -26,6 +26,7 @@ final class LegacyStorageTest extends TestCase
     public function testLegacyEnginesAndStorageHistoriesMatchNative(): void
     {
         $statements = [
+            'ALTER INSTANCE ROTATE INNODB MASTER KEY',
             "ALTER TABLESPACE absent ADD DATAFILE 'x.ibd'", "ALTER TABLESPACE absent ADD DATAFILE 'x.ibd' ENGINE missing",
             "ALTER TABLESPACE absent ADD DATAFILE 'x.ibd' ENGINE MyISAM", 'DROP TABLESPACE absent', 'DROP TABLESPACE absent ENGINE missing', 'DROP TABLESPACE absent ENGINE InnoDB',
             "CREATE LOGFILE GROUP g ADD UNDOFILE 'x.dat'", "ALTER LOGFILE GROUP g ADD UNDOFILE 'x.dat'", 'DROP LOGFILE GROUP g ENGINE InnoDB',

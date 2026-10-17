@@ -18,7 +18,7 @@ use SqlSemantics\Contract\GrammarRelease;
  * Shares installation inputs before a generated structure is observed.
  * The remote root fixture has no PROXY grants on either server, independently of image defaults.
  * The memory fixture mirrors the two overlapping client connections used during discovery.
- * Administrative discovery is followed by an empty open-table cache on both sides.
+ * Administrative discovery is followed by reset binary logs and an empty open-table cache on both sides.
  * No target SQL, target response, implementation, or stored routine body is imported.
  */
 final class Fixture
@@ -45,11 +45,16 @@ final class Fixture
             }
         }
 
-        $bootstrap->exec('FLUSH TABLES');
-        $instance->dictionary->cache->close();
-
         $session = $instance->connect($endpoint->username, $host, threadId: $native->thread_id);
         $administration = $instance->connect($endpoint->username, $host);
+        if ($administration->variables->read('log_bin') === 'ON') {
+            $target = new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs((new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->binaryLogs(GrammarRelease::from('mysql-' . $release)));
+            $reset = new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset([$target]);
+            $bootstrap->exec((new \Fuzz\Structure\Reference())->sql($reset, $administration->semantics()->profile()));
+            (new \Fuzz\Structure\Execution())->runIn($administration, $reset, []);
+        }
+        $bootstrap->exec('FLUSH NO_WRITE_TO_BINLOG TABLES');
+        $instance->dictionary->cache->close();
         $administration->close();
 
         return $session;

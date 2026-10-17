@@ -12,7 +12,6 @@ use MySqlMemory\Error\ProgramErrors;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Problem\Errors;
-use MySqlMemory\Session\Problem\Locations;
 use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
@@ -196,9 +195,10 @@ final class ProgramProblems
             return;
         }
         $walker = new Walker();
-        $calls = array_filter($walker->find($schedule, FunctionCall::class), static fn (FunctionCall $call): bool => Locations::undeclared($call, $operation));
-        if ($walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) !== [] || $walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable::class) !== [] || $calls !== []) {
-            throw StatementError::NotSupportedYet->error('Usage of subqueries or stored function calls as part of this statement');
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Routine\Event\Dependencies())->sources($schedule) as $source) {
+            if (!$source instanceof FunctionCall || !$source->native($operation->context->profile->grammar)) {
+                throw StatementError::NotSupportedYet->error(\SqlSemantics\Platform\MySql\Rules\Routine\Event\Dependencies::feature($operation->context->profile->grammar));
+            }
         }
         foreach ($walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast::class) as $cast) {
             if ($cast->array) {

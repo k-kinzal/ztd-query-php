@@ -63,7 +63,7 @@ final class LegacyStorageInputTest extends TestCase
             'DROP TABLESPACE _sqlfaker_identifier NO_WAIT',
         ];
         $statements = ["SET sql_mode='NO_ENGINE_SUBSTITUTION'", ...$inputs, "SET sql_mode=''", ...$inputs];
-        foreach (['5.6.51'] as $release) {
+        foreach (['5.6.51', '5.7.44'] as $release) {
             $definition = new DisposableMySql($release);
             $port = filter_var(getenv('MYSQL_MEMORY_STORAGE_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
             if (is_int($port)) {

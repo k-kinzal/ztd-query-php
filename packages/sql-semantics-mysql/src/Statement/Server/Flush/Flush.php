@@ -17,7 +17,8 @@ use SqlSemantics\Statement\Snapshot;
  * Mirrors SQLCOM_FLUSH with the REFRESH_* flags of LEX::type. Rule:
  * MYSQL-FLUSH-001. The items are kept in written order; the server merges
  * them into flags. LOCAL is a synonym of NO_WRITE_TO_BINLOG, which is
- * written. The statement names no relation and has no facts.
+ * written. The statement names no relation. Each QUERY CACHE item reports its
+ * MySQL 5.7 deprecation, including repeated items.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  * Status: Implemented.
  *
@@ -47,10 +48,16 @@ final class Flush implements Statement
     }
 
     /**
-     * Has nothing to derive: the request names no relation and no value.
+     * Reports each written query-cache item without resolving a relation or value.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        foreach ($this->items as $item) {
+            $notice = $item->deprecation($derivation->context->profile->grammar);
+            if ($notice !== null) {
+                \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise($notice, $derivation, $item);
+            }
+        }
     }
 
     /**

@@ -10,7 +10,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 
 /**
- * Reports collation and function-name notices when a session first loads a routine definition.
+ * Reports collation, administrative-option and function-name notices when a session first loads a routine definition.
  *
  * A routine DDL invalidates these session entries; table flushes do not. The definition
  * supplies typed collation occurrences and function names, without reparsing stored display text.
@@ -46,6 +46,12 @@ final class LoadNotices
             $notice = $collation->deprecation($session->settings()->release());
             if ($notice !== null) {
                 $session->diagnostics->warning($notice->code(), $notice->message());
+            }
+        }
+        foreach ((new Walker())->find($routine->statement, \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem::class) as $item) {
+            $notice = $item->deprecation($session->settings()->release());
+            if ($notice !== null) {
+                $session->diagnostics->warning($notice->code(), $notice->value);
             }
         }
         if ($routine->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction && $routine->statement->nameCollision($session->settings()->release())) {

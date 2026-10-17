@@ -107,6 +107,11 @@ database, login password, client host and thread identity, installed help data,
 routine installation dates and resource-group capabilities. Discovery uses a
 separate administrative connection before the generated statement runs. It
 never imports that statement's response or any routine implementation.
+After discovery, both servers reset enabled binary logs before the generated
+structure is observed. The administrative table-cache flush does not write to
+the log. Generated operations retain their log effects; subsequent positions,
+filenames, sizes and events are compared exactly. Resetting initial fixture
+state does not implement logging for writes or permit normalizing their output.
 
 The summary distinguishes `matchedSuccess`, `matchedError`, `different` and
 `failed`. Exit status 0 requires a complete native match for every
@@ -1370,3 +1375,16 @@ comparison case. Event schedules still need a model that preserves dependency
 priority, unused CTE preparation and invocation-time checks in stored programs.
 This campaign does not meet the 900-second gate; all nine supplied seed corpora
 and an unseeded campaign must pass together on the final revision.
+
+Event schedule input refusals retain the event name and definer separately from
+an operand's clause and row role. This lets Memory apply default-database
+precedence and legacy conversion diagnostics without reparsing input text or
+publishing a row as a scalar. A normal schedule's dependency traversal skips CTE
+definitions but keeps their references: an unused definition supplies no active
+table dependency, while reading even a constant CTE does. Stored-function calls
+remain dependencies whether or not the routine exists.
+
+Administrative deprecations belong to semantic operands. Each legacy QUERY
+CACHE flush item retains its notice, including repeated items, later input
+failures and a stored routine's first load. These input and history properties
+are separate from the outstanding whole-model constructor invariant gate.

@@ -37,6 +37,7 @@ final class ExpressionRules
     /**
      * Lowers an expression: a node of `expr`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the operand has no scalar role
      * @throws ImplementationGap When a production has no rule
      */
     public function expression(Node $expression): Scalar

@@ -66,6 +66,7 @@ final class InputErrors
     public function source(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand => (new Event\Alteration())->operand($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration => (new Event\Alteration())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget => (new Dml\Targets())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ZeroKeyPrefix => SchemaError::KeyPartZeroLength->error($diagnostic->column->value),

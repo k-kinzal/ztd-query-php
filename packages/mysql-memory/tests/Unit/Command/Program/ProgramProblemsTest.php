@@ -89,6 +89,14 @@ final class ProgramProblemsTest extends TestCase
         $session->query('CREATE EVENT e9 ON SCHEDULE AT nope() DO SELECT 1');
     }
 
+    public function testScheduleRefusesADeclaredStoredFunctionAsWellAsAnAbsentOne(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE FUNCTION schedule_time() RETURNS DATETIME DETERMINISTIC RETURN '2030-01-01'");
+        $this->expectExceptionCode(1235);
+        $session->query('ALTER EVENT e ON SCHEDULE AT schedule_time()');
+    }
+
     public function testRaiseRefusesAVariableInAView(): void
     {
         $session = (new Instance())->connect();

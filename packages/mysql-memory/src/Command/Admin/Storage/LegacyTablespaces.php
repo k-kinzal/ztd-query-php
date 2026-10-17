@@ -47,7 +47,7 @@ final class LegacyTablespaces
             throw SchemaError::IllegalCreateOption->error($engine, 'TABLESPACE or LOGFILE GROUP');
         }
         if ($statement instanceof AlterTablespaceDatafile || $statement instanceof AlterTablespaceAccess) {
-            throw SchemaError::EngineUnsupportedOperation->error('ALTER TABLESPACE');
+            throw SchemaError::EngineUnsupportedOperation->error($statement instanceof AlterTablespaceAccess ? 'ALTER TABLESPACE ACCESS MODE' : ($statement->action === \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction::Change ? 'CHANGE FILE TABLESPACE' : 'ALTER TABLESPACE'));
         }
         if ($statement instanceof CreateTablespace) {
             $this->create($statement, $session);
