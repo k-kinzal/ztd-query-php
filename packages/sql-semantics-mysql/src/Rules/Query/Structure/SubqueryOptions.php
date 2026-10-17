@@ -15,7 +15,8 @@ use SqlSemantics\Statement\Query;
 /**
  * Checks options whose placement is intrinsic to a subquery boundary.
  *
- * SQL_CACHE is available only before MySQL 8.0 and those releases do not
+ * HIGH_PRIORITY, SQL_BUFFER_RESULT and SQL_CALC_FOUND_ROWS belong to the
+ * outer query block. SQL_CACHE is available only before MySQL 8.0 and those releases do not
  * accept it in the query blocks of an expression subquery. A derived table
  * enforces its independent modifier domain at construction. A parenthesized top-level SELECT can still
  * carry it, so parentheses alone do not impose this constraint.
@@ -26,7 +27,7 @@ use SqlSemantics\Statement\Query;
 final class SubqueryOptions
 {
     /**
-     * Refuses SQL_CACHE in the query-expression spine of an expression subquery.
+     * Refuses statement-level modifiers in the query-expression spine of an expression subquery.
      *
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a query-cache option crosses the subquery boundary
      */
@@ -48,5 +49,6 @@ final class SubqueryOptions
                 }
             }
         }
+        Check::input((new DerivedOptions())->problem($query) === null, 'An expression subquery cannot carry statement-level SELECT modifiers.');
     }
 }

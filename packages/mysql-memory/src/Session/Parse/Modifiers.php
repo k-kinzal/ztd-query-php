@@ -228,12 +228,12 @@ final class Modifiers
     }
 
     /**
-     * Recognizes a statement modifier that 5.6 refuses immediately in a derived block.
+     * Recognizes a statement modifier that 5.6 refuses immediately in a nested block.
      * A DELETE's first SELECT can itself be a derived relation after FROM.
      */
     public function misplaced(Token $token, bool $modifier): bool
     {
-        return $modifier && $this->release === GrammarRelease::MySql5651 && ($this->blocks > 1 || ($this->depth > 0 && ($this->clauses[0] ?? false))) && in_array($token->name, ['HIGH_PRIORITY', 'SQL_BUFFER_RESULT', 'SQL_CALC_FOUND_ROWS'], true);
+        return $modifier && $this->release === GrammarRelease::MySql5651 && ($this->nested || $this->blocks > 1 || ($this->depth > 0 && ($this->clauses[0] ?? false))) && in_array($token->name, ['HIGH_PRIORITY', 'SQL_BUFFER_RESULT', 'SQL_CALC_FOUND_ROWS'], true);
     }
 
     /**

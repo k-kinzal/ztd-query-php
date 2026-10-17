@@ -32,7 +32,7 @@ final class DerivedOptionsTest extends TestCase
 
     public function testBlocksStopsAtNestedExpressionQueries(): void
     {
-        $inner = new Select([SelectOption::HighPriority], [new SelectExpression(new NumberLiteral('1'))]);
+        $inner = new Select([SelectOption::SmallResult], [new SelectExpression(new NumberLiteral('1'))]);
         $outer = new Select([], [new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($inner))]);
 
         self::assertSame([$outer], (new DerivedOptions())->blocks($outer));

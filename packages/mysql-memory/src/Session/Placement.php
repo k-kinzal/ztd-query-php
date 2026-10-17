@@ -45,9 +45,10 @@ final class Placement
      * Raises the error of the first query block whose options the server refuses.
      *
      * @param Closure(Select, bool): void|null $after A check of each block in written order: called with false after its options, and with true where the block ends, after the blocks written in it, as the server checks the variables of its INTO and its LIMIT
+     * @param array<int, true>|null $reached The identities prepared by this statement; unused CTE bodies retain syntax checks only
      * @throws \MySqlMemory\Error\SqlError When a block has such options
      */
-    public function check(Node $statement, GrammarRelease $release = GrammarRelease::MySql847, ?Closure $after = null): void
+    public function check(Node $statement, GrammarRelease $release = GrammarRelease::MySql847, ?Closure $after = null, ?array $reached = null): void
     {
         $first = $this->first($this->carrier($statement, $release));
         $program = \MySqlMemory\Command\Dispatcher::program($statement);
@@ -67,7 +68,8 @@ final class Placement
                 throw StatementError::WrongUsage->error('ALL', 'DISTINCT');
             }
             $this->misplaced($select, $first, $release);
-            foreach ($select === $first || $program ? [] : [SelectOption::HighPriority, SelectOption::BufferResult, SelectOption::CalcFoundRows] as $option) {
+            $active = $reached === null || isset($reached[spl_object_id($select)]);
+            foreach ($select === $first || $program || !$active ? [] : [SelectOption::HighPriority, SelectOption::BufferResult, SelectOption::CalcFoundRows] as $option) {
                 if (in_array($option, $select->options, true)) {
                     throw StatementError::CantUseOptionHere->error($option->value);
                 }

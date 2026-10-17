@@ -134,4 +134,13 @@ final class ModifiersTest extends TestCase
         self::assertSame([[], ['HIGH_PRIORITY', '']], $modifiers->scan(PHP_INT_MAX));
     }
 
+    public function testMisplacedPrecedesQuantifierConflictsInAnExpressionSubquery(): void
+    {
+        $tokens = (new Instance('5.6.51'))->connect()->semantics()->parser()->tokenize('SELECT (SELECT ALL DISTINCT SQL_BUFFER_RESULT 1)');
+        $modifiers = new Modifiers($tokens, GrammarRelease::MySql5651);
+
+        self::assertSame([[], ['SQL_BUFFER_RESULT', '']], $modifiers->scan(PHP_INT_MAX));
+        self::assertSame(strlen('SELECT (SELECT ALL DISTINCT SQL_BUFFER_RESULT'), $modifiers->stoppedAt);
+    }
+
 }

@@ -59,6 +59,38 @@ final class SubqueryOptionsTest extends TestCase
 
         self::assertSame($query, $subquery->query);
     }
+
+    /**
+     * @return iterable<string, array{Closure(Query): Node, SelectOption}>
+     */
+    public static function providerRestrictedModifiers(): iterable
+    {
+        foreach (self::providerBoundaries() as $name => [$construct]) {
+            foreach ([SelectOption::HighPriority, SelectOption::BufferResult, SelectOption::CalcFoundRows] as $option) {
+                yield $name . ' ' . $option->value => [$construct, $option];
+            }
+        }
+    }
+
+    /**
+     * @param Closure(Query): Node $construct The consuming subquery constructor
+     */
+    #[DataProvider('providerRestrictedModifiers')]
+    public function testCheckRejectsStatementModifiersAcrossEveryExpressionBoundary(Closure $construct, SelectOption $option): void
+    {
+        $query = new ParenthesizedQuery(new Select([$option], [new SelectExpression(new NumberLiteral('1'))]));
+        $this->expectExceptionMessage('An expression subquery cannot carry statement-level SELECT modifiers.');
+
+        $construct($query);
+    }
+
+    public function testCheckRejectsAStatementModifierInARowSubquery(): void
+    {
+        $query = new Select([SelectOption::BufferResult], [new SelectExpression(new NumberLiteral('1')), new SelectExpression(new NumberLiteral('2'))]);
+        $this->expectExceptionMessage('An expression subquery cannot carry statement-level SELECT modifiers.');
+
+        new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery($query);
+    }
     public function testCheckAcceptsNestedDerivedTablesWithTheirOwnModifierDomain(): void
     {
         $derived = new DerivedTable(new Select([SelectOption::Distinct], [new SelectExpression(new NumberLiteral('1'))]), new \SqlSemantics\Statement\Identifier\Name('x'));

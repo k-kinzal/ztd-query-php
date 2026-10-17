@@ -1311,6 +1311,15 @@ and reset. Memory records the configured source host and local replication
 state; it does not open a network replication connection. These bounded checks
 do not replace the outstanding whole-model and SQL Faker campaigns.
 
+Expression-subquery constructors exclude HIGH_PRIORITY, SQL_BUFFER_RESULT and
+SQL_CALC_FOUND_ROWS throughout their query-expression spine. Lowering reports
+their typed placement diagnostic before publishing a scalar or row subquery.
+Top-level parenthesized queries keep these modifiers. Unused CTE definitions
+retain their deferred preparation behavior; statement-level modifier checks
+apply when the query body is used. Native comparisons include populated tables,
+unreachable stored instructions and the 5.6 precedence of misplaced modifiers
+over conflicting quantifiers.
+
 Multiple-table DELETE targets bind to input occurrence identities in Semantics.
 An unqualified target uses the current database unless it names an explicit
 alias. A qualified target selects its database even when another input has the

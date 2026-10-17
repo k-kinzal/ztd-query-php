@@ -126,7 +126,7 @@ final class Reading
             if (!$program && isset($reached[spl_object_id($select)])) {
                 $this->declared($select, $ended, $session, $operation);
             }
-        });
+        }, $reached);
         if (!$program && in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && !$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
             $this->into($operation->statement, $session);
         }

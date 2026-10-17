@@ -58,6 +58,15 @@ final class PlacementTest extends TestCase
         self::assertCount(1, $session->query('SELECT SQL_BUFFER_RESULT 1 UNION SELECT 2 ORDER BY 1 LIMIT 1'));
     }
 
+    public function testCheckLeavesUnusedCommonTableModifiersUnprepared(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->query('WITH c AS (SELECT SQL_BUFFER_RESULT 1) SELECT 2')[0];
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2']], $reply->rows);
+    }
+
     public function testFirstAnswersTheFirstQueryBlockOfTheStatementOrOfTheRowsItWrites(): void
     {
         $session = (new Instance())->connect();

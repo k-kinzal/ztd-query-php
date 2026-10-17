@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Query;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
@@ -38,6 +39,27 @@ final class QueryRulesTest extends TestCase
     {
         self::assertSame('SELECT (SELECT 1) AS v, a IN (SELECT 2) AS w FROM (SELECT 3) d WHERE EXISTS (SELECT 4)', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select (select 1) as v, a in (select 2) as w from (select 3) d where exists (select 4)')->toString());
         self::assertSame('SELECT (SELECT 1) AS v FROM t WHERE EXISTS (SELECT 2)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select (select 1) as v from t where exists (select 2)')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRestrictedSubqueries(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.4.7'] as $release) {
+            foreach (['SELECT (SELECT SQL_BUFFER_RESULT 1)', 'SELECT EXISTS (SELECT SQL_BUFFER_RESULT 1)', 'SELECT 1 IN (SELECT SQL_BUFFER_RESULT 1)', 'SELECT 1 = ANY (SELECT SQL_BUFFER_RESULT 1)'] as $sql) {
+                yield $release . ' ' . $sql => [$release, $sql];
+            }
+        }
+    }
+
+    #[DataProvider('providerRestrictedSubqueries')]
+    public function testQueryRejectsModifiersBeforePublishingANestedQuery(string $release, string $sql): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect usage/placement of 'SQL_BUFFER_RESULT'");
+
+        (new Semantics(Dialect::MySql, $release))->analyze($sql);
     }
 
     public function testLegacyQueryLowersCreateSelectWithItsUnion(): void
