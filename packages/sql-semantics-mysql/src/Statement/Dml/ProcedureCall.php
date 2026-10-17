@@ -7,11 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * CALL of a stored procedure with its arguments.
@@ -43,8 +43,10 @@ final class ProcedureCall implements Statement
      */
     public function __construct(public readonly QualifiedName $procedure, array $arguments = [])
     {
+        \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check($procedure);
         Check::input($procedure->catalog === null, 'A procedure is qualified by at most a database.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'The arguments of CALL are expressions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -27,4 +27,10 @@ final class ShowReplicaStatusTest extends TestCase
     {
         self::assertSame('SHOW SLAVE STATUS', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('SHOW SLAVE STATUS')->toString());
     }
+
+    public function testValueRejectsIncompatibleChannel(): void
+    {
+        $this->expectExceptionMessage('A replication channel is quoted text.');
+        new ShowReplicaStatus(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

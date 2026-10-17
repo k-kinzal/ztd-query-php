@@ -132,9 +132,11 @@ final class ViewRule
     /**
      * Lowers the definition after the definer: a node of `view_tail`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the modern column list has an invalid name
+     *
      * @throws ImplementationGap When a production has no rule
      */
-    public function definition(Node $tail, ?ViewAlgorithm $algorithm, ?Account $definer): ViewDefinition
+    public function definition(Node $tail, ?ViewAlgorithm $algorithm, ?Account $definer, bool $alter = false): ViewDefinition
     {
         $form = $this->lowering->productions->form($tail);
         $suid = $this->lowering->productions->form($form->node(0));
@@ -147,6 +149,11 @@ final class ViewRule
             'view_tail: view_suid VIEW_SYM opt_if_not_exists table_ident opt_derived_column_list AS view_query_block' => [$this->lowering->options->present($form->node(2)), $form->node(3), $this->derived($form->node(4)), $form->node(6)],
             default => throw ImplementationGap::production($form),
         };
+        $identity = $this->lowering->names->qualified($name);
+        $problem = \SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewColumns::explicit($columns);
+        if ($problem !== null && !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns($identity, $problem->column, $this->lowering->programName), (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, false);
+        }
         $query = $this->lowering->productions->form($body);
         if ($query->signature !== 'view_select: view_select_aux view_check_option' && $query->signature !== 'view_query_block: query_expression_with_opt_locking_clauses view_check_option') {
             throw ImplementationGap::production($query);
@@ -156,7 +163,17 @@ final class ViewRule
             throw ImplementationGap::production($check);
         }
 
-        return new ViewDefinition($this->lowering->names->qualified($name), $this->lowering->queries->query($query->node(0)), $columns, $algorithm, $definer, self::SECURITY[$suid->signature], self::CHECKS[$check->signature], $exists);
+        try {
+            $read = $this->lowering->queries->statement($query->node(0));
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery && !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection) {
+                throw $failure;
+            }
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery($identity, $alter, $failure->problem), $failure->end, false);
+        }
+        \SqlSemantics\Diagnostic\Check::invariant($read instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'A view definition retains a complete read query.');
+        $this->lowering->origins->forget($read);
+        return new ViewDefinition($identity, $read->query, $columns, $algorithm, $definer, self::SECURITY[$suid->signature], self::CHECKS[$check->signature], $exists);
     }
 
     /**
@@ -204,7 +221,7 @@ final class ViewRule
     {
         [$algorithm, $definer, $tail] = self::ALTERS[$form->signature] ?? throw ImplementationGap::production($form);
 
-        return new AlterView($this->definition($form->node($tail), $algorithm === null ? null : $this->algorithm($form->node($algorithm)), $this->lowering->users->definer($form->node($definer))));
+        return new AlterView($this->definition($form->node($tail), $algorithm === null ? null : $this->algorithm($form->node($algorithm)), $this->lowering->users->definer($form->node($definer)), true));
     }
 
     /**

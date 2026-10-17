@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateLogfileGroup;
 
 #[CoversClass(CreateLogfileGroup::class)]
@@ -21,10 +20,10 @@ final class CreateLogfileGroupTest extends TestCase
         self::assertSame("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' INITIAL_SIZE 1", (new Semantics(Dialect::MySql))->analyze("create logfile group g add undofile 'f' initial_size 1")->toString());
     }
 
-    public function testDeriveStatementReportsRejectedOptions(): void
+    public function testDeriveStatementAcceptsAConsistentOptionList(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' COMMENT 'a' COMMENT 'b'");
+        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' COMMENT 'a'");
 
-        self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 }

@@ -8,6 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -26,7 +29,10 @@ use SqlSemantics\Statement\Snapshot;
  * instance of a structured system variable; `DEFAULT.x` is the instance
  * `default`. The value is derived as an expression at a position that sees
  * no relation, a keyword value has no facts, and a bare name value is its
- * text for a system variable (MYSQL-SET-WORD-001). Diagnostics: none.
+ * text for a system variable (MYSQL-SET-WORD-001). Outside a program, an unknown
+ * assignment target is reported. An explicitly scoped target is also checked for
+ * writability and scope. MySQL 8.0 and later derive the value before checking the
+ * target; older releases check the target first.
  * Terminates: the parts are leaves.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html,
  * https://dev.mysql.com/doc/refman/8.4/en/set-statement.html,
@@ -44,21 +50,36 @@ final class NameAssignment implements SetItem
 
     /**
      * @param Name $name The assigned name
-     * @param Scalar|SetWord $value The value: an expression, or a keyword the grammar accepts there
+     * @param Scalar|BareName|SetWord $value The value: an expression, or a keyword the grammar accepts there
      * @param VariableScope|null $scope The scope keyword written before the name
      * @param Name|null $qualifier The component, key cache instance or trigger row written before the name
      */
-    public function __construct(public readonly Name $name, public readonly Scalar|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null)
+    public function __construct(public readonly Name $name, public readonly Scalar|BareName|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null)
     {
         Check::input(!$value instanceof BareName || $value->system === ($scope !== null), 'A bare name value is known to be text exactly when a scope keyword names a system variable.');
     }
 
     /**
-     * Derives the value.
+     * Resolves the target and value in the release's order; inside a stored program an unscoped name may be local.
      */
     public function deriveItem(Derivation $derivation): void
     {
-        if ($this->value instanceof Scalar) {
+        $valueFirst = !in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($valueFirst && !$this->value instanceof SetWord) {
+            (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
+        }
+        $settings = Settings::of($derivation->context);
+        if ($this->qualifier === null && !$derivation->inProgram() && ($this->scope !== null || $settings->variable($this->name->value) === null)) {
+            $access = new VariableAccess();
+            if ($this->scope === null) {
+                $access->find($this->name->value, $derivation, true);
+            } else {
+                $access->assign($this->name->value, $this->scope, $derivation);
+            }
+        } elseif ($this->qualifier !== null && !$derivation->inProgram() && $settings->row($this->qualifier->value) === null) {
+            (new SystemTarget($this->name, null, $this->qualifier))->structured($derivation);
+        }
+        if (!$valueFirst && !$this->value instanceof SetWord) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
     }

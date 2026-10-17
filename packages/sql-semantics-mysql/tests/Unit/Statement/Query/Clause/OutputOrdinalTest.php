@@ -42,8 +42,9 @@ final class OutputOrdinalTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT 1, a FROM t GROUP BY 2 ORDER BY 2', [$table]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $fact = $operation->facts->scalar($operation->statement->orderBy[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $fact = $operation->facts->scalar($operation->statement->query->orderBy[0]->expression);
         self::assertInstanceOf(AliasTarget::class, $fact->resolution);
         self::assertSame($operation->field(1), $fact->resolution->field);
         self::assertSame(Nullability::Nullable, $fact->nullability);
@@ -62,8 +63,9 @@ final class OutputOrdinalTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM t ORDER BY 2');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->orderBy[0]->expression)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->type);
         self::assertSame([], $operation->facts->diagnostics);
     }
 

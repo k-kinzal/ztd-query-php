@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Group\StopGroupReplication
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers PURGE BINARY LOGS, BINLOG and START and STOP GROUP_REPLICATION.
@@ -73,18 +73,29 @@ final class LogRule
             throw ImplementationGap::production($form);
         }
         $options = $this->lowering->form($form->node(1));
+        $master = false;
         if ($options->signature === 'purge_options: master_or_binary LOGS_SYM purge_option') {
-            $this->lowering->utility->binaryLogsWord($options->node(0));
+            $master = $this->lowering->utility->binaryLogsWord($options->node(0));
         } elseif ($options->signature !== 'purge_options: BINARY_SYM LOGS_SYM purge_option') {
             throw ImplementationGap::production($options);
         }
         $option = $this->lowering->form($options->node(2));
+        $rejected = (new SyntaxLogMoment())->rejected($option->node, $this->lowering->profile->grammar);
+        if ($rejected !== null) {
+            throw $rejected;
+        }
 
-        return match ($option->signature) {
+        $statement = match ($option->signature) {
             'purge_option: TO_SYM TEXT_STRING_sys' => new PurgeLogsTo($this->lowering->literals->text($option->node(1))),
             'purge_option: BEFORE_SYM expr' => new PurgeLogsBefore($this->lowering->expressions->expression($option->node(1))),
             default => throw ImplementationGap::production($option),
         };
+        $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::PurgeMasterLogs;
+        if ($master && $notice->warnedIn($this->lowering->profile->grammar)) {
+            $this->lowering->origins->notice($statement, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice), $options->node(0));
+        }
+
+        return $statement;
     }
 
     /**

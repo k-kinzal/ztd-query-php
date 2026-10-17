@@ -39,6 +39,7 @@ use SqlParser\Parser\SyntaxException;
 #[UsesClass(\SqlParser\MySql\Lexer\VariableScanner::class)]
 #[UsesClass(\SqlParser\MySql\Lexer\WordScanner::class)]
 #[UsesClass(\SqlParser\Parser\LrParser::class)]
+#[UsesClass(\SqlParser\Parser\Reductions::class)]
 #[UsesClass(\SqlParser\Parser\Node::class)]
 #[UsesClass(\SqlParser\Resource\SqlVersion::class)]
 #[UsesClass(\SqlParser\Resource\VersionRegistry::class)]

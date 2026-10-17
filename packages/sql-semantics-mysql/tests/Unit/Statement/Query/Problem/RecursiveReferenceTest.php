@@ -25,10 +25,10 @@ final class RecursiveReferenceTest extends TestCase
 
     public function testAReferenceWithoutAnchorDependsOnTheMissingPart(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH RECURSIVE c AS (SELECT x FROM c) SELECT 1', []);
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH RECURSIVE c AS (SELECT x FROM c) SELECT 1 FROM c', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::RecursiveWithoutAnchor, $operation->facts->diagnostics[0]->rule);
+        self::assertSame(MisuseRule::RecursiveWithoutUnion, $operation->facts->diagnostics[0]->rule);
     }
 }

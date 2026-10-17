@@ -57,11 +57,19 @@ final class ResourceGroupRuleTest extends TestCase
 
     public function testNumberKeepsTheText(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g VCPU = 007', (new Semantics(Dialect::MySql))->analyze('alter resource group g vcpu 007')->toString());
+        self::assertSame('SET RESOURCE GROUP g FOR 007', (new Semantics(Dialect::MySql))->analyze('set resource group g for 007')->toString());
     }
 
     public function testClaimedConfirmsTheList(): void
     {
         self::assertSame('SET RESOURCE GROUP g FOR 9', (new Semantics(Dialect::MySql))->analyze('set resource group g for 9')->toString());
     }
+    public function testNameRefusesAnOperandBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Identifier name '" . str_repeat('猫', 22) . "' is too long");
+
+        (new Semantics(Dialect::MySql))->analyze('DROP RESOURCE GROUP `' . str_repeat('猫', 22) . '`');
+    }
+
 }

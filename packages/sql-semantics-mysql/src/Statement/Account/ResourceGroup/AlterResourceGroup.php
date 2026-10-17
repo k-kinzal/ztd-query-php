@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER RESOURCE GROUP name [VCPU = …] [THREAD_PRIORITY = n] [ENABLE|DISABLE] [FORCE]` (8.0+).
@@ -34,15 +32,16 @@ final class AlterResourceGroup implements Statement
     public readonly array $cpus;
 
     /**
-     * @param Name $name The group name
+     * @param ResourceGroupName $name The group name
      * @param list<CpuRange> $cpus The CPUs of VCPU; none when the option is absent
      * @param ThreadPriority|null $priority The THREAD_PRIORITY, when written
      * @param bool|null $enabled ENABLE (true) or DISABLE (false), when written
      * @param bool $force Whether FORCE is written
      */
-    public function __construct(public readonly Name $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false)
+    public function __construct(public readonly ResourceGroupName $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false)
     {
         $this->cpus = Check::listOf($cpus, CpuRange::class, 'VCPU lists CPU numbers and ranges.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -50,6 +49,7 @@ final class AlterResourceGroup implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $this->name->derive($derivation);
     }
 
     /**
@@ -57,7 +57,7 @@ final class AlterResourceGroup implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'RESOURCE', 'GROUP')->name($this->name, NameUse::Label);
+        $out->keyword('ALTER', 'RESOURCE', 'GROUP')->node($this->name);
         if ($this->cpus !== []) {
             $out->keyword('VCPU')->symbol('=')->list($this->cpus);
         }

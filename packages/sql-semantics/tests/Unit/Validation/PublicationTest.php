@@ -24,6 +24,19 @@ use SqlSemantics\Validation\Publication;
 #[Medium]
 final class PublicationTest extends TestCase
 {
+    public function testEstablishKeepsScalarReplacementsInsideThePublishedOperation(): void
+    {
+        $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (SELECT 1 LIMIT 0)');
+        $subquery = $operation->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $subquery);
+        $replacement = $operation->facts->scalar($subquery)->replacement;
+
+        self::assertNotNull($replacement);
+        self::assertTrue($operation->facts->covers($replacement));
+        self::assertSame($replacement, $operation->facts->query($subquery->query)->fields()?->at(0)->expression);
+        self::assertSame('SELECT (SELECT 1 LIMIT 0)', $operation->toString());
+    }
+
     public function testEstablishDerivesTheFactsAndRendersCorrespondingSql(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
@@ -47,6 +60,17 @@ final class PublicationTest extends TestCase
         $this->expectExceptionMessage('A statement node occurs at one position only.');
 
         (new Publication())->establish($context, new Select([new ResultColumn($literal), new ResultColumn($literal)]));
+    }
+
+    public function testEstablishAuditsSessionValuesBeforeDerivingFacts(): void
+    {
+        $session = new class () implements \SqlSemantics\Contract\Session {
+        };
+        $context = (new Semantics(Dialect::Sqlite))->context([], true, null, $session);
+
+        $this->expectExceptionMessage('must be final');
+
+        (new Publication())->establish($context, new Select([new ResultColumn(new IntegerLiteral('1'))]));
     }
 
     public function testRootIsTheOnlyStatementOrAScript(): void

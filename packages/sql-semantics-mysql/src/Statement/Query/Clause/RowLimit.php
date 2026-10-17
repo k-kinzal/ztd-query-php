@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the row count and the offset
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t LIMIT 10 OFFSET 5');
- *     [$query->statement->limit->count->text, $query->statement->limit->offset->text] // => ['10', '5']
+ *     [$query->statement->query->limit->count->text, $query->statement->query->limit->offset->text] // => ['10', '5']
  * @example Refusing an expression as a row count
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
@@ -35,14 +34,14 @@ final class RowLimit implements Limit
     use Snapshot;
 
     /**
-     * @param Scalar $count The row count
-     * @param Scalar|null $offset The number of rows skipped
+     * @param NumberLiteral|Parameter|ProgramVariable $count The row count
+     * @param NumberLiteral|Parameter|ProgramVariable|null $offset The number of rows skipped
      * @param OffsetSpelling|null $spelling How the offset is written; given exactly when there is an offset
      */
-    public function __construct(public readonly Scalar $count, public readonly ?Scalar $offset = null, public readonly ?OffsetSpelling $spelling = null)
+    public function __construct(public readonly NumberLiteral|Parameter|ProgramVariable $count, public readonly NumberLiteral|Parameter|ProgramVariable|null $offset = null, public readonly ?OffsetSpelling $spelling = null)
     {
         foreach ([$count, $offset] as $operand) {
-            Check::input($operand === null || $operand instanceof Parameter || $operand instanceof ProgramVariable || ($operand instanceof NumberLiteral && $operand->form === NumberForm::Integer), 'A LIMIT operand is an unsigned integer, a parameter marker or a stored program variable.');
+            Check::input(!$operand instanceof NumberLiteral || $operand->form === NumberForm::Integer, 'A LIMIT operand is an unsigned integer, a parameter marker or a stored program variable.');
         }
         Check::input(($offset === null) === ($spelling === null), 'An offset is written in exactly one spelling.');
     }

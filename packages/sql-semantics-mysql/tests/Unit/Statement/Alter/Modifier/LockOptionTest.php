@@ -15,9 +15,9 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
 #[Medium]
 final class LockOptionTest extends TestCase
 {
-    public function testDeriveOptionReportsALockTheReleaseDoesNotKnow(): void
+    public function testDeriveOptionAcceptsTheKnownLock(): void
     {
-        self::assertSame('DEFAULT is not a LOCK the server knows.', (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t LOCK = `DEFAULT`')->facts->diagnostics[0]->message());
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t LOCK = SHARED')->facts->diagnostics);
     }
 
     public function testDeriveCommandChecksTheLock(): void

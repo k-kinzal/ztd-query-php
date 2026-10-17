@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Session\Problem\Definition;
+
+use MySqlMemory\Command\Definition\Expression\ExpressionRole;
+use MySqlMemory\Command\Definition\Expression\ExpressionRules;
+use MySqlMemory\Evaluation\Compile\Walker;
+use MySqlMemory\Session\Problem\Errors;
+use MySqlMemory\Session\Problems;
+use MySqlMemory\Session\Session;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
+use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Query;
+
+/**
+ * Opens functional-index subquery tables before checking the creation target.
+ *
+ * References are already resolved by SQL Semantics. Their failures precede
+ * target existence, missing key columns and the forbidden-subquery diagnostic.
+ * Explicit row-width conflicts precede table lookup. Verified through SQL
+ * on MySQL 8.0.44, 8.4.7 and 9.1.0 without consulting implementation code.
+ *
+ * @visibility MySqlMemory
+ */
+final class FunctionalQueries
+{
+    /**
+     * Prepares referenced tables before target existence and index validation.
+     *
+     * @throws \MySqlMemory\Error\SqlError When an explicit width or a referenced table is invalid
+     */
+    public function prepare(Operation $operation, Session $session, Problems $problems): void
+    {
+        $create = $operation->statement;
+        if (!$create instanceof CreateTable || $session->settings()->legacy()) {
+            return;
+        }
+        $indexes = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof IndexDefinition));
+        $walker = new Walker();
+        if (array_filter($indexes, static fn (IndexDefinition $index): bool => (new Walker())->find($index, Query::class) !== []) === []) {
+            return;
+        }
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof OperandColumns && $diagnostic->expression !== null && $walker->find($diagnostic->expression, Query::class) === []) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $create);
+            }
+        }
+        $problems->opened($operation, $session, $operation->facts->diagnostics);
+    }
+
+    /**
+     * Refuses index subqueries after target existence, before ordinary key columns.
+     *
+     * @throws \MySqlMemory\Error\SqlError When an index expression contains a forbidden construct
+     */
+    public function forbidden(CreateTable $create): void
+    {
+        $indexes = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof IndexDefinition));
+        if (array_filter($indexes, static fn (IndexDefinition $index): bool => (new Walker())->find($index, Query::class) !== []) === []) {
+            return;
+        }
+        foreach ($indexes as $index) {
+            foreach ($index->parts as $part) {
+                if ($part instanceof ExpressionPart) {
+                    (new \MySqlMemory\Command\Definition\Constraint\FunctionalKeys())->check($part, $index);
+                    (new ExpressionRules())->forbidden($part->expression, ExpressionRole::Functional, $index->name?->column->value ?? $index->constraint?->name?->column->value ?? 'functional_index');
+                }
+            }
+        }
+    }
+}

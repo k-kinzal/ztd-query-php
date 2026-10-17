@@ -9,12 +9,13 @@ use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * EXPLAIN (DESCRIBE, DESC) with a statement: the execution plan of a SELECT, TABLE, VALUES, INSERT, REPLACE, UPDATE or DELETE.
@@ -31,6 +32,13 @@ use SqlSemantics\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/explain.html. Status: Implemented.
  *
  * @visibility public
+ * @example Refusing a format outside the public format domain
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, new \SqlSemantics\Statement\Identifier\Name('XML')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a legacy modifier around a modern DELETE alias
+ *     $target = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), alias: new \SqlSemantics\Statement\Identifier\Name('x'));
+ *     $delete = new \SqlSemantics\Platform\MySql\Statement\Dml\Delete(null, [], $target);
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($delete, modifier: \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Inspecting a query and reading the report columns
  *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('EXPLAIN FORMAT = TREE SELECT 1');
  *     [$explain->field(0)->name?->value, $explain->toString()] // => ['EXPLAIN', 'EXPLAIN FORMAT = TREE SELECT 1']
@@ -40,7 +48,7 @@ final class Explain implements Statement
     use Snapshot;
 
     /**
-     * @param Statement $statement The explained statement
+     * @param Explainable $statement The explained statement
      * @param Name|null $format The format name after FORMAT =
      * @param bool $analyze Whether ANALYZE is written
      * @param ExplainModifier|null $modifier The EXTENDED or PARTITIONS keyword of MySQL 5.x
@@ -48,14 +56,17 @@ final class Explain implements Statement
      * @param Name|null $database The database after FOR DATABASE
      */
     public function __construct(
-        public readonly Statement $statement,
+        public readonly Explainable $statement,
         public readonly ?Name $format = null,
         public readonly bool $analyze = false,
         public readonly ?ExplainModifier $modifier = null,
         public readonly ?UserVariable $into = null,
         public readonly ?Name $database = null,
     ) {
+        Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
+        Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null), 'EXTENDED and PARTITIONS are written alone.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -64,7 +75,7 @@ final class Explain implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $context = $derivation->context;
-        $derivation->inspected($this->statement, $this->database === null ? null : new Environment(new AnalysisContext($context->profile, [$this->database], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema)));
+        $derivation->inspected($this->statement, $this->database === null ? null : new Environment(new AnalysisContext($context->profile, [$this->database], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema, $context->session, $context->foldedSchemas)));
         (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
     }
 

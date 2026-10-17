@@ -23,6 +23,13 @@ final class PurgeLogsBeforeTest extends TestCase
         self::assertSame([], $purge->facts->diagnostics);
     }
 
+    public function testDeriveStatementRequiresOneColumnForTheMoment(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new Semantics(Dialect::MySql))->analyze('PURGE BINARY LOGS BEFORE ROW(1,2)');
+    }
+
     public function testRenderWritesTheMoment(): void
     {
         self::assertSame("PURGE BINARY LOGS BEFORE '2024-01-01'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("purge master logs before '2024-01-01'")->toString());

@@ -9,10 +9,10 @@ use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CREATE USER: the CREATE USER statement that reproduces an account (MySQL 5.7 and later).
@@ -38,6 +38,7 @@ final class ShowCreateUser implements Statement
      */
     public function __construct(public readonly Account $user)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -51,7 +52,7 @@ final class ShowCreateUser implements Statement
 
             return;
         }
-        $name = 'CREATE USER for ' . $this->user->user->value . '@' . ($this->user->host->value ?? '%');
+        $name = 'CREATE USER for ' . $this->user->username() . '@' . ($this->user->hostname() ?? '%');
         $derivation->output($facts->query($facts->shape($derivation, Report::CreateUser, $name), $derivation->context->columnNames));
     }
 

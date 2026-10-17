@@ -8,8 +8,8 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Factor;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Identification;
-use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 
 /**
@@ -165,14 +165,21 @@ final class IdentificationRule
      * Lowers a factor: the number before FACTOR, as written.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the factor is not exactly 2 or 3
      */
-    public function factor(Node $factor): Numeral
+    public function factor(Node $factor): Factor
     {
         $form = $this->lowering->form($factor);
         if ($form->signature !== 'factor: NUM FACTOR_SYM') {
             throw ImplementationGap::production($form);
         }
 
-        return $this->lowering->numbers->token($form->token(0));
+        $number = $form->token(0)->text;
+        $value = Factor::tryFrom($number);
+        if ($value === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange('nth factor', $number, 'ER_WRONG_VALUE'), (new \SqlSemantics\Construction\SourceRanges())->span($factor)[1] ?? 0);
+        }
+
+        return $value;
     }
 }

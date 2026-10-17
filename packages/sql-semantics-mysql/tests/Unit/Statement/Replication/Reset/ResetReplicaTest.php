@@ -18,6 +18,13 @@ use SqlSemantics\Statement\Operation;
 #[Medium]
 final class ResetReplicaTest extends TestCase
 {
+    public function testValueRejectsASynonymInTheOriginalTerminology(): void
+    {
+        $this->expectExceptionMessage('The SLAVE synonym applies to current replication terminology.');
+
+        new ResetReplica(Terminology::Legacy, synonym: true);
+    }
+
     public function testDeriveTargetRejectsTheVocabularyOfAnotherRelease(): void
     {
         $this->expectExceptionMessage('RESET REPLICA is written in the vocabulary of the release.');
@@ -28,5 +35,11 @@ final class ResetReplicaTest extends TestCase
     public function testRenderWritesTheLegacySpellingWithChannel(): void
     {
         self::assertSame("RESET SLAVE ALL FOR CHANNEL 'c'", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("reset slave all for channel 'c'")->toString());
+    }
+
+    public function testRenderWritesTheSpellingOfTheSynonym(): void
+    {
+        self::assertSame("RESET SLAVE ALL FOR CHANNEL 'c'", (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("reset slave all for channel 'c'")->toString());
+        self::assertSame('RESET REPLICA ALL', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('reset replica all')->toString());
     }
 }

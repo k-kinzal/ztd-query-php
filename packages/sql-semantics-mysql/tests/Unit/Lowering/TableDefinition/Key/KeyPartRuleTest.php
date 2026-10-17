@@ -53,6 +53,16 @@ final class KeyPartRuleTest extends TestCase
         self::assertInstanceOf(ExpressionPart::class, (new KeyPartRule($lowering))->part($node));
     }
 
+    public function testExpressionLowersAnArrayCastIntoAKeyRole(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE INDEX k ON t ((CAST(j AS SIGNED ARRAY)))')->find('key_part_with_expression')[0];
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart::class, (new KeyPartRule($lowering))->part($node));
+    }
+
     public function testLengthLowersThePrefixLength(): void
     {
         $platform = new Platform();

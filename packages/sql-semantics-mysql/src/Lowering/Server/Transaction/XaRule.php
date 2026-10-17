@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Transaction;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -21,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the XA transaction statements.
@@ -31,7 +30,7 @@ use SqlSemantics\Statement\Statement;
  * later). BEGIN and START are synonyms in XA START (ServerNoise). A global
  * transaction identifier or branch qualifier longer than 64 bytes, and a
  * format identifier above 2^63-1, are syntax errors the server raises in the
- * `xid` action (MYSQL_YYABORT_UNLESS) and are rejected as such. Constructs:
+ * completed identifier, retaining the native diagnostic boundary. Constructs:
  * XaStart, XaEnd, XaPrepare, XaCommit, XaRollback, XaRecover, Xid.
  * Terminates: every child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
@@ -69,7 +68,7 @@ final class XaRule
      * Lowers an XA statement: a node of `xa`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws AnalysisException When an identifier part exceeds its limit
+     * @throws \SqlSemantics\Construction\RejectedInput When an identifier part exceeds its limit
      */
     public function statement(Form $form): Statement
     {
@@ -89,7 +88,7 @@ final class XaRule
      * Lowers XA START or XA BEGIN.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws AnalysisException When an identifier part exceeds its limit
+     * @throws \SqlSemantics\Construction\RejectedInput When an identifier part exceeds its limit
      */
     public function start(Form $form): XaStart
     {
@@ -152,7 +151,7 @@ final class XaRule
      * Lowers an XA transaction identifier: a node of `xid`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws AnalysisException When a part exceeds its limit
+     * @throws \SqlSemantics\Construction\RejectedInput When a part exceeds its limit
      */
     public function xid(Node $xid): Xid
     {
@@ -164,24 +163,25 @@ final class XaRule
             'xid: text_string , text_string , ulong_num' => [$literals->text($form->node(0)), $literals->text($form->node(2)), $this->lowering->numbers->numeral($form->node(4))],
             default => throw ImplementationGap::production($form),
         };
-        $this->limits($transaction, $branch, $format);
+        if (!$this->limits($transaction, $branch, $format)) {
+            $ranges = new \SqlSemantics\Construction\SourceRanges();
+            $end = $ranges->span($xid)[1] ?? 0;
+            $offset = $format === null ? $end : ($ranges->span($form->node(4))[0] ?? 0);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier($offset, $format === null), $end);
+        }
 
         return new Xid($transaction, $branch, $format);
     }
 
     /**
-     * Rejects identifier parts the server rejects while it parses.
-     *
-     * @throws AnalysisException When a part exceeds its limit
+     * Tells whether the decoded parts fit the release's identifier domain.
      */
-    public function limits(Text $transaction, ?Text $branch, ?Numeral $format): void
+    public function limits(Text $transaction, ?Text $branch, ?Numeral $format): bool
     {
         $magnitudes = new Magnitudes();
-        if ($magnitudes->bytes($transaction) > 64 || ($branch !== null && $magnitudes->bytes($branch) > 64)) {
-            throw new AnalysisException('Syntax error: an XA transaction identifier part holds at most 64 bytes.');
-        }
-        if ($format !== null && !$magnitudes->format($format, $this->lowering->profile->grammar)) {
-            throw new AnalysisException('Syntax error: an XA format identifier is at most 9223372036854775807.');
-        }
+
+        return $magnitudes->bytes($transaction) <= 64
+            && ($branch === null || $magnitudes->bytes($branch) <= 64)
+            && ($format === null || $magnitudes->format($format, $this->lowering->profile->grammar));
     }
 }

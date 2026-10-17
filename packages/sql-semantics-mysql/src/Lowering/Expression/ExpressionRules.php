@@ -37,11 +37,32 @@ final class ExpressionRules
     /**
      * Lowers an expression: a node of `expr`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the operand has no scalar role
      * @throws ImplementationGap When a production has no rule
      */
     public function expression(Node $expression): Scalar
     {
+        return (new OperandRule())->scalar($this->operand($expression), $expression);
+    }
+
+    /**
+     * Lowers an expression in a position admitting either one value or a row.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function operand(Node $expression): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+    {
         return (new ConditionRule($this->lowering))->expression($expression);
+    }
+
+    /**
+     * Lowers a list of operands in a row comparison position.
+     *
+     * @return list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand>
+     */
+    public function operands(Node $list): array
+    {
+        return (new ListRule($this->lowering))->operands($list);
     }
 
     /**
@@ -51,7 +72,7 @@ final class ExpressionRules
      */
     public function bitExpression(Node $expression): Scalar
     {
-        return (new BitRule($this->lowering))->bitExpression($expression);
+        return (new OperandRule())->scalar((new BitRule($this->lowering))->bitExpression($expression), $expression);
     }
 
     /**
@@ -61,7 +82,7 @@ final class ExpressionRules
      */
     public function simpleExpression(Node $expression): Scalar
     {
-        return (new PrimaryRule($this->lowering))->simpleExpression($expression);
+        return (new OperandRule())->scalar((new PrimaryRule($this->lowering))->simpleExpression($expression), $expression);
     }
 
     /**

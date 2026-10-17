@@ -43,8 +43,8 @@ final class AggregateResults
      */
     public function aggregate(Aggregate $call, array $arguments, Derivation $derivation): ScalarFact
     {
-        if ($call->distinct && $call->over !== null) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::DistinctAggregate));
+        if ($call->distinct && $call->over !== null && $call->function !== AggregateFunction::Collect) {
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::DistinctAggregate, $call));
         }
         $type = $arguments[0]->type ?? new NullOnly();
         $aggregation = new TypeClasses();

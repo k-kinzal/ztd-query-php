@@ -10,6 +10,7 @@ use ReflectionReference;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Snapshot;
 use UnitEnum;
+use WeakMap;
 
 /**
  * Audits that a value graph is deeply immutable and made of the closed value domain only.
@@ -25,6 +26,11 @@ use UnitEnum;
 final class ValueGraph
 {
     /**
+     * @var array<string, WeakMap<object, true>> Completed immutable audits, isolated by admitted namespace domain
+     */
+    private static array $audited = [];
+
+    /**
      * @var array<class-string, list<ReflectionProperty>>
      */
     private array $properties = [];
@@ -39,11 +45,19 @@ final class ValueGraph
     /**
      * Answers every object reachable from a root, the root included, after auditing each.
      *
+     * @param bool $reuse Whether to omit already audited immutable subgraphs; use only when the caller needs validation, not a complete object listing
      * @return list<object>
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a reachable value is outside the closed immutable domain
      */
-    public function objects(object $root): array
+    public function objects(object $root, bool $reuse = false): array
     {
+        $domain = implode("\0", $this->namespaces);
+        if ($reuse && !isset(self::$audited[$domain])) {
+            /** @var WeakMap<object, true> $cache */
+            $cache = new WeakMap();
+            self::$audited[$domain] = $cache;
+        }
+        $verified = $reuse ? self::$audited[$domain] : null;
         $objects = [];
         $seen = [];
         $pending = [$root];
@@ -60,7 +74,7 @@ final class ValueGraph
                 Check::input($value === null || is_bool($value) || is_int($value) || is_string($value), 'A semantic value holds null, booleans, integers, strings, lists and closed values only.');
                 continue;
             }
-            if (isset($seen[spl_object_id($value)])) {
+            if (($verified !== null && isset($verified[$value])) || isset($seen[spl_object_id($value)])) {
                 continue;
             }
             $seen[spl_object_id($value)] = true;
@@ -68,6 +82,12 @@ final class ValueGraph
             foreach ($this->members($value) as $property) {
                 Check::input($property->isInitialized($value), 'A semantic value has no uninitialised property.');
                 $pending[] = $property->getValue($value);
+            }
+        }
+
+        if ($verified !== null) {
+            foreach ($objects as $object) {
+                $verified[$object] = true;
             }
         }
 
@@ -92,6 +112,8 @@ final class ValueGraph
         }
         Check::input($admitted, 'A value of class ' . $class . ' is not part of the closed semantic value domain.');
         if ($value instanceof UnitEnum) {
+            (new ValueSchema())->check($class);
+
             return $this->properties[$class] = [];
         }
         $reflection = new ReflectionClass($value);
@@ -102,6 +124,8 @@ final class ValueGraph
             $properties[] = $property;
         }
         Check::input(in_array(Snapshot::class, $reflection->getTraitNames(), true), 'Semantic value class ' . $class . ' must close cloning, dynamic properties and unserialization with the Snapshot trait.');
+
+        (new ValueSchema())->check($class);
 
         return $this->properties[$class] = $properties;
     }

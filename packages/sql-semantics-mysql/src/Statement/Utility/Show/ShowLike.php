@@ -32,6 +32,7 @@ final class ShowLike implements Node
      */
     public function __construct(public readonly Text $pattern)
     {
+        \SqlSemantics\Diagnostic\Check::input($pattern->radix === null, 'A SHOW LIKE pattern is quoted text.');
     }
 
     /**

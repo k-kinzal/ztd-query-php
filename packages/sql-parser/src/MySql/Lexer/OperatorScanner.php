@@ -10,7 +10,7 @@ use SqlParser\Lexer\LexicalException;
 /**
  * Reads MySQL's operators, punctuation and parameter markers.
  *
- * Comparison operators take the longest spelling the keyword table knows,
+ * Comparison punctuation is read as one candidate, including invalid pairs.
  * `&&` and `||` are the boolean operators, `:=` assigns, and `->` and `->>`
  * are the JSON operators of releases that have them. Every other punctuation
  * character is a token of its own. Under the named parameter syntax, `:name`
@@ -47,6 +47,10 @@ final class OperatorScanner
 
             return $scan->lexeme('PARAM_MARKER', $start);
         }
+        $comparison = $this->comparison($scan);
+        if ($comparison !== null) {
+            return $comparison;
+        }
         foreach ([3, 2] as $length) {
             $candidate = substr($cursor->source, $start, $length);
             if (strlen($candidate) === $length && ($name = $this->multiCharacter($scan, $candidate)) !== null) {
@@ -70,6 +74,30 @@ final class OperatorScanner
         $cursor->take(1);
 
         return $scan->lexeme($scan->keywords->lookup($character, false, $scan->mode) ?? $character, $start);
+    }
+
+    /**
+     * Reads adjacent comparison punctuation without splitting an invalid candidate.
+     *
+     * A leading less-than sign admits a third greater-than, equals or bang byte.
+     * Other comparison signs admit two bytes. Whitespace ends the candidate.
+     * Observed through native SQL on MySQL 8.4.7, including <=! and >=!.
+     *
+     * @throws LexicalException When the adjacent punctuation names no comparison
+     */
+    public function comparison(Scan $scan): ?Lexeme
+    {
+        $start = $scan->cursor->offset();
+        if (preg_match('/\G(?:<[<>=!][>=!]|[<>=][<>=!])/', $scan->cursor->source, $match, 0, $start) !== 1) {
+            return null;
+        }
+        $name = $scan->keywords->lookup($match[0], false, $scan->mode);
+        if ($name === null) {
+            throw LexicalException::unexpectedCharacter($scan->cursor->source, $start);
+        }
+        $scan->cursor->take(strlen($match[0]));
+
+        return $scan->lexeme($name, $start);
     }
 
     /**

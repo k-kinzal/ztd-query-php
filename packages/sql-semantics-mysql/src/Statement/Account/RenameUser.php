@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RENAME USER old TO new, …`: a request to rename accounts, applied pair by pair in order.
@@ -27,7 +27,7 @@ final class RenameUser implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserRenaming> The renamings in order
+     * @var non-empty-list<UserRenaming> The renamings in order
      */
     public readonly array $renamings;
 
@@ -37,6 +37,7 @@ final class RenameUser implements Statement
     public function __construct(array $renamings)
     {
         $this->renamings = Check::listOf($renamings, UserRenaming::class, 'RENAME USER names at least one pair.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

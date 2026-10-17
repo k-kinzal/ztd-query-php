@@ -19,6 +19,17 @@ use SqlSemantics\Statement\Shape\RowShape;
 #[Medium]
 final class ShowFactsTest extends TestCase
 {
+    public function testShapeReadsStrictModeFromTheSessionSnapshot(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), strict: false);
+        $show = $semantics->analyze('SHOW FULL COLUMNS FROM t', $semantics->context([], true, null, $settings));
+
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $show->field(0)->nullability);
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $show->field(6)->nullability);
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::Nullable, $show->field(7)->nullability);
+    }
+
     public function testDeriveResolvesTheWhereConditionAgainstTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW VARIABLES WHERE Value = 1 AND nope = 2', []);

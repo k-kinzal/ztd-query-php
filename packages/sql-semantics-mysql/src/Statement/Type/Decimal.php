@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('10', '2');
  *     [$type->name(), $type->precision, $type->scale] // => ['DECIMAL', '10', '2']
  */
-final class Decimal implements TypeName
+final class Decimal implements DeclaredName
 {
     use Snapshot;
 

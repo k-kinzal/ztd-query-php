@@ -17,20 +17,21 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Derives the statements that define stored programs: routines, triggers and events.
  *
  * Rule: MYSQL-ROUTINE-001, MYSQL-TRIGGER-001, MYSQL-EVENT-001. A routine
- * body is derived in a scope whose outermost level holds the parameters as
- * one row (MYSQL-ROUTINE-PARAMETERS-001); a parameter name written twice is
- * reported (ER_SP_DUP_PARAM) and keeps its first meaning. A stored function
+ * body uses the routine's database, independent of the caller's current
+ * database, and is derived in a scope whose outermost level holds the parameters as
+ * one row (MYSQL-ROUTINE-PARAMETERS-001), with distinct identities enforced
+ * by ParameterList. A stored function
  * whose SQL body holds no RETURN is reported (ER_SP_NORETURN). A trigger
  * body is derived in a scope where NEW and OLD denote the row of the
  * trigger table (MYSQL-TRIGGER-ROWS-001) and SET assigns to the NEW row
@@ -62,27 +63,40 @@ final class ProgramFacts
     /**
      * Derives the parameters and the body of a stored procedure or function.
      */
-    public function routine(ParameterList $parameters, ExternalBody|ProgramStatement|Statement $body, ProgramKind $kind, QualifiedName $name, Derivation $derivation): void
+    public function routine(ParameterList $parameters, ExternalBody|ProgramStatement|Statement $body, ProgramKind $kind, QualifiedName $name, Derivation $derivation, ?\SqlSemantics\Platform\MySql\Statement\Type\TypeName $returns = null, ?\SqlSemantics\Platform\MySql\Statement\Name\CollationName $collation = null, bool $scopeComplete = true): void
     {
         $fact = $derivation->relation($parameters, $derivation->environment());
-        $scope = new ProgramScope($derivation->environment(), $kind);
-        $hidden = [];
-        $seen = [];
-        foreach ($parameters->parameters as $position => $parameter) {
-            if ($scope->holds($seen, $parameter->name)) {
-                $derivation->report(new ProgramProblem(ProgramRule::DuplicateParameter, $parameter->name->value));
-                $hidden[] = $position;
-            }
-            $seen[] = $parameter->name;
+        if ($returns !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($returns, $derivation);
+            (new Declaration\DeclaredCollation())->warn($collation, $derivation);
+            (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($returns, '', $derivation);
+        }
+        $problem = $returns === null ? null : $this->returnCollation($returns, $derivation->context->profile->grammar);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
         }
         if ($body instanceof ExternalBody) {
             return;
         }
-        $environment = new Environment($derivation->context, null, [new VisibleRelation($parameters, $fact->shape, null, null, $hidden)]);
-        (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, $kind));
+        $context = $derivation->context;
+        if ($name->schema !== null) {
+            $context = new \SqlSemantics\Contract\AnalysisContext($context->profile, [$name->schema], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema, $context->session, $context->foldedSchemas);
+        }
+        $environment = new Environment($context, null, [new VisibleRelation($parameters, $fact->shape)]);
+        (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, $kind, complete: $scopeComplete));
         if ($kind === ProgramKind::Function && !(new ReturnSearch())->found($body)) {
             $derivation->report(new ProgramProblem(ProgramRule::MissingReturn, $name->name->value));
         }
+    }
+
+    /**
+     * Identifies the implicit binary collation that a function return declaration cannot carry.
+     * National types select their own collation on MySQL 8 and later.
+     */
+    public function returnCollation(\SqlSemantics\Platform\MySql\Statement\Type\TypeName $returns, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet
+    {
+        return (new Declaration\ReturnCollation())->problem($returns, $release);
     }
 
     /**

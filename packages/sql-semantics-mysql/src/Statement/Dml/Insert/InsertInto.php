@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Insert;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
@@ -17,7 +19,8 @@ use SqlSemantics\Statement\Snapshot;
  * Mirrors the server's `PT_insert` with its `is_replace` flag: REPLACE
  * deletes a row that duplicates a unique key before it inserts the new one.
  * REPLACE takes no IGNORE and no HIGH_PRIORITY; the written table has no
- * correlation name. The keyword INTO is optional and always written.
+ * correlation name. The keyword INTO is optional and always written. The
+ * hints of the comment written right after the verb are kept with it.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html, https://dev.mysql.com/doc/refman/8.4/en/replace.html.
  *
  * @visibility public
@@ -30,11 +33,17 @@ final class InsertInto implements Node
     use Snapshot;
 
     /**
+     * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
+     */
+    public readonly array $hints;
+
+    /**
      * @param bool $replace Whether the verb is REPLACE
      * @param InsertPriority|null $priority The scheduling modifier
      * @param bool $ignore Whether IGNORE turns errors into warnings
      * @param WriteTarget $table The table the rows are written to
      * @param ColumnList|null $columns The columns written; null for every column of the table
+     * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
      * @throws InvalidConstruction When REPLACE has IGNORE or HIGH_PRIORITY, or the table has a correlation name
      */
     public function __construct(
@@ -43,7 +52,9 @@ final class InsertInto implements Node
         public readonly bool $ignore,
         public readonly WriteTarget $table,
         public readonly ?ColumnList $columns = null,
+        array $hints = [],
     ) {
+        $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         Check::input(!$replace || (!$ignore && $priority !== InsertPriority::High), 'REPLACE takes neither IGNORE nor HIGH_PRIORITY.');
         Check::input($table->alias === null, 'The table of INSERT and REPLACE has no correlation name.');
     }
@@ -54,6 +65,10 @@ final class InsertInto implements Node
     public function render(Output $out): void
     {
         $out->keyword($this->replace ? 'REPLACE' : 'INSERT');
+        $comment = (new HintComment($this->hints))->text();
+        if ($comment !== null) {
+            $out->comment($comment);
+        }
         if ($this->priority !== null) {
             $out->keyword($this->priority->value);
         }

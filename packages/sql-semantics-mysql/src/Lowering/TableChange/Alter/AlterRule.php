@@ -80,19 +80,22 @@ final class AlterRule
      * Lowers ALTER TABLE: a production of `alter` routed to this family, or a node of `alter_table_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Form $form): AlterTable
     {
+        $this->lowering->columnTable = $this->lowering->names->qualified($form->node(str_contains($form->signature, 'opt_ignore') ? 3 : 2));
         return match ($form->signature) {
             'alter: ALTER opt_ignore TABLE_SYM table_ident alter_commands' => new AlterTable(
-                $this->lowering->names->qualified($form->node(3)),
+                $this->lowering->columnTable,
                 $this->commands($form->node(4)),
                 $this->lowering->options->present($form->node(1)),
             ),
             'alter: ALTER TABLE_SYM table_ident alter_commands',
             'alter_table_stmt: ALTER TABLE_SYM table_ident opt_alter_table_actions',
             'alter_table_stmt: ALTER TABLE_SYM table_ident standalone_alter_table_action' => new AlterTable(
-                $this->lowering->names->qualified($form->node(2)),
+                $this->lowering->columnTable,
                 $this->commands($form->node(3)),
             ),
             default => throw ImplementationGap::production($form),
@@ -104,6 +107,8 @@ final class AlterRule
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function commands(Node $node): array
     {
@@ -136,6 +141,8 @@ final class AlterRule
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function others(Form $form): array
     {
@@ -161,6 +168,8 @@ final class AlterRule
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function items(Node $list): array
     {

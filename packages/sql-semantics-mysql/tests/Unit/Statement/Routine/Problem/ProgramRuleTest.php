@@ -16,6 +16,7 @@ final class ProgramRuleTest extends TestCase
     public function testCasesHoldTheirMessagePatterns(): void
     {
         self::assertSame([
+            "Incorrect routine name '%s'", "Identifier name '%s' is too long",
             'Duplicate parameter: %s',
             'Duplicate variable: %s',
             'Duplicate condition: %s',
@@ -46,13 +47,14 @@ final class ProgramRuleTest extends TestCase
             'Updating of OLD row is not allowed in trigger',
             'Updating of NEW row is not allowed in after trigger',
             'There is no NEW row in on DELETE trigger',
+            'Incorrect usage of CAST( .. AS .. ARRAY) and stored routines',
         ], array_map(static fn (ProgramRule $rule): string => $rule->value, ProgramRule::cases()));
     }
 
     public function testCasesNameTheCasesOfTheServerErrors(): void
     {
         self::assertSame([
-            'DuplicateParameter',
+            'IncorrectName', 'NameTooLong', 'DuplicateParameter',
             'DuplicateVariable',
             'DuplicateCondition',
             'DuplicateCursor',
@@ -82,6 +84,7 @@ final class ProgramRuleTest extends TestCase
             'OldRowUpdate',
             'AfterRowUpdate',
             'NoNewRow',
+            'ArrayCast',
         ], array_map(static fn (ProgramRule $rule): string => $rule->name, ProgramRule::cases()));
     }
 }

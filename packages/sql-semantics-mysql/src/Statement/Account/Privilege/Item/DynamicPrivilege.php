@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading a dynamic privilege
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT BACKUP_ADMIN ON *.* TO u')->statement->privileges[0]->name->value // => 'BACKUP_ADMIN'
  */
-final class DynamicPrivilege implements Grantable
+final class DynamicPrivilege implements Privilege
 {
     use Snapshot;
 

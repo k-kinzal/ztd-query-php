@@ -37,4 +37,20 @@ final class ColumnDefinitionTest extends TestCase
     {
         self::assertSame('CREATE TABLE t (t.a INT NOT NULL)', (new Semantics(Dialect::MySql, '5.7.44'))->analyze('CREATE TABLE t (t.a INT NOT NULL)')->toString());
     }
+    public function testSridResolvesTheLastRestrictionWithoutChangingItsSpelling(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a POINT SRID 99999999 SRID 0x10E6, b POINT SRID 0, c POINT)');
+        $statement = $operation->statement;
+        self::assertInstanceOf(CreateTable::class, $statement);
+        $first = $statement->elements[0];
+        $second = $statement->elements[1];
+        $third = $statement->elements[2];
+        self::assertInstanceOf(ColumnDefinition::class, $first);
+        self::assertInstanceOf(ColumnDefinition::class, $second);
+        self::assertInstanceOf(ColumnDefinition::class, $third);
+
+        self::assertSame([4326, 0, null], [$first->srid(), $second->srid(), $third->srid()]);
+        self::assertStringContainsString("SRID 99999999 SRID x'10E6'", $operation->toString());
+    }
+
 }

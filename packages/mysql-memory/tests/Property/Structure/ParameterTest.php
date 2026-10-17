@@ -1,0 +1,82 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Property\Structure;
+
+use Fuzz\Structure\Bindings;
+use Fuzz\Structure\Choices;
+use Fuzz\Structure\Execution;
+use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Typing\Domain;
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
+use SqlSemantics\Statement\Identifier\Name;
+
+/**
+ * Checks parameter binding from directly constructed trees with nested scopes.
+ */
+#[CoversNothing]
+#[Medium]
+final class ParameterTest extends TestCase
+{
+    /**
+     * Resolves parent result types from explicit NULL bindings instead of unbound placeholders.
+     */
+    public function testNullFixtureResolvesParametersInsideTypedParentExpressions(): void
+    {
+        $query = new Select([], [
+            new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat(\SqlSemantics\Platform\MySql\Statement\Call\Temporal\TemporalFormat::Date, new Parameter(':format'))),
+            new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation(new Parameter(), new Parameter())),
+            new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression(null, [new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new Parameter())])),
+        ]);
+        $bindings = (new Bindings())->nulls($query);
+        $reply = (new Execution())->run($query, parameters: $bindings, mode: 'PIPES_AS_CONCAT');
+
+        self::assertCount(4, $bindings);
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([[null, null, null]], $reply->rows);
+    }
+
+    /**
+     * @return iterable<string, array{int, int}>
+     */
+    public static function providerBindings(): iterable
+    {
+        for ($seed = 0; $seed < 100; $seed++) {
+            $choices = new Choices('binding:' . $seed);
+            yield (string) $seed => [$choices->integer(-1000, 1000), $choices->integer(-1000, 1000)];
+        }
+    }
+
+    /**
+     * A derived table is resolved before the projection but reads the second input slot.
+     */
+    #[DataProvider('providerBindings')]
+    public function testInputsBindInWrittenOrderRatherThanDerivationOrder(int $projected, int $nested): void
+    {
+        $query = new Select([], [new SelectExpression(new Parameter())], new DerivedTable(new Select([], [new SelectExpression(new Parameter(), new Name('a'))]), new Name('t')), new Parameter());
+        $reply = (new Execution())->run($query, parameters: [[$projected, Domain::integer()], [$nested, Domain::integer()], [1, Domain::integer()]]);
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([[(string) $projected]], $reply->rows);
+    }
+    /**
+     * The named extension preserves occurrence order alongside positional markers.
+     */
+    #[DataProvider('providerBindings')]
+    public function testNamedAndPositionalInputsBindAcrossNestedScopes(int $projected, int $nested): void
+    {
+        $query = new Select([], [new SelectExpression(new Parameter(':projected'))], new DerivedTable(new Select([], [new SelectExpression(new Parameter(':nested'), new Name('a'))]), new Name('t')), new Parameter());
+        $reply = (new Execution())->run($query, parameters: [[$projected, Domain::integer()], [$nested, Domain::integer()], [1, Domain::integer()]]);
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([[(string) $projected]], $reply->rows);
+    }
+}

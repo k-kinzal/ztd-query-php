@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bef361b582618f51f85d383e15a2078f",
+    "content-hash": "d1bf766fc1febf9e35c49610090625e3",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -75,7 +75,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/bison-parser",
-                "reference": "441f0f29ebf98c6a50e3d7211789363224c56aa7"
+                "reference": "62c00046e85d3b63ba79f66bb9708e22ec2ca2c7"
             },
             "require": {
                 "php": "^8.1"
@@ -197,7 +197,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/deriver",
-                "reference": "544dcb5fae4f0176a22fed22c0a14d90538d0ba9"
+                "reference": "889c612afbdeea1308cdd6a0db607522f7e8d0d8"
             },
             "require": {
                 "ext-json": "*",
@@ -302,17 +302,13 @@
                     "phpunit --testsuite differential"
                 ],
                 "bench": [
-                    "@php bench/run.php"
+                    "@php bench/Bench.php"
                 ],
                 "fuzz": [
                     "@fuzz:smoke"
                 ],
                 "fuzz:smoke": [
-                    "@fuzz:seed",
                     "@php fuzz/run.php 100"
-                ],
-                "fuzz:seed": [
-                    "@php fuzz/seed.php"
                 ],
                 "fuzz:semantic": [
                     "@php fuzz/semantic.php 100"
@@ -336,7 +332,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/lemon-parser",
-                "reference": "6878535b93ab1e5cdeec5cb66a98ac0ee9ef769a"
+                "reference": "e01ef1ea6f71066edae1b7aea2d6be9a2e7dae5f"
             },
             "require": {
                 "php": "^8.1"
@@ -453,12 +449,170 @@
             }
         },
         {
+            "name": "k-kinzal/mysql-memory",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/mysql-memory",
+                "reference": "a851741e1a9404ec604806ee469b451dfbb990e3"
+            },
+            "require": {
+                "ext-bcmath": "*",
+                "ext-intl": "*",
+                "ext-mbstring": "*",
+                "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "k-kinzal/sql-semantics-mysql": "dev-main",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "ext-pdo_mysql": "*",
+                "fakerphp/faker": "^1.23",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/container": "dev-main",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "suggest": {
+                "ext-mysqli": "To connect to the server with mysqli",
+                "ext-pdo_mysql": "To connect to the server with PDO"
+            },
+            "bin": [
+                "bin/mysql-memory"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MySqlMemory\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/mysql-memory"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:expression": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/expression') || mkdir('fuzz/corpus/expression', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_expression.php fuzz/corpus/expression/ --timeout=60"
+                ],
+                "fuzz:query": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/query') || mkdir('fuzz/corpus/query', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_query.php fuzz/corpus/query/ --timeout=60"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:expression --max-runs=100",
+                    "@fuzz:query --max-runs=100",
+                    "@fuzz:write --max-runs=100",
+                    "@fuzz:statement --max-runs=100"
+                ],
+                "fuzz:write": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/write') || mkdir('fuzz/corpus/write', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_write.php fuzz/corpus/write/ --timeout=60"
+                ],
+                "fuzz:statement": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/statement') || mkdir('fuzz/corpus/statement', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_statement.php fuzz/corpus/statement/ --timeout=60"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:integration": [
+                    "phpunit --testsuite integration"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "An in-memory MySQL server for tests: SQL is parsed and bound with SQL Semantics and executed over in-memory tables, reachable through PDO and mysqli",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/mysql-memory",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/mysql-memory/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/sql-catalog",
             "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "packages/sql-catalog",
-                "reference": "537962001fc90543e60979f837af50fc6ab373e7"
+                "reference": "dc8666747f5aa6404e20af982f7734c984106cf4"
             },
             "require": {
                 "ext-json": "*",
@@ -598,7 +752,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "98adb9f3138fdbf662eff4f3a8eddbe8438fe4ad"
+                "reference": "96ea9cde11e113e5b86d092181896e525173bcb6"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -744,7 +898,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Faker Provider for generating syntactically valid SQL statements",
+            "description": "Grammar-based SQL generator for MySQL, PostgreSQL, and SQLite, with a FakerPHP provider",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/"
@@ -759,7 +913,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "727486768564090ef9e8509b0f21ac4bab3f709a"
+                "reference": "f906969984cfd311d046bb29f8ca41f886bdedb5"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -888,7 +1042,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Generate PHP-Faker based fixtures from SQL schemas",
+            "description": "FakerPHP provider that generates fixture rows from MySQL, PostgreSQL, and SQLite table definitions",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-fixture/"
@@ -903,7 +1057,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-formatter",
-                "reference": "c8706d38c29c2787f2dac7ba5edc41ed63fd74c1"
+                "reference": "8db334d078d2973d6542008e37dbe1573a0d07f7"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1127,15 +1281,15 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-parser",
-                "reference": "4400aaab117b7ff3685fb6bab3bc0eb64c531dcd"
+                "reference": "89da4242e0de089acda3b0007d97230119df9368"
             },
             "require": {
-                "ext-zlib": "*",
                 "php": "^8.1"
             },
             "require-dev": {
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
+                "ext-zlib": "*",
                 "fakerphp/faker": "^1.23",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/bison-parser": "dev-main",
@@ -1151,6 +1305,7 @@
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
             "suggest": {
+                "ext-zlib": "Read legacy deflated custom parse-table caches; shipped tables do not require it",
                 "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL parse tables with bin/build-mysql.php and bin/build-pg.php",
                 "k-kinzal/lemon-parser": "To rebuild the SQLite parse tables with bin/build-sqlite.php"
             },
@@ -1273,7 +1428,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite built from the official grammars",
+            "description": "Lossless LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite, built from the official grammars",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"
@@ -1288,7 +1443,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics",
-                "reference": "64e3a90b2e2f120bb18bf6960cfa10aa43bc0f61"
+                "reference": "37bb0a74ebc759ae270ff90f7c3ae8f622beb564"
             },
             "require": {
                 "composer-runtime-api": "^2.2",
@@ -1312,9 +1467,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/build-models.php"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1400,7 +1552,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Typed SQL statement analysis and reconstruction, with schema-dependent binding and value provenance",
+            "description": "Typed statement models, SQL reconstruction, and schema binding for MySQL, PostgreSQL, and SQLite",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"
@@ -1415,7 +1567,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-mysql",
-                "reference": "11fa5f3bddc2692c24a561feca11173209701cf8"
+                "reference": "d792dea810cd1373d03e93634e44ef218eade435"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1442,8 +1594,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\MySql\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\MySql\\": "resources/models/"
+                    "SqlSemantics\\Platform\\MySql\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1465,12 +1616,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=mysql --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1506,14 +1651,20 @@
                 ],
                 "fuzz:roundtrip": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:seeds --",
-                    "@php fuzz/run.php mysql"
+                    "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_roundtrip.php fuzz/corpus/mysql/ --timeout=60"
                 ],
-                "fuzz:seeds": [
-                    "@php fuzz/seed.php mysql"
+                "fuzz:schema": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/mysql-schema') || mkdir('fuzz/corpus/mysql-schema', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_schema.php fuzz/corpus/mysql-schema/ --timeout=60"
                 ],
                 "fuzz:smoke": [
-                    "@fuzz:roundtrip --max-runs=100"
+                    "@fuzz:roundtrip --max-runs=100",
+                    "@fuzz:schema --max-runs=100"
+                ],
+                "ledger": [
+                    "@php vendor/k-kinzal/sql-semantics/bin/production-ledger.php ."
                 ],
                 "lint": [
                     "@autoload:check",
@@ -1546,7 +1697,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "MySql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "MySQL statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-mysql",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/"
@@ -1561,7 +1712,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-postgres",
-                "reference": "796a89c417a4cbf0f5079929817276d5fc9da154"
+                "reference": "deafb8ecfb32e7f142d0ee7772c633b04e6a8d5f"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1588,8 +1739,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\PostgreSql\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\PostgreSql\\": "resources/models/"
+                    "SqlSemantics\\Platform\\PostgreSql\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1611,12 +1761,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=postgresql --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1652,14 +1796,20 @@
                 ],
                 "fuzz:roundtrip": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:seeds --",
-                    "@php fuzz/run.php pg"
+                    "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_roundtrip.php fuzz/corpus/pg/ --timeout=60"
                 ],
-                "fuzz:seeds": [
-                    "@php fuzz/seed.php pg"
+                "fuzz:schema": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/pg-schema') || mkdir('fuzz/corpus/pg-schema', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_schema.php fuzz/corpus/pg-schema/ --timeout=60"
                 ],
                 "fuzz:smoke": [
-                    "@fuzz:roundtrip --max-runs=100"
+                    "@fuzz:roundtrip --max-runs=100",
+                    "@fuzz:schema --max-runs=100"
+                ],
+                "ledger": [
+                    "@php vendor/k-kinzal/sql-semantics/bin/production-ledger.php ."
                 ],
                 "lint": [
                     "@autoload:check",
@@ -1692,7 +1842,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "PostgreSql statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "PostgreSQL statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-postgres",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-postgres/"
@@ -1707,7 +1857,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-sqlite",
-                "reference": "8b03a4a3cbb727eeb0da260e0b094ee0b142108f"
+                "reference": "05850d3a43c78316c37e2acbb3c1ca8335218a1a"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1734,8 +1884,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\Sqlite\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\Sqlite\\": "resources/models/"
+                    "SqlSemantics\\Platform\\Sqlite\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1757,12 +1906,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=sqlite --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1798,14 +1941,20 @@
                 ],
                 "fuzz:roundtrip": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:seeds --",
-                    "@php fuzz/run.php sqlite"
+                    "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_roundtrip.php fuzz/corpus/sqlite/ --timeout=60"
                 ],
-                "fuzz:seeds": [
-                    "@php fuzz/seed.php sqlite"
+                "fuzz:schema": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/sqlite-schema') || mkdir('fuzz/corpus/sqlite-schema', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_schema.php fuzz/corpus/sqlite-schema/ --timeout=60"
                 ],
                 "fuzz:smoke": [
-                    "@fuzz:roundtrip --max-runs=100"
+                    "@fuzz:roundtrip --max-runs=100",
+                    "@fuzz:schema --max-runs=100"
+                ],
+                "ledger": [
+                    "@php vendor/k-kinzal/sql-semantics/bin/production-ledger.php ."
                 ],
                 "lint": [
                     "@autoload:check",
@@ -1838,7 +1987,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Sqlite statement models, SQL reconstruction, and semantic binding for SQL Semantics",
+            "description": "SQLite statement models, SQL reconstruction, and schema binding for SQL Semantics",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics-sqlite",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/"
@@ -1853,7 +2002,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "d836177265a3d4c411fc8e9a59320e937f18a214"
+                "reference": "e7fb9dacfce0138e384b0a94a412b967282451dc"
             },
             "require": {
                 "php": "^8.1"
@@ -1932,14 +2081,13 @@
                 "fuzz": [
                     "@fuzz:smoke"
                 ],
+                "fuzz:session-state": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "php-fuzzer fuzz fuzz/fuzz_session_state.php --timeout=15"
+                ],
                 "fuzz:smoke": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:token-stream --max-runs=100"
-                ],
-                "fuzz:token-stream": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/token-stream') || mkdir('fuzz/corpus/token-stream', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
+                    "@fuzz:session-state --max-runs=100"
                 ],
                 "lint": [
                     "@autoload:check",
@@ -1954,7 +2102,7 @@
                     "loc-guard --config=loc.yaml"
                 ],
                 "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
+                    "phpstan analyse --memory-limit=1G"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -1972,7 +2120,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Zero Table Dependencies query layer for PHP",
+            "description": "Zero Table Dependency testing for PHP: the database-independent core of ZTD Query",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-core",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-core/"
@@ -1987,7 +2135,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "447090c1846bbdc9a727ad6574f14eeb1aba3f69"
+                "reference": "da05dad57679d91ebb9dd052ac44e64c5867c4ef"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1998,6 +2146,7 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/container": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
@@ -2069,26 +2218,21 @@
                 "fuzz": [
                     "@fuzz:smoke"
                 ],
-                "fuzz:robustness": [
+                "fuzz:behavior": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness') || mkdir('fuzz/corpus/robustness', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
+                    "@php -r \"is_dir('fuzz/corpus/behavior') || mkdir('fuzz/corpus/behavior', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/behavior/ --timeout=60"
                 ],
-                "fuzz:robustness:classify": [
+                "fuzz:fixtures": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
-                ],
-                "fuzz:robustness:rewrite": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
+                    "@putenv ZTD_FUZZ_FIXTURES=1",
+                    "@php -r \"is_dir('fuzz/corpus/fixtures') || mkdir('fuzz/corpus/fixtures', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/fixtures/ --timeout=60"
                 ],
                 "fuzz:smoke": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:robustness --max-runs=100",
-                    "@fuzz:robustness:classify --max-runs=100",
-                    "@fuzz:robustness:rewrite --max-runs=100"
+                    "@fuzz:behavior --max-runs=100",
+                    "@fuzz:fixtures --max-runs=100"
                 ],
                 "lint": [
                     "@autoload:check",
@@ -2103,7 +2247,7 @@
                     "loc-guard --config=loc.yaml"
                 ],
                 "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
+                    "phpstan analyse --memory-limit=1G"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -2136,7 +2280,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "dcc13cd7889ca5576d014353f522188b30108fac"
+                "reference": "952a0b4cbe665ae2f1854030cc75962371f0e534"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -2150,9 +2294,7 @@
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/container": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "k-kinzal/sql-faker": "dev-main",
                 "k-kinzal/sql-fixture": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -2215,48 +2357,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:correctness:delete": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-delete') || mkdir('fuzz/corpus/correctness-delete', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/"
-                ],
-                "fuzz:correctness:insert": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-insert') || mkdir('fuzz/corpus/correctness-insert', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/"
-                ],
-                "fuzz:correctness:replace": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-replace') || mkdir('fuzz/corpus/correctness-replace', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace/"
-                ],
-                "fuzz:correctness:select": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-select') || mkdir('fuzz/corpus/correctness-select', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/"
-                ],
-                "fuzz:correctness:update": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-update') || mkdir('fuzz/corpus/correctness-update', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/"
-                ],
-                "fuzz:robustness": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-execute') || mkdir('fuzz/corpus/robustness-execute', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:robustness --max-runs=100",
-                    "@fuzz:correctness:select --max-runs=100",
-                    "@fuzz:correctness:insert --max-runs=100",
-                    "@fuzz:correctness:replace --max-runs=100",
-                    "@fuzz:correctness:update --max-runs=100",
-                    "@fuzz:correctness:delete --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -2270,7 +2370,7 @@
                     "loc-guard --config=loc.yaml"
                 ],
                 "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
+                    "phpstan analyse --memory-limit=1G"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -2306,7 +2406,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "b50714036ca61ac57ab2b81d0d26eca274c493a7"
+                "reference": "19cba32ce1e686b833e44169337f949d2ca5b0ac"
             },
             "require": {
                 "ext-pdo": "*",
@@ -2319,12 +2419,10 @@
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/container": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "k-kinzal/sql-faker": "dev-main",
                 "k-kinzal/sql-fixture": "dev-main",
                 "k-kinzal/ztd-query-mysql": "dev-main",
                 "k-kinzal/ztd-query-postgres": "dev-main",
                 "k-kinzal/ztd-query-sqlite": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -2392,102 +2490,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:correctness:delete": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-delete') || mkdir('fuzz/corpus/correctness-delete', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/"
-                ],
-                "fuzz:correctness:insert": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-insert') || mkdir('fuzz/corpus/correctness-insert', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/"
-                ],
-                "fuzz:correctness:pg:ctas": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-pg-ctas') || mkdir('fuzz/corpus/correctness-pg-ctas', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_pg_ctas.php fuzz/corpus/correctness-pg-ctas/"
-                ],
-                "fuzz:correctness:pg:delete": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-pg-delete') || mkdir('fuzz/corpus/correctness-pg-delete', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_pg_delete.php fuzz/corpus/correctness-pg-delete/"
-                ],
-                "fuzz:correctness:pg:insert": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-pg-insert') || mkdir('fuzz/corpus/correctness-pg-insert', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_pg_insert.php fuzz/corpus/correctness-pg-insert/"
-                ],
-                "fuzz:correctness:pg:select": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-pg-select') || mkdir('fuzz/corpus/correctness-pg-select', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_pg_select.php fuzz/corpus/correctness-pg-select/"
-                ],
-                "fuzz:correctness:pg:update": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-pg-update') || mkdir('fuzz/corpus/correctness-pg-update', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_pg_update.php fuzz/corpus/correctness-pg-update/"
-                ],
-                "fuzz:correctness:select": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-select') || mkdir('fuzz/corpus/correctness-select', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/"
-                ],
-                "fuzz:correctness:sqlite:alter": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-alter') || mkdir('fuzz/corpus/correctness-sqlite-alter', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_alter.php fuzz/corpus/correctness-sqlite-alter/"
-                ],
-                "fuzz:correctness:sqlite:delete": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-delete') || mkdir('fuzz/corpus/correctness-sqlite-delete', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_delete.php fuzz/corpus/correctness-sqlite-delete/"
-                ],
-                "fuzz:correctness:sqlite:insert": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-insert') || mkdir('fuzz/corpus/correctness-sqlite-insert', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_insert.php fuzz/corpus/correctness-sqlite-insert/"
-                ],
-                "fuzz:correctness:sqlite:select": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-select') || mkdir('fuzz/corpus/correctness-sqlite-select', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_select.php fuzz/corpus/correctness-sqlite-select/"
-                ],
-                "fuzz:correctness:sqlite:update": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-update') || mkdir('fuzz/corpus/correctness-sqlite-update', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_update.php fuzz/corpus/correctness-sqlite-update/"
-                ],
-                "fuzz:correctness:update": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/correctness-update') || mkdir('fuzz/corpus/correctness-update', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/"
-                ],
-                "fuzz:robustness": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-execute') || mkdir('fuzz/corpus/robustness-execute', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:robustness --max-runs=100",
-                    "@fuzz:correctness:select --max-runs=100",
-                    "@fuzz:correctness:insert --max-runs=100",
-                    "@fuzz:correctness:update --max-runs=100",
-                    "@fuzz:correctness:delete --max-runs=100",
-                    "@fuzz:correctness:sqlite:select --max-runs=100",
-                    "@fuzz:correctness:sqlite:insert --max-runs=100",
-                    "@fuzz:correctness:sqlite:update --max-runs=100",
-                    "@fuzz:correctness:sqlite:delete --max-runs=100",
-                    "@fuzz:correctness:sqlite:alter --max-runs=100",
-                    "@fuzz:correctness:pg:select --max-runs=100",
-                    "@fuzz:correctness:pg:insert --max-runs=100",
-                    "@fuzz:correctness:pg:update --max-runs=100",
-                    "@fuzz:correctness:pg:delete --max-runs=100",
-                    "@fuzz:correctness:pg:ctas --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -2501,7 +2503,7 @@
                     "loc-guard --config=loc.yaml"
                 ],
                 "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
+                    "phpstan analyse --memory-limit=1G"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -2537,7 +2539,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "b4970aa3c13aca6d71d9a3fe0cede243945c74c3"
+                "reference": "e0767d61f46c27056db308286caf75b9960f5c65"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2547,6 +2549,7 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/container": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
@@ -2618,26 +2621,21 @@
                 "fuzz": [
                     "@fuzz:smoke"
                 ],
-                "fuzz:robustness": [
+                "fuzz:behavior": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness') || mkdir('fuzz/corpus/robustness', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
+                    "@php -r \"is_dir('fuzz/corpus/behavior') || mkdir('fuzz/corpus/behavior', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/behavior/ --timeout=60"
                 ],
-                "fuzz:robustness:classify": [
+                "fuzz:fixtures": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
-                ],
-                "fuzz:robustness:rewrite": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
+                    "@putenv ZTD_FUZZ_FIXTURES=1",
+                    "@php -r \"is_dir('fuzz/corpus/fixtures') || mkdir('fuzz/corpus/fixtures', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/fixtures/ --timeout=60"
                 ],
                 "fuzz:smoke": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:robustness --max-runs=100",
-                    "@fuzz:robustness:classify --max-runs=100",
-                    "@fuzz:robustness:rewrite --max-runs=100"
+                    "@fuzz:behavior --max-runs=100",
+                    "@fuzz:fixtures --max-runs=100"
                 ],
                 "lint": [
                     "@autoload:check",
@@ -2652,16 +2650,13 @@
                     "loc-guard --config=loc.yaml"
                 ],
                 "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
+                    "phpstan analyse --memory-limit=1G"
                 ],
                 "test": [
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
                     "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:fuzz": [
-                    "phpunit fuzz/"
                 ],
                 "test:unit": [
                     "phpunit --testsuite unit"
@@ -2688,7 +2683,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "8dca125e494c34a9c5e3ef3842627ae77eed96e6"
+                "reference": "a6c0b6c2ecabfdb02f90263c38d87ecb66e00057"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2769,29 +2764,21 @@
                 "fuzz": [
                     "@fuzz:smoke"
                 ],
-                "fuzz:robustness": [
-                    "@fuzz:semantics"
-                ],
-                "fuzz:robustness:classify": [
+                "fuzz:behavior": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
+                    "@php -r \"is_dir('fuzz/corpus/behavior') || mkdir('fuzz/corpus/behavior', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/behavior/ --timeout=60"
                 ],
-                "fuzz:robustness:rewrite": [
+                "fuzz:fixtures": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
-                ],
-                "fuzz:semantics": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/semantics') || mkdir('fuzz/corpus/semantics', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_semantics.php fuzz/corpus/semantics/"
+                    "@putenv ZTD_FUZZ_FIXTURES=1",
+                    "@php -r \"is_dir('fuzz/corpus/fixtures') || mkdir('fuzz/corpus/fixtures', 0777, true);\" --",
+                    "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_behavior.php fuzz/corpus/fixtures/ --timeout=60"
                 ],
                 "fuzz:smoke": [
                     "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:robustness:classify --max-runs=100",
-                    "@fuzz:robustness:rewrite --max-runs=100",
-                    "@fuzz:semantics --max-runs=100"
+                    "@fuzz:behavior --max-runs=100",
+                    "@fuzz:fixtures --max-runs=100"
                 ],
                 "lint": [
                     "@autoload:check",
@@ -2806,7 +2793,7 @@
                     "loc-guard --config=loc.yaml"
                 ],
                 "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
+                    "phpstan analyse --memory-limit=1G"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -3665,7 +3652,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/requirements",
-                "reference": "d1896e73a8baba0540ffee2a3f80b224f79709fd"
+                "reference": "ca179f539fd5b1396197a6aa2fce62889aadae9e"
             },
             "require": {
                 "ext-dom": "*",
@@ -3683,10 +3670,15 @@
             },
             "require-dev": {
                 "behat/behat": "^3.14",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
                 "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5"
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
             },
             "bin": [
                 "bin/requirements"
@@ -3699,18 +3691,35 @@
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Requirements\\Tests\\": "tests/"
+                    "Tests\\": "tests/"
                 }
             },
             "scripts": {
                 "autoload:check": [
                     "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
                 ],
-                "test": [
-                    "phpunit"
+                "compat": [
+                    "phpcs"
                 ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=1G"
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/requirements"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
                 ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
@@ -3721,15 +3730,41 @@
                 "lint": [
                     "@autoload:check",
                     "@format:check",
-                    "@phpstan"
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:integration": [
+                    "phpunit --testsuite integration"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
                 ]
             },
             "license": [
                 "MIT"
             ],
-            "description": "Specification verification and source traceability for PHP projects",
+            "description": "Links source text, EARS specifications, and tests for PHP projects",
             "support": {
-                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/requirements"
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/requirements",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/requirements/"
             },
             "transport-options": {
                 "relative": true
@@ -5513,6 +5548,7 @@
         "k-kinzal/bison-parser": 20,
         "k-kinzal/deriver": 20,
         "k-kinzal/lemon-parser": 20,
+        "k-kinzal/mysql-memory": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/requirements": 20,
         "k-kinzal/sql-catalog": 20,

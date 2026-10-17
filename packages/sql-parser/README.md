@@ -86,6 +86,22 @@ $parser = new PostgreSqlParser(parameters: ParameterSyntax::Named);
 $parser->parse('SELECT id FROM users WHERE id = :id');
 ```
 
+MySQL also implements `SqlParser\Parser\ReductionParser`. Its optional second argument observes completed visible productions, including those completed before a later syntax error:
+
+```php
+$parser = new SqlParser\MySql\MySqlParser('mysql-8.4.7');
+$completed = [];
+try {
+    $parser->parse('SELECT BINARY 1, )', static function (SqlParser\Parser\Node $node, SqlParser\Lexer\Token $lookahead) use (&$completed): void {
+        $completed[] = [$node->name, $lookahead->offset];
+    });
+} catch (SqlParser\Parser\SyntaxException $error) {
+    // Completed reductions are available; the original syntax error still propagates.
+}
+```
+
+The callback receives the next token used for the reduction decision. Hidden grammar actions produce no notification. The parser's normal return value remains the lossless root node, and registering an observer does not accept otherwise invalid SQL. Consumers that retain observations should extract only the information they need from the temporary nodes.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

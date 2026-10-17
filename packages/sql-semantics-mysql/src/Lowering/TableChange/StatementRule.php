@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming;
 use SqlSemantics\Platform\MySql\Statement\Alter\TargetTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the statements of the table change family other than the actions of ALTER TABLE.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Statement;
  * MYSQL-ALTER-STATEMENT-001. TABLE and TABLES are synonyms; the TABLE of
  * TRUNCATE is optional. RENAME USER belongs to the account family, which
  * lowers its list. Constructs: DropTable, DropIndex, RenameTable,
- * TableRenaming, TruncateTable, TargetTable, PartitionEntry. Terminates:
+ * TableRenaming, TruncateTable, TargetTable. Standalone partitioning is refused. Terminates:
  * lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/drop-index.html,
@@ -77,6 +77,8 @@ final class StatementRule
      * Lowers one statement of the family.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Form $form): Statement
     {

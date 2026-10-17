@@ -127,13 +127,13 @@ final class BlockRuleTest extends TestCase
     #[DataProvider('providerDeclarationLowersAVariableWithItsCollationAndDefault')]
     public function testDeclarationLowersAVariableWithItsCollationAndDefault(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare s varchar(5) collate utf8mb4_bin default 'a'; end");
+        $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare s varchar(5) character set utf8mb4 collate utf8mb4_bin default 'a'; end");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertEquals([new VariableDeclaration([new Name('s')], new Character(CharacterKind::VarChar, '5'), new CollationName(new Name('utf8mb4_bin')), new StringLiteral(['a']))], $statement->body->declarations);
-        self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE s VARCHAR(5) COLLATE utf8mb4_bin DEFAULT 'a'; END", $operation->toString());
+        self::assertEquals([new VariableDeclaration([new Name('s')], new Character(CharacterKind::VarChar, '5', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), new StringLiteral(['a']))], $statement->body->declarations);
+        self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE s VARCHAR(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'a'; END", $operation->toString());
     }
 
     /**
@@ -161,7 +161,7 @@ final class BlockRuleTest extends TestCase
         self::assertInstanceOf(CursorDeclaration::class, $declaration);
 
         self::assertSame('c', $declaration->name->value);
-        self::assertInstanceOf($class, $declaration->query);
+        self::assertInstanceOf($class, $declaration->query->query);
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR ' . $rendering . '; END', $operation->toString());
     }
 

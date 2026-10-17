@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
@@ -24,6 +23,18 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class CreateLoadableFunctionTest extends TestCase
 {
+    public function testNameCollisionIncludesKeywordsAndReleaseSpecificFunctions(): void
+    {
+        $keyword = new CreateLoadableFunction(new Name('begin'), LoadableResult::Integer, new Text('./missing.so'));
+        $function = new CreateLoadableFunction(new Name('JSON_ARRAY'), LoadableResult::Integer, new Text('./missing.so'));
+        $ordinary = new CreateLoadableFunction(new Name('library'), LoadableResult::Integer, new Text('./missing.so'));
+
+        self::assertTrue($keyword->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertFalse($function->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertTrue($function->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse($ordinary->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testDeriveStatementChangesNoContext(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -83,6 +94,6 @@ final class CreateLoadableFunctionTest extends TestCase
     {
         $this->expectExceptionMessage('A library name is written as a quoted string.');
 
-        new CreateLoadableFunction(new Name('f'), LoadableResult::Real, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new CreateLoadableFunction(new Name('f'), LoadableResult::Real, new Text('41', Radix::Hexadecimal));
     }
 }

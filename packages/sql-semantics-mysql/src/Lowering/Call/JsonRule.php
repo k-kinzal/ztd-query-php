@@ -116,7 +116,7 @@ final class JsonRule
         return match ($response->signature) {
             'json_on_response: ERROR_SYM' => new JsonResponse(JsonResponseKind::Error),
             'json_on_response: NULL_SYM' => new JsonResponse(JsonResponseKind::Null),
-            'json_on_response: DEFAULT_SYM signed_literal' => new JsonResponse(JsonResponseKind::Default, $this->lowering->literals->literal($response->node(1))),
+            'json_on_response: DEFAULT_SYM signed_literal' => new JsonResponse(JsonResponseKind::Default, $this->lowering->literals->signed($response->node(1))),
             default => throw ImplementationGap::production($response),
         };
     }

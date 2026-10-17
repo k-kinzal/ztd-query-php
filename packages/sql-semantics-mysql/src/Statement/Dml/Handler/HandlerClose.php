@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HANDLER ... CLOSE: closes an open handler.
@@ -32,6 +32,8 @@ final class HandlerClose implements Statement
      */
     public function __construct(public readonly Name $handler)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check(new \SqlSemantics\Statement\Identifier\QualifiedName($handler));
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

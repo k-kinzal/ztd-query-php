@@ -8,9 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ANALYZE [NO_WRITE_TO_BINLOG | LOCAL] TABLE t, … [histogram]`: a request to update the key distribution statistics of tables, or their histograms.
@@ -46,6 +46,7 @@ final class AnalyzeTable implements Statement
     {
         $this->tables = (new MaintainedTables())->checked($tables);
 
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

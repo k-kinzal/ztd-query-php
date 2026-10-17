@@ -7,11 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Prepared;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * EXECUTE: runs a prepared statement with user variables for its parameter markers.
@@ -43,6 +43,7 @@ final class Execute implements Statement
     public function __construct(public readonly Name $name, array $variables = [])
     {
         $this->variables = Check::listOf($variables, UserVariable::class, 'EXECUTE ... USING takes user variables.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

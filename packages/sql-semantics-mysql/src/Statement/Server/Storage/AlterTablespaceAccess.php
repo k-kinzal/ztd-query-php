@@ -7,10 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER TABLESPACE name {READ_ONLY | READ_WRITE | NOT ACCESSIBLE}`: a request to change the access mode of a tablespace (MySQL 5.6 and 5.7).
@@ -37,6 +37,7 @@ final class AlterTablespaceAccess implements Statement
      */
     public function __construct(public readonly Name $name, public readonly TablespaceAccess $access)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

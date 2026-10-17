@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  * @visibility public
  * @example Reading the operator of an integer division
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a DIV 2');
- *     $query->statement->where->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide
+ *     $query->statement->query->where->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide
  */
 enum ArithmeticOperator: string
 {

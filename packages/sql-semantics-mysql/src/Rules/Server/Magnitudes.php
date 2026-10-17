@@ -55,11 +55,58 @@ final class Magnitudes
     }
 
     /**
-     * Tells whether a number is an integer: digits only, or a hexadecimal literal.
+     * Tells whether a number is an integer token: at most unsigned 64-bit decimal digits, or a hexadecimal literal.
      */
     public function integral(Numeral $number): bool
     {
-        return $number->hexadecimal || preg_match('/\A[0-9]+\z/', $number->text) === 1;
+        return $number->hexadecimal || (preg_match('/\A[0-9]+\z/', $number->text) === 1 && $this->atMost($number, '18446744073709551615'));
+    }
+
+    /**
+     * Resolves an EXPLAIN connection operand to the unsigned 32-bit thread identity.
+     *
+     * Decimal tokens retain their full unsigned range before narrowing. Hexadecimal tokens
+     * first saturate at the signed 64-bit limit. Verified through native SQL observations.
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the operand is not an integer token
+     */
+    public function connection(Numeral $number): int
+    {
+        Check::input($this->integral($number), 'An EXPLAIN connection identifier is an integer token.');
+
+        return $this->unsigned32($number);
+    }
+
+    /**
+     * Resolves an integer operand narrowed to 32 unsigned bits, including hexadecimal saturation.
+     * Verified through EXPLAIN identities and WEIGHT_STRING cast lengths on native releases.
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the operand is not an integer token
+     */
+    public function unsigned32(Numeral $number): int
+    {
+        Check::input($this->integral($number), 'An unsigned integer operand is an integer token.');
+
+        return $this->option32($number);
+    }
+
+    /**
+     * Reads an unsigned option's leading digits before narrowing to 32 bits.
+     * Unlike real_ulong_num, ulong_num permits fractional and exponent spellings;
+     * their suffix is not evaluated. Overflow saturates before narrowing.
+     */
+    public function option32(Numeral $number): int
+    {
+        $digits = ltrim($number->hexadecimal ? $this->decimal($number->text) : (string) preg_replace('/\A([0-9]*).*\z/s', '$1', $number->text), '0');
+        $limit = $number->hexadecimal ? self::LARGEST : '18446744073709551615';
+        if (strlen($digits) > strlen($limit) || strlen($digits) === strlen($limit) && strcmp($digits, $limit) > 0) {
+            $digits = $limit;
+        }
+        $identity = 0;
+        foreach (str_split($digits) as $digit) {
+            $identity = ($identity * 10 + (int) $digit) % 4294967296;
+        }
+
+        return $identity;
     }
 
     /**

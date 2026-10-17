@@ -28,6 +28,14 @@ final class InsertRuleTest extends TestCase
         self::assertSame('REPLACE INTO t SELECT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('replace t select 1')->toString());
     }
 
+    public function testLegacyRetainsTheHintsOfInsertAndReplace(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+
+        self::assertSame('INSERT /*+ QB_NAME(`b`) */ INTO t VALUES (1)', $semantics->analyze('INSERT /*+ QB_NAME(b) */ INTO t VALUES (1)')->toString());
+        self::assertSame('REPLACE /*+ QB_NAME(`b`) */ INTO t SET a = 2', $semantics->analyze('REPLACE /*+ QB_NAME(b) */ INTO t SET a=2')->toString());
+    }
+
     public function testBuildChoosesRowsOrQuery(): void
     {
         self::assertSame('INSERT INTO t VALUES (1)', (new Semantics(Dialect::MySql))->analyze('insert t values (1)')->toString());

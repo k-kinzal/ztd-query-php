@@ -9,17 +9,17 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\WindowResults;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
-use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
-use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
-use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * A call of a function that is only a window function: ranking, distribution, and the value functions LEAD, LAG, FIRST_VALUE, LAST_VALUE and NTH_VALUE.
@@ -45,13 +45,13 @@ final class WindowFunction implements Scalar
     use Snapshot;
 
     /**
-     * @var list<Scalar> The arguments in order
+     * @var list<Scalar|RoutineVariable> The arguments in order
      */
     public readonly array $arguments;
 
     /**
      * @param WindowFunctionKind $kind The function
-     * @param list<Scalar> $arguments The arguments in order
+     * @param list<Scalar|RoutineVariable> $arguments The arguments in order
      * @param Name|WindowSpecification $over The window written after OVER
      * @param NullTreatment|null $nulls The written RESPECT NULLS or IGNORE NULLS
      * @param CountingEdge|null $edge The written FROM FIRST or FROM LAST of NTH_VALUE
@@ -63,14 +63,13 @@ final class WindowFunction implements Scalar
         public readonly ?NullTreatment $nulls = null,
         public readonly ?CountingEdge $edge = null,
     ) {
-        $this->arguments = Check::listOf($arguments, Scalar::class, 'Window function arguments are expressions.');
-        [$minimum, $maximum] = $kind->arity();
-        Check::input(count($arguments) >= $minimum && count($arguments) <= $maximum, 'The grammar does not accept this number of arguments for ' . $kind->value . '.');
-        Check::input($nulls === null || $kind->treatsNulls(), $kind->value . ' takes no NULL treatment.');
-        Check::input($edge === null || $kind === WindowFunctionKind::NthValue, 'Only NTH_VALUE counts from an edge.');
-        $counted = $arguments[$kind->counted() ?? -1] ?? null;
-        Check::input($counted === null || $counted instanceof NumberLiteral || $counted instanceof Parameter || $counted instanceof UserVariable || $counted instanceof RoutineVariable, 'The count is an integer, a parameter marker or a variable.');
-        Check::input($kind !== WindowFunctionKind::NthValue || (new Precedence())->admits($arguments[1], Precedence::SIMPLE_EXPR), 'The row number of NTH_VALUE needs a grouping.');
+        $values = [];
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->checked($kind, $arguments, $nulls, $edge) as $argument) {
+            Check::input($argument instanceof Scalar || $argument instanceof RoutineVariable, 'An ordinary window call requires scalar arguments.');
+            $values[] = $argument;
+        }
+        $this->arguments = $values;
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -80,11 +79,15 @@ final class WindowFunction implements Scalar
     {
         $facts = [];
         foreach ($this->arguments as $argument) {
-            $facts[] = (new Arguments())->one($argument, $derivation, $environment);
+            $facts[] = $argument instanceof RoutineVariable ? $derivation->scalar($argument, $environment) : (new Arguments())->one($argument, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
+        $fact = (new WindowResults())->result($this, $facts, $derivation);
+        $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
+        $results = new WindowResults();
+        $domain = $arguments === null ? null : $results->resolved($this, $arguments, $derivation, false);
 
-        return (new WindowResults())->result($this, $facts, $derivation);
+        return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
     }
 
     /**

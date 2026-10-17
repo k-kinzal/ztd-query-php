@@ -1,0 +1,3110 @@
+{
+    "SqlSemantics\\Platform\\PostgreSql\\Dialect": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Lowering\\Family": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\AlterDefaultPrivileges": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\DefaultGrant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\DefaultRevoke",
+        "scopes": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\DefaultGrant": {
+        "grantOption": "bool",
+        "grantees": "array",
+        "objects": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\DefaultObjectKind",
+        "privileges": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\DefaultObjectKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\DefaultRevoke": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "grantOptionOnly": "bool",
+        "grantees": "array",
+        "objects": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\DefaultObjectKind",
+        "privileges": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\ForRoles": {
+        "roles": "array",
+        "word": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RoleWord"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Defaults\\InSchemas": {
+        "schemas": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Owned\\DropOwned": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "roles": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Owned\\ReassignOwned": {
+        "newOwner": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "owners": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Grant": {
+        "grantOption": "bool",
+        "grantees": "array",
+        "grantor": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "privileges": "array",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeTarget"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\GrantRole": {
+        "grantor": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "members": "array",
+        "options": "array",
+        "roles": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\MembershipOption": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "setting": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\MembershipSetting"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\MembershipSetting": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Privilege": {
+        "columns": "array",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\PrivilegeKeyword|SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\PrivilegeKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\Revoke": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "grantOptionOnly": "bool",
+        "grantees": "array",
+        "grantor": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "privileges": "array",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeTarget"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Privilege\\RevokeRole": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "grantor": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "members": "array",
+        "option": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "roles": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Problem\\AccessProblem": {
+        "rule": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Problem\\AccessProblemRule",
+        "subjects": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Problem\\AccessProblemRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\AlterGroupMembers": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\AddOrDrop",
+        "group": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "members": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\AlterRole": {
+        "options": "array",
+        "role": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "word": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RoleWord"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\AlterRoleSetting": {
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "role": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "setting": "SqlSemantics\\Statement\\Statement",
+        "word": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RoleWord"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\CreateRole": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "word": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RoleWord"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\DropRole": {
+        "ifExists": "bool",
+        "roles": "array",
+        "word": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RoleWord"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleAttribute": {
+        "word": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleConnectionLimit": {
+        "limit": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber",
+        "magnitude": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleFlag": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleInherit": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleMembers": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleMembersKind",
+        "roles": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleMembersKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RolePassword": {
+        "password": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "unencrypted": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleSystemId": {
+        "identifier": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Role\\RoleValidity": {
+        "until": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\LargeObjectsTarget": {
+        "identifiers": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\NamedObjectsTarget": {
+        "names": "array",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeObjectKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\ParameterName": {
+        "parts": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\ParametersTarget": {
+        "parameters": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeObjectKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\RelationsTarget": {
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeObjectKind",
+        "relations": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\RoutinesTarget": {
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeObjectKind",
+        "signatures": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\SchemaContentsTarget": {
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeObjectKind",
+        "schemas": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\TypesTarget": {
+        "names": "array",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Access\\Target\\PrivilegeObjectKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\CastContext": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\CastConversion": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\CreateCast": {
+        "context": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\CastContext",
+        "method": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference|SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\CastConversion",
+        "source": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\CreateTransform": {
+        "functions": "array",
+        "language": "SqlSemantics\\Statement\\Identifier\\Name",
+        "orReplace": "bool",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\TransformDirection": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\TransformFunction": {
+        "direction": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Cast\\TransformDirection",
+        "function": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Collation\\CreateConversion": {
+        "function": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "isDefault": "bool",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "source": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Collation\\RefreshCollationVersion": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\AlterDatabase": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\AlterDatabaseSetting": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "setting": "SqlSemantics\\Statement\\Statement"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\CreateDatabase": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\DatabaseOption": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\DatabaseOptionKeyword|SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\OptionArgument"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\DatabaseOptionKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\DefaultSetting": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\DropDatabase": {
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\DropDatabaseOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\MoveDatabase": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "tablespace": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Database\\RefreshDatabaseCollation": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Domain\\AlterDomainConstraint": {
+        "constraint": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Domain\\AlterDomainNotNull": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "notNull": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Domain\\CreateDomain": {
+        "constraints": "array",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Domain\\DomainCheck": {
+        "attributes": "array",
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Domain\\DomainDefaultChange": {
+        "default": "?SqlSemantics\\Statement\\Scalar",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Domain\\DomainNotNull": {
+        "attributes": "array",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Domain\\DropDomainConstraint": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "constraint": "SqlSemantics\\Statement\\Identifier\\Name",
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Domain\\ValidateDomainConstraint": {
+        "constraint": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Extension\\AlterExtensionContents": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\AddOrDrop",
+        "extension": "SqlSemantics\\Statement\\Identifier\\Name",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Extension\\CreateExtension": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Extension\\ExtensionCascade": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Extension\\ExtensionSchema": {
+        "schema": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Extension\\ExtensionVersion": {
+        "role": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Extension\\VersionRole",
+        "version": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Word|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Extension\\UpdateExtension": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "versions": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Extension\\VersionRole": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\AlterFdw": {
+        "functions": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\AlterForeignServer": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "version": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\ServerVersion"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\AlterUserMapping": {
+        "options": "array",
+        "server": "SqlSemantics\\Statement\\Identifier\\Name",
+        "user": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec|SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\MappingUser"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\CreateFdw": {
+        "functions": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\CreateForeignServer": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "type": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "version": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\ServerVersion",
+        "wrapper": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\CreateUserMapping": {
+        "ifNotExists": "bool",
+        "options": "array",
+        "server": "SqlSemantics\\Statement\\Identifier\\Name",
+        "user": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec|SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\MappingUser"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\DropUserMapping": {
+        "ifExists": "bool",
+        "server": "SqlSemantics\\Statement\\Identifier\\Name",
+        "user": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec|SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\MappingUser"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\ImportForeignSchema": {
+        "localSchema": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "remoteSchema": "SqlSemantics\\Statement\\Identifier\\Name",
+        "restriction": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\ImportRestriction",
+        "server": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\ImportRestriction": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\ImportRestrictionKind",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\ImportRestrictionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\MappingUser": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\ForeignData\\ServerVersion": {
+        "version": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\AccessMethodKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\CreateAccessMethod": {
+        "handler": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\AccessMethodKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\CreateLanguage": {
+        "handler": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "inline": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "orReplace": "bool",
+        "trusted": "bool",
+        "validator": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\FunctionClause"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\CreateLanguageExtension": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "orReplace": "bool",
+        "trusted": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\FunctionClause": {
+        "function": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "role": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\FunctionRole"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Language\\FunctionRole": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Problem\\CatalogMisuse": {
+        "rule": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Problem\\CatalogMisuseRule",
+        "subjects": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Problem\\CatalogMisuseRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\AlterPublicationMembers": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\PublicationAction",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "objects": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\AlterPublicationOptions": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\CreatePublication": {
+        "allTables": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "objects": "array",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\PublicationAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\PublicationSchema": {
+        "keywords": "bool",
+        "schema": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\PublicationTable": {
+        "columns": "array",
+        "keyword": "bool",
+        "star": "bool",
+        "table": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RelationReference",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\AlterSubscriptionConnection": {
+        "connection": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\AlterSubscriptionOptions": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\SubscriptionOptionAction",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\AlterSubscriptionPublications": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\PublicationAction",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "publications": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\CreateSubscription": {
+        "connection": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "publications": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\DropSubscription": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\EnableSubscription": {
+        "enable": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\RefreshSubscription": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Publication\\Subscription\\SubscriptionOptionAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Schema\\CreateSchema": {
+        "authorization": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec",
+        "elements": "array",
+        "ifNotExists": "bool",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Tablespace\\AlterTablespaceOptions": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "reset": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Tablespace\\CreateTablespace": {
+        "location": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "owner": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Tablespace\\DropTablespace": {
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\TextSearch\\AlterTextSearchDictionary": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\TextSearch\\DropTextSearchMapping": {
+        "configuration": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "ifExists": "bool",
+        "tokens": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\TextSearch\\MapTextSearchTokens": {
+        "change": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\TextSearch\\MappingChange",
+        "configuration": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "dictionaries": "array",
+        "tokens": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\TextSearch\\MappingChange": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\TextSearch\\ReplaceTextSearchDictionary": {
+        "configuration": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "replaced": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "replacement": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "tokens": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\AddAttribute": {
+        "attribute": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypedColumn",
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\AddEnumLabel": {
+        "ifNotExists": "bool",
+        "label": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "position": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\EnumPosition",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\AlterComposite": {
+        "changes": "array",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\AlterTypeOptions": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\CreateComposite": {
+        "attributes": "array",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\CreateEnum": {
+        "labels": "array",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\CreateRange": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\DropAttribute": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\DropEnumLabel": {
+        "label": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\EnumPosition": {
+        "after": "bool",
+        "neighbor": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\RenameEnumLabel": {
+        "label": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "newLabel": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Catalog\\Type\\RetypeAttribute": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "collation": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ColumnCollation": {
+        "collation": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\ColumnCheck": {
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "noInherit": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\ColumnPrimaryKey": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\ColumnUnique": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "nullsDistinct": "?bool",
+        "options": "array",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\DefaultExpression": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\Generated": {
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "when": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\GeneratedWhen"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\GeneratedWhen": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\Identity": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "when": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\GeneratedWhen"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\NotNull": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\NullAllowed": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\References": {
+        "actions": "array",
+        "columns": "array",
+        "match": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Reference\\KeyMatch",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\ConstraintKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\CreateAssertion": {
+        "attributes": "array",
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Reference\\KeyMatch": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Reference\\ReferenceAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Reference\\ReferenceEvent": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Reference\\ReferentialAction": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Reference\\ReferenceAction",
+        "columns": "array",
+        "event": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Reference\\ReferenceEvent"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\Exclusion": {
+        "attributes": "array",
+        "elements": "array",
+        "included": "array",
+        "method": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\ExclusionElement": {
+        "element": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\IndexElement",
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\ForeignKey": {
+        "actions": "array",
+        "attributes": "array",
+        "columns": "array",
+        "match": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Reference\\KeyMatch",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "referenced": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\IndexConstraint": {
+        "attributes": "array",
+        "index": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "primary": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\TableCheck": {
+        "attributes": "array",
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\TablePrimaryKey": {
+        "attributes": "array",
+        "columns": "array",
+        "included": "array",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Table\\TableUnique": {
+        "attributes": "array",
+        "columns": "array",
+        "included": "array",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "nullsDistinct": "?bool",
+        "options": "array",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\BinaryOperation": {
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Cast": {
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "spelling": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\CastSpelling",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\CastSpelling": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Collation": {
+        "collation": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\ColumnReference": {
+        "parts": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\ColumnStar": {
+        "qualifiers": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\ArrayConstructor": {
+        "items": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\ArrayItems"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\ArrayItems": {
+        "nested": "array",
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\CaseBranch": {
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "result": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\CaseExpression": {
+        "branches": "array",
+        "default": "?SqlSemantics\\Statement\\Scalar",
+        "operand": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\Composite": {
+        "fields": "array",
+        "relation": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\RowConstructor": {
+        "fields": "array",
+        "spelling": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\RowSpelling"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\RowSpelling": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\DefaultRequest": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\FieldSelection": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Grouped": {
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\GroupingFunction": {
+        "arguments": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Indirection": {
+        "base": "SqlSemantics\\Statement\\Scalar",
+        "steps": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\AtLocal": {
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\AtTimeZone": {
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "zone": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\Between": {
+        "high": "SqlSemantics\\Statement\\Scalar",
+        "low": "SqlSemantics\\Statement\\Scalar",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "symmetric": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\BooleanOperation": {
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\BooleanOperator",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\BooleanOperator": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\DistinctTest": {
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "negated": "bool",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\Negation": {
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\PatternMatch": {
+        "escape": "?SqlSemantics\\Statement\\Scalar",
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "negated": "bool",
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\PatternOperator",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\PatternOperator": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Operator\\UnaryOperation": {
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\BooleanTest": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\BooleanTestKind",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\BooleanTestKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\DocumentTest": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\JsonItemKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\JsonTest": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\JsonItemKind",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "uniqueness": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonUniqueKeys"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\NormalizationTest": {
+        "form": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\NormalForm",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\NullTest": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "spelling": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\NullTestSpelling"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\NullTestSpelling": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Predicate\\Overlaps": {
+        "left": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\RowConstructor",
+        "right": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Constructor\\RowConstructor"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\AmbiguousOutputName": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\AmbiguousRelation": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\ImproperStar": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\MissingField": {
+        "field": "string",
+        "type": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\NoCollation": {
+        "type": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\NotComposite": {
+        "field": "string",
+        "type": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\NotImplemented": {
+        "feature": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\NotSubscriptable": {
+        "type": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\OperandMismatch": {
+        "actual": "string",
+        "construct": "string",
+        "expected": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\RowArity": {
+        "actual": "int",
+        "construct": "string",
+        "expected": "int"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Problem\\TypeConflict": {
+        "construct": "string",
+        "first": "string",
+        "second": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Step\\AllFields": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Step\\Slice": {
+        "lower": "?SqlSemantics\\Statement\\Scalar",
+        "upper": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Step\\Subscript": {
+        "index": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\ArraySubquery": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\Exists": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\InList": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\InSubquery": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\MatchKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\QuantifiedArray": {
+        "array": "SqlSemantics\\Statement\\Scalar",
+        "comparator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\MatchKeyword",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "quantifier": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\Quantifier"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\QuantifiedSubquery": {
+        "comparator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\MatchKeyword",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "quantifier": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\Quantifier",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\Quantifier": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\ScalarSubquery": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Expression\\Subquery\\UniquePredicate": {
+        "nullsDistinct": "?bool",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\ArgumentSpelling": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Conditional\\Coalesce": {
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Conditional\\MinMax": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Conditional\\MinMaxKind",
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Conditional\\MinMaxKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Conditional\\NullIf": {
+        "other": "SqlSemantics\\Statement\\Scalar",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameBound": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameBoundKind",
+        "offset": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameBoundKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameExclusion": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FunctionCall": {
+        "arguments": "array",
+        "distinct": "bool",
+        "filter": "?SqlSemantics\\Statement\\Scalar",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "order": "array",
+        "over": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\WindowSpecification|SqlSemantics\\Statement\\Identifier\\Name|null",
+        "star": "bool",
+        "variadic": "bool",
+        "withinGroup": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Constructor\\JsonArrayAggregate": {
+        "filter": "?SqlSemantics\\Statement\\Scalar",
+        "nulls": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonNullHandling",
+        "order": "array",
+        "over": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\WindowSpecification|SqlSemantics\\Statement\\Identifier\\Name|null",
+        "returning": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonReturning",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonValueExpression"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Constructor\\JsonArrayConstructor": {
+        "nulls": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonNullHandling",
+        "returning": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonReturning",
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Constructor\\JsonArrayQuery": {
+        "format": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonFormat",
+        "query": "SqlSemantics\\Statement\\Query",
+        "returning": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonReturning"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Constructor\\JsonObjectAggregate": {
+        "filter": "?SqlSemantics\\Statement\\Scalar",
+        "nulls": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonNullHandling",
+        "over": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\WindowSpecification|SqlSemantics\\Statement\\Identifier\\Name|null",
+        "pair": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonPair",
+        "returning": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonReturning",
+        "unique": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonUniqueKeys"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Constructor\\JsonObjectConstructor": {
+        "nulls": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonNullHandling",
+        "pairs": "array",
+        "returning": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonReturning",
+        "unique": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonUniqueKeys"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Constructor\\JsonParse": {
+        "unique": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonUniqueKeys",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonValueExpression"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Constructor\\JsonScalar": {
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Constructor\\JsonSerialize": {
+        "returning": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonReturning",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonValueExpression"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonEncoding": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonFormat": {
+        "encodingName": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonNullHandling": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonPair": {
+        "key": "SqlSemantics\\Statement\\Scalar",
+        "spelling": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\KeyValueSpelling",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonValueExpression"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonReturning": {
+        "format": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonFormat",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonUniqueKeys": {
+        "unique": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonValueExpression": {
+        "format": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonFormat",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\KeyValueSpelling": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonArgument": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonValueExpression"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonBehavior": {
+        "default": "?SqlSemantics\\Statement\\Scalar",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonBehaviorKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonBehaviorClause": {
+        "onEmpty": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonBehavior",
+        "onError": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonBehavior"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonBehaviorKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonFunctionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonQueryFunction": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonBehaviorClause",
+        "context": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonValueExpression",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonFunctionKind",
+        "passing": "array",
+        "path": "SqlSemantics\\Statement\\Scalar",
+        "quotes": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonQuoting",
+        "returning": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\JsonReturning",
+        "wrapper": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonWrapping"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonQuoting": {
+        "keep": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonWrapperKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonWrapping": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Json\\Query\\JsonWrapperKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\NamedArgument": {
+        "parameter": "SqlSemantics\\Statement\\Identifier\\Name",
+        "spelling": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\ArgumentSpelling",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\PositionalArgument": {
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\ArgumentProblem": {
+        "argument": "SqlSemantics\\Statement\\Identifier\\Name",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\ArgumentProblemKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\ArgumentProblemKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\CallMisuse": {
+        "function": "SqlSemantics\\Statement\\Identifier\\Name",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\CallMisuseKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\CallMisuseKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\JsonProblem": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\JsonProblemKind",
+        "subjects": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\JsonProblemKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\WindowProblem": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\WindowProblemKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\WindowProblemKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\XmlProblem": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\XmlProblemKind",
+        "subject": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Problem\\XmlProblemKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\CollationFor": {
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\KeywordCall": {
+        "arguments": "array",
+        "function": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\KeywordFunction"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\KeywordFunction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\MergeAction": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\Normalize": {
+        "form": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\NormalForm",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\Treat": {
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\ValueFunction": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\ValueFunctionKind",
+        "precision": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Syntax\\ValueFunctionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\Extract": {
+        "field": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\ExtractUnit|SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "source": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\ExtractUnit": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\Overlay": {
+        "count": "?SqlSemantics\\Statement\\Scalar",
+        "replacement": "SqlSemantics\\Statement\\Scalar",
+        "start": "SqlSemantics\\Statement\\Scalar",
+        "string": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\Position": {
+        "string": "SqlSemantics\\Statement\\Scalar",
+        "substring": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\SimilarSubstring": {
+        "escape": "SqlSemantics\\Statement\\Scalar",
+        "pattern": "SqlSemantics\\Statement\\Scalar",
+        "string": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\Substring": {
+        "count": "?SqlSemantics\\Statement\\Scalar",
+        "countFirst": "bool",
+        "start": "?SqlSemantics\\Statement\\Scalar",
+        "string": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\Trim": {
+        "characters": "?SqlSemantics\\Statement\\Scalar",
+        "side": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\TrimSide",
+        "strings": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Text\\TrimSide": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\WindowFrame": {
+        "end": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameBound",
+        "exclusion": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameExclusion",
+        "mode": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameMode",
+        "start": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FrameBound"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\WindowSpecification": {
+        "existing": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "frame": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\WindowFrame",
+        "order": "array",
+        "partition": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlAttribute": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlConcat": {
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlElement": {
+        "attributes": "array",
+        "content": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlExists": {
+        "passing": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlPassing",
+        "path": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlForest": {
+        "elements": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlIndent": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlParse": {
+        "option": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\XmlOption",
+        "value": "SqlSemantics\\Statement\\Scalar",
+        "whitespace": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlWhitespace"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlPassing": {
+        "document": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlProcessingInstruction": {
+        "content": "?SqlSemantics\\Statement\\Scalar",
+        "target": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlRoot": {
+        "standalone": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlStandalone",
+        "value": "SqlSemantics\\Statement\\Scalar",
+        "version": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlSerialize": {
+        "indent": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlIndent",
+        "option": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\XmlOption",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlStandalone": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\Xml\\XmlWhitespace": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\BitStringConstant": {
+        "digits": "string",
+        "radix": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\BitStringRadix"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\BitStringRadix": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\BooleanLiteral": {
+        "value": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\Constant": {
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\NumericConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\BitStringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant": {
+        "digits": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\NamedParameter": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\NoSuchParameter": {
+        "marker": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\NullLiteral": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\NumericConstant": {
+        "text": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\PositionalParameter": {
+        "number": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber": {
+        "magnitude": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\NumericConstant",
+        "negative": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant": {
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\TypedLiteral": {
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Assignment\\Assignment": {
+        "column": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Assignment\\ColumnTarget",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Assignment\\ColumnTarget": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "steps": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Assignment\\RowAssignment": {
+        "columns": "array",
+        "source": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConflictDoNothing": {
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\IndexInference|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConstraintInference|null"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConflictDoUpdate": {
+        "assignments": "array",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\IndexInference|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConstraintInference|null",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConstraintInference": {
+        "constraint": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\IndexInference": {
+        "elements": "array",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyAllColumns": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyArguments": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyDirection": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyFlag": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyForce": {
+        "all": "bool",
+        "columns": "array",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyForceKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyForceKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyOption": {
+        "argument": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\OptionArgument",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyQuery": {
+        "file": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyStream",
+        "legacy": "array",
+        "options": "array",
+        "program": "bool",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyStream": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyTable": {
+        "binary": "bool",
+        "columns": "array",
+        "delimiters": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "direction": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyDirection",
+        "file": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyStream",
+        "legacy": "array",
+        "options": "array",
+        "program": "bool",
+        "table": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\TargetTable",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyText": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyTextKind",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Copy\\CopyTextKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\CurrentOf": {
+        "cursor": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Cursor\\Close": {
+        "cursor": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Cursor\\CursorOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Cursor\\DeclareCursor": {
+        "hold": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Cursor\\Holdability",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Cursor\\Fetch": {
+        "count": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber",
+        "cursor": "SqlSemantics\\Statement\\Identifier\\Name",
+        "move": "bool",
+        "movement": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Cursor\\FetchMovement"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Cursor\\FetchMovement": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Cursor\\Holdability": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Delete": {
+        "returning": "array",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\TargetTable",
+        "using": "?SqlSemantics\\Statement\\Relation",
+        "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\CurrentOf|null",
+        "with": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\CommonTables"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\InsertDefaults": {
+        "conflict": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConflictDoNothing|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConflictDoUpdate|null",
+        "returning": "array",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\TargetTable",
+        "with": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\CommonTables"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\InsertRows": {
+        "columns": "array",
+        "conflict": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConflictDoNothing|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConflictDoUpdate|null",
+        "overriding": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Overriding",
+        "returning": "array",
+        "rows": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\ValueRows|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\ParenthesizedRows",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\TargetTable",
+        "with": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\CommonTables"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\InsertSelect": {
+        "columns": "array",
+        "conflict": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConflictDoNothing|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Conflict\\ConflictDoUpdate|null",
+        "overriding": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Overriding",
+        "returning": "array",
+        "source": "SqlSemantics\\Statement\\Query",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\TargetTable",
+        "with": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\CommonTables"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge": {
+        "clauses": "array",
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "returning": "array",
+        "source": "SqlSemantics\\Statement\\Relation",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\TargetTable",
+        "with": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\CommonTables"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeDelete": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeInsert": {
+        "columns": "array",
+        "overriding": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Overriding",
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeInsertDefaults": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeMatch": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeNothing": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeUpdate": {
+        "assignments": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeWhen": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeUpdate|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeDelete|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeInsert|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeInsertDefaults|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeNothing",
+        "condition": "?SqlSemantics\\Statement\\Scalar",
+        "match": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Merge\\MergeMatch"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Overriding": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\ParenthesizedRows": {
+        "rows": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\ValueRows|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\ParenthesizedRows"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Prepared\\Deallocate": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Prepared\\Execute": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "parameters": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Prepared\\Prepare": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "parameters": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Prepared\\PreparedParameters",
+        "statement": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Prepared\\PreparedParameters": {
+        "types": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Problem\\ManipulationMisuse": {
+        "rule": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Problem\\ManipulationMisuseRule",
+        "subjects": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Problem\\ManipulationMisuseRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\TargetTable": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RelationReference"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\Update": {
+        "assignments": "array",
+        "from": "?SqlSemantics\\Statement\\Relation",
+        "returning": "array",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\TargetTable",
+        "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\CurrentOf|null",
+        "with": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\CommonTables"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Manipulation\\ValueRows": {
+        "rows": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName": {
+        "parts": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ImproperName": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName": {
+        "explicit": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifiers": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RelationReference": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "only": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpecKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Attribute": {
+        "known": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\KnownAttribute",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\AttributeArgument|SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\KeywordWord|SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|null"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\AttributeChange": {
+        "attribute": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Attribute",
+        "none": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\BooleanArgument": {
+        "written": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\KeywordWord|SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|null"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\ChoiceArgument": {
+        "choice": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Choice\\Choice",
+        "written": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\KeywordWord|SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Choice\\Alignment": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Choice\\CollationProvider": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Choice\\FinalModification": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Choice\\Parallelism": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Choice\\StorageStrategy": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\IntegerArgument": {
+        "number": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\AggregateAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\BaseTypeAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\CollationAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\ConfigurationAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\DictionaryAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\OperatorAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\OperatorChangeAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\ParserAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\RangeAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\TemplateAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Known\\TypeChangeAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\LengthArgument": {
+        "length": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\NameArgument": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\KeywordWord"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\Reading": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\TextArgument": {
+        "text": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\KeywordWord|SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Attribute\\TypeArgument": {
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\KeywordWord"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\ChangeOwner": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference",
+        "owner": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Comment": {
+        "comment": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\CopyCollation": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "source": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Define": {
+        "arguments": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\AggregateArguments",
+        "definition": "?array",
+        "ifNotExists": "bool",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName",
+        "replace": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Drop": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "concurrently": "bool",
+        "ifExists": "bool",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "objects": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\ExtensionDependency": {
+        "extension": "SqlSemantics\\Statement\\Identifier\\Name",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference",
+        "remove": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Problem\\AttributeProblem": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Problem\\AttributeProblemKind",
+        "subjects": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Problem\\AttributeProblemKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Problem\\ObjectProblem": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Problem\\ObjectProblemKind",
+        "subject": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Problem\\ObjectProblemKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\CastPair": {
+        "source": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\LargeObjectNumber": {
+        "identifier": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\MemberName": {
+        "domain": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "owner": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName|SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\OperatorGroupName": {
+        "method": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\RelationTarget": {
+        "relation": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RelationReference"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\TransformFor": {
+        "language": "SqlSemantics\\Statement\\Identifier\\Name",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\TypeReference": {
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Reference\\UnqualifiedName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\Rename": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "ifExists": "bool",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "member": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RenamedMember",
+        "newName": "SqlSemantics\\Statement\\Identifier\\Name",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference",
+        "roleWord": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RoleWord"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RenamedMember": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "part": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RenamedPart"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RenamedPart": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\RoleWord": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\SecurityLabel": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "label": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference",
+        "provider": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Word|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|null"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Object\\SetSchema": {
+        "ifExists": "bool",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "object": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectReference",
+        "schema": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\AlterOperator": {
+        "attributes": "array",
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\OperatorSignature"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\CreateOperatorClass": {
+        "family": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "isDefault": "bool",
+        "items": "array",
+        "method": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\CreateOperatorFamily": {
+        "method": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\FunctionMember": {
+        "function": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\RoutineSignature",
+        "operandTypes": "?array",
+        "support": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\MemberKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\MemberPurpose": {
+        "sortFamily": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\MemberRemoval": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\MemberKind",
+        "number": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant",
+        "types": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\OperatorFamilyAddition": {
+        "items": "array",
+        "method": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\OperatorFamilyRemoval": {
+        "members": "array",
+        "method": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\OperatorMember": {
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\OperatorSignature",
+        "purpose": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\MemberPurpose",
+        "strategy": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Operator\\StorageMember": {
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\AddOrDrop": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\AlteredOption": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\OptionAction",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Definition": {
+        "argument": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\OptionArgument",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\GenericOption": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\KeywordWord": {
+        "word": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\NormalForm": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\OptionAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Toggle": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Word": {
+        "word": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\XmlOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\DistinctClause": {
+        "on": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\IntoClause": {
+        "persistence": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\IntoPersistence",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\IntoPersistence": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\LockStrength": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\LockWait": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\LockingClause": {
+        "relations": "array",
+        "strength": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\LockStrength",
+        "wait": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\LockWait"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\OutputPosition": {
+        "clause": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\OrderingClause",
+        "position": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\SelectOptions": {
+        "limit": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\RowLimit",
+        "locking": "array",
+        "lockingFirst": "bool",
+        "order": "array",
+        "readOnly": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\ValuesRow": {
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\WindowDefinition": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "window": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\WindowSpecification"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\ExpressionTarget": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Grouping\\GroupingRow": {
+        "members": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Grouping\\GroupingSet": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Grouping\\GroupingSetKind",
+        "members": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Grouping\\GroupingSetKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\CommaLimit": {
+        "count": "?SqlSemantics\\Statement\\Scalar",
+        "offset": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\FetchFirst": {
+        "count": "?SqlSemantics\\Statement\\Scalar",
+        "withTies": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\LimitCount": {
+        "count": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\Offset": {
+        "start": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\RowLimit": {
+        "count": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\LimitCount|SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\CommaLimit|SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\FetchFirst|null",
+        "offset": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Limit\\Offset",
+        "offsetFirst": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\NullsOrder": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\ParenthesizedQuery": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\ArityMismatch": {
+        "available": "int",
+        "rule": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\ArityRule",
+        "specified": "int",
+        "subject": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\ArityRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\OrderingClause": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\PositionOutOfRange": {
+        "clause": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\OrderingClause",
+        "position": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\QueryMisuse": {
+        "rule": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\QueryMisuseRule",
+        "subject": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Problem\\QueryMisuseRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\QueryExpression": {
+        "body": "SqlSemantics\\Statement\\Query",
+        "options": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\SelectOptions",
+        "with": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\WithClause"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Select": {
+        "distinct": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\DistinctClause",
+        "from": "?SqlSemantics\\Statement\\Relation",
+        "groupBy": "array",
+        "groupQuantifier": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SetQuantifier",
+        "having": "?SqlSemantics\\Statement\\Scalar",
+        "into": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\IntoClause",
+        "options": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\SelectOptions",
+        "targets": "array",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "windows": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SetOperation": {
+        "left": "SqlSemantics\\Statement\\Query",
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SetOperator",
+        "quantifier": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SetQuantifier",
+        "right": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SetOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SetQuantifier": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SortDirection": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SortItem": {
+        "direction": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SortDirection",
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "nulls": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\NullsOrder",
+        "using": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\StarTarget": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\TableQuery": {
+        "options": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\Clause\\SelectOptions",
+        "table": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\TableInput"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\ValuesList": {
+        "rows": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\CommonTableExpression": {
+        "columns": "array",
+        "cycle": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\CycleClause",
+        "materialization": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\Materialization",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "query": "SqlSemantics\\Statement\\Query",
+        "search": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\SearchClause"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\CycleClause": {
+        "columns": "array",
+        "mark": "SqlSemantics\\Statement\\Identifier\\Name",
+        "markDefault": "?SqlSemantics\\Statement\\Scalar",
+        "markValue": "?SqlSemantics\\Statement\\Scalar",
+        "path": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\Materialization": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\SearchClause": {
+        "columns": "array",
+        "order": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\SearchOrder",
+        "sequence": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\SearchOrder": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\With\\WithClause": {
+        "recursive": "bool",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\DerivedTable": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "columns": "array",
+        "lateral": "bool",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\FunctionTable": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "columns": "array",
+        "definitions": "array",
+        "functions": "array",
+        "lateral": "bool",
+        "ordinality": "bool",
+        "rowsFrom": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Join": {
+        "condition": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\JoinOn|SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\JoinUsing|null",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\JoinKind",
+        "left": "SqlSemantics\\Statement\\Relation",
+        "natural": "bool",
+        "right": "SqlSemantics\\Statement\\Relation"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\JoinKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\JoinOn": {
+        "condition": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\JoinUsing": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "columns": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Json\\JsonExistsColumn": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "onError": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause",
+        "path": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Json\\JsonNestedColumns": {
+        "columns": "array",
+        "path": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "pathName": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Json\\JsonOrdinalityColumn": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Json\\JsonTable": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "aliases": "array",
+        "columns": "array",
+        "context": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause",
+        "lateral": "bool",
+        "onError": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause",
+        "passing": "array",
+        "path": "SqlSemantics\\Statement\\Scalar",
+        "pathName": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Json\\JsonValueColumn": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause",
+        "format": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "path": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant",
+        "quotes": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName",
+        "wrapper": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\ParenthesizedJoin": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "columns": "array",
+        "join": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Join|SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\ParenthesizedJoin"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\RelationList": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\TableFunction": {
+        "call": "SqlSemantics\\Statement\\Scalar",
+        "definitions": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\TableInput": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "columns": "array",
+        "sample": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\TableSample",
+        "table": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RelationReference"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\TableSample": {
+        "arguments": "array",
+        "method": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "seed": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Xml\\XmlColumnOption": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Xml\\XmlColumnOptionKind",
+        "value": "?SqlSemantics\\Statement\\Scalar",
+        "word": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Xml\\XmlColumnOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Xml\\XmlNamespace": {
+        "prefix": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "uri": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Xml\\XmlTable": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "aliases": "array",
+        "columns": "array",
+        "lateral": "bool",
+        "namespaces": "array",
+        "passing": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Clause",
+        "row": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Relation\\Xml\\XmlTableColumn": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "type": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\AlterRoutine": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\ObjectKind",
+        "options": "array",
+        "signature": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\RoutineSignature"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\AtomicBody": {
+        "statements": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\CreateFunction": {
+        "body": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\ReturnStatement|SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\AtomicBody|null",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "options": "array",
+        "parameters": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\RoutineParameters",
+        "procedure": "bool",
+        "replace": "bool",
+        "returns": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\ResultTable|null"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\DefaultSpelling": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\FunctionParameter": {
+        "default": "?SqlSemantics\\Statement\\Scalar",
+        "defaultSpelling": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\DefaultSpelling",
+        "mode": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\ParameterMode",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "nameFirst": "bool",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\ConfigurationSetting": {
+        "clause": "SqlSemantics\\Statement\\Statement"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\EstimateKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\ParallelSafety": {
+        "level": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\RoutineAttribute": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\RoutineDefinition": {
+        "source": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\RoutineSource",
+        "symbol": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\RoutineEstimate": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\EstimateKind",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\RoutineLanguage": {
+        "language": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Word|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\RoutineSource": {
+        "language": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "text": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\SupportFunction": {
+        "function": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Option\\Transforms": {
+        "types": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\ParameterMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Problem\\RoutineProblem": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Problem\\RoutineProblemKind",
+        "subject": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Problem\\RoutineProblemKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\ResultColumn": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\ResultTable": {
+        "columns": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\ReturnStatement": {
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\RoutineParameters": {
+        "parameters": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\AggregateArguments": {
+        "direct": "array",
+        "ordered": "?array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\AggregateSignature": {
+        "arguments": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\AggregateArguments",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\OperatorArity": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\OperatorSignature": {
+        "arity": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\OperatorArity",
+        "operator": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\OperatorName",
+        "types": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Routine\\Signature\\RoutineSignature": {
+        "arguments": "?array",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AddConstraint": {
+        "constraint": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Constraint"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterConstraint": {
+        "attributes": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTable": {
+        "commands": "array",
+        "ifExists": "bool",
+        "relation": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RelationReference",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTarget"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTarget": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\AddColumn": {
+        "column": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnDefinition",
+        "ifNotExists": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\AddIdentity": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "when": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\GeneratedWhen"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\AlterIdentity": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\ColumnAction": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\ColumnActionKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\ColumnActionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\ColumnAttributes": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "reset": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\ColumnStatistics": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant",
+        "target": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\ColumnStorageChange": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "setting": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnStorage|SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnCompression"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\DefaultChange": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\DropColumn": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "ifExists": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\IdentityGeneration": {
+        "when": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Constraint\\Column\\GeneratedWhen"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\IdentityRestart": {
+        "value": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\IdentitySetting": {
+        "option": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceOption"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\SetExpression": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Column\\TypeChange": {
+        "collation": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName",
+        "using": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\DropConstraint": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\InheritanceChange": {
+        "parent": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ParentTable",
+        "remove": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\MoveAll": {
+        "from": "SqlSemantics\\Statement\\Identifier\\Name",
+        "nowait": "bool",
+        "owners": "array",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\AlterTarget",
+        "to": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\NamedAction": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\NamedActionKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\NamedActionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\ColumnForeignOptions": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\ForeignOptions": {
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\OfComposite": {
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\OwnerTo": {
+        "owner": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RoleSpec"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\RelationOptions": {
+        "options": "array",
+        "reset": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\ReplicaIdentity": {
+        "index": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\ReplicaIdentityKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\ReplicaIdentityKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\Option\\SetAccessMethod": {
+        "method": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableAction": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Alter\\TableActionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateForeignTable": {
+        "definition": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ListedColumns|SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\PartitionOf",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "server": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTable": {
+        "definition": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\TableForm",
+        "ifNotExists": "bool",
+        "method": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "onCommit": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\OnCommit",
+        "options": "array",
+        "partitioning": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\PartitionSpec",
+        "persistence": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTableAs": {
+        "ifNotExists": "bool",
+        "persistence": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence",
+        "query": "SqlSemantics\\Statement\\Query&SqlSemantics\\Statement\\Statement",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTarget",
+        "withData": "?bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTableAsExecute": {
+        "execute": "SqlSemantics\\Statement\\Statement",
+        "ifNotExists": "bool",
+        "persistence": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTarget",
+        "withData": "?bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\CreateTarget": {
+        "columns": "array",
+        "method": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "onCommit": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\OnCommit",
+        "options": "array",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnCompression": {
+        "method": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnDefinition": {
+        "compression": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnCompression",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "qualifiers": "array",
+        "storage": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnStorage",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnOptions": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifiers": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ColumnStorage": {
+        "method": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\LikeClause": {
+        "options": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\LikeOption": {
+        "including": "bool",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\LikeOptionKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\LikeOptionKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ListedColumns": {
+        "elements": "array",
+        "parents": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ParentTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\PartitionOf": {
+        "bound": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\PartitionBound",
+        "elements": "array",
+        "parent": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ParentTable"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\TypedTable": {
+        "elements": "array",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\AlterStatistics": {
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "target": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\ColumnKey": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\CreateIndex": {
+        "concurrently": "bool",
+        "elements": "array",
+        "ifNotExists": "bool",
+        "included": "array",
+        "method": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "nullsDistinct": "?bool",
+        "options": "array",
+        "table": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\RelationReference",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "unique": "bool",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\CreateStatistics": {
+        "from": "array",
+        "ifNotExists": "bool",
+        "keys": "array",
+        "kinds": "array",
+        "name": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\ExpressionKey": {
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "parenthesized": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\IndexElement": {
+        "classOptions": "array",
+        "collation": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "direction": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\SortDirection",
+        "key": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\ColumnKey|SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\ExpressionKey",
+        "nulls": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Query\\NullsOrder",
+        "operatorClass": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\OnCommit": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\AttachIndex": {
+        "index": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\AttachPartition": {
+        "bound": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\PartitionBound",
+        "partition": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ParentTable"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\DefaultBound": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\DetachMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\DetachPartition": {
+        "mode": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\DetachMode",
+        "partition": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ParentTable"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\HashBound": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\HashModulus": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\ListBound": {
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\PartitionElement": {
+        "collation": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "key": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\ColumnKey|SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Index\\ExpressionKey",
+        "operatorClass": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\PartitionSpec": {
+        "elements": "array",
+        "strategy": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\RangeBound": {
+        "from": "array",
+        "to": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Partition\\RangeLimit": {
+        "word": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Policy\\AlterPolicy": {
+        "check": "?SqlSemantics\\Statement\\Scalar",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "roles": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "using": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Policy\\CreatePolicy": {
+        "check": "?SqlSemantics\\Statement\\Scalar",
+        "command": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Policy\\PolicyCommand",
+        "mode": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "roles": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "using": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Policy\\PolicyCommand": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Problem\\AlterAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Problem\\DefinitionProblem": {
+        "relation": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "rule": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Problem\\DefinitionRule",
+        "subject": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Problem\\DefinitionRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Problem\\KindProblem": {
+        "action": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Problem\\AlterAction",
+        "relation": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "rule": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Problem\\KindRule"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Problem\\KindRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\AlterSequence": {
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\CreateSequence": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "persistence": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceAs": {
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeDesignation"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlag": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceFlagKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceNumber": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceNumberKind",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceNumberKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Sequence\\SequenceReference": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "owned": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\AlterEventTrigger": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "state": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\FiringState"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\CreateConstraintTrigger": {
+        "arguments": "array",
+        "attributes": "array",
+        "events": "array",
+        "function": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "referenced": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Element\\ParentTable",
+        "replace": "bool",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "when": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\CreateEventTrigger": {
+        "event": "SqlSemantics\\Statement\\Identifier\\Name",
+        "filters": "array",
+        "function": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\CreateTrigger": {
+        "arguments": "array",
+        "events": "array",
+        "function": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "replace": "bool",
+        "row": "?bool",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "timing": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\TriggerTiming",
+        "transitions": "array",
+        "when": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\EventFilter": {
+        "values": "array",
+        "variable": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\FiringState": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\TriggerArgument": {
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\NumericConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\TriggerEvent": {
+        "columns": "array",
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\TriggerEventKind"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\TriggerEventKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\TriggerTiming": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Trigger\\TriggerTransition": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "new": "bool",
+        "table": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\TruncateTable": {
+        "behavior": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\DropBehavior",
+        "restartIdentity": "?bool",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CheckOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateMaterializedView": {
+        "columns": "array",
+        "ifNotExists": "bool",
+        "method": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "query": "SqlSemantics\\Statement\\Query&SqlSemantics\\Statement\\Statement",
+        "tablespace": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "unlogged": "bool",
+        "withData": "?bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateRule": {
+        "actions": "array",
+        "event": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\RuleEvent",
+        "grouped": "bool",
+        "instead": "?bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "replace": "bool",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CreateView": {
+        "checkOption": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\CheckOption",
+        "columns": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "persistence": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\Persistence",
+        "query": "SqlSemantics\\Statement\\Query&SqlSemantics\\Statement\\Statement",
+        "recursive": "bool",
+        "replace": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\RefreshMaterializedView": {
+        "concurrently": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "withData": "?bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Table\\View\\RuleEvent": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\ArrayBound": {
+        "size": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\ArraySpecifier": {
+        "bounds": "array",
+        "keyword": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\ArrayOf": {
+        "element": "SqlSemantics\\Statement\\Type\\TypeDescriptor"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\IntervalSpan": {
+        "fields": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\IntervalFields",
+        "precision": "?int"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\ModifierProblem": {
+        "typeName": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\NamedOnPath": {
+        "missing": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Parameterized": {
+        "base": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Builtin",
+        "modifiers": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Descriptor\\Undetermined": {
+        "missing": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\BitDesignation": {
+        "modifiers": "array",
+        "varying": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\CharacterDesignation": {
+        "keyword": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\CharacterKeyword",
+        "length": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant",
+        "varying": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\CharacterKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\ColumnDesignation": {
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\DatetimeDesignation": {
+        "keyword": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\DatetimeKeyword",
+        "precision": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant",
+        "zone": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\ZoneOption"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\DatetimeKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\DecimalDesignation": {
+        "keyword": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\DecimalKeyword",
+        "modifiers": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\DecimalKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\FloatDesignation": {
+        "precision": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\IntervalDesignation": {
+        "fields": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\IntervalFields",
+        "precision": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\IntegerConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\IntervalFields": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\KeywordDesignation": {
+        "keyword": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\TypeKeyword"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\NamedDesignation": {
+        "modifiers": "array",
+        "name": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\TypeKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\Designation\\ZoneOption": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName": {
+        "array": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\ArraySpecifier",
+        "designation": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeDesignation",
+        "setOf": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypedColumn": {
+        "collation": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Name\\DottedName",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "type": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Call": {
+        "call": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Invocation\\FunctionCall"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\DoBlock": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\DoLanguage": {
+        "language": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Word|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Listen": {
+        "channel": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Load": {
+        "file": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Analyze": {
+        "keyword": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\OptionKeyword",
+        "options": "array",
+        "syntax": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\OptionSyntax",
+        "targets": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Checkpoint": [],
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Cluster": {
+        "index": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "indexFirst": "bool",
+        "options": "array",
+        "syntax": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\OptionSyntax",
+        "table": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Explain": {
+        "options": "array",
+        "statement": "SqlSemantics\\Statement\\Statement",
+        "syntax": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\OptionSyntax"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Lock": {
+        "mode": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\LockMode",
+        "nowait": "bool",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\LockMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\MaintenanceTarget": {
+        "columns": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\OptionKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\OptionSyntax": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Reindex": {
+        "concurrently": "bool",
+        "object": "SqlSemantics\\Statement\\Identifier\\QualifiedName|SqlSemantics\\Statement\\Identifier\\Name|null",
+        "options": "array",
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\ReindexTarget": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\UtilityOption": {
+        "argument": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Word|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Toggle|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber|null",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\OptionKeyword"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\Vacuum": {
+        "options": "array",
+        "syntax": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Maintenance\\OptionSyntax",
+        "targets": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Notify": {
+        "channel": "SqlSemantics\\Statement\\Identifier\\Name",
+        "payload": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Problem\\UtilityProblem": {
+        "kind": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Problem\\UtilityProblemKind",
+        "subjects": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Problem\\UtilityProblemKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\AlterSystemSetting": {
+        "setting": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SetParameter|SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SetParameterFrom|SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\Reset"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\Discard": {
+        "target": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\DiscardTarget"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\DiscardTarget": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ParameterName": {
+        "parts": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ParameterSource": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\Reset": {
+        "parameter": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ParameterName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SpecialParameter"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SetParameter": {
+        "local": "bool",
+        "parameter": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ParameterName",
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SetParameterFrom": {
+        "local": "bool",
+        "parameter": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ParameterName",
+        "source": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ParameterSource"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SetSpecialSetting": {
+        "default": "bool",
+        "local": "bool",
+        "setting": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SpecialSetting",
+        "value": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\Word|SqlSemantics\\Platform\\PostgreSql\\Statement\\Option\\XmlOption|null"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SetTimeZone": {
+        "local": "bool",
+        "zone": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant|SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\SignedNumber|SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\TypedLiteral|SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ZoneKeyword"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\Show": {
+        "parameter": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ParameterName|SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SpecialParameter"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SpecialParameter": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\SpecialSetting": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Session\\ZoneKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\Begin": {
+        "modes": "array",
+        "spelling": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\BeginSpelling"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\BeginSpelling": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\Chaining": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\Commit": {
+        "chaining": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\Chaining",
+        "spelling": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\CommitSpelling"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\CommitSpelling": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\PreparedAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\PreparedTransaction": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\PreparedAction",
+        "identifier": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\StringConstant"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\Rollback": {
+        "chaining": "?SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\Chaining",
+        "spelling": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\RollbackSpelling"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\RollbackSpelling": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\SavepointAction": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\SavepointCommand": {
+        "action": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\SavepointAction",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\SetConstraints": {
+        "constraints": "array",
+        "deferred": "bool"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\SetTransaction": {
+        "local": "bool",
+        "modes": "array",
+        "scope": "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\TransactionScope"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\TransactionMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Transaction\\TransactionScope": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\PostgreSql\\Statement\\Utility\\Unlisten": {
+        "channel": "?SqlSemantics\\Statement\\Identifier\\Name"
+    }
+}

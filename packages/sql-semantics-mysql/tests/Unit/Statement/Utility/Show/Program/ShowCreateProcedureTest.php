@@ -26,4 +26,11 @@ final class ShowCreateProcedureTest extends TestCase
     {
         self::assertSame('SHOW CREATE PROCEDURE db.x', (new Semantics(Dialect::MySql))->analyze('SHOW CREATE PROCEDURE db.x')->toString());
     }
+
+    public function testNameRejectsACatalogQualifier(): void
+    {
+        $this->expectExceptionMessage('A stored-program name has at most a database qualifier.');
+        new ShowCreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('db'), new \SqlSemantics\Statement\Identifier\Name('catalog')));
+    }
+
 }

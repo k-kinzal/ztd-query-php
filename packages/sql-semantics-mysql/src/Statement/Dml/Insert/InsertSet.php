@@ -9,9 +9,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * INSERT or REPLACE of one row written as SET assignments, with the optional row alias and ON DUPLICATE KEY UPDATE.
@@ -25,12 +25,12 @@ use SqlSemantics\Statement\Statement;
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t SET a = 1, b = a + 1');
  *     [count($insert->statement->assignments), $insert->toString()] // => [2, 'INSERT INTO t SET a = 1, b = a + 1']
  */
-final class InsertSet implements Statement
+final class InsertSet implements Explainable
 {
     use Snapshot;
 
     /**
-     * @var list<Assignment> The assignments in written order
+     * @var non-empty-list<Assignment> The assignments in written order
      */
     public readonly array $assignments;
 
@@ -52,6 +52,7 @@ final class InsertSet implements Statement
         $this->assignments = Check::listOf($assignments, Assignment::class, 'SET holds at least one assignment.', 1);
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || ($alias === null && $this->onDuplicate === []), 'REPLACE has neither a row alias nor ON DUPLICATE KEY UPDATE.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

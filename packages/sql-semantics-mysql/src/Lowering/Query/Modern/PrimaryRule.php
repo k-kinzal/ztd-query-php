@@ -97,6 +97,9 @@ final class PrimaryRule
             $clauses->predicate($form->node($at + 3)),
             $clauses->windows($form->node($at + 4)),
             $qualify ? $clauses->predicate($form->node($at + 5)) : null,
+            hints: $this->lowering->hints($form->token(0)),
+            source: $specification,
+            origins: $this->lowering->origins,
         );
     }
 
@@ -171,7 +174,7 @@ final class PrimaryRule
             if ($table->signature !== 'common_table_expr: ident opt_derived_column_list AS table_subquery') {
                 throw ImplementationGap::production($table);
             }
-            $tables[] = new CommonTableExpression($this->lowering->names->identifier($table->node(0)), (new TableRule($this->lowering))->columns($table->node(1)), (new ExpressionRule($this->lowering))->subquery($table->node(3)));
+            $tables[] = $this->lowering->origins->record(new CommonTableExpression($this->lowering->names->identifier($table->node(0)), (new TableRule($this->lowering))->columns($table->node(1)), (new ExpressionRule($this->lowering))->subquery($table->node(3))), $item);
         }
 
         return new With($recursive, $tables);

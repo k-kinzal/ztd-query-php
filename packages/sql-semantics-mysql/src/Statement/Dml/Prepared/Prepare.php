@@ -6,12 +6,13 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Prepared;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * PREPARE: names a statement whose text is given as a string or held by a user variable.
@@ -38,6 +39,8 @@ final class Prepare implements Statement
      */
     public function __construct(public readonly Name $name, public readonly Text|UserVariable $source)
     {
+        Check::input(!$source instanceof Text || $source->radix === null, 'A PREPARE source is a quoted string or a user variable.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -22,6 +22,12 @@ final class InstallComponentTest extends TestCase
         self::assertSame("INSTALL COMPONENT 'a', 'b'", (new Semantics(Dialect::MySql))->analyze("install component 'a', 'b'")->toString());
     }
 
+    public function testRenderRejectsARadixComponentName(): void
+    {
+        $this->expectExceptionMessage('A component URN is a quoted string.');
+        new InstallComponent([new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', radix: \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal)]);
+    }
+
     public function testDeriveStatementDerivesTheVariablesAndValues(): void
     {
         $install = (new Semantics(Dialect::MySql))->analyze("INSTALL COMPONENT 'a' SET PERSIST a.v = 1");

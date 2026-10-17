@@ -57,6 +57,26 @@ final class ClauseRuleTest extends TestCase
         self::assertSame('CREATE USER u PASSWORD REUSE INTERVAL 5 DAY PASSWORD HISTORY 2', (new Semantics(Dialect::MySql))->analyze('create user u password reuse interval 5 day password history 2')->toString());
     }
 
+    /**
+     * @return iterable<string, array{string, \SqlSemantics\Statement\Fact\Diagnostic}>
+     */
+    public static function providerRefusals(): iterable
+    {
+        yield 'converted integer' => ['CREATE USER u PASSWORD_LOCK_TIME 00032768 BROKEN', new \SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange('PASSWORD_LOCK_TIME', '32768', 'ER_WRONG_VALUE')];
+        yield 'converted hexadecimal' => ['CREATE USER u FAILED_LOGIN_ATTEMPTS 0x8000 BROKEN', new \SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange('FAILED_LOGIN_ATTEMPTS', '32768', 'ER_WRONG_VALUE')];
+        yield 'before fractional suffix' => ['CREATE USER u PASSWORD_LOCK_TIME 32768 PASSWORD HISTORY 1.0', new \SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange('PASSWORD_LOCK_TIME', '32768', 'ER_WRONG_VALUE')];
+        yield 'earlier TLS property' => ["CREATE USER u REQUIRE ISSUER 'a' ISSUER 'b' PASSWORD_LOCK_TIME 32768", new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute(\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsAttribute::Issuer)];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRefusals')]
+    public function testCompletedRetainsTheFirstClauseRefusal(string $sql, \SqlSemantics\Statement\Fact\Diagnostic $problem): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser('mysql-8.4.7'), $sql, strlen($sql), $semantics->profile());
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true)], array_column($notices, 1));
+    }
+
     public function testExpireLowersTheLegacyExpiry(): void
     {
         self::assertSame('CREATE USER u PASSWORD EXPIRE NEVER PASSWORD EXPIRE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('create user u password expire never password expire')->toString());

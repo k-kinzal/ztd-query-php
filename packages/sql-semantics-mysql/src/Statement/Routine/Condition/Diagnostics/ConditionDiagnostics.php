@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics;
 
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -31,15 +34,16 @@ final class ConditionDiagnostics implements Node
     public readonly array $items;
 
     /**
-     * @param Scalar $number The number of the condition, counted from 1: a literal, a variable or a name
+     * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable $number The number of the condition, counted from 1: a literal, a variable or a name
      * @param list<InformationItem> $items The assignments; at least one, each of a condition information item
      */
-    public function __construct(public readonly Scalar $number, array $items)
+    public function __construct(public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable $number, array $items)
     {
         $this->items = Check::listOf($items, InformationItem::class, 'GET DIAGNOSTICS reads at least one item.', 1);
         foreach ($this->items as $item) {
             Check::input($item->item instanceof ConditionItemName, 'Condition information holds condition information items.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

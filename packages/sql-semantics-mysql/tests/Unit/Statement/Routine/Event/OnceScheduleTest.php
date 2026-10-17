@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
-use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -34,7 +33,7 @@ final class OnceScheduleTest extends TestCase
         $fact = $create->facts->scalar($statement->schedule->at);
         self::assertInstanceOf(Known::class, $fact->type);
 
-        self::assertInstanceOf(Temporal::class, $fact->type->descriptor);
+        self::assertSame('DATETIME', $fact->type->descriptor->name());
         self::assertSame(Nullability::NotNull, $fact->nullability);
         self::assertSame([], $create->facts->diagnostics);
     }

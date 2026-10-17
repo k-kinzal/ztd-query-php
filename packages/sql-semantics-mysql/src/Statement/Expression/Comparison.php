@@ -35,7 +35,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading both operands
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a >= 10');
- *     [$query->statement->where->left->name->value, $query->statement->where->right->text] // => ['a', '10']
+ *     [$query->statement->query->where->left->name->value, $query->statement->query->where->right->text] // => ['a', '10']
  */
 final class Comparison implements Scalar
 {
@@ -43,14 +43,16 @@ final class Comparison implements Scalar
 
     /**
      * @param ComparisonOperator $operator The operator
-     * @param Scalar $left The left operand
-     * @param Scalar $right The right operand
+     * @param Scalar|RowOperand $left The left operand
+     * @param Scalar|RowOperand $right The right operand
      */
-    public function __construct(public readonly ComparisonOperator $operator, public readonly Scalar $left, public readonly Scalar $right)
+    public function __construct(public readonly ComparisonOperator $operator, public readonly Scalar|RowOperand $left, public readonly Scalar|RowOperand $right)
     {
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->problem($left, $right) === null, 'Compared operands have compatible nested row shapes.');
         $precedence = new Precedence();
         Check::input($precedence->fits($left, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The left operand of a comparison needs a grouping to keep its place.');
         Check::input($precedence->opening($right) >= Precedence::PREDICATE, 'The right operand of a comparison needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -61,7 +63,8 @@ final class Comparison implements Scalar
         $left = $derivation->scalar($this->left, $environment);
         $right = $derivation->scalar($this->right, $environment);
         $operands = new Operands();
-        $operands->comparable([$left, $right], $derivation);
+        $operands->comparable([$left, $right], $derivation, $this);
+        $operands->collated([$left, $right], $this->operator->value, $derivation);
 
         return $operands->truth($this->operator === ComparisonOperator::NullSafeEqual ? Nullability::NotNull : $left->nullability->propagate($right->nullability));
     }

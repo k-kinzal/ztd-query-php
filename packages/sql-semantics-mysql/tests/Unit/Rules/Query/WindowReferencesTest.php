@@ -38,8 +38,24 @@ final class WindowReferencesTest extends TestCase
     public function testNamesAnswersTheWindowNamesInWrittenOrder(): void
     {
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT ROW_NUMBER() OVER a, LAG(1) OVER (b), (SELECT RANK() OVER c) FROM DUAL WINDOW d AS (e)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
 
         self::assertSame(['a', 'b', 'e'], array_map(static fn (Name $name): string => $name->value, (new WindowReferences())->names([...$select->items, ...$select->windows])));
+    }
+
+    public function testCheckNamesTheUndefinedWindow(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 WINDOW x AS (zz)');
+
+        self::assertEquals([new Misuse(MisuseRule::UnknownWindow, new Name('zz'))], $operation->facts->diagnostics);
+    }
+
+    public function testCheckReportsAWindowNameInWhereAndGroupBy(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertCount(2, $semantics->analyze('SELECT 1 FROM (SELECT 1 a) t WHERE RANK() OVER w > 0 GROUP BY RANK() OVER v')->facts->diagnostics);
     }
 }

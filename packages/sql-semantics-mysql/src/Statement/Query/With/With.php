@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a recursive WITH clause
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('WITH RECURSIVE c AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c');
- *     [$query->statement->with->recursive, count($query->statement->with->tables)] // => [true, 1]
+ *     [$query->statement->query->with->recursive, count($query->statement->query->with->tables)] // => [true, 1]
  * @example Refusing a WITH clause without tables
  *     new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
@@ -41,6 +41,7 @@ final class With implements WithClause
     public function __construct(public readonly bool $recursive, array $tables)
     {
         $this->tables = Check::listOf($tables, CommonTableExpression::class, 'A WITH clause defines at least one common table expression.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

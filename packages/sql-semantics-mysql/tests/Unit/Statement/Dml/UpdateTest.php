@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
-use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -24,6 +24,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class UpdateTest extends TestCase
 {
+    public function testValueRejectsAnOutputPositionInWriteOrdering(): void
+    {
+        $this->expectExceptionMessage('UPDATE ordering uses expressions');
+
+        new Update(null, false, false, [new TableReference(new QualifiedName(new Name('t')))], [new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')))]);
+    }
+
     public function testDeriveStatementResolvesAssignmentsAgainstEveryTable(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -61,6 +68,22 @@ final class UpdateTest extends TestCase
     {
         $this->expectExceptionMessage('UPDATE holds at least one assignment.');
 
-        new Update(null, false, false, [new WriteTarget(new QualifiedName(new Name('t')))], []);
+        new Update(null, false, false, [new TableReference(new QualifiedName(new Name('t')))], []);
     }
+
+    public function testRenderWritesTheHintCommentAfterTheVerb(): void
+    {
+        self::assertSame('WITH c AS (SELECT 1) UPDATE /*+ NO_BKA(`t`) */ t SET a = 1', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1) UPDATE /*+ no_bka(t) */ t SET a = 1')->toString());
+    }
+
+    public function testTablesFlattenAnUnparenthesizedCommaList(): void
+    {
+        $first = new TableReference(new QualifiedName(new Name('a')));
+        $second = new TableReference(new QualifiedName(new Name('b')));
+        $third = new TableReference(new QualifiedName(new Name('c')));
+        $update = new Update(null, false, false, [$first, new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([$second, $third])], [new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('id')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+
+        self::assertSame([$first, $second, $third], $update->tables);
+    }
+
 }

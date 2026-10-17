@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression\Subquery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -24,16 +23,16 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class InQueryTest extends TestCase
 {
-    public function testDeriveScalarIsNullWhenAColumnCanBeAndReportsAWidthMismatch(): void
+    public function testDeriveScalarIsNullableForANullableSubqueryColumn(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
-        $test = (new Lowering($platform->productions($profile), new Leaves(), $profile))->expressions->expression($platform->parser($profile)->parse('SELECT 1 IN (SELECT NULL, 2)')->find('expr')[0]);
-        $derivation = new Derivation($platform->context($profile, null, [], true));
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 IN (SELECT NULL)');
+        self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
+    }
 
-        self::assertInstanceOf(InQuery::class, $test);
-        self::assertSame(Nullability::Nullable, $derivation->scalar($test, $derivation->environment())->nullability);
-        self::assertSame('Operand should contain 1 column(s), not 2.', $derivation->facts()->diagnostics[0]->message());
+    public function testFixedWidthMismatchCannotBePublished(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 IN (SELECT NULL, 2)');
     }
 
     public function testRenderWritesTheNegatedTest(): void

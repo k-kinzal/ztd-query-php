@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
@@ -40,11 +39,12 @@ use SqlSemantics\Statement\Type\Known;
  * (ER_ILLEGAL_GRANT_FOR_TABLE otherwise); a column list fits a table only
  * (ER_ILLEGAL_GRANT_FOR_TABLE, or a syntax error after FUNCTION or
  * PROCEDURE); FUNCTION and PROCEDURE need a routine name
- * (ER_ILLEGAL_GRANT_FOR_TABLE); a dynamic privilege fits the global level
+ * (ER_ILLEGAL_GRANT_FOR_TABLE), except that global REVOKE ALL in MySQL 8.0
+ * and later ignores the optional FUNCTION or PROCEDURE kind; a dynamic privilege fits the global level
  * only (ER_ILLEGAL_PRIVILEGE_LEVEL, a warning under REVOKE IF EXISTS). ALL
- * fits every level. In a privilege list a role written with a host is a
- * RoleOrPrivilegeMismatch; in a role list a static privilege or a dynamic
- * privilege written with columns is one. The table of a level resolves by
+ * fits every level. Role and privilege operands have separate public types.
+ * Invalid list operands are refused during lowering before a statement can
+ * be constructed. The table of a level resolves by
  * CORE-TABLE-LOOKUP-001 and contributes the slots of its declaration; a
  * name a complete context does not declare is MissingTable for GRANT,
  * except that GRANT of CREATE or ALL without column privileges and every
@@ -62,7 +62,7 @@ final class PrivilegeChecks
     /**
      * Derives the facts of a GRANT of privileges.
      *
-     * @param list<Grantable> $privileges
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges
      */
     public function grant(Derivation $derivation, array $privileges, ObjectKind $kind, PrivilegeLevel $level): void
     {
@@ -91,10 +91,14 @@ final class PrivilegeChecks
     /**
      * Derives the facts of a REVOKE of privileges.
      *
-     * @param list<Grantable> $privileges
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges
      */
     public function revoke(Derivation $derivation, array $privileges, ObjectKind $kind, PrivilegeLevel $level, bool $ifExists): void
     {
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($level instanceof GlobalLevel && ($privileges[0] ?? null) instanceof AllPrivileges && !$legacy) {
+            return;
+        }
         $this->level($derivation, $privileges, $kind, $level, $ifExists);
         if ($level instanceof ObjectLevel && $kind === ObjectKind::Table) {
             $derivation->target($level, $this->target($derivation, $level, true));
@@ -104,7 +108,7 @@ final class PrivilegeChecks
     /**
      * Reports the privileges, column lists and object kind that do not fit the level.
      *
-     * @param list<Grantable> $privileges
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges
      * @param bool $lenient Whether a dynamic privilege outside the global level is only a warning (REVOKE IF EXISTS)
      */
     public function level(Derivation $derivation, array $privileges, ObjectKind $kind, PrivilegeLevel $level, bool $lenient): void
@@ -114,9 +118,7 @@ final class PrivilegeChecks
             $derivation->report(new MisplacedPrivilege((string) $kind->keyword(), $level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE'));
         }
         foreach ($privileges as $privilege) {
-            if ($privilege instanceof GrantedRole) {
-                $derivation->report(new RoleOrPrivilegeMismatch($this->describe($privilege), false));
-            } elseif ($privilege instanceof DynamicPrivilege && !$level instanceof GlobalLevel && !$lenient) {
+            if ($privilege instanceof DynamicPrivilege && !$level instanceof GlobalLevel && !$lenient) {
                 $derivation->report(new MisplacedPrivilege($privilege->name->value, $level->describe(), 'ER_ILLEGAL_PRIVILEGE_LEVEL'));
             } elseif ($privilege instanceof StaticPrivilege) {
                 $this->fit($derivation, $privilege, $kind, $level);
@@ -147,20 +149,6 @@ final class PrivilegeChecks
         }
         if (!($kind === ObjectKind::Table ? $privilege->kind->table() : $privilege->kind->routine())) {
             $derivation->report(new MisplacedPrivilege($name, $level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE'));
-        }
-    }
-
-    /**
-     * Reports the items of a role list of GRANT … TO or REVOKE … FROM that are no roles.
-     *
-     * @param list<Grantable> $roles
-     */
-    public function roles(Derivation $derivation, array $roles): void
-    {
-        foreach ($roles as $role) {
-            if (!$role instanceof GrantedRole) {
-                $derivation->report(new RoleOrPrivilegeMismatch($this->describe($role), true));
-            }
         }
     }
 
@@ -202,7 +190,7 @@ final class PrivilegeChecks
             return $item->name->value;
         }
         if ($item instanceof GrantedRole) {
-            return $item->role->user->value . ($item->role->host === null ? '' : '@' . $item->role->host->value);
+            return $item->role->username() . ($item->role->host === null ? '' : '@' . $item->role->hostname());
         }
 
         return 'ALL';

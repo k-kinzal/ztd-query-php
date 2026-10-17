@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TableRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
-use SqlSemantics\Statement\Relation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 
 /**
  * Lowers the table references and joins of the 5.x grammars.
@@ -69,6 +69,8 @@ final class JoinRule
      *
      * @return list<Relation>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a derived factor lacks its alias
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a nested factor has contradictory syntax
      */
     public function list(Node $list): array
     {
@@ -91,6 +93,8 @@ final class JoinRule
      * Lowers a reference with its optional ODBC escape.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a derived factor lacks its alias
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a nested factor has contradictory syntax
      */
     public function escaped(Node $reference): Relation
     {
@@ -107,6 +111,8 @@ final class JoinRule
      * Lowers a table reference.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a derived factor lacks its alias
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a nested factor has contradictory syntax
      */
     public function reference(Node $reference): Relation
     {
@@ -123,6 +129,8 @@ final class JoinRule
      * Lowers a join, walking the joins on its left in a loop.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a derived factor lacks its alias
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a nested factor has contradictory syntax
      */
     public function joined(Node $joined): JoinedTable
     {
@@ -150,6 +158,8 @@ final class JoinRule
      * Lowers one join over an already lowered left operand.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a derived factor lacks its alias
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a nested factor has contradictory syntax
      */
     public function step(Relation $left, Form $form): JoinedTable
     {

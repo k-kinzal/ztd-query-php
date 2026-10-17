@@ -1,0 +1,786 @@
+{
+    "SqlSemantics\\Platform\\Sqlite\\Dialect": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Connection\\Attach": {
+        "file": "SqlSemantics\\Statement\\Scalar",
+        "key": "?SqlSemantics\\Statement\\Scalar",
+        "schema": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Connection\\Detach": {
+        "schema": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Connection\\NameOperand": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\BindParameter": {
+        "label": "string",
+        "prefix": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\ParameterPrefix"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\CaseBranch": {
+        "then": "SqlSemantics\\Statement\\Scalar",
+        "when": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\CaseExpression": {
+        "base": "?SqlSemantics\\Statement\\Scalar",
+        "branches": "array",
+        "otherwise": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Cast": {
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "target": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Collate": {
+        "collation": "SqlSemantics\\Statement\\Identifier\\Name",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\ColumnUse": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\DoubleQuotedWord": {
+        "word": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\FunctionCall": {
+        "arguments": "array",
+        "filter": "?SqlSemantics\\Statement\\Scalar",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "order": "array",
+        "over": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\WindowSpec|SqlSemantics\\Statement\\Identifier\\Name|null",
+        "quantifier": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\SetQuantifier",
+        "star": "bool"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Grouped": {
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\BlobLiteral": {
+        "hex": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\CurrentTime": {
+        "keyword": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TimeKeyword"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\HexLiteral": {
+        "digits": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\IntegerLiteral": {
+        "digits": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\NullLiteral": [],
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\RealLiteral": {
+        "exponent": "?string",
+        "fraction": "?string",
+        "whole": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TextLiteral": {
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TimeKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\Between": {
+        "high": "SqlSemantics\\Statement\\Scalar",
+        "low": "SqlSemantics\\Statement\\Scalar",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\Binary": {
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\BinaryOperator",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\BinaryOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\NullTest": {
+        "form": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\NullTestForm",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\NullTestForm": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\PatternMatch": {
+        "escape": "?SqlSemantics\\Statement\\Scalar",
+        "left": "SqlSemantics\\Statement\\Scalar",
+        "negated": "bool",
+        "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\PatternOperator",
+        "right": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\PatternOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\Unary": {
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\UnaryOperator"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\UnaryOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\ParameterPrefix": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Raise": {
+        "action": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\RaiseAction",
+        "message": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\RaiseAction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\RowExpression": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\Exists": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\InList": {
+        "items": "array",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\InQuery": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\InTable": {
+        "arguments": "?array",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\ScalarSubquery": {
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\TruthWord": {
+        "value": "bool"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\Frame": {
+        "end": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBound",
+        "exclusion": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameExclusion",
+        "start": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBound",
+        "unit": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameUnit"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBound": {
+        "kind": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBoundKind",
+        "offset": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBoundKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameExclusion": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameUnit": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\WindowDefinition": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "window": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\WindowSpec"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\WindowSpec": {
+        "base": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "frame": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\Frame",
+        "order": "array",
+        "partition": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Inspection\\Explain": {
+        "mode": "SqlSemantics\\Platform\\Sqlite\\Statement\\Inspection\\ExplainMode",
+        "statement": "SqlSemantics\\Statement\\Statement"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Inspection\\ExplainMode": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "quote": "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\WordQuote"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\WordQuote": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\Analyze": {
+        "target": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\Pragma": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "value": "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\SignedNumber|SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\PragmaKeyword|null"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\PragmaKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\Reindex": {
+        "target": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\Vacuum": {
+        "into": "?SqlSemantics\\Statement\\Scalar",
+        "schema": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Assignment": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictTarget": {
+        "terms": "array",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Delete": {
+        "returning": "array",
+        "target": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\MutationTarget",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "with": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertDefaults": {
+        "into": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertInto",
+        "returning": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertInto": {
+        "columns": "array",
+        "replace": "bool",
+        "resolution": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "target": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\MutationTarget",
+        "with": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertRows": {
+        "into": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertInto",
+        "returning": "array",
+        "rows": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause",
+        "upserts": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertSelect": {
+        "into": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertInto",
+        "query": "SqlSemantics\\Statement\\Query",
+        "returning": "array",
+        "upserts": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\MutationTarget": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "index": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\IndexChoice",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Problem\\GeneratedColumnWrite": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "write": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Problem\\WriteKind"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Problem\\WriteKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\RowAssignment": {
+        "columns": "array",
+        "value": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Update": {
+        "assignments": "array",
+        "from": "?SqlSemantics\\Statement\\Relation",
+        "resolution": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "returning": "array",
+        "target": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\MutationTarget",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "with": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Upsert": {
+        "assignments": "array",
+        "target": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictTarget",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Compound": {
+        "first": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Select|SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause",
+        "limit": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Limit",
+        "orderBy": "array",
+        "steps": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\CompoundOperator": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\CompoundStep": {
+        "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\CompoundOperator",
+        "query": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Select|SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Limit": {
+        "comma": "bool",
+        "count": "SqlSemantics\\Statement\\Scalar",
+        "offset": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\ListedColumn": {
+        "collation": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "direction": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\NullsOrder": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\OutputOrdinal": {
+        "constant": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortTerm": {
+        "direction": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection",
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "nulls": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\NullsOrder"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\ArityMismatch": {
+        "actual": "int",
+        "expected": "int",
+        "rule": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\ArityRule"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\ArityRule": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\CallMisuse": {
+        "function": "SqlSemantics\\Statement\\Identifier\\Name",
+        "rule": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\CallMisuseRule"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\CallMisuseRule": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\Misuse": {
+        "rule": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\MisuseRule"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\MisuseRule": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\OrdinalOutOfRange": {
+        "columns": "int",
+        "ordinal": "int"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\RandomColumnName": [],
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\WrongArgumentCount": {
+        "arguments": "int",
+        "function": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ResultColumn": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "as": "bool",
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "layout": "?SqlSemantics\\Statement\\Spelling\\Layout"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Select": {
+        "columns": "array",
+        "from": "?SqlSemantics\\Statement\\Relation",
+        "groupBy": "array",
+        "having": "?SqlSemantics\\Statement\\Scalar",
+        "limit": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Limit",
+        "orderBy": "array",
+        "quantifier": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\SetQuantifier",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "windows": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\SetQuantifier": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Star": [],
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\TableStar": {
+        "table": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValueRow": {
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause": {
+        "rows": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\CommonTable": {
+        "columns": "array",
+        "materialization": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\Materialization",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\Materialization": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause": {
+        "recursive": "bool",
+        "tables": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithQuery": {
+        "body": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Select|SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause|SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Compound",
+        "with": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\DerivedQuery": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "as": "bool",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\IndexChoice": {
+        "index": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinChain": {
+        "constraint": "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOn|SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinUsing|null",
+        "first": "SqlSemantics\\Statement\\Relation",
+        "steps": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinKeyword": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOn": {
+        "condition": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOperator": {
+        "comma": "bool",
+        "words": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinStep": {
+        "constraint": "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOn|SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinUsing|null",
+        "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOperator",
+        "relation": "SqlSemantics\\Statement\\Relation"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinUsing": {
+        "columns": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\NestedInput": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "as": "bool",
+        "relation": "SqlSemantics\\Statement\\Relation"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\TableCall": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "arguments": "array",
+        "as": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\TableInput": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "as": "bool",
+        "index": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\IndexChoice",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AbsentRelation": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AlterAddColumn": {
+        "column": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnDefinition",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AlterDropColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AlterRenameColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "newName": "SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AlterRenameTable": {
+        "newName": "SqlSemantics\\Statement\\Identifier\\Name",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\Collation": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnCheck": {
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnDefinition": {
+        "constraints": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "type": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\TypeName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnPrimaryKey": {
+        "autoincrement": "bool",
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "direction": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnUnique": {
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ConstraintName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\DefaultExpression": {
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\DefaultLiteral": {
+        "literal": "SqlSemantics\\Statement\\Scalar",
+        "sign": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\NumberSign"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\DefaultWord": {
+        "word": "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\Generated": {
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "word": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\GeneratedStorage": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\NotNull": {
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\NullAllowed": {
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateIndex": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "table": "SqlSemantics\\Statement\\Identifier\\Name",
+        "terms": "array",
+        "unique": "bool",
+        "where": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateTable": {
+        "columns": "array",
+        "constraints": "array",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "optionsComma": "bool",
+        "temporary": "bool"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateTableAs": {
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "query": "SqlSemantics\\Statement\\Query",
+        "temporary": "bool"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateView": {
+        "columns": "?array",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "query": "SqlSemantics\\Statement\\Query",
+        "temporary": "bool"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateVirtualTable": {
+        "arguments": "?array",
+        "ifNotExists": "bool",
+        "module": "SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Drop": {
+        "ifExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "object": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\SchemaObjectKind"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Limit\\DefaultNotConstant": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Limit\\DefinitionPosition": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Limit\\ProhibitedConstruct": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Limit\\ProhibitedExpression": {
+        "construct": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Limit\\ProhibitedConstruct",
+        "position": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Limit\\DefinitionPosition"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\LiteralColumn": {
+        "literal": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TextLiteral"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\ModuleArgument": {
+        "text": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\AlterationObstacle": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\AlterationRefused": {
+        "obstacle": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\AlterationObstacle"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\ColumnCountMismatch": {
+        "listed": "int",
+        "returned": "int"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\DecoratedColumnName": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\DuplicateColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\GeneratedColumnFlaw": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\GeneratedColumnProblem": {
+        "column": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "flaw": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\GeneratedColumnFlaw"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\PrimaryKeyFlaw": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\PrimaryKeyProblem": {
+        "flaw": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\PrimaryKeyFlaw"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\QualifiedTemporaryName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\StrictTypeViolation": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "declared": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\UnknownColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\UnknownStorage": {
+        "word": "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\UnknownTableOption": {
+        "option": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TableOption"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\Deferrability": {
+        "deferrable": "bool",
+        "initially": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\InitialMode"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ForeignKeyClause": {
+        "arguments": "array",
+        "columns": "?array",
+        "table": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\InitialMode": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\MatchName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceAction": {
+        "event": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceEvent",
+        "reaction": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceReaction"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceEvent": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceReaction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Refusal\\KindRefusal": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Refusal\\WrongRelationKind": {
+        "refusal": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Refusal\\KindRefusal",
+        "relation": "SqlSemantics\\Statement\\Declaration\\Table"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\SchemaObjectKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\ConstraintRun": {
+        "items": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\ForeignKey": {
+        "clause": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ForeignKeyClause",
+        "columns": "array",
+        "deferrability": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\Deferrability"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TableCheck": {
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "expression": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TableOption": {
+        "without": "bool",
+        "word": "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TableOptionKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TablePrimaryKey": {
+        "autoincrement": "bool",
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "terms": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TableUnique": {
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "terms": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Begin": {
+        "behavior": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\TransactionBehavior",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Commit": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Release": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Rollback": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\RollbackTo": {
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Savepoint": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\TransactionBehavior": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\CreateTrigger": {
+        "columns": "array",
+        "event": "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerEvent",
+        "forEachRow": "bool",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "steps": "array",
+        "table": "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerTable",
+        "temporary": "bool",
+        "timing": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerTiming",
+        "when": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerEvent": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerTiming": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\Affinity": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\ColumnDomain": {
+        "affinity": "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\Affinity",
+        "declared": "string",
+        "standard": "bool",
+        "strict": "bool"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\NoAffinity": [],
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\NumberSign": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\SignedNumber": {
+        "number": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\IntegerLiteral|SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\HexLiteral|SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\RealLiteral",
+        "sign": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\NumberSign"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\Storage": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\TypeName": {
+        "arguments": "array",
+        "words": "array"
+    },
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\Vector": {
+        "width": "int"
+    }
+}

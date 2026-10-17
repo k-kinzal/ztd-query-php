@@ -7,19 +7,22 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Conversion;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A conversion of a string to a character set: `CONVERT(expr USING charset)` (`Item_func_conv_charset`).
@@ -33,7 +36,7 @@ use SqlSemantics\Statement\Type\Known;
  * @visibility public
  * @example Reading the character set
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CONVERT(a USING utf8mb4) = 'x'");
- *     $query->statement->where->left->charset->name->value // => 'utf8mb4'
+ *     $query->statement->query->where->left->charset->name->value // => 'utf8mb4'
  */
 final class CharsetConversion implements Scalar
 {
@@ -46,6 +49,7 @@ final class CharsetConversion implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly CharsetName $charset)
     {
         Check::input($charset->name !== null, 'CONVERT … USING names a character set.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -56,9 +60,13 @@ final class CharsetConversion implements Scalar
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         $name = $this->charset->name;
         Check::invariant($name !== null, 'CONVERT … USING names a character set.');
-        $type = strtolower($name->value) === 'binary' ? new Binary(BinaryKind::VarBinary) : new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, $name));
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->charset($name->value, $derivation);
+        $charset = Charset::named($name->value);
+        $type = strtolower($name->value) === 'binary' ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(charset: new CharsetAttribute(CharsetForm::Named, $name));
+        $operand = (new Precision())->domain($fact->type);
+        $domain = $operand === null || $charset === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);
 
-        return new ScalarFact(new Known($type), $fact->nullability);
+        return new ScalarFact(new Known($domain ?? $type), $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $fact->nullability : Nullability::Nullable);
     }
 
     /**

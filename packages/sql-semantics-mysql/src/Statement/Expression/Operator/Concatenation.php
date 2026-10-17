@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Expression\StringResult;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -32,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Concatenating under PIPES_AS_CONCAT
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('PIPES_AS_CONCAT'));
- *     $semantics->analyze("SELECT a FROM t WHERE a || 'x'")->statement->where instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation // => true
+ *     $semantics->analyze("SELECT a FROM t WHERE a || 'x'")->statement->query->where instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation // => true
  */
 final class Concatenation implements Scalar
 {
@@ -47,6 +48,7 @@ final class Concatenation implements Scalar
         $precedence = new Precedence();
         Check::input($precedence->fits($left, Precedence::SIMPLE_EXPR, Precedence::SIMPLE_EXPR), 'The left operand of || needs a grouping to keep its place.');
         Check::input($precedence->opening($right) > Precedence::SIMPLE_EXPR, 'The right operand of || needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -59,7 +61,9 @@ final class Concatenation implements Scalar
         $left = $operands->single($derivation->scalar($this->left, $environment), $derivation);
         $right = $operands->single($derivation->scalar($this->right, $environment), $derivation);
 
-        return new ScalarFact((new StringResult())->concatenation([$left->type, $right->type]), $left->nullability->propagate($right->nullability));
+        $fact = new ScalarFact((new StringResult())->concatenation([$left->type, $right->type]), $left->nullability->propagate($right->nullability));
+
+        return (new Results())->refine('CONCAT', [$this->left, $this->right], [$left, $right], $fact, $derivation);
     }
 
     /**

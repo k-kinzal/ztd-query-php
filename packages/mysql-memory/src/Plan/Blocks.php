@@ -1,0 +1,440 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Plan;
+
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Compile\Walker;
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Evaluation\Convert;
+use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Evaluation\Leaf\Constant;
+use MySqlMemory\Evaluation\Operator\Logic;
+use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Plan\Path\AccessPath;
+use MySqlMemory\Plan\Path\Source\SingleRow;
+use MySqlMemory\Plan\Path\Source\TableScan;
+use MySqlMemory\Plan\Path\Transform\Distinct;
+use MySqlMemory\Plan\Path\Transform\Filter;
+use MySqlMemory\Plan\Path\Transform\Limit;
+use MySqlMemory\Plan\Path\Transform\Project;
+use MySqlMemory\Plan\Path\Transform\Sort;
+use MySqlMemory\Plan\Window\Windowing;
+use MySqlMemory\Session\Diagnostics;
+use MySqlMemory\Typing\Domain;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
+use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
+use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
+use SqlSemantics\Platform\MySql\Statement\Query\Limit as LimitClause;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Shape\Field;
+
+/**
+ * Plans one query block: its FROM, WHERE, grouping, HAVING, windows, select list, DISTINCT, ORDER BY and LIMIT, in the order the server applies them.
+ *
+ * The rows of the block's plan hold the select list followed by the sort keys that are not in it.
+ * A materialized window function reads a temporary column, so a BLOB or JSON result is
+ * flagged as a blob. The base column each output column reads is answered by
+ * {@see Origins}.
+ *
+ * @visibility MySqlMemory
+ */
+final class Blocks
+{
+    /**
+     * @param Planner $planner The planner of the statement
+     */
+    public function __construct(public readonly Planner $planner)
+    {
+    }
+
+    /**
+     * Plans a SELECT block.
+     *
+     * @throws SqlError When an expression of the block cannot be compiled
+     */
+    public function select(Select $select, ?Scope $outer): QueryPlan
+    {
+        $compiler = $this->planner->compiler;
+        $scope = new Scope($outer);
+        $input = $select->from === null ? new SingleRow() : $this->planner->relations->plan($select->from, $scope);
+        $input = (new JoinComparisons($this->planner))->plan($input, $select, $scope);
+        $input = (new Lookup\PrimaryKeys($this->planner))->plan($select, $input, $scope);
+        $filter = $select->where === null ? null : $this->where($input, $select->where, $scope);
+        $input = (new Locking($this->planner))->lock($select, $scope, $input, $filter);
+        $grouping = new Grouping($this->planner);
+        [$input, $evaluation] = $grouping->plan($select, $input, $scope);
+        if ($select->having !== null) {
+            $input = $this->where($input, $select->having, $evaluation);
+        }
+        $windows = new Windowing($this->planner);
+        [$input, $presorted, $storedWindows] = $windows->plan($select, $input, $evaluation);
+        $fields = $this->fields($select);
+        $expressions = array_map(fn (Field $field): Evaluable => $compiler->names->field($field, $evaluation), $fields);
+        $rolled = array_map(static fn (Field $field): bool => $grouping->rolls($select, $field), $fields);
+        if ($select->groupBy?->modifier !== null) {
+            $expressions = array_map(static fn (Field $field, Evaluable $expression): Evaluable => $grouping->output($field, $expression), $fields, $expressions);
+        }
+        $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $windows->output($select, $field, $expression, $storedWindows), $fields, $expressions);
+        [$keys, $expressions] = $this->sortKeys($select, $fields, $domains, $expressions, $evaluation);
+        $expressions = $this->carry($select, $scope, $evaluation, $expressions);
+        $names = array_map(fn (Field $field): string => $this->name($field, $select), $fields);
+        $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== [], $storedWindows);
+        $hashes = (new SortedDistinct($this->planner))->hashes(new QueryPlan($input, $domains, $names, $origins), $select, $keys);
+        $root = (new Projection\DistinctStorage($this->planner))->grouped($this->distinct($select, $fields, $input, $expressions, $domains, $hashes, $keys !== []), $select, $domains, $keys !== []);
+        $copies = (new Window\CopiedAssignments($this->planner))->copies($select, $fields, $storedWindows);
+        $root = (new Window\CopiedAssignments($this->planner))->buffered($select, $root, $copies);
+        if ($keys !== [] && !$presorted) {
+            $root = (new Window\CopiedAssignments($this->planner))->sorted($root, $expressions, array_intersect_key(array_fill_keys(array_column($keys, 0), true), $copies));
+            $root = new Sort($root, $keys);
+        }
+        $calculate = in_array(SelectOption::CalcFoundRows, $select->options, true);
+        $root = $this->limit($root, $select->limit, $outer, $calculate);
+        $root = $this->limit($root, $select->late?->limit, $outer, $calculate);
+        $root = (new Window\Direct($this->planner))->bounded((new Projection\Emission($this->planner))->plan($root, $select, $storedWindows), $select);
+        $root = (new Window\ParentInputs($this->planner))->emitted($select, $root, $expressions, count($fields), $keys !== [] && !$presorted, $copies);
+
+        $plan = (new Grouping\Preparation($this->planner))->plan((new Projection\DistinctStorage($this->planner))->apply(new QueryPlan($root, $domains, $names, $origins), $select, $outer, $expressions, $keys !== []), $select, $scope, $evaluation);
+
+        return (new Lookup\Preparation($this->planner))->plan(System\ProgramMetadata::buffered((new SortedDistinct($this->planner))->apply($plan, $select, $keys, $outer), $this->planner, $select, $outer, $scope, $keys !== []), $select, $scope, $evaluation);
+    }
+
+    /**
+     * Answers the domain of a select item, binary again when SQL Semantics types it as a binary temporal value its expression holds in a character set.
+     *
+     * A column of a merged derived table holds a temporal value in the connection collation; a
+     * block that passes its rows through a temporary table, for GROUP BY, DISTINCT or a window,
+     * sends it binary (verified on a live 8.4 server).
+     */
+    public function tabled(Field $field, Domain $domain): Domain
+    {
+        $type = $field->slot->type;
+        if (!$domain->kind->temporal() || $domain->collation->bytes() || !$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain || !$type->descriptor->collation->bytes() || $type->descriptor->kind !== $domain->kind) {
+            return $domain;
+        }
+
+        return $domain->withCollation($type->descriptor->collation, $domain->coercibility);
+    }
+
+    /**
+     * Appends the row of the FROM clause of the block the planner carries to its rows, when the block neither groups nor removes duplicates.
+     *
+     * INSERT ... SELECT reads the columns of the FROM clause of its query in ON DUPLICATE KEY UPDATE
+     * when the query is one block without GROUP BY.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/insert-on-duplicate.html.
+     *
+     * @param list<Evaluable> $expressions The select list, then the ORDER BY keys
+     * @return list<Evaluable>
+     */
+    public function carry(Select $select, Scope $scope, Scope $evaluation, array $expressions): array
+    {
+        if ($this->planner->carrying !== $select || $evaluation !== $scope || in_array(SelectOption::Distinct, $select->options, true)) {
+            return $expressions;
+        }
+        $this->planner->carried = [count($expressions), $scope];
+        $position = 0;
+        foreach ($scope->columns as $domains) {
+            foreach ($domains as $domain) {
+                $expressions[] = new ColumnRead($domain, $position++);
+            }
+        }
+
+        return $expressions;
+    }
+
+    /**
+     * Answers the fields of the select list of a block.
+     *
+     * @return list<Field>
+     * @throws SqlError When the select list holds a star over a relation of unknown columns
+     */
+    public function fields(Select $select): array
+    {
+        $fields = [];
+        foreach ($this->planner->compiler->facts->query($select)->projection as $field) {
+            if (!$field instanceof Field) {
+                throw StatementError::NotSupportedYet->error('a star over an open relation');
+            }
+            $fields[] = $field;
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Answers the sort keys of a block and its select list followed by the keys that are not in it.
+     *
+     * A key that names a select item sorts by that item; another is compiled after the select
+     * list, but for a key constant for the statement, which does not sort.
+     *
+     * @param list<Field> $fields The fields of the select list
+     * @param list<Domain> $domains The domains of the select list
+     * @param list<Evaluable> $expressions The select list
+     * @return array{list<array{int, Domain, bool}>, list<Evaluable>}
+     * @throws SqlError When a key cannot be compiled
+     */
+    public function sortKeys(Select $select, array $fields, array $domains, array $expressions, Scope $evaluation): array
+    {
+        return (new Projection\Ordering($this->planner))->keys($select, $fields, $domains, $expressions, $evaluation);
+    }
+
+    /**
+     * Projects the rows of a block and removes duplicates under DISTINCT.
+     *
+     * Under DISTINCT an item constant for the statement is evaluated only for the rows that
+     * remain: the duplicates are found among the other items (verified on a live 8.4 server).
+     *
+     * @param list<Field> $fields The fields of the select list
+     * @param list<Evaluable> $expressions The select list, then the ORDER BY keys
+     * @param list<Domain> $domains The domains of the select list
+     * @param bool $hashed Whether duplicate removal uses temporary hash keys
+     * @param bool $sorted Whether the output requires sorting keys
+     */
+    public function distinct(Select $select, array $fields, AccessPath $input, array $expressions, array $domains, bool $hashed = false, bool $sorted = false): AccessPath
+    {
+        if (!in_array(SelectOption::Distinct, $select->options, true)) {
+            return new Project($input, $expressions, publish: $this->planner->settings->legacy() && !(new Projection\Emission($this->planner))->sortable($select), order: (new Projection\Ordering($this->planner))->order($select, $fields, $expressions), initial: (new Projection\Ordering($this->planner))->initial($select, $fields, $domains));
+        }
+        $input = (new Projection\DistinctStorage($this->planner))->input($select, $input, $fields, $sorted);
+        $deferred = (new Window\DistinctOutputs($this->planner))->plan($select, $fields, $input, $expressions, $domains, $hashed);
+        if ($deferred !== null) {
+            return $deferred;
+        }
+        $compiler = $this->planner->compiler;
+        $constants = [];
+        foreach ($fields as $position => $field) {
+            if ($field->expression !== null && $compiler->constancy($field->expression, assignmentsVary: false)->constant() && (new Walker())->find($field->expression, Query::class) === []) {
+                $constants[$position] = $expressions[$position];
+            }
+        }
+        $zeroNulls = (new Projection\DistinctStorage($this->planner))->numericNulls($select, $fields, $domains);
+        if ($constants === []) {
+            return new Distinct(new Project($input, $expressions), $domains, $hashed, $zeroNulls);
+        }
+        $placeheld = array_map(static fn (int $position, Evaluable $expression): Evaluable => isset($constants[$position]) ? new Constant($expression->domain(), null) : $expression, array_keys($expressions), $expressions);
+        $distinct = new Distinct(new Project($input, $placeheld), $domains, $hashed, $zeroNulls);
+
+        return new Project($distinct, array_map(static fn (int $position, Evaluable $expression): Evaluable => $constants[$position] ?? new ColumnRead($expression->domain(), $position), array_keys($expressions), $expressions));
+    }
+
+    /**
+     * Tells whether the server finds at once that a block reads no row: LIMIT 0 without SQL_CALC_FOUND_ROWS, or a constant false WHERE or HAVING part.
+     *
+     * The constant parts are evaluated apart from the statement, so that their warnings are
+     * recorded only when the statement evaluates them; a part that fails is taken as true.
+     *
+     * @param bool $countOffsets Whether offset rows keep aggregate preparation active for LIMIT 0
+     * @param bool $assignmentsVary Whether constant assignments prevent folding a condition
+     */
+    public function empty(Select $select, ?Scope $outer, bool $countOffsets = false, bool $assignmentsVary = true): bool
+    {
+        foreach ([$select->limit, $select->late?->limit] as $limit) {
+            $count = $limit instanceof RowLimit ? $limit->count : null;
+            while ($count instanceof Grouped) {
+                $count = $count->operand;
+            }
+            if ($count instanceof NumberLiteral && (int) $count->text === 0 && (!$countOffsets || !$limit instanceof RowLimit || $limit->offset === null || ($limit->offset instanceof NumberLiteral && (int) $limit->offset->text === 0)) && !in_array(SelectOption::CalcFoundRows, $select->options, true)) {
+                return true;
+            }
+        }
+        $compiler = $this->planner->compiler;
+        $context = $compiler->connection->context;
+        $frame = new Frame(new Context($context->modes, new Diagnostics(), $context->variables, $context->started));
+        foreach (array_merge(...array_map(fn (Scalar $condition): array => $this->conjuncts($condition), array_values(array_filter([$select->where, $select->having])))) as $conjunct) {
+            if (!$compiler->constancy($conjunct, assignmentsVary: $assignmentsVary)->constant() || (new Walker())->find($conjunct, Query::class) !== []) {
+                continue;
+            }
+            try {
+                $condition = $compiler->compile($conjunct, new Scope($outer));
+                if (Convert::toBool($condition->evaluate($frame), $condition->domain(), $frame->context) !== true) {
+                    return true;
+                }
+            } catch (SqlError) {
+                continue;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Plans the WHERE clause of a block over its rows.
+     *
+     * A conjunct of the condition constant for the statement is evaluated once, before any row is
+     * read, as the server evaluates it when it optimizes the block; when it is not true no row is
+     * read. The other conjuncts are evaluated for each row, in written order.
+     *
+     * @throws SqlError When the condition cannot be compiled
+     */
+    public function where(AccessPath $input, Scalar $where, Scope $scope): Filter
+    {
+        $compiler = $this->planner->compiler;
+        $constant = null;
+        $varying = null;
+        $recheck = null;
+        foreach ($this->conjuncts($where) as $conjunct) {
+            $compiled = $compiler->compile($conjunct, $scope);
+            if ((new \MySqlMemory\Evaluation\Compile\Family\UnsignedBounds($compiler))->impossible($conjunct)) {
+                $constant = new Constant($compiler->operators->truth(false), 0);
+            } elseif ($compiler->constancy($conjunct)->constant()) {
+                $constant = $constant === null ? $compiled : new Logic(LogicalOperator::And, $constant, $compiled, $compiler->operators->truth($constant->domain()->nullable || $compiled->domain()->nullable));
+            } else {
+                $varying = $varying === null ? $compiled : new Logic(LogicalOperator::And, $varying, $compiled, $compiler->operators->truth($varying->domain()->nullable || $compiled->domain()->nullable));
+                if ($compiler->settings->legacy() && $input instanceof Path\Source\KeyLookup && (new Lookup\PrimaryKeys($this->planner))->preparable($conjunct)) {
+                    $recheck = $recheck === null ? $compiled : new Logic(LogicalOperator::And, $recheck, $compiled, $compiler->operators->truth($recheck->domain()->nullable || $compiled->domain()->nullable));
+                }
+            }
+        }
+
+        return new Filter($input, $varying ?? new Constant($compiler->operators->truth(false), 1), $constant, $recheck);
+    }
+
+    /**
+     * Splits a condition into the operands of its top-level ANDs, in written order.
+     *
+     * @return list<Scalar>
+     */
+    public function conjuncts(Scalar $condition): array
+    {
+        while ($condition instanceof Grouped) {
+            $condition = $condition->operand;
+        }
+        if ($condition instanceof Logical && $condition->operator === LogicalOperator::And) {
+            return [...$this->conjuncts($condition->left), ...$this->conjuncts($condition->right)];
+        }
+
+        return [$condition];
+    }
+
+    /**
+     * Plans `TABLE t`: every column of a table, or of a system table with the rows it holds now.
+     */
+    public function table(ExplicitTable $table, ?Scope $outer): QueryPlan
+    {
+        $schema = $table->table->schema->value ?? $this->planner->settings->database;
+        $stored = $this->planner->dictionary->table($schema, $table->table->name->value);
+        $view = $this->planner->dictionary->schema($schema)->views[$table->table->name->value] ?? null;
+        if ($stored === null && $view !== null) {
+            return (new Views($this->planner))->table($view);
+        }
+        $system = $this->planner->dictionary->system;
+        $read = $stored === null ? $system?->find($schema, $table->table->name->value) : null;
+        if ($system !== null && $read !== null) {
+            $stored = $system->deferred($read, $this->planner->compiler->connection);
+        }
+        if ($stored === null) {
+            throw QueryError::NoSuchTable->error($schema, $table->table->name->value);
+        }
+        $columns = $stored->definition->columns;
+        $visible = array_values(array_filter(array_keys($columns), static fn (int $position): bool => !$columns[$position]->invisible));
+        $expressions = array_map(static fn (int $position) => new ColumnRead($columns[$position]->domain, $position), $visible);
+
+        $definition = $stored->definition;
+        $origins = array_map(static fn (int $position): ColumnOrigin => $system?->origin($definition, $position, $definition->name) ?? new ColumnOrigin($definition->schema, $definition->name, $definition->name, $columns[$position]->name, $definition->flags($position)), $visible);
+
+        return new QueryPlan(new Project(new TableScan($stored, handle: $this->planner->compiler->connection->context->tableHandle($stored, $table)), $expressions), array_map(static fn (int $position) => $columns[$position]->domain, $visible), array_map(static fn (int $position): string => $columns[$position]->name, $visible), $origins);
+    }
+
+    /**
+     * Bounds a path by a LIMIT clause, whose values are known before any row is read.
+     *
+     * @param bool $exhaust Whether SQL_CALC_FOUND_ROWS consumes the remaining input
+     * @throws SqlError When a bound is not a non-negative integer
+     */
+    public function limit(AccessPath $path, ?LimitClause $limit, ?Scope $outer, bool $exhaust = false): AccessPath
+    {
+        if (!$limit instanceof RowLimit) {
+            return $path;
+        }
+        if ($path instanceof Path\Transform\Prepare && $path->early) {
+            return new Path\Transform\Prepare($this->limit($path->input, $limit, $outer, $exhaust), $path->conditions, true, $path->guard);
+        }
+        $count = $this->bound($limit->count, $outer);
+        $offset = $limit->offset === null ? 0 : $this->bound($limit->offset, $outer);
+        if ($count === 0 && $path instanceof Path\Combine\SetOperation && !$path->retain && $this->planner->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            $offset = 0;
+        }
+
+        $constant = $path instanceof Project && $path->input instanceof SingleRow;
+
+        return new Limit($path, $count, $offset, !$constant || !$this->planner->settings->legacy() || $exhaust, $exhaust, $path instanceof Path\Combine\UnionStream && $path->prepare);
+    }
+
+    /**
+     * Evaluates a LIMIT or OFFSET value.
+     *
+     * @throws SqlError When the value is not an integer
+     */
+    public function bound(\SqlSemantics\Statement\Operand $value, ?Scope $outer): int
+    {
+        $evaluable = $this->planner->compiler->compile($value, new Scope($outer));
+        $frame = new Frame($this->planner->compiler->connection->context);
+        $number = Convert::toInteger($evaluable->evaluate($frame), $evaluable->domain(), $frame->context, true);
+        if ($number === null) {
+            throw StatementError::WrongArguments->error('LIMIT');
+        }
+
+        return $number < 0 ? PHP_INT_MAX : $number;
+    }
+
+    /**
+     * Answers the name of an output column.
+     *
+     * An item without alias that names a column of a view is named as the view names the column,
+     * in any case the statement writes it; so is a column of a view of INFORMATION_SCHEMA of MySQL
+     * 8.0 and later (verified on live 5.7.44, 8.0.44 and 8.4.7 servers).
+     *
+     * @param Select|null $select The block of the select list, which tells whether the item has an alias
+     */
+    public function name(Field $field, ?Select $select = null): string
+    {
+        if ($field->name !== null) {
+            return ($select === null ? null : $this->viewed($field, $select)) ?? $field->name->value;
+        }
+
+        return $field->expression === null ? '' : (new \MySqlMemory\Evaluation\Compile\Printer())->expression($field->expression);
+    }
+
+    /**
+     * Answers the name a view gives the column an item without alias names, or null for another item.
+     */
+    public function viewed(Field $field, Select $select): ?string
+    {
+        $expression = $field->expression;
+        if (!$expression instanceof ColumnUse) {
+            return null;
+        }
+        foreach ($select->items as $item) {
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression && $item->expression === $expression && $item->alias !== null) {
+                return null;
+            }
+        }
+        $resolution = $this->planner->compiler->facts->scalar($expression)->resolution;
+        if (!$resolution instanceof ResolvedColumn || $resolution->slot->name === null) {
+            return null;
+        }
+        $table = $this->planner->compiler->facts->covers($resolution->relation) ? $this->planner->compiler->facts->relation($resolution->relation)->table : null;
+        if (!$table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable || $table->table->kind !== \SqlSemantics\Statement\Declaration\RelationKind::View) {
+            return null;
+        }
+        $system = $this->planner->dictionary->system;
+        if ($system !== null && $system->table($table->table) !== null && !$system->named($table->table)) {
+            return null;
+        }
+
+        return $resolution->slot->name->value;
+    }
+}

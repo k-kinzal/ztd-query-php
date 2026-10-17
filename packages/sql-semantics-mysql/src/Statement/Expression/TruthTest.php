@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Testing a comparison
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = 1 IS NOT TRUE');
- *     [$query->statement->where->negated, $query->statement->where->truth->value] // => [true, 'TRUE']
+ *     [$query->statement->query->where->negated, $query->statement->query->where->truth->value] // => [true, 'TRUE']
  */
 final class TruthTest implements Scalar
 {
@@ -43,6 +43,7 @@ final class TruthTest implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly Truth $truth, public readonly bool $negated = false)
     {
         Check::input((new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The operand of a truth test needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
@@ -31,7 +32,7 @@ use SqlSemantics\Statement\Type\Known;
  *     $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral(true, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('5'));
  *     [$literal->negative, $literal->number->text] // => [true, '5']
  */
-final class SignedLiteral implements Scalar
+final class SignedLiteral implements Literal
 {
     use Snapshot;
 
@@ -49,11 +50,8 @@ final class SignedLiteral implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->number, $environment);
-        if ($this->negative && $this->number->beyondSigned()) {
-            return new ScalarFact(new Known(new Decimal()), $fact->nullability);
-        }
 
-        return new ScalarFact($fact->type, $fact->nullability);
+        return new ScalarFact(new Known(Literals::of($derivation->context)->number($this->number, $this->negative)), $fact->nullability);
     }
 
     /**

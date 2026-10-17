@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the file name
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t INTO DUMPFILE '/tmp/a.bin'");
- *     $query->statement->into->file->value // => '/tmp/a.bin'
+ *     $query->statement->query->into->file->value // => '/tmp/a.bin'
  */
 final class IntoDumpfile implements IntoDestination
 {

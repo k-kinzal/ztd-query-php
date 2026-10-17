@@ -41,7 +41,7 @@ final class AddConstraint implements AlterCommand
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
-        (new ElementFacts())->element($this->element, $derivation, $scope);
+        (new ElementFacts())->element($this->element, $derivation, $scope, typeNotices: true);
     }
 
     /**

@@ -73,4 +73,11 @@ final class CreateTableTest extends TestCase
     {
         self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE InnoDB COMMENT \'x\' REPLACE AS SELECT 1 AS a', (new Semantics(Dialect::MySql))->analyze('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE = InnoDB COMMENT = \'x\' REPLACE AS SELECT 1 AS a')->toString());
     }
+    public function testDeriveStatementOrdersNoticesBeforeTheTypeFailure(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT(11), b BIT(65) DEFAULT (!1), c INT(11))');
+
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', "'!' is deprecated and will be removed in a future release. Please use NOT instead", 'Integer display width is deprecated and will be removed in a future release.', "Display width out of range for column 'b' (max = 64)"], array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings));
+    }
+
 }

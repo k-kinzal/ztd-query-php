@@ -23,6 +23,16 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CollationNameTest extends TestCase
 {
+    public function testDeprecationUsesTheResolvedNameAndRelease(): void
+    {
+        self::assertSame(4079, (new CollationName(new Name('UCS2_BIN')))->deprecation(GrammarRelease::MySql847)?->code());
+        self::assertSame(3778, (new CollationName(new Name('utf8_bin')))->deprecation(GrammarRelease::MySql847)?->code());
+        self::assertNull((new CollationName(new Name('ucs2_bin')))->deprecation(GrammarRelease::MySql5744));
+        self::assertNull((new CollationName(new Name('utf8mb4_bin')))->deprecation(GrammarRelease::MySql847));
+        self::assertNull((new CollationName(new Name('missing')))->deprecation(GrammarRelease::MySql847));
+        self::assertNull((new CollationName(null))->deprecation(GrammarRelease::MySql847));
+    }
+
     public function testRenderWritesTheNameAsWritten(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));

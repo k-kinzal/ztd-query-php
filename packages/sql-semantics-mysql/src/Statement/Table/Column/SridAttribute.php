@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table\Column;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Snapshot;
@@ -32,10 +35,17 @@ final class SridAttribute implements ColumnAttribute
     }
 
     /**
-     * Derives nothing: the attribute holds no expression.
+     * Checks that the column restriction is an unsigned 32-bit identifier, allowing zero.
+     *
+     * Rule: MYSQL-COLUMN-SRID-001. Every written SRID is checked, including a restriction
+     * a later attribute replaces. Verified through SQL on MySQL 8.4.7. Status: Implemented.
      */
     public function deriveAttribute(Derivation $derivation, Environment $scope): void
     {
+        $magnitudes = new Magnitudes();
+        if ($magnitudes->integer($derivation, $this->srid) && !$magnitudes->atMost($this->srid, '4294967295')) {
+            $derivation->report(new SpatialProblem(SpatialRule::IdentifierOutOfRange));
+        }
     }
 
     /**

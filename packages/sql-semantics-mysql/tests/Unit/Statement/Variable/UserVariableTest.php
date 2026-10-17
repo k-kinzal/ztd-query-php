@@ -25,8 +25,9 @@ final class UserVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @total');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(UserVariable::class, $item0->expression);
         $fact = $operation->facts->scalar($item0->expression);
@@ -41,8 +42,9 @@ final class UserVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @Total');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item0 = $operation->statement->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(UserVariable::class, $item0->expression);
         self::assertSame('Total', $item0->expression->name->value);
@@ -72,7 +74,7 @@ final class UserVariableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $variable = new UserVariable(new Name('my var'));
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression($variable)]));
+        $operation = new Operation($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression($variable)])));
 
         self::assertSame('SELECT @`my var`', $operation->toString());
         self::assertSame(Nullability::Dependent, $operation->facts->scalar($variable)->nullability);

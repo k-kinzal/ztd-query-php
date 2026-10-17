@@ -150,9 +150,6 @@ final class FlowFactsTest extends TestCase
     {
         yield 'a function' => ['CREATE FUNCTION f(x INT) RETURNS INT BEGIN IF x THEN RETURN 1; END IF; RETURN x; END', []];
         yield 'an unknown name in a function' => ['CREATE FUNCTION f(x INT) RETURNS INT RETURN y', ['Column y does not exist.']];
-        yield 'a procedure' => ['CREATE PROCEDURE p() BEGIN RETURN 1; END', ['RETURN is only allowed in a FUNCTION']];
-        yield 'a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN NEW.a', ['RETURN is only allowed in a FUNCTION']];
-        yield 'an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO RETURN 1', ['RETURN is only allowed in a FUNCTION']];
     }
 
     public function testReturnedResolvesTheValueToALocalVariable(): void
@@ -169,5 +166,26 @@ final class FlowFactsTest extends TestCase
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertSame($block->declarations[0], $resolution->relation);
+    }
+
+    /**
+     * @return iterable<string, array{string, non-empty-list<string>}>
+     */
+    public static function providerRefusesIntrinsicBodyContradictions(): iterable
+    {
+        yield 'a procedure' => ['CREATE PROCEDURE p() BEGIN RETURN 1; END', ['RETURN is only allowed in a FUNCTION']];
+        yield 'a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN NEW.a', ['RETURN is only allowed in a FUNCTION']];
+        yield 'an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO RETURN 1', ['RETURN is only allowed in a FUNCTION']];
+    }
+
+    /**
+     * @param non-empty-list<string> $messages
+     */
+    #[DataProvider('providerRefusesIntrinsicBodyContradictions')]
+    public function testRefusesIntrinsicBodyContradictions(string $sql, array $messages): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 }

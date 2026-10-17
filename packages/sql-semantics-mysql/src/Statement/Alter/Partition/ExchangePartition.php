@@ -39,6 +39,7 @@ final class ExchangePartition implements StandaloneCommand
      */
     public function __construct(public readonly Name $partition, public readonly QualifiedName $table, public readonly ?ValidationOption $validation = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
     }
 

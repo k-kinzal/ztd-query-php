@@ -7,10 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HANDLER ... READ FIRST|NEXT: reads rows of an open handler in natural row order.
@@ -35,6 +35,7 @@ final class HandlerScan implements Statement
      */
     public function __construct(public readonly OpenHandler $handler, public readonly ScanDirection $direction, public readonly ?Scalar $where = null, public readonly ?Limit $limit = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

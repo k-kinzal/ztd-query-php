@@ -6,14 +6,22 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Constants;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 
 /**
  * A prefix operator applied to a simple_expr: `+x`, `-x`, `~x`, `!x` (`Item_func_neg`, `Item_func_bit_neg`, `Item_func_not`).
@@ -22,7 +30,8 @@ use SqlSemantics\Statement\Snapshot;
  * COLLATE, so `-a COLLATE c` negates the collated value (MYSQL-PRECEDENCE-001).
  *
  * Rule: MYSQL-UNARY-001. Facts: unary plus has the facts of its operand
- * (the server drops it); unary minus follows MYSQL-NUMERIC-RESULT-001; `~`
+ * (the server drops it); unary minus follows MYSQL-NUMERIC-RESULT-001, and is a DECIMAL over an
+ * integer constant that is negative; `~`
  * is a bit operator; `!` is a truth value. Each is NULL when the operand
  * is, and takes a single value. Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/arithmetic-functions.html#operator_unary-minus,
@@ -41,10 +50,13 @@ final class Unary implements Scalar
     /**
      * @param UnaryOperator $operator The operator
      * @param Scalar $operand The operand
+     * @param bool $keyword Whether tight negation was written NOT under HIGH_NOT_PRECEDENCE
      */
-    public function __construct(public readonly UnaryOperator $operator, public readonly Scalar $operand)
+    public function __construct(public readonly UnaryOperator $operator, public readonly Scalar $operand, public readonly bool $keyword = false)
     {
+        Check::input(!$keyword || $operator === UnaryOperator::Not, 'Only logical negation has a keyword spelling.');
         Check::input((new Precedence())->opening($operand) >= Precedence::PREFIX, 'The operand of a prefix operator needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -52,15 +64,25 @@ final class Unary implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        Check::input(!$this->keyword || $derivation->context->profile->lexical->highNotPrecedence, 'The tight NOT keyword requires HIGH_NOT_PRECEDENCE.');
         $operands = new Operands();
+        if (in_array($this->operator, [UnaryOperator::Not, UnaryOperator::PairedNot], true) && !$this->keyword) {
+            Deprecation::raise(Deprecated::BangNot, $derivation, $this, false);
+        }
         $fact = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
         $numbers = new NumericResult();
+        $operand = (new Precision())->domain($fact->type);
+        $precise = new Numbers(Settings::of($derivation->context)->divPrecisionIncrement);
+        $bits = $numbers->bits([[$this->operand, $fact]], $derivation->context->profile->grammar);
+        if ($this->operator === UnaryOperator::Invert && $numbers->binaryOperand($this->operand, $fact)) {
+            Deprecation::raise(Deprecated::BinaryBitwise, $derivation);
+        }
 
         return match ($this->operator) {
-            UnaryOperator::Plus => new ScalarFact($fact->type, $fact->nullability),
-            UnaryOperator::Minus => new ScalarFact($numbers->negation($this->operand, $fact), $fact->nullability),
-            UnaryOperator::Invert => new ScalarFact($numbers->bits([[$this->operand, $fact]], $derivation->context->profile->grammar), $fact->nullability),
-            UnaryOperator::Not => $operands->truth($fact->nullability),
+            UnaryOperator::Plus => new ScalarFact($fact->type, $fact->nullability, $fact->resolution, $fact->replacement ?? $this->operand),
+            UnaryOperator::Minus => new ScalarFact($operand === null ? $numbers->negation($this->operand, $fact) : new Known($this->negated($precise, $operand, $numbers, $derivation)), $fact->nullability),
+            UnaryOperator::Invert => new ScalarFact($operand === null || !$bits instanceof Known ? $bits : new Known(TypeClass::of($bits->descriptor) === TypeClass::Unsigned ? $precise->bits() : $precise->binaryBits(null, $operand)), $fact->nullability),
+            UnaryOperator::Not, UnaryOperator::PairedNot => $operands->truth($fact->nullability),
         };
     }
 
@@ -69,6 +91,28 @@ final class Unary implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->symbol($this->operator->value)->node($this->operand);
+        if ($this->keyword) {
+            $out->keyword('NOT');
+        } elseif ($this->operator === UnaryOperator::PairedNot) {
+            $out->symbol('!')->glue()->symbol('!');
+        } else {
+            $out->symbol($this->operator->value);
+        }
+        $out->node($this->operand);
+    }
+
+    /**
+     * Resolves unary minus over a resolved operand. Legacy exact results and boolean literals include an extra sign character.
+     */
+    public function negated(Numbers $precise, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain $operand, NumericResult $numbers, Derivation $derivation): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain
+    {
+        $result = $precise->negated($operand, (new Constants())->negative($this->operand) || $numbers->beyond($this->operand));
+        $grammar = $derivation->context->profile->grammar;
+        $literal = $this->operand;
+        while ($literal instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped || ($literal instanceof self && $literal->operator === UnaryOperator::Plus)) {
+            $literal = $literal->operand;
+        }
+
+        return $literal instanceof \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $precise->legacyNegated($result, $operand->unsigned && $precise->operand($operand) === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) : $result;
     }
 }

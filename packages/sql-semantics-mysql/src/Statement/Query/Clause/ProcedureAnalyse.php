@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the arguments
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)');
- *     count($query->statement->procedure->arguments) // => 2
+ *     count($query->statement->query->procedure->arguments) // => 2
  * @example Refusing a third argument
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse([$one, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')]) // throws \SqlSemantics\Diagnostic\InvalidConstruction

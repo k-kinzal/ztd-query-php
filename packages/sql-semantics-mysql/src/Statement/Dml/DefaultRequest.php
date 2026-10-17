@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a) VALUES (DEFAULT)');
  *     $insert->statement->rows[0]->values[0] instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest // => true
  */
-final class DefaultRequest implements Scalar
+final class DefaultRequest implements Operand
 {
     use Snapshot;
 

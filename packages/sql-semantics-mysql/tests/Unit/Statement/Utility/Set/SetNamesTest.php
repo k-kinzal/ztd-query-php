@@ -15,6 +15,17 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames;
 #[Medium]
 final class SetNamesTest extends TestCase
 {
+    public function testExplicitNamesRetainTheirOrderedNotices(): void
+    {
+        $set = (new Semantics(Dialect::MySql))->analyze('SET NAMES utf8 COLLATE utf8_bin');
+
+        self::assertCount(2, $set->facts->warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning::class, $set->facts->warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning::class, $set->facts->warnings[1]);
+        self::assertSame([3719, 3778], [$set->facts->warnings[0]->code(), $set->facts->warnings[1]->code()]);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SET CHARACTER SET utf8')->facts->warnings);
+    }
+
     public function testDeriveItemDerivesNothing(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET NAMES DEFAULT');

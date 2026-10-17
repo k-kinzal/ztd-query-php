@@ -107,8 +107,8 @@ final class SubqueryRule
         $blocks = new BlockRule($this->lowering);
 
         return match ($form->signature) {
-            'query_specification: SELECT_SYM select_init2_derived' => [$blocks->derived($form->node(1)), $trailer],
-            'query_specification: SELECT_SYM select_part2_derived table_expression' => [$blocks->derived($form->node(1), $form->node(2)), $trailer],
+            'query_specification: SELECT_SYM select_init2_derived' => [$blocks->derived($form->node(1))->hinted($this->lowering->hints($form->token(0))), $trailer],
+            'query_specification: SELECT_SYM select_part2_derived table_expression' => [$blocks->derived($form->node(1), $form->node(2))->hinted($this->lowering->hints($form->token(0))), $trailer],
             'query_specification: ( select_paren_derived )' => [$this->paren($form->node(1)), $trailer],
             'query_specification: ( select_paren_derived ) opt_union_order_or_limit' => [$this->paren($form->node(1)), (new UnionRule($this->lowering))->ordering($form->node(3))->then($trailer)],
             default => throw ImplementationGap::production($form),
@@ -126,8 +126,8 @@ final class SubqueryRule
         $blocks = new BlockRule($this->lowering);
 
         return new ParenthesizedQuery(match ($form->signature) {
-            'select_paren_derived: SELECT_SYM select_part2_derived' => $blocks->derived($form->node(1))->select(),
-            'select_paren_derived: SELECT_SYM select_part2_derived table_expression' => $blocks->derived($form->node(1), $form->node(2))->select(),
+            'select_paren_derived: SELECT_SYM select_part2_derived' => $blocks->derived($form->node(1))->hinted($this->lowering->hints($form->token(0)))->select(),
+            'select_paren_derived: SELECT_SYM select_part2_derived table_expression' => $blocks->derived($form->node(1), $form->node(2))->hinted($this->lowering->hints($form->token(0)))->select(),
             'select_paren_derived: ( select_paren_derived )' => $this->paren($form->node(1)),
             default => throw ImplementationGap::production($form),
         });

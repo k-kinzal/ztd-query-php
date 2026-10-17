@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index hint
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t IGNORE KEY FOR GROUP BY (i, j)');
- *     [$query->statement->from->indexHints[0]->action, count($query->statement->from->indexHints[0]->indexes)] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Ignore, 2]
+ *     [$query->statement->query->from->indexHints[0]->action, count($query->statement->query->from->indexHints[0]->indexes)] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Ignore, 2]
  * @example Refusing FORCE INDEX without an index
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Force, null, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

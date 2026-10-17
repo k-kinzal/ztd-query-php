@@ -1,0 +1,22 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/k-kinzal/php-ai-toolkit/extension.neon
+    - vendor/k-kinzal/php-ai-toolkit/rules.neon
+
+parameters:
+    exceptions:
+        # The session turns an ImplementationGap of SQL Semantics, which no method declares, into ER_NOT_SUPPORTED_YET.
+        reportUncheckedExceptionDeadCatch: false
+    toolkit:
+        visibilityExemptNamespacePrefixes: ['Tests', 'Fuzz']
+        forbiddenNamespacePrefixes: ['Tests\\Fixture', 'Tests\\Fixtures']
+        broadCatchAllowedPaths:
+            - src/Server/Client.php
+            - src/Session/Session.php
+            - fuzz/campaign.php
+            # Construction rejects out-of-domain choices; the CLI reports every failure.
+            - fuzz/Structure/Construction.php
+            - fuzz/structures.php
+    phpVersion: 80100
+    level: max
+    paths: [src, tests, fuzz]

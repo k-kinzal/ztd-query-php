@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Problem;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
@@ -25,9 +26,12 @@ final class SpatialProblem implements Diagnostic
     /**
      * @param SpatialRule $rule The broken rule
      * @param SpatialAttributeKind|null $attribute The attribute the rule concerns; null for the identifier of the system
+     * @param string|null $value The decoded attribute containing a line feed, present only for that problem
      */
-    public function __construct(public readonly SpatialRule $rule, public readonly ?SpatialAttributeKind $attribute = null)
+    public function __construct(public readonly SpatialRule $rule, public readonly ?SpatialAttributeKind $attribute = null, public readonly ?string $value = null)
     {
+        Check::input(($rule === SpatialRule::LineFeed) === ($value !== null), 'Only a line-feed problem retains its offending value.');
+        Check::input($rule !== SpatialRule::LineFeed || ($attribute !== null && str_contains((string) $value, "\n")), 'A line-feed problem names an attribute containing a line feed.');
     }
 
     /**
@@ -37,6 +41,7 @@ final class SpatialProblem implements Diagnostic
     {
         $subject = $this->attribute === null ? 'SRID' : $this->attribute->value;
         $text = match ($this->rule) {
+            SpatialRule::LineFeed => 'Attribute ' . $subject . ' contains a line feed',
             SpatialRule::IdentifierOutOfRange => $subject . ' is out of range: it is at most 4294967295',
             SpatialRule::IdentifierZero => 'SRID 0 cannot be modified',
             SpatialRule::RepeatedAttribute => 'Multiple definitions of attribute ' . $subject,

@@ -31,7 +31,11 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * production is the name it spells, letter case kept; a string or a host
  * name at a name position is the name it holds. The leading dot of
  * `.table` and `.table.column` names the default database and is not kept.
- * Every name is recorded as an operand leaf. Constructs: Name,
+ * Each consumer records the decoded name or its dedicated name role as an operand leaf.
+ * Unquoted FULL in the keyword-as-identifier production also records an input notice in
+ * releases that deprecate it, without changing the decoded name. Source:
+ * https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-32.html.
+ * Constructs: Name,
  * QualifiedName, ColumnUse, ColumnName, TableWildcard. Terminates: unit
  * productions are followed in a loop over strict subtrees and lists are
  * flattened iteratively. Source: https://dev.mysql.com/doc/refman/8.4/en/identifiers.html,
@@ -114,12 +118,28 @@ final class NameRule
      */
     public function identifier(Node $name): Name
     {
-        $form = $this->lowering->productions->form($name);
-        while (isset(self::FORWARD[$form->signature])) {
-            $form = $this->lowering->productions->form($form->node(0));
+        $value = $this->lowering->leaves->record($this->decoded($name));
+        $form = $this->identifierForm($name);
+        $deprecated = (new SyntaxNames())->unquoted($form->node, $this->lowering->profile->grammar);
+        if ($deprecated !== null) {
+            $this->lowering->origins->notice($value, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $form->node);
         }
+
+        return $value;
+    }
+
+    /**
+     * Decodes an identifier before its consumer assigns and records a name role.
+     * The ordinary identifier method records a Name; legacy directory lowering
+     * records its dedicated value instead. No source tree enters either value.
+     *
+     * @throws ImplementationGap When the production is not an identifier
+     */
+    public function decoded(Node $name): Name
+    {
+        $form = $this->identifierForm($name);
         if ($form->node->name === 'TEXT_STRING_sys' || $form->node->name === 'TEXT_STRING_validated') {
-            return $this->lowering->leaves->record(new Name($this->lowering->literals->bytes($form->node)));
+            return new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($this->lowering->literals->bytes($form->node), $this->lowering->client));
         }
         $kind = self::TOKENS[$form->signature] ?? ($this->keyword($form->signature) ? 'word' : null);
         if ($kind === null) {
@@ -127,7 +147,20 @@ final class NameRule
         }
         $text = $form->token(0)->text;
 
-        return $this->lowering->leaves->record(new Name($kind === 'identifier' ? (new Identifiers())->decode($text) : $text));
+        return new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($kind === 'identifier' ? (new Identifiers())->decode($text) : $text, $this->lowering->client));
+    }
+
+    /**
+     * Follows unit productions to the identifier's token-bearing form.
+     */
+    public function identifierForm(Node $name): Form
+    {
+        $form = $this->lowering->productions->form($name);
+        while (isset(self::FORWARD[$form->signature])) {
+            $form = $this->lowering->productions->form($form->node(0));
+        }
+
+        return $form;
     }
 
     /**
@@ -159,6 +192,7 @@ final class NameRule
      * Lowers the name of a table, view or routine with its optional database qualifier.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a stored-program name is outside its intrinsic domain
      */
     public function qualified(Node $name): QualifiedName
     {
@@ -171,8 +205,13 @@ final class NameRule
             throw ImplementationGap::production($form);
         }
         $schema = $positions[1] === null ? null : $this->identifier($form->node($positions[1]));
+        $identifier = $this->identifier($form->node($positions[0]));
+        $problem = $form->node->name === 'sp_name' ? \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($identifier) : null;
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($name)[1] ?? 0);
+        }
 
-        return new QualifiedName($this->identifier($form->node($positions[0])), $schema);
+        return new QualifiedName($identifier, $schema);
     }
 
     /**
@@ -253,6 +292,7 @@ final class NameRule
     /**
      * Lowers the name of a column at a position that defines or alters it.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the qualifier contradicts the definition target
      * @throws ImplementationGap When the production has no rule
      */
     public function columnName(Node $field): ColumnName
@@ -263,12 +303,19 @@ final class NameRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->lowering->leaves->record(new ColumnName($this->identifier($form->node($positions[0])), $this->qualifier($form, $positions[1], $positions[2])));
+        $name = new ColumnName($this->identifier($form->node($positions[0])), $this->qualifier($form, $positions[1], $positions[2]), $form->signature === 'field_ident: . ident' ? OptionalWords::Written : OptionalWords::Omitted);
+        $target = $this->lowering->columnTable;
+        $problem = $target === null ? null : (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->problem($name, $target);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($field)[1] ?? 0, true);
+        }
+        return $this->lowering->leaves->record($name);
     }
 
     /**
      * Lowers the optional name of an index or constraint, which MySQL 5.x lets a table name qualify.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the qualifier contradicts the definition target
      * @throws ImplementationGap When the production has no rule
      */
     public function optionalColumnName(Node $name): ?ColumnName

@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup;
 
 #[CoversClass(DropLogfileGroup::class)]
@@ -21,10 +20,10 @@ final class DropLogfileGroupTest extends TestCase
         self::assertSame('DROP LOGFILE GROUP g', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('drop logfile group g')->toString());
     }
 
-    public function testDeriveStatementReportsRejectedOptions(): void
+    public function testDeriveStatementAcceptsAConsistentOptionList(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('DROP LOGFILE GROUP g ENGINE a ENGINE b');
+        $operation = (new Semantics(Dialect::MySql))->analyze('DROP LOGFILE GROUP g ENGINE a');
 
-        self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 }

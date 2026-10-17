@@ -34,12 +34,38 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ColumnResolverTest extends TestCase
 {
+    public function testMissingDistinguishesTablelessQualifiersFromMissingColumns(): void
+    {
+        $legacy = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $modern = new Semantics(Dialect::MySql);
+        $qualifier = new QualifiedName(new Name('t'));
+        $resolver = new ColumnResolver();
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier::class, $resolver->missing(new Environment($legacy->context()), new Name('a'), $qualifier));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier::class, $resolver->missing(new Environment($modern->context()), new Name('a'), $qualifier));
+        self::assertInstanceOf(MissingColumn::class, $resolver->missing(new Environment($legacy->context()), new Name('a'), null));
+        self::assertInstanceOf(MissingColumn::class, $legacy->analyze('SELECT (SELECT t.a)')->facts->diagnostics[0]);
+    }
+
+    public function testOutputRetainsAliasDepthAndLeavesUnlistedNamesUnresolved(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x');
+        $scope = new Environment($operation->context, aliases: [$operation->field('x')]);
+        $reference = (new ColumnResolver())->output($scope, new Name('x'), 2, []);
+
+        self::assertInstanceOf(AliasTarget::class, $reference);
+        self::assertSame(2, $reference->depth);
+        self::assertNull((new ColumnResolver())->output($scope, new Name('y'), 2, []));
+    }
+
     public function testFindPrefersAColumnOfTheFromClauseToAnAlias(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('SELECT b AS a FROM t GROUP BY a HAVING a > 0', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
         self::assertNotNull($group);
@@ -47,7 +73,7 @@ final class ColumnResolverTest extends TestCase
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($table->columns[0], $resolution->declaration());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame(["Expression #1 of SELECT list is not in GROUP BY clause and contains nonaggregated column '(current).t.b' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testFindFallsBackToTheAliasOfASelectListItem(): void
@@ -56,6 +82,8 @@ final class ColumnResolverTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('SELECT a AS x FROM t GROUP BY x ORDER BY x + 1', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
         self::assertNotNull($group);
@@ -81,6 +109,8 @@ final class ColumnResolverTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x FROM u GROUP BY x');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
         self::assertNotNull($group);
@@ -112,6 +142,9 @@ final class ColumnResolverTest extends TestCase
         $ambiguous = (new ColumnResolver())->alias(new Name('x'), [$fields[0], $fields[1], $fields[2]]);
         self::assertInstanceOf(AmbiguousAlias::class, $ambiguous);
         self::assertCount(3, $ambiguous->candidates);
+        $outer = (new ColumnResolver())->find(new Environment($operation->context, new Environment($operation->context, aliases: [$fields[0]])), new Name('x'));
+        self::assertInstanceOf(AliasTarget::class, $outer);
+        self::assertSame(1, $outer->depth);
     }
 
     public function testUnlistedAnswersTheOccurrencesThatMayGiveAHavingPositionTheName(): void
@@ -121,7 +154,11 @@ final class ColumnResolverTest extends TestCase
         $grouped = $semantics->analyze('SELECT 1 FROM u GROUP BY c HAVING c > 0');
         $other = $semantics->analyze('SELECT 1 FROM u GROUP BY d HAVING c > 0');
         $starSelect = $star->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $starSelect);
+        $starSelect = $starSelect->query;
         $groupedSelect = $grouped->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $groupedSelect);
+        $groupedSelect = $groupedSelect->query;
         self::assertInstanceOf(Select::class, $starSelect);
         self::assertInstanceOf(Select::class, $groupedSelect);
         self::assertInstanceOf(Comparison::class, $starSelect->having);
@@ -172,6 +209,8 @@ final class ColumnResolverTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze("SELECT 'é' FROM t GROUP BY q", [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $group = $select->groupBy;
         self::assertNotNull($group);
@@ -198,5 +237,13 @@ final class ColumnResolverTest extends TestCase
 
         self::assertSame([$input], $resolution->relations);
         self::assertCount(2, $resolution->missing);
+    }
+
+    public function testFindRefusesAQualifierThatNamesAnotherDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, null, null, \SqlSemantics\Contract\ParameterStyle::Native, new \SqlSemantics\Contract\SearchPath('d'));
+        $t = $semantics->analyze('CREATE TABLE t (a INT)');
+
+        self::assertSame([0, 1], [count($semantics->analyze('SELECT d.t.a FROM t', [$t])->facts->diagnostics), count($semantics->analyze('SELECT a FROM t WHERE e.t.a = 1', [$t])->facts->diagnostics)]);
     }
 }

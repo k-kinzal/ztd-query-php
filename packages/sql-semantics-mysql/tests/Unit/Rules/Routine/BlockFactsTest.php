@@ -35,6 +35,8 @@ final class BlockFactsTest extends TestCase
         $inner = $outer->statements[0];
         self::assertInstanceOf(Block::class, $inner);
         $select = $inner->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -63,7 +65,7 @@ final class BlockFactsTest extends TestCase
         self::assertInstanceOf(Block::class, $block);
         $cursor = $block->declarations[1];
         self::assertInstanceOf(CursorDeclaration::class, $cursor);
-        $query = $cursor->query;
+        $query = $cursor->query->query;
         self::assertInstanceOf(Select::class, $query);
         $where = $query->where;
         self::assertInstanceOf(Comparison::class, $where);
@@ -104,8 +106,6 @@ final class BlockFactsTest extends TestCase
         yield 'a duplicate condition in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE C CONDITION FOR 1052; END', ['Duplicate condition: C']];
         yield 'a duplicate cursor in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE cur CURSOR FOR SELECT 1; DECLARE cur CURSOR FOR SELECT 2; END', ['Duplicate cursor: cur']];
         yield 'an undefined handler condition' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c BEGIN END; END', ['Undefined CONDITION: c']];
-        yield 'a bad SQLSTATE of a handler' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '00000' BEGIN END; END", ["Bad SQLSTATE: '00000'"]];
-        yield 'a bad SQLSTATE of a condition' => ['mysql-5.7.44', "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '00123'; END", ["Bad SQLSTATE: '00123'"]];
         yield 'an unknown name in a cursor query' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT z; END', ['Column z does not exist.']];
         yield 'an unknown name in the statements' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT x, z; END', ['Column z does not exist.']];
     }
@@ -167,6 +167,8 @@ final class BlockFactsTest extends TestCase
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $first = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $first);
@@ -205,6 +207,8 @@ final class BlockFactsTest extends TestCase
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);

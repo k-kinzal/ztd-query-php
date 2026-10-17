@@ -25,6 +25,7 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Validation\ValueGraph;
+use WeakReference;
 
 #[CoversClass(ValueGraph::class)]
 #[Small]
@@ -45,6 +46,29 @@ final class ValueGraphTest extends TestCase
         self::assertContains(SetQuantifier::Distinct, $objects);
     }
 
+    public function testObjectsReusesOnlyACompletedAuditInTheSameDomain(): void
+    {
+        $literal = new IntegerLiteral('1');
+        $graph = new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Statement\\']);
+
+        self::assertSame([$literal], $graph->objects($literal, true));
+        self::assertSame([], $graph->objects($literal, true));
+        self::assertSame([$literal], $graph->objects($literal));
+        $this->expectExceptionMessage('is not part of the closed semantic value domain.');
+
+        (new ValueGraph(['SqlSemantics\\Statement\\']))->objects($literal, true);
+    }
+
+    public function testObjectsDoesNotRetainAuditedInstances(): void
+    {
+        $literal = new IntegerLiteral('1');
+        $reference = WeakReference::create($literal);
+        (new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($literal, true);
+        unset($literal);
+
+        self::assertNull($reference->get());
+    }
+
     public function testObjectsRefusesAClassOutsideTheAdmittedNamespaces(): void
     {
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\']);
@@ -52,6 +76,15 @@ final class ValueGraphTest extends TestCase
         $this->expectExceptionMessage('A value of class ' . IntegerLiteral::class . ' is not part of the closed semantic value domain.');
 
         $graph->objects(new Select([new ResultColumn(new IntegerLiteral('1'))]));
+    }
+
+    public function testObjectsRefusesOriginalParserTrees(): void
+    {
+        $tree = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->parser()->parse('SELECT 1');
+
+        $this->expectExceptionMessage('is not part of the closed semantic value domain.');
+
+        (new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\']))->objects($tree);
     }
 
     public function testObjectsRefusesAPhpReferenceInsideAList(): void

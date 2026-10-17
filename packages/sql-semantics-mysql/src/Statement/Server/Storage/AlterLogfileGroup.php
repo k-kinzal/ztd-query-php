@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER LOGFILE GROUP name ADD {UNDOFILE | REDOFILE} 'file' [option …]`: a request to add a log file to an NDB log file group.
@@ -44,6 +44,7 @@ final class AlterLogfileGroup implements Statement
     public function __construct(public readonly Name $name, public readonly LogFile $file, array $options = [])
     {
         $this->options = (new StorageOptions())->checked($options, StorageOptions::ALTER_LOGFILE_GROUP);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

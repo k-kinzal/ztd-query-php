@@ -13,6 +13,9 @@ use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -29,8 +32,13 @@ final class ClockCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new ClockCall(Clock::CurrentTime, new Numeral('2')), $derivation->environment());
 
-        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Time, '2')), $fact->type);
+        self::assertEquals(new Known(new Domain(Kind::Time, Field::Time, 11, 2)), $fact->type);
         self::assertSame(Nullability::NotNull, $fact->nullability);
+    }
+
+    public function testDecimalsReadsThePrecisionModulo256(): void
+    {
+        self::assertSame([0, 0, 2, 19], [(new ClockCall(Clock::Now))->decimals(), (new ClockCall(Clock::Now, new Numeral('256')))->decimals(), (new ClockCall(Clock::UtcTimestamp, new Numeral('258')))->decimals(), (new ClockCall(Clock::CurrentTime, new Numeral('00000000058387')))->decimals()]);
     }
 
     public function testRenderWritesEmptyParenthesesWithoutAPrecision(): void

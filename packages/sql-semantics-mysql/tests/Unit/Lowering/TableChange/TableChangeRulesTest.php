@@ -15,6 +15,13 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\TableChangeRules;
 #[Medium]
 final class TableChangeRulesTest extends TestCase
 {
+    public function testCompletedRefusesAnUnknownModifierInAProgramBody(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('bad is not a LOCK the server knows.');
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t LOCK=bad');
+    }
+
     public function testStatementLowersAStatementNode(): void
     {
         self::assertSame('TRUNCATE TABLE t', (new Semantics(Dialect::MySql))->analyze('TRUNCATE t')->toString());

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramRestrictions;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Query;
 
 #[CoversClass(ProgramRestrictions::class)]
 #[Medium]
@@ -26,9 +25,9 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementNoStoredProgramMayContain(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
     }
 
     /**
@@ -91,9 +90,9 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementAStoredFunctionOrTriggerMayNotContain(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
     }
 
     /**
@@ -109,7 +108,7 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'SHOW in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SHOW VARIABLES; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'SHOW in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SHOW TABLES', ['Not allowed to return a result set from a trigger']];
         yield 'EXPLAIN in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW EXPLAIN SELECT 1', ['Not allowed to return a result set from a trigger']];
-        yield 'EXPLAIN FOR CONNECTION in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN EXPLAIN FOR CONNECTION 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
+        yield 'EXPLAIN in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN EXPLAIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'DESCRIBE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN DESCRIBE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'HELP in a trigger' => ["CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW HELP 'x'", ['Not allowed to return a result set from a trigger']];
         yield 'CHECK TABLE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN CHECK TABLE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
@@ -169,9 +168,9 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementWhereverItIsNested(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
     }
 
     /**
@@ -195,9 +194,9 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementInEveryRelease(string $release, string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql, $release);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
     }
 
     /**
@@ -207,18 +206,37 @@ final class ProgramRestrictionsTest extends TestCase
     {
         yield 'RESET MASTER in a 5.6 function' => ['mysql-5.6.51', 'CREATE FUNCTION f() RETURNS INT BEGIN RESET MASTER; RETURN 1; END', ['RESET is not allowed in stored function or trigger']];
         yield 'RESET QUERY CACHE in a 5.7 trigger' => ['mysql-5.7.44', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RESET QUERY CACHE', ['RESET is not allowed in stored function or trigger']];
-        yield 'RESET SLAVE in a 5.7 procedure' => ['mysql-5.7.44', 'CREATE PROCEDURE p() RESET SLAVE', []];
         yield 'a SELECT in an 8.0 trigger' => ['mysql-8.0.44', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SELECT a FROM t', ['Not allowed to return a result set from a trigger']];
         yield 'LOCK TABLES in a 5.6 procedure' => ['mysql-5.6.51', 'CREATE PROCEDURE p() LOCK TABLES t WRITE', ['LOCK is not allowed in stored procedures']];
         yield 'a 5.7 union with a locked middle operand in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3; RETURN 1; END', ['Not allowed to return a result set from a function']];
-        yield 'a 5.7 union with a locked middle operand INTO in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3 INTO @a; RETURN 1; END', []];
         yield 'LOAD XML in an 8.4 event' => ['mysql-8.4.7', "CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO LOAD XML INFILE 'f' INTO TABLE t", ['LOAD XML is not allowed in stored procedures']];
+    }
+
+    /**
+     * @return iterable<string, array{string, string, list<string>}>
+     */
+    public static function providerCheckAcceptsReleaseSpecificBodies(): iterable
+    {
+        yield 'RESET SLAVE in a 5.7 procedure' => ['mysql-5.7.44', 'CREATE PROCEDURE p() RESET SLAVE', []];
+        yield 'a 5.7 union with a locked middle operand INTO in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3 INTO @a; RETURN 1; END', []];
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerCheckAcceptsReleaseSpecificBodies')]
+    public function testCheckAcceptsReleaseSpecificBodies(string $release, string $sql, array $messages): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     #[DataProvider('providerAnywhereAnswersTheProblemOfTheStatement')]
     public function testAnywhereAnswersTheProblemOfTheStatement(string $sql, ?string $message): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($message, (new ProgramRestrictions())->anywhere($statement)?->message());
     }
@@ -228,6 +246,9 @@ final class ProgramRestrictionsTest extends TestCase
      */
     public static function providerAnywhereAnswersTheProblemOfTheStatement(): iterable
     {
+        foreach (['HANDLER t OPEN', 'HANDLER t CLOSE', 'HANDLER t READ NEXT', 'HANDLER t READ a FIRST', 'HANDLER t READ a = (1)'] as $statement) {
+            yield $statement => [$statement, 'HANDLER is not allowed in stored procedures'];
+        }
         yield 'LOCK TABLES' => ['LOCK TABLES t READ', 'LOCK is not allowed in stored procedures'];
         yield 'UNLOCK TABLES' => ['UNLOCK TABLES', 'UNLOCK is not allowed in stored procedures'];
         yield 'ALTER VIEW' => ['ALTER VIEW v AS SELECT 1', 'ALTER VIEW is not allowed in stored procedures'];
@@ -254,6 +275,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testFunctionAnswersTheProblemOfTheStatement(string $sql, ProgramKind $kind, ?string $message): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($message, (new ProgramRestrictions())->function($statement, $kind)?->message());
     }
@@ -285,6 +307,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testResultsTellsWhetherTheStatementReturnsRows(string $sql, bool $expected): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($expected, (new ProgramRestrictions())->results($statement));
     }
@@ -317,7 +340,8 @@ final class ProgramRestrictionsTest extends TestCase
     public function testIntoTellsWhetherTheQueryWritesItsRows(string $sql, bool $expected): void
     {
         $query = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
-        self::assertInstanceOf(Query::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
         self::assertSame($expected, (new ProgramRestrictions())->into($query));
     }
@@ -343,4 +367,15 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'a TABLE statement' => ['TABLE t', false];
         yield 'a VALUES statement' => ['VALUES ROW(1)', false];
     }
+    public function testFunctionRefusesViewDefinitionTransactionBoundaries(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $create = $semantics->analyze('CREATE VIEW v AS SELECT 1')->statement;
+        $drop = $semantics->analyze('DROP VIEW v')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\CreateView::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\DropView::class, $drop);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, (new ProgramRestrictions())->function($create, ProgramKind::Function)?->rule);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, (new ProgramRestrictions())->function($drop, ProgramKind::Trigger)?->rule);
+    }
+
 }

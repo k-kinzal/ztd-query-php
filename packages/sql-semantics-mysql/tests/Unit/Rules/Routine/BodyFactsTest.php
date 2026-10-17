@@ -41,6 +41,8 @@ final class BodyFactsTest extends TestCase
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $where = $select->where;
         self::assertInstanceOf(Comparison::class, $where);
@@ -111,10 +113,6 @@ final class BodyFactsTest extends TestCase
      */
     public static function providerStatementChecksTheRestrictionsOfTheProgramKind(): iterable
     {
-        yield 'a result set of a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
-        yield 'a commit in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN COMMIT; RETURN 1; END', ['Explicit or implicit commit is not allowed in stored function or trigger.']];
-        yield 'a result set of a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SELECT 1', ['Not allowed to return a result set from a trigger']];
-        yield 'a procedure created in a procedure' => ['CREATE PROCEDURE p() BEGIN CREATE PROCEDURE q() BEGIN END; END', ["Can't create a PROCEDURE from within another stored routine"]];
         yield 'a result set of a procedure' => ['CREATE PROCEDURE p() SELECT 1', []];
     }
 
@@ -140,5 +138,27 @@ final class BodyFactsTest extends TestCase
         yield 'NEW in a DELETE trigger' => ['CREATE TRIGGER tr BEFORE DELETE ON t FOR EACH ROW SET NEW.a = 1', ['There is no NEW row in on DELETE trigger']];
         yield 'OLD in a nested statement' => ['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW BEGIN DECLARE x INT; SET NEW.a = x; IF NEW.a > 0 THEN SET OLD.a = 1; END IF; END', ['Updating of OLD row is not allowed in trigger']];
         yield 'NEW in a block of an AFTER trigger' => ['CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW BEGIN SET NEW.a = 1; END', ['Updating of NEW row is not allowed in after trigger']];
+    }
+
+    /**
+     * @return iterable<string, array{string, non-empty-list<string>}>
+     */
+    public static function providerRefusesIntrinsicBodyContradictions(): iterable
+    {
+        yield 'a result set of a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
+        yield 'a commit in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN COMMIT; RETURN 1; END', ['Explicit or implicit commit is not allowed in stored function or trigger.']];
+        yield 'a result set of a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SELECT 1', ['Not allowed to return a result set from a trigger']];
+        yield 'a procedure created in a procedure' => ['CREATE PROCEDURE p() BEGIN CREATE PROCEDURE q() BEGIN END; END', ["Can't create a PROCEDURE from within another stored routine"]];
+    }
+
+    /**
+     * @param non-empty-list<string> $messages
+     */
+    #[DataProvider('providerRefusesIntrinsicBodyContradictions')]
+    public function testRefusesIntrinsicBodyContradictions(string $sql, array $messages): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 }

@@ -15,7 +15,7 @@ A well-formed model is not "a statement that succeeds on the server". A SELECT o
 | G1 | SQL accepted by the grammar of the selected release is structured into a concrete semantic model. | Lowering rules that dispatch on the exact productions of the shipped grammars; a production without a rule fails with `ImplementationGap`, never with a generic node or a skipped clause. |
 | G2 | The model does not drop the operations, operands or relations of the input. | Leaf embedding and token correspondence between the input and the published model (see [Rendering](rendering.md#checks-before-publication)). |
 | G3 | Resolutions, types and NULL facts follow the documented rules of the database for the given context, and missing information is stated, not guessed. | Derivation rules per construct, the closed fact types, and fact completeness: every expression, relation and query receives exactly one fact. |
-| G4 | Published values are deeply immutable, and their internal references are consistent. | Final classes with readonly properties, constructor validation, the value audit of every published graph, and the refusal of cloning, dynamic properties and serialization by the `Snapshot` trait, which the value audit requires of every class it admits. |
+| G4 | Published values are deeply immutable, and their internal references are consistent. | Final classes with readonly properties, constructor validation, the retained-field schema and value audit of the context, statement, facts and source locations, and the refusal of cloning, dynamic properties and serialization by the `Snapshot` trait, which the value audit requires of every class it admits. |
 | G5 | The SQL rendered for an operation requests what the model describes. | Rendering by typed pieces only; layouts that may only re-spell the rendered tokens; then parsing the text with the same release and comparing the result with the model operand by operand. |
 | G6 | `new Operation(...)` publishes only a well-formed new root. | The same checks as `analyze()` except those against an input text. A construction has no relation to any earlier operation. |
 | G7 | References reach the declaration objects of the context, and missing information is distinguished from missing implementation. | Resolutions hold the supplied objects; `Dependent` facts name the missing input; an unwritten rule is an `ImplementationGap`. |
@@ -24,6 +24,42 @@ What is preserved: the requested operation, the position and names of inputs and
 
 What is not promised: whitespace, comments, keyword case and other spellings listed in [Rendering](rendering.md#what-the-rendered-sql-does-not-preserve); row order the language leaves open; the wording of server error messages; execution plans.
 
+## Retained data boundary
+
+The root `Operation` retains only `context`, `statement`, `facts` and `sources`. It has no SQL-string cache or original parser tree. `toString()` renders the structure when requested. Publication temporarily parses that rendered text to check correspondence, then discards the temporary text and tree. The original input is not a fallback available to a consumer of the published operation.
+
+Publication audits the complete reachable value graph, including private fields, context declarations and settings, and elements of arrays. Foreign objects (including parser nodes), closures, resources, PHP references and mutable objects are refused. The root is checked too. Completed audits of immutable context subgraphs may be reused by object identity within the same admitted value domain; weak references prevent the audit cache from keeping those objects alive. Value classes cannot inherit state, so an inherited private field cannot escape the audit. Every admitted class must also match its package's `resources/value-schema.json`: an explicit inventory of class names and retained property names and native types. A new field is refused even on an otherwise admitted class. New value classes and fields therefore require an explicit change to the inventory. `composer schema:check`, included in `composer lint`, checks all definitions, including ones no executed test reaches. The check reads the committed inventory; it never updates it automatically.
+
+Strings remain necessary for names, literal values and result-column spellings. A string literal can itself contain SQL, and a spelling layout can contain a subquery expression: those are the semantic operands or result names requested by the statement, not an opaque root used to recover missing structure. `SourceMap` holds positions and semantic occurrences, not input bytes. These distinctions are part of the field contracts. The inventory catches unreviewed storage additions; it cannot determine whether deliberately storing unrelated source text in an existing literal field respects that contract. The inventories, constructors and field contracts remain within the trust boundary.
+
+Consumers may calculate plans and derived structures from the published data. `Construction\Reconstruction` rebuilds node occurrences through their constructors, supports substitutions by occurrence identity, and shares immutable non-node values. Construct a new `Operation` to derive facts for the resulting structure. A rewrite that changes an expression carrying a result-name layout must also preserve its intended output name explicitly; old spelling must not be applied to changed operands.
+
+## Operand roles when constructing MySQL models
+
+The type accepted by a constructor describes the role of that operand. An ordinary expression implements `Statement\Scalar`, which extends the shared `Statement\Operand` contract for deriving value facts. Position-restricted operands implement `Operand` directly: for example, a MySQL output ordinal belongs in an ORDER BY item, a program variable in a row limit, and a bare `DEFAULT` in a write value. They cannot be supplied where an ordinary expression is required. `MySql\Statement\LiteralExpression` identifies literals that are also ordinary expressions; condition-information assignments accept that role and variable references, rather than arbitrary function calls. VCPU ranges hold bounded integer indices rather than numeric token spellings.
+
+The MySQL model additionally distinguishes these roles:
+
+- `MySql\Statement\Literal` identifies literals accepted by literal-only defaults and JSON responses. A signed literal is a literal-only operand; a sign in a general expression is a unary operation.
+- `MySql\Statement\Relation\TableSource` identifies inputs to FROM, JOIN, UPDATE and multiple-table DELETE. SHOW result relations and stored-program parameter rows are not table inputs. SELECT handles its special `FROM DUAL` form separately.
+- `MySql\Statement\Type\DeclaredName` identifies column and routine declaration types. CAST targets remain `TypeName` values but do not implement `DeclaredName`.
+- `MySql\Statement\Statement` identifies a single MySQL statement. A generic multi-statement `Script` is not an operand where a stored program or EXPLAIN requires one statement.
+- `MySql\Statement\Variable\SystemTarget` identifies the variable assigned by SET or an INSTALL COMPONENT setting. It is an `Operand`, not a `Scalar`. A `SystemVariable` is always a read, has no assignment flag, and accepts only implicit, GLOBAL or SESSION scope. Assignment targets can request PERSIST and PERSIST_ONLY without making those scopes available in a value expression.
+
+MySQL's `Explainable` role restricts EXPLAIN to queries and data manipulation. Condition numbers retain literal, variable or name operands rather than arbitrary expressions. Index option pairs reject duplicate ALGORITHM or LOCK clauses; positions requiring quoted text reject radix forms. Select-item layout token counts are checked against the expression during construction. These are intrinsic model constraints, not an execution approval decision.
+
+`ALTER TABLE ... ALTER COLUMN ... SET DEFAULT` retains either a `DefaultLiteral` or a `DefaultExpression`. Dropping the default retains `null`. Consumers do not interpret a separate Boolean flag to decide what an arbitrary expression means.
+
+A MySQL parameter occurrence retains its marker. Its scalar fact holds a `MySql\Statement\Variable\ParameterBinding` with the resolved input position, even when its value is unbound. The structural renderer records occurrences in written order before derivation, so the binding does not depend on source offsets, the order in which scopes are resolved, or the consumer's traversal order. Directly constructed statements receive the same bindings as parsed statements.
+
+MySQL string literals, temporal literals and non-expression text retain decoded values without the lexical escape rule of the input SQL. A profile-aware string codec quotes those values when rendering. The same directly constructed literal can therefore be used with or without `NO_BACKSLASH_ESCAPES`; reconstruction preserves its decoded bytes in either profile.
+
+MySQL resource-group commands share a `ResourceGroupName` operand: its constructor excludes NUL and limits the converted name to 64 bytes. Decoded spelling, converted identity and conversion notices remain separate semantic values. Result-column naming also distinguishes an operand from its output name: a literal retains NUL bytes, while the derived name ends at NUL after its leading controls are removed. Explicit aliases retain a valid string rendering when they contain NUL.
+
+Query and composite-expression constructors check a shared grammar-generation invariant across their nested operands. Known features removed before 8.0 (including PROCEDURE ANALYSE, SQL_CACHE and legacy trailing-clause forms) cannot occur in the same graph as features introduced in 8.x or later (including WITH, VALUES, TABLE and windows). This does not certify execution or choose a target release: a graph using only legacy features still needs a legacy profile.
+
+These constraints apply to direct PHP construction as well as SQL analysis. They do not establish that every constructor-accepted combination executes successfully: release constraints and relationships between nested operands still require work. MySQL Memory's [direct construction campaign](../../mysql-memory/docs/semantic-structures.md) tests the model independently of the parser and retains such counterexamples.
+
 ## Failure classes
 
 Each outcome has its own class, so a caller can tell them apart:
@@ -31,6 +67,7 @@ Each outcome has its own class, so a caller can tell them apart:
 | Outcome | Class |
 |---------|-------|
 | The text is outside the grammar of the release | `AnalysisException` |
+| An input operand violates a semantic constructor domain | `Construction\RejectedInput` |
 | The SQL is grammatical but semantically wrong | a successful operation with diagnostics |
 | A declaration, signature, parameter value or session value is missing | a successful operation with `Dependent` facts naming it |
 | A rule is not implemented | `ImplementationGap` |
@@ -63,14 +100,14 @@ Every lowering rule and derivation collaborator carries a rule record in its cla
 | `Implemented` | The rule is implemented against its contract. |
 | `ContractReviewed` | The contract and the argument for the implementation were reviewed. |
 
-Passing tests never upgrade a status. In this release nearly all rules are `Implemented`, a few are `Specified` (for example MySQL optimizer hints), and none is `ContractReviewed` yet. The rule records are part of the API documentation of each database package.
+Passing tests never upgrade a status. In this release nearly all rules are `Implemented`, a few are `Specified` (for example the entry rules of the MySQL data manipulation statements), and none is `ContractReviewed` yet. The rule records are part of the API documentation of each database package.
 
 ## What tests and fuzzing establish
 
 Tests look for defects in rules and in how they are connected; they are not a substitute for the guarantees.
 
 - **Unit tests and examples.** Every source class has unit tests, and every `@example` in the API documentation is executed as a test. Tests include constructions that must be refused, such as operands that would be re-associated when rendered.
-- **Grammar coverage.** Each database package lists every production of every shipped grammar release in `resources/productions`. The production ledger (`bin/production-ledger.php`, run as `composer ledger` in each database package and in CI) fails when a production has no lowering rule that dispatches on it, or when a rule names a production no release has. The ledger shows that a rule exists for each production, not that it is right; the fuzz targets and tests look for that. The MySQL package also checks that every statement production of its nine releases is routed to a rule family, and several noise tables are checked to name only productions and token positions that exist.
+- **Production inventory.** Each database package lists every production of every shipped grammar release in `resources/productions`. The production ledger (`bin/production-ledger.php`, run as `composer ledger` in each database package and in CI) fails when a production has no lowering rule that dispatches on it, or when a rule names a production no release has. The ledger shows that a rule exists for each production, not that it is right; the fuzz targets and tests look for that. The MySQL package also checks that every statement production of its nine releases is routed to a rule family, and several noise tables are checked to name only productions and token positions that exist.
 - **Grammar-based fuzzing.** Each database package has fuzz targets that generate statements from the official grammar with [SQL Faker](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-faker/README.md), analyze them, analyze the rendered text again, and require the same structure and a stable rendering. A schema target does the same for table definitions and the declarations they provide. A scheduled workflow runs these targets.
 
 What they do not establish: that a fact agrees with the server for every input, that every server error is reported as a diagnostic, or that untested combinations of constructs are right. The package does not run statements against a database server. Comparison with real servers, where it is done, is evidence outside the package and never a runtime dependency.
@@ -112,3 +149,7 @@ See the [PostgreSQL package](https://github.com/k-kinzal/ztd-query-php/blob/main
 - A search path must start with `main`; `temp` is always searched first.
 
 See the [SQLite package](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-sqlite/README.md#limitations).
+
+MySQL statement constructors also check composition before returning. The same check applies to composite expressions. Contradictory lexical requirements cannot coexist in a single structure: for example, one NOT expression requiring HIGH_NOT_PRECEDENCE and another requiring its absence. The check also rejects known combinations of features belonging to disjoint grammar generations. These are intrinsic structural constraints, not an execution certificate. Matching the structure to a particular release and session mode remains necessary; the composition rules do not yet enumerate every release constraint.
+
+SQLSTATE values require five uppercase letters or digits and exclude success class `00`. Condition error codes require a nonzero integer prefix before conversion to 32 bits; for example, `0.7` is refused while `1e2` denotes code 1. An invalid direct constructor input raises `InvalidConstruction`; SQL lowering raises `Construction\RejectedInput` with the same domain failure represented as a typed diagnostic and integer operand end offset. It does not publish an invalid statement or delegate this invariant to its consumer. Name resolution and execution-state failures remain separate. This is an operand invariant, not a test of whether a statement can execute in a particular database.

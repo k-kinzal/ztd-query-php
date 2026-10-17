@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
 
 use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -21,8 +22,9 @@ final class WriteMisuse implements Diagnostic
 
     /**
      * @param WriteRule $rule The broken rule
+     * @param Name|null $table The correlation name of the target table that is not updatable, or its name when it has none
      */
-    public function __construct(public readonly WriteRule $rule)
+    public function __construct(public readonly WriteRule $rule, public readonly ?Name $table = null)
     {
     }
 

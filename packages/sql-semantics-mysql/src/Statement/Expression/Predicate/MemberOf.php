@@ -47,6 +47,7 @@ final class MemberOf implements Scalar
         $precedence = new Precedence();
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of MEMBER OF needs a grouping to keep its place.');
         Check::input($precedence->admits($array, Precedence::SIMPLE_EXPR), 'The array of MEMBER OF needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

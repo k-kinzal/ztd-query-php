@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaThread;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StopReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers START SLAVE, START REPLICA, STOP SLAVE and STOP REPLICA of every release.

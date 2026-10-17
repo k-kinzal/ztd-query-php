@@ -1,0 +1,349 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Session;
+
+use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\Globals;
+use MySqlMemory\Session\Variables;
+use MySqlMemory\Typing\Domain;
+use MySqlMemory\Variable\Scope;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Reach;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
+
+#[CoversClass(Variables::class)]
+#[Small]
+final class VariablesTest extends TestCase
+{
+    public function testDatabaseCollationUpdatesBothDatabaseEncodingVariables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->variables->databaseCollation(Collation::known('latin1_bin'));
+
+        self::assertSame(['latin1', 'latin1_bin'], [$session->variables->read('character_set_database'), $session->variables->read('collation_database')]);
+        self::assertSame('utf8mb4_0900_ai_ci', $session->variables->read('collation_connection'));
+    }
+
+    public function testSetKeepsTheDatabaseCharsetAndCollationTogether(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET character_set_database=latin1');
+        self::assertSame('latin1_swedish_ci', $session->variables->read('collation_database'));
+        $session->query('SET collation_database=utf8mb4_bin');
+
+        self::assertSame('utf8mb4', $session->variables->read('character_set_database'));
+    }
+
+    public function testResultCollationRetainsNamesUntilTheResultCharacterSetChanges(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET NAMES utf8mb4 COLLATE utf8mb4_bin');
+        $session->query("SET collation_connection='utf8mb4_general_ci'");
+        self::assertSame('utf8mb4_bin', $session->variables->resultCollation()?->name);
+
+        $session->query("SET character_set_results='utf8mb4'");
+        self::assertSame('utf8mb4_0900_ai_ci', $session->variables->resultCollation()->name);
+
+        $session->query('SET character_set_results=NULL');
+        self::assertNull($session->variables->resultCollation());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDisplayedNames(): iterable
+    {
+        yield 'legacy complete characters' => ['5.7.44', str_repeat('界', 33)];
+        yield 'modern incomplete byte' => ['8.4.7', str_repeat('界', 33) . '?'];
+    }
+
+    #[DataProvider('providerDisplayedNames')]
+    public function testCheckUserNameBoundsTheDisplayedBytes(string $release, string $displayed): void
+    {
+        $variables = (new Instance($release))->connect()->variables;
+        $this->expectExceptionCode(3061);
+        $this->expectExceptionMessage("User variable name '" . $displayed . "' is illegal");
+
+        $variables->checkUserName(str_repeat('界', 65));
+    }
+
+    public function testCheckUserNameRefusesAnOverlongAssignmentName(): void
+    {
+        $variables = (new Instance())->connect()->variables;
+        $this->expectExceptionCode(3061);
+        $this->expectExceptionMessage("User variable name '" . str_repeat('a', 65) . "' is illegal");
+
+        $variables->checkUserName(str_repeat('a', 65));
+    }
+
+    public function testAssignCountsCharactersAndKeepsLegacyNames(): void
+    {
+        $modern = (new Instance())->connect()->variables;
+        $legacy = (new Instance('5.6.51'))->connect()->variables;
+
+        $modern->assign(str_repeat('é', 64), 7, Domain::integer());
+        $legacy->assign('', 8, Domain::integer());
+        $legacy->assign(str_repeat('a', 65), 9, Domain::integer());
+
+        self::assertSame([7, 8, 9], [$modern->user(str_repeat('é', 64))[0], $legacy->user('')[0], $legacy->user(str_repeat('a', 65))[0]]);
+    }
+
+    public function testSystemAndSetShareTheLastInsertIdOfTheFunction(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT LAST_INSERT_ID(42)');
+        self::assertSame(42, $session->variables->read('last_insert_id'));
+        self::assertSame(42, $session->variables->read('identity'));
+        $session->query('SET identity=73');
+        $result = $session->query('SELECT LAST_INSERT_ID(), @@last_insert_id, @@identity')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['73', '73', '73']], $result->rows);
+    }
+
+    public function testSystemReadsTheConnectionIdUntilThePseudoIdIsAssigned(): void
+    {
+        $session = (new Instance())->connect();
+        $id = $session->id;
+        self::assertSame($id, $session->variables->read('pseudo_thread_id'));
+        $session->query('SET pseudo_thread_id=42');
+        $result = $session->query('SELECT CONNECTION_ID(), @@pseudo_thread_id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['42', '42']], $result->rows);
+        self::assertSame($id, $session->id);
+    }
+
+    public function testUserAnswersNullForAVariableNeverAssigned(): void
+    {
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+
+        self::assertEquals([null, Domain::string(0, Collation::binary(), Field::MediumBlob)], $variables->user('nothing'));
+    }
+
+    public function testUserReadsTheNameWithoutRegardToCase(): void
+    {
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+        $variables->assign('Total', 5, Domain::integer());
+
+        self::assertEquals([5, Domain::integer()], $variables->user('TOTAL'));
+    }
+
+    public function testAssignKeepsTheValueAndDomainByLowerCaseName(): void
+    {
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+        $variables->assign('V', 'ink', Domain::string(3, Collation::known('utf8mb4_0900_ai_ci')));
+
+        self::assertSame(['v'], array_keys($variables->user));
+        self::assertEquals(['ink', Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'))], $variables->user('V'));
+    }
+
+    public function testAssignKeepsNumericAssignmentCollationUntilAnotherAssignment(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET NAMES latin1; SET @v=12; SET NAMES utf8mb4');
+        $saved = $session->variables->user;
+        $session->query('SET @v=13');
+
+        self::assertSame('latin1', $saved['v']->collation->charset->name);
+        self::assertSame('binary', $saved['v']->domain->collation->charset->name);
+        self::assertSame('utf8mb4', $session->variables->user['v']->collation->charset->name);
+        self::assertSame(12, $saved['v']->value);
+    }
+
+    public function testAssignRetainsNumericTypesAndCollationsWhenTheValueBecomesNull(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET NAMES latin1; SET @v=12; SET NAMES utf8mb4; SET @v=NULL');
+        $entry = $session->variables->user['v'];
+        $session->query('SET @v=CAST(NULL AS CHAR CHARACTER SET ascii)');
+
+        self::assertNull($entry->value);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, $entry->domain->kind);
+        self::assertSame('latin1', $entry->collation->charset->name);
+        self::assertSame('latin1', $session->variables->user['v']->domain->collation->charset->name);
+    }
+
+    public function testAllocateLeavesAnExistingEntryIntact(): void
+    {
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+        $variables->assign('v', 12, Domain::integer());
+        $entry = $variables->user['v'];
+        $variables->allocate('V', Collation::known('latin1_swedish_ci'));
+
+        self::assertSame($entry, $variables->user['v']);
+        self::assertSame(12, $variables->user('v')[0]);
+    }
+
+    public function testAssignPreservesUntypedNullCollationsButReplacesTypedNullInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('SET NAMES latin1;SET @v=12;SET NAMES utf8mb4;SET @v=NULL');
+        $untyped = $session->variables->user['v'];
+        $session->query('SET @v=CAST(NULL AS SIGNED)');
+        $typed = $session->variables->user['v'];
+
+        self::assertSame('latin1', $untyped->collation->charset->name);
+        self::assertSame('utf8mb4', $typed->collation->charset->name);
+        self::assertSame($untyped->domain->kind, $typed->domain->kind);
+        self::assertNull($typed->value);
+    }
+
+    public function testAssignOfAStatementIsReadBack(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @V = 5');
+        $result = $session->query('SELECT @v, @nothing')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['5', null]], $result->rows);
+    }
+
+    public function testSystemAnswersTheSessionValue(): void
+    {
+        $definition = new Definition('autocommit', Reach::Both, ValueShape::Boolean, 'ON', Writability::Writable, null, null, Resolved::integer());
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+        $variables->set($definition, 'OFF');
+
+        self::assertSame('OFF', $variables->system($definition, Scope::Session));
+        self::assertSame('OFF', $variables->system($definition, Scope::Both));
+    }
+
+    public function testSystemAnswersTheGlobalValueInTheGlobalScope(): void
+    {
+        $definition = new Definition('autocommit', Reach::Both, ValueShape::Boolean, 'ON', Writability::Writable, null, null, Resolved::integer());
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+        $variables->set($definition, 'OFF');
+
+        self::assertSame('ON', $variables->system($definition, Scope::Global));
+    }
+
+    public function testSystemAnswersTheGlobalValueWithoutASessionValue(): void
+    {
+        $definition = new Definition('autocommit', Reach::Both, ValueShape::Boolean, 'ON', Writability::Writable, null, null, Resolved::integer());
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals(['autocommit' => 'OFF']));
+
+        self::assertSame('OFF', $variables->system($definition, Scope::Session));
+    }
+
+    public function testSetChangesOnlyTheSessionValue(): void
+    {
+        $definition = new Definition('div_precision_increment', Reach::Both, ValueShape::Unsigned, 4, Writability::Writable, 0, 30, Resolved::integer());
+        $globals = new Globals();
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), $globals);
+        $variables->set($definition, 6);
+
+        self::assertSame(['div_precision_increment' => 6], $variables->session);
+        self::assertSame(4, $globals->value($definition));
+    }
+
+    public function testSetOfAStatementLeavesTheGlobalValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET div_precision_increment = 6');
+        $result = $session->query('SELECT @@div_precision_increment, @@SESSION.div_precision_increment, @@GLOBAL.div_precision_increment')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['6', '6', '4']], $result->rows);
+    }
+
+    public function testReadAnswersTheSessionValueByName(): void
+    {
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+
+        self::assertSame('ON', $variables->read('autocommit'));
+        self::assertSame(4, $variables->read('div_precision_increment'));
+        self::assertSame(1024, $variables->read('group_concat_max_len'));
+    }
+
+    public function testReadAnswersNullForAnUnknownName(): void
+    {
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+
+        self::assertNull($variables->read('nosuch'));
+    }
+
+    public function testReadDescribesTheConnection(): void
+    {
+        $session = (new Instance())->connect('app', 'example.com');
+
+        self::assertSame('app@example.com', $session->variables->account);
+        self::assertSame('app@%', $session->variables->definer->text());
+        self::assertSame($session->id, $session->variables->connection);
+        self::assertSame(0, $session->variables->rowCount);
+        self::assertSame(0, $session->variables->lastInsertId);
+    }
+
+    public function testSystemKeepsTheGlobalValueTheConnectionStartedWith(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->query('SET GLOBAL div_precision_increment = 6');
+        $result = $session->query('SELECT @@div_precision_increment, @@global.div_precision_increment, 1/3')[0];
+        $later = $instance->connect()->query('SELECT @@div_precision_increment')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $later);
+        self::assertSame([['4', '6', '0.3333']], $result->rows);
+        self::assertSame([['6']], $later->rows);
+    }
+
+    public function testSetKeepsANullValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET character_set_results = NULL');
+        $result = $session->query('SELECT @@character_set_results, @@global.character_set_results')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, 'utf8mb4']], $result->rows);
+        self::assertNull($session->variables->read('character_set_results'));
+    }
+
+    public function testInstantReadsTheClockOfTheServer(): void
+    {
+        $instance = new Instance();
+        $instance->registry->threads->pass(7200.0);
+        $variables = new Variables($instance->catalog, $instance->globals, $instance);
+
+        self::assertGreaterThan(microtime(true) + 7100.0, $variables->instant());
+    }
+
+    public function testClockIncludesSleepWhileIgnoringThePinnedStatementTimestamp(): void
+    {
+        $session = (new Instance())->connect();
+        $before = $session->variables->clock();
+        $session->query('SET timestamp=1700000000; DO SLEEP(5)');
+
+        self::assertGreaterThanOrEqual($before + 5, $session->variables->clock());
+        self::assertSame(1700000000.0, $session->variables->instant());
+    }
+
+    public function testInstantReadsTheTimestampTheSessionSet(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET timestamp = 1700000000.5');
+
+        self::assertSame(1700000000.5, $session->variables->instant());
+    }
+
+    public function testCountReadsAnUnsignedValueBeyondTheSignedRangeAsTheLargestInteger(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET group_concat_max_len = 18446744073709551615');
+
+        self::assertSame([PHP_INT_MAX, 7], [$session->variables->count('group_concat_max_len', 1024), $session->variables->count('nosuch', 7)]);
+    }
+}

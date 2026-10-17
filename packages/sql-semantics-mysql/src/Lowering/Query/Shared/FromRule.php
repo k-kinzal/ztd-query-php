@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Modern\FactorRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Modern\ReferenceRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
-use SqlSemantics\Statement\Relation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 
 /**
  * Lowers the FROM clause and the table reference lists of every grammar generation, handing each table factor to its generation.
@@ -50,20 +50,21 @@ final class FromRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function from(Node $clause): ?Relation
+    public function from(Node $clause): Relation|Dual|null
     {
         $form = $this->lowering->form($clause);
 
         return match ($form->signature) {
             'opt_from_clause:' => null,
             'opt_from_clause: from_clause' => $this->from($form->node(0)),
-            'from_clause: FROM from_tables', 'from_clause: FROM table_reference_list' => $this->tables($form->node(1)),
-            default => throw ImplementationGap::production($form),
+            'from_clause: FROM from_tables', 'from_clause: FROM table_reference_list' => $this->from($form->node(1)),
+            'from_tables: DUAL_SYM', 'table_reference_list: DUAL_SYM' => new Dual(),
+            default => $this->tables($clause),
         };
     }
 
     /**
-     * Lowers the tables of a FROM clause, of UPDATE or of DELETE: one reference, a comma list or DUAL.
+     * Lowers the table references of SELECT, UPDATE or DELETE: one reference or a comma list.
      *
      * @throws ImplementationGap When a production has no rule
      */
@@ -83,9 +84,6 @@ final class FromRule
     public function members(Node $tables): array
     {
         $form = $this->lowering->form($tables);
-        if ($form->signature === 'from_tables: DUAL_SYM' || $form->signature === 'table_reference_list: DUAL_SYM') {
-            return [new Dual()];
-        }
         if ($form->signature === 'from_tables: table_reference_list') {
             return $this->members($form->node(0));
         }
@@ -107,6 +105,8 @@ final class FromRule
      * Lowers a table factor of either grammar generation.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a factor cannot be published
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a legacy factor has contradictory syntax
      */
     public function factor(Node $factor): Relation
     {

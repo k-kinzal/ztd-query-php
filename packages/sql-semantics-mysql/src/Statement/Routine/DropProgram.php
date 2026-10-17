@@ -7,10 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DROP PROCEDURE, DROP FUNCTION, DROP TRIGGER or DROP EVENT.
@@ -26,6 +26,8 @@ use SqlSemantics\Statement\Statement;
  * https://dev.mysql.com/doc/refman/8.4/en/drop-event.html.
  * Status: Implemented.
  *
+ * @example Refusing an empty procedure name before derivation
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram(\SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Procedure, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('')))  // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @visibility public
  * @example Reading a DROP TRIGGER
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP TRIGGER IF EXISTS shop.tr');
@@ -42,7 +44,20 @@ final class DropProgram implements Statement
      */
     public function __construct(public readonly ProgramKind $kind, public readonly QualifiedName $name, public readonly bool $ifExists = false)
     {
+        Check::input(!str_contains($name->name->value, "\0"), 'A dropped program name cannot contain NUL.');
+        if ($kind !== ProgramKind::Function) {
+            ProgramNames::check($name);
+        }
         Check::input($name->catalog === null, 'A program name has at most a database qualifier.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Tells whether the name needs MySQL 5.6's unrestricted DROP FUNCTION operand.
+     */
+    public function legacyName(): bool
+    {
+        return $this->kind === ProgramKind::Function && ProgramNames::problem($this->name->name) !== null;
     }
 
     /**

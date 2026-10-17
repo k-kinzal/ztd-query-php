@@ -38,6 +38,17 @@ final class LanguageProfile
     }
 
     /**
+     * Tells whether declarations made under another profile hold under this one: the same grammar release and rule revision.
+     *
+     * Lexical settings and the parameter style change only how SQL text reads, so a table declared
+     * under one sql_mode keeps its declaration when a session reads SQL under another.
+     */
+    public function sharesDeclarationsWith(self $other): bool
+    {
+        return $this->grammar === $other->grammar && $this->ruleRevision === $other->ruleRevision;
+    }
+
+    /**
      * Profile compatibility includes the fixed artifacts and effective lexical settings.
      */
     public function compatibleWith(self $other): bool

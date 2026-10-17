@@ -38,17 +38,29 @@ use SqlSemantics\Statement\Reference\Missing\SessionState;
 final class ExplainFacts
 {
     /**
+     * Identifies the finite format domain across all supported releases.
+     */
+    public function known(?Name $format): bool
+    {
+        return $format === null || in_array(strtoupper($format->value), ['TRADITIONAL', 'JSON', 'TREE'], true);
+    }
+
+    /**
      * Records the rows of an EXPLAIN, or reports why the server refuses it.
      */
     public function derive(Derivation $derivation, ?Name $format, bool $analyze, ?ExplainModifier $modifier, ?UserVariable $into): void
     {
+        $notice = $modifier?->deprecation($derivation->context->profile->grammar);
+        if ($notice !== null) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise($notice, $derivation, after: false);
+        }
         $named = $format === null ? null : strtoupper($format->value);
         if ($into !== null) {
             $derivation->scalar($into, $derivation->environment());
         }
         $refused = $this->refusal($derivation->context->profile->grammar, $named, $analyze, $into !== null);
         if ($refused !== null) {
-            $derivation->report(new UtilityMisuse($refused));
+            $derivation->report($refused === UtilityRule::UnknownExplainFormat && $format !== null ? new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat($format) : new UtilityMisuse($refused));
 
             return;
         }

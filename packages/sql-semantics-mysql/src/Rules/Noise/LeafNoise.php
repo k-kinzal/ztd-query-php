@@ -49,7 +49,7 @@ final class LeafNoise
      *   default object type of GRANT and REVOKE
      *   (https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html,
      *   https://dev.mysql.com/doc/refman/8.4/en/grant.html).
-     * - `table_ident: . ident` and `field_ident: . ident`, position 0: a
+     * - `table_ident: . ident`, position 0: a
      *   leading dot names the default database, as an unqualified name does
      *   (https://dev.mysql.com/doc/refman/5.7/en/identifier-qualifiers.html).
      *   A table of a FROM clause and a column of an expression keep the dot
@@ -78,7 +78,7 @@ final class LeafNoise
             'opt_storage: STORAGE_SYM' => [0],
             'opt_table: TABLE_SYM' => [0],
             'table_ident: . ident' => [0],
-            'field_ident: . ident' => [0],
+
             'charset: CHAR_SYM SET' => [1],
             'character_set: CHAR_SYM SET_SYM' => [1],
         ];

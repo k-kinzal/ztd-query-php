@@ -56,6 +56,7 @@ final class UntilRule
     /**
      * Lowers an optional UNTIL clause; an absent clause is null.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the condition kinds are intrinsically incompatible
      * @throws ImplementationGap When a production has no rule
      */
     public function until(Node $clause, Terminology $terminology): ?ReplicaUntil
@@ -72,6 +73,8 @@ final class UntilRule
     /**
      * Lowers the condition list.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the condition kinds are intrinsically incompatible
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function conditions(Node $list, Terminology $terminology): ReplicaUntil
@@ -83,11 +86,19 @@ final class UntilRule
             array_unshift($positions, $rule->option($form->node(2), $terminology));
             $form = $this->lowering->form($form->node(0));
         }
+        $point = null;
+        $gtids = null;
         if (isset(self::POSITIONS[$form->signature])) {
-            return new ReplicaUntil(null, null, [$rule->option($form->node(0), $terminology), ...$positions]);
+            array_unshift($positions, $rule->option($form->node(0), $terminology));
+        } else {
+            $point = self::POINTS[$form->signature] ?? throw ImplementationGap::production($form);
+            $gtids = $point === UntilPoint::AfterGaps ? null : $this->lowering->literals->text($form->node(2));
         }
-        $point = self::POINTS[$form->signature] ?? throw ImplementationGap::production($form);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\ReplicaConditions())->combination($point, $gtids, $positions);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting($problem), (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
+        }
 
-        return new ReplicaUntil($point, $point === UntilPoint::AfterGaps ? null : $this->lowering->literals->text($form->node(2)), $positions);
+        return new ReplicaUntil($point, $gtids, $positions);
     }
 }

@@ -104,7 +104,7 @@ final class KeyPartRule
 
         return match ($form->signature) {
             'key_part_with_expression: key_part' => $this->part($form->node(0), $direction),
-            'key_part_with_expression: ( expr ) opt_ordering_direction' => new ExpressionPart($this->lowering->expressions->expression($form->node(1)), $queries->direction($form->node(3))),
+            'key_part_with_expression: ( expr ) opt_ordering_direction' => $this->expression($form->node(1), $queries->direction($form->node(3))),
             'key_part: ident' => new ColumnPart($names->identifier($form->node(0)), null, $direction === null ? null : $queries->direction($direction)),
             'key_part: ident ( NUM )' => new ColumnPart($names->identifier($form->node(0)), $this->length($part), $direction === null ? null : $queries->direction($direction)),
             'key_part: ident opt_ordering_direction' => new ColumnPart($names->identifier($form->node(0)), null, $queries->direction($form->node(1))),
@@ -114,10 +114,37 @@ final class KeyPartRule
     }
 
     /**
+     * Separates a multi-valued array key from an ordinary expression key.
+     */
+    public function expression(Node $node, ?\SqlSemantics\Platform\MySql\Statement\Query\Direction $direction): KeyPart
+    {
+        $expression = $this->lowering->expressions->expression($node);
+        $ungrouped = $expression;
+        while ($ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
+            $ungrouped = $ungrouped->operand;
+        }
+        if ($ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast && $ungrouped->array) {
+            while ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
+                $this->lowering->origins->forget($expression);
+                $expression = $expression->operand;
+            }
+            $this->lowering->origins->forget($ungrouped);
+
+            return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart($ungrouped->operand, $ungrouped->target, $direction), $node);
+        }
+
+        return new ExpressionPart($expression, $direction);
+    }
+
+    /**
      * Lowers the prefix length of a key part: the number token at the third position.
      */
     public function length(Node $part): Numeral
     {
+        $failure = (new SyntaxPrefixes())->rejected($part, $this->lowering);
+        if ($failure !== null) {
+            throw $failure;
+        }
         return $this->lowering->numbers->token($this->lowering->productions->form($part)->token(2));
     }
 }

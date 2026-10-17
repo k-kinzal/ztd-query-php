@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -43,6 +44,7 @@ final class Position implements Scalar
     {
         $precedence = new Precedence();
         Check::input($precedence->admits($substring, Precedence::BIT_EXPR) && !$precedence->absorbs($substring, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The substring of POSITION needs a grouping.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -50,7 +52,9 @@ final class Position implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('IP', [(new Arguments())->one($this->substring, $derivation, $environment), (new Arguments())->one($this->string, $derivation, $environment)]);
+        $facts = [(new Arguments())->one($this->substring, $derivation, $environment), (new Arguments())->one($this->string, $derivation, $environment)];
+
+        return (new Results())->refine('LOCATE', [$this->substring, $this->string], $facts, (new ResultTyping())->fact('IP', $facts), $derivation);
     }
 
     /**

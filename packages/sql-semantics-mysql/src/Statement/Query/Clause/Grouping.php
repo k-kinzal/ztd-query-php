@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the grouping expressions
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t GROUP BY a, b');
- *     count($query->statement->groupBy->items) // => 2
+ *     count($query->statement->query->groupBy->items) // => 2
  * @example Refusing an empty grouping
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

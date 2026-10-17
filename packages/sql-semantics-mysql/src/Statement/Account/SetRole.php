@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `SET ROLE {DEFAULT | NONE | ALL [EXCEPT role, …] | role, …}` (8.0+): a request to change the active roles of the session.
@@ -29,6 +29,7 @@ final class SetRole implements Statement
      */
     public function __construct(public readonly RoleSelection $roles)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

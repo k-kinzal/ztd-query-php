@@ -50,9 +50,9 @@ final class WriteScopeTest extends TestCase
 
     public function testValueReportsARowAsTheWrittenValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('UPDATE t SET a = (1, 2)');
-
-        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new Semantics(Dialect::MySql))->analyze('UPDATE t SET a = (1, 2)');
     }
 
     public function testAssignAnswersTheAssignedColumns(): void
@@ -72,5 +72,13 @@ final class WriteScopeTest extends TestCase
         $operation = $semantics->analyze('INSERT INTO t (b, t.b) VALUES (1, 2)', [$t]);
 
         self::assertInstanceOf(DuplicateColumn::class, $operation->facts->diagnostics[0]);
+    }
+
+    public function testWrittenNamesTheColumnsAStatementWritesNeverAVariable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $environment = new \SqlSemantics\Resolution\Environment($semantics->context());
+
+        self::assertSame([false, true], [$environment->written, (new WriteScope())->written($environment)->written]);
     }
 }

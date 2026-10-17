@@ -24,6 +24,14 @@ final class ShowGrantsTest extends TestCase
         self::assertSame('Grants for u@%', $named->field(0)->name?->value);
     }
 
+    public function testDeriveStatementNamesTheResolvedAccount(): void
+    {
+        $show = (new Semantics(Dialect::MySql))->analyze("SHOW GRANTS FOR ' u '@' host '");
+
+        self::assertSame('Grants for u@host', $show->field(0)->name?->value);
+        self::assertSame('SHOW GRANTS FOR ` u `@` host `', $show->toString());
+    }
+
     public function testRenderWritesTheStatement(): void
     {
         self::assertSame('SHOW GRANTS', (new Semantics(Dialect::MySql))->analyze('SHOW GRANTS')->toString());

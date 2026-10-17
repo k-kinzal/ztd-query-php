@@ -35,9 +35,9 @@ final class NullTestTest extends TestCase
 
     public function testDeriveScalarReportsARowOperand(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) IS NULL');
-
-        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) IS NULL');
     }
 
     public function testRenderChainsTestsToTheLeft(): void

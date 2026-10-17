@@ -19,6 +19,31 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 #[Medium]
 final class OrdinaryColumnTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName, list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute>}>
+     */
+    public static function providerContradictions(): iterable
+    {
+        $bit = new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit);
+        $clock = new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now);
+        yield 'clock default' => [$bit, [new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral($clock)]];
+        yield 'clock update' => [$bit, [new \SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate($clock)]];
+        yield 'automatic increment' => [$bit, [new KeywordAttribute(\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::AutoIncrement)]];
+        yield 'serial default' => [$bit, [new KeywordAttribute(\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::SerialDefaultValue)]];
+        yield 'nonspatial srid' => [$bit, [new \SqlSemantics\Platform\MySql\Statement\Table\Column\SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'))]];
+        yield 'clock precision' => [new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Timestamp, '3'), [new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral($clock)]];
+    }
+
+    /**
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute> $attributes
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerContradictions')]
+    public function testIntrinsicAttributeContradictionsCannotBeConstructed(\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName $type, array $attributes): void
+    {
+        $this->expectExceptionMessage('Column attributes must fit');
+        new OrdinaryColumn($type, $attributes);
+    }
+
     public function testDataTypeAnswersTheType(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT UNSIGNED)');

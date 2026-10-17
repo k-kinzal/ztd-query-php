@@ -218,7 +218,7 @@ final class DefinitionRule
 
         return match ($form->signature) {
             'part_value_expr_item: MAX_VALUE_SYM', 'part_value_item: MAX_VALUE_SYM' => new PartitionMaximum(),
-            'part_value_expr_item: bit_expr', 'part_value_item: bit_expr' => $this->lowering->expressions->bitExpression($form->node(0)),
+            'part_value_expr_item: bit_expr', 'part_value_item: bit_expr' => $this->lowering->origins->record($this->lowering->expressions->bitExpression($form->node(0)), $form->node(0)),
             default => throw ImplementationGap::production($form),
         };
     }

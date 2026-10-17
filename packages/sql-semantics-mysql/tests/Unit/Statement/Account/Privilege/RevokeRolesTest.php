@@ -10,15 +10,14 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeRoles;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 
 #[CoversClass(RevokeRoles::class)]
 #[Medium]
 final class RevokeRolesTest extends TestCase
 {
-    public function testDeriveStatementReportsAPrivilegeInTheRoleList(): void
+    public function testDeriveStatementNeedsNoExpressionBindings(): void
     {
-        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics(Dialect::MySql))->analyze('REVOKE BACKUP_ADMIN (c) FROM u')->facts->diagnostics[0]);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE r FROM u')->facts->diagnostics);
     }
 
     public function testRenderWritesEveryClause(): void

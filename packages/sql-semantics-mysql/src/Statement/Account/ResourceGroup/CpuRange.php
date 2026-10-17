@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup;
 
-use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
@@ -18,19 +18,32 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a range
- *     $range = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3'));
- *     [$range->first->text, $range->last?->text] // => ['0', '3']
+ *     $range = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange(0, 3);
+ *     [$range->first, $range->last] // => [0, 3]
  */
 final class CpuRange implements Node
 {
     use Snapshot;
 
     /**
-     * @param Numeral $first The CPU number, or the first of the range
-     * @param Numeral|null $last The last CPU of the range, when one is written
+     * @var int<0, 2147483647> The CPU number, or the first of the range
      */
-    public function __construct(public readonly Numeral $first, public readonly ?Numeral $last = null)
+    public readonly int $first;
+
+    /**
+     * @var int<0, 2147483647>|null The last CPU, when a range is requested
+     */
+    public readonly ?int $last;
+
+    /**
+     * @param int $first The CPU index, within the unsigned NUM token domain
+     * @param int|null $last The last CPU index, within the same domain
+     */
+    public function __construct(int $first, ?int $last = null)
     {
+        Check::input($first >= 0 && $first <= 2147483647 && ($last === null || ($last >= 0 && $last <= 2147483647)), 'A CPU index is an integer from 0 through 2147483647.');
+        $this->first = $first;
+        $this->last = $last;
     }
 
     /**
@@ -38,9 +51,9 @@ final class CpuRange implements Node
      */
     public function render(Output $out): void
     {
-        $out->node($this->first);
+        $out->spelled((string) $this->first);
         if ($this->last !== null) {
-            $out->symbol('-')->node($this->last);
+            $out->symbol('-')->spelled((string) $this->last);
         }
     }
 }

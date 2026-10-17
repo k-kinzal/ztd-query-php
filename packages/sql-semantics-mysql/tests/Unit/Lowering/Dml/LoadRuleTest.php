@@ -15,6 +15,42 @@ use SqlSemantics\Platform\MySql\Lowering\Dml\LoadRule;
 #[Medium]
 final class LoadRuleTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRefusedOptions(): iterable
+    {
+        yield 'original generated structure' => ['mysql-8.2.0', "LOAD DATA S3 'a' COUNT 00000 REPLACE INTO TABLE A ROWS IDENTIFIED BY '\\\\\\\\' (`'`, @b, @utf8mb4_0900_ai_ci) ALGORITHM = BULK"];
+        yield 'compression without bulk' => ['mysql-9.1.0', "load data infile 'f' into table t character set latin1 compression = 'zstd' ()"];
+        yield 'parallel bulk columns' => ['mysql-8.2.0', "LOAD DATA INFILE 'f' INTO TABLE t (a) PARALLEL=1 ALGORITHM=BULK"];
+        yield 'memory bulk assignments' => ['mysql-8.2.0', "LOAD DATA INFILE 'f' INTO TABLE t SET a=1 MEMORY=1 ALGORITHM=BULK"];
+    }
+
+    /**
+     * @param string $release The grammar that reads the original input
+     * @param string $sql The retained input, including formerly accepted contradictions
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRefusedOptions')]
+    public function testStatementRefusesOptionsWithoutPublishingAnInvalidLoad(string $release, string $sql): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The LOAD options must be refused before construction.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions::class, $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
+    }
+
+    public function testInputNormalizesTheCountKeywordWithoutRecordingAnOperand(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' COUNT 2 INTO TABLE t")->toString());
+        self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' `COUNT` 2 INTO TABLE t")->toString());
+        self::assertSame("LOAD DATA URL 'f' `count` 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' count 2 INTO TABLE t")->toString());
+    }
+
     public function testStatementLowersEveryGeneration(): void
     {
         self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('load data infile \'f\' into table t')->toString());

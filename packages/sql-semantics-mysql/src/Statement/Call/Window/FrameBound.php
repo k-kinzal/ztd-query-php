@@ -40,6 +40,7 @@ final class FrameBound implements Node
     public function __construct(public readonly FrameBoundKind $kind, public readonly ?Scalar $offset = null, public readonly ?IntervalUnit $unit = null)
     {
         Check::input(($offset !== null) === $kind->offset(), 'A frame boundary has an offset exactly when it is PRECEDING or FOLLOWING.');
+        Check::input($unit === null || $offset !== null, 'An INTERVAL frame boundary retains its offset expression.');
         Check::input($offset === null || $unit !== null || $offset instanceof NumberLiteral || $offset instanceof Parameter, 'A frame offset is a number, a parameter marker or an interval.');
     }
 

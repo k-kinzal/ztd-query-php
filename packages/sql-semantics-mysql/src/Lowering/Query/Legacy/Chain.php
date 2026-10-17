@@ -86,7 +86,7 @@ final class Chain
             return $after->wrap(new SetOperation($query, SetOperator::Union, $quantifier, $final));
         }
         if ($final->trailer->procedure !== null) {
-            throw new AnalysisException('Incorrect usage of PROCEDURE and UNION: PROCEDURE ANALYSE follows a single query block only.');
+            throw new AnalysisException('Incorrect usage of PROCEDURE and subquery: PROCEDURE ANALYSE follows a single query block only.');
         }
         if (!$after->empty() && !$final->trailer->empty()) {
             return new OrderedSetOperation($query, SetOperator::Union, $quantifier, $final->select(), $after->orderBy, $after->limit);
@@ -103,11 +103,11 @@ final class Chain
     public function earlier(Block $operand, Trailer $clauses, int $index): Query
     {
         $trailer = $operand->trailer;
-        if ($trailer->orderBy !== [] || ($trailer->limit !== null && $this->release !== GrammarRelease::MySql5651)) {
-            throw new AnalysisException('Incorrect usage of UNION and ORDER BY or LIMIT: only the last SELECT of a union takes them without parentheses.');
-        }
         if ($trailer->into !== null || $operand->into !== null) {
             throw new AnalysisException('Incorrect usage of UNION and INTO: only the last SELECT of a union takes INTO.');
+        }
+        if ($trailer->orderBy !== [] || ($trailer->limit !== null && $this->release !== GrammarRelease::MySql5651)) {
+            throw new AnalysisException('Incorrect usage of UNION and ' . ($trailer->orderBy !== [] ? 'ORDER BY' : 'LIMIT') . ': only the last SELECT of a union takes them without parentheses.');
         }
         if ($trailer->procedure !== null) {
             throw new AnalysisException('Incorrect usage of UNION and SELECT ... PROCEDURE ANALYSE(): a union takes no PROCEDURE ANALYSE.');

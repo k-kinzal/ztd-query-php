@@ -134,4 +134,15 @@ final class LookupLevelTest extends TestCase
 
         self::assertSame([$shapeMissing, $nameMissing], LookupLevel::undecided($relation));
     }
+
+    public function testFoundSkipsAHiddenImplicitSlotForAnUnqualifiedName(): void
+    {
+        $context = new AnalysisContext(new LanguageProfile(GrammarRelease::Sqlite3472), [new Name('main')]);
+        $implicit = new OutputSlot(new Name('e'), new Known(Storage::Integer), Nullability::Nullable);
+        $relation = new VisibleRelation(new TableInput(new QualifiedName(new Name('t'))), new RowShape([new OutputSlot(new Name('a'), new Known(Storage::Text), Nullability::Nullable)]), null, new QualifiedName(new Name('t')), [1], [new ImplicitSlot([new Name('e')], $implicit)]);
+        $scope = new Environment($context, null, [$relation]);
+
+        self::assertSame([], (new LookupLevel($scope, new Name('e'), null, 0))->found());
+        self::assertSame($implicit, (new LookupLevel($scope, new Name('e'), new QualifiedName(new Name('t')), 0))->found()[0]->slot);
+    }
 }

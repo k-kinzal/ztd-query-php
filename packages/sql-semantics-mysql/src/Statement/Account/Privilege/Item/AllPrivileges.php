@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Granting every privilege of a database
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT ALL PRIVILEGES ON db.* TO u')->toString() // => 'GRANT ALL ON db.* TO u'
  */
-final class AllPrivileges implements Grantable
+final class AllPrivileges implements Privilege
 {
     use Snapshot;
 

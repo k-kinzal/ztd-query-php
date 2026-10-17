@@ -7,10 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `INSTALL PLUGIN name SONAME 'library'`: a request to load a server plugin from a shared library.
@@ -35,6 +35,8 @@ final class InstallPlugin implements Statement
      */
     public function __construct(public readonly Name $plugin, public readonly Text $library)
     {
+        \SqlSemantics\Diagnostic\Check::input($library->radix === null, 'A plugin library name is quoted text.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

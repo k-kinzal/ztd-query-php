@@ -182,7 +182,7 @@ final class KeyOptionRule
         }
         $literals = $this->lowering->literals;
 
-        return match ($form->signature) {
+        return $this->lowering->origins->record(match ($form->signature) {
             'all_key_opt: KEY_BLOCK_SIZE opt_equal ulong_num', 'common_index_option: KEY_BLOCK_SIZE opt_equal ulong_num' => new KeyBlockSize($this->lowering->numbers->numeral($form->node(2))),
             'all_key_opt: COMMENT_SYM TEXT_STRING_sys', 'common_index_option: COMMENT_SYM TEXT_STRING_sys' => new IndexComment($literals->text($form->node(1))),
             'common_index_option: visibility' => new IndexVisibility($this->visible($form->node(0))),
@@ -191,7 +191,7 @@ final class KeyOptionRule
             'fulltext_key_opt: WITH PARSER_SYM IDENT_sys', 'fulltext_index_option: WITH PARSER_SYM IDENT_sys' => new IndexParser($this->lowering->names->identifier($form->node(2))),
             'key_using_alg: USING btree_or_rtree', 'key_using_alg: TYPE_SYM btree_or_rtree', 'index_type_clause: USING index_type', 'index_type_clause: TYPE_SYM index_type' => new IndexUsing($this->structure($form->node(1))),
             default => throw ImplementationGap::production($form),
-        };
+        }, $option);
     }
 
     /**

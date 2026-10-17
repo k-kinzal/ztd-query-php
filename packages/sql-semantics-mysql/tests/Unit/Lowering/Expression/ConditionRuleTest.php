@@ -68,6 +68,16 @@ final class ConditionRuleTest extends TestCase
         self::assertInstanceOf(NullTest::class, $expression->left);
     }
 
+    public function testQuantifiedOperatorRejectsNullSafeEqualityAsInputSyntax(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $this->expectExceptionMessage("Unexpected '<=>' at line 1, column 10");
+
+        (new ConditionRule($lowering))->boolean($platform->parser($profile)->parse('SELECT 1 <=> ALL (SELECT 2)')->find('bool_pri')[0]);
+    }
+
     public function testApplyLowersAQuantifiedComparison(): void
     {
         $platform = new Platform();
@@ -117,5 +127,17 @@ final class ConditionRuleTest extends TestCase
         $this->expectExceptionMessage('No semantic rule is implemented for: comp_op: EQ');
 
         (new ConditionRule($lowering))->synonym($platform->parser($profile)->parse('SELECT 1 = 2')->find('comp_op')[0]);
+    }
+
+    public function testNullTestRetainsADeferredOperand(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $form = $lowering->form($platform->parser($profile)->parse('SELECT 1 IS NULL')->find('bool_pri')[0]);
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'));
+        $value = (new ConditionRule($lowering))->nullTest($form, $operand, false);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNullTest::class, $value);
+        self::assertSame($operand, $value->operand);
     }
 }

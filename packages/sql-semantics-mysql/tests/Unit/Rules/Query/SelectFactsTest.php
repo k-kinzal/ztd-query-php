@@ -10,16 +10,21 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectFacts;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Shape\Field;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(SelectFacts::class)]
@@ -39,24 +44,31 @@ final class SelectFactsTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a AS x FROM t WHERE b = 1 GROUP BY a HAVING x > 1 ORDER BY x', [$t]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
         self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->orderBy[0]->expression)->resolution);
+        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->resolution);
         self::assertSame($t->columns[0], $operation->field('x')->column());
     }
 
-    public function testDeriveReportsARowWhereTheServerTakesOneValue(): void
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerScalarPositions(): iterable
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $messages = array_map(static fn ($diagnostic): string => $diagnostic->message(), [
-            ...$semantics->analyze('SELECT (1, 2)')->facts->diagnostics,
-            ...$semantics->analyze('SELECT 1 FROM DUAL WHERE (1, 2)')->facts->diagnostics,
-            ...$semantics->analyze('SELECT 1 HAVING (SELECT 1, 2)')->facts->diagnostics,
-            ...$semantics->analyze('SELECT 1 ORDER BY (1, 2)')->facts->diagnostics,
-            ...$semantics->analyze('SELECT 1 GROUP BY ROW(1, 2, 3)')->facts->diagnostics,
-        ]);
+        yield 'projection' => ['SELECT (1, 2)', 2];
+        yield 'where' => ['SELECT 1 FROM DUAL WHERE (1, 2)', 2];
+        yield 'having' => ['SELECT 1 HAVING (SELECT 1, 2)', 2];
+        yield 'ordering' => ['SELECT 1 ORDER BY (1, 2)', 2];
+        yield 'grouping' => ['SELECT 1 GROUP BY ROW(1, 2, 3)', 3];
+    }
 
-        self::assertSame(['Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 3.'], $messages);
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerScalarPositions')]
+    public function testDeriveReportsARowWhereTheServerTakesOneValue(string $sql, int $width): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not ' . $width . '.');
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 
     public function testWindowsReportsANameDefinedTwice(): void
@@ -71,6 +83,8 @@ final class SelectFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x, 2, a, 1+1, 3 AS y FROM t');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame(['x', '2', '1+1', 'y'], array_map(static fn (Field $field): ?string => $field->name?->value, (new SelectFacts())->aliases($select, $operation->fields()->items ?? [], $operation->context->profile)));
@@ -80,8 +94,53 @@ final class SelectFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1+1 FROM t ORDER BY `1+1`', []);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($select->orderBy[0]->expression)->resolution);
+    }
+
+    public function testWindowsNamesTheFirstDefinitionOfAWindowDefinedTwice(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 WINDOW X AS (), x AS (), x AS ()');
+
+        self::assertEquals([new Misuse(MisuseRule::DuplicateWindow, new Name('X')), new Misuse(MisuseRule::DuplicateWindow, new Name('X'))], $operation->facts->diagnostics);
+    }
+
+    public function testDeriveWarnsOfAGroupingDirectionAndProcedureAnalyseIn57(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_NO_CACHE 1 FROM t GROUP BY 1 DESC, 1 ASC PROCEDURE ANALYSE()');
+
+        self::assertSame([Deprecated::NoCache->value, Deprecated::GroupByDirection->value, Deprecated::GroupByDirection->value, Deprecated::ProcedureAnalyse->value], array_map(static fn (Warning $warning): string => $warning->message(), $operation->facts->warnings));
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 FROM t GROUP BY 1 DESC PROCEDURE ANALYSE()')->facts->warnings);
+    }
+
+    public function testTabledMakesATemporalValueBinaryInAGroupedBlock(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (e DATE)');
+        $grouped = $semantics->analyze('SELECT IFNULL(e, e) FROM t GROUP BY e', [$t])->facts->output?->fields()?->at(0)->type;
+        $plain = $semantics->analyze('SELECT IFNULL(e, e) FROM t', [$t])->facts->output?->fields()?->at(0)->type;
+
+        self::assertInstanceOf(Known::class, $grouped);
+        self::assertInstanceOf(Domain::class, $grouped->descriptor);
+        self::assertInstanceOf(Known::class, $plain);
+        self::assertInstanceOf(Domain::class, $plain->descriptor);
+        self::assertSame(['binary', 'latin1_swedish_ci'], [$grouped->descriptor->collation->name, $plain->descriptor->collation->name]);
+    }
+
+    public function testTabledPreservesLogicalWindowTypesAcrossScalarSubqueries(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $window = "SELECT FIRST_VALUE(CAST('2020-01-02' AS DATE)) OVER () AS v FROM (SELECT 1 UNION ALL SELECT 2) t LIMIT 1";
+        $scalar = $semantics->analyze('SELECT (' . $window . ')')->field(0)->type;
+        $derived = $semantics->analyze('SELECT v FROM (' . $window . ') d')->field(0)->type;
+        self::assertInstanceOf(Known::class, $scalar);
+        self::assertInstanceOf(Domain::class, $scalar->descriptor);
+        self::assertInstanceOf(Known::class, $derived);
+        self::assertInstanceOf(Domain::class, $derived->descriptor);
+
+        self::assertSame(['latin1_swedish_ci', 'binary'], [$scalar->descriptor->collation->name, $derived->descriptor->collation->name]);
     }
 }

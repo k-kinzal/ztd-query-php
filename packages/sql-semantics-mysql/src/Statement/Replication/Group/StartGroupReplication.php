@@ -11,9 +11,9 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `START GROUP_REPLICATION [USER = …, PASSWORD = …, DEFAULT_AUTH = …]`: starts group replication (MySQL 5.7 and later).
@@ -50,6 +50,7 @@ final class StartGroupReplication implements Statement
     public function __construct(array $options = [])
     {
         $this->options = Check::listOf($options, CredentialOption::class, 'START GROUP_REPLICATION sets a list of options.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -65,6 +66,15 @@ final class StartGroupReplication implements Statement
             if ($option->credential === Credential::Password && strlen($option->value->value) > self::PASSWORD) {
                 $derivation->report(new RefusedSetting(ReplicationError::GroupPasswordTooLong));
             }
+        }
+        $credentials = [];
+        foreach ($this->options as $option) {
+            $credentials[$option->credential->value] = $option->value->value;
+        }
+        if (($credentials['USER'] ?? null) === '') {
+            $derivation->report(new RefusedSetting(ReplicationError::GroupUserEmpty));
+        } elseif (isset($credentials['PASSWORD']) && !isset($credentials['USER'])) {
+            $derivation->report(new RefusedSetting(ReplicationError::GroupUserMissing));
         }
     }
 

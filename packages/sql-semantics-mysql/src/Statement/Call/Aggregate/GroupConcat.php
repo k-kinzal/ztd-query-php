@@ -9,20 +9,27 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\AggregateOwnership;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * A call of GROUP_CONCAT(): the concatenated non-NULL values of a group, with DISTINCT, an ordering and a separator.
@@ -31,7 +38,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * the rows in the written order, separated by the separator (a comma by
  * default). The result is a string in the character set of the arguments,
  * binary when one is binary; it is NULL when a group has no non-NULL row.
- * Its length is cut to group_concat_max_len. The grammar of MySQL 8.0 and
+ * Its length is cut to group_concat_max_len, which also decides its type:
+ * a VARCHAR up to 512 characters and a long blob beyond. The grammar of MySQL 8.0 and
  * later accepts OVER, which the server rejects (ER_NOT_SUPPORTED_YET).
  * Terminates: the parts are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_group-concat.
@@ -40,14 +48,14 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing GROUP_CONCAT()
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT GROUP_CONCAT(DISTINCT 'a' SEPARATOR ';')");
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::Nullable]
+ *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['TEXT', \SqlSemantics\Statement\Type\Nullability::Nullable]
  */
 final class GroupConcat implements SetFunction
 {
     use Snapshot;
 
     /**
-     * @var list<Scalar> The concatenated expressions in order
+     * @var non-empty-list<Scalar> The concatenated expressions in order
      */
     public readonly array $arguments;
 
@@ -72,6 +80,10 @@ final class GroupConcat implements SetFunction
     ) {
         $this->arguments = Check::listOf($arguments, Scalar::class, 'GROUP_CONCAT takes at least one expression.', 1);
         $this->order = Check::listOf($order, OrderItem::class, 'An ordering is a list of ordering items.');
+        foreach ($this->order as $item) {
+            Check::input(!$item->expression instanceof OutputOrdinal, 'This ordering reads expressions rather than SELECT output positions.');
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -87,7 +99,7 @@ final class GroupConcat implements SetFunction
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $environment = $this->aggregates() ? (new HavingScope())->leave($environment) : $environment;
+        $environment = $this->aggregates() ? (new HavingScope())->arguments($environment) : $environment;
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);
@@ -96,11 +108,15 @@ final class GroupConcat implements SetFunction
             (new Arguments())->one($item->expression, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
+        (new AggregateOwnership())->register($this, $derivation, $environment);
         if ($this->over !== null) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupConcat));
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupConcat, $this));
         }
 
-        return new ScalarFact((new ResultTyping())->type('S', $facts), Nullability::Nullable);
+        $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
+        $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->concatenated($arguments, $derivation);
+
+        return new ScalarFact($domain === null ? (new ResultTyping())->type('S', $facts) : new Known($domain), Nullability::Nullable);
     }
 
     /**

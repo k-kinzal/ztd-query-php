@@ -16,6 +16,13 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 #[Medium]
 final class AlterViewTest extends TestCase
 {
+    public function testValueRejectsTheCreateOnlyExistenceClause(): void
+    {
+        $this->expectExceptionMessage('ALTER VIEW has no IF NOT EXISTS clause.');
+
+        new AlterView(new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]), ifNotExists: true));
+    }
+
     public function testDeriveStatementResolvesTheViewAndDeclaresNothing(): void
     {
         $semantics = new Semantics(Dialect::MySql);

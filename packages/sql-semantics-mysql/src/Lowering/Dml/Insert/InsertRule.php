@@ -18,8 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers INSERT and REPLACE of every release.
@@ -93,13 +93,14 @@ final class InsertRule
         $skip = $ignore === null ? false : $this->lowering->options->present($form->node($ignore));
         $alias = $layout[6] === null ? null : $this->alias($form->node($layout[6]));
         $updates = $layout[7] === null ? [] : $this->updates($form->node($layout[7]));
+        $hints = $this->lowering->hints($form->token(0));
         if ($form->node->children[$source] instanceof Node) {
             [$columns, $body] = (new InsertSourceRule($this->lowering))->source($form->node($source));
 
-            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns), $body, $alias, $updates);
+            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, $alias, $updates);
         }
 
-        return new InsertSet(new InsertInto($replace, $priority, $skip, $target), (new ValueRule($this->lowering))->assignments($form->node($source + 1)), $alias, $updates);
+        return new InsertSet(new InsertInto($replace, $priority, $skip, $target, hints: $hints), (new ValueRule($this->lowering))->assignments($form->node($source + 1)), $alias, $updates);
     }
 
     /**
@@ -113,6 +114,7 @@ final class InsertRule
         if (!$replace && $form->signature !== 'insert: INSERT insert_lock_option opt_ignore insert2 insert_field_spec opt_insert_update') {
             throw ImplementationGap::production($form);
         }
+        $hints = $this->lowering->hints($form->token(0));
         $offset = $replace ? 0 : 1;
         $target = $this->target($form->node(2 + $offset));
         $priority = $this->priority($form->node(1));
@@ -120,11 +122,11 @@ final class InsertRule
         $updates = $replace ? [] : $this->updates($form->node(5));
         $spec = $this->lowering->form($form->node(3 + $offset));
         if ($spec->signature === 'insert_field_spec: SET ident_eq_list') {
-            return new InsertSet(new InsertInto($replace, $priority, $skip, $target), (new ValueRule($this->lowering))->assignments($spec->node(1)), null, $updates);
+            return new InsertSet(new InsertInto($replace, $priority, $skip, $target, hints: $hints), (new ValueRule($this->lowering))->assignments($spec->node(1)), null, $updates);
         }
         [$columns, $body] = (new InsertSourceRule($this->lowering))->source($spec->node);
 
-        return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns), $body, null, $updates);
+        return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, null, $updates);
     }
 
     /**

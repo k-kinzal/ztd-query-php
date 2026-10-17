@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeRoles;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers GRANT and REVOKE of MySQL 8.0 and later.
@@ -60,19 +60,11 @@ final class GrantRule
 
         return match ($form->signature) {
             'grant: GRANT role_or_privilege_list TO_SYM user_list opt_with_admin_option' => new GrantRoles(
-                $privileges->items($form->node(1), true),
+                $privileges->roles($form->node(1), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
                 $this->lowering->users->accounts($form->node(3)),
                 $this->admin($form->node(4)),
             ),
-            'grant: GRANT role_or_privilege_list ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => new GrantPrivileges(
-                $privileges->items($form->node(1), false),
-                $privileges->kind($form->node(3)),
-                $privileges->level($form->node(4)),
-                $this->specifications($form->node(6)),
-                null,
-                $clauses->grantOptions($form->node(7)),
-                $this->grantAs($form->node(8)),
-            ),
+            'grant: GRANT role_or_privilege_list ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => $this->checked($this->request($form, false), $form),
             'grant: GRANT ALL opt_privileges ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => $this->all($form),
             'grant: GRANT PROXY_SYM ON_SYM user TO_SYM user_list opt_grant_option' => new GrantProxy(
                 $this->lowering->users->account($form->node(3)),
@@ -88,18 +80,40 @@ final class GrantRule
      */
     public function all(Form $form): GrantPrivileges
     {
-        $this->privileges->words($form->node(2));
-        $clauses = new ClauseRule($this->lowering);
+        return $this->checked($this->request($form, true), $form);
+    }
 
-        return new GrantPrivileges(
-            [new AllPrivileges()],
-            $this->privileges->kind($form->node(4)),
-            $this->privileges->level($form->node(5)),
-            $this->specifications($form->node(7)),
-            null,
-            $clauses->grantOptions($form->node(8)),
-            $this->grantAs($form->node(9)),
-        );
+    /**
+     * Reads either privilege spelling without publishing an invalid standalone statement.
+     */
+    public function request(Form $form, bool $all): GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel
+    {
+        if ($all) {
+            $this->privileges->words($form->node(2));
+        }
+        $offset = $all ? 1 : 0;
+        $items = $all ? [new AllPrivileges()] : $this->privileges->granted($form->node(1), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        $kind = $this->privileges->kind($form->node(3 + $offset));
+        $level = $this->privileges->level($form->node(4 + $offset));
+        $grantees = $this->specifications($form->node(6 + $offset));
+        $options = (new ClauseRule($this->lowering))->grantOptions($form->node(7 + $offset));
+        $as = $this->grantAs($form->node(8 + $offset));
+        $this->privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        return (new \SqlSemantics\Platform\MySql\Lowering\Routine\Program\PrivilegeGrant())->select(new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest($items, $kind, $level, $grantees, options: $options, as: $as));
+    }
+
+    /**
+     * Reports the immediate constraint before publishing a standalone grant.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the privilege target contradicts the immediate GRANT role
+     */
+    public function checked(GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel $request, Form $form): GrantPrivileges
+    {
+        if (!$request instanceof GrantPrivileges) {
+            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+
+        return $request;
     }
 
     /**
@@ -117,18 +131,11 @@ final class GrantRule
         return match ($form->signature) {
             'revoke: REVOKE if_exists role_or_privilege_list FROM user_list opt_ignore_unknown_user' => new RevokeRoles(
                 $ifExists,
-                $privileges->items($form->node(2), true),
+                $privileges->roles($form->node(2), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
                 $this->lowering->users->accounts($form->node(4)),
                 $ignore,
             ),
-            'revoke: REVOKE if_exists role_or_privilege_list ON_SYM opt_acl_type grant_ident FROM user_list opt_ignore_unknown_user' => new RevokePrivileges(
-                $ifExists,
-                $privileges->items($form->node(2), false),
-                $privileges->kind($form->node(4)),
-                $privileges->level($form->node(5)),
-                $this->specifications($form->node(7)),
-                $ignore,
-            ),
+            'revoke: REVOKE if_exists role_or_privilege_list ON_SYM opt_acl_type grant_ident FROM user_list opt_ignore_unknown_user' => $this->revokePrivileges($form, $ifExists, $ignore),
             'revoke: REVOKE if_exists ALL opt_privileges ON_SYM opt_acl_type grant_ident FROM user_list opt_ignore_unknown_user' => $this->revokeAll($form, $ifExists, $ignore),
             'revoke: REVOKE if_exists ALL opt_privileges , GRANT OPTION FROM user_list opt_ignore_unknown_user' => $this->everything($form, $ifExists, $ignore),
             'revoke: REVOKE if_exists PROXY_SYM ON_SYM user FROM user_list opt_ignore_unknown_user' => new RevokeProxy(
@@ -139,6 +146,20 @@ final class GrantRule
             ),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Reads all recipients before refusing a routine's column privileges.
+     */
+    public function revokePrivileges(Form $form, bool $ifExists, bool $ignore): RevokePrivileges
+    {
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0;
+        $items = $this->privileges->granted($form->node(2), $end);
+        $kind = $this->privileges->kind($form->node(4));
+        $level = $this->privileges->level($form->node(5));
+        $users = $this->specifications($form->node(7));
+        $this->privileges->columnKind($items, $kind, $level, $end);
+        return new RevokePrivileges($ifExists, $items, $kind, $level, $users, $ignore);
     }
 
     /**

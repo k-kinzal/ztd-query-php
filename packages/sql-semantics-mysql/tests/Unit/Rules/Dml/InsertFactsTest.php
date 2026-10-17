@@ -7,15 +7,20 @@ namespace Tests\Unit\Rules\Dml;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
@@ -44,6 +49,25 @@ final class InsertFactsTest extends TestCase
         self::assertSame(["Column count doesn't match value count at row 2"], $messages('INSERT INTO t VALUES (1, 2), ()'));
         self::assertSame(["Column count doesn't match value count at row 2"], $messages('INSERT INTO t VALUES (), (1, 2)'));
         self::assertSame([], $messages('INSERT INTO t VALUES (), ()'));
+    }
+
+    public function testOpenReadsAnEmptyColumnListAsEveryColumn(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
+        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+
+        self::assertSame([], $messages('INSERT INTO t () VALUES (1, 2)'));
+        self::assertSame([], $messages('INSERT INTO t () VALUES ()'));
+        self::assertSame([], $messages('INSERT INTO t () SELECT 1, 2'));
+    }
+
+    public function testQueryReportsAWidthMismatchAtTheFirstRow(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
+
+        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('INSERT INTO t SELECT 1', $tables)->facts->diagnostics));
     }
 
     public function testSetDerivesTheAssignments(): void
@@ -97,5 +121,138 @@ final class InsertFactsTest extends TestCase
         $operation = $semantics->analyze('INSERT INTO t VALUES (1, 2) AS t ON DUPLICATE KEY UPDATE a = 1', [$t]);
 
         self::assertSame('Not unique table/alias', $operation->facts->diagnostics[0]->message());
+    }
+
+    public function testQueryChecksEachRowOfAValuesSourceAgainstTheWrittenColumns(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (a INT, b INT NOT NULL DEFAULT 0)');
+        $second = $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(1, 2), ROW(3)) LIMIT 1', [$t])->facts->diagnostics;
+        $empty = $semantics->analyze('INSERT INTO t () WITH x AS (SELECT 1) VALUES ROW(), ROW()', [$t])->facts->diagnostics;
+        $listed = $semantics->analyze('INSERT INTO t (a) (VALUES ROW())', [$t])->facts->diagnostics;
+        $default = $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(1, DEFAULT))', [$t]);
+
+        self::assertSame(["Column count doesn't match value count at row 2"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $second));
+        self::assertSame([], $empty);
+        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $listed));
+        self::assertSame([], $default->facts->diagnostics);
+    }
+
+    public function testDefaultedHoldsForEmptyRowsWithoutAColumnList(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $empty = $semantics->analyze('INSERT INTO t VALUES ROW(), ROW() LOCK IN SHARE MODE')->statement;
+        $listed = $semantics->analyze('INSERT INTO t (a) VALUES ROW()')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $empty);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $listed);
+
+        self::assertTrue((new InsertFacts())->defaulted($empty));
+        self::assertFalse((new InsertFacts())->defaulted($listed));
+    }
+
+    public function testDuplicatesNamesARowAliasThatIsTheTableName(): void
+    {
+        $diagnostics = (new Semantics(Dialect::MySql))->analyze('INSERT INTO w VALUES (1) AS w ON DUPLICATE KEY UPDATE a = 1')->facts->diagnostics;
+
+        self::assertContainsEquals(new Misuse(MisuseRule::DuplicateAlias, new Name('w')), $diagnostics);
+    }
+
+    public function testOpenFindsTheInvisibleColumnsOfTheTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE, f INT)')->declarations();
+        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+
+        self::assertSame([], $messages('INSERT INTO v (a, e, f) VALUES (1, 2, 3)'));
+        self::assertSame([], $messages('INSERT INTO v SET e = 3'));
+        self::assertSame([], $messages('INSERT INTO v VALUES (1, 3)'));
+        self::assertSame(["Column count doesn't match value count at row 1"], $messages('INSERT INTO v VALUES (1, 2, 3)'));
+    }
+
+    public function testOpenWarnsOfDelayedAsEachReleaseDoes(): void
+    {
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('REPLACE DELAYED INTO t VALUES (1)');
+        $modern = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('INSERT DELAYED INTO t VALUES (1)');
+
+        self::assertSame(["'REPLACE DELAYED' is deprecated and will be removed in a future release. Please use REPLACE instead"], array_map(static fn (Warning $warning): string => $warning->message(), $legacy->facts->warnings));
+        self::assertSame(['INSERT DELAYED is no longer supported. The statement was converted to INSERT.'], array_map(static fn (Warning $warning): string => $warning->message(), $modern->facts->warnings));
+    }
+
+    public function testRowsCountsTheFirstRowBeforeTheColumnsInMySql57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
+
+        self::assertSame("Column count doesn't match value count at row 1", $semantics->analyze('INSERT INTO t (z) VALUES (1, 2)', $tables)->facts->diagnostics[0]->message());
+    }
+
+    public function testQueryCountsTheSourceBeforeTheColumnsInMySql56(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
+
+        self::assertSame("Column count doesn't match value count at row 1", $semantics->analyze('INSERT INTO t (z) SELECT 1, 2', $tables)->facts->diagnostics[0]->message());
+    }
+
+    public function testTargetAnswersTheWrittenTableAndItsFact(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
+
+        self::assertSame([], $semantics->analyze('INSERT INTO t (b) VALUES (1)', $tables)->facts->diagnostics);
+    }
+
+    public function testLateTellsMySql56And57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+
+        self::assertSame("Column count doesn't match value count at row 1", $semantics->analyze('INSERT INTO t (z, y) VALUES (1)')->facts->diagnostics[0]->message());
+    }
+
+    public function testColumnsResolvesTheColumnListAfterTheCountInMySql57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
+
+        self::assertCount(2, $semantics->analyze('INSERT INTO t (z) VALUES (1, 2)', $tables)->facts->diagnostics);
+    }
+
+    public function testEarlyAnswersTheMismatchOfTheFirstRowInMySql57Only(): void
+    {
+        $legacy = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $modern = new Semantics(Dialect::MySql);
+        $listed = $legacy->analyze('INSERT INTO t (a) VALUES (1, 2)')->statement;
+        $unlisted = $legacy->analyze('INSERT INTO t VALUES (1, 2)')->statement;
+        self::assertInstanceOf(InsertRows::class, $listed);
+        self::assertInstanceOf(InsertRows::class, $unlisted);
+
+        self::assertEquals(new ValueCountMismatch(1, 2, 1), (new InsertFacts())->early($listed, new Derivation($legacy->context([]))));
+        self::assertNull((new InsertFacts())->early($unlisted, new Derivation($legacy->context([]))));
+        self::assertNull((new InsertFacts())->early($listed, new Derivation($modern->context([]))));
+    }
+
+    public function testMismatchChecksARowAgainstTheColumnsAndTheFirstRow(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $insert = $semantics->analyze('INSERT INTO t VALUES (1, 2), (3), ()')->statement;
+        self::assertInstanceOf(InsertRows::class, $insert);
+        $early = new ValueCountMismatch(1, 2, 1);
+
+        self::assertEquals(new ValueCountMismatch(2, 1, 2), (new InsertFacts())->mismatch($insert, 1, null, 2, null, new Derivation($semantics->context([]))));
+        self::assertEquals(new ValueCountMismatch(3, 1, 2), (new InsertFacts())->mismatch($insert, 1, 3, 2, null, new Derivation($semantics->context([]))));
+        self::assertEquals(new ValueCountMismatch(2, 0, 3), (new InsertFacts())->mismatch($insert, 2, 3, 2, null, new Derivation($semantics->context([]))));
+        self::assertSame($early, (new InsertFacts())->mismatch($insert, 0, 1, null, $early, new Derivation($semantics->context([]))));
+        self::assertNull((new InsertFacts())->mismatch($insert, 0, 2, null, null, new Derivation($semantics->context([]))));
+    }
+
+    public function testSourceChecksTheWidthOfAQueryAgainstTheWrittenColumns(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
+        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+
+        self::assertSame(["Column count doesn't match value count at row 1"], $messages('INSERT INTO t SELECT 1'));
+        self::assertSame([], $messages('INSERT INTO t SELECT 1, 2'));
+        self::assertSame([], $messages('INSERT INTO t VALUES ROW(), ROW() LOCK IN SHARE MODE'));
     }
 }

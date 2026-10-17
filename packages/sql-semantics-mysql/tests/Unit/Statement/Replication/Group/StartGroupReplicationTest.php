@@ -22,7 +22,21 @@ final class StartGroupReplicationTest extends TestCase
     {
         $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'");
 
-        self::assertEquals([new RefusedSetting(ReplicationError::GroupPasswordTooLong)], $start->facts->diagnostics);
+        self::assertEquals([new RefusedSetting(ReplicationError::GroupPasswordTooLong), new RefusedSetting(ReplicationError::GroupUserMissing)], $start->facts->diagnostics);
+    }
+
+    public function testDeriveStatementRequiresAUserWithPassword(): void
+    {
+        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION PASSWORD = ''");
+
+        self::assertEquals([new RefusedSetting(ReplicationError::GroupUserMissing)], $start->facts->diagnostics);
+    }
+
+    public function testDeriveStatementUsesTheLastUserOption(): void
+    {
+        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION USER = 'u', USER = '', PASSWORD = 'p'");
+
+        self::assertEquals([new RefusedSetting(ReplicationError::GroupUserEmpty)], $start->facts->diagnostics);
     }
 
     public function testDeriveStatementRejectsMySql56(): void

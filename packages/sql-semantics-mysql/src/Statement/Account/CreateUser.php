@@ -13,9 +13,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE USER [IF NOT EXISTS] account [auth], … [DEFAULT ROLE …] [REQUIRE …] [WITH limits] [options] [ATTRIBUTE|COMMENT '…']`: a request to create accounts.
@@ -37,7 +37,7 @@ final class CreateUser implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserSpecification> The accounts in order
+     * @var non-empty-list<UserSpecification> The accounts in order
      */
     public readonly array $users;
 
@@ -81,6 +81,7 @@ final class CreateUser implements Statement
         foreach ($this->users as $user) {
             Check::input($user->created(), 'CREATE USER names accounts without password management words.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -89,8 +90,6 @@ final class CreateUser implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $checks = new AccountChecks();
-        $checks->tls($derivation, $this->tls);
-        $checks->options($derivation, $this->options);
         $checks->comment($derivation, $this->comment);
     }
 

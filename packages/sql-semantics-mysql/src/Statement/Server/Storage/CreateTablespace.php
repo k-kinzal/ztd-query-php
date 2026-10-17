@@ -9,10 +9,10 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE TABLESPACE name [ADD DATAFILE 'file'] [USE LOGFILE GROUP group] [option …]`: a request to create a general tablespace.
@@ -46,6 +46,7 @@ final class CreateTablespace implements Statement
     public function __construct(public readonly Name $name, public readonly ?Text $datafile = null, public readonly ?Name $logfileGroup = null, array $options = [])
     {
         $this->options = (new StorageOptions())->checked($options, StorageOptions::TABLESPACE);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

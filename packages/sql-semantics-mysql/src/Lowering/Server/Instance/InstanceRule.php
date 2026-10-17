@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadTls;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\RotateMasterKey;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Shutdown;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers KILL, SHUTDOWN, RESTART, CLONE and ALTER INSTANCE.
@@ -74,7 +74,7 @@ final class InstanceRule
     public function statement(Form $form): Statement
     {
         return match ($form->signature) {
-            'kill: KILL_SYM kill_option expr' => new Kill($this->scope($form->node(1)), $this->lowering->expressions->expression($form->node(2))),
+            'kill: KILL_SYM kill_option expr' => (new \SqlSemantics\Platform\MySql\Lowering\Server\ProcessOperand($this->lowering))->statement($form),
             'shutdown_stmt: SHUTDOWN' => new Shutdown(),
             'restart_server_stmt: RESTART_SYM' => new Restart(),
             'clone_stmt: CLONE_SYM LOCAL_SYM DATA_SYM DIRECTORY_SYM opt_equal TEXT_STRING_filesystem' => $this->local($form),

@@ -99,6 +99,8 @@ final class ItemRule
      * Lowers one action: a node of `alter_list_item`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function item(Node $item): AlterCommand
     {

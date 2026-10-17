@@ -35,14 +35,24 @@ final class ReplicaConditions
      */
     public function until(ReplicaUntil $until): ?ReplicationError
     {
+        return $this->combination($until->point, $until->gtids, $until->positions);
+    }
+
+    /**
+     * Checks the intrinsic combination before constructing an UNTIL value.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption> $positions The written log operands
+     */
+    public function combination(?UntilPoint $point, ?\SqlSemantics\Platform\MySql\Statement\Literal\Text $gtidSet, array $positions): ?ReplicationError
+    {
         $written = [];
-        foreach ($until->positions as $position) {
+        foreach ($positions as $position) {
             $written[$position->kind->value] = true;
         }
         $source = isset($written[SourceOptionKind::LogFile->value]) || isset($written[SourceOptionKind::LogPosition->value]);
         $relay = isset($written[SourceOptionKind::RelayLogFile->value]) || isset($written[SourceOptionKind::RelayLogPosition->value]);
-        $gtids = $until->gtids !== null;
-        $gaps = $until->point === UntilPoint::AfterGaps;
+        $gtids = $gtidSet !== null;
+        $gaps = $point === UntilPoint::AfterGaps;
         $complete = (isset($written[SourceOptionKind::LogFile->value]) && isset($written[SourceOptionKind::LogPosition->value]))
             || (isset($written[SourceOptionKind::RelayLogFile->value]) && isset($written[SourceOptionKind::RelayLogPosition->value]));
         $refused = (($source || $relay) && $gtids) || !($complete || $gtids || $gaps) || (($source || $relay || $gtids) && $gaps);

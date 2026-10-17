@@ -9,9 +9,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE [OR REPLACE] SPATIAL REFERENCE SYSTEM [IF NOT EXISTS] srid attribute …`: a request to define a spatial reference system (MySQL 8.0 and later).
@@ -24,6 +24,9 @@ use SqlSemantics\Statement\Statement;
  * Status: Implemented.
  *
  * @visibility public
+ * @example Rejecting repeated attribute roles before deriving an operation
+ *     $name = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('n'));
+ *     new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference(false, false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('7'), [$name, $name]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Defining a spatial reference system
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create or replace spatial reference system 4120 name 'Greek' organization 'EPSG' identified by 4120 definition 'GEOGCS[]'");
  *     [$create->toString(), $create->facts->diagnostics] // => ["CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 4120 NAME 'Greek' ORGANIZATION 'EPSG' IDENTIFIED BY 4120 DEFINITION 'GEOGCS[]'", []]
@@ -42,12 +45,15 @@ final class CreateSpatialReference implements Statement
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      * @param Numeral $srid The spatial reference system identifier
      * @param list<SpatialAttribute> $attributes The attributes in written order
-     * @throws InvalidConstruction When OR REPLACE and IF NOT EXISTS are both written
+     * @throws InvalidConstruction When modifiers conflict or an attribute is repeated
      */
     public function __construct(public readonly bool $orReplace, public readonly bool $ifNotExists, public readonly Numeral $srid, array $attributes)
     {
         Check::input(!$orReplace || !$ifNotExists, 'OR REPLACE and IF NOT EXISTS exclude each other.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($srid), 'A spatial reference identifier is an integer token.');
         $this->attributes = Check::listOf($attributes, SpatialAttribute::class, 'CREATE SPATIAL REFERENCE SYSTEM takes a list of attributes.');
+        Check::input(count(array_unique(array_map(static fn (SpatialAttribute $attribute): string => $attribute->kind->value, $this->attributes))) === count($this->attributes), 'A spatial reference definition cannot repeat an attribute.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -55,9 +61,7 @@ final class CreateSpatialReference implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $checks = new SpatialChecks();
-        $checks->srid($derivation, $this->srid);
-        $checks->attributes($derivation, $this->attributes);
+        (new SpatialChecks())->create($derivation, $this->srid, $this->attributes);
     }
 
     /**

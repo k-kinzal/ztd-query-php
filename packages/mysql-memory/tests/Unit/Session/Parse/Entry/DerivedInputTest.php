@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Session\Parse\Entry;
+
+use MySqlMemory\Instance;
+use MySqlMemory\Session\Parse\Entry\DerivedInput;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlParser\MySql\MySqlParser;
+
+#[CoversClass(DerivedInput::class)]
+#[Medium]
+final class DerivedInputTest extends TestCase
+{
+    public function testBeforePreservesTheFirstRegisteredRelationCondition(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $input = new DerivedInput();
+        $sql = 'SELECT * FROM t, (SELECT 1)';
+
+        self::assertSame(1046, $input->before($sql, strlen($sql), $session)?->getCode());
+        $session->variables->database = 'd';
+        self::assertNull($input->before($sql, strlen($sql), $session));
+        self::assertSame(1066, $input->before('SELECT * FROM t, t, (SELECT 1)', 27, $session)?->getCode());
+        self::assertNull($input->before('SELECT * FROM (SELECT 1), t, t', 24, $session));
+        self::assertNull($input->before($sql, strlen($sql), (new Instance('8.4.7'))->connect()));
+    }
+
+    public function testConditionsUseTheCompletedOperandAndRefusalBoundary(): void
+    {
+        $tree = (new MySqlParser('mysql-5.6.51'))->parse('SELECT * FROM d.t, u');
+        $names = $tree->find('table_ident');
+        $input = new DerivedInput();
+
+        self::assertSame([], $input->conditions($tree, 100, ''));
+        self::assertSame([], $input->conditions($names[0], 100, ''));
+        self::assertSame([], $input->conditions($names[1], 10, ''));
+        self::assertSame(1046, $input->conditions($names[1], 100, '')[0][1]->getCode());
+    }
+    public function testTargetsChecksTheIndependentDeleteHeader(): void
+    {
+        $session = (new Instance())->connect();
+        $input = new DerivedInput();
+
+        self::assertSame(1046, $input->targets('DELETE missing FROM (SELECT HIGH_PRIORITY 1) d', $session)?->getCode());
+        self::assertNull($input->targets('DELETE d.missing FROM (SELECT HIGH_PRIORITY 1) d', $session));
+        self::assertNull($input->targets('CREATE PROCEDURE p() DELETE missing FROM (SELECT HIGH_PRIORITY 1) d', $session));
+    }
+
+    public function testRefusalPreservesTheOuterTargetDatabaseRequirement(): void
+    {
+        $failure = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority), 42, false);
+        $session = (new Instance())->connect();
+
+        self::assertSame(1046, (new DerivedInput())->refusal($failure, 'DELETE a FROM (SELECT HIGH_PRIORITY 1) d', $session)?->getCode());
+    }
+
+    public function testTargetsDoesNotOverrideARefusalBeforeTheTargetListCompletes(): void
+    {
+        $session = (new Instance())->connect();
+        $input = new DerivedInput();
+
+        self::assertNull($input->targets('DELETE a, d.b FROM (SELECT ABS()) AS x', $session, 11));
+        self::assertSame(1046, $input->targets('DELETE a, d.b FROM (SELECT ABS()) AS x', $session, 13)?->getCode());
+    }
+
+}

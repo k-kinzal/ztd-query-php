@@ -17,6 +17,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Problem;
  */
 enum ProgramRule: string
 {
+    case IncorrectName = "Incorrect routine name '%s'";
+    case NameTooLong = "Identifier name '%s' is too long";
     case DuplicateParameter = 'Duplicate parameter: %s';
     case DuplicateVariable = 'Duplicate variable: %s';
     case DuplicateCondition = 'Duplicate condition: %s';
@@ -47,4 +49,5 @@ enum ProgramRule: string
     case OldRowUpdate = 'Updating of OLD row is not allowed in trigger';
     case AfterRowUpdate = 'Updating of NEW row is not allowed in after trigger';
     case NoNewRow = 'There is no NEW row in on DELETE trigger';
+    case ArrayCast = 'Incorrect usage of CAST( .. AS .. ARRAY) and stored routines';
 }

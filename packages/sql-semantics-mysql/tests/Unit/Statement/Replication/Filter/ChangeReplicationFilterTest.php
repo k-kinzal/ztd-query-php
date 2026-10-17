@@ -28,4 +28,10 @@ final class ChangeReplicationFilterTest extends TestCase
     {
         self::assertSame("CHANGE REPLICATION FILTER REPLICATE_DO_DB = (a) FOR CHANNEL 'c'", (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("change replication filter replicate_do_db = (a) for channel 'c'")->toString());
     }
+
+    public function testValueRejectsIncompatibleChannel(): void
+    {
+        $this->expectExceptionMessage('A replication channel is quoted text.');
+        new ChangeReplicationFilter([new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter(\SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind::DoDb, [])], new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

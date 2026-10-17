@@ -12,8 +12,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
@@ -36,11 +36,11 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the position of an ordering item
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t ORDER BY 2');
- *     $query->statement->orderBy[0]->expression->position() // => 2
+ *     $query->statement->query->orderBy[0]->expression->position() // => 2
  * @example Refusing a decimal as a position
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.0')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class OutputOrdinal implements Scalar
+final class OutputOrdinal implements Operand
 {
     use Snapshot;
 

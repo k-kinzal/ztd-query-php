@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnFlags;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -45,10 +46,44 @@ final class ColumnFlagsTest extends TestCase
         $element2 = $statement->elements[2];
         self::assertInstanceOf(ColumnDefinition::class, $element2);
         self::assertSame(Nullability::Dependent, $flags->nullability($element2->specification));
+        self::assertSame(Nullability::NotNull, $flags->nullability($element2->specification, explicitDefaultsForTimestamp: false));
+        self::assertSame(Nullability::Nullable, $flags->nullability($element2->specification, explicitDefaultsForTimestamp: true));
         $element3 = $statement->elements[3];
         self::assertInstanceOf(ColumnDefinition::class, $element3);
         self::assertSame(Nullability::NotNull, $flags->nullability($element3->specification));
         self::assertSame(Nullability::NotNull, $flags->nullability($element0->specification, true));
+    }
+
+    public function testKeywordTellsWhetherAnAttributeIsWritten(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL UNIQUE, b SERIAL)');
+        $statement = $create->statement;
+        self::assertInstanceOf(CreateTable::class, $statement);
+        $flags = new ColumnFlags();
+
+        $element0 = $statement->elements[0];
+        self::assertInstanceOf(ColumnDefinition::class, $element0);
+        self::assertTrue($flags->keyword($element0->specification, ColumnKeyword::Unique));
+        self::assertTrue($flags->keyword($element0->specification, ColumnKeyword::NotNull));
+        self::assertFalse($flags->keyword($element0->specification, ColumnKeyword::PrimaryKey));
+        $element1 = $statement->elements[1];
+        self::assertInstanceOf(ColumnDefinition::class, $element1);
+        self::assertFalse($flags->keyword($element1->specification, ColumnKeyword::Unique));
+    }
+
+    public function testSerialTellsWhetherTheTypeIsSerial(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a SERIAL, b BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE)');
+        $statement = $create->statement;
+        self::assertInstanceOf(CreateTable::class, $statement);
+        $flags = new ColumnFlags();
+
+        $element0 = $statement->elements[0];
+        self::assertInstanceOf(ColumnDefinition::class, $element0);
+        self::assertTrue($flags->serial($element0->specification));
+        $element1 = $statement->elements[1];
+        self::assertInstanceOf(ColumnDefinition::class, $element1);
+        self::assertFalse($flags->serial($element1->specification));
     }
 
     public function testInvisibleFollowsTheLastVisibilityAttribute(): void

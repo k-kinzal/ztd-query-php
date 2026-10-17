@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor;
 
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -29,9 +29,9 @@ final class CursorDeclaration implements Declaration
 
     /**
      * @param Name $name The cursor name
-     * @param Query $query The query whose rows the cursor reads
+     * @param QueryRoot|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $query The query in the statement grammar position of CURSOR FOR
      */
-    public function __construct(public readonly Name $name, public readonly Query $query)
+    public function __construct(public readonly Name $name, public readonly QueryRoot|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $query)
     {
     }
 

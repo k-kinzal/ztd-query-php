@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Lowering\Utility\Show;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateFunction;
@@ -40,7 +41,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowProcesslist;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the SHOW statements of MySQL 5.6 and 5.7 about schema objects, stored programs and the server.
@@ -126,7 +126,7 @@ final class LegacyObjectRule
             'triggers' => new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2)), $clauses->filter($form->node(3))),
             'events' => new ShowEvents($clauses->database($form->node(1)), $clauses->filter($form->node(2))),
             'tableStatus' => new ShowTableStatus($clauses->database($form->node(2)), $clauses->filter($form->node(3))),
-            'openTables' => new ShowOpenTables($clauses->database($form->node(2)), $clauses->filter($form->node(3))),
+            'openTables' => new ShowOpenTables($clauses->database($form->node(2), true), $clauses->filter($form->node(3))),
             'columns' => $this->columns($form),
             'keys' => $this->keys($form),
             'createDatabase' => new ShowCreateDatabase($names->identifier($form->node(3)), $this->lowering->options->present($form->node(2))),

@@ -89,6 +89,7 @@ final class BlockRule
      * Lowers one DECLARE: a node of `sp_decl`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a condition or handler operand is outside its intrinsic domain
      */
     public function declaration(Node $declaration): Declaration
     {
@@ -115,7 +116,7 @@ final class BlockRule
                 );
             case 'sp_decl: DECLARE_SYM ident CURSOR_SYM FOR_SYM select':
             case 'sp_decl: DECLARE_SYM ident CURSOR_SYM FOR_SYM select_stmt':
-                return new CursorDeclaration($this->lowering->names->identifier($form->node(1)), $this->lowering->queries->query($form->node(4)));
+                return new CursorDeclaration($this->lowering->names->identifier($form->node(1)), (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($this->lowering->queries->query($form->node(4))));
             default:
                 throw ImplementationGap::production($form);
         }
@@ -142,13 +143,13 @@ final class BlockRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function initial(Node $default): ?Scalar
+    public function initial(Node $default): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null
     {
         $form = $this->lowering->form($default);
 
         return match ($form->signature) {
             'sp_opt_default:' => null,
-            'sp_opt_default: DEFAULT expr', 'sp_opt_default: DEFAULT_SYM expr' => $this->lowering->expressions->expression($form->node(1)),
+            'sp_opt_default: DEFAULT expr', 'sp_opt_default: DEFAULT_SYM expr' => $this->lowering->expressions->operand($form->node(1)),
             default => throw ImplementationGap::production($form),
         };
     }

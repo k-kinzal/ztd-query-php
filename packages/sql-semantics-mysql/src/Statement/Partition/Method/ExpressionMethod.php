@@ -40,7 +40,7 @@ final class ExpressionMethod implements PartitionMethod
      */
     public function deriveMethod(Derivation $derivation, Environment $scope): void
     {
-        $derivation->scalar($this->expression, $scope);
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->derive($this->expression, $derivation, $scope);
     }
 
     /**

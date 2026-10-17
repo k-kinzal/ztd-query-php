@@ -22,6 +22,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class DeleteTest extends TestCase
 {
+    public function testValueRejectsAnOutputPositionInWriteOrdering(): void
+    {
+        $this->expectExceptionMessage('DELETE ordering uses expressions');
+
+        new Delete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName(new Name('t'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')))]);
+    }
+
     public function testDeriveStatementSeesTheTableUnderItsAlias(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -36,5 +43,10 @@ final class DeleteTest extends TestCase
     public function testRenderWritesEveryClause(): void
     {
         self::assertSame('DELETE LOW_PRIORITY QUICK IGNORE FROM t PARTITION (p) WHERE a = 1 ORDER BY b LIMIT 5', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete low_priority quick ignore from t partition (p) where a = 1 order by b limit 5')->toString());
+    }
+
+    public function testRenderWritesTheHintCommentAfterTheVerb(): void
+    {
+        self::assertSame('DELETE /*+ BKA() */ FROM t', (new Semantics(Dialect::MySql))->analyze('DELETE /*+ BKA() */ FROM t')->toString());
     }
 }

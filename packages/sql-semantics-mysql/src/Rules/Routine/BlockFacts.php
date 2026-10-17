@@ -71,7 +71,7 @@ final class BlockFacts
                 $this->ordered($stage, 1, $derivation);
                 $stage = max($stage, 1);
                 $this->distinct($cursors, $declaration->name, ProgramRule::DuplicateCursor, $derivation, $inside);
-                $derivation->query($declaration->query, $inside->environment);
+                $derivation->query($declaration->query->query, $inside->environment);
                 $cursors[] = $declaration->name;
                 $inside = $inside->declared($inside->environment, $inside->conditions, [...$inside->cursors, $declaration->name]);
             } elseif ($declaration instanceof HandlerDeclaration) {
@@ -150,7 +150,9 @@ final class BlockFacts
         $hidden = [];
         foreach ($declaration->names as $position => $name) {
             if ($scope->holds($declared, $name)) {
-                $derivation->report(new ProgramProblem(ProgramRule::DuplicateVariable, $name->value));
+                $problem = new ProgramProblem(ProgramRule::DuplicateVariable, $name->value);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $declaration);
                 $hidden[] = $position;
             }
             $declared[] = $name;

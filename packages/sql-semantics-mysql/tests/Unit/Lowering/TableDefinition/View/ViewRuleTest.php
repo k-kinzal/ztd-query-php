@@ -111,4 +111,18 @@ final class ViewRuleTest extends TestCase
 
         self::assertTrue((new ViewRule($lowering))->drop($lowering->form($node))->ifExists);
     }
+    public function testDefinitionRefusesInvalidModernColumnsBeforeTheQuery(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect column name ''");
+        $semantics->analyze('CREATE VIEW v (``) AS VALUES ROW()');
+    }
+
+    public function testDefinitionKeepsLegacyColumnNames(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44');
+        self::assertSame('CREATE VIEW v (``) AS SELECT 1', $semantics->analyze('CREATE VIEW v (``) AS SELECT 1')->toString());
+    }
+
 }

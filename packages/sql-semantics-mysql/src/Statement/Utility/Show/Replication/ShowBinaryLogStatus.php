@@ -8,9 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW BINARY LOG STATUS (SHOW MASTER STATUS): the position in the binary log of the source.
@@ -36,6 +36,7 @@ final class ShowBinaryLogStatus implements Statement
      */
     public function __construct(public readonly Terminology $terminology)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -43,6 +44,9 @@ final class ShowBinaryLogStatus implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->terminology === Terminology::Legacy) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ShowMasterStatus, $derivation);
+        }
         (new ShowFacts())->rows($derivation, Report::LogStatus);
     }
 

@@ -10,6 +10,7 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 
 /**
  * Lowers the data type productions of every release into type structure.
@@ -134,11 +134,11 @@ final class TypeRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function type(Node $type): TypeName
+    public function type(Node $type): DeclaredName
     {
         $form = $this->lowering->productions->form($type);
 
-        return $this->numeric($form) ?? $this->keyword($form) ?? $this->strings->type($form) ?? throw ImplementationGap::production($form);
+        return $this->lowering->origins->record($this->numeric($form) ?? $this->keyword($form) ?? $this->strings->type($form) ?? throw ImplementationGap::production($form), $type);
     }
 
     /**
@@ -166,7 +166,7 @@ final class TypeRule
      *
      * @throws ImplementationGap When a part has no rule
      */
-    public function numeric(Form $form): ?TypeName
+    public function numeric(Form $form): ?DeclaredName
     {
         if ($form->signature === 'type: int_type opt_field_length field_options') {
             $kind = $this->lowering->productions->form($form->node(0));
@@ -193,7 +193,7 @@ final class TypeRule
      *
      * @throws ImplementationGap When a part has no rule
      */
-    public function fraction(?FloatingKind $kind, Form $form): TypeName
+    public function fraction(?FloatingKind $kind, Form $form): DeclaredName
     {
         [$precision, $scale] = $this->parts->numbers($form->node(1));
         $modifiers = $this->parts->modifiers($form->node(2));
@@ -237,7 +237,7 @@ final class TypeRule
      *
      * @throws ImplementationGap When a part has no rule
      */
-    public function keyword(Form $form): ?TypeName
+    public function keyword(Form $form): ?DeclaredName
     {
         if (isset(self::ELEMENTARY[$form->signature])) {
             [$kind, $position] = self::ELEMENTARY[$form->signature];

@@ -44,7 +44,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the ordering of a 5.6 union written after the locking clause of its last SELECT
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1)');
- *     $union = $query->statement->items[0]->expression->query;
+ *     $union = $query->statement->query->items[0]->expression->query;
  *     [count($union->right->locking), count($union->orderBy)] // => [1, 1]
  * @example Refusing a last SELECT without clauses of its own
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
@@ -83,6 +83,8 @@ final class OrderedSetOperation implements Query
         Check::input(!$left instanceof SetOperation || !$operator->tighter($left->operator), 'A looser set operation on the left of INTERSECT is written in parentheses.');
         Check::input(!$left instanceof LeadingUnion || $operator === SetOperator::Union, 'A leading union continues with UNION.');
         Check::input(!$left instanceof self && !$left instanceof QueryStatement && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause, INTO, locking clauses or an ordering of its result is written in parentheses as a set operand.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SetOperands())->left($left);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

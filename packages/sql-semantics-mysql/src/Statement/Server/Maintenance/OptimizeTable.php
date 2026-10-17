@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Maintenance;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `OPTIMIZE [NO_WRITE_TO_BINLOG | LOCAL] TABLE t, …`: a request to reorganize the storage of tables.
@@ -44,6 +44,7 @@ final class OptimizeTable implements Statement
     {
         $this->tables = (new MaintainedTables())->checked($tables);
 
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

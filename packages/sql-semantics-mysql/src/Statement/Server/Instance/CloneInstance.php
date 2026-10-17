@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CLONE INSTANCE FROM user@host:port IDENTIFIED BY 'password' [DATA DIRECTORY [=] 'directory'] [REQUIRE [NO] SSL]`: a request to clone a remote server (MySQL 8.0.17 and later).
@@ -48,6 +49,9 @@ final class CloneInstance implements Statement
         public readonly ?Text $directory = null,
         public readonly ?bool $requireSsl = null,
     ) {
+        Check::input($password->radix === null, 'A clone password is quoted text.');
+        Check::input($directory === null || $directory->radix === null, 'A clone directory is quoted text.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

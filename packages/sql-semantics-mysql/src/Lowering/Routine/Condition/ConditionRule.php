@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Routine\Condition;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
@@ -14,6 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 
 /**
  * Lowers condition values: error codes, SQLSTATE values, condition names and condition classes.
@@ -41,6 +45,7 @@ final class ConditionRule
      * Lowers an error code or an SQLSTATE value: a node of `sp_cond` or `sqlstate`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When a condition operand is outside its constructor domain
      */
     public function value(Node $condition): ErrorCode|SqlState
     {
@@ -49,7 +54,12 @@ final class ConditionRule
             $form = $this->lowering->form($form->node(0));
         }
         if ($form->signature === 'sp_cond: ulong_num') {
-            return new ErrorCode($this->lowering->numbers->numeral($form->node(0)));
+            $code = $this->lowering->numbers->numeral($form->node(0));
+            if (!ErrorCode::accepts($code)) {
+                throw new RejectedInput(new ProgramProblem(ProgramRule::ZeroErrorCode), (new SourceRanges())->span($condition)[1] ?? 0);
+            }
+
+            return new ErrorCode($code);
         }
         if ($form->signature !== 'sqlstate: SQLSTATE_SYM opt_value TEXT_STRING_literal') {
             throw ImplementationGap::production($form);
@@ -59,7 +69,12 @@ final class ConditionRule
             throw ImplementationGap::production($word);
         }
 
-        return new SqlState($this->lowering->literals->text($form->node(2)));
+        $text = $this->lowering->literals->text($form->node(2));
+        if (!SqlState::accepts($text->value)) {
+            throw new RejectedInput(new ProgramProblem(ProgramRule::BadSqlState, $text->value), (new SourceRanges())->span($condition)[1] ?? 0);
+        }
+
+        return new SqlState($text);
     }
 
     /**

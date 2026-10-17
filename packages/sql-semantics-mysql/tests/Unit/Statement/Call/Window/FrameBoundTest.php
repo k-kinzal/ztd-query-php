@@ -35,4 +35,13 @@ final class FrameBoundTest extends TestCase
         self::assertSame('? PRECEDING', (new Lexical())->join($parameter->pieces()));
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith([FrameBoundKind::CurrentRow])]
+    #[\PHPUnit\Framework\Attributes\TestWith([FrameBoundKind::UnboundedPreceding])]
+    #[\PHPUnit\Framework\Attributes\TestWith([FrameBoundKind::UnboundedFollowing])]
+    public function testValueRejectsAnIntervalWithoutAnOffset(FrameBoundKind $kind): void
+    {
+        $this->expectExceptionMessage('An INTERVAL frame boundary retains its offset expression.');
+        new FrameBound($kind, unit: IntervalUnit::Day);
+    }
+
 }

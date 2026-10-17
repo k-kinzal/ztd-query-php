@@ -96,7 +96,7 @@ final class ColumnChangesTest extends TestCase
         self::assertSame(['b', 'a'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $alter->facts->relation($alter->statement)->shape->slots));
     }
 
-    public function testSlotAnswersTheDeclaredTypeOfTheNewDefinition(): void
+    public function testSlotAnswersTheDeclaredNameOfTheNewDefinition(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');

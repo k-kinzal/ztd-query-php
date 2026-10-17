@@ -22,10 +22,13 @@ enum MisuseRule: string
     case DerivedWithoutAlias = 'Every derived table must have its own alias';
     case TableFunctionWithoutAlias = 'Every table function must have an alias';
     case DuplicateCommonTable = 'Not unique table/alias in WITH';
-    case RecursiveWithoutAnchor = 'Recursive Common Table Expression should contain a UNION whose first operand does not refer to it';
+    case RecursiveWithoutUnion = 'Recursive Common Table Expression should contain a UNION';
+    case RecursiveWithoutAnchor = 'Recursive Common Table Expression should have one or more non-recursive query blocks followed by one or more recursive ones';
     case DuplicateColumn = 'Duplicate column name';
     case DuplicateWindow = 'Window name is defined more than once';
     case UnknownWindow = 'Window name is not defined';
     case UnknownLockedTable = 'Table in the locking clause is not in the query';
+    case RepeatedLockedTable = 'Table appears in multiple locking clauses';
     case AmbiguousJoinColumn = 'Column in from clause is ambiguous';
+    case EmptyValuesRow = 'Each row of a VALUES clause must have at least one column, unless when used as source in an INSERT statement.';
 }

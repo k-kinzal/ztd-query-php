@@ -24,11 +24,12 @@ final class SpatialChecksTest extends TestCase
         self::assertInstanceOf(SpatialProblem::class, $operation->facts->diagnostics[0]);
     }
 
-    public function testAttributesReportsRepeatedAndMissingAttributes(): void
+    public function testDefinitionsReportsRepeatedAndMissingAttributes(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 5 DEFINITION 'd' DEFINITION 'e'");
-
-        self::assertSame(['ER_SRS_MULTIPLE_ATTRIBUTE_DEFINITIONS', 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $create->facts->diagnostics));
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Definition, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('d'));
+        (new SpatialChecks())->create($derivation, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('5'), [$definition, $definition]);
+        self::assertSame(['ER_SRS_MULTIPLE_ATTRIBUTE_DEFINITIONS', 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $derivation->facts()->diagnostics));
     }
 
     public function testAttributeReportsBlankControlAndLongValues(): void
@@ -36,5 +37,28 @@ final class SpatialChecksTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE SPATIAL REFERENCE SYSTEM 5 NAME \'\' DEFINITION \'d\' ORGANIZATION \' o\' IDENTIFIED BY 99999999999 DESCRIPTION \'a\\tb\'');
 
         self::assertSame(['ER_SRS_NAME_CANT_BE_EMPTY_OR_WHITESPACE', 'ER_SRS_ORGANIZATION_CANT_BE_EMPTY_OR_WHITESPACE', 'ER_DATA_OUT_OF_RANGE', 'ER_SRS_INVALID_CHARACTER_IN_ATTRIBUTE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $create->facts->diagnostics));
+    }
+
+    public function testAttributesReportsAMissingNameBeforeTheOrganization(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 2 ORGANIZATION 'a''b' IDENTIFIED BY 04111845221216");
+
+        self::assertSame(['ER_SRS_MISSING_MANDATORY_ATTRIBUTE', 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE', 'ER_DATA_OUT_OF_RANGE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $create->facts->diagnostics));
+    }
+
+    public function testAttributesReportsTheNameBeforeAMissingDefinition(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 5 NAME 'a\tb'");
+
+        self::assertSame(['ER_SRS_INVALID_CHARACTER_IN_ATTRIBUTE', 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $create->facts->diagnostics));
+    }
+    public function testCreateKeepsLiteralAndDefinitionOrderBeforeIdentifierRange(): void
+    {
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        $name = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'));
+        (new SpatialChecks())->create($derivation, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'), [$name, $name]);
+        $first = $derivation->facts()->diagnostics[0];
+        self::assertInstanceOf(SpatialProblem::class, $first);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::RepeatedAttribute, $first->rule);
     }
 }

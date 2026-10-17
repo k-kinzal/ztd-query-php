@@ -8,10 +8,12 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
+use SqlSemantics\Platform\MySql\Rules\Typing\Declared;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
@@ -44,7 +46,7 @@ final class PathColumn implements JsonTableColumn
 
     /**
      * @param Name $name The column name
-     * @param TypeName $type The declared type
+     * @param DeclaredName $type The declared type
      * @param StringLiteral $path The path
      * @param bool $exists Whether the column is an EXISTS column
      * @param CollationName|null $collation The written collation
@@ -54,7 +56,7 @@ final class PathColumn implements JsonTableColumn
      */
     public function __construct(
         public readonly Name $name,
-        public readonly TypeName $type,
+        public readonly DeclaredName $type,
         public readonly StringLiteral $path,
         public readonly bool $exists = false,
         public readonly ?CollationName $collation = null,
@@ -62,16 +64,20 @@ final class PathColumn implements JsonTableColumn
         public readonly ?JsonResponse $onError = null,
         public readonly bool $errorFirst = false,
     ) {
+        Check::input($collation === null || $collation->name !== null, 'A JSON_TABLE column collation names a collation.');
         Check::input(!$errorFirst || ($onEmpty !== null && $onError !== null), 'ON ERROR is written first only when both responses are.');
     }
 
     /**
-     * Derives the path and the defaults and answers the column.
+     * Derives the path and the defaults and answers the column, of the type it declares ({@see Declared::tableFunction()}).
      *
      * @return list<OutputSlot>
      */
     public function deriveColumns(Derivation $derivation, Environment $environment): array
     {
+        if ($this->errorFirst) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::JsonTableResponseOrder, $derivation);
+        }
         (new Arguments())->one($this->path, $derivation, $environment);
         foreach ([$this->onEmpty?->default, $this->onError?->default] as $default) {
             if ($default !== null) {
@@ -79,7 +85,9 @@ final class PathColumn implements JsonTableColumn
             }
         }
 
-        return [new OutputSlot($this->name, new Known($this->type), Nullability::Nullable)];
+        $domain = (new Declared(Settings::of($derivation->context)->connection, $derivation->context->profile->grammar))->tableFunction($this->type);
+
+        return [new OutputSlot($this->name, new Known($domain), Nullability::Nullable)];
     }
 
     /**

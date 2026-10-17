@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockInstance;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers LOCK TABLES, UNLOCK TABLES and the backup lock statements.

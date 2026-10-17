@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Server;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW PROCESSLIST: the threads running in the server.
@@ -35,6 +35,7 @@ final class ShowProcesslist implements Statement
      */
     public function __construct(public readonly bool $full = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

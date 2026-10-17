@@ -12,9 +12,9 @@ use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CHANGE REPLICATION FILTER filter = (…), … [FOR CHANNEL 'name']`: replaces replication filter rules (MySQL 5.7 and later).
@@ -37,7 +37,7 @@ final class ChangeReplicationFilter implements Statement
     use Snapshot;
 
     /**
-     * @var list<ReplicationFilter> The filters in written order; at least one
+     * @var non-empty-list<ReplicationFilter> The filters in written order; at least one
      */
     public readonly array $filters;
 
@@ -47,7 +47,9 @@ final class ChangeReplicationFilter implements Statement
      */
     public function __construct(array $filters, public readonly ?Text $channel = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         $this->filters = Check::listOf($filters, ReplicationFilter::class, 'CHANGE REPLICATION FILTER sets a list of filters.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

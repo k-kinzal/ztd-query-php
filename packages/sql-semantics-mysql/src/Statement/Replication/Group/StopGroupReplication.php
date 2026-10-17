@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Group;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `STOP GROUP_REPLICATION`: stops group replication (MySQL 5.7 and later).

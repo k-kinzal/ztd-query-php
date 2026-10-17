@@ -23,4 +23,5 @@ enum WriteRule: string
     case WildcardColumn = "Unknown column '*' in 'field list'";
     case CommonTableTarget = 'The target table is a common table expression, which is not updatable';
     case NonUpdatableTarget = 'The target table is a derived table, a table function or a common table expression, which is not updatable';
+    case NonUpdatableColumn = 'The assigned column of a derived table MySQL 5.7 merges is an expression, which is not updatable';
 }

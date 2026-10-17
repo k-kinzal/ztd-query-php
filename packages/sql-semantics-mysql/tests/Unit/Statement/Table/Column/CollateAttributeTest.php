@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 #[Medium]
 final class CollateAttributeTest extends TestCase
 {
-    public function testDeriveAttributeDerivesNothing(): void
+    public function testDeriveAttributeRetainsAKnownCollation(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)');
         $statement = $create->statement;
@@ -30,6 +30,15 @@ final class CollateAttributeTest extends TestCase
 
         self::assertInstanceOf(CollateAttribute::class, $attribute);
         self::assertSame('utf8mb4_bin', $attribute->collation->name?->value);
+    }
+
+    public function testDeriveAttributeReportsAnUnknownCollationBeforeTableResolution(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a BIT NULL COLLATE unknown');
+        $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation));
+
+        self::assertCount(1, $problems);
+        self::assertSame("Unknown collation: 'unknown'", $problems[0]->message());
     }
 
     public function testRenderWritesTheAttribute(): void

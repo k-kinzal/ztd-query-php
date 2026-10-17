@@ -36,6 +36,18 @@ final class FunctionRuleTest extends TestCase
         self::assertFalse($rule->claims('function_call_nonkeyword: now'));
     }
 
+    public function testGenericRefusesAnImpossibleNativeSignatureBeforeConstruction(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT abs()')->find('function_call_generic')[0];
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect parameter count in the call to native function 'abs'");
+
+        (new FunctionRule($lowering))->generic($lowering->form($node));
+    }
+
     public function testCallLowersKeywordAndGenericCalls(): void
     {
         $platform = new Platform();
@@ -120,4 +132,24 @@ final class FunctionRuleTest extends TestCase
         $node = $platform->parser($profile)->parse('SELECT f(a b)')->find('udf_expr')[0];
         self::assertSame('b', (new FunctionRule($lowering))->argument($node)->alias?->value);
     }
+
+    public function testArgumentValueRetainsARowWithoutMakingItScalar(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new FunctionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        self::assertSame($row, $rule->argumentValue($row)->expression);
+    }
+
+    public function testComposeChoosesTheStoredArgumentRole(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new FunctionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $call = $rule->compose(new \SqlSemantics\Statement\Identifier\Name('ABS'), [$rule->argumentValue($row)]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall::class, $call);
+    }
+
 }

@@ -31,6 +31,8 @@ final class LeadingUnionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select 1 union all select a from t for update union select 3 limit 1 union select 4');
         $union = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $union);
+        $union = $union->query;
         self::assertInstanceOf(SetOperation::class, $union);
         $leading = $union->left;
         self::assertInstanceOf(LeadingUnion::class, $leading);
@@ -76,13 +78,13 @@ final class LeadingUnionTest extends TestCase
     {
         $locked = new Select([], [new SelectExpression(new NumberLiteral('2'))], new Dual(), null, null, null, [], null, [], null, null, [new LockingClause(LockStrength::Update)]);
         $union = new SetOperation(new LeadingUnion(new Select([], [new SelectExpression(new NumberLiteral('1'))]), null, $locked), SetOperator::Union, null, new Select([], [new SelectExpression(new NumberLiteral('3'))]));
-        $accepted = new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), $union);
+        $accepted = new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($union));
         $limited = new Select([], [new SelectExpression(new NumberLiteral('2'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')));
         $limitedUnion = new SetOperation(new LeadingUnion(new Select([], [new SelectExpression(new NumberLiteral('1'))]), null, $limited), SetOperator::Union, null, new Select([], [new SelectExpression(new NumberLiteral('3'))]));
 
         self::assertSame('SELECT 1 UNION SELECT 2 FROM DUAL FOR UPDATE UNION SELECT 3', $accepted->toString());
         $this->expectExceptionMessage('A SELECT that keeps its own LIMIT before a later UNION needs MySQL 5.6.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), $limitedUnion);
+        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($limitedUnion));
     }
 }

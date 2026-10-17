@@ -56,6 +56,27 @@ $semantics->analyze('SELECT missing FROM users', [$users])->facts->diagnostics[0
 
 See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md) for operations, facts, contexts, rendering and guarantees.
 
+A SELECT, TABLE, VALUES or set-operation statement has a `Statement\QueryRoot`
+root. Its `query` property holds the query body (`Statement\Query\Select`, for
+example). Query bodies also appear directly in subqueries, INSERT sources and
+view definitions. They implement the shared `Query` role, not `Statement`.
+Construct a standalone query as `new QueryRoot($body)` before passing it to
+`Operation`. The wrapper enforces constraints of the statement position;
+`inputRelation()`, result fields and rendered SQL remain available on the operation.
+
+Written declaration types implement `Statement\Type\DeclaredName`; VARCHAR and
+VARBINARY declarations require a length. Expression facts can instead hold
+`Statement\Type\StringFamily` when the length is unresolved. This descriptor
+retains the binary/national classification and known character-set attribute,
+but cannot be used as a column, parameter, variable or return declaration.
+A fully resolved expression carries `Statement\Type\Resolved\Domain`.
+
+Stored-routine `ParameterList` values require distinct case- and accent-insensitive
+parameter names, and `Parameter` excludes NUL. Empty names, names longer than 64
+characters and names ending in an ASCII space require MySQL 5.6 or 5.7. They
+cannot be composed with modern-only syntax. Modern SQL lowering refuses those
+names with a typed `Construction\RejectedInput` before publishing a list.
+
 ### Releases
 
 Each release is read with its own grammar and keywords, and version comments are read as that release reads them:
@@ -72,6 +93,8 @@ use SqlSemantics\Platform\MySql\Dialect;
 ### Session modes
 
 Five `sql_mode` settings change tokenization: `ANSI_QUOTES`, `PIPES_AS_CONCAT`, `HIGH_NOT_PRECEDENCE`, `NO_BACKSLASH_ESCAPES` and `IGNORE_SPACE`. Pass a `Mode` as the third argument of `Semantics`. `Mode::fromString()` reads a value as `SELECT @@SESSION.sql_mode` reports it: a combination mode such as `ANSI` turns on the settings it includes, and every other mode name is accepted and not recorded, because it changes no token.
+
+Also pass `Statement\Type\Resolved\Settings` with `strict: false` when neither `STRICT_TRANS_TABLES` nor `STRICT_ALL_TABLES` is enabled. This changes the reported nullability of string calls such as `HEX`, `CONCAT` and `LOWER`, even for constant non-null arguments. `Settings::defaults()` follows the release's default strict mode; its MySQL 5.6 settings start with strict mode disabled.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -148,6 +171,14 @@ $semantics->analyze('SELECT @total')->field(0)->type->missing[0]->describe(); //
 
 ### Result column names
 
+Within a stored program, parameter and local-variable references resolve to the
+nearest declaration using MySQL's case- and accent-insensitive name identity.
+`INTO` and `LIMIT` operands retain the same declaration and type facts during
+definition. An unqualified select item can name either a column or a program
+variable, so its validated spelling remains available until resolution. A
+program-variable result uses the expression spelling, including quotes and
+parentheses; an ordinary column result uses its decoded name.
+
 MySQL names a select list item without alias after the text of its expression as the statement writes it, so `SELECT 1+1` and `SELECT 1 + 1` return columns named `1+1` and `1 + 1`. An item that names itself keeps its own name: a column reference its column name, a string the value of its first quoted part, `NULL` the name `NULL`, a number its text, `?` the name `?`, and in MySQL 5.6 and 5.7 `TRUE` and `FALSE` those words; parentheses and a unary plus do not change it. The server removes leading spaces and control characters from the name, and keeps at most 255 bytes of it.
 
 Such an item keeps the spelling of its expression as a layout (`SelectExpression::$layout`), and `toString()` writes the expression as it was written, comments included, so the rendered SQL returns the same column names. The optional words that change that text are part of the model: `AS` before an alias, `OUTER` and `INNER` of a join, the empty parentheses of `CURDATE()` and the other niladic functions, `ROW`, the `OF` of `MEMBER OF`, `INT` after `SIGNED`, `CHARACTER SET` for `CHARSET`, and the 5.6 and 5.7 leading dot of `.t`. Version comment markers are left out, as the server leaves them out of the name. An item built without a layout is named after, and written as, the canonical rendering of its expression. The name ends where the expression ends: whitespace and comments after it are not part of it, so `SELECT 1+1 /* c */` returns a column named `1+1`.
@@ -170,6 +201,186 @@ $semantics->analyze('SELECT `1+1` FROM (SELECT 1+1) AS d', [])->field(0)->resolu
 $semantics->analyze("SELECT 'ü'", [])->fields()?->lookup('ü') instanceof DependentField; // => true
 $semantics->analyze("SELECT 'ü'", [])->field(0)->slot->unnamed[0]->describe(); // => 'the session state: character_set_client'
 ```
+
+A nested query in a select list can refer to an earlier result alias. For example,
+`SELECT a+1 AS x, (SELECT x) FROM t` resolves the inner `x` to an `AliasTarget`.
+Input columns take precedence over result aliases. Forward references, ambiguous
+result names, and references to a result aggregate owned by the enclosing block
+produce `InvalidProjectionAlias`, with an `AliasRule` identifying the reason.
+
+When session settings specify user variables, a read publishes a
+`UserVariableBinding` that records whether the entry exists at that occurrence.
+An expression assignment introduces an entry for later occurrences without changing
+the supplied session snapshot. This distinction preserves MySQL 5.6 and 5.7 reads
+of absent variables. From MySQL 8.0, `CASE`, `COALESCE`, `IFNULL`, and `IF` infer
+each absent operand from the first other resolved result branch, including an
+explicit NULL, before aggregating all result types. An omitted ELSE adds no
+inference operand.
+
+Each `Settings::$userVariables` entry accepts a `Domain` or a
+`Statement\Variable\UserVariableEntry`. Use `UserVariableEntry` to provide both
+the stored value's domain and the collation retained at assignment. MySQL 5.6
+and 5.7 use the assignment character set for integer result metadata, even after
+the connection changes character set. A direct arithmetic operand uses the logical
+integer width, while an assignment retains the variable's reported width. Legacy
+`ABS` promotes that reported width into its result's numeric bound, so subsequent
+arithmetic can have a wider result. A plain `Domain` assumes the current connection collation for
+this metadata. An assignment to an absent variable introduces a NULL string entry
+using the operand's collation, or the connection collation for numeric and temporal
+operands. Later SET items and expression occurrences see this preparation state,
+which differs from the type of a subsequently assigned value.
+When the operand reads an existing user variable, the new entry instead takes
+that variable's assignment collation. This applies even if no row executes the
+assignment; numeric values still report their logical binary collation when read.
+When modeling an executed assignment, an untyped NULL retains the preceding type
+and collation. A typed NULL changes the value type; MySQL 5.6 also replaces its
+assignment collation, while later releases retain it. Legacy decimal and double
+variable metadata also expands by the retained assignment character width.
+
+`Settings::$handlers` maps each open HANDLER alias to its qualified table name.
+Supply the corresponding table declaration in the analysis context. The same
+`HandlerScan`, `HandlerIndexRead` or `HandlerIndexSeek` then resolves its predicate
+columns and output fields against that declaration, including invisible columns
+used explicitly in a predicate. Without a supplied handler, its row shape remains
+dependent on session state. Analysis does not open, advance or close a handler;
+the consumer supplies a new snapshot after those operations. Key values, predicate
+parameters and LIMIT parameters retain their positions in the original statement.
+
+Rows have an explicit `Statement\Expression\RowOperand` role. `Row`,
+`GroupedRow` and a fixed multi-column `RowSubquery` do not implement `Scalar`.
+Comparisons and membership predicates explicitly accept row operands and check
+fixed widths and nested shapes at construction. `ScalarSubquery` accepts a
+known one-column query or a query whose width depends on its catalog; changes
+to a wildcard's table declaration are resolved against each supplied context.
+
+Stored-program conditions, variable defaults, CASE operands and RETURN values
+also accept `RowOperand`. This models a stored instruction, whose scalar use is
+checked when control reaches it. For example, a procedure can contain a row-valued
+IF condition behind another IF that is false. The definition remains valid; the
+consumer must bind the row's names and report its scalar-use error if that
+instruction is reached. It must not replace the row with an ordinary scalar or
+require the original SQL to prepare it.
+
+`Settings::$fullTextParsers` supplies the available full-text parser plugins as
+a list of `Name` values. An empty list means no parser plugins are available;
+`null` leaves availability unspecified. `WITH PARSER` resolves names without
+regard to case. A name absent from a supplied catalog produces an
+`UnknownIndexParser` diagnostic and an ordered, aborting `ParseFailure` notice,
+before conditions in later table options or partition expressions. The same
+lookup applies to directly constructed CREATE TABLE, CREATE INDEX and ALTER
+TABLE definitions. Analysis does not load or install plugins.
+
+`Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
+the nullability of TIMESTAMP columns without an explicit NULL attribute. With
+the setting disabled they are NOT NULL; with it enabled they are nullable.
+An unknown setting (`null`) leaves the fact dependent. Default release settings
+disable it in MySQL 5.6 and 5.7 and enable it from MySQL 8.0.
+
+Resolved domains distinguish string expression bounds from reported byte lengths.
+`CASE`, control functions, string extrema, variable assignments and concatenations
+retain both bounds so nested
+expressions do not repeatedly multiply a blob's width by its character set size.
+`HEX` results also retain their character bound separately from the reported byte
+width, including through nested calls. Modern releases retain the low 32 bits when
+the encoded maximum wraps; legacy releases wrap the character count before scaling.
+The returned field type of `NULLIF` and computed `MIN`/`MAX` strings follows
+the emulated release, including MySQL 5.6 and 5.7 string sizing.
+When a derived table materializes a direct `GROUP_CONCAT` result, its column type
+uses `groupConcatMaxLen` and the argument character set, which can differ from
+the function's directly reported type. Set operations retain their separate
+release-specific string aggregation rules before materializing the result.
+
+Window expressions retain their logical domains while parent expressions resolve.
+`Materialization::windowed()` supplies the separate type needed when an execution
+path stores the result. Computed temporal windows retain a textual collation;
+reading a stored temporal column uses binary collation. Direct temporal control
+expressions use the connection collation in MySQL 8.0 and latin1 from MySQL 8.4.
+An executor applies `character_set_results` separately, so the result's byte
+length does not by itself identify the expression's logical character set.
+
+A domain also separates an expression's evaluation kind from its reported field.
+For example, `NULLIF` of a DATE reports a string but still converts the date to
+its numeric date value in arithmetic. `Domain::displayDecimals` overrides the
+result column's decimals without changing the fractional precision used during
+evaluation. Materializing that expression stores a string, so later arithmetic
+uses string conversion. Fixed-scale FLOAT and DOUBLE arithmetic retains the
+resolved scale and the release-specific display width. MySQL 8.0 YEAR results
+can report string fields and fractional metadata while retaining integer
+semantics; materialization stores them as integers. Decimal division preserves
+precision growth from `divPrecisionIncrement` even after its scale reaches 30.
+
+An unreduced scalar subquery reads a textually reported temporal result as a
+string while retaining its reported fractional metadata. Set columns also
+resolve from the returned field types: temporal `NULLIF` results become strings
+in the release's set collation, and matching BIT fields retain BIT storage.
+MySQL 5.7's streamed `UNION ALL` output retains the fractional precision of
+temporal values reported as strings; its stored query fields clear that precision.
+`Domain::storageField` records a separate field for storing an expression. For
+example, `NULLIF` of BIT can return a BIT field while a materialized derived
+table or `CREATE TABLE … SELECT` stores its result as an integer. The original
+evaluation and returned field remain available to direct expression consumers.
+MySQL 5.6 and 5.7 BIT extrema similarly evaluate as unsigned integers while reporting
+BIT fields. Their materialized result columns retain BIT storage and bounds.
+Expression resolution precedes execution paths: `Materialization::ordered()`
+provides the integer domain of a BIT sort key when an ordered DISTINCT path
+stores it. A path that reads a covering index can retain the original BIT domain.
+
+For a materialized TEXT/BLOB column, `Domain::capacity` records the byte capacity
+of its storage type separately from the reported bound in `length`. The `value()`
+view used when resolving expressions exposes that capacity. This lets a scalar
+subquery or string function read the same column type while direct projection
+retains the expression's original result width.
+For TEXT/BLOB set results, MySQL 5.7 and later expose the temporary column's
+capacity to scalar subqueries. MySQL 5.6 keeps the expression bound until a
+derived table reads the result. Nested set operations combine the original
+bounds rather than the allocated capacities.
+MySQL 5.7 can return an unordered `UNION ALL` directly. Its statement output
+reports the combined string expression types; the query facts retain the
+temporary column types needed by scalar and derived-table consumers.
+
+### Aggregate ownership
+
+`DISTINCT` ordering is checked against the selected expressions and the aggregates
+owned by the query block. An unselected aggregate call produces
+`AggregateInOrdering` with `distinct` set to `true`; an unselected input column
+produces `NonGroupedColumn`. Selecting every grouping expression makes `DISTINCT`
+redundant unless the block uses `ROLLUP`. A sorting subquery cannot read an outer
+aggregate through its result alias.
+
+Aggregate ownership is available through `$operation->facts->query($query)->aggregates`.
+For `SELECT (SELECT SUM(t.a)) FROM t`, the outer block owns `SUM(t.a)` because its
+argument reads only the outer table. `COUNT(*)` and constant arguments stay in the
+inner block. Clause visibility also matters: an enclosing WHERE cannot own an
+aggregate. Consumers should use the resolved occurrences when planning groups,
+since their written nesting alone does not identify the rows to aggregate.
+
+Inside HAVING, aggregate arguments can read the enclosing block's input columns,
+including through nested queries. A selected alias without a matching input column
+remains a reference to the result row. For example, `(SELECT SUM(a))` and
+`(SELECT SUM(x))` differ when the outer query selects `a AS x`.
+A reference to a computed result alias retains its enclosing query depth in
+`AliasTarget::depth`. Consumers must retain that dependency when deciding whether
+a scalar subquery can be evaluated once or must be evaluated for each outer row.
+MySQL 9.1 also lets ordinary nested expressions read unselected outer input columns;
+those references are checked against GROUP BY and functional dependencies.
+Earlier supported releases reject those names in grouped blocks, except for
+eligible derived or common tables merged into the block from MySQL 5.7 onward.
+The `derivedMerge` session setting controls that exception.
+
+### Constant JSON paths
+
+`Statement\Call\Json\JsonValueCall::pathValue` exposes the interpreted constant
+path before an `Operation` is derived. A `Json\Path` holds typed member, wildcard,
+array-cell, array-range and recursive-descent steps. Its constructors exclude
+missing or contradictory step operands. `Json\Path\Invalid` instead holds the
+byte position of an invalid decoded path operand; it is an SQL condition, not
+retained SQL source. The written string literal remains available for rendering.
+
+Derivation reports `InvalidJsonDocument` or `InvalidJsonPath`, tied to the owning
+call. Document types depend on the analysis context: the same column expression
+can be unresolved, numeric or textual as its table declaration changes. Consumers
+apply valid path steps to document values and retain their own execution state.
+Semantics does not execute JSON selection or certify execution eligibility.
 
 ### Tables and views
 
@@ -203,7 +414,51 @@ $semantics->analyze('INSERT INTO t (a, total) VALUES (1, DEFAULT)', [$table])->f
 $semantics->analyze('UPDATE t SET total = 3', [$table])->facts->diagnostics[0]->message(); // => "The value specified for generated column 'total' in table 't' is not allowed."
 ```
 
+## Declared type checks
+
+`CREATE TABLE` columns, routine parameters and function return types share checks for numeric widths, precision and scale, and temporal fractional precision. Invalid sizes appear as `InvalidTypeSize` diagnostics; an accompanying `ParseFailure` records where the server stops reading, so an executor can preserve warning order. Parameter and return-type errors use an empty column name, as MySQL reports them. MySQL 5.6 accepts `BIT(0)`; later supported releases reject it.
+
+The original spelling of an unquoted `FULL` identifier produces warning 4119 in the supported MySQL 8.x and 9.x releases. Quoted names, string aliases and names lexed as parts of a qualified identifier do not produce that warning. The decoded name remains independent of this notice, which is retained in `Operation::$sources` and merged into `facts->warnings`.
+
+Deprecated type attributes produce warnings in written order, including integer display widths, `ASCII`, `UNICODE`, `BINARY` and national character types. These checks do not establish complete validation of every type or table option.
+
+## Stored program body structure
+
+Stored-program names exclude empty names, trailing spaces, NUL bytes and names
+longer than 64 characters. These constructor constraints apply to declarations,
+calls, alterations and inspection requests. Input lowering reports the name's
+typed condition before later database or body conditions. MySQL 5.6 permits a
+wider operand domain for `DROP FUNCTION`; `DropProgram::legacyName()` identifies
+that form, and composition checks exclude incompatible newer language features.
+
+Routine declarations check the kinds of instructions they can contain, including
+unreachable branches and handlers. A stored function must contain a `RETURN`
+instruction; this does not require every runtime path to reach it. Procedures,
+triggers and events cannot contain `RETURN`. Function and trigger bodies reject
+result-producing statements, dynamic SQL, explicit transaction boundaries,
+privilege changes, RESET and FLUSH. Instructions prohibited in all stored
+programs are also refused before a declaration is published.
+
+Direct PHP construction raises `InvalidConstruction` for these contradictory
+combinations. SQL lowering raises `Construction\RejectedInput` with
+`Statement\Routine\Problem\RefusedProgramBody`. The diagnostic holds the typed
+name, definer, parameter and return declarations, and the body constraint. Its
+numeric completion positions allow input diagnostics to preserve ordering; it
+retains neither SQL text nor a parser node. Database selection, SQL mode and
+other state remain the consumer's responsibility. These body checks do not
+certify that a routine can execute or establish every implicit-commit DDL and
+lexical-scope constraint.
+
 ## Limitations
+
+`CAST(... AT LOCAL AS ...)` has no public expression type: every supported
+MySQL release rejects this form. Lowering reports `Construction\RejectedInput`
+with the typed `NotSupportedYet` problem before publishing a structure. The
+failure's `aborts` field distinguishes an immediate input stop from a refusal
+that still permits later grammar conditions. It is an input diagnostic, not an
+execution approval flag. SQL input remains accepted by SQL Parser wherever the
+grammar permits it; `Lowering\SyntaxWarnings` preserves the ordered observations
+of the rejected input, including a stored-program statement's stopping boundary.
 
 - Optimizer hints (`/*+ ... */` after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` or `DELETE`) are not analyzed. The server reads them with a grammar of their own, and the parser this package uses delivers them as a comment, so from 5.7 on a statement with a hint is refused with `ImplementationGap` instead of being read without it. In MySQL 5.6 such a comment is an ordinary comment.
 - Version comments (`/*!80000 ... */`) are read as the selected release reads them: the body is part of the statement when the release is at least the written version, and a comment otherwise. Rendered SQL writes that reading without the comment markers, so it is SQL for the selected release.
@@ -219,6 +474,37 @@ $semantics->analyze('UPDATE t SET total = 3', [$table])->facts->diagnostics[0]->
 
 See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/docs/guarantees.md) for the limits that apply to every database.
 
+`Statement\Routine\Condition\SqlState` accepts quoted values containing five uppercase letters or digits, excluding success class `00`. Invalid PHP construction raises `InvalidConstruction`. An invalid SQL operand such as `SIGNAL SQLSTATE '00000'` instead raises `SqlSemantics\Construction\RejectedInput`; its `problem` is a typed `ProgramProblem`, and `end` is the exclusive byte offset of the operand. No operation containing that invalid value is returned.
+
+Additional authentication factors use `Statement\Account\User\Factor`, whose cases are `Second` and `Third`. Registration and factor-change constructors accept this enum; factor changes also reject duplicates and adding the third factor before the second. Invalid SQL operands produce a typed input refusal during lowering instead of a statement that is intrinsically invalid. Account existence and installed authentication plugins remain execution-state concerns.
+
+`Statement\Name\AccountName` excludes names outside every supported release's domain: more than 32 trimmed user characters, more than 255 trimmed host bytes, or an at sign in the host. It preserves decoded operands, including embedded NUL bytes; `username()` and `hostname()` provide their whitespace-normalized interpretation. MySQL 5.6 has limits of 16 user characters and 60 host bytes; 5.7 has limits of 32 and 60. Input lowering applies the selected release's limits before publishing accounts and definers, and reports `AccountNameFailure` through `RejectedInput`. MySQL 5.6 checks the original operands before trimming when the host is explicit. Structure composition rejects a longer name combined with features that require an incompatible older release. Account existence remains an execution-state concern.
+
+A standalone `PARTITION` entry in the MySQL 5.6 and 5.7 grammars is rejected during input lowering. It is not a public `Statement` type. Partition clauses remain available inside table definitions and alterations; removing the client entry does not remove table partitioning. The input refusal carries a typed reason and keyword offset, without retaining SQL or parser nodes.
+
+Database encryption uses `Statement\Server\Database\Encryption::Enabled` or `Disabled`. `DatabaseEncryption` accepts this setting and an optional decoded `Text` spelling that must denote the same value. SQL lowering validates case-insensitive Y/N operands before their first NUL and refuses other values before publishing a statement. An entire `N` operand disables encryption; a NUL suffix enables it, including after `N`, matching the server's separate validation and setting conversion. Hexadecimal and bit spellings are excluded. Database existence and storage-engine capabilities remain execution-state concerns.
+
+Legacy INSERT statements retain their optimizer hints in the semantic head. Qualified wildcards in an INSERT column list require a legacy grammar and cannot compose with modern-only hints.
+
+`SetItem` contains only accepted assignment roles. `SET NAMES = expression` has no public expression-assignment type: input lowering raises `RefusedNamesAssignment`, carrying the assignment and operand offsets and whether a local `names` variable is visible. The refused expression and its parser nodes are discarded. `SetNames` still represents character-set changes, and `NameAssignment` can assign a declared local variable named `names`.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+`Statement\Account\Privilege\GrantRoles` and `RevokeRoles` accept nonempty lists of `GrantedRole` only. A static privilege such as `SELECT`, or a name with a column list, is not a role operand. SQL containing those operands raises `Construction\RejectedInput` during lowering instead of publishing an invalid role statement. Ordered input notices retain recipient-name precedence, each role-list problem, and whether parsing continues into later program statements. Diagnostic positions are integer offsets; no original SQL or parser node is retained.
+
+When a context supplies `Settings::client`, Latin-1 identifier input is decoded
+before statements are published. A `Name` constructed directly already holds
+the decoded name; changing the session character set does not change that name.
+SQL rendering encodes identifiers for the context's client character set. String
+literal bytes remain separate from identifier encoding. UTF-8 names therefore
+need no conversion; conversions for other client character sets are not covered
+by the Latin-1 rule.
+
+Structural publication checks names in the model's canonical representation. It
+must not reject a valid decoded name merely because the current client character
+set cannot spell it. `Operation::toString()` reports `UnrepresentableName` if
+rendering would replace identifier characters. This does not prevent direct
+structure consumers from resolving or executing the same object. Result labels
+and origin metadata follow the session's result character set independently.

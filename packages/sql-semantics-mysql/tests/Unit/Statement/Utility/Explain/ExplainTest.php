@@ -54,13 +54,22 @@ final class ExplainTest extends TestCase
     public function testRenderWritesTheOptions(): void
     {
         self::assertSame('EXPLAIN EXTENDED SELECT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('desc extended select 1')->toString());
-        self::assertSame('EXPLAIN ANALYZE FORMAT = tree INTO @v SELECT 1', (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze('explain analyze format = tree into @v select 1')->toString());
+        self::assertSame('EXPLAIN FORMAT = `JSON` INTO @v SELECT 1', (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze('explain format = JSON into @v select 1')->toString());
     }
 
     public function testRefusesAModifierWithOptions(): void
     {
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Explainable::class, $select);
         $this->expectExceptionMessage('EXTENDED and PARTITIONS are written alone.');
         new Explain($select, null, true, ExplainModifier::Extended);
     }
+    public function testRefusesAnIntoWithoutExplicitJsonFormat(): void
+    {
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Explainable::class, $query);
+        $this->expectExceptionMessage('EXPLAIN INTO has an explicit JSON format.');
+        new Explain($query, into: new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('p')));
+    }
+
 }

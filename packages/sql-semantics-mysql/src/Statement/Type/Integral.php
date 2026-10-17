@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::BigInt, '20', [\SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier::Unsigned]);
  *     [$type->name(), $type->width, $type->unsigned()] // => ['BIGINT', '20', true]
  */
-final class Integral implements TypeName
+final class Integral implements DeclaredName
 {
     use Snapshot;
 

@@ -15,6 +15,11 @@ use SqlSemantics\Platform\MySql\Lowering\Server\Instance\PluginRule;
 #[Medium]
 final class PluginRuleTest extends TestCase
 {
+    public function testWordPreservesGroupingAndQualification(): void
+    {
+        self::assertSame("INSTALL COMPONENT 'a' SET x = ((word)), y = c.word", (new Semantics(Dialect::MySql))->analyze("INSTALL COMPONENT 'a' SET x=((word)), y=c.word")->toString());
+    }
+
     public function testStatementLowersComponents(): void
     {
         self::assertSame("UNINSTALL COMPONENT 'a', 'b'", (new Semantics(Dialect::MySql))->analyze("uninstall component 'a', 'b'")->toString());

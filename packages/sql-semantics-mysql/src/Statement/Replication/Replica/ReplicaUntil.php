@@ -15,11 +15,15 @@ use SqlSemantics\Statement\Snapshot;
  * The UNTIL clause of START REPLICA: an optional GTID or gap condition first, then log positions, in written order.
  *
  * The grammar admits a GTID or gap condition only as the first item, so the
- * two parts keep the written order exactly. Which combinations the server
- * accepts is checked when the statement is derived (MYSQL-REPLICA-UNTIL-001).
+ * two parts keep the written order exactly. All positions use the same
+ * release vocabulary; legacy MASTER options and modern SOURCE synonyms
+ * cannot belong to the same structure. Which combinations the server
+ * accepts is checked before the value is retained (MYSQL-REPLICA-UNTIL-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html.
  *
  * @visibility public
+ * @example Rejecting a lone log position before deriving an operation
+ *     new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil(null, null, [new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::LogPosition, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding a GTID condition
  *     $until = new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGtids, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('3E11FA47-71CA-11E1-9E33-C80AA9429562:1-5'));
  *     $until->positions // => []
@@ -40,12 +44,15 @@ final class ReplicaUntil implements Node
      */
     public function __construct(public readonly ?UntilPoint $point, public readonly ?Text $gtids = null, array $positions = [])
     {
+        Check::input($gtids === null || $gtids->radix === null, 'A GTID set is quoted text.');
         $this->positions = Check::listOf($positions, SourceOption::class, 'UNTIL lists log positions.');
         Check::input(($gtids !== null) === ($point === UntilPoint::BeforeGtids || $point === UntilPoint::AfterGtids), 'A GTID condition, and only it, holds a GTID set.');
         Check::input($point !== null || $this->positions !== [], 'UNTIL holds at least one condition.');
         foreach ($this->positions as $position) {
             Check::input($position->kind->position(), 'UNTIL lists only log file and position options.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Replication\ReplicaConditions())->until($this) === null, 'UNTIL requires a complete log coordinate or an unmixed GTID or gap condition.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

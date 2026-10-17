@@ -18,6 +18,16 @@ interface Codec
 {
     /**
      * Spells a decoded name for a position, quoting only as the profile requires.
+     *
+     * @throws \SqlSemantics\Diagnostic\UnrepresentableName When the output character set cannot represent the name
      */
     public function name(Name $name, NameUse $use): string;
+
+    /**
+     * Encodes an already quoted or bare identifier spelling from the model's
+     * name representation to the output character set, preserving its quoting.
+     *
+     * @throws \SqlSemantics\Diagnostic\UnrepresentableName When the output character set cannot represent the name
+     */
+    public function spelling(string $text): string;
 }

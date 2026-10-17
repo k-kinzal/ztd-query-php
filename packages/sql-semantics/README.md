@@ -137,7 +137,7 @@ $semantics->analyze('SELECT * FROM users')->lookupField('id') instanceof Depende
 $semantics->analyze('SELECT 1 AS a, 2 AS a')->field('a'); // throws InvalidConstruction
 ```
 
-Semantic problems of grammatical SQL, such as a missing column, are facts of the operation, not exceptions:
+Resolution problems, such as a missing column, are facts of the operation:
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -295,6 +295,7 @@ The package also does not execute SQL, connect to a database, infer session sett
 | Situation | Result |
 |-----------|--------|
 | SQL outside the selected grammar | `AnalysisException` |
+| An input operand outside a semantic constructor domain | `Construction\RejectedInput`, with a typed diagnostic and operand end offset |
 | Missing or ambiguous names, arity mismatches and other semantic problems | facts of the returned operation: resolutions and `facts->diagnostics` |
 | Declarations, signatures, parameter values or session state the context does not hold | `Dependent` facts that name the missing input |
 | A rule the library has not implemented | `ImplementationGap`, a defect of the library |
@@ -302,7 +303,7 @@ The package also does not execute SQL, connect to a database, infer session sett
 | A failed correspondence or integrity check | `InvariantViolation`, a defect of the library, or a constructed [layout](docs/rendering.md#spelled-regions) that does not fit its expression; no operation is returned |
 | A configured work limit | `ResourceLimitExceeded` (reserved: no limit is configured in this release) |
 
-All exceptions are in `SqlSemantics\Diagnostic`. `Semantics` refuses a release, mode or search path that does not belong to the database with an exception from its constructor. An `ImplementationGap` or an `InvariantViolation` is a bug; please report it with the SQL and the release.
+Except for `SqlSemantics\Construction\RejectedInput`, these exceptions are in `SqlSemantics\Diagnostic`. `Semantics` refuses a release, mode or search path that does not belong to the database with an exception from its constructor. An `ImplementationGap` or an `InvariantViolation` is a bug; please report it with the SQL and the release.
 
 ## Documentation
 

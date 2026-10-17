@@ -39,7 +39,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the LIMIT a 5.6 SELECT keeps before a later UNION
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT a FROM t UNION SELECT b FROM u LIMIT 1 UNION SELECT c FROM v');
- *     [$query->statement->left::class, $query->statement->left->right->limit !== null] // => [\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion::class, true]
+ *     [$query->statement->query->left::class, $query->statement->query->left->right->limit !== null] // => [\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion::class, true]
  * @example Refusing a last operand without clauses of its own
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))]);
@@ -60,6 +60,8 @@ final class LeadingUnion implements Node
         Check::input($right->trailed() && $right->orderBy === [] && $right->procedure === null && $right->into === null && $right->late === null, 'The last operand of a leading union keeps its own LIMIT or locking clauses and nothing else.');
         Check::input(!$left instanceof SetOperation || $left->operator === SetOperator::Union, 'A leading union continues a UNION.');
         Check::input(!$left instanceof QueryStatement && !$left instanceof OrderedSetOperation && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause, INTO, locking clauses or an ordering of its result is written in parentheses as a set operand.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SetOperands())->left($left);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

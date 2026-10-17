@@ -27,4 +27,10 @@ final class InstallPluginTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);
     }
+
+    public function testValueRejectsIncompatibleLibrary(): void
+    {
+        $this->expectExceptionMessage('A plugin library name is quoted text.');
+        new InstallPlugin(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

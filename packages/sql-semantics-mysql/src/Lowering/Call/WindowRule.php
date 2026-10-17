@@ -75,13 +75,13 @@ final class WindowRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function function(Node $call): WindowFunction
+    public function function(Node $call): WindowFunction|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction
     {
         $form = $this->lowering->form($call);
         [$kind, $value, $count, $options, $row, $edge, $nulls, $window] = self::FUNCTIONS[$form->signature] ?? throw ImplementationGap::production($form);
         $arguments = [];
         if ($value !== null) {
-            $arguments[] = $this->lowering->expressions->expression($form->node($value));
+            $arguments[] = $this->lowering->expressions->operand($form->node($value));
         }
         if ($count !== null) {
             $arguments[] = $this->stable($form->node($count));
@@ -90,22 +90,23 @@ final class WindowRule
             array_push($arguments, ...$this->offset($form->node($options)));
         }
         if ($row !== null) {
-            $arguments[] = $this->lowering->expressions->simpleExpression($form->node($row));
+            $arguments[] = (new \SqlSemantics\Platform\MySql\Lowering\Expression\PrimaryRule($this->lowering))->simpleExpression($form->node($row));
         }
 
-        return new WindowFunction(
-            $kind,
-            $arguments,
-            $this->window($form->node($window)),
-            $nulls === null ? null : $this->nulls($form->node($nulls)),
-            $edge === null ? null : $this->edge($form->node($edge)),
-        );
+        $over = $this->window($form->node($window));
+        $treatment = $nulls === null ? null : $this->nulls($form->node($nulls));
+        $counting = $edge === null ? null : $this->edge($form->node($edge));
+        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar && !$argument instanceof RoutineVariable) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction($kind, $arguments, $over, $treatment, $counting);
+        }
+        $scalars = array_values(array_filter($arguments, static fn ($argument): bool => $argument instanceof Scalar || $argument instanceof RoutineVariable));
+        return new WindowFunction($kind, $scalars, $over, $treatment, $counting);
     }
 
     /**
      * Lowers the offset and default of LEAD and LAG: a node of opt_lead_lag_info.
      *
-     * @return list<Scalar>
+     * @return list<Scalar|RoutineVariable|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand>
      * @throws ImplementationGap When a production has no rule
      */
     public function offset(Node $options): array
@@ -122,7 +123,7 @@ final class WindowRule
 
         return match ($default->signature) {
             'opt_ll_default:' => $arguments,
-            'opt_ll_default: , expr' => [...$arguments, $this->lowering->expressions->expression($default->node(1))],
+            'opt_ll_default: , expr' => [...$arguments, $this->lowering->expressions->operand($default->node(1))],
             default => throw ImplementationGap::production($default),
         };
     }
@@ -132,7 +133,7 @@ final class WindowRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function stable(Node $integer): Scalar
+    public function stable(Node $integer): Scalar|RoutineVariable
     {
         $form = $this->lowering->form($integer);
         if ($form->signature === 'stable_integer: int64_literal') {

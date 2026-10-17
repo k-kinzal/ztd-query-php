@@ -37,4 +37,12 @@ final class InsertIntoTest extends TestCase
 
         new InsertInto(false, null, false, new WriteTarget(new QualifiedName(new Name('t')), new Name('x')));
     }
+
+    public function testRenderWritesTheHintCommentAfterTheVerb(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertSame("REPLACE /*+ SET_VAR(`sql_mode` = 'ANSI') */ INTO t SET a = 1", $semantics->analyze("REPLACE /*+ SET_VAR(sql_mode = 'ANSI') */ t SET a = 1")->toString());
+        self::assertSame('INSERT /*+ BKA(`t`) */ INTO t SELECT /*+ NO_BKA() */ 1', $semantics->analyze('INSERT /*+ BKA(t) */ INTO t SELECT /*+ NO_BKA() */ 1')->toString());
+    }
 }

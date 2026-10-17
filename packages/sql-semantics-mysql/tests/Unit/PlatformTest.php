@@ -97,7 +97,9 @@ final class PlatformTest extends TestCase
         $statements = $platform->lower($platform->parser($profile)->parse('SELECT 1;'), $profile, new Leaves());
 
         self::assertCount(1, $statements);
-        self::assertInstanceOf(Select::class, $statements[0]);
+        $root = $statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
         self::assertSame([], $platform->lower($platform->parser($profile)->parse(''), $profile, new Leaves()));
     }
 
@@ -136,6 +138,14 @@ final class PlatformTest extends TestCase
         self::assertTrue($explicit->complete);
         self::assertSame(Comparison::Sensitive, $explicit->relationNames);
         self::assertSame(Comparison::AsciiInsensitive, $explicit->columnNames);
+    }
+
+    public function testContextFoldsTheNamesOfInformationSchema(): void
+    {
+        $platform = new Platform();
+        $context = $platform->context($platform->profile(null, null, ParameterStyle::Native), ['shop'], [], true);
+
+        self::assertSame(['information_schema'], $context->foldedSchemas);
     }
 
     public function testContextRejectsASearchPathOfSeveralDatabases(): void

@@ -8,7 +8,9 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
@@ -17,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers EXPLAIN, DESCRIBE, HELP and USE.
@@ -73,6 +74,7 @@ final class ExplainRule
      * Lowers a node of `describe`, `describe_stmt`, `explain_stmt`, `help` or `use`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand has no semantic interpretation
      */
     public function statement(Form $form): Statement
     {
@@ -149,7 +151,7 @@ final class ExplainRule
             $modifier = self::MODIFIERS[$options->signature] ?? throw ImplementationGap::production($options);
         }
         if ($command->signature === 'explainable_command: FOR_SYM CONNECTION_SYM real_ulong_num') {
-            return new ExplainConnection($this->lowering->numbers->numeral($command->node(2)), $format, false, $modifier);
+            return new ExplainConnection($this->lowering->numbers->integral($command->node(2)), $format, $modifier);
         }
         return new Explain($this->explained($command), $format, false, $modifier);
     }
@@ -158,13 +160,18 @@ final class ExplainRule
      * Lowers EXPLAIN of MySQL 8.0 and later from its options, the variable of an INTO written before the statement, and its `explainable_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When connection options have no statement form
      */
     public function modern(Node $options, ?Node $into, Form $explainable): Statement
     {
         [$format, $analyze, $target] = (new OptionRule($this->lowering))->options($options);
         $variable = $into === null ? $target : $this->lowering->variables->user($into);
         if ($explainable->signature === 'explainable_stmt: FOR_SYM CONNECTION_SYM real_ulong_num') {
-            return new ExplainConnection($this->lowering->numbers->numeral($explainable->node(2)), $format, $analyze, null, $variable);
+            $connection = $this->lowering->numbers->integral($explainable->node(2));
+            if ($analyze || $variable !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain($analyze), (new \SqlSemantics\Construction\SourceRanges())->span($explainable->node)[1] ?? 0);
+            }
+            return new ExplainConnection($connection, $format);
         }
         $database = (self::EXPLAINED[$explainable->signature] ?? 0) === 1 ? (new OptionRule($this->lowering))->database($explainable->node(0)) : null;
 
@@ -176,10 +183,15 @@ final class ExplainRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function explained(Form $form): Statement
+    public function explained(Form $form): Explainable
     {
         $statement = $form->node(self::EXPLAINED[$form->signature] ?? throw ImplementationGap::production($form));
 
-        return isset(self::QUERIES[$statement->name]) ? $this->lowering->queries->statement($statement) : $this->lowering->dml->statement($statement);
+        $explained = isset(self::QUERIES[$statement->name]) ? $this->lowering->queries->statement($statement) : $this->lowering->dml->statement($statement);
+        if (!$explained instanceof Explainable) {
+            throw ImplementationGap::production($form);
+        }
+
+        return $explained;
     }
 }

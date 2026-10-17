@@ -10,8 +10,8 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Depending on the program state
  *     (new \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable(new \SqlSemantics\Statement\Identifier\Name('n')))->name->value // => 'n'
  */
-final class RoutineVariable implements Scalar
+final class RoutineVariable implements Operand
 {
     use Snapshot;
 

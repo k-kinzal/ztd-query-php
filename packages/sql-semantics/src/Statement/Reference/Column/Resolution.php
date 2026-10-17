@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Statement\Reference\Column;
 
 /**
- * The outcome of resolving a name used as a value: resolved, missing, ambiguous, conditional, or an output alias.
+ * The outcome of resolving a value reference: a column, output alias, variable or parameter binding, or a missing, ambiguous or conditional name.
  *
  * Finding a candidate and resolving uniquely are different outcomes.
  *

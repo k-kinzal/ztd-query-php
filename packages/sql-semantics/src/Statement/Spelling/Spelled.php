@@ -24,7 +24,7 @@ final class Spelled
     use Snapshot;
 
     /**
-     * @param string $gap The whitespace and comments written before the token; empty for the first token of a region
+     * @param string $gap The whitespace and comments before the token; a dialect may validate observable leading trivia for the first token
      * @param string $text The spelling of the token
      */
     public function __construct(public readonly string $gap, public readonly string $text)

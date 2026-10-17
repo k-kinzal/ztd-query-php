@@ -38,7 +38,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the searched columns
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)");
- *     [count($query->statement->where->columns), $query->toString()] // => [2, "SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)"]
+ *     [count($query->statement->query->where->columns), $query->toString()] // => [2, "SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)"]
  */
 final class FullTextSearch implements Scalar
 {
@@ -63,6 +63,7 @@ final class FullTextSearch implements Scalar
         Check::input($precedence->admits($against, Precedence::BIT_EXPR), 'The search string of AGAINST needs a grouping to keep its place.');
         Check::input($stated === OptionalWords::Omitted || $mode !== FullTextMode::Boolean, 'Only a natural language search states IN NATURAL LANGUAGE MODE.');
         Check::input(($mode !== FullTextMode::Boolean && $stated === OptionalWords::Omitted) || !$precedence->absorbs($against, Precedence::PREDICATE, Precedence::BIT_EXPR), 'A search string followed by IN ... MODE needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

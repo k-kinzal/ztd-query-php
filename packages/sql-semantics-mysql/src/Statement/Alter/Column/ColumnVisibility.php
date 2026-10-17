@@ -36,10 +36,11 @@ final class ColumnVisibility implements AlterCommand
     }
 
     /**
-     * Derives nothing: the action holds no expression.
+     * Derives the retained definition-name notices.
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
+        $this->column->deriveName($derivation, $scope->relations[0]->name ?? null);
     }
 
     /**

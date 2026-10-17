@@ -11,10 +11,10 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -97,13 +97,15 @@ final class JoinedTableTest extends TestCase
         $modern = $semantics->analyze('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', [$t, $u]);
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', []);
 
-        self::assertInstanceOf(Select::class, $modern->statement);
-        self::assertInstanceOf(JoinedTable::class, $modern->statement->from);
-        self::assertInstanceOf(JoinedTable::class, $modern->statement->from->right);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern->statement);
+        self::assertInstanceOf(Select::class, $modern->statement->query);
+        self::assertInstanceOf(JoinedTable::class, $modern->statement->query->from);
+        self::assertInstanceOf(JoinedTable::class, $modern->statement->query->from->right);
         self::assertCount(1, $modern->facts->diagnostics);
-        self::assertInstanceOf(Select::class, $legacy->statement);
-        self::assertInstanceOf(JoinedTable::class, $legacy->statement->from);
-        self::assertInstanceOf(JoinedTable::class, $legacy->statement->from->left);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $legacy->statement);
+        self::assertInstanceOf(Select::class, $legacy->statement->query);
+        self::assertInstanceOf(JoinedTable::class, $legacy->statement->query->from);
+        self::assertInstanceOf(JoinedTable::class, $legacy->statement->query->from->left);
     }
 
     public function testRenderWritesTheOperatorAndTheCondition(): void
@@ -119,27 +121,27 @@ final class JoinedTableTest extends TestCase
     {
         $this->expectExceptionMessage('A natural join takes no condition.');
 
-        new JoinedTable(new Dual(), JoinOperator::Natural, new Dual(), null, [new Name('a')]);
+        new JoinedTable(new TableReference(new QualifiedName(new Name('t'))), JoinOperator::Natural, new TableReference(new QualifiedName(new Name('t'))), null, [new Name('a')]);
     }
 
     public function testBothConditionsAreRejected(): void
     {
         $this->expectExceptionMessage('A join has an ON condition or a USING list, not both.');
 
-        new JoinedTable(new Dual(), JoinOperator::Join, new Dual(), new NumberLiteral('1'), [new Name('a')]);
+        new JoinedTable(new TableReference(new QualifiedName(new Name('t'))), JoinOperator::Join, new TableReference(new QualifiedName(new Name('t'))), new NumberLiteral('1'), [new Name('a')]);
     }
 
     public function testAJoinOnTheRightOfANaturalJoinIsRejected(): void
     {
         $this->expectExceptionMessage('The right operand of a natural join is no unparenthesized join.');
 
-        new JoinedTable(new Dual(), JoinOperator::Natural, new JoinedTable(new Dual(), JoinOperator::Cross, new Dual()));
+        new JoinedTable(new TableReference(new QualifiedName(new Name('t'))), JoinOperator::Natural, new JoinedTable(new TableReference(new QualifiedName(new Name('t'))), JoinOperator::Cross, new TableReference(new QualifiedName(new Name('t')))));
     }
 
     public function testACommaListAsAnOperandIsRejected(): void
     {
         $this->expectExceptionMessage('A comma list joined to a table is written in parentheses.');
 
-        new JoinedTable(new TableList([new Dual(), new Dual()]), JoinOperator::Cross, new Dual());
+        new JoinedTable(new TableList([new TableReference(new QualifiedName(new Name('t'))), new TableReference(new QualifiedName(new Name('t')))]), JoinOperator::Cross, new TableReference(new QualifiedName(new Name('t'))));
     }
 }

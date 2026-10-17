@@ -19,11 +19,13 @@ use SqlSemantics\Statement\Snapshot;
  * The grammar reads the algorithm as an identifier; the server accepts
  * INPLACE and COPY, INSTANT from 8.0 on, and the word DEFAULT spelled as an
  * identifier in 5.6 and 5.7, compared without regard to case. Any other name
- * is the diagnostic UnknownAlterChoice (MYSQL-ALTER-CHOICES-001). The name is
+ * is refused before construction (MYSQL-ALTER-CHOICES-001). The name is
  * kept as written; the keyword DEFAULT is the absent name.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.
  *
  * @visibility public
+ * @example Refusing an unknown option name
+ *     new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(new \SqlSemantics\Statement\Identifier\Name('unknown')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Requesting an in-place change
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(new \SqlSemantics\Statement\Identifier\Name('INPLACE'));
  *     $option->algorithm?->value // => 'INPLACE'
@@ -37,6 +39,7 @@ final class AlgorithmOption implements AlterOption, AlterModifier
      */
     public function __construct(public readonly ?Name $algorithm)
     {
+        \SqlSemantics\Diagnostic\Check::input((new Choices())->known($algorithm, false), 'The algorithm is a known table-change option.');
     }
 
     /**

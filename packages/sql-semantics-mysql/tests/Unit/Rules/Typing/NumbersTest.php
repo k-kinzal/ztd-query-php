@@ -1,0 +1,359 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Rules\Typing;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Identifier\Name;
+
+#[CoversClass(Numbers::class)]
+#[Small]
+final class NumbersTest extends TestCase
+{
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerSignedBranches(): iterable
+    {
+        yield 'IFNULL ten' => ['IFNULL(NULL,10)', 3];
+        yield 'IFNULL three digits' => ['IFNULL(NULL,123)', 4];
+        yield 'IFNULL nested IF' => ['IFNULL(NULL,IF(0,0,123))', 4];
+        yield 'IF ten' => ['IF(0,0,10)', 3];
+        yield 'IF three digits' => ['IF(0,0,123)', 4];
+        yield 'CASE ten' => ['CASE WHEN 0 THEN 0 ELSE 10 END', 3];
+        yield 'CASE three digits' => ['CASE WHEN 0 THEN 0 ELSE 123 END', 4];
+        yield 'negative branch' => ['IF(0,0,-1)', 2];
+        yield 'COALESCE keeps its width' => ['COALESCE(10,0)', 2];
+    }
+
+    #[DataProvider('providerSignedBranches')]
+    public function testSignedRetainsTheArithmeticWidthOfLegacyControlBranches(string $sql, int $expected): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT ' . $sql);
+        $expression = $operation->field(0)->expression;
+        self::assertNotNull($expression);
+        $type = $operation->facts->scalar($expression)->type;
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+
+        self::assertSame($expected, (new Numbers())->signed($expression, $type->descriptor, $operation->facts)->length);
+    }
+
+    public function testQuotientReservesAStringDividendSignFrom80(): void
+    {
+        $text = Domain::string(10, Collation::known('utf8mb4_0900_ai_ci'));
+        $divisor = Domain::integer(Field::LongLong, 2);
+
+        self::assertSame(11, (new Numbers())->quotient($text, $divisor)->length);
+        self::assertSame(10, (new Numbers(legacyRemainders: true))->quotient($text, $divisor)->length);
+    }
+
+    public function testUnsignedFollowsTheSubtractionMode(): void
+    {
+        self::assertTrue((new Numbers())->unsigned(ArithmeticOperator::Plus, Domain::integer(), Domain::integer(unsigned: true)));
+        self::assertFalse((new Numbers(unsignedSubtraction: false))->unsigned(ArithmeticOperator::Minus, Domain::integer(), Domain::integer(unsigned: true)));
+    }
+
+    public function testLegacyNegatedKeepsASignAlreadyReservedForAnUnsignedOperand(): void
+    {
+        $domain = Domain::integer(Field::LongLong, 5);
+
+        self::assertSame($domain, (new Numbers())->legacyNegated($domain, true));
+        self::assertSame(3, (new Numbers(legacyRemainders: true))->binary(ArithmeticOperator::Modulo, Domain::integer(Field::Tiny, 3, true), Domain::integer(Field::LongLong, 1))->length);
+    }
+
+    public function testWidthOmitsTheSignForUnsignedArithmeticResults(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(6, $numbers->width(Domain::integer(Field::LongLong, 7), true));
+        self::assertSame(10, $numbers->width(Domain::integer(Field::Long, 11), true));
+        self::assertSame(10, $numbers->width(Domain::integer(Field::Long, 10, true), true));
+        self::assertSame(8, $numbers->width(new Domain(Kind::Date, Field::Date, 10), true));
+    }
+
+    public function testIntegerResultRetainsYearResultDecimalsWithoutChangingIntegerEvaluation(): void
+    {
+        $year = new Domain(Kind::Year, Field::VarString, 4, 0, true, displayDecimals: 31);
+        $result = (new Numbers())->integerResult(ArithmeticOperator::Plus, $year, Domain::integer(Field::LongLong, 2));
+
+        self::assertSame([Kind::Integer, 34, 0, 31], [$result->kind, $result->length, $result->decimals, $result->displayDecimals]);
+        self::assertSame([3, 31], (new Numbers())->digits($year));
+    }
+
+    public function testReportedIntegerCapsTheFractionalMetadataOfAProduct(): void
+    {
+        $year = new Domain(Kind::Year, Field::VarString, 4, 0, true, displayDecimals: 31);
+        $result = (new Numbers())->reportedInteger(ArithmeticOperator::Multiply, $year, Domain::integer(), 5, true);
+
+        self::assertSame([5, 0, 30], [$result->length, $result->decimals, $result->displayDecimals]);
+    }
+
+    public function testDecimalDivisionKeepsPrecisionGrowthAfterItsScaleReachesThirty(): void
+    {
+        self::assertSame([37, 30], [(new Numbers())->decimal(ArithmeticOperator::Divide, [31, 30], [1, 0])->length, (new Numbers())->decimal(ArithmeticOperator::Divide, [31, 30], [1, 0])->decimals]);
+    }
+
+    public function testFloatingCanUseTheMySql80WidthWithoutLegacyIntegerRules(): void
+    {
+        $numbers = new Numbers(legacyFloating: true);
+
+        self::assertEquals(Domain::double(19, 2), $numbers->floating(ArithmeticOperator::Plus, Domain::double(8, 2), Domain::integer()));
+        self::assertSame(66, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(Field::LongLong, 66), Domain::integer())->length);
+    }
+
+    public function testFloatingRetainsFixedScaleAndAddsTheDivisionIncrement(): void
+    {
+        $numbers = new Numbers();
+        $left = Domain::double(8, 2);
+        $right = Domain::double(9, 3);
+
+        self::assertEquals(Domain::double(9, 3), $numbers->floating(ArithmeticOperator::Multiply, $left, $right));
+        self::assertEquals(Domain::double(13, 7), $numbers->floating(ArithmeticOperator::Divide, $left, $right));
+        self::assertEquals(Domain::double(20, 3), (new Numbers(legacyRemainders: true))->floating(ArithmeticOperator::Plus, $left, $right));
+        self::assertEquals(Domain::double(23), $numbers->floating(ArithmeticOperator::Plus, $left, Domain::double()));
+    }
+
+    public function testFloatingDistinguishesNumericStringsFromTemporalsReportedAsStrings(): void
+    {
+        $numbers = new Numbers(legacyRemainders: true);
+        $temporal = new Domain(Kind::Time, Field::VarString, 14, 3);
+        $reported = new Domain(Kind::Time, Field::VarString, 14, 3, displayDecimals: 31);
+
+        self::assertSame(Kind::Double, $numbers->operand($temporal));
+        self::assertEquals(Domain::double(20, 3), $numbers->floating(ArithmeticOperator::Plus, $temporal, Domain::integer()));
+        self::assertEquals(Domain::double(23), $numbers->floating(ArithmeticOperator::Plus, $reported, Domain::integer()));
+        self::assertEquals(Domain::double(23), $numbers->floating(ArithmeticOperator::Plus, Domain::string(4, Collation::binary()), Domain::integer()));
+        self::assertEquals(Domain::double(23), $numbers->floating(ArithmeticOperator::Plus, new Domain(Kind::Json, Field::Json, 4), Domain::integer()));
+    }
+
+    public function testBinaryPreservesTheLegacySignedCarryAtMaximumPrecision(): void
+    {
+        $numbers = new Numbers(legacyRemainders: true);
+
+        self::assertSame(67, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(Field::LongLong, 66), Domain::integer())->length);
+        self::assertSame(66, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 66), Domain::integer())->length);
+        self::assertSame(66, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(Field::LongLong, 65, true), Domain::integer())->length);
+    }
+
+    public function testOperandReadsTemporalValuesByTheirFraction(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(Kind::Integer, $numbers->operand(new Domain(Kind::Date, Field::Date, 10)));
+        self::assertSame(Kind::Decimal, $numbers->operand(new Domain(Kind::Time, Field::Time, 12, 3)));
+        self::assertSame(Kind::Double, $numbers->operand(Domain::string(3, Collation::binary())));
+    }
+
+    public function testDigitsAreThePrecisionAndScaleAnOperandBrings(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame([5, 2], $numbers->digits(Domain::decimal(5, 2)));
+        self::assertSame([20, 6], $numbers->digits(new Domain(Kind::DateTime, Field::DateTime, 26, 6)));
+        self::assertSame([3, 0], $numbers->digits(Domain::integer(Field::LongLong, 4)));
+    }
+
+    public function testBinaryWidensIntegersAndDecimals(): void
+    {
+        $numbers = new Numbers(4);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 5), $numbers->binary(ArithmeticOperator::Plus, Domain::integer(Field::LongLong, 4), Domain::integer(Field::LongLong, 2)));
+        self::assertEquals(Domain::integer(Field::LongLong, 5), $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 4), Domain::integer(Field::LongLong, 2)));
+        self::assertEquals(Domain::decimal(5, 4), $numbers->binary(ArithmeticOperator::Divide, Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 2)));
+        self::assertEquals(Domain::double(23), $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::string(1, Collation::binary())));
+        self::assertEquals(Domain::double(21, 0), $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::null()));
+        self::assertEquals(Domain::integer(Field::LongLong, 2), $numbers->binary(ArithmeticOperator::IntegerDivide, Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 2)));
+    }
+
+    public function testDecimalFollowsTheOperator(): void
+    {
+        $numbers = new Numbers(4);
+
+        self::assertEquals(Domain::decimal(7, 3), $numbers->decimal(ArithmeticOperator::Multiply, [5, 2], [2, 1]));
+        self::assertEquals(Domain::decimal(6, 2), $numbers->decimal(ArithmeticOperator::Plus, [5, 2], [2, 1]));
+        self::assertEquals(Domain::decimal(5, 2), $numbers->decimal(ArithmeticOperator::Modulo, [5, 2], [2, 1]));
+    }
+
+    public function testDecimalPreservesTheCarryDigitInMaximumPrecisionResultMetadata(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(68, $numbers->decimal(ArithmeticOperator::Plus, [65, 30], [1, 0])->length);
+        self::assertSame(68, $numbers->decimal(ArithmeticOperator::Plus, [66, 30], [1, 0])->length);
+        self::assertSame(67, $numbers->decimal(ArithmeticOperator::Minus, [65, 0], [1, 0])->length);
+        self::assertSame(67, $numbers->decimal(ArithmeticOperator::Multiply, [65, 30], [65, 30])->length);
+        self::assertSame(67, $numbers->decimal(ArithmeticOperator::Divide, [65, 30], [65, 30])->length);
+    }
+
+    public function testNegatedWidensUnsignedIntegers(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertEquals(Domain::integer(Field::LongLong, 21), $numbers->negated(Domain::integer(Field::LongLong, 20, true)));
+        self::assertEquals(Domain::decimal(5, 2), $numbers->negated(Domain::decimal(5, 2)));
+        self::assertEquals(Domain::double(23), $numbers->negated(Domain::string(1, Collation::binary())));
+    }
+
+    public function testNegatedMakesANegativeIntegerConstantADecimal(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertEquals(Domain::decimal(1, 0), $numbers->negated(Domain::integer(Field::LongLong, 2), true));
+        self::assertEquals(Domain::decimal(21, 0), $numbers->negated(Domain::integer(Field::LongLong, 21, true), true));
+        self::assertEquals(Domain::decimal(5, 2), $numbers->negated(Domain::decimal(5, 2), true));
+    }
+
+    public function testBinaryCountsTheDigitsOfAProductAndAnUnsignedRemainder(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(42, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 21, true), Domain::integer(Field::LongLong, 21, true))->length);
+        self::assertSame(41, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(), Domain::integer())->length);
+        self::assertSame(66, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 61), Domain::integer())->length);
+        self::assertSame(22, $numbers->binary(ArithmeticOperator::Modulo, Domain::integer(Field::LongLong, 21, true), Domain::integer(Field::LongLong, 2))->length);
+        self::assertSame(22, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::integer(Field::LongLong, 2))->length);
+    }
+
+    public function testQuotientUsesTheDivisorScaleAndRetainsLegacyZeroWidthNull(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(1, $numbers->quotient(Domain::null(), Domain::integer(length: 7))->length);
+        self::assertSame(4, $numbers->quotient(Domain::null(), Domain::decimal(6, 3))->length);
+        self::assertSame(7, $numbers->quotient(Domain::null(), Domain::string(6, Collation::binary()))->length);
+        self::assertSame(5, $numbers->quotient(Domain::decimal(4, 2), Domain::decimal(3, 2))->length);
+        self::assertSame(0, (new Numbers(legacyRemainders: true))->quotient(Domain::null(), Domain::decimal(4, 2))->length);
+        self::assertSame(4, (new Numbers(legacyRemainders: true))->quotient(Domain::decimal(4, 2), Domain::null())->length);
+    }
+
+    public function testQuotientIsAsLongAsTheDividendWithoutItsFraction(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertEquals(Domain::integer(Field::LongLong, 5), $numbers->quotient(Domain::decimal(6, 2), Domain::integer(Field::LongLong, 2)));
+        self::assertEquals(Domain::integer(Field::LongLong, 21, true), $numbers->quotient(Domain::integer(Field::LongLong, 2, true), Domain::double()));
+    }
+
+    public function testQuotientBoundsWideResultsAndReservesTheWholeFloatingWidth(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(22, $numbers->quotient(Domain::decimal(65, 30), Domain::integer())->length);
+        self::assertSame(22, $numbers->quotient(Domain::string(100, Collation::binary()), Domain::integer())->length);
+        self::assertSame(22, $numbers->quotient(Domain::double(3), Domain::integer())->length);
+        self::assertSame(22, $numbers->quotient(Domain::integer(Field::LongLong, 2), Domain::double(3))->length);
+    }
+
+    public function testQuotientKeepsLegacyDividendWidthsWithinTwentyOneCharacters(): void
+    {
+        $numbers = new Numbers(legacyRemainders: true);
+
+        self::assertSame(21, $numbers->quotient(Domain::decimal(65, 30), Domain::integer())->length);
+        self::assertSame(21, $numbers->quotient(Domain::string(100, Collation::binary()), Domain::integer())->length);
+        self::assertSame(3, $numbers->quotient(Domain::double(3), Domain::integer())->length);
+        self::assertSame(1, $numbers->quotient(Domain::integer(Field::LongLong, 1), Domain::double(3))->length);
+    }
+
+    public function testBitsIsAnUnsignedBigint(): void
+    {
+        self::assertEquals(Domain::integer(Field::LongLong, 21, true), (new Numbers())->bits());
+    }
+
+    public function testTruthIsAOneDigitBigint(): void
+    {
+        self::assertEquals(Domain::integer(Field::LongLong, 1), (new Numbers())->truth());
+    }
+
+    public function testNumericReadsAHexadecimalLiteralAsTheUnsignedIntegerItsBytesSpell(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertEquals(Domain::integer(Field::LongLong, 5, true), $numbers->numeric(new RadixLiteral(Radix::Hexadecimal, 'FFFF'), Domain::string(2, Collation::binary())));
+        self::assertEquals(Domain::integer(Field::LongLong, 5, true), $numbers->numeric(new Grouped(new Grouped(new RadixLiteral(Radix::Hexadecimal, 'FFFF'))), Domain::string(2, Collation::binary())));
+        self::assertEquals(Domain::integer(Field::LongLong, 20, true), $numbers->numeric(new RadixLiteral(Radix::Hexadecimal, '010203040506070809'), Domain::string(9, Collation::binary())));
+    }
+
+    public function testNumericReadsABitLiteralOneDigitWider(): void
+    {
+        self::assertEquals(Domain::integer(Field::LongLong, 4, true), (new Numbers())->numeric(new RadixLiteral(Radix::Bit, '11111111'), Domain::string(1, Collation::binary())));
+    }
+
+    public function testNumericKeepsAnyOtherOperand(): void
+    {
+        $numbers = new Numbers();
+        $string = Domain::string(2, Collation::binary());
+        $integer = Domain::integer(Field::LongLong, 3);
+
+        self::assertSame($string, $numbers->numeric(new RadixLiteral(Radix::Hexadecimal, 'FFFF', new Name('latin1')), $string));
+        self::assertSame($string, $numbers->numeric(new NumberLiteral('12'), $string));
+        self::assertSame($integer, $numbers->numeric(new RadixLiteral(Radix::Hexadecimal, 'FF'), $integer));
+    }
+
+    public function testBinaryBitsIsABinaryStringAsLongAsItsLongestOperand(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertEquals(Domain::string(5, Collation::binary()), $numbers->binaryBits(ArithmeticOperator::BitAnd, Domain::string(3, Collation::binary()), Domain::string(5, Collation::binary())));
+        self::assertEquals(Domain::string(5, Collation::binary()), $numbers->binaryBits(ArithmeticOperator::BitXor, Domain::string(5, Collation::binary()), Domain::string(3, Collation::binary())));
+        self::assertEquals(Domain::string(4, Collation::binary()), $numbers->binaryBits(null, Domain::string(4, Collation::binary())));
+    }
+
+    public function testBinaryBitsOfAShiftIsAsLongAsItsLeftOperand(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertEquals(Domain::string(3, Collation::binary()), $numbers->binaryBits(ArithmeticOperator::ShiftLeft, Domain::string(3, Collation::binary()), Domain::string(5, Collation::binary())));
+        self::assertEquals(Domain::string(3, Collation::binary()), $numbers->binaryBits(ArithmeticOperator::ShiftRight, Domain::string(3, Collation::binary()), Domain::string(5, Collation::binary())));
+    }
+
+    public function testLegacyNegatedCountsTheSignOfAnExactResult(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame([12, 5, 23], [$numbers->legacyNegated(Domain::integer(Field::LongLong, 11))->length, $numbers->legacyNegated(Domain::decimal(2, 1))->length, $numbers->legacyNegated(Domain::double(23))->length]);
+    }
+
+    public function testSignedCountsTheSignOfAnIntegerLiteralOperand(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame([2, 2, 11], [$numbers->signed(new NumberLiteral('1'), Domain::integer(Field::LongLong, 1))->length, $numbers->signed(new Grouped(new NumberLiteral('1')), Domain::integer(Field::LongLong, 1))->length, $numbers->signed(new StringLiteral(['1']), Domain::integer(Field::Long, 11))->length]);
+    }
+
+    public function testWidthCountsTheDigitsAndTheSignOfATemporalValue(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame([9, 15, 8, 11], [$numbers->width(new Domain(Kind::Date, Field::Date, 10)), $numbers->width(new Domain(Kind::DateTime, Field::DateTime, 19)), $numbers->width(new Domain(Kind::Time, Field::Time, 10)), $numbers->width(Domain::integer(Field::Long, 11))]);
+    }
+
+    public function testBinaryCountsATemporalOperandByItsWidth(): void
+    {
+        $date = new Domain(Kind::Date, Field::Date, 10);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 10), (new Numbers())->binary(ArithmeticOperator::Plus, $date, Domain::integer(Field::LongLong, 1)));
+        self::assertEquals(Domain::integer(Field::LongLong, 9), (new Numbers())->binary(ArithmeticOperator::IntegerDivide, $date, Domain::integer(Field::LongLong, 1)));
+        self::assertEquals(Domain::integer(Field::LongLong, 10), (new Numbers(4, true, true))->binary(ArithmeticOperator::Modulo, $date, Domain::integer(Field::LongLong, 1)));
+    }
+
+    public function testNegatedMakesATemporalValueADouble(): void
+    {
+        self::assertEquals(Domain::double(19, 2), (new Numbers())->negated(new Domain(Kind::DateTime, Field::DateTime, 22, 2)));
+    }
+}

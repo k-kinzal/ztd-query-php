@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockedRowAction;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the clauses written after a query: LIMIT, PROCEDURE ANALYSE, INTO and the locking clauses.
@@ -107,7 +106,7 @@ final class TailRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function value(Node $option): Scalar
+    public function value(Node $option): NumberLiteral|\SqlSemantics\Platform\MySql\Statement\Literal\Parameter|ProgramVariable
     {
         $form = $this->lowering->form($option);
 

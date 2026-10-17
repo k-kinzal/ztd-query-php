@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
@@ -32,12 +34,30 @@ final class LoadFacts
      */
     public function derive(LoadTable $load, Derivation $derivation): void
     {
+        $conflict = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true) ? null : $this->algorithm($load);
+        if ($conflict !== null) {
+            $derivation->report($conflict);
+        }
         $base = $derivation->environment();
+        if ($load->charset?->name !== null) {
+            if (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($load->charset->name->value) === null) {
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($load->charset->name->value));
+            }
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::charset($load->charset->name->value, $derivation);
+        }
         $fact = $derivation->relation($load->table, $base);
-        $environment = new Environment($derivation->context, $base, [new VisibleRelation($load->table, $fact->shape, null, $load->table->name)]);
+        $environment = new Environment($derivation->context, $base, [new VisibleRelation($load->table, $fact->shape, null, $load->table->name, [], (new TableShapes())->implicit($fact))]);
         foreach ($load->columns as $column) {
-            $derivation->scalar($column, $column instanceof ColumnUse ? $environment : $base);
+            $derivation->scalar($column, $column instanceof ColumnUse ? (new WriteScope())->written($environment) : $base);
         }
         (new WriteScope())->assign($load->assignments, $derivation, $environment, $environment, false);
+    }
+
+    /**
+     * Resolves option compatibility independently of engine and file availability.
+     */
+    public function algorithm(LoadTable $load): ?LoadConflict
+    {
+        return (new LoadOptions())->conflict($load->format, $load->input, $load->duplicates, $load->compression, $load->columns !== [], $load->assignments !== [], $load->bulk);
     }
 }

@@ -8,14 +8,16 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
  * The prefix operators of the simple_expr level: `+`, `-`, `~` and the tight logical negation `!`.
  *
  * Under HIGH_NOT_PRECEDENCE the keyword NOT is the tight negation and is
- * written `!`. Each case holds the written operator.
+ * represented by Not. Unary retains whether its spelling was NOT or `!`.
+ * PairedNot retains a contiguous `!!` pair: native 8.0, 8.4 and 9.1 treat it as
+ * one negation, with one warning. Two separated marks remain two negations.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/operator-precedence.html,
  * https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_high_not_precedence.
  *
  * @visibility public
  * @example Reading a unary minus
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE -a < 0');
- *     $query->statement->where->left->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus
+ *     $query->statement->query->where->left->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus
  */
 enum UnaryOperator: string
 {
@@ -23,4 +25,5 @@ enum UnaryOperator: string
     case Minus = '-';
     case Invert = '~';
     case Not = '!';
+    case PairedNot = '!!';
 }

@@ -10,21 +10,11 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Spine;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\FormatAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
-use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Scalar;
 
@@ -45,7 +35,7 @@ use SqlSemantics\Statement\Scalar;
  * usage of DEFAULT and generated column"; sql/parse_tree_column_attrs.h
  * `PT_default_column_attr::do_contextualize` and its siblings,
  * `PT_generated_field_def_base`); 5.7 has no grammar for them. Constructs: OrdinaryColumn,
- * GeneratedColumn, ParseGeneratedColumn. Terminates: lists are flattened
+ * GeneratedColumn. Terminates: lists are flattened
  * iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html. Status: Implemented.
@@ -91,11 +81,12 @@ final class ColumnRule
      * @param list<ColumnAttribute> $trailing Attributes written after the specification, such as a 5.x column CHECK
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When a generated column has an attribute or type the server refuses for it
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
      */
-    public function specification(Node $definition, ?Node $attributes = null, ?References $references = null, array $trailing = []): ColumnSpecification
+    public function specification(Node $definition, ?Node $attributes = null, ?References $references = null, array $trailing = [], ?\SqlSemantics\Statement\Identifier\Name $name = null): ColumnSpecification
     {
         if ($definition->name === 'type') {
-            return new OrdinaryColumn($this->lowering->types->type($definition), [...$this->attributes($attributes ?? throw ImplementationGap::rule('MySQL 5.6 column specification without attributes')), ...$trailing], $references);
+            return $this->ordinary($definition, $attributes ?? throw ImplementationGap::rule('MySQL 5.6 column specification without attributes'), $references, $trailing, $name);
         }
         $form = $this->lowering->productions->form($definition);
         $positions = self::GENERATED[$form->signature] ?? null;
@@ -105,6 +96,7 @@ final class ColumnRule
             $type = $this->lowering->types->type($form->node(0));
             $attributes = $this->attributes($form->node($list));
             $this->refuse($attributes, $type);
+            $this->compatible($type, $attributes, $name, $definition);
 
             return new GeneratedColumn(
                 $type,
@@ -117,9 +109,37 @@ final class ColumnRule
         }
 
         return match ($form->signature) {
-            'field_def: type opt_attribute', 'field_def: type opt_column_attribute_list' => new OrdinaryColumn($this->lowering->types->type($form->node(0)), [...$this->attributes($form->node(1)), ...$trailing], $references),
+            'field_def: type opt_attribute', 'field_def: type opt_column_attribute_list' => $this->ordinary($form->node(0), $form->node(1), $references, $trailing, $name),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Publishes an ordinary specification only after its intrinsic attributes agree.
+     *
+     * @param list<ColumnAttribute> $trailing Attributes after the type's own list
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     */
+    public function ordinary(Node $definition, Node $list, ?References $references, array $trailing, ?\SqlSemantics\Statement\Identifier\Name $name): OrdinaryColumn
+    {
+        $type = $this->lowering->types->type($definition);
+        $attributes = [...$this->attributes($list), ...$trailing];
+        $this->compatible($type, $attributes, $name, $list);
+        return new OrdinaryColumn($type, $attributes, $references);
+    }
+
+    /**
+     * Converts a structural contradiction to a typed source refusal.
+     *
+     * @param list<ColumnAttribute> $attributes The effective declaration operands
+     * @throws \SqlSemantics\Construction\RejectedInput When the type and an attribute disagree
+     */
+    public function compatible(TypeName $type, array $attributes, ?\SqlSemantics\Statement\Identifier\Name $name, Node $boundary): void
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $attributes)[0] ?? null;
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute($name ?? new \SqlSemantics\Statement\Identifier\Name(''), $problem, $this->lowering->programName ?? $this->lowering->columnTable), (new \SqlSemantics\Construction\SourceRanges())->span($boundary)[1] ?? 0, true);
+        }
     }
 
     /**
@@ -153,21 +173,9 @@ final class ColumnRule
      */
     public function refuse(array $attributes, TypeName $type): void
     {
-        foreach ($attributes as $attribute) {
-            $word = match (true) {
-                $attribute instanceof DefaultLiteral, $attribute instanceof DefaultExpression => 'DEFAULT',
-                $attribute instanceof OnUpdate => 'ON UPDATE',
-                $attribute instanceof KeywordAttribute && ($attribute->keyword === ColumnKeyword::AutoIncrement || $attribute->keyword === ColumnKeyword::SerialDefaultValue) => $attribute->keyword->value,
-                $attribute instanceof FormatAttribute => 'COLUMN_FORMAT',
-                $attribute instanceof StorageAttribute => 'STORAGE',
-                default => null,
-            };
-            if ($word !== null) {
-                throw new AnalysisException('Incorrect usage of ' . $word . ' and generated column');
-            }
-        }
-        if ($type instanceof Elementary && $type->kind === ElementaryKind::Serial) {
-            throw new AnalysisException('Incorrect usage of SERIAL and generated column');
+        $word = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->generated($type, $attributes);
+        if ($word !== null) {
+            throw new AnalysisException('Incorrect usage of ' . $word . ' and generated column');
         }
     }
 
@@ -220,17 +228,18 @@ final class ColumnRule
     }
 
     /**
-     * Lowers the internal 5.7 statement PARSE_GCOL_EXPR: a node of `parse_gcol_expr`.
+     * Refuses the internal 5.7 PARSE_GCOL_EXPR entry before publishing a statement.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the internal entry is submitted as SQL
      */
-    public function parse(Node $statement): ParseGeneratedColumn
+    public function parse(Node $statement): never
     {
         $form = $this->lowering->productions->form($statement);
         if ($form->signature !== 'parse_gcol_expr: PARSE_GCOL_EXPR_SYM ( generated_column_func )') {
             throw ImplementationGap::production($form);
         }
 
-        return new ParseGeneratedColumn($this->expression($form->node(2)));
+        throw (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->generated($statement) ?? ImplementationGap::production($form);
     }
 }

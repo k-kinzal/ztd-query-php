@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\NamedRelation;
@@ -26,7 +27,7 @@ use SqlSemantics\Statement\Relation;
  * table are each one visible relation under their correlation name, or a
  * table reference under its table name when it has none, together with the
  * INVISIBLE columns a name finds (MYSQL-TABLE-SHAPES-001); DUAL makes none
- * visible. A non-lateral derived table sees the enclosing queries only; a
+ * visible. From MySQL 8.0, a non-lateral derived table sees the enclosing queries only; a
  * LATERAL derived table and the document of JSON_TABLE also see the tables
  * to their left: the earlier members of the comma list and, inside a join,
  * the left operand. A join combines its operands by MYSQL-JOIN-COLUMNS-001
@@ -44,6 +45,37 @@ use SqlSemantics\Statement\Relation;
 final class FromScope
 {
     /**
+     * Reports a relation of a FROM clause whose name another relation of the clause already takes.
+     *
+     * Two relations clash when their aliases, or table names when they have
+     * none, are equal and they read tables of one database; a table name
+     * without a database names a table of the current database, and a
+     * derived table belongs to no database. The first clash is reported
+     * (ER_NONUNIQ_TABLE).
+     *
+     * @param list<VisibleRelation> $visible
+     */
+    public function unique(array $visible, Derivation $derivation): void
+    {
+        $names = $derivation->context->relationNames;
+        $current = $derivation->context->searchPath[0]->value ?? '';
+        $seen = [];
+        foreach ($visible as $relation) {
+            $name = $relation->alias ?? $relation->name?->name;
+            if ($name === null) {
+                continue;
+            }
+            $key = ($relation->name === null ? '' : $names->fold($relation->name->schema->value ?? $current)) . "\0" . $names->fold($name->value);
+            if (isset($seen[$key])) {
+                $derivation->report(new NonUniqueTable($name));
+
+                return;
+            }
+            $seen[$key] = true;
+        }
+    }
+
+    /**
      * Derives one term, records its facts and answers what it makes visible.
      *
      * @param list<VisibleRelation> $left The relations to the left of the term in its FROM clause
@@ -56,6 +88,7 @@ final class FromScope
 
             return $input;
         }
+        $outer = $term instanceof DerivedTable ? $this->derived($outer) : $outer;
         $lateral = $term instanceof JsonTable || ($term instanceof DerivedTable && $term->lateral);
         $fact = $derivation->relation($term, $lateral ? new Environment($derivation->context, $outer, $left) : $outer);
         if ($term instanceof NamedRelation) {
@@ -71,6 +104,22 @@ final class FromScope
         }
 
         return new JoinedInput($fact, [$relation], $star);
+    }
+
+    /**
+     * Gives a derived table its enclosing scope. MySQL 5.6 and 5.7 forbid outer
+     * query references while still exposing routine variables and trigger rows.
+     * The remaining chain retains declaration shadowing within stored programs.
+     * Source: https://dev.mysql.com/doc/refman/8.0/en/derived-tables.html.
+     */
+    public function derived(Environment $environment): Environment
+    {
+        if (!in_array($environment->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            return $environment;
+        }
+        $relations = array_values(array_filter($environment->relations, static fn (VisibleRelation $relation): bool => $relation->relation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList || $relation->relation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration || $relation->relation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable));
+
+        return new Environment($environment->context, $environment->outer === null ? null : $this->derived($environment->outer), $relations);
     }
 
     /**

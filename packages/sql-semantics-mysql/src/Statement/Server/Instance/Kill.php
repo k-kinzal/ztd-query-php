@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Utility\ProcessReferences;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `KILL [CONNECTION | QUERY] processlist_id`: a request to end a connection or the statement it runs.
@@ -29,11 +31,17 @@ final class Kill implements Statement
     use Snapshot;
 
     /**
+     * The server's name for dependencies forbidden in a process identifier.
+     */
+    public const DEPENDENCIES = 'Usage of subqueries or stored function calls as part of this statement';
+
+    /**
      * @param KillScope|null $scope CONNECTION or QUERY, when written
      * @param Scalar $process The processlist identifier
      */
     public function __construct(public readonly ?KillScope $scope, public readonly Scalar $process)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -41,7 +49,14 @@ final class Kill implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->scalar($this->process, $derivation->environment());
+        (new Operands())->single($derivation->scalar($this->process, $derivation->environment()), $derivation);
+        if ($derivation->inProgram()) {
+            return;
+        }
+        (new ProcessReferences())->check($this->process, $derivation);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->names([$this->process], false) as $name) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $name));
+        }
     }
 
     /**

@@ -28,8 +28,9 @@ final class UnionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2');
 
-        self::assertInstanceOf(QueryExpression::class, $operation->statement);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
+        self::assertInstanceOf(SetOperation::class, $operation->statement->query->body);
         self::assertSame('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2', $operation->toString());
     }
 

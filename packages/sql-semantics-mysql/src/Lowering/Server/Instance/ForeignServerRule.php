@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\DropServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE, ALTER and DROP SERVER.
@@ -78,13 +78,18 @@ final class ForeignServerRule
     /**
      * Lowers CREATE SERVER from the position of its name.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the definition name is empty
      * @throws ImplementationGap When a production has no rule
      */
     public function create(Form $form, int $name): CreateServer
     {
         $names = $this->lowering->names;
 
-        return new CreateServer($names->identifier($form->node($name)), $names->identifier($form->node($name + 4)), $this->options($form->node($name + 7)));
+        $identifier = $names->identifier($form->node($name));
+        if ($identifier->value === '') {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Server), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
+        return new CreateServer($identifier, $names->identifier($form->node($name + 4)), $this->options($form->node($name + 7)));
     }
 
     /**

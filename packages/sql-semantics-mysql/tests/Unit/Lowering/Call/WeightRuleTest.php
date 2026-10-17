@@ -66,6 +66,18 @@ final class WeightRuleTest extends TestCase
         self::assertSame('7', (new WeightRule($lowering))->length($node)->text);
     }
 
+    public function testLengthRefusesZeroBeforeConstructingItsOwner(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT WEIGHT_STRING(NULL AS CHAR(0))')->find('ws_num_codepoints')[0];
+        $this->expectException(\SqlSemantics\Diagnostic\AnalysisException::class);
+        $this->expectExceptionMessage('WEIGHT_STRING requires a positive cast length');
+
+        (new WeightRule($lowering))->length($node);
+    }
+
     public function testLevelsLowersARange(): void
     {
         $platform = new Platform();

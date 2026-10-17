@@ -42,6 +42,22 @@ final class ExplainRuleTest extends TestCase
         self::assertSame('EXPLAIN ANALYZE FORMAT = `json` INTO @v FOR DATABASE db SELECT 1', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('explain analyze format=json into @v for database db select 1')->toString());
     }
 
+    public function testModernRefusesConnectionAnalysisBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('EXPLAIN ANALYZE FOR CONNECTION is not supported.');
+
+        (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 1');
+    }
+
+    public function testModernRefusesConnectionIntoBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('EXPLAIN FOR CONNECTION does not support the INTO clause.');
+
+        (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @a FOR CONNECTION 1');
+    }
+
     public function testExplainedLowersThroughTheOwningFamily(): void
     {
         self::assertSame('EXPLAIN UPDATE t SET a = 1', (new Semantics(Dialect::MySql))->analyze('explain update t set a = 1')->toString());

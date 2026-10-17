@@ -50,11 +50,6 @@ final class ConditionFactsTest extends TestCase
      */
     public static function providerValueChecksTheFormOfAnSqlState(): iterable
     {
-        yield 'success in a handler' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '00000' BEGIN END; END", ["Bad SQLSTATE: '00000'"]];
-        yield 'success in a condition in 5.6' => ['mysql-5.6.51', "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '00123'; END", ["Bad SQLSTATE: '00123'"]];
-        yield 'four characters in SIGNAL' => ['mysql-8.0.44', "CREATE PROCEDURE p() SIGNAL SQLSTATE '4500'", ["Bad SQLSTATE: '4500'"]];
-        yield 'six characters in SIGNAL' => ['mysql-9.1.0', "CREATE PROCEDURE p() SIGNAL SQLSTATE VALUE '450000'", ["Bad SQLSTATE: '450000'"]];
-        yield 'a lower-case letter in SIGNAL' => ['mysql-9.1.0', "CREATE PROCEDURE p() SIGNAL SQLSTATE '4500a'", ["Bad SQLSTATE: '4500a'"]];
         yield 'a warning in SIGNAL' => ['mysql-9.1.0', "CREATE PROCEDURE p() SIGNAL SQLSTATE '01000'", []];
         yield 'an upper-case letter in a handler' => ['mysql-5.7.44', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '42S02', NOT FOUND, SQLWARNING BEGIN END; END", []];
     }
@@ -160,10 +155,6 @@ final class ConditionFactsTest extends TestCase
      */
     public static function providerValueReportsTheErrorCodeZero(): iterable
     {
-        yield 'zero in a condition in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'zero in a handler in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 0 BEGIN END; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'a decimal below one in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.7; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'a hexadecimal zero in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0x00; END', ["Incorrect CONDITION value: '0'"]];
         yield 'a floating number in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1e2; END', []];
     }
 

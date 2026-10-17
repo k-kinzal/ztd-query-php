@@ -27,6 +27,15 @@ use SqlSemantics\Statement\Type\NullOnly;
 #[Small]
 final class ShowRowsTest extends TestCase
 {
+    public function testColumnsRetainNonStrictNullabilityInModernColumnReports(): void
+    {
+        $rows = new ShowRows();
+
+        self::assertSame(['Field', 'v'], $rows->columns(Report::Columns, GrammarRelease::MySql847, false)[0]);
+        self::assertSame(['Extra', 'v'], $rows->columns(Report::FullColumns, GrammarRelease::MySql847, false)[6]);
+        self::assertSame(['Field', 'v?'], $rows->columns(Report::Columns, GrammarRelease::MySql847, true)[0]);
+    }
+
     public function testColumnsAnswersEveryLayoutOfEveryRelease(): void
     {
         $rows = new ShowRows();

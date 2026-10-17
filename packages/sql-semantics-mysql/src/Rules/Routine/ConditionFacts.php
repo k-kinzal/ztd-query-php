@@ -19,9 +19,9 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 /**
  * Derives condition values, SIGNAL and RESIGNAL, and the targets of GET DIAGNOSTICS.
  *
- * Rule: MYSQL-PROGRAM-CONDITIONS-001. An SQLSTATE value is five digits or
- * upper-case letters and does not begin with `00`, which means success
- * (ER_SP_BAD_SQLSTATE); an error code is not 0 (ER_WRONG_VALUE). Two
+ * Rule: MYSQL-PROGRAM-CONDITIONS-001. The SQLSTATE constructor guarantees
+ * five digits or upper-case letters outside success class `00`. The ErrorCode
+ * constructor rejects zero before the 32-bit conversion. Two
  * condition values are the same when they are the same general condition,
  * the same error number or the same SQLSTATE value; a condition name stands
  * for the value it is declared for. A condition name must be declared around the
@@ -42,16 +42,10 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 final class ConditionFacts
 {
     /**
-     * Checks a condition value: the form of an SQLSTATE value, the declaration of a condition name.
+     * Checks the declaration of a condition name; literal condition domains hold at construction.
      */
     public function value(Condition $value, Derivation $derivation, ProgramScope $scope): void
     {
-        if ($value instanceof ErrorCode && !$value->valid()) {
-            $derivation->report(new ProgramProblem(ProgramRule::ZeroErrorCode));
-        }
-        if ($value instanceof SqlState && !$value->valid()) {
-            $derivation->report(new ProgramProblem(ProgramRule::BadSqlState, $value->state->value));
-        }
         if ($value instanceof ConditionName && $scope->condition($value->name) === null) {
             $derivation->report(new ProgramProblem(ProgramRule::UndefinedCondition, $value->name->value));
         }

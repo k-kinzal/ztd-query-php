@@ -12,9 +12,12 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\ItemNaming;
 use SqlSemantics\Platform\MySql\Statement\Call\CallArgument;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
@@ -23,6 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
@@ -33,6 +37,18 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Medium]
 final class ItemNamingTest extends TestCase
 {
+    public function testOwnResolvesCalendarDependentOdbcNamesWithoutNarrowingLayouts(): void
+    {
+        $profile = (new Semantics(Dialect::MySql))->profile();
+        $settings = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::defaults($profile->grammar);
+        $naming = new ItemNaming($profile, null, $settings);
+        $escape = new OdbcEscape(new Name('d'), new StringLiteral(['2024-02-31']));
+
+        self::assertSame(['2024-02-31', 'client'], $naming->own($escape));
+        self::assertTrue($naming->keeps($escape));
+        self::assertNull((new ItemNaming($profile))->own($escape));
+    }
+
     public function testNameAnswersTheAliasTheColumnNameOrTheText(): void
     {
         $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
@@ -58,7 +74,30 @@ final class ItemNamingTest extends TestCase
 
         $this->expectExceptionMessage('A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
 
-        $naming->name(new SelectExpression(new ColumnUse(new Name('a')), null, new Layout([new Spelled('', '`a`')])));
+        $naming->name(new SelectExpression(new StringLiteral(['a']), null, new Layout([new Spelled('', '"a"')])));
+    }
+
+    public function testKeepsUnqualifiedReferenceSpellingUntilItsRoleIsResolved(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->profile());
+
+        self::assertTrue($naming->keeps(new Grouped(new ColumnUse(new Name('e')))));
+        self::assertFalse($naming->keeps(new ColumnUse(new Name('e'), new QualifiedName(new Name('t')))));
+        self::assertFalse($naming->keeps(new StringLiteral(['e'])));
+    }
+
+    public function testNameUsesVariableSpellingAndColumnIdentityInTheirOwnEnvironments(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $naming = new ItemNaming($semantics->profile());
+        $parameters = new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]);
+        $row = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow($parameters, [new Name('É')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), program: [$row]);
+        $environment = new \SqlSemantics\Resolution\Environment($semantics->context(session: $settings));
+        $item = new SelectExpression(new ColumnUse(new Name('e')), layout: new Layout([new Spelled('', '`e`')]));
+
+        self::assertEquals(new Name('`e`'), $naming->name($item, $environment));
+        self::assertEquals(new Name('e'), $naming->name($item, new \SqlSemantics\Resolution\Environment($semantics->context())));
     }
 
     public function testNameRefusesALayoutThatSpellsTheCanonicalRendering(): void
@@ -83,6 +122,17 @@ final class ItemNamingTest extends TestCase
         self::assertNull($modern->own(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1'))));
     }
 
+    public function testUnwrappedStripsTheWrappersThatCreateNoItem(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+        $column = new ColumnUse(new Name('a'));
+        $date = new OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']));
+        $minus = new Unary(UnaryOperator::Minus, $column);
+
+        self::assertSame($column, $naming->unwrapped(new Grouped(new Unary(UnaryOperator::Plus, new OdbcEscape(new Name('fn'), $column)))));
+        self::assertSame([$date, $minus], [$naming->unwrapped($date), $naming->unwrapped(new Grouped($minus))]);
+    }
+
     public function testConstantSpellsTheNameArgumentOfNameConst(): void
     {
         $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
@@ -95,11 +145,27 @@ final class ItemNamingTest extends TestCase
         self::assertSame(['x', 'utf8mb3'], $naming->own(new FunctionCall(new Name('name_const'), [new CallArgument(new StringLiteral(['x'])), new CallArgument(new NumberLiteral('1'))])));
     }
 
-    public function testConstantRefusesAValueItDoesNotSpell(): void
+    public function testConstantAnswersAnEmptyNameForAnArgumentThatIsNoLiteral(): void
     {
-        $this->expectExceptionMessage('the column name NAME_CONST takes from a name argument other than');
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
 
-        (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile))->constant(new NumberLiteral('1e1'));
+        self::assertSame(['', ''], [$naming->constant(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()), $naming->constant(new Unary(UnaryOperator::Minus, new NumberLiteral('1')))]);
+    }
+
+    public function testConstantNormalizesFloatingAndTemporalNames(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertSame('1000', $naming->constant(new NumberLiteral('1e3')));
+        self::assertSame('2024-01-31', $naming->constant(new OdbcEscape(new Name('d'), new StringLiteral(['20240131']))));
+    }
+
+    public function testConstantKeepsLongerPositionalNamesInLegacyReleases(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context()->profile);
+
+        self::assertSame('0.000012345678901234568', $naming->constant(new NumberLiteral('1.2345678901234568e-5')));
+        self::assertSame('0.0000000000000012345678901234568', $naming->constant(new NumberLiteral('1.2345678901234568e-15')));
     }
 
     public function testBytesPadsBitsToWholeBytes(): void
@@ -133,9 +199,25 @@ final class ItemNamingTest extends TestCase
         self::assertEquals(new Name('é'), $naming->stored('é', 'national'));
         self::assertEquals(new Name(''), $naming->stored('é', 'binary'));
         self::assertEquals(new Name('aé'), $naming->stored('aé', 'binary'));
-        self::assertEquals(new NameConversion('utf16'), $naming->stored('ab', 'utf16'));
-        self::assertEquals(new NameConversion('latin1'), $naming->stored('é', 'latin1'));
+        self::assertEquals(new Name('慢'), $naming->stored('ab', 'utf16'));
+        self::assertEquals(new Name('Ã©'), $naming->stored('é', 'latin1'));
+        self::assertEquals(new NameConversion('cp1251'), $naming->stored('é', 'cp1251'));
         self::assertEquals(new Name('é?'), $naming->stored('é😀', 'utf8mb4'));
+    }
+
+    public function testStoredReadsATextOfTheClientInTheCharacterSetTheSessionNames(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('utf8mb4'));
+
+        self::assertEquals(new Name("UPPER('straße')"), $naming->stored("UPPER('straße')", 'client'));
+        self::assertEquals(new Name("CONCAT('?', 'a')"), $naming->stored("CONCAT('😀', 'a')", 'client'));
+        self::assertEquals(new Name(str_repeat('a', 255)), $naming->stored(str_repeat('a', 300), 'client'));
+        self::assertEquals(new Name("CONCAT('Ã©')"), (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('latin1')))->stored("CONCAT('é')", 'client'));
+    }
+
+    public function testLatin1ReadsTheBytesAsCp1252WithTheControlsOfItsUnassignedBytes(): void
+    {
+        self::assertSame("aÃ©\u{20AC}\u{81}\u{9D}", (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile))->latin1("aé\x80\x81\x9D"));
     }
 
     public function testNarrowedKeepsWholeCharactersOfUtf8mb3(): void
@@ -152,4 +234,59 @@ final class ItemNamingTest extends TestCase
         self::assertTrue((new ItemNaming((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context()->profile))->legacy());
         self::assertFalse((new ItemNaming((new Semantics(Dialect::MySql, 'mysql-8.0.44'))->context()->profile))->legacy());
     }
+
+    public function testOwnNamesAnOdbcEscapeAsItsOperandUnlessItIsATemporalLiteral(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('a'), $naming->name(new SelectExpression(new OdbcEscape(new Name('fn'), new ColumnUse(new Name('a'))))));
+        self::assertNull($naming->own(new OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']))));
+    }
+
+    public function testIdentifierKeepsAnAlreadyDecodedNameAcrossClientCharacterSets(): void
+    {
+        $latin1 = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('latin1'));
+        $utf8 = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('utf8mb4'));
+
+        self::assertEquals([new Name('é'), new Name('x'), new Name('é')], [$latin1->identifier(new Name('é')), $latin1->identifier(new Name('x')), $utf8->identifier(new Name('é'))]);
+    }
+
+    public function testWideReadsWholeUnitsAndWritesAQuestionMarkForAUnitThatIsNoCharacter(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertSame(['慢', '', '?', '扡', '😀'], [$naming->wide('abc', 'utf16'), $naming->wide('a', 'utf16'), $naming->wide('abcde', 'utf32'), $naming->wide('ab', 'utf16le'), $naming->wide("\xD8\x3D\xDE\x00", 'utf16')]);
+    }
+    public function testStoredStopsAtNulAfterRemovingLeadingControls(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('zero'), $naming->stored("\0zero\0tail", 'client'));
+        self::assertEquals(new Name('zero'), $naming->stored("zero\0tail", 'binary'));
+        self::assertEquals(new Name('稀'), $naming->stored("\x00z\x00\x00\x00b", 'ucs2'));
+        self::assertEquals(new Name('z'), $naming->stored("\x00z\x00\x00\x00b", 'utf16'));
+    }
+
+    public function testIdentifierStopsAnExplicitAliasAtNul(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('zero'), $naming->identifier(new Name("zero\0tail")));
+    }
+
+    public function testNameRemovesLeadingControlsFromAnExplicitAlias(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('zero'), $naming->name(new SelectExpression(new NumberLiteral('1'), new Name(" \0zero\0tail"))));
+    }
+
+    public function testEncodedConvertsOnlyNamesWhenBuildingAnObservableLabel(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->profile(), Charset::known('latin1'));
+        $output = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $output->name(new Name('猫'))->symbol('+')->spelled("'é'");
+        self::assertSame("`?` + 'é'", $naming->encoded($output));
+    }
+
 }

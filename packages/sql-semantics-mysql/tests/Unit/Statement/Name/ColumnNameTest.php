@@ -73,4 +73,33 @@ final class ColumnNameTest extends TestCase
 
         new ColumnName(new Name('a'), new QualifiedName(new Name('t'), new Name('db'), new Name('catalog')));
     }
+    public function testTheLegacyDotPrefixSurvivesLoweringAndRendering(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $name = $lowering->names->columnName($platform->parser($profile)->parse('CREATE TABLE t (.a INT)')->find('field_ident')[0]);
+        $out = new Output($platform->codec($profile));
+        $name->render($out);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written, $name->dot);
+        self::assertSame('.a', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testRejectsADotPrefixBeforeATableQualifier(): void
+    {
+        $this->expectExceptionMessage('A definition name with a dot prefix has no table qualifier.');
+        new ColumnName(new Name('a'), new QualifiedName(new Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
+    }
+
+    public function testDeriveNameWarnsFromTheRetainedDotWithoutInputLocations(): void
+    {
+        $context = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->context([]);
+        $derivation = new \SqlSemantics\Construction\Derivation($context);
+        (new ColumnName(new Name('a'), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written))->deriveName($derivation);
+        $warning = $derivation->facts()->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $warning);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotDefinitionName, $warning->construct);
+    }
+
 }

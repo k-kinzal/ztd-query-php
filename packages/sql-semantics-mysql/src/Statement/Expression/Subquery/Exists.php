@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Testing for rows
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE EXISTS (SELECT 1)');
- *     $query->facts->scalar($query->statement->where)->nullability // => \SqlSemantics\Statement\Type\Nullability::NotNull
+ *     $query->facts->scalar($query->statement->query->where)->nullability // => \SqlSemantics\Statement\Type\Nullability::NotNull
  */
 final class Exists implements Scalar
 {
@@ -37,6 +37,8 @@ final class Exists implements Scalar
      */
     public function __construct(public readonly Query $query)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

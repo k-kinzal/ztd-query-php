@@ -28,8 +28,16 @@ final class GrantPrivilegesTest extends TestCase
         self::assertInstanceOf(UnknownGrantColumn::class, $grant->facts->diagnostics[0]);
     }
 
+    public function testDeriveStatementRefusesAsOutsideTheGlobalLevel(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('AS clause cannot be granted at database db (ER_UNSUPPORTED_USE_OF_GRANT_AS).');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON db.* TO root AS CURRENT_USER');
+    }
+
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame("GRANT SELECT ON FUNCTION db.f TO u IDENTIFIED BY 'x' REQUIRE NONE WITH MAX_USER_CONNECTIONS 2", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("grant select on function db.f to u identified by 'x' require none with max_user_connections 2")->toString());
+        self::assertSame("GRANT EXECUTE ON FUNCTION db.f TO u IDENTIFIED BY 'x' REQUIRE NONE WITH MAX_USER_CONNECTIONS 2", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("grant execute on function db.f to u identified by 'x' require none with max_user_connections 2")->toString());
     }
 }

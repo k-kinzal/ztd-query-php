@@ -65,4 +65,9 @@ final class CodecTest extends TestCase
         self::assertSame('SELECT "select" AS c1, `a b` AS c2, `x``y` AS c3 FROM `order`', $operation->toString());
         self::assertSame('SELECT "select" AS c1, `a b` AS c2, `x``y` AS c3 FROM `order`', $semantics->analyze($operation->toString())->toString());
     }
+    public function testSpellingPreservesIdentifierQuotesAndBytes(): void
+    {
+        self::assertSame('"é"', (new Codec())->spelling('"é"'));
+    }
+
 }

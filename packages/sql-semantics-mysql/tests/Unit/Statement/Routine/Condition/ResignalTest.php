@@ -54,8 +54,6 @@ final class ResignalTest extends TestCase
      */
     public static function providerDeriveStatementReportsTheBrokenRule(): iterable
     {
-        yield 'success value' => ["RESIGNAL SQLSTATE '00000'", ProgramRule::BadSqlState, "Bad SQLSTATE: '00000'"];
-        yield 'long value' => ["RESIGNAL SQLSTATE '450001'", ProgramRule::BadSqlState, "Bad SQLSTATE: '450001'"];
         yield 'name without declaration' => ['RESIGNAL gone SET MYSQL_ERRNO = 5', ProgramRule::UndefinedCondition, 'Undefined CONDITION: gone'];
         yield 'item set twice' => ["RESIGNAL SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'", ProgramRule::DuplicateSignalItem, "Duplicate condition information item 'MESSAGE_TEXT'"];
     }
@@ -101,10 +99,6 @@ final class ResignalTest extends TestCase
         yield 'name without declaration' => [
             'CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL gone; END',
             ['Undefined CONDITION: gone'],
-        ];
-        yield 'success value' => [
-            "CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL SQLSTATE '00000'; END",
-            ["Bad SQLSTATE: '00000'"],
         ];
         yield 'item set twice in a handler' => [
             "CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'; END; END",

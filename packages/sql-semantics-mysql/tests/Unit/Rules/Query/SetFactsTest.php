@@ -11,6 +11,8 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\SetFacts;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
@@ -36,6 +38,13 @@ final class SetFactsTest extends TestCase
         self::assertSame(Nullability::Nullable, $operation->field('n')->nullability);
     }
 
+    public function testDeriveWarnsAboutIntoInsideTheLastOperand(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION (SELECT 2 INTO @x)');
+
+        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->facts->warnings);
+    }
+
     public function testOperandsCombinesTheColumnsOfBothOperands(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
@@ -47,6 +56,17 @@ final class SetFactsTest extends TestCase
         self::assertInstanceOf(Known::class, $type);
         self::assertSame('INT', $type->descriptor->name());
         self::assertSame(Nullability::Nullable, $operation->field('x')->nullability);
+    }
+
+    public function testCombinedHoldsForASetOperationInParentheses(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $nested = $semantics->analyze('(SELECT 1 UNION SELECT 2) UNION SELECT 3')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $nested);
+        $nested = $nested->query;
+        self::assertInstanceOf(SetOperation::class, $nested);
+
+        self::assertSame([true, false], [(new SetFacts())->combined($nested->left), (new SetFacts())->combined($nested->right)]);
     }
 
     public function testLeadingCombinesTheOperandsBeforeALaterUnion(): void
@@ -67,6 +87,17 @@ final class SetFactsTest extends TestCase
 
         $this->expectExceptionMessage('A SELECT that keeps its own LIMIT before a later UNION needs MySQL 5.6.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), $union);
+        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($union));
     }
+    public function testDerivePublishesTheLegacyConditionFromDirectOperands(): void
+    {
+        $one = new Select([], [new SelectExpression(new NumberLiteral('1'))]);
+        $query = new SetOperation(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one), SetOperator::Union, null, new Select([], [new SelectExpression(new NumberLiteral('2'))]));
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
+        $derivation->query($query, $derivation->environment());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion::class, $derivation->facts()->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
+    }
+
 }

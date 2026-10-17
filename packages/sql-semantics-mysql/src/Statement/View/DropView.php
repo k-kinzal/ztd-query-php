@@ -10,13 +10,13 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to drop views.
@@ -54,8 +54,10 @@ final class DropView implements Statement
     {
         $this->views = Check::listOf($views, QualifiedName::class, 'DROP VIEW names at least one view.', 1);
         foreach ($this->views as $view) {
+            (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($view);
             Check::input($view->catalog === null, 'A view name has at most a database qualifier.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

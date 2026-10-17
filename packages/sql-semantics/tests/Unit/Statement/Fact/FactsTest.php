@@ -24,6 +24,43 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class FactsTest extends TestCase
 {
+    public function testForQueryKeepsItsConditionsAndResolvedDependenciesWithoutSiblingConditions(): void
+    {
+        $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (SELECT missing_a), missing_b');
+        $expression = $operation->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $expression);
+        $facts = $operation->facts->forQuery($expression->query);
+
+        self::assertCount(2, $operation->facts->diagnostics);
+        self::assertSame([$operation->facts->diagnostics[0]], $facts->diagnostics);
+        self::assertSame($operation->facts->query($expression->query), $facts->output);
+        self::assertSame($operation->facts->scalar($expression), $facts->scalar($expression));
+    }
+
+    public function testReferencedRelationRetainsTheBoundOccurrence(): void
+    {
+        $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE d.t FROM e.t, d.t');
+        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
+
+        self::assertSame($statement->tables[1], $operation->facts->referencedRelation($statement->targets[0]));
+        self::assertNull($operation->facts->referencedRelation(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('d'))));
+    }
+
+    public function testWarningInstructionDistinguishesAnInstructionFromAnOuterNotice(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
+        $parsed = $semantics->analyze('CREATE PROCEDURE p() BEGIN SELECT FOUND_ROWS(); END');
+        $facts = $parsed->facts;
+        $root = $semantics->analyze('SELECT FOUND_ROWS()')->facts;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $parsed->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Block::class, $parsed->statement->body);
+        self::assertSame($parsed->statement->body->statements[0], $facts->warningInstruction($facts->warnings[0]));
+        self::assertNull($root->warningInstruction($root->warnings[0]));
+        self::assertNull($facts->warningInstruction($root->warnings[0]));
+    }
+
     public function testIndexKeysPairsByNodeIdentity(): void
     {
         $first = new IntegerLiteral('1');

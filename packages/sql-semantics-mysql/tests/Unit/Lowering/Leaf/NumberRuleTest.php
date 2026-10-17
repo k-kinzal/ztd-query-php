@@ -93,4 +93,38 @@ final class NumberRuleTest extends TestCase
         self::assertSame('1', $rule->ternary(new Node('ternary_option', 0, [new Node('ulong_num', 0, [new Token(0, 'NUM', '1', 0)])]))?->text);
         self::assertNull($rule->ternary(new Node('ternary_option', 1, [new Token(0, 'DEFAULT_SYM', 'DEFAULT', 0)])));
     }
+    public function testIntegralKeepsDecimalAndHexadecimalIntegerTokens(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new NumberRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+
+        self::assertSame('18446744073709551615', $rule->integral(new Node('real_ulong_num', 3, [new Token(0, 'ULONGLONG_NUM', '18446744073709551615', 0)]))->text);
+        self::assertSame('FF', $rule->integral(new Node('real_ulong_num', 1, [new Token(0, 'HEX_NUM', '0xFF', 0)]))->text);
+    }
+
+    public function testIntegralRejectsACompletedFractionalOperand(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new NumberRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+
+        $rule->integral(new Node('real_ulong_num', 4, [new Node('dec_num_error', 0, [new Node('dec_num', 0, [new Token(0, 'DECIMAL_NUM', '1.5', 20)])])]));
+    }
+
+    public function testCompletedRetainsTheAbortingIntegerTokenDiagnostic(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new NumberRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $notice = $rule->completed(new Node('dec_num_error', 0, [new Node('dec_num', 0, [new Token(0, 'DECIMAL_NUM', '1.5', 20)])]));
+
+        self::assertNotNull($notice);
+        self::assertTrue($notice->aborts);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $notice->problem);
+        self::assertSame('1.5', $notice->problem->number->text);
+        self::assertNull($rule->completed(new Node('ulong_num', 0, [new Token(0, 'NUM', '42', 0)])));
+    }
+
 }

@@ -8,12 +8,14 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
+use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HANDLER ... READ index op (value, ...): reads rows of an open handler from the first index key that compares as asked.
@@ -32,7 +34,7 @@ final class HandlerIndexSeek implements Statement
     use Snapshot;
 
     /**
-     * @var list<Scalar> The key values in written order
+     * @var list<Scalar|DefaultRequest> The key values in written order
      */
     public readonly array $values;
 
@@ -40,7 +42,7 @@ final class HandlerIndexSeek implements Statement
      * @param OpenHandler $handler The handler read from
      * @param Name $index The index searched; `PRIMARY` names the primary key
      * @param KeyComparison $comparison How the key is compared with the values
-     * @param list<Scalar> $values The key values; at least one
+     * @param list<Scalar|DefaultRequest> $values The key values; at least one
      * @param Scalar|null $where The condition rows must meet
      * @param Limit|null $limit The most rows read
      */
@@ -52,7 +54,13 @@ final class HandlerIndexSeek implements Statement
         public readonly ?Scalar $where = null,
         public readonly ?Limit $limit = null,
     ) {
-        $this->values = Check::listOf($values, Scalar::class, 'An index seek compares at least one key value.', 1);
+        $accepted = [];
+        foreach (Check::listOf($values, Operand::class, 'An index seek compares at least one key value.', 1) as $value) {
+            Check::input($value instanceof Scalar || $value instanceof DefaultRequest, 'A HANDLER key value is an expression or DEFAULT.');
+            $accepted[] = $value;
+        }
+        $this->values = $accepted;
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

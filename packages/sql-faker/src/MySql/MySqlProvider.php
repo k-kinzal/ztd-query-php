@@ -54,6 +54,8 @@ final class MySqlProvider extends Base
      * Register SQL formatters on the supplied Faker generator.
      * @param Generator $generator Faker generator
      * @param string|null $version MySQL version tag (e.g., "mysql-8.4.7"). Null for default.
+     * @param bool $highNotPrecedence Generate for HIGH_NOT_PRECEDENCE operator tokenization
+     * @param bool $pipesAsConcat Generate for PIPES_AS_CONCAT operator tokenization
      *
      * @visibility public
      * @example Choose a supported database version
@@ -63,14 +65,14 @@ final class MySqlProvider extends Base
      * @example Reject an unsupported database version
      *     new \SqlFaker\MySql\MySqlProvider(\Faker\Factory::create(), 'missing-version') // throws \RuntimeException: Unsupported
      */
-    public function __construct(Generator $generator, ?string $version = null, ?GrammarCoverage $coverage = null)
+    public function __construct(Generator $generator, ?string $version = null, ?GrammarCoverage $coverage = null, bool $highNotPrecedence = false, bool $pipesAsConcat = false)
     {
         parent::__construct($generator);
 
         $generator->addProvider($this);
         $resolvedVersion = MySqlGrammar::resolveVersion($version);
         $this->grammar = MySqlGrammar::load($resolvedVersion);
-        $this->sql = SqlGeneratorFactory::create($generator, $this->grammar, $resolvedVersion, $coverage);
+        $this->sql = SqlGeneratorFactory::create($generator, $this->grammar, $resolvedVersion, $coverage, $highNotPrecedence, $pipesAsConcat);
     }
 
     /**

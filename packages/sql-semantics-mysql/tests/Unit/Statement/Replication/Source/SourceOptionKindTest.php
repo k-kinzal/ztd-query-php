@@ -43,9 +43,47 @@ final class SourceOptionKindTest extends TestCase
         self::assertTrue(SourceOptionKind::AssignGtidsToAnonymousTransactions->accepts(AnonymousGtids::Local));
     }
 
+    public function testAcceptsRequiresATextualUuidPrefixForAnonymousGtids(): void
+    {
+        $kind = SourceOptionKind::AssignGtidsToAnonymousTransactions;
+        self::assertFalse($kind->accepts(new Text('')));
+        self::assertFalse($kind->accepts(new Text('3e11fa4771ca11e19e33c80aa9429562')));
+        self::assertFalse($kind->accepts(new Text('3e11fa47-71ca-11e1-9e33-c80aa942956z')));
+        self::assertFalse($kind->accepts(new Text(' 3e11fa47-71ca-11e1-9e33-c80aa9429562')));
+        self::assertTrue($kind->accepts(new Text('3e11fa47-71ca-11e1-9e33-c80aa9429562')));
+        self::assertTrue($kind->accepts(new Text('3E11FA47-71CA-11E1-9E33-C80AA9429562 trailing')));
+    }
+
     public function testPositionNamesTheLogPositionOptions(): void
     {
         self::assertTrue(SourceOptionKind::RelayLogFile->position());
         self::assertFalse(SourceOptionKind::Port->position());
     }
+
+    public function testAcceptsDistinguishesSourceAndRelayLogNumerals(): void
+    {
+        self::assertFalse(SourceOptionKind::LogPosition->accepts(new Numeral('b', true)));
+        self::assertTrue(SourceOptionKind::RelayLogPosition->accepts(new Numeral('b', true)));
+        self::assertTrue(SourceOptionKind::LogPosition->accepts(new Numeral('1.5')));
+        self::assertTrue(SourceOptionKind::LogPosition->accepts(new Numeral('2147483648')));
+    }
+    public function testAcceptsRestrictsSourceSwitchesToTheirBooleanNumericDomain(): void
+    {
+        self::assertTrue(SourceOptionKind::GtidOnly->accepts(new Numeral('01')));
+        self::assertTrue(SourceOptionKind::RequireRowFormat->accepts(new Numeral('1.9')));
+        self::assertTrue(SourceOptionKind::ConnectionAutoFailover->accepts(new Numeral('1', true)));
+        self::assertFalse(SourceOptionKind::GtidOnly->accepts(new Numeral('1.0')));
+        self::assertFalse(SourceOptionKind::RequireRowFormat->accepts(new Numeral('2')));
+        self::assertFalse(SourceOptionKind::ConnectionAutoFailover->accepts(new Numeral('2')));
+    }
+
+    public function testWarningNamePreservesTheSingularDiagnosticWithoutChangingSql(): void
+    {
+        $kind = SourceOptionKind::CompressionAlgorithms;
+
+        self::assertSame('MASTER_COMPRESSION_ALGORITHM', $kind->warningName(Terminology::Legacy));
+        self::assertSame('SOURCE_COMPRESSION_ALGORITHM', $kind->warningName(Terminology::Current));
+        self::assertSame('SOURCE_COMPRESSION_ALGORITHMS', $kind->keyword(Terminology::Current));
+    }
+
 }

@@ -56,7 +56,8 @@ final class DefinitionRuleTest extends TestCase
         self::assertCount(3, $statement->parameters->parameters);
         self::assertCount(1, $statement->characteristics);
         self::assertInstanceOf(RoutineComment::class, $statement->characteristics[0]);
-        self::assertInstanceOf(Select::class, $statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement->body);
+        self::assertInstanceOf(Select::class, $statement->body->query);
         self::assertNotNull($statement->definer);
         self::assertFalse($statement->ifNotExists);
         self::assertSame("CREATE DEFINER = root@`%` PROCEDURE db.p(IN a INT, OUT b INT, INOUT c INT) COMMENT 'x' SELECT a", $create->toString());
@@ -76,7 +77,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerRoutineLowersAFunctionWithItsReturnCollation')]
     public function testRoutineLowersAFunctionWithItsReturnCollation(string $release): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f(a int) returns varchar(5) collate utf8mb4_bin deterministic return a');
+        $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f(a int) returns varchar(5) character set utf8mb4 collate utf8mb4_bin deterministic return a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame('f', $statement->name->name->value);
@@ -85,7 +86,7 @@ final class DefinitionRuleTest extends TestCase
         self::assertInstanceOf(ReturnStatement::class, $statement->body);
         self::assertNull($statement->definer);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame('CREATE FUNCTION f(a INT) RETURNS VARCHAR(5) COLLATE utf8mb4_bin DETERMINISTIC RETURN a', $create->toString());
+        self::assertSame('CREATE FUNCTION f(a INT) RETURNS VARCHAR(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DETERMINISTIC RETURN a', $create->toString());
     }
 
     /**

@@ -7,12 +7,28 @@ namespace Tests\Unit\Rules\Call;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Call\NativeSpatialCatalog;
+use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(NativeSpatialCatalog::class)]
 #[Small]
 final class NativeSpatialCatalogTest extends TestCase
 {
+    public function testRowsRefuseASetterArgumentForLegacySrid(): void
+    {
+        self::assertNull((new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->row(\SqlSemantics\Contract\GrammarRelease::MySql5744, 'SRID', 2));
+    }
+
+    public function testRowsPropagateNullabilityForModernSridReading(): void
+    {
+        $query = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT ST_SRID(X'00'),ST_SRID(NULL),ST_SRID(X'00',0)");
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SELECT ST_SRID(X'00')");
+
+        self::assertSame([Nullability::NotNull, Nullability::Nullable, Nullability::Nullable, Nullability::Nullable], [$query->field(0)->nullability, $query->field(1)->nullability, $query->field(2)->nullability, $legacy->field(0)->nullability]);
+    }
+
     public function testRowsHoldAReleaseMaskArgumentCountsAndAResultCode(): void
     {
         self::assertCount(135, NativeSpatialCatalog::ROWS);

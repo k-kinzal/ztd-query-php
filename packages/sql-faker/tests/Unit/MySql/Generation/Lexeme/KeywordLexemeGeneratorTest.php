@@ -51,4 +51,17 @@ final class KeywordLexemeGeneratorTest extends TestCase
         $generator = new KeywordLexemeGenerator([], []);
         self::assertNull($generator->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
     }
+
+    public function testGeneratePreservesAFunctionKeywordUsedAsATableName(): void
+    {
+        $generator = new KeywordLexemeGenerator([], ['ADDDATE_SYM' => ['ADDDATE']]);
+        $keyword = new TerminalOccurrence('ADDDATE_SYM', 0, [1, 2], ['ident', 'ident_keywords_unambiguous']);
+        $open = new TerminalOccurrence('(', 3, [], []);
+        $sequence = new TerminalSequence([$keyword, $open]);
+        $right = new ResolvedOutput([new OutputPart(new Lexeme('(', 'symbol', $open, 'source'), '', 'open')]);
+        $candidates = $generator->generate(new LexemeInput($sequence, 0, $right));
+
+        self::assertNotNull($candidates);
+        self::assertSame('function', [...$candidates->sequences()][0]->lexemes[0]->kind);
+    }
 }

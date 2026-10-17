@@ -30,4 +30,10 @@ final class PrepareTest extends TestCase
     {
         self::assertSame("PREPARE s FROM 'SELECT ?'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("prepare s from 'SELECT ?'")->toString());
     }
+    public function testRefusesRadixText(): void
+    {
+        $this->expectExceptionMessage('A PREPARE source is a quoted string or a user variable.');
+
+        new Prepare(new \SqlSemantics\Statement\Identifier\Name('s'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

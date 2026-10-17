@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to change the definition of an existing view.
@@ -37,6 +37,8 @@ final class AlterView implements Statement
      */
     public function __construct(public readonly ViewDefinition $definition)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$definition->ifNotExists, 'ALTER VIEW has no IF NOT EXISTS clause.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

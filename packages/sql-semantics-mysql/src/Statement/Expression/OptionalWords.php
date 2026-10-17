@@ -16,7 +16,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
  * @visibility public
  * @example Reading whether the parentheses are written
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CURRENT_DATE');
- *     $query->statement->items[0]->expression->parentheses // => \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted
+ *     $query->statement->query->items[0]->expression->parentheses // => \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted
  */
 enum OptionalWords
 {

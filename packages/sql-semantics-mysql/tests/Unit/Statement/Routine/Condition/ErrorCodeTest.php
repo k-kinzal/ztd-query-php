@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
@@ -21,7 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Fact\Diagnostic;
 
 #[CoversClass(ErrorCode::class)]
 #[Medium]
@@ -57,9 +57,34 @@ final class ErrorCodeTest extends TestCase
     }
 
     #[DataProvider('providerValidTellsWhetherTheCodeIsNotZero')]
-    public function testValidTellsWhetherTheCodeIsNotZero(string $text, bool $hexadecimal, bool $expected): void
+    public function testAcceptsTellsWhetherTheCodeIsNotZero(string $text, bool $hexadecimal, bool $expected): void
     {
-        self::assertSame($expected, (new ErrorCode(new Numeral($text, $hexadecimal)))->valid());
+        self::assertSame($expected, ErrorCode::accepts(new Numeral($text, $hexadecimal)));
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerZeroPrefixes(): iterable
+    {
+        foreach (self::providerValidTellsWhetherTheCodeIsNotZero() as $name => [$text, $hexadecimal, $accepted]) {
+            if (!$accepted) {
+                yield $name => [$text, $hexadecimal];
+            }
+        }
+    }
+
+    #[DataProvider('providerZeroPrefixes')]
+    public function testRejectsZeroPrefixes(string $text, bool $hexadecimal): void
+    {
+        $this->expectExceptionMessage('A condition error code has a nonzero integer prefix.');
+
+        new ErrorCode(new Numeral($text, $hexadecimal));
+    }
+
+    public function testValidHoldsForAnAcceptedPrefix(): void
+    {
+        self::assertTrue((new ErrorCode(new Numeral('1051e3')))->valid());
     }
 
     /**
@@ -115,15 +140,23 @@ final class ErrorCodeTest extends TestCase
         yield 'an integer' => ['1051', false, '1051'];
         yield 'a floating number' => ['12e3', false, '12'];
         yield 'a decimal' => ['7.5', false, '7'];
-        yield 'a decimal without integer part' => ['.5', false, ''];
+        yield 'a decimal with a nonzero integer part' => ['1.5', false, '1'];
         yield 'a hexadecimal literal' => ['0aF', true, '0aF'];
     }
 
-    public function testValidLetsTheProgramReportTheCodeZero(): void
+    public function testLoweringRejectsAZeroPrefixBeforePublishingAStructure(): void
     {
-        $create = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END');
+        $this->expectException(RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect CONDITION value: '0'");
 
-        self::assertSame(["Incorrect CONDITION value: '0'"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
-        self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END', $create->toString());
+        (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END');
+    }
+
+    public function testAcceptsChecksBeforeTheThirtyTwoBitConversion(): void
+    {
+        $code = new Numeral('4294967296');
+
+        self::assertTrue(ErrorCode::accepts($code));
+        self::assertSame(0, (new ErrorCode($code))->number());
     }
 }
