@@ -124,4 +124,17 @@ final class SetOutputTest extends TestCase
         self::assertCount(2, $domains);
         self::assertSame([1024, 1], [$domains[0]->length, $domains[1]->length]);
     }
+    public function testFieldsRetainsTheInterpretedExpressionOfEachOperand(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 2147483648 UNION ALL SELECT 1.25');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        $derivation = new Derivation($operation->context);
+        $derivation->query($operation->statement->query, $derivation->environment());
+        $fields = (new SetOutput())->fields($operation->statement->query, 0, $derivation);
+
+        self::assertCount(2, $fields);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral::class, $fields[0]?->expression);
+        self::assertSame('2147483648', $fields[0]->expression->text);
+    }
+
 }

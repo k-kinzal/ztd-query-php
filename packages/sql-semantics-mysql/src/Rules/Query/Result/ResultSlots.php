@@ -83,7 +83,7 @@ final class ResultSlots
         foreach ($left->shape->slots as $position => $slot) {
             $other = $right->shape->complete() ? $right->shape->slots[$position] ?? null : null;
             if ($other !== null) {
-                $type = $this->settled($slot->type, $other->type, $derivation, $combined);
+                $type = $this->settled($slot->type, $other->type, $derivation, $combined, [$left->projection[$position] instanceof Field ? $left->projection[$position] : null, $right->projection[$position] instanceof Field ? $right->projection[$position] : null]);
                 $nullability = $this->nullability($operator, $slot->nullability, $other->nullability);
             } elseif ($problem !== null) {
                 $type = new Invalid($problem);
@@ -107,11 +107,12 @@ final class ResultSlots
      * operand takes no part (verified on a live 8.4 server).
      *
      * @param array{bool, bool} $combined Whether each operand is itself a set operation
+     * @param list<Field|null> $fields Original projection facts, when available
      */
-    public function settled(TypeFact $left, TypeFact $right, Derivation $derivation, array $combined = [false, false]): TypeFact
+    public function settled(TypeFact $left, TypeFact $right, Derivation $derivation, array $combined = [false, false], array $fields = []): TypeFact
     {
         $domains = [$this->operand($left, $combined[0]), $this->operand($right, $combined[1])];
-        $domain = $domains[0] === null || $domains[1] === null ? null : (new CombinedColumns())->resolve($domains, $derivation);
+        $domain = $domains[0] === null || $domains[1] === null ? null : (new CombinedColumns())->resolve($domains, $derivation, $fields);
 
         return $domain === null ? (new TypeAggregation())->aggregate([$left, $right]) : new Known((new Materialization())->set($domain, $derivation->context->profile->grammar));
     }

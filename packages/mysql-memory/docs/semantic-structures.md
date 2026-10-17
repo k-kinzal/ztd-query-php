@@ -1737,3 +1737,26 @@ stopped after 158.052 seconds with 259 matches and one difference: native 1146
 versus memory 1241. Repairing that input does not turn the interrupted run into a
 900-second pass. Whole-model intrinsic query/window issues and the final-revision
 whole-model, nine-corpus and unseeded acceptance gates remain open.
+
+Legacy set outputs retain the original projection fields while resolving the
+combined column. Those fields distinguish a computed expression from a column
+reference, preserve its reported width separately from its value bound, and keep
+operand order. MySQL 5.6 and 5.7 use that information for integer signedness,
+MEDIUMINT allocation, FLOAT promotion, decimal precision and text conversion
+widths. MySQL 5.7 additionally distinguishes the fields returned by an unordered
+UNION ALL from fields stored for a derived-table consumer. NULL and temporal
+outputs retain that distinction as well as strings. These facts are resolved in
+Semantics without retaining source SQL or parser nodes.
+
+Memory stores each operand using the resulting domain. Numeric storage clamps
+values outside a field's range instead of applying an explicit CAST's overflow
+warning or wraparound. Copying an integer column of the same storage type keeps
+its bits; the semantic projection origin distinguishes that copy from a computed
+value. The original expression's own diagnostics are still emitted. The native
+set-field matrix includes 21 scalar/column operands in both orders, UNION and
+UNION ALL, direct results and derived-table consumers. A separate direct
+construction test reuses 128 query objects per legacy release before table
+creation, with populated input, and after removal, while the consumer receives
+unrelated request text. These bounded tests exercise sufficiency of the retained
+result and origin information; they do not establish the unresolved ordinary
+window and nested-query constructor invariants.

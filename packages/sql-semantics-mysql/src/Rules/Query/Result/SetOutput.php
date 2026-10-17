@@ -51,13 +51,14 @@ final class SetOutput
         $fields = [];
         foreach ($fact->projection as $field) {
             $domain = $field instanceof Field ? (new Precision())->domain($field->type) : null;
-            if (!$field instanceof Field || $domain?->kind !== Kind::String) {
+            if (!$field instanceof Field || $domain === null) {
                 $fields[] = $field;
                 continue;
             }
             $operands = $this->domains($body, $field->position, $derivation);
             $settled = $operands === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($operands, 'UNION', $derivation);
-            $returned = $this->returned($domain, $settled);
+            $combined = $operands === null ? null : (new CombinedColumns())->resolve($operands, $derivation, $this->fields($body, $field->position, $derivation));
+            $returned = $this->returned($domain, $settled, $combined);
             if ($returned === null) {
                 $fields[] = $field;
                 continue;
@@ -74,13 +75,19 @@ final class SetOutput
      * streamed MySQL 5.7 UNION ALL. Stored set columns instead clear decimals.
      * Verified through NULLIF over TIME, DATETIME and TIMESTAMP columns on 5.7.
      */
-    public function returned(Domain $stored, ?Domain $settled): ?Domain
+    public function returned(Domain $stored, ?Domain $settled, ?Domain $combined = null): ?Domain
     {
+        if ($settled?->kind === Kind::Null) {
+            return Domain::null();
+        }
+        if ($settled?->kind->temporal() === true && $settled->field !== ResultField::VarString) {
+            return new Domain($settled->kind, $settled->field, $stored->length, $settled->decimals, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), [], $settled->coercibility);
+        }
         if ($settled?->kind->temporal() === true && $settled->field === ResultField::VarString) {
             return new Domain(Kind::String, ResultField::VarString, $stored->length, $settled->decimals, false, $stored->collation, [], $stored->coercibility);
         }
 
-        return $settled?->kind === Kind::String ? Domain::string($settled->length, $settled->collation, ResultField::VarString, $settled->coercibility) : null;
+        return $settled?->kind === Kind::String ? new Domain(Kind::String, ResultField::VarString, $combined->length ?? $settled->length, $combined->decimals ?? Domain::NOT_FIXED, $combined->unsigned ?? false, $settled->collation, [], $settled->coercibility) : null;
     }
 
     /**
@@ -131,4 +138,18 @@ final class SetOutput
 
         return $domain === null ? null : [$domain];
     }
+    /**
+     * Reads original projection facts in the same order as the operand domains.
+     *
+     * @return list<Field|null>
+     */
+    public function fields(Query $query, int $position, Derivation $derivation): array
+    {
+        if ($query instanceof SetOperation && $query->left instanceof Query) {
+            return [...$this->fields($query->left, $position, $derivation), ...$this->fields($query->right, $position, $derivation)];
+        }
+        $field = $derivation->facts()->query($query)->projection[$position] ?? null;
+        return [$field instanceof Field ? $field : null];
+    }
+
 }

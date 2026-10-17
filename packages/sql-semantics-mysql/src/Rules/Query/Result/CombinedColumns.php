@@ -34,8 +34,9 @@ final class CombinedColumns
      * Settles the operands before the set's temporary columns are allocated.
      *
      * @param list<Domain> $domains The operand column types
+     * @param list<\SqlSemantics\Statement\Shape\Field|null> $fields Original projection facts, when available
      */
-    public function resolve(array $domains, Derivation $derivation): ?Domain
+    public function resolve(array $domains, Derivation $derivation, array $fields = []): ?Domain
     {
         $present = array_values(array_filter($domains, static fn (Domain $domain): bool => $domain->kind !== Kind::Null));
         if ($present !== [] && count(array_filter($present, static fn (Domain $domain): bool => $domain->field === Field::Bit)) === count($present)) {
@@ -44,17 +45,8 @@ final class CombinedColumns
         $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $operands = array_map(fn (Domain $domain): Domain => $this->operand($domain, $derivation, $legacy), $domains);
         $result = (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($operands, 'UNION', $derivation);
-        $last = $domains[count($domains) - 1] ?? null;
-        $storageWidth = $last?->field === Field::LongLong || ($last?->kind === Kind::Null && $present !== [] && $present[0]->field === Field::LongLong);
-
-        if ($legacy && $storageWidth && $result?->field === Field::LongLong) {
-            $replaceNull = $domains[0]->kind === Kind::Null;
-            $length = count($present) === 1 ? $present[0]->length : max(20, ...array_map(static fn (Domain $domain): int => $domain->length, $present));
-
-            return Domain::integer(Field::LongLong, $replaceNull ? 20 : $length, $result->unsigned);
-        }
-
-        return $result === null ? null : $this->floating($result, $present, $legacy);
+        $result = $result === null ? null : $this->floating($result, $present, $legacy);
+        return $legacy && $result !== null ? (new LegacySetColumns())->resolve($result, $operands, $fields) : $result;
     }
 
     /**
