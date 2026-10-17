@@ -19,6 +19,8 @@ final class Targets
 {
     /**
      * Resolves earlier target-database and input conditions from retained semantic values.
+     * From 5.7 onward an unknown charset is a grammar condition preceding the
+     * target database. MySQL 5.6 resolves that target prefix first.
      *
      * @throws LogicException When an intrinsic target refusal has no resolution diagnostic
      */
@@ -28,14 +30,21 @@ final class Targets
         if ($problem->program !== null && $database === '') {
             return QueryError::NoDatabase->error();
         }
-        foreach ($problem->targets as $target) {
-            if ($target->schema === null && $database === '') {
-                return QueryError::NoDatabase->error();
-            }
+        $missingDatabase = $database === '' && array_filter($problem->targets, static fn (\SqlSemantics\Statement\Identifier\QualifiedName $target): bool => $target->schema === null) !== [];
+        if ($missingDatabase && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return QueryError::NoDatabase->error();
         }
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new \SqlSemantics\Contract\SearchPath($database), $session->resolution());
         $derivation = new \SqlSemantics\Construction\Derivation($context);
         $problem->derive($derivation);
+        foreach ($derivation->facts()->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset) {
+                return (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session);
+            }
+        }
+        if ($missingDatabase) {
+            return QueryError::NoDatabase->error();
+        }
         $alias = null;
         foreach ($derivation->facts()->diagnostics as $diagnostic) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($diagnostic)) {

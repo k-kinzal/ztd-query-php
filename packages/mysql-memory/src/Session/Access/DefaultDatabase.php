@@ -28,10 +28,13 @@ final class DefaultDatabase
 {
     /**
      * Checks the names whose implicit database is needed before their later clauses.
+     * Modern DELETE collects grammar notices before resolving its target names;
+     * MySQL 5.6 DELETE and stored-definition names resolve while reading the header.
      *
+     * @param bool $afterParsing Whether grammar notices have been recorded
      * @throws SqlError When an unqualified name requires a current database
      */
-    public function check(Statement $statement, Session $session): void
+    public function check(Statement $statement, Session $session, bool $afterParsing = false): void
     {
         $database = $session->variables->database;
         if ($statement instanceof Explain) {
@@ -39,6 +42,9 @@ final class DefaultDatabase
             $statement = $statement->statement;
         }
         if ($database !== '') {
+            return;
+        }
+        if ($statement instanceof MultipleDelete && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && !$afterParsing) {
             return;
         }
         $names = match (true) {

@@ -104,4 +104,13 @@ final class CollationsTest extends TestCase
         self::assertEquals([Collation::known('utf8mb3_bin'), Coercibility::Explicit], $rules->settle($domains, true, true));
         self::assertNull($rules->settle($domains, true));
     }
+    public function testOperandPreservesLegacyAggregateCoercibility(): void
+    {
+        $aggregate = Domain::decimal(8, 4)->withCollation(Collation::binary(), Coercibility::Coercible);
+        $rules = new Collations(Collation::known('latin1_swedish_ci'));
+
+        self::assertEquals([Collation::binary(), Coercibility::Coercible], $rules->operand($aggregate));
+        self::assertEquals([Collation::binary(), Coercibility::Coercible], $rules->settle([$aggregate]));
+    }
+
 }

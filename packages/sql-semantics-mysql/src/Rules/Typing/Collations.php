@@ -102,14 +102,15 @@ final class Collations
     public function operand(Domain $domain): array
     {
         $text = $domain->kind === Kind::String || $domain->kind === Kind::Json;
+        $coercibleNumber = $domain->kind->numeric() && $domain->coercibility === Coercibility::Coercible;
 
         $level = match (true) {
             $domain->kind === Kind::Null => Coercibility::Ignorable,
-            $text, $domain->kind->temporal() && $domain->coercibility === Coercibility::Coercible => $domain->coercibility,
+            $text, $coercibleNumber, $domain->kind->temporal() && $domain->coercibility === Coercibility::Coercible => $domain->coercibility,
             default => Coercibility::Numeric,
         };
 
-        return [$text ? $domain->collation : $this->connection, $level];
+        return [$text || $coercibleNumber ? $domain->collation : $this->connection, $level];
     }
 
     /**

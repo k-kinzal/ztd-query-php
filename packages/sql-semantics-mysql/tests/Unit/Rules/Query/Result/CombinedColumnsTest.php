@@ -117,4 +117,15 @@ final class CombinedColumnsTest extends TestCase
         self::assertEquals(Domain::integer(Field::LongLong, 4, true), $rules->operand(new Domain(Kind::Year, Field::LongLong, 4, 0, true), $derivation, true));
         self::assertEquals(Domain::integer(Field::LongLong, 8, true), $rules->operand(new Domain(Kind::Bit, Field::LongLong, 8, 0, true), $derivation, true));
     }
+    public function testFloatingLegacyTemporaryFieldsLoseScalesAboveSeventeen(): void
+    {
+        $rules = new CombinedColumns();
+        $fixed = Domain::double(17, 17);
+        $wide = Domain::double(18, 18);
+
+        self::assertEquals($fixed, $rules->floating($fixed, [$fixed], true));
+        self::assertEquals(Domain::double(22), $rules->floating($wide, [$wide], true));
+        self::assertEquals($wide, $rules->floating($wide, [$wide], false));
+    }
+
 }

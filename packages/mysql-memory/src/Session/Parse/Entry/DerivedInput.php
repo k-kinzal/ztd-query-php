@@ -25,9 +25,14 @@ final class DerivedInput
 {
     /**
      * Resolves an outer DELETE target before a later input-operand refusal.
+     * A complete target refusal already retains its typed dependencies; reuse
+     * their resolved error instead of overriding it from the source prefix.
      */
-    public function refusal(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
+    public function refusal(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session, ?SqlError $resolved = null): ?SqlError
     {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {
+            return $resolved ?? (new Dml\Targets())->unmatched($failure->problem, $session);
+        }
         return $this->targets($statement, $session, $failure->end);
     }
 

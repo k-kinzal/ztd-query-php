@@ -11,8 +11,13 @@ use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
+use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Evaluation\Convert;
+use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
@@ -23,6 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
@@ -130,7 +136,14 @@ final class ExplainCommand implements Command
             return new Completion(0, 0, $context->diagnostics->raised());
         }
         if ($format === 'TRADITIONAL') {
-            $rows = $this->rows($statement, $session, $database);
+            $impossible = $this->impossible($operation, $session, $context, $connection);
+            $rows = $this->rows($statement, $session, $database, $impossible);
+            if ($impossible && !$session->settings()->legacy()) {
+                $note = $this->deleted($statement, $database);
+                if ($note !== null) {
+                    $context->diagnostics->note(QueryError::RewrittenQuery, $note);
+                }
+            }
             $headings = $this->headings();
             if ($session->settings()->legacy()) {
                 $headings = LegacyPlan::headings($headings, $statement->modifier, $session->instance->version);
@@ -193,7 +206,7 @@ final class ExplainCommand implements Command
      *
      * @return list<list<int|string|null>>
      */
-    public function rows(Explain $explain, Session $session, string $database): array
+    public function rows(Explain $explain, Session $session, string $database, bool $impossible = false): array
     {
         $statement = $explain->statement;
         $rows = [];
@@ -204,12 +217,11 @@ final class ExplainCommand implements Command
         if ($written !== null) {
             $rows[] = [1, $written->replace ? 'REPLACE' : 'INSERT', $written->table->name->name->value, null, 'ALL', null, null, null, null, null, null, null];
         }
-        $kind = match (true) {
-            $statement instanceof Update => 'UPDATE',
-            $statement instanceof Delete => 'DELETE',
-            default => 'SIMPLE',
-        };
-        $where = $statement instanceof Update || $statement instanceof Delete ? $statement->where : null;
+        $kind = $this->kind($statement);
+        $where = $statement instanceof Update || $statement instanceof Delete || $statement instanceof MultipleDelete ? $statement->where : null;
+        if ($impossible) {
+            return [[1, $kind, null, null, null, null, null, null, null, null, null, 'Impossible WHERE']];
+        }
         if ($statement instanceof Delete) {
             $rows[] = [1, 'DELETE', $statement->table->alias->value ?? $statement->table->name->name->value, null, 'ALL', null, null, null, null, $this->count($session, $statement->table->name, $database), '100.00', $where === null ? null : 'Using where'];
 
@@ -224,6 +236,76 @@ final class ExplainCommand implements Command
         }
 
         return $rows;
+    }
+
+    /**
+     * Names the modification whose rows an explanation prepares.
+     */
+    public function kind(Node $statement): string
+    {
+        return match (true) {
+            $statement instanceof Update => 'UPDATE',
+            $statement instanceof Delete, $statement instanceof MultipleDelete => 'DELETE',
+            default => 'SIMPLE',
+        };
+    }
+
+    /**
+     * Resolves a DELETE predicate that is known before reading any table rows.
+     * Uses semantic facts and the expression compiler; EXPLAIN never deletes rows.
+     */
+    public function impossible(Operation $operation, Session $session, Context $context, Connection $connection): bool
+    {
+        $explain = $operation->statement;
+        if (!$explain instanceof Explain) {
+            return false;
+        }
+        $statement = $explain->statement;
+        if ((!$statement instanceof Delete && !$statement instanceof MultipleDelete) || $statement->where === null) {
+            return false;
+        }
+        $compiler = (new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary))->compiler;
+        if ($compiler->constancy($statement->where) !== Constancy::Resolved) {
+            return false;
+        }
+        $predicate = $compiler->compile($statement->where, new Scope());
+
+        return Convert::toPredicate($predicate->evaluate(new Frame($context)), $predicate->domain(), $context) !== true;
+    }
+
+    /**
+     * Describes a DELETE whose constant predicate eliminates every row.
+     * The rewritten-query note names resolved base tables, including aliased
+     * deletion targets. Observed through EXPLAIN and SHOW WARNINGS on 8.0–9.1.
+     */
+    public function deleted(Explain $explain, string $database): ?string
+    {
+        $statement = $explain->statement;
+        if (!$statement instanceof Delete && !$statement instanceof MultipleDelete) {
+            return null;
+        }
+        $quote = static fn (string $name): string => '`' . str_replace('`', '``', $name) . '`';
+        $qualified = static fn (QualifiedName $name): string => $quote($name->schema->value ?? $database) . '.' . $quote($name->name->value);
+        $prefix = 'delete';
+        foreach ($statement->options as $option) {
+            $prefix .= ' ' . strtolower($option->value);
+        }
+        if ($statement instanceof Delete) {
+            return $prefix . ' from ' . $qualified($statement->table->name) . ($statement->table->alias === null ? '' : ' ' . $quote($statement->table->alias->value)) . ' where false';
+        }
+        $sources = [];
+        $names = [];
+        foreach ($statement->tables as $table) {
+            if (!$table instanceof TableReference) {
+                return null;
+            }
+            $name = $qualified($table->name());
+            $sources[] = $name . ($table->alias() === null ? '' : ' ' . $quote($table->alias()->value));
+            $names[strtolower(($table->alias() ?? $table->name()->name)->value)] = $name;
+        }
+        $targets = array_map(static fn (QualifiedName $target): string => $names[strtolower($target->name->value)] ?? $qualified($target), $statement->targets);
+
+        return $prefix . ' ' . implode(',', $targets) . ' from ' . implode(',', $sources) . ' where false';
     }
 
     /**

@@ -82,6 +82,7 @@ final class Introspection
             $origin instanceof \MySqlMemory\Evaluation\Leaf\Assignment => $domain->coercibility->value,
             $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null => $domain->coercibility->value,
             $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit || $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Bit => $domain->coercibility->value,
+            $domain->kind->numeric() && $domain->coercibility === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible => $domain->coercibility->value,
             $domain->kind->temporal() => $domain->coercibility === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible ? 4 : 5,
             $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Year => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric->value,
             !$this->textual($argument) => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric->value,

@@ -85,6 +85,28 @@ final class AggregatesTest extends TestCase
         self::assertEquals([Domain::double(17, 0), Domain::double(21, 4)], [$aggregates->result(AggregateFunction::Sum, Domain::null()), $aggregates->result(AggregateFunction::Average, Domain::null())]);
     }
 
+    public function testResultUsesSessionPrecisionAndLegacyFloatingWidths(): void
+    {
+        $aggregates = new Aggregates(new Settings(Collation::known('utf8mb4_bin'), divPrecisionIncrement: 8));
+
+        self::assertEquals(Domain::double(8, 8)->withCollation(Collation::binary(), Coercibility::Coercible), $aggregates->result(AggregateFunction::Average, Domain::null(), GrammarRelease::MySql5651));
+        self::assertEquals(Domain::double(25, 8), $aggregates->result(AggregateFunction::Average, Domain::null()));
+        self::assertEquals(Domain::double(16, 10)->withCollation(Collation::binary(), Coercibility::Coercible), $aggregates->result(AggregateFunction::Average, Domain::double(8, 2), GrammarRelease::MySql5744));
+        self::assertEquals(Domain::double(27, 10), $aggregates->result(AggregateFunction::Average, Domain::double(8, 2)));
+        self::assertEquals(Domain::double(24)->withCollation(Collation::binary(), Coercibility::Coercible), $aggregates->result(AggregateFunction::Average, Domain::string(4, Collation::known('utf8mb4_bin')), GrammarRelease::MySql5744));
+        self::assertEquals(Domain::decimal(73, 30), $aggregates->result(AggregateFunction::Average, Domain::decimal(65, 30)));
+        self::assertEquals(Domain::decimal(10, 9), $aggregates->result(AggregateFunction::Average, Domain::decimal(2, 1)));
+    }
+
+    public function testFloatingAverageUsesFixedScalesUntilTheyBecomeUnfixed(): void
+    {
+        $aggregates = new Aggregates(new Settings(Collation::binary(), divPrecisionIncrement: 30));
+
+        self::assertEquals(Domain::double(23), $aggregates->floatingAverage(Domain::double(8, 2), false));
+        self::assertEquals(Domain::double(38), $aggregates->floatingAverage(Domain::double(8, 2), true));
+        self::assertEquals(Domain::double(23), $aggregates->floatingAverage(new Domain(Kind::String, Field::VarString, 8, 0), false));
+    }
+
     public function testResultTypesJsonAggregatesAndExtremesOfJsonByRelease(): void
     {
         $aggregates = new Aggregates(new Settings(Collation::known('utf8mb4_0900_ai_ci')));
@@ -120,6 +142,15 @@ final class AggregatesTest extends TestCase
         self::assertNotNull($blob);
         self::assertSame([Field::VarString, 128, 513], [$partial->field, $partial->length, $partial->metadataLength()]);
         self::assertSame([Field::Blob, 1024, 4096], [$blob->field, $blob->length, $blob->metadataLength()]);
+    }
+
+    public function testExactPrecisionCapsOnlyMySql91Metadata(): void
+    {
+        $rules = new Aggregates(new Settings(Collation::binary()));
+
+        self::assertSame(87, $rules->exactPrecision(87, GrammarRelease::MySql847));
+        self::assertSame(65, $rules->exactPrecision(87, GrammarRelease::MySql910));
+        self::assertSame(23, $rules->exactPrecision(23, GrammarRelease::MySql910));
     }
 
 }

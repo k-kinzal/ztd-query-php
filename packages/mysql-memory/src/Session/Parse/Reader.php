@@ -155,7 +155,7 @@ final class Reader
         }
         $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new Entry\InputErrors())->refused($failure, $statement, $session);
         $error = new SqlError($error->error, $error->getMessage(), $failure, $error->following, $error->signalled, $error->getCode(), $error->recorded);
-        $target = (new Entry\DerivedInput())->refusal($failure, $statement, $session);
+        $target = (new Entry\DerivedInput())->refusal($failure, $statement, $session, $error);
         $error = $target ?? $error;
         $earlier = ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias ? (new Entry\DerivedInput())->before($statement, $failure->end, $session) : null) ?? ($failure->end === 0 || $target !== null ? null : (new CacheOptions())->condition($error, $statement, $session, $failure->end - 1));
         if ($earlier !== null) {

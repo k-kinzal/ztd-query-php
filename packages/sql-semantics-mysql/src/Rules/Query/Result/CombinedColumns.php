@@ -60,6 +60,8 @@ final class CombinedColumns
     /**
      * Retains fixed fractional digits when floating fields combine. Legacy
      * matching DOUBLE fields report their storage width when no scale is fixed.
+     * Fixed scales above 17 become unfixed in legacy temporary fields, observed
+     * with AVG(NULL) at every precision increment from 15 through 30.
      *
      * @param list<Domain> $operands The non-NULL operand fields
      */
@@ -69,14 +71,16 @@ final class CombinedColumns
             return $result;
         }
         $scale = max(array_map(static fn (Domain $domain): int => $domain->decimals, $operands));
+        $same = count(array_filter($operands, static fn (Domain $domain): bool => $domain->field === Field::Double)) === count($operands);
+        if ($legacy && $same && $scale > 17) {
+            return Domain::double(22);
+        }
         if ($scale < Domain::NOT_FIXED) {
             $length = max(array_map(static fn (Domain $domain): int => $domain->length - $domain->decimals, $operands)) + $scale;
 
             return new Domain(Kind::Double, $result->field, $length, $scale, $result->unsigned, null, [], Coercibility::Numeric);
         }
-        $same = count(array_filter($operands, static fn (Domain $domain): bool => $domain->field === Field::Double)) === count($operands);
-
-        return $legacy && $same ? Domain::double(22) : $result;
+        return $result;
     }
 
     /**

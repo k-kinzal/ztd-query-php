@@ -11,6 +11,7 @@
 declare(strict_types=1);
 
 return [
+    1003 => ['HY000', '%s'],
     1 => ['HY000', "Can't create/write to file '%s' (Errcode: %d - %s)"],
     3061 => ['42000', "User variable name '%s' is illegal"],
     1453 => ['42000', "Variable '%s' must be quoted with `...`, or renamed"],

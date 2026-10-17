@@ -53,8 +53,12 @@ final class Reading
             throw (new \MySqlMemory\Command\InternalCommand())->error($operation);
         }
         (new \MySqlMemory\Command\Explain\ExplainCommand())->format($operation->statement);
-        $this->targets($operation->statement, $session);
+        if ($session->settings()->release() === GrammarRelease::MySql5651) {
+            $this->targets($operation->statement, $session);
+        }
         $this->parsed($operation, $session);
+        (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation->statement, $session, true);
+        $this->targets($operation->statement, $session);
         (new \MySqlMemory\Command\Access\HandlerPreparation())->database($operation, $session);
         $this->grouping($operation, $session);
         $this->variables($operation, $session);

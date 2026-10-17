@@ -221,4 +221,50 @@ final class ExplainCommandTest extends TestCase
 
         $session->query('EXPLAIN FORMAT=xyz SELECT * FROM t AS a, t AS a');
     }
+    public function testImpossibleDistinguishesFalseConstantsFromRowPredicates(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); INSERT INTO t VALUES(1),(2)');
+        $context = new Context(new SqlModes([]), $session->diagnostics, $session->variables, 0.0);
+        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context);
+        $command = new ExplainCommand();
+
+        self::assertTrue($command->impossible($session->analyze('EXPLAIN DELETE t FROM t WHERE 1=2'), $session, $context, $connection));
+        self::assertFalse($command->impossible($session->analyze('EXPLAIN DELETE FROM t WHERE a=0'), $session, $context, $connection));
+        self::assertFalse($command->impossible($session->analyze('EXPLAIN DELETE FROM t WHERE 1'), $session, $context, $connection));
+        self::assertFalse($command->impossible($session->analyze('EXPLAIN DELETE FROM t'), $session, $context, $connection));
+        self::assertFalse($command->impossible($session->analyze('SELECT 1'), $session, $context, $connection));
+        $reply = $session->query("EXPLAIN DELETE t FROM t WHERE N'0'")[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['1', 'DELETE', null, null, null, null, null, null, null, null, null, 'Impossible WHERE']], $reply->rows);
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame('delete `d`.`t` from `d`.`t` where false', $warnings->rows[1][2]);
+        $rows = $session->query('SELECT a FROM t ORDER BY a')[0];
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['1'], ['2']], $rows->rows);
+    }
+
+    public function testDeletedNamesBaseTargetsAndPreservesAliases(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
+        $statement = $session->analyze('EXPLAIN DELETE LOW_PRIORITY IGNORE x FROM t AS x WHERE 0')->statement;
+        self::assertInstanceOf(Explain::class, $statement);
+
+        self::assertSame('delete low_priority ignore `d`.`t` from `d`.`t` `x` where false', (new ExplainCommand())->deleted($statement, 'd'));
+    }
+
+    public function testKindIdentifiesMultipleDeleteInATablePlan(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
+        $explain = $session->analyze('EXPLAIN DELETE t FROM t WHERE a>0')->statement;
+        self::assertInstanceOf(Explain::class, $explain);
+        $command = new ExplainCommand();
+
+        self::assertSame('DELETE', $command->kind($explain->statement));
+        self::assertSame([[1, 'DELETE', 't', null, 'ALL', null, null, null, null, 1, '100.00', 'Using where']], $command->rows($explain, $session, 'd'));
+    }
+
 }

@@ -50,4 +50,31 @@ final class TargetsTest extends TestCase
         self::assertSame(1066, $input->error(new RepeatedDeleteTarget([$t, $t]), $session)->getCode());
         self::assertSame('unrelated invalid input', $session->text);
     }
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerCharsetPriority(): iterable
+    {
+        yield '5.6' => ['5.6.51', 1046];
+        yield '5.7' => ['5.7.44', 1115];
+        yield '8.0' => ['8.0.44', 1115];
+        yield '8.4' => ['8.4.7', 1115];
+        yield '9.1' => ['9.1.0', 1115];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCharsetPriority')]
+    public function testUnmatchedPreservesCharsetPriorityWithoutInputText(string $release, int $number): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->text = 'unrelated invalid input';
+        $predicate = new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new Name('missing_charset')));
+        $table = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')), new Name('y'));
+        $refusal = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([new QualifiedName(new Name('x'))], [$table], where: $predicate);
+
+        self::assertSame($number, (new Targets())->unmatched($refusal, $session)->getCode());
+        $session->variables->database = 'd';
+        self::assertSame(1115, (new Targets())->unmatched($refusal, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
 }
