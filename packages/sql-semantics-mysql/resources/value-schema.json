@@ -3114,7 +3114,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\InvalidColumnAttribute": {
         "attribute": "string",
-        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "scope": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\KindRefusal": {
         "name": "string",

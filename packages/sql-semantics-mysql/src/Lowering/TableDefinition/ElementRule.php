@@ -58,6 +58,8 @@ final class ElementRule
      *
      * @return non-empty-list<TableElement>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function elements(Node $list): array
     {
@@ -79,6 +81,8 @@ final class ElementRule
      * Lowers one element: a node of `field_list_item`, `table_element`, `column_def`, `key_def`, `table_constraint_def` or `field_spec`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function element(Node $element): TableElement
     {
@@ -93,8 +97,8 @@ final class ElementRule
 
         return match ($form->signature) {
             'column_def: ident field_def opt_references' => new ColumnDefinition(
-                $this->lowering->leaves->record(new ColumnName($this->lowering->names->identifier($form->node(0)))),
-                (new ColumnRule($this->lowering))->specification($form->node(1), null, $references->optional($form->node(2))),
+                $name = $this->lowering->leaves->record(new ColumnName($this->lowering->names->identifier($form->node(0)))),
+                (new ColumnRule($this->lowering))->specification($form->node(1), null, $references->optional($form->node(2)), name: $name->column),
             ),
             'column_def: field_spec opt_check_constraint' => $this->column($form->node(0), null, (new KeyRule($this->lowering))->optionalCheck($form->node(1))),
             'column_def: field_spec references' => $this->column($form->node(0), $references->references($form->node(1))),
@@ -107,6 +111,8 @@ final class ElementRule
      * Lowers a 5.x column: a node of `field_spec`, with the reference or CHECK written after it.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function column(Node $spec, ?References $references = null, ?CheckConstraint $check = null): ColumnDefinition
     {
@@ -114,9 +120,9 @@ final class ElementRule
         $rule = new ColumnRule($this->lowering);
         $trailing = $check === null ? [] : [$check];
 
-        return new ColumnDefinition($this->lowering->names->columnName($form->node(0)), match ($form->signature) {
-            'field_spec: field_ident type opt_attribute' => $rule->specification($form->node(1), $form->node(2), $references, $trailing),
-            'field_spec: field_ident field_def' => $rule->specification($form->node(1), null, $references, $trailing),
+        return new ColumnDefinition($name = $this->lowering->names->columnName($form->node(0)), match ($form->signature) {
+            'field_spec: field_ident type opt_attribute' => $rule->specification($form->node(1), $form->node(2), $references, $trailing, $name->column),
+            'field_spec: field_ident field_def' => $rule->specification($form->node(1), null, $references, $trailing, $name->column),
             default => throw ImplementationGap::production($form),
         });
     }

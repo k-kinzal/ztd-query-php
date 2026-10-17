@@ -59,6 +59,7 @@ final class SyntaxWarnings
                 if ($lookahead->offset > $end) {
                     return;
                 }
+                (new TableDefinition\Column\SyntaxColumns())->observe($node, $lowering, $tokens);
                 $failure = $header->observe($node, $lookahead, $lowering, $tokens);
                 if ($failure !== null && $failure->end <= $end) {
                     $state->record($failure->end, new ParseFailure($failure->problem, $failure->aborts));

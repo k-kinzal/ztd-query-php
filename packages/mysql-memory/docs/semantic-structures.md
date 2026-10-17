@@ -72,8 +72,13 @@ SQL lowering and direct construction share the same attribute rule. Column
 collations retain their lookup diagnostics before table resolution. For ordinary
 columns, later DEFAULT and ON UPDATE clauses replace earlier clauses; an
 incompatible earlier clock expression does not invalidate a compatible final
-clause. Other intrinsic column type/attribute combinations still require
-constructor-level constraints.
+clause. Ordinary-column constructors now exclude clock defaults and updates on
+non-DATETIME/TIMESTAMP types, mismatched fractional precision, SRID on nonspatial
+types, and AUTO_INCREMENT/SERIAL DEFAULT VALUE on nonnumeric types. Floating
+AUTO_INCREMENT remains available for legacy releases. Input refusals retain the
+column name and typed table or enclosing-program database scope, preserving the
+version-specific error boundary without publishing a contradictory specification.
+These constraints do not establish every column-definition invariant.
 
 Engine attributes on columns, indexes, tables and tablespaces share a constructor invariant: quoted text must be empty (reset) or a complete JSON document, with finite numbers and no more than 100 nested containers. An invalid document is rejected even inside an unreachable stored-program instruction. SQL input lowering applies the same rule and retains a typed operand diagnostic before publishing a statement. Memory formats that diagnostic without parsing JSON again. The same directly constructed secondary attribute is tested before its table exists, against a populated table, and after the table is dropped.
 

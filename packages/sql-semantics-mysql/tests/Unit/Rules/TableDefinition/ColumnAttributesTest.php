@@ -26,6 +26,16 @@ final class ColumnAttributesTest extends TestCase
         self::assertSame('SERIAL', (new ColumnAttributes())->generated($type, []));
     }
 
+    public function testAttributeRecognizesAutoIncrementTypeFamilies(): void
+    {
+        $attribute = new \SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute(\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::AutoIncrement);
+        $rules = new ColumnAttributes();
+        self::assertNull($rules->attribute(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Boolean), $attribute));
+        self::assertNull($rules->attribute(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Serial), $attribute));
+        self::assertNull($rules->attribute(new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Float), $attribute));
+        self::assertSame('AUTO_INCREMENT', $rules->attribute(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit), $attribute));
+    }
+
     /**
      * @return iterable<string, array{string, list<string>}>
      */
@@ -48,9 +58,15 @@ final class ColumnAttributesTest extends TestCase
      * @param list<string> $expected
      */
     #[DataProvider('providerAttributes')]
-    public function testProblemsResolvesTheAttributeAgainstItsColumnType(string $definition, array $expected): void
+    public function testIncompatibleResolvesTheAttributeAgainstItsColumnType(string $definition, array $expected): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(c ' . $definition . ')');
+        try {
+            $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(c ' . $definition . ')');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(InvalidColumnAttribute::class, $failure->problem);
+            self::assertSame($expected, [$failure->problem->attribute]);
+            return;
+        }
         $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof InvalidColumnAttribute));
 
         self::assertSame($expected, array_map(static fn ($problem): string => $problem->attribute, $problems));

@@ -39,7 +39,7 @@ final class CommandPrefix
         if (!$this->applicable($tokens, $session)) {
             return null;
         }
-        if (in_array($command, ['LOAD', 'CREATE'], true) && $session->variables->database !== '') {
+        if ($session->variables->database !== '' && $this->tableCommand($tokens)) {
             return null;
         }
         $semantics = $session->semantics();
@@ -84,7 +84,18 @@ final class CommandPrefix
         $command = strtoupper($tokens[0]->text ?? '');
 
         return ($command === 'ALTER' && in_array(strtoupper($tokens[1]->text ?? ''), ['DATABASE', 'SCHEMA'], true))
-            || ($session->settings()->legacy() && in_array($command, ['LOAD', 'CREATE', 'REVOKE', 'SET'], true));
+            || ($session->settings()->legacy() && (in_array($command, ['LOAD', 'CREATE', 'REVOKE', 'SET'], true) || $command === 'ALTER' && in_array(strtoupper($tokens[1]->text ?? ''), ['TABLE', 'IGNORE'], true)));
+    }
+
+    /**
+     * Identifies table prefixes whose only early requirement is a selected database.
+     *
+     * @param list<Token> $tokens The input statement tokens
+     */
+    public function tableCommand(array $tokens): bool
+    {
+        $command = strtoupper($tokens[0]->text ?? '');
+        return in_array($command, ['LOAD', 'CREATE'], true) || $command === 'ALTER' && in_array(strtoupper($tokens[1]->text ?? ''), ['TABLE', 'IGNORE'], true);
     }
 
     /**
@@ -109,7 +120,7 @@ final class CommandPrefix
      */
     public function completed(\SqlSemantics\Statement\Statement $model, ?Token $next, string $statement, Session $session): ?SqlError
     {
-        if (($model instanceof LoadTable && $model->table->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $model->name->schema === null)) {
+        if (($model instanceof LoadTable && $model->table->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $model->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $model->table->schema === null)) {
             return $session->variables->database === '' ? QueryError::NoDatabase->error() : null;
         }
         if ($model instanceof \SqlSemantics\Platform\MySql\Statement\Account\SetPassword && $next?->text === ',' && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {

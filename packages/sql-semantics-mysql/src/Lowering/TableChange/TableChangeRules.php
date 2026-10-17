@@ -44,13 +44,30 @@ final class TableChangeRules
      */
     public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
-        return (new ModifierRule($this->lowering))->completed($node);
+        $notice = (new ModifierRule($this->lowering))->completed($node);
+        if ($notice !== null || $node->name !== 'alter_list_item' || !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            return $notice;
+        }
+        $rule = new Alter\ColumnItemRule($this->lowering);
+        $form = $this->lowering->form($node);
+        try {
+            if ($rule->claims($form->signature)) {
+                $rule->item($form);
+            }
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, $failure->aborts);
+        } catch (\SqlSemantics\Diagnostic\AnalysisException) {
+            // Other refusals retain their ordinary input formatting.
+        }
+        return null;
     }
 
     /**
      * Lowers a table change statement: a node of one of the statement rules this family owns.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Node $statement): Statement
     {
@@ -61,6 +78,8 @@ final class TableChangeRules
      * Lowers a production of `alter` or `drop` that MYSQL-DEFINITION-ROUTES-001 routes to this family.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function definition(Form $form): Statement
     {

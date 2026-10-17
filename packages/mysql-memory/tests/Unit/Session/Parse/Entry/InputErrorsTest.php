@@ -19,6 +19,19 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testColumnResolvesItsDeclarationScopeWithoutInputText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $errors = new InputErrors();
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute(new \SqlSemantics\Statement\Identifier\Name('a'), 'DEFAULT', $name);
+        self::assertSame(1046, $errors->column($problem, $session)->getCode());
+        $session->use('mysql');
+        self::assertSame(1067, $errors->column($problem, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testSourceDistinguishesTypedSourceFailuresFromOtherDiagnostics(): void
     {
         $session = (new Instance())->connect();

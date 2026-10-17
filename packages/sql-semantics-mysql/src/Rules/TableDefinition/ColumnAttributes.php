@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\SridAttribute;
-use SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
@@ -55,18 +53,16 @@ final class ColumnAttributes
     }
 
     /**
-     * Answers incompatible effective column attributes in declaration order.
+     * Names intrinsic contradictions after replacement of DEFAULT and ON UPDATE.
      *
-     * The last DEFAULT and ON UPDATE clauses replace earlier clauses, including
-     * an incompatible clock expression. Verified on MySQL 8.4.7.
+     * Floating AUTO_INCREMENT remains a release constraint: MySQL 5.x accepts it.
      *
-     * @return list<InvalidColumnAttribute>
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute> $attributes The written attributes
+     * @return list<'SRID'|'DEFAULT'|'ON UPDATE'|'AUTO_INCREMENT'> Incompatible effective attributes
      */
-    public function problems(ColumnDefinition $column): array
+    public function incompatible(\SqlSemantics\Platform\MySql\Statement\Type\TypeName $type, array $attributes): array
     {
         $problems = [];
-        $type = $column->specification->dataType();
-        $attributes = $column->specification->columnAttributes();
         $default = null;
         $update = null;
         foreach ($attributes as $position => $attribute) {
@@ -80,16 +76,33 @@ final class ColumnAttributes
             if ($attribute instanceof DefaultLiteral && $position !== $default || $attribute instanceof OnUpdate && $position !== $update) {
                 continue;
             }
-            if ($attribute instanceof SridAttribute && !$type instanceof Spatial) {
-                $problems[] = new InvalidColumnAttribute($column->name->column, 'SRID');
-            }
-            if (($attribute instanceof DefaultLiteral || $attribute instanceof OnUpdate) && $attribute->value instanceof ClockCall) {
-                if (!$type instanceof Temporal || !in_array($type->kind, [TemporalKind::DateTime, TemporalKind::Timestamp], true) || (int) ($type->precision ?? '0') !== $attribute->value->decimals()) {
-                    $problems[] = new InvalidColumnAttribute($column->name->column, $attribute instanceof OnUpdate ? 'ON UPDATE' : 'DEFAULT');
-                }
+            $problem = $this->attribute($type, $attribute);
+            if ($problem !== null) {
+                $problems[] = $problem;
             }
         }
 
         return $problems;
     }
+    /**
+     * Checks one effective attribute against the type, without any catalog input.
+     *
+     * @return 'SRID'|'DEFAULT'|'ON UPDATE'|'AUTO_INCREMENT'|null The intrinsic incompatibility
+     */
+    public function attribute(\SqlSemantics\Platform\MySql\Statement\Type\TypeName $type, \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute $attribute): ?string
+    {
+        if ($attribute instanceof SridAttribute && !$type instanceof Spatial) {
+            return 'SRID';
+        }
+        if (($attribute instanceof DefaultLiteral || $attribute instanceof OnUpdate) && $attribute->value instanceof ClockCall) {
+            if (!$type instanceof Temporal || !in_array($type->kind, [TemporalKind::DateTime, TemporalKind::Timestamp], true) || (int) ($type->precision ?? '0') !== $attribute->value->decimals()) {
+                return $attribute instanceof OnUpdate ? 'ON UPDATE' : 'DEFAULT';
+            }
+        }
+        if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute && in_array($attribute->keyword, [\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::AutoIncrement, \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::SerialDefaultValue], true) && !($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Integral || $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Floating || $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Elementary && in_array($type->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Boolean, \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Serial], true))) {
+            return 'AUTO_INCREMENT';
+        }
+        return null;
+    }
+
 }

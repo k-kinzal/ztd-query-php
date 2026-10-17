@@ -17,6 +17,16 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class SyntaxDeprecationsTest extends TestCase
 {
+    public function testJsonTablePreservesResponseOrderBeforeTargetRefusal(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');
+        $tree = $parser->parse("DELETE missing FROM JSON_TABLE('[]', '$[*]' COLUMNS(a INT PATH '$' ERROR ON ERROR ERROR ON EMPTY)) AS j");
+        $node = $tree->find('opt_on_empty_or_error_json_table')[0];
+        self::assertSame(Deprecated::JsonTableResponseOrder, (new SyntaxDeprecations())->completed($node, GrammarRelease::MySql847));
+        $normal = $parser->parse("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS(a INT PATH '$' ERROR ON EMPTY ERROR ON ERROR)) AS j");
+        self::assertNull((new SyntaxDeprecations())->completed($normal->find('opt_on_empty_or_error_json_table')[0], GrammarRelease::MySql847));
+    }
+
     public function testStopsBinaryFollowsOnlyTheDirectCastOperand(): void
     {
         $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');

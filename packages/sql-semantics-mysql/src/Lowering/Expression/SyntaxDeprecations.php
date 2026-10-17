@@ -31,7 +31,7 @@ final class SyntaxDeprecations
             $node->name === 'text_literal' && $first instanceof Token && $first->name === 'NCHAR_STRING' => Deprecated::National,
             $node->name === 'simple_expr' && $first instanceof Token && in_array($first->name, ['BINARY', 'BINARY_SYM'], true) => Deprecated::BinaryOperator,
             in_array($node->name, ['variable_aux', 'in_expression_user_variable_assignment'], true) && $assignment instanceof Token && $assignment->name === 'SET_VAR' => Deprecated::AssignmentInExpression,
-            default => null,
+            default => $this->jsonTable($node),
         };
 
         if ($construct === Deprecated::BinaryOperator && $construct->warnedIn($release) && $release !== GrammarRelease::MySql8044 && $this->stopsBinary($node)) {
@@ -40,6 +40,15 @@ final class SyntaxDeprecations
 
         return $construct !== null && $construct->warnedIn($release) ? $construct : null;
     }
+    /**
+     * Reads the completed reversed pair, excluding a single ON ERROR response.
+     */
+    public function jsonTable(Node $node): ?Deprecated
+    {
+        $first = $node->children[0] ?? null;
+        return $node->name === 'opt_on_empty_or_error_json_table' && $first instanceof Node && $first->name === 'on_error' && ($node->children[1] ?? null) instanceof Node ? Deprecated::JsonTableResponseOrder : null;
+    }
+
     /**
      * Recognizes a BINARY operand that consists of AT LOCAL and optional grouping only.
      * Arithmetic and other enclosing expressions remain distinct operands.

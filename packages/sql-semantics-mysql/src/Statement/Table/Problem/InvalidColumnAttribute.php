@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the incompatible attribute
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT SRID 1)')->facts->diagnostics[0]->message() // => 'Incorrect usage of SRID and non-geometry column'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute(new \SqlSemantics\Statement\Identifier\Name('a'), 'SRID'))->message() // => 'Incorrect usage of SRID and non-geometry column'
  */
 final class InvalidColumnAttribute implements Diagnostic
 {
@@ -24,9 +24,10 @@ final class InvalidColumnAttribute implements Diagnostic
 
     /**
      * @param Name $column The column with the attribute
-     * @param 'SRID'|'DEFAULT'|'ON UPDATE' $attribute The incompatible attribute
+     * @param 'SRID'|'DEFAULT'|'ON UPDATE'|'AUTO_INCREMENT' $attribute The incompatible attribute
+     * @param \SqlSemantics\Statement\Identifier\QualifiedName|null $scope The table or enclosing program whose database is resolved first
      */
-    public function __construct(public readonly Name $column, public readonly string $attribute)
+    public function __construct(public readonly Name $column, public readonly string $attribute, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $scope = null)
     {
     }
 
@@ -36,6 +37,7 @@ final class InvalidColumnAttribute implements Diagnostic
     public function message(): string
     {
         return match ($this->attribute) {
+            'AUTO_INCREMENT' => "Incorrect column specifier for column '{$this->column->value}'",
             'SRID' => 'Incorrect usage of SRID and non-geometry column',
             'DEFAULT' => "Invalid default value for '{$this->column->value}'",
             'ON UPDATE' => "Invalid ON UPDATE clause for '{$this->column->value}' column",

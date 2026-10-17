@@ -65,6 +65,8 @@ final class ModernForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint => $value->enforced !== null,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute => true,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions => true,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput => $value->source !== \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile || $value->count !== null || $value->primaryKeyOrder,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable => $value->compression !== null,

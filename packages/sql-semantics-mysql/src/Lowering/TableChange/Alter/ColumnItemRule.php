@@ -98,6 +98,8 @@ final class ColumnItemRule
      * Lowers a column action of `alter_list_item`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function item(Form $form): AlterCommand
     {
@@ -183,6 +185,8 @@ final class ColumnItemRule
      * @param int $operand The position of the definition or of the type
      * @param int|null $second The position of the second part of the specification, when there is one
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function definition(Form $form, ?int $name, int $operand, ?int $second): ColumnDefinition
     {
@@ -194,7 +198,8 @@ final class ColumnItemRule
             return $element;
         }
 
-        return new ColumnDefinition($this->name($form->node($name)), $definitions->columnSpecification($form->node($operand), $second === null ? null : $form->node($second)));
+        $identity = $this->name($form->node($name));
+        return new ColumnDefinition($identity, $definitions->columnSpecification($form->node($operand), $second === null ? null : $form->node($second), $identity->column));
     }
 
     /**

@@ -81,11 +81,12 @@ final class ColumnRule
      * @param list<ColumnAttribute> $trailing Attributes written after the specification, such as a 5.x column CHECK
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When a generated column has an attribute or type the server refuses for it
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
      */
-    public function specification(Node $definition, ?Node $attributes = null, ?References $references = null, array $trailing = []): ColumnSpecification
+    public function specification(Node $definition, ?Node $attributes = null, ?References $references = null, array $trailing = [], ?\SqlSemantics\Statement\Identifier\Name $name = null): ColumnSpecification
     {
         if ($definition->name === 'type') {
-            return new OrdinaryColumn($this->lowering->types->type($definition), [...$this->attributes($attributes ?? throw ImplementationGap::rule('MySQL 5.6 column specification without attributes')), ...$trailing], $references);
+            return $this->ordinary($definition, $attributes ?? throw ImplementationGap::rule('MySQL 5.6 column specification without attributes'), $references, $trailing, $name);
         }
         $form = $this->lowering->productions->form($definition);
         $positions = self::GENERATED[$form->signature] ?? null;
@@ -95,6 +96,7 @@ final class ColumnRule
             $type = $this->lowering->types->type($form->node(0));
             $attributes = $this->attributes($form->node($list));
             $this->refuse($attributes, $type);
+            $this->compatible($type, $attributes, $name, $definition);
 
             return new GeneratedColumn(
                 $type,
@@ -107,9 +109,37 @@ final class ColumnRule
         }
 
         return match ($form->signature) {
-            'field_def: type opt_attribute', 'field_def: type opt_column_attribute_list' => new OrdinaryColumn($this->lowering->types->type($form->node(0)), [...$this->attributes($form->node(1)), ...$trailing], $references),
+            'field_def: type opt_attribute', 'field_def: type opt_column_attribute_list' => $this->ordinary($form->node(0), $form->node(1), $references, $trailing, $name),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Publishes an ordinary specification only after its intrinsic attributes agree.
+     *
+     * @param list<ColumnAttribute> $trailing Attributes after the type's own list
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     */
+    public function ordinary(Node $definition, Node $list, ?References $references, array $trailing, ?\SqlSemantics\Statement\Identifier\Name $name): OrdinaryColumn
+    {
+        $type = $this->lowering->types->type($definition);
+        $attributes = [...$this->attributes($list), ...$trailing];
+        $this->compatible($type, $attributes, $name, $list);
+        return new OrdinaryColumn($type, $attributes, $references);
+    }
+
+    /**
+     * Converts a structural contradiction to a typed source refusal.
+     *
+     * @param list<ColumnAttribute> $attributes The effective declaration operands
+     * @throws \SqlSemantics\Construction\RejectedInput When the type and an attribute disagree
+     */
+    public function compatible(TypeName $type, array $attributes, ?\SqlSemantics\Statement\Identifier\Name $name, Node $boundary): void
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $attributes)[0] ?? null;
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute($name ?? new \SqlSemantics\Statement\Identifier\Name(''), $problem, $this->lowering->programName ?? $this->lowering->columnTable), (new \SqlSemantics\Construction\SourceRanges())->span($boundary)[1] ?? 0, true);
+        }
     }
 
     /**

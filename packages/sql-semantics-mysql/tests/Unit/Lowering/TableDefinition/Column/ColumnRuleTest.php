@@ -34,7 +34,7 @@ final class ColumnRuleTest extends TestCase
         self::assertInstanceOf(GeneratedColumn::class, (new ColumnRule($lowering))->specification($node));
     }
 
-    public function testSpecificationLowersALegacyTypeAndAttributes(): void
+    public function testOrdinaryLowersALegacyTypeAndAttributes(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('5.6.51', null, ParameterStyle::Native);
@@ -44,6 +44,19 @@ final class ColumnRuleTest extends TestCase
 
         self::assertInstanceOf(OrdinaryColumn::class, $specification);
         self::assertCount(1, $specification->attributes);
+    }
+
+    public function testCompatibleRefusesATypeContradictionWithItsColumnIdentity(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER TABLE d.t MODIFY c BIT AUTO_INCREMENT');
+            self::fail('The incompatible column must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute::class, $failure->problem);
+            self::assertSame('c', $failure->problem->column->value);
+            self::assertSame('d', $failure->problem->scope?->schema?->value);
+            self::assertSame('AUTO_INCREMENT', $failure->problem->attribute);
+        }
     }
 
     public function testAttributesLowersTheListInOrder(): void

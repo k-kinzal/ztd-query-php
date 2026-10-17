@@ -18,7 +18,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Rule: MYSQL-ORDINARY-COLUMN-001. The attributes are kept in written order,
  * because the server applies them in that order (a later NULL cancels an
- * earlier NOT NULL). An inline REFERENCES clause is ignored through MySQL 8.4 and declares a
+ * earlier NOT NULL). Effective clock defaults and updates require DATETIME or
+ * TIMESTAMP with matching precision; SRID requires a spatial type. AUTO_INCREMENT
+ * requires an integer or floating type (floating types are accepted only by legacy releases).
+ * Intrinsic contradictions are rejected during construction. An inline REFERENCES clause is ignored through MySQL 8.4 and declares a
  * foreign key from MySQL 9.0 onward; the reference request is retained. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/ansi-diff-foreign-keys.html. Status: Implemented.
  *
@@ -44,6 +47,7 @@ final class OrdinaryColumn implements ColumnSpecification
     public function __construct(public readonly DeclaredName $type, array $attributes = [], public readonly ?References $references = null)
     {
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $this->attributes) === [], 'Column attributes must fit the declared type and temporal precision.');
     }
 
     /**

@@ -16,6 +16,27 @@ use PHPUnit\Framework\TestCase;
 final class CommandPrefixTest extends TestCase
 {
     /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerTableCommands(): iterable
+    {
+        yield 'create' => ['CREATE TABLE t', true];
+        yield 'load' => ['LOAD DATA', true];
+        yield 'alter' => ['ALTER TABLE t', true];
+        yield 'alter ignore' => ['ALTER IGNORE TABLE t', true];
+        yield 'database' => ['ALTER DATABASE d', false];
+        yield 'selection' => ['SELECT 1', false];
+    }
+
+    #[DataProvider('providerTableCommands')]
+    public function testTableCommandDistinguishesTablePrefixesFromDatabaseAlterations(string $sql, bool $expected): void
+    {
+        $parser = (new Instance('5.7.44'))->connect()->semantics()->parser();
+        $prefix = new CommandPrefix();
+        self::assertSame($expected, $prefix->tableCommand($parser->tokenize($sql)));
+    }
+
+    /**
      * @return iterable<string, array{string, string, int|null}>
      */
     public static function providerPrefixes(): iterable

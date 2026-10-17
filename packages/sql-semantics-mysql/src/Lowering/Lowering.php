@@ -62,6 +62,11 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 final class Lowering
 {
     /**
+     * The table currently declaring column operands; only its typed name can escape.
+     */
+    public ?\SqlSemantics\Statement\Identifier\QualifiedName $columnTable = null;
+
+    /**
      * The start_entry alternatives the server enters by a grammar selector token; no SQL text parses to them.
      */
     private const SELECTED = [

@@ -40,7 +40,7 @@ final class CompletedNotice
      */
     public function operands(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
     {
-        $load = $lowering->literals->radixNotice($node) ?? (new Server\Instance\SpatialRule($lowering))->completed($node) ?? (new Dml\ChangeRule($lowering))->completed($node) ?? (new TableDefinition\Key\SyntaxPrefixes())->completed($node, $lowering) ?? (new Leaf\SyntaxJsonAttribute())->completed($node, $lowering) ?? (new Dml\SyntaxLoadInput())->completed($node, $lowering);
+        $load = (new TableDefinition\Column\SyntaxColumns())->completed($node, $lowering) ?? $lowering->literals->radixNotice($node) ?? (new Server\Instance\SpatialRule($lowering))->completed($node) ?? (new Dml\ChangeRule($lowering))->completed($node) ?? (new TableDefinition\Key\SyntaxPrefixes())->completed($node, $lowering) ?? (new Leaf\SyntaxJsonAttribute())->completed($node, $lowering) ?? (new Dml\SyntaxLoadInput())->completed($node, $lowering);
         if ($load !== null) {
             return $load;
         }

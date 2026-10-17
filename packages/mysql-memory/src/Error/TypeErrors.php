@@ -41,6 +41,7 @@ final class TypeErrors
     public function columnAttribute(\SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute $diagnostic): SqlError
     {
         return match ($diagnostic->attribute) {
+            'AUTO_INCREMENT' => SchemaError::WrongFieldSpec->error($diagnostic->column->value),
             'SRID' => StatementError::WrongUsage->error('SRID', 'non-geometry column'),
             'DEFAULT' => SchemaError::InvalidDefault->error($diagnostic->column->value),
             'ON UPDATE' => SchemaError::InvalidOnUpdate->error($diagnostic->column->value),

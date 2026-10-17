@@ -48,6 +48,8 @@ final class CreateTableRule
      * Lowers the 5.x `create` alternative of CREATE TABLE.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function legacy(Form $form): Statement
     {
@@ -57,6 +59,7 @@ final class CreateTableRule
         $temporary = $this->temporary($form->node(1));
         $exists = $this->lowering->options->present($form->node(3));
         $name = $this->lowering->names->qualified($form->node(4));
+        $this->lowering->columnTable = $name;
         $tail = $this->lowering->productions->form($form->node(5));
         $options = new TableOptionRule($this->lowering);
         $changes = $this->lowering->tableChanges;
@@ -74,6 +77,8 @@ final class CreateTableRule
      * Lowers the 5.x forms that open a parenthesis after the table name: a column list, or a query.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function enclosed(QualifiedName $name, Form $form, int $temporary, bool $exists): CreateTable
     {
@@ -151,6 +156,8 @@ final class CreateTableRule
      * Lowers CREATE TABLE of MySQL 8.0 and later: a node of `create_table_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function modern(Node $statement): Statement
     {
@@ -158,6 +165,7 @@ final class CreateTableRule
         $temporary = $this->lowering->options->present($form->node(1)) ? 1 : 0;
         $exists = $this->lowering->options->present($form->node(3));
         $name = $this->lowering->names->qualified($form->node(4));
+        $this->lowering->columnTable = $name;
 
         return match ($form->signature) {
             'create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( table_element_list ) opt_create_table_options_etc' => $this->rest($name, (new ElementRule($this->lowering))->elements($form->node(6)), $form->node(8), $temporary, $exists),
