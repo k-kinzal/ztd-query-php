@@ -7,6 +7,7 @@ namespace Tests\Unit\Command\Definition;
 use MySqlMemory\Command\Definition\StorageOptions;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
@@ -95,4 +96,24 @@ final class StorageOptionsTest extends TestCase
 
         self::assertSame([['Error', 3981, "Storage engine 'InnoDB' does not support ENGINE_ATTRIBUTE."]], $session->diagnostics->conditions);
     }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerDirectories(): iterable
+    {
+        yield 'legacy' => ['5.6.51', 1103];
+        yield 'modern' => ['8.4.7', 1525];
+    }
+
+    #[DataProvider('providerDirectories')]
+    public function testDirectoriesPrecedeMissingColumnsAndDestinationSchemas(string $release, int $code): void
+    {
+        $session = (new Instance($release))->connect();
+        $create = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('absent')), options: [new \SqlSemantics\Platform\MySql\Statement\Table\Option\TextOption(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::DataDirectory, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('text'))]);
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode($code);
+        (new StorageOptions())->directories($create, $session);
+    }
+
 }

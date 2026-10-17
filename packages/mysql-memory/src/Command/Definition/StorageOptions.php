@@ -72,6 +72,9 @@ final class StorageOptions
         foreach ((new Walker())->find($statement, CreateTable::class) as $create) {
             $this->engine($create, $session->variables, $context);
         }
+        if ($statement instanceof CreateTable) {
+            $this->directories($statement, $session);
+        }
     }
 
     /**
@@ -101,9 +104,29 @@ final class StorageOptions
      */
     public function check(CreateTable $create, Session $session, Context $context): void
     {
+        $this->directories($create, $session);
         $engine = $this->engine($create, $session->variables);
         (new Database\TableEncryption())->check($create, $engine, $session, $context);
         $this->attributes($create, $engine);
+        foreach ($create->options as $option) {
+            if ($option instanceof TablespaceOption) {
+                $this->tablespace($option, $create, $engine, $session);
+            }
+        }
+        if ($engine === 'InnoDB') {
+            (new InnoDbOptions())->check($create, $session, $context);
+        }
+    }
+
+    /**
+     * Rejects relative storage directories before opening the destination schema.
+     *
+     * Database selection and option-name resolution precede this check. Empty
+     * columns, absent schemas and IF NOT EXISTS follow it on 5.6 through 9.1.
+     * Observed through SQL on 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
+     */
+    public function directories(CreateTable $create, Session $session): void
+    {
         foreach ($create->options as $option) {
             if ($option instanceof TextOption && in_array($option->kind, [TextOptionKind::DataDirectory, TextOptionKind::IndexDirectory], true) && !str_starts_with($option->value->bytes(), '/')) {
                 if ($session->settings()->legacy()) {
@@ -111,12 +134,6 @@ final class StorageOptions
                 }
                 throw \MySqlMemory\Error\Family\DataError::WrongValue->error('path', $option->value->bytes());
             }
-            if ($option instanceof TablespaceOption) {
-                $this->tablespace($option, $create, $engine, $session);
-            }
-        }
-        if ($engine === 'InnoDB') {
-            (new InnoDbOptions())->check($create, $session, $context);
         }
     }
 
