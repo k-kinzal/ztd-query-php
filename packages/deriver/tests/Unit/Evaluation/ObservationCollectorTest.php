@@ -98,7 +98,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(StateQuery::class)]
 #[UsesClass(TupleQuery::class)]
@@ -108,16 +108,16 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(PointRef::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -232,10 +232,10 @@ final class ObservationCollectorTest extends TestCase
 
     public function testProjectCarriesConfidentialityThroughAbstractSlots(): void
     {
-        $config = new Configuration(stateSlots:[new StateSlot('example.cache', 'array')]);
+        $config = new \Deriver\Model\Registration\Contributions(stateSlots:[new StateSlot('example.cache', 'array')]);
         $state = new State();
         $state->memory->cells['model:box'] = Term::array(['example.cache' => Term::fromNative(['keep' => 'selected'])]);
-        $value = (new ObservationCollector(\Tests\Fake\SolverFixture::context(configuration:$config)))->project(new Term('object', 'box', secret:true), ['keep'], $state, 'example.cache');
+        $value = (new ObservationCollector(\Tests\Fake\SolverFixture::context(contributions:$config)))->project(new Term('object', 'box', secret:true), ['keep'], $state, 'example.cache');
         self::assertSame('selected', $value->native());
         self::assertTrue($value->isSecret());
     }
@@ -257,9 +257,9 @@ final class ObservationCollectorTest extends TestCase
 
     public function testProjectDelegatesRegisteredDomainProjectionWithoutErasingConfidentiality(): void
     {
-        $config = new Configuration(domains:[new \Tests\Fake\PolicyDomain()]);
+        $config = new \Deriver\Model\Registration\Contributions(domains:[new \Tests\Fake\PolicyDomain()]);
         $input = new Term('domain', 'example.policy', ['representation' => Term::fromNative(['keep' => 'selected'])], secret:true);
-        $value = (new ObservationCollector(\Tests\Fake\SolverFixture::context(configuration:$config)))->project($input, ['keep'], new State());
+        $value = (new ObservationCollector(\Tests\Fake\SolverFixture::context(contributions:$config)))->project($input, ['keep'], new State());
         self::assertSame('domain', $value->kind);
         self::assertSame('example.policy', $value->literal);
         self::assertSame('selected', $value->operands['representation']->native());

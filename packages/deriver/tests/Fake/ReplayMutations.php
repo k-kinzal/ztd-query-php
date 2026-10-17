@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\Result\Candidates\Candidate;
-use Deriver\Result\Candidates\CandidateCollection;
+use Deriver\Result\Candidate;
+use Deriver\Result\CandidateCollection;
 use JsonException;
 use LogicException;
 

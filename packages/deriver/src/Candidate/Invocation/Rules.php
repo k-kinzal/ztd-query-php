@@ -8,9 +8,9 @@ use Deriver\Candidate\Derivation;
 use Deriver\Candidate\Evidence\Provenance;
 use Deriver\Candidate\Frame;
 use Deriver\ControlFlow\Instruction;
+use Deriver\Evidence\Node;
 use Deriver\Exception\ModelContractException;
-use Deriver\Model\Expansion\Request;
-use Deriver\Result\Evidence\Node;
+use Deriver\Project\Expansion\Request;
 use Deriver\Value\Term;
 use Throwable;
 

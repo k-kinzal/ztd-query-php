@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use Deriver\Diagnostic\Frontier;
 use Deriver\Project\ProjectSnapshot;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Frontier;
 use Deriver\Value\Identity;
 use Deriver\Value\Term;
 use WeakMap;

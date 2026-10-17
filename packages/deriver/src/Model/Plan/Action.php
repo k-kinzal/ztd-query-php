@@ -9,15 +9,15 @@ use Deriver\Model\Binding\LocationRef;
 /**
  * An ordered state effect, callback invocation, branch, or completion.
  *
- * @visibility public
+ * @visibility root
  * @example Returning a bound input
  *     \Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::parameter('id'))->operation // => 'return'
  * @example Deriving a route handler argument with captured framework metadata
  *     $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::callback('response', \Deriver\Model\Plan\Expression::parameter('callback')), \Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::receiver())]);
- *     $descriptor = new \Deriver\Model\ModelDescriptor('slim.get', '1', 'Slim\App::get', new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('pattern'), new \Deriver\Model\Signature\Parameter('callback')]));
+ *     $descriptor = new \Deriver\Model\ModelDescriptor('slim.get', '1', 'Slim\App::get', new \Deriver\Project\Declaration\Signature([new \Deriver\Project\Declaration\Parameter('pattern'), new \Deriver\Project\Declaration\Parameter('callback')]));
  *     $route = new class ($descriptor, $plan) implements \Deriver\Model\CallModel { public function __construct(private \Deriver\Model\ModelDescriptor $descriptor, private \Deriver\Model\Plan\SemanticPlan $plan) {} public function descriptor(): \Deriver\Model\ModelDescriptor { return $this->descriptor; } public function describe(\Deriver\Model\CallDescription $call): \Deriver\Model\ModelDecision { return \Deriver\Model\ModelDecision::handled($this->plan); } };
  *     $source = '<?php function routes(Slim\App $app, string $table) { $app->get("/", function () use ($table) { query("SELECT * FROM $table"); }); } function query($sql) {}';
- *     $session = (new \Deriver\Analyzer())->open(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('app.php', $source)]), new \Deriver\Project\Configuration(models: [$route]));
+ *     $session = new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('app.php', $source)]), new \Deriver\Project\Configuration(), new \Deriver\Model\Registration\Contributions(models: [$route]));
  *     $scope = \Deriver\Query\QueryScope::fromEntrypoints([new \Deriver\Project\EntryPoint('routes', [\Deriver\Value\Term::parameter('app', 'Slim\App'), \Deriver\Value\Term::constant('users')])]);
  *     $session->derive(new \Deriver\Query\ValueQuery($session->callsTo('query')[0]->argument(0), scope: $scope))->candidates[0]->result // => 'SELECT * FROM users'
  */

@@ -129,20 +129,20 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -206,7 +206,7 @@ final class AllocationTest extends TestCase
     }
     public function testRecordCreatesDistinctAbstractStatePerObject(): void
     {
-        $context = SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $context = SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
         $state = new State();
         $storage = new StateStorage($context);
 
@@ -220,7 +220,7 @@ final class AllocationTest extends TestCase
 
     public function testRecordClonesHeapAndModelStateWithTheirDeclaredSharingRules(): void
     {
-        $context = SolverFixture::context(configuration:new Configuration(stateSlots:[new StateSlot('example.copy', 'int', Term::constant(1)),new StateSlot('example.reset', 'int', Term::constant(2), 'reset')]));
+        $context = SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots:[new StateSlot('example.copy', 'int', Term::constant(1)),new StateSlot('example.reset', 'int', Term::constant(2), 'reset')]));
         $body = SummaryFixture::body($context);
         $state = new State();
         $source = new Term('object', 'original', attributes:['class' => 'Box']);

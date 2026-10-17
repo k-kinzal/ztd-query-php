@@ -8,7 +8,7 @@ use Deriver\Model\CallDescription;
 use Deriver\Model\CallModel;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Project\TargetProfile;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;

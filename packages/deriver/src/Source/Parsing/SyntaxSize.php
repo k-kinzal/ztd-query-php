@@ -10,7 +10,7 @@ use PhpParser\Node;
 
 /**
  * Checks raw parser output iteratively before recursive name resolution and cloning.
- * @visibility namespace
+ * @visibility Deriver\Source
  */
 final class SyntaxSize
 {

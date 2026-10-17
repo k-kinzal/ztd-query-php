@@ -147,7 +147,7 @@ final class DeclarationScanner
                 return true;
             }
             if (!$this->index->files[$path]->declarationsOnly || $this->index->files[$previous->path]->declarationsOnly) {
-                $this->index->issues[] = new \Deriver\Result\Frontier('INVALID_PROGRAM', $this->index->builder($path)->source($node), 'duplicate:' . $name);
+                $this->index->issues[] = new \Deriver\Diagnostic\Frontier('INVALID_PROGRAM', $this->index->builder($path)->source($node), 'duplicate:' . $name);
             }
             return true;
         }

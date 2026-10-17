@@ -45,7 +45,7 @@ final class BodyIndex
     /**
      * Captures the dependencies used by this component.
      */
-    public function __construct(public readonly CallableGraph $body, public readonly ?\Deriver\Result\Evidence\Node $modelEvidence = null)
+    public function __construct(public readonly CallableGraph $body, public readonly ?\Deriver\Evidence\Node $modelEvidence = null)
     {
         foreach ($body->blocks as $block) {
             foreach ($block->instructions as $offset => $instruction) {

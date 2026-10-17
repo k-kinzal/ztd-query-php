@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
 #[UsesClass(\Deriver\Source\Parsing\SourceParser::class)]

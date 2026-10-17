@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Project;
 
-use Deriver\Result\Frontier;
+use Deriver\Diagnostic\Frontier;
 
 /**
  * Versioned immutable manifest of source, models, environment, and target assumptions.

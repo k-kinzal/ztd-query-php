@@ -8,7 +8,7 @@ use Deriver\Value\Term;
 
 /**
  * A namespaced abstract object slot with explicit initialization, clone, and invalidation contracts.
- * @visibility public
+ * @visibility root
  * @example Resetting cached state on clone
  *     (new \Deriver\Model\State\StateSlot('example.cache', 'array', \Deriver\Value\Term::array([]), 'reset'))->clone // => 'reset'
  */

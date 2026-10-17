@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Result\Serialization;
 
+use Deriver\Diagnostic\Frontier;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Frontier;
+use Deriver\Result\Execution\StorageSnapshot;
 use Deriver\Result\Serialization\JsonReport;
 use Deriver\Result\Serialization\ValueGraph;
-use Deriver\Result\StorageSnapshot;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -73,14 +73,14 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
 #[UsesClass(Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]

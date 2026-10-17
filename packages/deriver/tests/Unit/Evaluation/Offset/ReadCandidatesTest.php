@@ -19,7 +19,7 @@ final class ReadCandidatesTest extends TestCase
     public function testApplyKeepsRepeatedSelectionsCorrelated(): void
     {
         $result = \Tests\Fake\Analysis::returns('<?php function target(string $key){$a=["a"=>1,"b"=>2];return [$a[$key],$a[$key]];}');
-        $values = array_map(static fn (\Deriver\Result\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes);
+        $values = array_map(static fn (\Deriver\Result\Execution\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes);
         self::assertEqualsCanonicalizing([[1,1],[2,2],[null,null]], $values);
     }
     /**

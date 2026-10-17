@@ -8,7 +8,7 @@ use Deriver\Value\Term;
 
 /**
  * One guarded call target with an optional replacement receiver binding.
- * @visibility public
+ * @visibility root
  * @example Naming an implementation
  *     (new \Deriver\Model\Provider\DispatchTarget('Service::run'))->symbol // => 'Service::run'
  */

@@ -10,7 +10,6 @@ use Deriver\Source\Lowering\EffectInspection;
 /**
  * Lists attached PHPDoc from captured syntax without compiling callable bodies.
  * @visibility Deriver\Source
- * @visibility Deriver\Analysis
  * @visibility Deriver\Session
  */
 final class Comments

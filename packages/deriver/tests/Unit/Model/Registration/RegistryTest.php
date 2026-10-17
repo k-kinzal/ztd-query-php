@@ -10,8 +10,8 @@ use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Registration\Registry;
-use Deriver\Model\Signature\Signature;
 use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Query\ReturnQuery;
 use Deriver\Value\Term;
 use JsonException;
@@ -92,7 +92,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Model\Registration\ProviderExpansion::class)]
 #[UsesClass(\Deriver\Model\Registration\SignatureIdentity::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
-#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
+#[UsesClass(\Deriver\Project\Declaration\Parameter::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Project\EntryPoint::class)]
@@ -103,19 +103,19 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -150,10 +150,10 @@ final class RegistryTest extends TestCase
     public function testPreferredPreservesTheSemanticContract(): void
     {
         $model = new \Tests\Fake\PlanModel(
-            new ModelDescriptor('example.key', '1', 'key', new Signature([new \Deriver\Model\Signature\Parameter('id', 'int')])),
+            new ModelDescriptor('example.key', '1', 'key', new Signature([new \Deriver\Project\Declaration\Parameter('id', 'int')])),
             new SemanticPlan([Action::returns(Expression::binary('.', Expression::literal(Term::constant('user:')), Expression::parameter('id')))]),
         );
-        $session = \Tests\Fake\Analysis::session('<?php function target(){return key(3);}', new Configuration(models: [$model]));
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return key(3);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame('user:3', $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);
@@ -168,7 +168,7 @@ final class RegistryTest extends TestCase
     {
         $plan = new SemanticPlan([Action::returns(Expression::literal(Term::constant(1)))]);
         $model = new \Tests\Fake\PlanModel(new ModelDescriptor('example', '1', 'f'), $plan);
-        $registry = new Registry(new Configuration(models:[$model]));
+        $registry = new Registry(new Configuration(), new \Deriver\Model\Registration\Contributions(models:[$model]));
         self::assertSame($plan, $registry->describe('F')->plan);
         self::assertSame($plan, $registry->describe('\\F')->plan);
         self::assertNull($registry->describe('unknown')->plan);

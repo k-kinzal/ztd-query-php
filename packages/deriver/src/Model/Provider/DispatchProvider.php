@@ -6,7 +6,7 @@ namespace Deriver\Model\Provider;
 
 /**
  * Adds justified library dispatch candidates without mutating application memory.
- * @visibility public
+ * @visibility root
  * @example Partial candidates never imply a closed world
  *     (new \Deriver\Model\Provider\DispatchDecision())->targets // => []
  */

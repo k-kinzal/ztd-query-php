@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Source\Declaration\Traits;
 
 use Deriver\ControlFlow\ClassDeclaration;
-use Deriver\Result\Frontier;
+use Deriver\Diagnostic\Frontier;
 use Deriver\Source\Declaration\CallableSource;
 use Deriver\Source\Declaration\ProjectIndex;
 use PhpParser\Node\Stmt;

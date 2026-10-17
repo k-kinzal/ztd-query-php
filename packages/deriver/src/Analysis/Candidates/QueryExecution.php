@@ -14,7 +14,7 @@ use Deriver\Model\Registration\Registry;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectSnapshot;
 use Deriver\Query\Query;
-use Deriver\Result\Candidates\CandidateCollection;
+use Deriver\Result\CandidateCollection;
 use JsonException;
 
 /**

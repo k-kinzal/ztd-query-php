@@ -46,6 +46,6 @@ final class Analyzer
      */
     public function open(ProjectInput $input, Configuration $configuration = new Configuration()): AnalysisSession
     {
-        return new Session($input, $configuration, $this->syntax, $this->lowered);
+        return new Session($input, $configuration, parsing: $this->syntax, lowering: $this->lowered);
     }
 }

@@ -35,19 +35,24 @@ final class ProviderExpansion
      * Captured environment and registered domains.
      */
     public readonly Configuration $configuration;
+    /**
+     * Contributed models, with the providers in stable order and the domains they add.
+     */
+    public readonly Contributions $contributions;
 
     /**
      * @param ProjectInput $input Original source snapshot
-     * @param Configuration $configuration Trusted explicit providers
+     * @param Configuration $configuration Explicit assumptions
+     * @param Contributions $contributions Trusted explicit providers and models
      * @throws InvalidInputException If provider identities conflict or environment keys overlap
      */
-    public function __construct(ProjectInput $input, Configuration $configuration)
+    public function __construct(ProjectInput $input, Configuration $configuration, Contributions $contributions = new Contributions())
     {
         $files = $input->files;
         $environment = $configuration->environment;
-        $domains = $configuration->domains;
+        $domains = $contributions->domains;
         $providers = [];
-        foreach ($configuration->providers as $provider) {
+        foreach ($contributions->providers as $provider) {
             [$id, $version] = [$provider->id(), $provider->version()];
             if ($id === '' || $version === '' || isset($providers[$id])) {
                 throw new InvalidInputException('MODEL_CONFLICT: invalid or repeated provider identity.');
@@ -77,6 +82,7 @@ final class ProviderExpansion
             }
         }
         $this->input = new ProjectInput($files);
-        $this->configuration = new Configuration($configuration->target, $configuration->models, $configuration->closedWorld, $environment, $configuration->environmentVersion, $configuration->standardModels, $configuration->intrinsics, $domains, array_values($providers), $configuration->resources, $configuration->dependencyVersions, $configuration->stateSlots, $configuration->sourceLimits, $configuration->candidateCacheEntries, $configuration->retainedResults, $configuration->expansionRules);
+        $this->configuration = new Configuration($configuration->target, $configuration->closedWorld, $environment, $configuration->environmentVersion, $configuration->standardModels, $configuration->resources, $configuration->dependencyVersions, $configuration->sourceLimits, $configuration->candidateCacheEntries, $configuration->retainedResults, $configuration->expansionRules);
+        $this->contributions = new Contributions($contributions->models, array_values($providers), $domains, $contributions->intrinsics, $contributions->stateSlots);
     }
 }

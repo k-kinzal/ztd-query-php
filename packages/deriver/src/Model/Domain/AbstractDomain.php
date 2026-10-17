@@ -9,7 +9,7 @@ use Deriver\Value\Projection;
 /**
  * A versioned abstract lattice; join is inclusion, not application-specific composition.
  *
- * @visibility public
+ * @visibility root
  * @example Naming a domain fact
  *     (new \Deriver\Model\Domain\DomainFact('policy', \Deriver\Value\Term::array([])))->domain // => 'policy'
  */

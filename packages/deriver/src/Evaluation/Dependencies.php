@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Deriver\Evaluation;
 
 use Deriver\ControlFlow\Instruction;
-use Deriver\Result\Derivation;
+use Deriver\Result\Execution\Derivation;
 
 /**
  * Records concrete definition, storage, call, and control dependencies as graph IDs.

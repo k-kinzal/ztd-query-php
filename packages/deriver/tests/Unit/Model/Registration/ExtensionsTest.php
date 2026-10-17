@@ -25,14 +25,14 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Project\SourceLimits::class)]
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Value\Term::class)]
 #[Small]
 final class ExtensionsTest extends TestCase
 {
     public function testRegistersVersionedOperationsAndDomains(): void
     {
-        $extensions = new Extensions(new Configuration(intrinsics:[new \Tests\Fake\PolicyOperation('compose')], domains:[new \Tests\Fake\PolicyDomain()]));
+        $extensions = new Extensions(new \Deriver\Model\Registration\Contributions(intrinsics:[new \Tests\Fake\PolicyOperation('compose')], domains:[new \Tests\Fake\PolicyDomain()]));
         self::assertArrayHasKey('policy.compose', $extensions->intrinsics);
         self::assertArrayHasKey('example.policy', $extensions->domains);
         self::assertSame('1', $extensions->manifest['domain:example.policy']);
@@ -40,7 +40,7 @@ final class ExtensionsTest extends TestCase
     public function testRejectsDuplicateOperations(): void
     {
         $this->expectException(InvalidInputException::class);
-        new Extensions(new Configuration(intrinsics:[new \Tests\Fake\PolicyOperation('compose'),new \Tests\Fake\PolicyOperation('compose')]));
+        new Extensions(new \Deriver\Model\Registration\Contributions(intrinsics:[new \Tests\Fake\PolicyOperation('compose'),new \Tests\Fake\PolicyOperation('compose')]));
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerIntrinsicIdentityPairs')]
@@ -50,8 +50,8 @@ final class ExtensionsTest extends TestCase
         $first->method('descriptor')->willReturn($firstDescriptor);
         $second = self::createStub(PureIntrinsic::class);
         $second->method('descriptor')->willReturn($secondDescriptor);
-        $a = new Extensions(new Configuration(intrinsics:[$first]));
-        $b = new Extensions(new Configuration(intrinsics:[$second]));
+        $a = new Extensions(new \Deriver\Model\Registration\Contributions(intrinsics:[$first]));
+        $b = new Extensions(new \Deriver\Model\Registration\Contributions(intrinsics:[$second]));
         self::assertNotSame($a->manifest, $b->manifest);
     }
     /**
@@ -75,7 +75,7 @@ final class ExtensionsTest extends TestCase
         $intrinsic->method('descriptor')->willReturn($descriptor);
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage($message);
-        new Extensions(new Configuration(intrinsics:[$intrinsic]));
+        new Extensions(new \Deriver\Model\Registration\Contributions(intrinsics:[$intrinsic]));
     }
     /**
      * @return iterable<string,array{IntrinsicDescriptor,string}>
@@ -97,7 +97,7 @@ final class ExtensionsTest extends TestCase
         $second->method('descriptor')->willReturn(new IntrinsicDescriptor('example', '1', 'second', 0, []));
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('repeated intrinsic operation or ID');
-        new Extensions(new Configuration(intrinsics:[$first,$second]));
+        new Extensions(new \Deriver\Model\Registration\Contributions(intrinsics:[$first,$second]));
     }
     public function testRegistersZeroArityAndTheLastValidDependency(): void
     {
@@ -105,7 +105,7 @@ final class ExtensionsTest extends TestCase
         $first->method('descriptor')->willReturn(new IntrinsicDescriptor('a', '1', 'first', 0, []));
         $second = self::createStub(PureIntrinsic::class);
         $second->method('descriptor')->willReturn(new IntrinsicDescriptor('z', '1', 'second', 2, [1]));
-        $extensions = new Extensions(new Configuration(intrinsics:[$second,$first]));
+        $extensions = new Extensions(new \Deriver\Model\Registration\Contributions(intrinsics:[$second,$first]));
         self::assertSame(['intrinsic:a','intrinsic:z'], array_keys($extensions->manifest));
         self::assertSame(['second' => $second,'first' => $first], $extensions->intrinsics);
         self::assertSame([], $extensions->domains);
@@ -114,7 +114,7 @@ final class ExtensionsTest extends TestCase
     {
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('invalid or repeated domain identity');
-        new Extensions(new Configuration(domains:[new \Tests\Fake\PolicyDomain(),new \Tests\Fake\PolicyDomain()]));
+        new Extensions(new \Deriver\Model\Registration\Contributions(domains:[new \Tests\Fake\PolicyDomain(),new \Tests\Fake\PolicyDomain()]));
     }
 
 }

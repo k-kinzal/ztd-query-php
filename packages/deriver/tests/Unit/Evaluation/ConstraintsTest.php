@@ -81,19 +81,19 @@ use RuntimeException;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -332,7 +332,7 @@ final class ConstraintsTest extends TestCase
         $upper->method('id')->willReturn('upper');
         $upper->method('version')->willReturn('1');
         $upper->method('refine')->willReturn(new Term('binary', '<=', [$x,Term::constant(8)]));
-        $context = \Tests\Fake\SolverFixture::context(configuration: new Configuration(providers:[$other,$lower,$upper]));
+        $context = \Tests\Fake\SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers:[$other,$lower,$upper]));
         $state = new State();
         self::assertTrue((new Constraints($context))->refine($state, Term::parameter('condition', 'bool'), true));
         $bounds = $state->constraints[(new Identity())->key($x)];
@@ -349,7 +349,7 @@ final class ConstraintsTest extends TestCase
         $provider->method('id')->willReturn('refinement');
         $provider->method('version')->willReturn('1');
         $provider->method('refine')->willReturn($implied);
-        $context = \Tests\Fake\SolverFixture::context(configuration:new Configuration(providers:[$provider]));
+        $context = \Tests\Fake\SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers:[$provider]));
         $state = new State();
         self::assertSame($expected, (new Constraints($context))->refine($state, Term::parameter('condition'), false));
         self::assertCount($guards, $state->guard);
@@ -375,7 +375,7 @@ final class ConstraintsTest extends TestCase
         $provider->method('id')->willReturn('refinement');
         $provider->method('version')->willReturn('1');
         $provider->expects(self::once())->method('refine')->with(self::identicalTo($predicate), false)->willReturn(null);
-        $context = \Tests\Fake\SolverFixture::context(configuration:new Configuration(providers:[$provider]));
+        $context = \Tests\Fake\SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers:[$provider]));
         self::assertTrue((new Constraints($context))->refine(new State(), $predicate, false));
     }
 
@@ -385,7 +385,7 @@ final class ConstraintsTest extends TestCase
         $provider->method('id')->willReturn('broken');
         $provider->method('version')->willReturn('1');
         $provider->method('refine')->willThrowException(new RuntimeException('provider failed'));
-        $context = \Tests\Fake\SolverFixture::context(configuration:new Configuration(providers:[$provider]));
+        $context = \Tests\Fake\SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers:[$provider]));
         $state = new State();
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('provider failed');

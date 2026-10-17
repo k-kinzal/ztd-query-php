@@ -44,8 +44,8 @@ final class Retention
     /**
      * Retains the explanation closure of this computation, independently of unrelated caller frontiers.
      * @param list<CompletionRecord> $outcomes Compact isolated completions
-     * @param array<string, \Deriver\Result\Derivation> $available Query explanation graph
-     * @return array<string, \Deriver\Result\Derivation>|null Bounded explanation closure
+     * @param array<string, \Deriver\Result\Execution\Derivation> $available Query explanation graph
+     * @return array<string, \Deriver\Result\Execution\Derivation>|null Bounded explanation closure
      */
     public function evidence(array $outcomes, array $available): ?array
     {

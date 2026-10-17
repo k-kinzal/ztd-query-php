@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Deriver\Model\Binding;
 
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Value\Term;
 
 /**
  * Signature-normalized abstract inputs with an explicit distinction between preparation and evaluated calls.
- * @visibility public
+ * @visibility root
  * @example Normalizing formal names
- *     $bindings = \Deriver\Model\Binding\ArgumentBindings::formal(new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('id')]));
+ *     $bindings = \Deriver\Model\Binding\ArgumentBindings::formal(new \Deriver\Project\Declaration\Signature([new \Deriver\Project\Declaration\Parameter('id')]));
  *     $bindings->arguments['id']->name // => 'id'
  */
 final class ArgumentBindings

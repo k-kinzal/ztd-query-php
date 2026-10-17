@@ -8,7 +8,7 @@ use Deriver\Analyzer;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
-use Deriver\Result\Derivation;
+use Deriver\Result\Execution\Derivation;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -86,21 +86,21 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
 #[UsesClass(Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]

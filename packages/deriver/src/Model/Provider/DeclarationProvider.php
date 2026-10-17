@@ -8,7 +8,7 @@ use Deriver\Project\ProjectInput;
 
 /**
  * Provides captured declarations as data; SourceFile::declarationsOnly keeps signatures separate from bodies.
- * @visibility public
+ * @visibility root
  * @example Providers are installed explicitly
  *     (new \Deriver\Project\Configuration())->providers // => []
  */

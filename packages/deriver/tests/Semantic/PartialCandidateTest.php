@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Semantic;
 
 use Deriver\Query\ValueQuery;
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;

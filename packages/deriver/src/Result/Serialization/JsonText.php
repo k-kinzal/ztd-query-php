@@ -9,6 +9,7 @@ use stdClass;
 
 /**
  * Preserves arbitrary PHP identifier bytes in otherwise UTF-8 JSON metadata.
+ * Replay compares exports byte for byte, so this normalization is part of the export contract and stays public.
  * @visibility public
  * @example Decoding metadata byte tags
  *     $codec = new \Deriver\Result\Serialization\JsonText();

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Memory;
 
-use Deriver\Result\StorageSnapshot;
+use Deriver\Result\Execution\StorageSnapshot;
 use Deriver\Value\Term;
 use WeakMap;
 

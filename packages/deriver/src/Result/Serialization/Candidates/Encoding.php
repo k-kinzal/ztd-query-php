@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Result\Serialization\Candidates;
 
-use Deriver\Result\Candidates\CandidateCollection;
+use Deriver\Result\CandidateCollection;
 use Deriver\Result\Serialization\JsonText;
 use Deriver\Result\Serialization\ValueGraph;
 use stdClass;

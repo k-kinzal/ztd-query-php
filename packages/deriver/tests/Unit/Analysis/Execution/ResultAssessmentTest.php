@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Analysis\Execution;
 
 use Deriver\Analysis\Execution\ResultAssessment;
+use Deriver\Diagnostic\Frontier;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Alternative;
-use Deriver\Result\Exceptional;
-use Deriver\Result\Frontier;
-use Deriver\Result\StorageSnapshot;
+use Deriver\Result\Execution\Alternative;
+use Deriver\Result\Execution\Exceptional;
+use Deriver\Result\Execution\StorageSnapshot;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -101,14 +101,14 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
 #[UsesClass(Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
 #[UsesClass(Exceptional::class)]
 #[UsesClass(Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]

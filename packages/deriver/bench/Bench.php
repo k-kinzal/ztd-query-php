@@ -10,7 +10,7 @@ use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\Budget;
 use Deriver\Query\ReturnQuery;
-use Deriver\Result\Candidates\CandidateCollection;
+use Deriver\Result\CandidateCollection;
 
 if (($argv[1] ?? '') !== '--worker') {
     $measurements = [];

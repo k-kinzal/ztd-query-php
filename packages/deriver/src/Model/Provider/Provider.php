@@ -6,7 +6,7 @@ namespace Deriver\Model\Provider;
 
 /**
  * An explicitly installed, versioned source of analysis contracts.
- * @visibility public
+ * @visibility root
  * @example Provider contracts are explicitly registered
  *     (new \Deriver\Project\Configuration())->providers // => []
  */

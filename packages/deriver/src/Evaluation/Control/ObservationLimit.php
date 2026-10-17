@@ -7,9 +7,9 @@ namespace Deriver\Evaluation\Control;
 use Deriver\Evaluation\Context;
 use Deriver\Model\Operations\Lattice;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Alternative;
-use Deriver\Result\Exceptional;
-use Deriver\Result\StorageSnapshot;
+use Deriver\Result\Execution\Alternative;
+use Deriver\Result\Execution\Exceptional;
+use Deriver\Result\Execution\StorageSnapshot;
 use Deriver\Value\Term;
 
 /**

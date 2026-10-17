@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Deriver\Analysis\Execution;
 
 use Deriver\Evaluation\Context;
-use Deriver\Result\Assessment;
-use Deriver\Result\StorageSnapshot;
+use Deriver\Result\Execution\Assessment;
+use Deriver\Result\Execution\StorageSnapshot;
 use Deriver\Value\Term;
 use WeakMap;
 

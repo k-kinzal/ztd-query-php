@@ -38,7 +38,7 @@ final class CatalogFeedbackTest extends TestCase
         $session = Analysis::session('<?php function sink($sql){} ' . $source);
         $call = $session->callsTo('sink')[0];
         $result = $session->derive(new ValueQuery($call->argument(0)));
-        $actual = array_values(array_unique(array_map(static fn (\Deriver\Result\Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes), SORT_REGULAR));
+        $actual = array_values(array_unique(array_map(static fn (\Deriver\Result\Execution\Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes), SORT_REGULAR));
         sort($actual);
         sort($expected);
         self::assertSame($expected, $actual);
@@ -125,7 +125,7 @@ final class CatalogFeedbackTest extends TestCase
     public function testUnknownArrayKeysRetainEverySlotAndAbsence(): void
     {
         $result = Analysis::returns('<?php function target(string $key){return ["a"=>"users","b"=>"posts"][$key];}');
-        $values = array_unique(array_map(static fn (\Deriver\Result\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes), SORT_REGULAR);
+        $values = array_unique(array_map(static fn (\Deriver\Result\Execution\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes), SORT_REGULAR);
         self::assertEqualsCanonicalizing(['users','posts',null], $values);
         self::assertSame(['PHP_WARNING'], array_column($result->frontiers, 'code'));
     }
@@ -184,7 +184,7 @@ final class CatalogFeedbackTest extends TestCase
     {
         $session = Analysis::session('<?php final class DB {function __call($name,$args){return $args[0];}} function target(?DB $db){return $db?->query("SELECT 1");}');
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertEqualsCanonicalizing([null,'SELECT 1'], array_unique(array_map(static fn (\Deriver\Result\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes), SORT_REGULAR));
+        self::assertEqualsCanonicalizing([null,'SELECT 1'], array_unique(array_map(static fn (\Deriver\Result\Execution\Alternative $outcome) => $outcome->values['return']->native(), $result->normalOutcomes), SORT_REGULAR));
         self::assertSame([], $result->frontiers);
     }
 

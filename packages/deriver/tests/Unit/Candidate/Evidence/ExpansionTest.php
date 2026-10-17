@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Candidate\Evidence;
 
 use Deriver\Candidate\Evidence\Expansion as Subject;
-use Deriver\Result\Evidence\Node;
+use Deriver\Evidence\Node;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;

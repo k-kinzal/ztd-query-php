@@ -21,7 +21,7 @@ final class RulesTest extends TestCase
      */
     public function testApplySkipsUndemandedInputs(): void
     {
-        $rule = \Deriver\Model\Expansion\Rule::constantFunction('count-one', '1', 'count', Term::constant(1));
+        $rule = \Deriver\Project\Expansion\Rule::constantFunction('count-one', '1', 'count', Term::constant(1));
         $result = A::returns('function target(){return count(expensive());}', new Configuration(expansionRules:[$rule]));
         self::assertSame(1, $result->candidates[0]->result);
         self::assertSame(0, $result->statistics->bodyExpansions);

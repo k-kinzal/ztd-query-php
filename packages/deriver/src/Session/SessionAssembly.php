@@ -7,6 +7,7 @@ namespace Deriver\Session;
 use Deriver\Candidate\Cache;
 use Deriver\Candidate\Index\DefinitionIndex;
 use Deriver\Exception\InvalidInputException;
+use Deriver\Model\Registration\Contributions;
 use Deriver\Model\Registration\ProviderExpansion;
 use Deriver\Model\Registration\Registry;
 use Deriver\Project\Configuration;
@@ -65,19 +66,20 @@ final class SessionAssembly
     /**
      * @param ProjectInput $input Captured sources
      * @param Configuration $configuration Explicit assumptions
+     * @param Contributions $contributions Models, providers, domains, intrinsics and state slots to register
      * @param ParseCache $parsing Reusable parsed files
      * @param LoweringCache $lowering Reusable lowered bodies
      * @param bool $validateSource Whether malformed captured PHP rejects the session
      * @throws InvalidInputException If the input exceeds its limits or, when validated, contains malformed PHP
      * @throws JsonException If the snapshot identity cannot be encoded
      */
-    public function __construct(ProjectInput $input, Configuration $configuration, ParseCache $parsing = new ParseCache(), LoweringCache $lowering = new LoweringCache(), bool $validateSource = true)
+    public function __construct(ProjectInput $input, Configuration $configuration, Contributions $contributions = new Contributions(), ParseCache $parsing = new ParseCache(), LoweringCache $lowering = new LoweringCache(), bool $validateSource = true)
     {
-        $this->providers = new ProviderExpansion($input, $configuration);
+        $this->providers = new ProviderExpansion($input, $configuration, $contributions);
         $this->input = $this->providers->input;
         $this->configuration = $this->providers->configuration;
         $this->configuration->sourceLimits->check($this->input);
-        $this->models = new Registry($this->configuration);
+        $this->models = new Registry($this->configuration, $this->providers->contributions);
         $this->identity = new SnapshotIdentity($this->input, $this->configuration, $this->models, $this->providers);
         $this->program = new ProjectIndex($this->identity->id, $this->input, $this->configuration->target, $parsing, $lowering, $this->configuration->sourceLimits);
         if ($validateSource) {

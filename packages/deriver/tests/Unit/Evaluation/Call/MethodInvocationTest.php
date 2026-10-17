@@ -15,7 +15,7 @@ use Deriver\Model\Provider\DispatchProvider;
 use Deriver\Model\Provider\DispatchTarget;
 use Deriver\Project\Configuration;
 use Deriver\Query\ReturnQuery;
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\SolverFixture;
 
 #[CoversClass(MethodInvocation::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
 #[UsesClass(\Deriver\Model\Registration\SignatureIdentity::class)]
 #[UsesClass(\Deriver\Model\Registration\ModelPrecedence::class)]
 #[UsesClass(\Deriver\Model\Registration\Declarations::class)]
@@ -146,8 +146,8 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Model\Registration\ProviderExpansion::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
-#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
-#[UsesClass(\Deriver\Model\Signature\Signature::class)]
+#[UsesClass(\Deriver\Project\Declaration\Parameter::class)]
+#[UsesClass(\Deriver\Project\Declaration\Signature::class)]
 #[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Project\EntryPoint::class)]
 #[UsesClass(\Deriver\Project\ProjectInput::class)]
@@ -157,20 +157,20 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
 #[UsesClass(Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -363,7 +363,7 @@ final class MethodInvocationTest extends TestCase
         $provider->method('id')->willReturn('example.dispatch');
         $provider->method('version')->willReturn('1');
         $provider->method('resolve')->willReturn(new DispatchDecision([new DispatchTarget('provided')], true));
-        $context = SolverFixture::context('<?php class Box{static function run(){return 1;}}function provided(){return 2;}function target(){}', configuration:new Configuration(providers:[$provider]));
+        $context = SolverFixture::context('<?php class Box{static function run(){return 1;}}function provided(){return 2;}function target(){}', configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers:[$provider]));
         $caller = $context->program->callable('target');
         self::assertNotNull($caller);
         $state = new State();
@@ -404,17 +404,17 @@ final class MethodInvocationTest extends TestCase
     public function testModeledInvokesUserModelsOnATypeBoundWithoutSource(): void
     {
         $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.missing-run', '1', 'Missing::run'), new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(Term::constant(7)))]));
-        $session = \Tests\Fake\Analysis::session('<?php function target(?Missing $value){return $value->run();}', new Configuration(closedWorld:true, models:[$model]));
+        $session = \Tests\Fake\Analysis::session('<?php function target(?Missing $value){return $value->run();}', new Configuration(closedWorld:true), contributions: new \Deriver\Model\Registration\Contributions(models:[$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([7], array_map(static fn (Alternative $a): int|float|string|bool|null => $a->values['return']->literal, $result->normalOutcomes));
-        self::assertContains('Error', array_map(static fn (\Deriver\Result\Exceptional $e): mixed => $e->exception->literal, $result->exceptionalOutcomes));
+        self::assertContains('Error', array_map(static fn (\Deriver\Result\Execution\Exceptional $e): mixed => $e->exception->literal, $result->exceptionalOutcomes));
         self::assertSame([], $result->frontiers);
     }
 
     public function testModeledLeavesSelectedSourceImplementationsAndUnmodeledTypesToDispatch(): void
     {
         $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('example.missing-run', '1', 'Missing::run'), new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::literal(Term::constant(7)))]));
-        $context = SolverFixture::context(configuration:new Configuration(models:[$model]));
+        $context = SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$model]));
         $caller = $context->program->callable('target');
         self::assertNotNull($caller);
         $invocation = new MethodInvocation(new Machine($context));

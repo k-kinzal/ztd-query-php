@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate\Evidence;
 
-use Deriver\Result\Evidence\Node;
+use Deriver\Evidence\Node;
 
 /**
  * Projects call and binding dependencies without inventing execution paths.

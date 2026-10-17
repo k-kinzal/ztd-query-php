@@ -18,7 +18,7 @@ use stdClass;
  * mistaken for a known null. This reader validates value records and references.
  * Validate the complete report against the packaged schema when consuming other fields.
  *
- * @visibility public
+ * @visibility Deriver\Result
  * @example Reading a lossless scalar from a report
  *     $json = '{"schemaVersion":"1","values":{"v0":{"kind":"constant","literal":{"type":"int64","value":"42"},"operands":[],"attributes":[],"redacted":false,"secret":false}}}';
  *     \Deriver\Result\Serialization\ValueReader::fromJson($json)->read('v0')->native() // => 42

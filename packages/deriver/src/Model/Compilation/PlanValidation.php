@@ -7,8 +7,8 @@ namespace Deriver\Model\Compilation;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Signature;
 use Deriver\Model\State\StateSlot;
+use Deriver\Project\Declaration\Signature;
 
 /**
  * Validates declarative opcodes, operand counts, and declared state footprints.

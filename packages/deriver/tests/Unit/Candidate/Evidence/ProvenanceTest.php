@@ -6,7 +6,7 @@ namespace Tests\Unit\Candidate\Evidence;
 
 use Deriver\Candidate\Choices;
 use Deriver\Candidate\Evidence\Provenance as Subject;
-use Deriver\Result\Evidence\Node;
+use Deriver\Evidence\Node;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;

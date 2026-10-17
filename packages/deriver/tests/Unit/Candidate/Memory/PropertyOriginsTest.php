@@ -62,7 +62,7 @@ final class PropertyOriginsTest extends TestCase
     public function testSelectedWritesNeverEnterAReplacedBody(): void
     {
         $model = new \Tests\Fake\PlanModel(new \Deriver\Model\ModelDescriptor('change', '1', 'Box::change'), new \Deriver\Model\Plan\SemanticPlan([]));
-        $engine = F::evaluator('class Box{public $n=1;function change(){$this->n=9;}}', new \Deriver\Project\Configuration(models: [$model]));
+        $engine = F::evaluator('class Box{public $n=1;function change(){$this->n=9;}}', new \Deriver\Project\Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $frame = F::frame($engine, 'Box::change');
         $property = $engine->context->index->property('Box', 'n');
         self::assertNotNull($property);

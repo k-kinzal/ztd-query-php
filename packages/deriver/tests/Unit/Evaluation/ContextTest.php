@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation;
 
+use Deriver\Diagnostic\Frontier;
 use Deriver\Evaluation\Context;
 use Deriver\Model\Provider\Provider;
 use Deriver\Model\Registration\Registry;
+use Deriver\Project\CancellationToken;
 use Deriver\Project\Configuration;
 use Deriver\Project\EntryPoint;
+use Deriver\Project\ResourceLimits;
 use Deriver\Query\Budget;
-use Deriver\Query\CancellationToken;
 use Deriver\Query\QueryScope;
-use Deriver\Query\ResourceLimits;
 use Deriver\Query\ReturnQuery;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Derivation;
-use Deriver\Result\Frontier;
+use Deriver\Result\Execution\Derivation;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -86,17 +86,17 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
 #[UsesClass(Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
 #[UsesClass(Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -178,10 +178,11 @@ final class ContextTest extends TestCase
         $provider = self::createStub(Provider::class);
         $provider->method('id')->willReturn('project.contracts');
         $provider->method('version')->willReturn('4');
-        $config = new Configuration(closedWorld:true, environmentVersion:'deployment-7', providers:[$provider]);
+        $config = new Configuration(closedWorld:true, environmentVersion:'deployment-7');
+        $contributions = new \Deriver\Model\Registration\Contributions(providers:[$provider]);
         $fixture = \Tests\Fake\SolverFixture::context();
         $query = new ReturnQuery('target', QueryScope::fromEntrypoints([new EntryPoint('target')]));
-        $context = new Context($fixture->program, $query, $config, new Registry($config));
+        $context = new Context($fixture->program, $query, $config, new Registry($config, $contributions));
         self::assertTrue($context->available(new SourceRef('test', 'fixture.php', 0, 1)));
         self::assertSame(['target:php-8.3-64bit','scope:entrypoint','world:closed','environment:deployment-7','provider:project.contracts@4'], $context->assumptions);
         self::assertSame([], $context->frontiers);

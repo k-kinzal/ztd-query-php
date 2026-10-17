@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Deriver\Model;
 
 use Deriver\Model\Binding\ArgumentBindings;
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Project\TargetProfile;
 use Deriver\Reference\SourceRef;
 
 /**
  * Normalized metadata for selecting a declarative call model.
  *
- * @visibility public
+ * @visibility root
  * @example Inspecting the contract
- *     $call = new \Deriver\Model\CallDescription('key', new \Deriver\Model\Signature\Signature(), new \Deriver\Project\TargetProfile());
+ *     $call = new \Deriver\Model\CallDescription('key', new \Deriver\Project\Declaration\Signature(), new \Deriver\Project\TargetProfile());
  *     $call->symbol // => 'key'
  */
 final class CallDescription
@@ -32,7 +32,7 @@ final class CallDescription
      * @param ArgumentBindings|null $arguments Evaluated bindings, or formal signature handles when omitted
      * @param array<string, string> $dependencyVersions Explicit captured package versions
      * @param SourceRef|null $source Source call site, shared by preparation and evaluated invocation
-     * @param Metadata\DeclarationLookup|null $declarations Captured parser-independent declaration metadata
+     * @param \Deriver\Project\Declaration\DeclarationLookup|null $declarations Captured parser-independent declaration metadata
      */
     public function __construct(
         public readonly string $symbol,
@@ -42,7 +42,7 @@ final class CallDescription
         ?ArgumentBindings $arguments = null,
         public readonly array $dependencyVersions = [],
         public readonly ?SourceRef $source = null,
-        public readonly ?Metadata\DeclarationLookup $declarations = null,
+        public readonly ?\Deriver\Project\Declaration\DeclarationLookup $declarations = null,
     ) {
         $this->arguments = $arguments ?? ArgumentBindings::formal($signature);
     }

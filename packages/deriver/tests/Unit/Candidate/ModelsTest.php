@@ -19,7 +19,7 @@ final class ModelsTest extends TestCase
      */
     public function testGraphReplacesSourceWithoutDemandingUnusedInputs(): void
     {
-        $e = F::evaluator('function heavy($input,$unused){return missing();}function target(){return heavy(missing(),missing());}', new \Deriver\Project\Configuration(models:[C::model(\Deriver\Model\Plan\Expression::literal(Term::constant(7)))]));
+        $e = F::evaluator('function heavy($input,$unused){return missing();}function target(){return heavy(missing(),missing());}', new \Deriver\Project\Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[C::model(\Deriver\Model\Plan\Expression::literal(Term::constant(7)))]));
         self::assertSame(7, F::value($e)->native());
         self::assertSame(0, $e->context->bodyExpansions);
     }

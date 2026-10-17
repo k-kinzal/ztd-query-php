@@ -10,7 +10,7 @@ use Deriver\Value\Term;
 /**
  * A pure plan expression referencing parameters, state, or registered operations.
  *
- * @visibility public
+ * @visibility root
  * @example Keeping a symbolic parameter
  *     \Deriver\Model\Plan\Expression::parameter('id')->name // => 'id'
  */

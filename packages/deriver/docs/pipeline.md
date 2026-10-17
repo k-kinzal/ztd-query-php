@@ -4,7 +4,7 @@ Deriver answers a query in two groups of stages. The project stages run once whe
 
 ## Project stages
 
-Provider expansion runs the configured providers once before anything is parsed. Entry point, declaration and environment providers add to the captured input and configuration, the contributions are recorded in the snapshot manifest, and the expanded input and configuration do not change for the rest of the session. A provider that contradicts an explicit environment value is rejected.
+Provider expansion runs the contributed providers once before anything is parsed. Entry point, declaration and environment providers add to the captured input and configuration, the contributions are recorded in the snapshot manifest, and the expanded input and configuration do not change for the rest of the session. A provider that contradicts an explicit environment value is rejected.
 
 Parsing turns the bytes of one file and the target profile into a syntax tree with resolved names. The parser admits the file against the source limits, rejects grammar that the target version does not have, and records a malformed file as an INCOMPLETE_SOURCE diagnostic instead of a partial tree. Parsing the same bytes for the same profile always produces the same tree, so parsed files are reused by content hash.
 
@@ -12,7 +12,7 @@ Declaration scanning indexes the classes, functions, constants, properties and c
 
 Lowering turns the syntax of one callable into a control flow graph of basic blocks and instructions. A body is lowered only when a query or an index demands it, each body is lowered once per snapshot, and a lowered body may be reused across snapshots when its file, declaration, target and lowering version are unchanged.
 
-Model registration validates the configured models, domains, intrinsics and state slots and resolves their precedence. Replacing a standard model requires an explicit declaration, repeated identifiers and ambiguous priorities are rejected, and the resulting registry is the only place a query consults for a model decision.
+Model registration validates the contributed models, domains, intrinsics and state slots and resolves their precedence. Replacing a standard model requires an explicit declaration, repeated identifiers and ambiguous priorities are rejected, and the resulting registry is the only place a query consults for a model decision.
 
 The snapshot identity is computed from the normalized sources, the registered model manifest, the environment, the dependency versions and the target profile. Two sessions with equal identities answer every query identically, and a change to any of those inputs changes the identity. File order does not.
 

@@ -7,8 +7,8 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 use Deriver\Analyzer;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
+use Deriver\Project\ResourceLimits;
 use Deriver\Project\SourceFile;
-use Deriver\Query\ResourceLimits;
 use Deriver\Query\ValueQuery;
 
 if (count($argv) < 2) {

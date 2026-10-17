@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Deriver\Model;
 
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Signature;
 
 /**
  * Stable model identity, target symbol, version, and explicit precedence.
  *
- * @visibility public
+ * @visibility root
  * @example Inspecting the contract
  *     (new \Deriver\Model\ModelDescriptor('example', '1', 'Example\\key'))->version // => '1'
  */

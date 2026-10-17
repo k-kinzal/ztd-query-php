@@ -15,8 +15,8 @@ use Deriver\Evaluation\Demand\Discovery;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\State;
 use Deriver\Project\Configuration;
+use Deriver\Project\ResourceLimits;
 use Deriver\Query\Budget;
-use Deriver\Query\ResourceLimits;
 use Deriver\Value\Term;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -98,11 +98,11 @@ use Tests\Fake\SummaryFixture;
 #[UsesClass(ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]

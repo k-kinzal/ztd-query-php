@@ -48,7 +48,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
@@ -81,7 +81,7 @@ final class SlotReferenceTest extends TestCase
 {
     public function testApplyRejectsAnIncompatibleSourceBeforeChangingEitherCell(): void
     {
-        $context = \Tests\Fake\SolverFixture::context(configuration: new Configuration(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
+        $context = \Tests\Fake\SolverFixture::context(configuration: new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots: [new StateSlot('example.slot', 'int', Term::constant(1))]));
         $state = new State();
         $storage = new StateStorage($context);
 

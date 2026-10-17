@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Binding;
 
 use Deriver\Model\Binding\ArgumentBindings;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;

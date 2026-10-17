@@ -63,7 +63,7 @@ final class ContextTest extends TestCase
     public function testAcceptEvidenceCountsSharedNodesOnce(): void
     {
         $engine = CandidateFixture::evaluator();
-        $node = new \Deriver\Result\Evidence\Node('operation', attributes:['operation' => 'literal']);
+        $node = new \Deriver\Evidence\Node('operation', attributes:['operation' => 'literal']);
         $engine->context->acceptEvidence(new \Deriver\Value\Term('constant', 1, evidence:$node));
         $engine->context->acceptEvidence(new \Deriver\Value\Term('constant', 1, evidence:$node));
         self::assertCount(1, $engine->context->proofNodes);

@@ -8,7 +8,7 @@ use Deriver\Model\Binding\LocationRef;
 
 /**
  * An ordered model-call argument with its name, unpack mode, and optional storage reference.
- * @visibility public
+ * @visibility root
  * @example Passing a named reference-capable argument
  *     (new \Deriver\Model\Plan\CallArgument(\Deriver\Model\Binding\LocationRef::parameter('value'), 'item'))->name // => 'item'
  */

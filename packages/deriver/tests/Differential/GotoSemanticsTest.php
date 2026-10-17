@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Differential;
 
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;

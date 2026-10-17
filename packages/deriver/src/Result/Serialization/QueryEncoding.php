@@ -19,7 +19,8 @@ use JsonException;
  * @phpstan-type EntryRecord array{symbol: string, arguments: list<array{name: ScalarRecord, value: string}>, receiver: string|null, properties: list<array{name: string, value: string}>, captures: list<array{name: string, value: string}>, symbolicArguments: bool}
  * @phpstan-type QueryRecord array{kind: string, symbol?: string, parameter?: string, expression?: \Deriver\Reference\ExpressionRef, point?: \Deriver\Reference\PointRef, variable?: string, projection?: \Deriver\Value\Projection, values?: object, scope: array{mode: string, entries: list<EntryRecord>}, budget: \Deriver\Query\Budget}
  * @visibility Deriver\Result
- * @visibility Deriver\Analysis
+ * @visibility Deriver\Analysis\Candidates
+ * @visibility Deriver\Analysis\Execution
  * @visibility Deriver\Session
  */
 final class QueryEncoding

@@ -33,7 +33,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
@@ -60,7 +60,7 @@ final class ObservationProviderTest extends TestCase
      */
     public function testQueriesRetainsTheSessionEntryScope(): void
     {
-        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(providers: [new \Tests\Fake\MiniContainer()]));
+        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers: [new \Tests\Fake\MiniContainer()]));
         $query = (new \Tests\Fake\MiniContainer())->queries($session->snapshotSession)['entry-return'];
         self::assertSame($session->entrypoints(), $query->scope()->entries);
     }

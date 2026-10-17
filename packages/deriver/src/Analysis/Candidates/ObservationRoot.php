@@ -6,14 +6,14 @@ namespace Deriver\Analysis\Candidates;
 
 use Deriver\Candidate\Index\DefinitionIndex;
 use Deriver\Candidate\Target;
-use Deriver\Result\Evidence\Node;
+use Deriver\Evidence\Node;
 use Deriver\Result\Serialization\QueryEncoding;
 use Deriver\Value\Term;
 use JsonException;
 
 /**
  * The evidence root of one candidate: the selected target, independently of the value expansion reached.
- * @visibility namespace
+ * @visibility parent
  */
 final class ObservationRoot
 {

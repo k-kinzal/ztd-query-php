@@ -31,9 +31,10 @@ deptrac:
       - class
       - use
   layers:
-    # --- Public vocabulary -------------------------------------------------------
-    # The types a caller constructs or receives. They refer to each other, and to
-    # nothing else: no engine, no source model, no session.
+    # --- Vocabulary ----------------------------------------------------------------
+    # The types a caller constructs or receives, in one direction: inputs below outputs,
+    # and the internal model contract between them. Nothing here sees an engine, a
+    # source stage or a session.
     - name: Exception
       collectors:
         - type: directory
@@ -48,36 +49,42 @@ deptrac:
       collectors:
         - type: directory
           value: 'src/Value/.*'
-    # Content-addressed derivation nodes. A term carries its evidence, so this
-    # sits below Value although it is exported with the results.
+    # Content-addressed derivation nodes. A term carries its evidence, so this sits below Value.
     - name: Evidence
       collectors:
         - type: directory
-          value: 'src/Result/Evidence/.*'
+          value: 'src/Evidence/.*'
+    # Diagnostics: an unexplored dependency and what it affects. Programs, snapshots and results carry them.
+    - name: Diagnostic
+      collectors:
+        - type: directory
+          value: 'src/Diagnostic/.*'
     # Queries, budgets and the runtime resource monitor that enforces them.
     - name: Query
       collectors:
         - type: directory
           value: 'src/Query/.*'
-    # Captured files, entry points, target profile, snapshot and configuration.
+    # The input vocabulary: captured files, entry points, target profile, limits, configuration,
+    # replacement rules, the captured project view and the declaration facts it exposes.
     - name: Project
       collectors:
         - type: directory
           value: 'src/Project/.*'
-    # The contract model authors implement: descriptors, decisions, plans,
-    # providers, domains, intrinsics and expansion rules.
+    # The internal model contract: descriptors, decisions, plans, providers, domains and intrinsics.
+    # Models are contributed by the library and its tests, not by callers.
     - name: Model
       collectors:
         - type: directory
           value: 'src/Model/(?!Builtin/|Compilation/|Operations/|Registration/).*'
-    # Candidate collections, execution results and their serialization.
+    # The output vocabulary: candidate collections and their evidence, execution results, serialization.
     - name: Result
       collectors:
         - type: directory
-          value: 'src/Result/(?!Evidence/).*'
+          value: 'src/Result/.*'
         # PHPStan local type aliases that deptrac resolves as class names.
         - type: classLike
-          value: '^Deriver\\Result\\Serialization\\(ValueRecord|ScalarRecord|QueryRecord)$'
+          value: '^Deriver\\Result\\Serialization\\(ValueRecord|ScalarRecord|QueryRecord|JsonTree)$'
+
     # The session interface a caller holds.
     - name: SessionContract
       collectors:
@@ -227,21 +234,22 @@ deptrac:
   ruleset:
     Exception: []
     Reference: [Exception]
+    Evidence: [Reference]
     Value: [Exception, Evidence]
-    Evidence: [Reference, Project]
+    Diagnostic: [Reference, Value]
+    Project: [Exception, Reference, Value, Diagnostic]
     Query: [Exception, Reference, Value, Project]
-    Project: [Exception, Value, Query, Model, Result]
-    Model: [Exception, Reference, Value, Query, Project, SessionContract]
-    Result: [Exception, Reference, Value, Evidence, Query]
-    SessionContract: [Exception, Reference, Query, Project, Model, Result, Evidence]
-    ControlFlow: [Reference, Value, Result]
+    Model: [Exception, Reference, Value, Project, Query]
+    Result: [Exception, Reference, Evidence, Value, Diagnostic, Project, Query]
+    SessionContract: [Exception, Reference, Project, Query, Result]
+    ControlFlow: [Reference, Value, Diagnostic]
     SourceParsing: [Exception, Project, PhpParser]
-    SourceDeclaration: [Exception, Reference, Value, Project, Result, ControlFlow, SourceParsing, SourceLowering, PhpParser]
-    SourceLowering: [Exception, Reference, Value, Project, Result, ControlFlow, SourceParsing, SourceDeclaration, PhpParser]
+    SourceDeclaration: [Exception, Reference, Value, Diagnostic, Project, ControlFlow, SourceParsing, SourceLowering, PhpParser]
+    SourceLowering: [Exception, Reference, Value, Diagnostic, Project, ControlFlow, SourceParsing, SourceDeclaration, PhpParser]
     PhpParser: []
-    ModelBuiltin: [Exception, Value, Model]
+    ModelBuiltin: [Exception, Value, Project, Model]
     ModelOperations: [Exception, Value, Project, Model]
-    ModelCompilation: [Exception, Reference, Value, Model, ControlFlow]
+    ModelCompilation: [Exception, Reference, Value, Project, Model, ControlFlow]
     ModelRegistration: [Exception, Value, Project, Model, ControlFlow, ModelBuiltin, ModelOperations]
     Candidate:
       - Exception
@@ -269,7 +277,7 @@ deptrac:
     CandidateEvidence: [Reference, Value, Evidence, CandidateIndex]
     CandidateEnumeration: [Value, ControlFlow, Candidate, CandidateEvidence]
     CandidateControl: [Candidate, CandidateIndex]
-    CandidateInvocation: [Exception, Value, Evidence, Model, ControlFlow, Candidate, CandidateIndex, CandidateEvidence]
+    CandidateInvocation: [Exception, Value, Evidence, Project, Model, ControlFlow, Candidate, CandidateIndex, CandidateEvidence]
     CandidateMemory: [Value, ControlFlow, Candidate, CandidateIndex, CandidateInvocation]
     CandidateLanguage: [Value, ControlFlow, ModelBuiltin, Candidate, CandidateIndex, CandidateEvidence, CandidateInvocation]
     CandidateRecurrence: [Value, ControlFlow, Candidate, CandidateIndex, CandidateMemory]
@@ -277,6 +285,7 @@ deptrac:
       - Exception
       - Reference
       - Value
+      - Diagnostic
       - Query
       - Project
       - Model
@@ -318,6 +327,7 @@ deptrac:
       - Exception
       - Reference
       - Value
+      - Diagnostic
       - Query
       - Project
       - Model

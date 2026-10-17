@@ -31,7 +31,7 @@ use Tests\Fake\SourceFixture;
 #[UsesClass(\Deriver\Project\SourceLimits::class)]
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]

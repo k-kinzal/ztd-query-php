@@ -38,7 +38,7 @@ final class StringJoiningTest extends TestCase
     public function testPartialJoinsTheHeadExactlyForAnEmptySourceAndKeepsItBeforeTheResidualOtherwise(): void
     {
         $result = \Tests\Fake\Analysis::returns('<?php function target(array $x){return implode(",",["id","name",...$x]);}');
-        $values = array_map(static fn (\Deriver\Result\Alternative $outcome): \Deriver\Value\Term => $outcome->values['return'], $result->normalOutcomes);
+        $values = array_map(static fn (\Deriver\Result\Execution\Alternative $outcome): \Deriver\Value\Term => $outcome->values['return'], $result->normalOutcomes);
         self::assertCount(2, $values);
         self::assertSame('id,name', $values[0]->native());
         self::assertSame('concat', $values[1]->kind);
@@ -54,7 +54,7 @@ final class StringJoiningTest extends TestCase
     public function testPartialRunsHeadConversionsBeforeTheUnknownSource(): void
     {
         $result = \Tests\Fake\Analysis::returns('<?php class T{function __toString(){throw new LogicException;}} function target(array $x){try{return implode(",",[new T,...$x]);}catch(LogicException $e){return "caught";}}');
-        self::assertSame(['"caught"'], array_values(array_unique(array_map(static fn (\Deriver\Result\Alternative $outcome): string => (string) json_encode($outcome->values['return']->native()), $result->normalOutcomes))));
+        self::assertSame(['"caught"'], array_values(array_unique(array_map(static fn (\Deriver\Result\Execution\Alternative $outcome): string => (string) json_encode($outcome->values['return']->native()), $result->normalOutcomes))));
         self::assertSame([], $result->frontiers);
     }
 
@@ -66,7 +66,7 @@ final class StringJoiningTest extends TestCase
         $session = \Tests\Fake\Analysis::session('<?php function target(array $x){return implode(",",["id",...$x]);}');
         $result = $session->derive(new \Deriver\Query\ReturnQuery('target', scope: \Deriver\Query\QueryScope::fromEntrypoints([new \Deriver\Project\EntryPoint('target', [new \Deriver\Value\Term('parameter', 'x', attributes: ['type' => 'array'], secret: true)])])));
         self::assertNotEmpty($result->normalOutcomes);
-        self::assertSame([true], array_values(array_unique(array_map(static fn (\Deriver\Result\Alternative $outcome): bool => $outcome->values['return']->isSecret(), $result->normalOutcomes))));
+        self::assertSame([true], array_values(array_unique(array_map(static fn (\Deriver\Result\Execution\Alternative $outcome): bool => $outcome->values['return']->isSecret(), $result->normalOutcomes))));
     }
     /**
      * @throws JsonException If fixture metadata cannot be encoded

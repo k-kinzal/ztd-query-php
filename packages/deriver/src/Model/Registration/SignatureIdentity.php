@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Model\Registration;
 
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Value\Identity;
 
 /**

@@ -73,7 +73,7 @@ final class CatalogMetadataTest extends TestCase
         self::assertContains('posts', $symbols);
         $entries = array_map(static fn (\Deriver\Reference\Observation $call): EntryPoint => new EntryPoint($call->callable), $session->callsTo('query'));
         $result = $session->derive(new ValueQuery($session->callsTo('sink')[0]->argument(0), scope: QueryScope::fromEntrypoints($entries)));
-        self::assertEqualsCanonicalizing(['SELECT * FROM users','SELECT * FROM posts'], array_map(static fn (\Deriver\Result\Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes));
+        self::assertEqualsCanonicalizing(['SELECT * FROM users','SELECT * FROM posts'], array_map(static fn (\Deriver\Result\Execution\Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes));
     }
 
     /**
@@ -82,7 +82,7 @@ final class CatalogMetadataTest extends TestCase
     public function testModelCanReuseSourceNamesReferencesAndComputedDefaults(): void
     {
         $model = new PlanModel(new ModelDescriptor('test.signature', '1', 'query', replaceSource: true, useSourceSignature: true), new SemanticPlan([Action::returns(Expression::parameter('sql'))]));
-        $session = Analysis::session('<?php function query(string $sql="SELECT "."1"){return "old";} function target(){return [query(sql:"SELECT 2"),query()];}', new Configuration(models: [$model]));
+        $session = Analysis::session('<?php function query(string $sql="SELECT "."1"){return "old";} function target(){return [query(sql:"SELECT 2"),query()];}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame(['SELECT 2','SELECT 1'], $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);
@@ -115,7 +115,7 @@ final class CatalogMetadataTest extends TestCase
                 return ModelDecision::handled(new SemanticPlan([Action::returns(Expression::literal($table ?? Term::constant('missing')))]));
             }
         };
-        $session = Analysis::session('<?php trait Named {function label(){}} class Model {static function where($id){}} class User extends Model {use Named;protected $table="users";const KIND="user";} function target(){return User::where(id:7);}', new Configuration(models: [$model]));
+        $session = Analysis::session('<?php trait Named {function label(){}} class Model {static function where($id){}} class User extends Model {use Named;protected $table="users";const KIND="user";} function target(){return User::where(id:7);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame('users', $result->normalOutcomes[0]->values['return']->native());
         foreach ($model->seen as $call) {

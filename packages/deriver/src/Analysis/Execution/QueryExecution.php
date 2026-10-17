@@ -24,8 +24,8 @@ use Deriver\Query\StateQuery;
 use Deriver\Query\ValueQuery;
 use Deriver\Reference\ResultRef;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Alternative;
-use Deriver\Result\DerivationResult;
+use Deriver\Result\Execution\Alternative;
+use Deriver\Result\Execution\DerivationResult;
 use Deriver\Result\Serialization\QueryEncoding;
 use Deriver\Result\Statistics;
 use Deriver\Value\Term;
@@ -97,14 +97,14 @@ final class QueryExecution
     /**
      * Observes one symbolic callable once under a shared resource and logical budget.
      * @param list<Query> $queries Observations in requested output order
-     * @return \Deriver\Result\ExecutionResultSet Independent observations from the shared execution
+     * @return \Deriver\Result\Execution\ExecutionResultSet Independent observations from the shared execution
      * @throws InvalidInputException If owners, scopes, or budgets differ
      * @throws JsonException If query metadata cannot be encoded
      */
-    public function together(array $queries): \Deriver\Result\ExecutionResultSet
+    public function together(array $queries): \Deriver\Result\Execution\ExecutionResultSet
     {
         if ($queries === []) {
-            return new \Deriver\Result\ExecutionResultSet([]);
+            return new \Deriver\Result\Execution\ExecutionResultSet([]);
         }
         $symbol = $this->owner($queries[0]);
         $keys = [];
@@ -125,7 +125,7 @@ final class QueryExecution
             $results[] = $this->result($batch->synchronize($index), $symbol, $start, $identity);
         }
         $context->batch = null;
-        return new \Deriver\Result\ExecutionResultSet($results);
+        return new \Deriver\Result\Execution\ExecutionResultSet($results);
     }
 
     /**

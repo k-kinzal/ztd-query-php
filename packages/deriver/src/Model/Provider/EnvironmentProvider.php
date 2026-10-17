@@ -6,7 +6,7 @@ namespace Deriver\Model\Provider;
 
 /**
  * Provides a captured environment; the core never reads the host environment.
- * @visibility public
+ * @visibility root
  * @example Providers are installed explicitly
  *     (new \Deriver\Project\Configuration())->providers // => []
  */

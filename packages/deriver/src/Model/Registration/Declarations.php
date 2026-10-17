@@ -6,11 +6,11 @@ namespace Deriver\Model\Registration;
 
 use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\Program;
-use Deriver\Model\Metadata\ClassMetadata;
-use Deriver\Model\Metadata\DeclarationLookup;
-use Deriver\Model\Metadata\PropertyMetadata;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\Declaration\ClassMetadata;
+use Deriver\Project\Declaration\DeclarationLookup;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\PropertyMetadata;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Value\Term;
 use Override;
 

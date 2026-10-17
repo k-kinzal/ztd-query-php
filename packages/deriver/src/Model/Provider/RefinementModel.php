@@ -8,7 +8,7 @@ use Deriver\Value\Term;
 
 /**
  * Supplies an implied predicate under an explicitly observed condition.
- * @visibility public
+ * @visibility root
  * @example Refinements use immutable symbolic expressions
  *     \Deriver\Value\Term::parameter('id', 'int')->kind // => 'parameter'
  */

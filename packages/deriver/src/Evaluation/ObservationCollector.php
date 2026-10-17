@@ -16,8 +16,8 @@ use Deriver\Query\StateQuery;
 use Deriver\Query\TupleQuery;
 use Deriver\Query\ValueQuery;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Alternative;
-use Deriver\Result\Exceptional;
+use Deriver\Result\Execution\Alternative;
+use Deriver\Result\Execution\Exceptional;
 use Deriver\Value\Projection;
 use Deriver\Value\Term;
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Deriver\Candidate\Evidence;
 
+use Deriver\Evidence\Node;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Evidence\Node;
 use Deriver\Value\Term;
 
 /**

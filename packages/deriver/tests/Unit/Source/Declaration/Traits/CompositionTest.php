@@ -29,7 +29,7 @@ use Tests\Fake\SourceFixture;
 #[UsesClass(\Deriver\Project\SourceLimits::class)]
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Source\Parsing\ParseCache::class)]
 #[UsesClass(\Deriver\Source\Parsing\SourceParser::class)]
 #[UsesClass(\Deriver\Source\Parsing\ParsedFile::class)]

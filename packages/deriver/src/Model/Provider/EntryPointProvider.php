@@ -6,7 +6,7 @@ namespace Deriver\Model\Provider;
 
 /**
  * Provides explicit application entries and their initial arguments.
- * @visibility public
+ * @visibility root
  * @example Providers are installed explicitly
  *     (new \Deriver\Project\Configuration())->providers // => []
  */

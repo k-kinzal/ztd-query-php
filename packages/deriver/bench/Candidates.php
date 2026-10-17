@@ -5,7 +5,6 @@ declare(strict_types=1);
 $autoload = getenv('DERIVER_BENCH_AUTOLOAD');
 require is_string($autoload) && $autoload !== '' ? $autoload : dirname(__DIR__) . '/vendor/autoload.php';
 
-use Deriver\Analyzer;
 use Deriver\Model\CallDescription;
 use Deriver\Model\CallModel;
 use Deriver\Model\ModelDecision;
@@ -13,9 +12,9 @@ use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
 use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
@@ -48,7 +47,7 @@ $model = new class () implements CallModel {
     }
 };
 $start = hrtime(true);
-$session = (new Analyzer())->open(new ProjectInput([new SourceFile('benchmark.php', '<?php ' . $source)]), new Configuration(models: $scenario === 'model' ? [$model] : []));
+$session = new Deriver\Session\Session(new ProjectInput([new SourceFile('benchmark.php', '<?php ' . $source)]), new Configuration(), new Deriver\Model\Registration\Contributions(models: $scenario === 'model' ? [$model] : []));
 $opened = hrtime(true);
 $queries = in_array($scenario, ['heavy', 'model', 'shared'], true) ? array_map(static fn ($site) => new ValueQuery($site->argument(0)), $session->callsTo('observe')) : [new ReturnQuery('target')];
 $selected = hrtime(true);

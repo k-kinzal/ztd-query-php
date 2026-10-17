@@ -21,6 +21,6 @@ final class OrderLoweringTest extends TestCase
         $session = \Tests\Fake\Analysis::session('<?php function sink($x){} function target(){$n=1;sink($n+++$n);}');
         self::assertCount(1, $session->callsTo('sink'));
         $result = $session->derive(new \Deriver\Query\ValueQuery($session->callsTo('sink')[0]->argument(0)));
-        self::assertEqualsCanonicalizing([2, 3], array_map(static fn (\Deriver\Result\Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes));
+        self::assertEqualsCanonicalizing([2, 3], array_map(static fn (\Deriver\Result\Execution\Alternative $outcome) => $outcome->values['value']->native(), $result->normalOutcomes));
     }
 }

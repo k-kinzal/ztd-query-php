@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Deriver\Query;
 
+use Deriver\Project\ResourceLimits;
+
 /**
  * Checks runtime interruptions while reserving memory for an explicit residual result.
  * @visibility Deriver\Candidate

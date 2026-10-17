@@ -29,7 +29,7 @@ final class PolicyContractTest extends TestCase
      */
     public function testCompositionPreservesAlternativeCorrelation(): void
     {
-        $session = Analysis::session('<?php function target(bool $choice){$a=$choice?["ttl"=>10,"tags"=>["a"]]:["ttl"=>20,"tags"=>["b"]];return policy_compose($a,["ttl"=>15,"tags"=>["c"]]);}', PolicyModels::configuration());
+        $session = Analysis::session('<?php function target(bool $choice){$a=$choice?["ttl"=>10,"tags"=>["a"]]:["ttl"=>20,"tags"=>["b"]];return policy_compose($a,["ttl"=>15,"tags"=>["c"]]);}', contributions: PolicyModels::contributions());
         $result = $session->derive(new ReturnQuery('target'));
         self::assertCount(2, $result->normalOutcomes);
         self::assertSame(['ttl' => 10, 'tags' => ['a', 'c']], $result->normalOutcomes[0]->values['return']->native());
@@ -43,7 +43,7 @@ final class PolicyContractTest extends TestCase
      */
     public function testOverwriteKeepsUnrelatedFields(): void
     {
-        $session = Analysis::session('<?php function target(){return policy_override(["ttl"=>10,"tags"=>["a"]],["ttl"=>30]);}', PolicyModels::configuration());
+        $session = Analysis::session('<?php function target(){return policy_override(["ttl"=>10,"tags"=>["a"]],["ttl"=>30]);}', contributions: PolicyModels::contributions());
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame(['ttl' => 30, 'tags' => ['a']], $result->normalOutcomes[0]->values['return']->native());
     }
@@ -54,7 +54,7 @@ final class PolicyContractTest extends TestCase
      */
     public function testUnknownTagsPreserveIndependentTimeToLive(): void
     {
-        $session = Analysis::session('<?php function target(){return policy_uncertain_tags(["ttl"=>10,"tags"=>["a"]],["ttl"=>20]);}', PolicyModels::configuration());
+        $session = Analysis::session('<?php function target(){return policy_uncertain_tags(["ttl"=>10,"tags"=>["a"]],["ttl"=>20]);}', contributions: PolicyModels::contributions());
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame(10, $result->normalOutcomes[0]->values['return']->operands['ttl']->native());
         self::assertSame('opaque', $result->normalOutcomes[0]->values['return']->operands['tags']->kind);

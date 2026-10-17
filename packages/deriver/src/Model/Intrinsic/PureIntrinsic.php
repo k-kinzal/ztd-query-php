@@ -10,7 +10,7 @@ use Deriver\Value\Term;
 /**
  * A trusted pure transformation of abstract values, including partial inputs.
  *
- * @visibility public
+ * @visibility root
  * @example Describing an operation dependency
  *     (new \Deriver\Model\Intrinsic\IntrinsicDescriptor('identity', '1', 'identity', 1, [0]))->dependencies // => [0]
  */

@@ -7,12 +7,12 @@ namespace Deriver\Evaluation\Summary;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Demand\Cell;
 use Deriver\Evaluation\State;
-use Deriver\Result\Derivation;
+use Deriver\Result\Execution\Derivation;
 
 /**
  * Bounded session reuse of closed, isolated function completions across observation queries.
  * @visibility Deriver\Evaluation
- * @visibility Deriver\Analysis
+ * @visibility Deriver\Analysis\Execution
  * @visibility Deriver\Session
  */
 final class SharedSummaries

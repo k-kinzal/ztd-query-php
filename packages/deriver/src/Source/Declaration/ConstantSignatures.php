@@ -10,7 +10,7 @@ use PhpParser\Node\Stmt;
 
 /**
  * Captures access and initializer contracts without evaluating constant expressions.
- * @visibility namespace
+ * @visibility Deriver\Source
  */
 final class ConstantSignatures
 {

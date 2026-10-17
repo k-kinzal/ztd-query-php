@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Candidate\Evidence;
 
 use Deriver\Candidate\Evidence\Contexts as Subject;
-use Deriver\Result\Evidence\Node;
+use Deriver\Evidence\Node;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\CandidateApi as A;

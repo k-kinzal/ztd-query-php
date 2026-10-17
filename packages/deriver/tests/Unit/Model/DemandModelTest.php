@@ -17,7 +17,7 @@ final class DemandModelTest extends TestCase
      */
     public function testDemandEvaluatesOnlyTheSelectionParameter(): void
     {
-        $s = C::session('function target(){observe(heavy("fast",missing()));}', new \Deriver\Project\Configuration(models:[new \Tests\Fake\SelectiveModel()]));
+        $s = C::session('function target(){observe(heavy("fast",missing()));}', new \Deriver\Project\Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[new \Tests\Fake\SelectiveModel()]));
         $r = C::argument($s);
         self::assertSame([10], C::native($r));
         self::assertSame(0, $r->statistics->bodyExpansions);

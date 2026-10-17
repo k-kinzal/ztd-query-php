@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Session;
 
-use Deriver\Result\DerivationResult;
+use Deriver\Result\Execution\DerivationResult;
 use WeakMap;
 
 /**
@@ -14,7 +14,7 @@ use WeakMap;
 final class ResultRetention
 {
     /**
-     * @var array<string, DerivationResult|\Deriver\Result\Candidates\CandidateCollection> Recent small results, including interrupted observations
+     * @var array<string, DerivationResult|\Deriver\Result\CandidateCollection> Recent small results, including interrupted observations
      */
     private array $recent = [];
 
@@ -35,9 +35,9 @@ final class ResultRetention
 
     /**
      * Caps both the number and structural size of retained graphs without serializing them.
-     * @param DerivationResult|\Deriver\Result\Candidates\CandidateCollection $result New observation
+     * @param DerivationResult|\Deriver\Result\CandidateCollection $result New observation
      */
-    public function remember(DerivationResult|\Deriver\Result\Candidates\CandidateCollection $result): void
+    public function remember(DerivationResult|\Deriver\Result\CandidateCollection $result): void
     {
         if ($this->capacity === 0 || !$this->small($result)) {
             return;
@@ -51,10 +51,10 @@ final class ResultRetention
 
     /**
      * Bounds the complete retained object graph, arrays, and literal payloads, including query inputs.
-     * @param DerivationResult|\Deriver\Result\Candidates\CandidateCollection $result Candidate result
+     * @param DerivationResult|\Deriver\Result\CandidateCollection $result Candidate result
      * @return bool Whether it fits 4,096 visited entries and one MiB of string payloads
      */
-    public function small(DerivationResult|\Deriver\Result\Candidates\CandidateCollection $result): bool
+    public function small(DerivationResult|\Deriver\Result\CandidateCollection $result): bool
     {
         $seen = new WeakMap();
         $pending = [$result];

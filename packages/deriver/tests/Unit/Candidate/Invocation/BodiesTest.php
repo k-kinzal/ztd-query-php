@@ -22,7 +22,7 @@ final class BodiesTest extends TestCase
      */
     public function testSelectSharesOneReplacementAcrossOutputRequests(): void
     {
-        $engine = F::evaluator('function work(){return missing();}function target(){return work();}', new Configuration(models: [new PlanModel(new ModelDescriptor('work', '1', 'work'), new SemanticPlan([]))]));
+        $engine = F::evaluator('function work(){return missing();}function target(){return work();}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [new PlanModel(new ModelDescriptor('work', '1', 'work'), new SemanticPlan([]))]));
         $frame = F::frame($engine);
         $call = F::instruction($frame, 'invoke');
         $selector = new Bodies($engine);

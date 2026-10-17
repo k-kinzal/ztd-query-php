@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Query;
 
-use Deriver\Query\CancellationToken;
-use Deriver\Query\ResourceLimits;
+use Deriver\Project\CancellationToken;
+use Deriver\Project\ResourceLimits;
 use Deriver\Query\Resources;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;

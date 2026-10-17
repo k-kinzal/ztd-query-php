@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Semantic;
 
 use Deriver\Project\Configuration;
+use Deriver\Project\ResourceLimits;
 use Deriver\Query\Budget;
-use Deriver\Query\ResourceLimits;
 use Deriver\Query\TupleQuery;
 use Deriver\Query\ValueQuery;
 use JsonException;

@@ -8,13 +8,13 @@ use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\CallableIdentity;
 use Deriver\ControlFlow\ClassDeclaration;
 use Deriver\ControlFlow\Program;
+use Deriver\Diagnostic\Frontier;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Project\SourceLimits;
 use Deriver\Project\TargetProfile;
 use Deriver\Reference\SourceRef;
-use Deriver\Result\Frontier;
 use Deriver\Source\Declaration\Traits\Composition;
 use Deriver\Source\Lowering\CallableLowering;
 use Deriver\Source\Lowering\InstructionEmitter;
@@ -28,8 +28,8 @@ use PhpParser\Node\Stmt;
 /**
  * Captures declarations eagerly and compiles callable control flow on demand.
  * @visibility Deriver\Source
+ * @visibility Deriver\Analysis\Selection
  * @visibility Deriver\Session
- * @visibility Deriver\Analysis
  */
 final class ProjectIndex implements Program
 {

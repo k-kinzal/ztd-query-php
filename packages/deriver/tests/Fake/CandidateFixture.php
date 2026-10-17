@@ -28,9 +28,9 @@ final class CandidateFixture
      * Creates a query context without advancing a program state.
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public static function evaluator(string $source = 'function target($x){return $x+2;}', Configuration $configuration = new Configuration(), Budget $budget = new Budget()): Derivation
+    public static function evaluator(string $source = 'function target($x){return $x+2;}', Configuration $configuration = new Configuration(), Budget $budget = new Budget(), \Deriver\Model\Registration\Contributions $contributions = new \Deriver\Model\Registration\Contributions()): Derivation
     {
-        $session = new Session(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration);
+        $session = new Session(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration, $contributions);
         return new Derivation(new Context(new DefinitionIndex($session->program), $configuration, $session->models, $budget, new Cache()));
     }
 

@@ -24,22 +24,22 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\SourceFile::class)]
 #[UsesClass(\Deriver\Project\SourceLimits::class)]
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class ProviderExpansionTest extends TestCase
 {
     public function testCapturesContributionsBeforeSnapshotConstruction(): void
     {
-        $inputs = new ProviderExpansion(new ProjectInput([]), new Configuration(providers:[new \Tests\Fake\MiniContainer(),new \Tests\Fake\PolicyProvider()]));
+        $inputs = new ProviderExpansion(new ProjectInput([]), new Configuration(), new \Deriver\Model\Registration\Contributions(providers:[new \Tests\Fake\MiniContainer(),new \Tests\Fake\PolicyProvider()]));
         self::assertSame('generated/service.php', $inputs->input->files[0]->path);
         self::assertSame('captured', $inputs->configuration->environment['env:APP_NAME']->native());
         self::assertSame('entry', $inputs->entries[0]->symbol);
-        self::assertCount(1, $inputs->configuration->domains);
+        self::assertCount(1, $inputs->contributions->domains);
     }
     public function testRejectsEnvironmentConflicts(): void
     {
         $this->expectException(InvalidInputException::class);
-        new ProviderExpansion(new ProjectInput([]), new Configuration(environment:['env:APP_NAME' => Term::constant('conflict')], providers:[new \Tests\Fake\MiniContainer()]));
+        new ProviderExpansion(new ProjectInput([]), new Configuration(environment:['env:APP_NAME' => Term::constant('conflict')]), new \Deriver\Model\Registration\Contributions(providers:[new \Tests\Fake\MiniContainer()]));
     }
 }

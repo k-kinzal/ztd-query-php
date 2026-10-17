@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ModelPrecedence::class)]
 #[UsesClass(InvalidInputException::class)]
 #[UsesClass(ModelDescriptor::class)]
-#[UsesClass(\Deriver\Model\Signature\Signature::class)]
+#[UsesClass(\Deriver\Project\Declaration\Signature::class)]
 #[Small]
 final class ModelPrecedenceTest extends TestCase
 {

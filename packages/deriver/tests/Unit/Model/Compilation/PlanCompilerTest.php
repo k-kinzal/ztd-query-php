@@ -13,8 +13,8 @@ use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Signature;
 use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Query\ReturnQuery;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
@@ -100,7 +100,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\SignatureIdentity::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
-#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
+#[UsesClass(\Deriver\Project\Declaration\Parameter::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(Configuration::class)]
 #[UsesClass(\Deriver\Project\EntryPoint::class)]
@@ -111,19 +111,19 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -160,10 +160,10 @@ final class PlanCompilerTest extends TestCase
     public function testCompilePreservesTheSemanticContract(): void
     {
         $model = new \Tests\Fake\PlanModel(
-            new ModelDescriptor('example.key', '1', 'key', new Signature([new \Deriver\Model\Signature\Parameter('id', 'int')])),
+            new ModelDescriptor('example.key', '1', 'key', new Signature([new \Deriver\Project\Declaration\Parameter('id', 'int')])),
             new SemanticPlan([Action::returns(Expression::binary('.', Expression::literal(Term::constant('user:')), Expression::parameter('id')))]),
         );
-        $session = \Tests\Fake\Analysis::session('<?php function target(){return key(3);}', new Configuration(models: [$model]));
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return key(3);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame('user:3', $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);
@@ -212,9 +212,9 @@ final class PlanCompilerTest extends TestCase
         $at = new SourceRef('snapshot', 'model:sample', 2, 8, 3);
         $default = Term::constant(null);
         $signature = new Signature([
-            new \Deriver\Model\Signature\Parameter('item', 'int', true),
-            new \Deriver\Model\Signature\Parameter('fallback', 'string|null', default:$default),
-            new \Deriver\Model\Signature\Parameter('rest', 'mixed', variadic:true),
+            new \Deriver\Project\Declaration\Parameter('item', 'int', true),
+            new \Deriver\Project\Declaration\Parameter('fallback', 'string|null', default:$default),
+            new \Deriver\Project\Declaration\Parameter('rest', 'mixed', variadic:true),
         ], returnType:'self', allowExtraArguments:false, byReference:true);
         $source = new CallableGraph('Child::alias', [], [], $at, className:'ParentClass', visibility:'protected', static:true);
         $body = (new PlanCompiler($at))->compile(new ModelDescriptor('sample', '1', 'Child::alias', $signature), new SemanticPlan([]), $source);
@@ -314,8 +314,8 @@ final class PlanCompilerTest extends TestCase
             ]),
             Action::returns($chosen),
         ]);
-        $model = new \Tests\Fake\PlanModel(new ModelDescriptor('sample', '1', 'remote', new Signature([new \Deriver\Model\Signature\Parameter('flag', 'bool')])), $plan);
-        $session = \Tests\Fake\Analysis::session('<?php function target(){return [remote(true),remote(false)];}', new Configuration(models:[$model]));
+        $model = new \Tests\Fake\PlanModel(new ModelDescriptor('sample', '1', 'remote', new Signature([new \Deriver\Project\Declaration\Parameter('flag', 'bool')])), $plan);
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return [remote(true),remote(false)];}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);

@@ -38,11 +38,11 @@ items:
     category: order
   -
     id: PIPE-PROVIDE-001
-    statement: 'When a session is opened, the provider expansion shall run every configured provider once before any file is parsed and record the contributions in the snapshot manifest.'
+    statement: 'When a session is opened, the provider expansion shall run every contributed provider once before any file is parsed and record the contributions in the snapshot manifest.'
     evidence:
       -
         selector: 'p:nth-of-type(2)'
-        quote: 'Provider expansion runs the configured providers once before anything is parsed. Entry point, declaration and environment providers add to the captured input and configuration, the contributions are recorded in the snapshot manifest, and the expanded input and configuration do not change for the rest of the session. A provider that contradicts an explicit environment value is rejected.'
+        quote: 'Provider expansion runs the contributed providers once before anything is parsed. Entry point, declaration and environment providers add to the captured input and configuration, the contributions are recorded in the snapshot manifest, and the expanded input and configuration do not change for the rest of the session. A provider that contradicts an explicit environment value is rejected.'
     tests:
       -
         runner: unit
@@ -57,7 +57,7 @@ items:
     evidence:
       -
         selector: 'p:nth-of-type(2)'
-        quote: 'Provider expansion runs the configured providers once before anything is parsed. Entry point, declaration and environment providers add to the captured input and configuration, the contributions are recorded in the snapshot manifest, and the expanded input and configuration do not change for the rest of the session. A provider that contradicts an explicit environment value is rejected.'
+        quote: 'Provider expansion runs the contributed providers once before anything is parsed. Entry point, declaration and environment providers add to the captured input and configuration, the contributions are recorded in the snapshot manifest, and the expanded input and configuration do not change for the rest of the session. A provider that contradicts an explicit environment value is rejected.'
     tests:
       -
         runner: unit
@@ -185,11 +185,11 @@ items:
     category: lowering
   -
     id: PIPE-MODEL-001
-    statement: 'If a configured model replaces a standard model without declaring the replacement, or repeats an identifier, or ties on priority, then the model registration shall reject the configuration.'
+    statement: 'If a contributed model replaces a standard model without declaring the replacement, or repeats an identifier, or ties on priority, then the model registration shall reject the session.'
     evidence:
       -
         selector: 'p:nth-of-type(6)'
-        quote: 'Model registration validates the configured models, domains, intrinsics and state slots and resolves their precedence. Replacing a standard model requires an explicit declaration, repeated identifiers and ambiguous priorities are rejected, and the resulting registry is the only place a query consults for a model decision.'
+        quote: 'Model registration validates the contributed models, domains, intrinsics and state slots and resolves their precedence. Replacing a standard model requires an explicit declaration, repeated identifiers and ambiguous priorities are rejected, and the resulting registry is the only place a query consults for a model decision.'
     tests:
       -
         runner: unit
@@ -204,7 +204,7 @@ items:
     evidence:
       -
         selector: 'p:nth-of-type(6)'
-        quote: 'Model registration validates the configured models, domains, intrinsics and state slots and resolves their precedence. Replacing a standard model requires an explicit declaration, repeated identifiers and ambiguous priorities are rejected, and the resulting registry is the only place a query consults for a model decision.'
+        quote: 'Model registration validates the contributed models, domains, intrinsics and state slots and resolves their precedence. Replacing a standard model requires an explicit declaration, repeated identifiers and ambiguous priorities are rejected, and the resulting registry is the only place a query consults for a model decision.'
     tests:
       -
         runner: unit
@@ -403,10 +403,10 @@ items:
     tests:
       -
         runner: unit
-        target: 'Tests\Unit\Result\Candidates\CandidateCollectionTest::testJsonSerializeUsesOnlyCandidateFields'
+        target: 'Tests\Unit\Result\CandidateCollectionTest::testJsonSerializeUsesOnlyCandidateFields'
       -
         runner: unit
-        target: 'Tests\Unit\Result\Candidates\CandidateCollectionTest::testToJsonRedactsSecretValues'
+        target: 'Tests\Unit\Result\CandidateCollectionTest::testToJsonRedactsSecretValues'
     category: export
   -
     id: PIPE-EXPORT-002
@@ -419,7 +419,4 @@ items:
       -
         runner: unit
         target: 'Tests\Unit\ReplayTest::testVerifyDetectsChangedValues'
-      -
-        runner: unit
-        target: 'Tests\Unit\Analysis\Candidates\ReplayTest::testVerifyStillRevalidatesThroughTheFormerName'
     category: export

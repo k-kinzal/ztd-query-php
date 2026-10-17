@@ -7,7 +7,6 @@ namespace Deriver\Model\Registration;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Model\Domain\AbstractDomain;
 use Deriver\Model\Intrinsic\PureIntrinsic;
-use Deriver\Project\Configuration;
 
 /**
  * Validates and versions explicitly installed domain and intrinsic contracts.
@@ -29,12 +28,12 @@ final class Extensions
     public array $manifest = [];
 
     /**
-     * @param Configuration $configuration Trusted extension objects
+     * @param Contributions $contributions Trusted extension objects
      * @throws InvalidInputException If contracts or identities conflict
      */
-    public function __construct(Configuration $configuration)
+    public function __construct(Contributions $contributions)
     {
-        foreach ($configuration->intrinsics as $intrinsic) {
+        foreach ($contributions->intrinsics as $intrinsic) {
             $descriptor = $intrinsic->descriptor();
             if ($descriptor->id === '' || $descriptor->version === '' || $descriptor->operation === '' || $descriptor->arity < 0 || isset($this->intrinsics[$descriptor->operation], $this->manifest['intrinsic:' . $descriptor->id])) {
                 throw new InvalidInputException('MODEL_CONFLICT: invalid or repeated intrinsic identity.');
@@ -50,7 +49,7 @@ final class Extensions
             $this->intrinsics[$descriptor->operation] = $intrinsic;
             $this->manifest['intrinsic:' . $descriptor->id] = hash('sha256', serialize([$descriptor->version, $descriptor->operation, $descriptor->arity, $descriptor->dependencies]));
         }
-        foreach ($configuration->domains as $domain) {
+        foreach ($contributions->domains as $domain) {
             [$id, $version] = (new \Deriver\Model\Operations\DomainOperations())->registration($domain);
             if ($id === '' || $version === '' || isset($this->domains[$id])) {
                 throw new InvalidInputException('MODEL_CONFLICT: invalid or repeated domain identity.');

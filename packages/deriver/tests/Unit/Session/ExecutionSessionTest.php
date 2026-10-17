@@ -11,14 +11,14 @@ use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Provider\ObservationProvider;
 use Deriver\Model\Provider\Provider;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
+use Deriver\Project\CancellationToken;
 use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Project\ProjectInput;
+use Deriver\Project\ResourceLimits;
 use Deriver\Project\SourceFile;
 use Deriver\Query\Budget;
-use Deriver\Query\CancellationToken;
-use Deriver\Query\ResourceLimits;
 use Deriver\Query\ReturnQuery;
 use Deriver\Reference\ResultRef;
 use Deriver\Session\ExecutionSession as Session;
@@ -119,19 +119,19 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Reference\Observation::class)]
 #[UsesClass(ResultRef::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Exceptional::class)]
-#[UsesClass(\Deriver\Result\Explanation::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Exceptional::class)]
+#[UsesClass(\Deriver\Result\Execution\Explanation::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Result\ResultSet::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -224,7 +224,7 @@ final class ExecutionSessionTest extends TestCase
      */
     public function testEntrypointsUsesOnlyExplicitProviderContributions(): void
     {
-        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(providers: [new \Tests\Fake\MiniContainer()]));
+        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers: [new \Tests\Fake\MiniContainer()]));
         self::assertSame('entry', $session->entrypoints()[0]->symbol);
         self::assertSame([], \Tests\Fake\Analysis::session('<?php function entry(){}')->entrypoints());
     }
@@ -233,7 +233,7 @@ final class ExecutionSessionTest extends TestCase
      */
     public function testObservationsCreatesQueriesUsingTheCapturedEntries(): void
     {
-        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(providers: [new \Tests\Fake\MiniContainer()]));
+        $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers: [new \Tests\Fake\MiniContainer()]));
         $query = $session->observations()['entry-return'];
         self::assertSame('entrypoint', $query->scope()->mode);
         self::assertSame('entry', $query->scope()->entries[0]->symbol);
@@ -404,7 +404,7 @@ final class ExecutionSessionTest extends TestCase
         $ordinary = self::createStub(Provider::class);
         $ordinary->method('id')->willReturn('example.ordinary');
         $ordinary->method('version')->willReturn('1');
-        $session = \Tests\Fake\Analysis::session('<?php function a(){}function b(){}', new Configuration(providers:[$ordinary,$queries]));
+        $session = \Tests\Fake\Analysis::session('<?php function a(){}function b(){}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers:[$ordinary,$queries]));
         self::assertSame(['a' => $a,'z' => $b], $session->observations());
         self::assertSame([], $session->entrypoints());
     }
@@ -421,7 +421,7 @@ final class ExecutionSessionTest extends TestCase
         $second->method('id')->willReturn('example.second');
         $second->method('version')->willReturn('1');
         $second->method('queries')->willReturn(['same' => new ReturnQuery('b')]);
-        $session = \Tests\Fake\Analysis::session('<?php function a(){}function b(){}', new Configuration(providers:[$first,$second]));
+        $session = \Tests\Fake\Analysis::session('<?php function a(){}function b(){}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(providers:[$first,$second]));
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('MODEL_CONFLICT: repeated observation name same');
         $session->observations();
@@ -438,8 +438,8 @@ final class ExecutionSessionTest extends TestCase
         $first = new \Tests\Fake\PlanModel($firstDescriptor, $plan);
         $second = new \Tests\Fake\PlanModel($secondDescriptor, $plan);
         $source = '<?php function target(){return 1;}';
-        $a = \Tests\Fake\Analysis::session($source, new Configuration(models:[$first]));
-        $b = \Tests\Fake\Analysis::session($source, new Configuration(models:[$second]));
+        $a = \Tests\Fake\Analysis::session($source, new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$first]));
+        $b = \Tests\Fake\Analysis::session($source, new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$second]));
         self::assertNotSame($a->snapshot()->id, $b->snapshot()->id);
         self::assertNotSame($a->snapshot()->models, $b->snapshot()->models);
     }
@@ -468,8 +468,8 @@ final class ExecutionSessionTest extends TestCase
         $a = new \Tests\Fake\PlanModel(new ModelDescriptor('example.a', '1', 'a'), $plan);
         $z = new \Tests\Fake\PlanModel(new ModelDescriptor('example.z', '2', 'z'), $plan);
         $source = '<?php function target(){return 1;}';
-        $first = \Tests\Fake\Analysis::session($source, new Configuration(models:[$z,$a]));
-        $second = \Tests\Fake\Analysis::session($source, new Configuration(models:[$a,$z]));
+        $first = \Tests\Fake\Analysis::session($source, new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$z,$a]));
+        $second = \Tests\Fake\Analysis::session($source, new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$a,$z]));
         self::assertSame($first->snapshot()->id, $second->snapshot()->id);
         self::assertSame($first->snapshot()->models, $second->snapshot()->models);
         self::assertSame(['model:example.a','model:example.z'], array_keys($first->snapshot()->models));
@@ -485,8 +485,8 @@ final class ExecutionSessionTest extends TestCase
         $first = new \Tests\Fake\PlanModel(new ModelDescriptor('domain:example.policy', '1', 'run'), $plan);
         $second = new \Tests\Fake\PlanModel(new ModelDescriptor('domain:example.policy', '2', 'run'), $plan);
         $source = '<?php function target(){return 1;}';
-        $a = \Tests\Fake\Analysis::session($source, new Configuration(models:[$first], domains:[new \Tests\Fake\PolicyDomain()]));
-        $b = \Tests\Fake\Analysis::session($source, new Configuration(models:[$second], domains:[new \Tests\Fake\PolicyDomain()]));
+        $a = \Tests\Fake\Analysis::session($source, new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$first], domains:[new \Tests\Fake\PolicyDomain()]));
+        $b = \Tests\Fake\Analysis::session($source, new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$second], domains:[new \Tests\Fake\PolicyDomain()]));
         self::assertNotSame($a->snapshot()->id, $b->snapshot()->id);
         self::assertCount(2, $a->snapshot()->models);
         self::assertSame('1', $a->snapshot()->models['domain:example.policy']);

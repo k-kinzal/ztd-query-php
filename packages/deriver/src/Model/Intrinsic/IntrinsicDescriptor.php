@@ -7,7 +7,7 @@ namespace Deriver\Model\Intrinsic;
 /**
  * Versioned pure operation identity and its declared input dependencies.
  *
- * @visibility public
+ * @visibility root
  * @example Inspecting the contract
  *     (new \Deriver\Model\Intrinsic\IntrinsicDescriptor('prefix', '1', 'prefix', 1, [0]))->arity // => 1
  */

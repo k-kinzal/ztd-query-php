@@ -11,8 +11,8 @@ use Deriver\Evaluation\Offset\Path;
 use Deriver\Evaluation\Offset\StringAccess;
 use Deriver\Evaluation\Offset\Transfer;
 use Deriver\Evaluation\State;
-use Deriver\Result\Alternative;
-use Deriver\Result\Exceptional;
+use Deriver\Result\Execution\Alternative;
+use Deriver\Result\Execution\Exceptional;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -146,8 +146,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Model\Registration\ProviderExpansion::class)]
 #[UsesClass(\Deriver\Model\Registration\Registry::class)]
 #[UsesClass(\Deriver\Model\Registration\StateRegistry::class)]
-#[UsesClass(\Deriver\Model\Signature\Parameter::class)]
-#[UsesClass(\Deriver\Model\Signature\Signature::class)]
+#[UsesClass(\Deriver\Project\Declaration\Parameter::class)]
+#[UsesClass(\Deriver\Project\Declaration\Signature::class)]
 #[UsesClass(\Deriver\Project\Configuration::class)]
 #[UsesClass(\Deriver\Project\EntryPoint::class)]
 #[UsesClass(\Deriver\Project\ProjectInput::class)]
@@ -157,21 +157,21 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(\Deriver\Query\ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(\Deriver\Reference\SourceRef::class)]
 #[UsesClass(Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
 #[UsesClass(Exceptional::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]

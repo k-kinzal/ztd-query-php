@@ -9,9 +9,9 @@ use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
 use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
@@ -62,7 +62,7 @@ final class DeclarationContractTest extends TestCase
     public function testModelsSupplySemanticsForExternalDeclarationsWithoutReplacingSourceBodies(): void
     {
         $model = new PlanModel(new ModelDescriptor('example.external', '1', 'external', new Signature([new Parameter('value', 'int')], 'int')), new SemanticPlan([Action::returns(Expression::binary('+', Expression::parameter('value'), Expression::literal(Term::constant(1))))]));
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('app.php', '<?php function target(){return external(value: 2);}'), new SourceFile('stubs.php', '<?php function external(int $value): int {}', true)]), new Configuration(models: [$model]));
+        $session = new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php function target(){return external(value: 2);}'), new SourceFile('stubs.php', '<?php function external(int $value): int {}', true)]), new Configuration(), new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame(3, $result->candidates[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
@@ -113,7 +113,7 @@ final class DeclarationContractTest extends TestCase
     public function testModeledMethodReturnsResolveSelfInItsDeclaredClass(): void
     {
         $model = new PlanModel(new ModelDescriptor('example.same', '1', 'Box::same', new Signature(returnType: 'self')), new SemanticPlan([Action::returns(Expression::receiver())]));
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('app.php', '<?php class Box{}function target(){$box=new Box;$same=$box->same();return $same===$box;}')]), new Configuration(models: [$model]));
+        $session = new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php class Box{}function target(){$box=new Box;$same=$box->same();return $same===$box;}')]), new Configuration(), new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertTrue($result->candidates[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));

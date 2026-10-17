@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Deriver\Session;
 
+use Deriver\Diagnostic\Frontier;
 use Deriver\Model\Registration\ProviderExpansion;
 use Deriver\Model\Registration\Registry;
 use Deriver\Model\Registration\SignatureIdentity;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\ProjectSnapshot;
-use Deriver\Result\Frontier;
 use Deriver\Result\Serialization\JsonText;
 use Deriver\Value\Identity;
 use JsonException;

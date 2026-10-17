@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Semantic;
 
 use Deriver\AnalysisSession;
-use Deriver\Analyzer;
 use Deriver\Model\CallDescription;
 use Deriver\Model\CallModel;
 use Deriver\Model\ModelDecision;
@@ -13,9 +12,9 @@ use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
 use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Project\EntryPoint;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
@@ -24,7 +23,7 @@ use Deriver\Query\QueryScope;
 use Deriver\Query\ReturnQuery;
 use Deriver\Query\TupleQuery;
 use Deriver\Query\ValueQuery;
-use Deriver\Result\Candidates\CandidateCollection;
+use Deriver\Result\CandidateCollection;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -44,9 +43,9 @@ final class CandidateContractTest extends TestCase
      * Opens a captured source fixture using the candidate contract.
      * @throws JsonException If fixture metadata cannot be encoded
      */
-    public static function session(string $source, Configuration $configuration = new Configuration()): AnalysisSession
+    public static function session(string $source, Configuration $configuration = new Configuration(), \Deriver\Model\Registration\Contributions $contributions = new \Deriver\Model\Registration\Contributions()): AnalysisSession
     {
-        return (new Analyzer())->open(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration);
+        return new \Deriver\Session\Session(new ProjectInput([new SourceFile('candidate.php', '<?php ' . $source)]), $configuration, $contributions);
     }
 
     /**
@@ -78,7 +77,7 @@ final class CandidateContractTest extends TestCase
     }
 
     /**
-     * @return list<\Deriver\Result\Frontier> Test-only traversal of candidate residuals.
+     * @return list<\Deriver\Diagnostic\Frontier> Test-only traversal of candidate residuals.
      */
     public static function frontiers(CandidateCollection $result): array
     {
@@ -199,7 +198,7 @@ final class CandidateContractTest extends TestCase
     public function testC07AndC08ReplaceTheBodyAndDoNotDemandUnusedInputs(): void
     {
         foreach (['', 'function heavy($input,$unused){return expensive($input);}'] as $body) {
-            $session = self::session($body . 'function target($input){$value=heavy($input,other())+5;observe($value);}', new Configuration(models: [self::model(Expression::literal(Term::constant(10)))]));
+            $session = self::session($body . 'function target($input){$value=heavy($input,other())+5;observe($value);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [self::model(Expression::literal(Term::constant(10)))]));
             $result = self::argument($session);
             self::assertSame([15], self::native($result));
             self::assertSame(0, $result->statistics->bodyExpansions);
@@ -214,7 +213,7 @@ final class CandidateContractTest extends TestCase
      */
     public function testC09DemandsOnlyTheInputUsedByTheModel(): void
     {
-        $session = self::session('function heavy($input,$unused){return expensive();} function unused(){return expensive();} function target(){observe(heavy(7,unused())+5);}', new Configuration(models: [self::model(Expression::parameter('input'))]));
+        $session = self::session('function heavy($input,$unused){return expensive();} function unused(){return expensive();} function target(){observe(heavy(7,unused())+5);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [self::model(Expression::parameter('input'))]));
         $result = self::argument($session);
         self::assertSame([12], self::native($result));
         self::assertSame(0, $result->statistics->bodyExpansions);

@@ -31,7 +31,7 @@ final class SlotsTest extends TestCase
      */
     public function testBeforeUsesOnlyTheRequestedAllocatedDefault(): void
     {
-        $e = F::evaluator('function target(){return 1;}', new \Deriver\Project\Configuration(stateSlots:[new \Deriver\Model\State\StateSlot('example.count', 'int', Term::constant(3))]));
+        $e = F::evaluator('function target(){return 1;}', new \Deriver\Project\Configuration(), contributions: new \Deriver\Model\Registration\Contributions(stateSlots:[new \Deriver\Model\State\StateSlot('example.count', 'int', Term::constant(3))]));
         $v = (new \Deriver\Candidate\Memory\Slots($e))->before(F::frame($e), new Term('object', 'allocation'), 'example.count', 0, 0, 64);
         self::assertSame(3, $v->native());
     }

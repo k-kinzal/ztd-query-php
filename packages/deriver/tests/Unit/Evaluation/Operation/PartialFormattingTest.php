@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Operation;
 
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;

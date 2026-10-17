@@ -81,7 +81,7 @@ final class Constraints
      */
     public function refine(State $state, Term $predicate, bool $truth): bool
     {
-        foreach ($this->context?->configuration->providers ?? [] as $provider) {
+        foreach ($this->context?->models->contributions->providers ?? [] as $provider) {
             if (!$provider instanceof RefinementModel) {
                 continue;
             }

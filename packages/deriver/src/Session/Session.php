@@ -8,6 +8,7 @@ use Deriver\Analysis\Selection\CallObservations;
 use Deriver\AnalysisSession;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Model\Provider\ObservationProvider;
+use Deriver\Model\Registration\Contributions;
 use Deriver\Model\Registration\ProviderExpansion;
 use Deriver\Model\Registration\Registry;
 use Deriver\Project\Configuration;
@@ -16,8 +17,8 @@ use Deriver\Project\ProjectSnapshot;
 use Deriver\Query\Query;
 use Deriver\Reference\Observation;
 use Deriver\Reference\ResultRef;
-use Deriver\Result\Candidates\CandidateCollection;
-use Deriver\Result\Explanation;
+use Deriver\Result\CandidateCollection;
+use Deriver\Result\Execution\Explanation;
 use Deriver\Result\ResultSet;
 use Deriver\Result\Serialization\QueryEncoding;
 use Deriver\Source\Declaration\ProjectIndex;
@@ -43,10 +44,10 @@ final class Session implements AnalysisSession
         return (new \Deriver\Analysis\Selection\ExpressionResolution())->expression($this->program, $path, $start, $end, $role);
     }
     /**
-     * @return \Deriver\Model\Metadata\DeclarationLookup Captured declaration facts
+     * @return \Deriver\Project\Declaration\DeclarationLookup Captured declaration facts
      */
     #[Override]
-    public function declarations(): \Deriver\Model\Metadata\DeclarationLookup
+    public function declarations(): \Deriver\Project\Declaration\DeclarationLookup
     {
         return new \Deriver\Model\Registration\Declarations($this->program);
     }
@@ -115,15 +116,16 @@ final class Session implements AnalysisSession
     /**
      * @param ProjectInput $input Captured sources
      * @param Configuration $configuration Explicit assumptions
+     * @param Contributions $contributions Models, providers, domains, intrinsics and state slots to register
      * @param ParseCache $parsing Reusable parsed files
      * @param LoweringCache $lowering Reusable lowered bodies
      * @param bool $validateSource Whether malformed captured PHP rejects the session
      * @throws InvalidInputException If captured PHP is malformed
      * @throws JsonException If data cannot be represented in JSON
      */
-    public function __construct(ProjectInput $input, Configuration $configuration, ParseCache $parsing = new ParseCache(), LoweringCache $lowering = new LoweringCache(), bool $validateSource = true)
+    public function __construct(ProjectInput $input, Configuration $configuration, Contributions $contributions = new Contributions(), ParseCache $parsing = new ParseCache(), LoweringCache $lowering = new LoweringCache(), bool $validateSource = true)
     {
-        $this->assembly = new SessionAssembly($input, $configuration, $parsing, $lowering, $validateSource);
+        $this->assembly = new SessionAssembly($input, $configuration, $contributions, $parsing, $lowering, $validateSource);
         $this->liveResults = new WeakMap();
         $this->retention = new ResultRetention($this->assembly->configuration->retainedResults);
         $this->providers = $this->assembly->providers;
@@ -207,7 +209,7 @@ final class Session implements AnalysisSession
     /**
      * Looks up a result's explanation.
      * @param ResultRef $result Session result reference
-     * @return list<\Deriver\Result\Evidence\Alternative> Candidate derivations
+     * @return list<\Deriver\Result\Alternative> Candidate derivations
      * @throws InvalidInputException If the result is absent from this session
      */
     #[Override]
@@ -266,7 +268,7 @@ final class Session implements AnalysisSession
     public function observations(): array
     {
         $result = [];
-        foreach ($this->configuration->providers as $provider) {
+        foreach ($this->models->contributions->providers as $provider) {
             if (!$provider instanceof ObservationProvider) {
                 continue;
             }

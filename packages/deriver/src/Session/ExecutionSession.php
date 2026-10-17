@@ -6,12 +6,13 @@ namespace Deriver\Session;
 
 use Deriver\Analysis\Execution\QueryExecution;
 use Deriver\Exception\InvalidInputException;
+use Deriver\Model\Registration\Contributions;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Query\Query;
 use Deriver\Reference\ResultRef;
-use Deriver\Result\DerivationResult;
-use Deriver\Result\Explanation;
+use Deriver\Result\Execution\DerivationResult;
+use Deriver\Result\Execution\Explanation;
 use Deriver\Result\Serialization\QueryEncoding;
 use JsonException;
 use WeakMap;
@@ -66,9 +67,9 @@ class ExecutionSession
      * Captures an isolated execution-analysis session.
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public function __construct(ProjectInput $input, Configuration $configuration = new Configuration())
+    public function __construct(ProjectInput $input, Configuration $configuration = new Configuration(), Contributions $contributions = new Contributions())
     {
-        $this->snapshotSession = new Session($input, $configuration, validateSource: false);
+        $this->snapshotSession = new Session($input, $configuration, $contributions, validateSource: false);
         $this->program = $this->snapshotSession->program;
         $this->models = $this->snapshotSession->models;
         $this->manifest = $this->snapshotSession->manifest;
@@ -162,7 +163,7 @@ class ExecutionSession
     /**
      * Returns captured declaration metadata.
      */
-    public function declarations(): \Deriver\Model\Metadata\DeclarationLookup
+    public function declarations(): \Deriver\Project\Declaration\DeclarationLookup
     {
         return $this->snapshotSession->declarations();
     }
@@ -195,16 +196,16 @@ class ExecutionSession
      * @param list<Query> $queries Ordered requests
      * @throws JsonException If query metadata cannot be encoded
      */
-    public function deriveMany(array $queries): \Deriver\Result\ExecutionResultSet
+    public function deriveMany(array $queries): \Deriver\Result\Execution\ExecutionResultSet
     {
-        return new \Deriver\Result\ExecutionResultSet(array_map(fn (Query $query): DerivationResult => $this->derive($query), $queries));
+        return new \Deriver\Result\Execution\ExecutionResultSet(array_map(fn (Query $query): DerivationResult => $this->derive($query), $queries));
     }
     /**
      * Shares execution prefixes across compatible requests.
      * @param list<Query> $queries Observations at compatible program points
      * @throws JsonException If query metadata cannot be encoded
      */
-    public function deriveTogether(array $queries): \Deriver\Result\ExecutionResultSet
+    public function deriveTogether(array $queries): \Deriver\Result\Execution\ExecutionResultSet
     {
         $results = (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->together($queries);
         foreach ($results->results as $result) {

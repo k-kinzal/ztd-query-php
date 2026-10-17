@@ -9,7 +9,7 @@ use Deriver\ControlFlow\Program;
 use Deriver\Query\Query;
 use Deriver\Query\TupleQuery;
 use Deriver\Query\ValueQuery;
-use Deriver\Result\Alternative;
+use Deriver\Result\Execution\Alternative;
 use Deriver\Value\Operations;
 use Deriver\Value\Term;
 

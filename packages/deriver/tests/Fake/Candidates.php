@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fake;
 
 use Deriver\Query\ValueQuery;
-use Deriver\Result\DerivationResult;
+use Deriver\Result\Execution\DerivationResult;
 use Deriver\Value\Term;
 use JsonException;
 
@@ -86,7 +86,7 @@ final class Candidates
      */
     public static function values(DerivationResult $result): array
     {
-        return array_map(static fn (\Deriver\Result\Alternative $outcome): Term => $outcome->values['value'], $result->normalOutcomes);
+        return array_map(static fn (\Deriver\Result\Execution\Alternative $outcome): Term => $outcome->values['value'], $result->normalOutcomes);
     }
 
     /**

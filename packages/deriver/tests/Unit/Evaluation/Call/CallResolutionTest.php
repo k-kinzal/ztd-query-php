@@ -17,9 +17,9 @@ use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
 use Deriver\Model\Plan\SemanticPlan;
 use Deriver\Model\Registration\Registry;
-use Deriver\Model\Signature\Parameter;
-use Deriver\Model\Signature\Signature;
 use Deriver\Project\Configuration;
+use Deriver\Project\Declaration\Parameter;
+use Deriver\Project\Declaration\Signature;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
@@ -117,20 +117,20 @@ use Tests\Fake\SolverFixture;
 #[UsesClass(\Deriver\Project\TargetProfile::class)]
 #[UsesClass(\Deriver\Query\Budget::class)]
 #[UsesClass(\Deriver\Query\QueryScope::class)]
-#[UsesClass(\Deriver\Query\ResourceLimits::class)]
+#[UsesClass(\Deriver\Project\ResourceLimits::class)]
 #[UsesClass(ReturnQuery::class)]
 #[UsesClass(\Deriver\Reference\ResultRef::class)]
 #[UsesClass(SourceRef::class)]
-#[UsesClass(\Deriver\Result\Alternative::class)]
-#[UsesClass(\Deriver\Result\Assessment::class)]
-#[UsesClass(\Deriver\Result\Derivation::class)]
-#[UsesClass(\Deriver\Result\DerivationResult::class)]
-#[UsesClass(\Deriver\Result\Frontier::class)]
+#[UsesClass(\Deriver\Result\Execution\Alternative::class)]
+#[UsesClass(\Deriver\Result\Execution\Assessment::class)]
+#[UsesClass(\Deriver\Result\Execution\Derivation::class)]
+#[UsesClass(\Deriver\Result\Execution\DerivationResult::class)]
+#[UsesClass(\Deriver\Diagnostic\Frontier::class)]
 #[UsesClass(\Deriver\Result\Serialization\JsonText::class)]
 #[UsesClass(\Deriver\Result\Serialization\QueryEncoding::class)]
 #[UsesClass(\Deriver\Result\Serialization\ValueGraph::class)]
 #[UsesClass(\Deriver\Result\Statistics::class)]
-#[UsesClass(\Deriver\Result\StorageSnapshot::class)]
+#[UsesClass(\Deriver\Result\Execution\StorageSnapshot::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweringCache::class)]
 #[UsesClass(\Deriver\Source\Lowering\LoweredCallable::class)]
 #[UsesClass(\Deriver\Source\Lowering\SnapshotRebase::class)]
@@ -168,7 +168,7 @@ final class CallResolutionTest extends TestCase
             new ModelDescriptor('example.key', '1', 'key', new Signature([new Parameter('id', 'int')])),
             new SemanticPlan([Action::returns(Expression::binary('.', Expression::literal(Term::constant('user:')), Expression::parameter('id')))]),
         );
-        $session = \Tests\Fake\Analysis::session('<?php function target(){return key(3);}', new Configuration(models: [$model]));
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return key(3);}', new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame('user:3', $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);
@@ -210,7 +210,7 @@ final class CallResolutionTest extends TestCase
         $model = self::createStub(CallModel::class);
         $model->method('descriptor')->willReturn($descriptor);
         $model->method('describe')->willReturn($decision);
-        $context = SolverFixture::context('<?php function external(){return 1;}function target(){}', configuration:new Configuration(models:[$model]));
+        $context = SolverFixture::context('<?php function external(){return 1;}function target(){}', configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$model]));
         $site = new Instruction('site', 'invoke', new SourceRef('test', 'fixture.php', 5, 12));
         $body = (new CallResolution($context))->body('external', $site);
         self::assertSame($expectedPath, $body?->source->path);
@@ -257,7 +257,7 @@ final class CallResolutionTest extends TestCase
     {
         $descriptor = new ModelDescriptor('example.resolve', '2', 'external');
         $model = new \Tests\Fake\PlanModel($descriptor, new SemanticPlan([Action::returns(new Expression('invalid-opcode'))]));
-        $context = SolverFixture::context(configuration:new Configuration(models:[$model]));
+        $context = SolverFixture::context(configuration:new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models:[$model]));
         $site = new Instruction('site', 'invoke', new SourceRef('test', 'fixture.php', 5, 12));
         $this->expectException(\Deriver\Exception\ModelContractException::class);
         $this->expectExceptionMessage('expression-arity-or-opcode:invalid-opcode');
@@ -268,9 +268,10 @@ final class CallResolutionTest extends TestCase
     {
         $descriptor = new ModelDescriptor('example.resolve', '2', 'external', new Signature([new Parameter('value', 'int')], returnType:'int'));
         $model = new \Tests\Fake\PlanModel($descriptor, new SemanticPlan([Action::returns(Expression::parameter('value'))]));
-        $configuration = new Configuration(models:[$model]);
+        $configuration = new Configuration();
+        $contributions = new \Deriver\Model\Registration\Contributions(models:[$model]);
         $program = new ProjectIndex('test', new ProjectInput([new SourceFile('library.php', '<?php function external(int $value):int{}', declarationsOnly:true)]), $configuration->target);
-        $context = new Context($program, new ReturnQuery('external'), $configuration, new Registry($configuration));
+        $context = new Context($program, new ReturnQuery('external'), $configuration, new Registry($configuration, $contributions));
         $body = (new CallResolution($context))->body('external', new Instruction('site', 'invoke', new SourceRef('test', 'caller.php', 0, 1)));
         self::assertNotNull($body);
         self::assertFalse($body->external);
@@ -289,7 +290,7 @@ final class CallResolutionTest extends TestCase
     public function testNameSelectsOnlyAvailableNamespaceFallbacks(string $symbol, string|bool $fallback, bool $standard, string $expected): void
     {
         $model = new \Tests\Fake\PlanModel(new ModelDescriptor('example.resolve', '2', 'N\\modeled'), new SemanticPlan([Action::returns(Expression::literal(Term::constant(1)))]));
-        $context = SolverFixture::context('<?php function local_function(){}', configuration:new Configuration(models:[$model], standardModels:$standard));
+        $context = SolverFixture::context('<?php function local_function(){}', configuration:new Configuration(standardModels:$standard), contributions: new \Deriver\Model\Registration\Contributions(models:[$model]));
         $site = new Instruction('site', 'invoke', new SourceRef('test', 'fixture.php', 0, 1), attributes:['fallback' => $fallback]);
         self::assertSame($expected, (new CallResolution($context))->name($symbol, $site));
     }
