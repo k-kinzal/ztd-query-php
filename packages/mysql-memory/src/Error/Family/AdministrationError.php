@@ -22,6 +22,7 @@ enum AdministrationError: int implements ErrorCode
 {
     use CatalogedError;
 
+    case FileCreate = 1;
     case FileStat = 13;
     case GetErrno = 1030;
     case NoSuchThread = 1094;

@@ -60,4 +60,11 @@ final class SyntaxFormatsTest extends TestCase
         self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto($format), true)], array_column($notices, 1));
     }
 
+    public function testModifierRetainsTheCompletedKeywordBeforeAMissingConnection(): void
+    {
+        $sql = 'EXPLAIN PARTITIONS FOR CONNECTION';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-5.7.44'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql5744));
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ExplainPartitions], array_column($notices, 1));
+    }
+
 }

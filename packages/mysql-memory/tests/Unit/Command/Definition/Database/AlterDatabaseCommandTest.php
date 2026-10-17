@@ -201,4 +201,21 @@ final class AlterDatabaseCommandTest extends TestCase
 
         (new AlterDatabaseCommand())->schema($statement, $session);
     }
+
+    public function testSchemaUsesTheLegacyEncodedOptionsPathForAnAbsentDatabase(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $this->expectExceptionCode(1);
+        $this->expectExceptionMessage("Can't create/write to file './a@0020b/db.opt' (Errcode: 2 - No such file or directory)");
+        $session->query('ALTER DATABASE `a b` COLLATE DEFAULT');
+    }
+
+    public function testCollationResolvesAnExplicitDefaultFromTheServerSetting(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d CHARACTER SET utf8mb4 COLLATE utf8mb4_bin; ALTER DATABASE d COLLATE DEFAULT');
+        self::assertSame('latin1_swedish_ci', $session->instance->dictionary->schema('d')?->collation);
+        $session->query('ALTER DATABASE d CHARACTER SET utf8mb4 COLLATE utf8mb4_bin; ALTER DATABASE d CHARACTER SET DEFAULT');
+        self::assertSame('latin1_swedish_ci', $session->instance->dictionary->schema('d')->collation);
+    }
 }

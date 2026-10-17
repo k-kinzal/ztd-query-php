@@ -31,4 +31,13 @@ final class CompletedWarningsTest extends TestCase
         self::assertSame([1681, 1681], array_values(array_map(static fn ($notice): int => $notice->code(), (new CompletedWarnings())->before($sql, strlen($sql), $session))));
     }
 
+    public function testBeforeKeepsAnExplainModifierAfterTheGrammarSelectsItsOptionRole(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $warnings = new CompletedWarnings();
+        $sql = 'EXPLAIN EXTENDED FOR CONNECTION ?';
+        self::assertSame([], $warnings->before('EXPLAIN EXTENDED', 16, $session));
+        self::assertSame([1681], array_values(array_map(static fn ($notice): int => $notice->code(), $warnings->before($sql, strlen($sql), $session))));
+    }
+
 }

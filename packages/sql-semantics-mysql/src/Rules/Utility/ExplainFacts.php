@@ -50,6 +50,10 @@ final class ExplainFacts
      */
     public function derive(Derivation $derivation, ?Name $format, bool $analyze, ?ExplainModifier $modifier, ?UserVariable $into): void
     {
+        $notice = $modifier?->deprecation($derivation->context->profile->grammar);
+        if ($notice !== null) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise($notice, $derivation, after: false);
+        }
         $named = $format === null ? null : strtoupper($format->value);
         if ($into !== null) {
             $derivation->scalar($into, $derivation->environment());

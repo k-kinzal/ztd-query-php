@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Operation;
  * set are refused; utf8 is warned of as an alias of utf8mb3. Encryption is
  * already a two-case semantic setting. Then the name: an empty name is
  * ER_WRONG_DB_NAME, a system database cannot be changed, and a database that does not exist is
- * error 3503. A character set alone takes its default collation. The
+ * error 3503 (legacy releases report its missing db.opt path as error 1). A character set alone takes its default collation. The
  * statement commits the open transaction and affects one row. Encryption changes
  * the default for new persistent tables. READ ONLY is retained by the semantic
  * model but is not yet enforced by the emulator. Verified on a live 8.4 server.
@@ -89,13 +89,14 @@ final class AlterDatabaseCommand implements Command
         $charset = null;
         $collation = null;
         foreach ($statement->options as $option) {
-            if ($option instanceof DatabaseCharset && $option->charset->name !== null) {
-                $charset = $this->charset($option, $charset, $context);
+            if ($option instanceof DatabaseCharset) {
+                $charset = $option->charset->name === null ? Charset::known((string) $context->variables->read('character_set_server')) : $this->charset($option, $charset, $context);
             }
-            if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
-                $collation = Collation::named($option->collation->name->value);
+            if ($option instanceof DatabaseCollation) {
+                $name = $option->collation->name->value ?? (string) $context->variables->read('collation_server');
+                $collation = Collation::named($name);
                 if ($collation === null) {
-                    throw SchemaError::UnknownCollation->error((new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $option->collation->name->value, 2)[0], 64, in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
+                    throw SchemaError::UnknownCollation->error((new \MySqlMemory\Error\DiagnosticText())->bytes(explode("\0", $name, 2)[0], 64, in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
                 }
             }
         }
@@ -141,7 +142,9 @@ final class AlterDatabaseCommand implements Command
         }
         $schema = $session->instance->dictionary->schema($name);
         if ($schema === null) {
-            throw SchemaError::SchemaMissing->error($name);
+            throw $session->settings()->legacy()
+                ? \MySqlMemory\Error\Family\AdministrationError::FileCreate->error('./' . (new FileName())->encoded($name) . '/db.opt', 2, 'No such file or directory')
+                : SchemaError::SchemaMissing->error($name);
         }
 
         return $schema;

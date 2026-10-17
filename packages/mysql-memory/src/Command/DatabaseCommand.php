@@ -64,7 +64,7 @@ final class DatabaseCommand implements Command
                 }
                 $context->diagnostics->note(SchemaError::DatabaseExists, SchemaError::DatabaseExists->message($name));
 
-                return new Completion(0, 0, 1);
+                return new Completion(1, 0, 1);
             }
             $dictionary->schemas[$name] = new Schema($name, $this->collation($statement, $session), encryption: $this->encryption($statement, $session));
 

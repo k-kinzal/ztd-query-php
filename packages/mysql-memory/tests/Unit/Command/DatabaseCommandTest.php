@@ -107,7 +107,7 @@ final class DatabaseCommandTest extends TestCase
         $warnings = $session->query('SHOW WARNINGS')[0];
 
         self::assertInstanceOf(Completion::class, $reply);
-        self::assertSame([0, 1], [$reply->affectedRows, $reply->warnings]);
+        self::assertSame([1, 1], [$reply->affectedRows, $reply->warnings]);
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Note', '1007', "Can't create database 'd'; database exists"]], $warnings->rows);
     }
@@ -184,4 +184,5 @@ final class DatabaseCommandTest extends TestCase
 
         $session->query("CREATE DATABASE IF NOT EXISTS d ENCRYPTION 'x'");
     }
+
 }

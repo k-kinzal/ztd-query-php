@@ -56,6 +56,8 @@ enum Deprecated: string
     case DotDefinitionName = "'.<column>' is deprecated and will be removed in a future release. Please use the column name without a dot prefix instead";
     case DotTable = "'.<table>' is deprecated and will be removed in a future release. Please use the table name without a dot prefix instead";
     case BinaryBitwise = "Bitwise operations on BINARY will change behavior in a future version, check the 'Bit functions' section in the manual.";
+    case ExplainExtended = "'EXTENDED' is deprecated and will be removed in a future release.";
+    case ExplainPartitions = "'PARTITIONS' is deprecated and will be removed in a future release.";
     case ProcedureAnalyse = "'PROCEDURE ANALYSE' is deprecated and will be removed in a future release.";
     case GroupByDirection = "'GROUP BY with ASC/DESC' is deprecated and will be removed in a future release. Please use GROUP BY ... ORDER BY ... ASC/DESC instead";
     case IntoInsideQuery = 'The INTO clause is deprecated inside query blocks of query expressions and will be removed in a future release. Please move the INTO clause to the end of statement instead.';
@@ -99,7 +101,7 @@ enum Deprecated: string
             self::ShowProfile, self::ShowProfiles, self::SuperPrivilege, self::ReplicationSpelling, self::ResetMaster, self::PurgeMasterLogs, self::ShowMasterLogs, self::ShowMasterStatus => 1287,
             self::InsertDelayed, self::ReplaceDelayed => 3005,
             self::UnquotedFull => 4119,
-            self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::FlushQueryCache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
+            self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::FlushQueryCache, self::ExplainExtended, self::ExplainPartitions, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore, self::UpgradeDatabaseName => 1681,
             self::Utf8Alias => 3719,
             self::Utf8Collation => 3778,
             self::Ucs2Collation => 4079,
@@ -126,7 +128,7 @@ enum Deprecated: string
         if ($this === self::ReplicationSpelling) {
             return in_array($release, [GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830], true);
         }
-        if ($this === self::SpatialFunction || $this === self::UpgradeDatabaseName || $this === self::FlushQueryCache) {
+        if (in_array($this, [self::SpatialFunction, self::UpgradeDatabaseName, self::FlushQueryCache, self::ExplainExtended, self::ExplainPartitions], true)) {
             return $release === GrammarRelease::MySql5744;
         }
         if ($release === GrammarRelease::MySql5651) {

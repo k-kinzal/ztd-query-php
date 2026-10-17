@@ -39,6 +39,22 @@ final class SyntaxFormats
         return $refusal === null ? null : new ParseFailure(new UnknownExplainFormat($name), true);
     }
     /**
+     * Retains a completed modifier's notice before later input can fail.
+     */
+    public function modifier(Node $node, Lowering $lowering): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        if ($node->name === 'opt_extended_describe' && count($node->children) === 1) {
+            $modifier = match ($lowering->form($node)->signature) {
+                'opt_extended_describe: EXTENDED_SYM' => \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Extended,
+                'opt_extended_describe: PARTITIONS_SYM' => \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Partitions,
+                default => null,
+            };
+            return $modifier?->deprecation($lowering->profile->grammar);
+        }
+        return null;
+    }
+
+    /**
      * Retains INTO's refusal at the options boundary, or at the completed statement in 8.1.
      * MySQL 8.1 reads later operand notices before rejecting INTO; 8.2 onward rejects
      * completed options before reading the explained operand.

@@ -1500,3 +1500,20 @@ counted as successful state-transition witnesses for constructor validity.
 Constraint diagnostics and tablespace lookup retain their precedence. The
 ordinary empty-definition and deferred definition domains still need review;
 matching their SQL errors alone does not establish the construction property.
+
+Legacy EXPLAIN modifiers carry their deprecation notices as semantic values.
+Completed modifiers retain those notices when later input is refused; a bare
+`EXPLAIN EXTENDED` remains a table-description request. Native tests compare
+96 modifier observations on MySQL 5.6 and 5.7. This does not address the separate
+canonical-query note of successful extended EXPLAIN output.
+
+An explicit database character-set or collation DEFAULT resolves the server's
+current setting. A missing legacy database reports its encoded options-file
+condition, and repeated CREATE DATABASE IF NOT EXISTS retains its native
+completion count. Native histories compare 171 statements across three releases
+and 60 observations of unchanged AlterDatabase objects across absent, populated
+and dropped schemas. Unrelated request text remains outside those objects.
+The repair snapshot passed 8,329 Semantics tests and 17,934 Memory unit,
+property and documentation tests, static checks for both packages, and all seven
+native modifier/default tests. The outstanding construction and full-fuzz gates
+remain required by the acceptance contract.
