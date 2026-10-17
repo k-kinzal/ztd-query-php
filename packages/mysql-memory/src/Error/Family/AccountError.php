@@ -58,6 +58,7 @@ enum AccountError: int implements ErrorCode
     case RetainWithEmptyPassword = 3895;
     case UnregisteredDynamicPrivilege = 3929;
     case InvalidUserAttributeJson = 3982;
+    case ReferencedAsDefiner = 4005;
     case RoleGrantedToItself = 4027;
     case InvalidFactorPlugin = 4052;
     case PluginOperationUnsupported = 4054;

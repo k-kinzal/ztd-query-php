@@ -367,4 +367,12 @@ final class MaterializationTest extends TestCase
         self::assertSame([262140, 4294967295, 4294967292], [$text->descriptor->length, $long->descriptor->length, $parent->descriptor->length]);
     }
 
+    public function testViewPreservesMergingBeforeDerivedTablesCanMerge(): void
+    {
+        $query = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
+        $rules = new Materialization();
+        self::assertTrue($rules->view($query, GrammarRelease::MySql5651));
+        self::assertFalse($rules->mergeable($query, GrammarRelease::MySql5651));
+    }
+
 }

@@ -180,6 +180,9 @@ final class Stages
         if (self::opensTableFirst($statement)) {
             return true;
         }
+        if (self::viewTarget($statement, $diagnostic)) {
+            return true;
+        }
         if ($statement instanceof RenameTable) {
             return $diagnostic instanceof MissingTable || $diagnostic instanceof TableExists;
         }
@@ -200,6 +203,14 @@ final class Stages
         }
 
         return false;
+    }
+
+    /**
+     * Identifies a view target's kind check, which follows preparation of its query.
+     */
+    public static function viewTarget(Node $statement, Diagnostic $diagnostic): bool
+    {
+        return $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView && $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind && $diagnostic->name === $statement->definition->name;
     }
 
     /**

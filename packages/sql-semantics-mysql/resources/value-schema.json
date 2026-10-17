@@ -2313,6 +2313,13 @@
         "arguments": "array",
         "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordFunction"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowFunction": {
+        "arguments": "array",
+        "edge": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\CountingEdge",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunctionKind",
+        "nulls": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\NullTreatment",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Conversion\\DeferredCast": {
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget"

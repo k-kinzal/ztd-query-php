@@ -96,13 +96,14 @@ final class ProgramSource
      *
      * @return array{string, string}
      */
-    public static function definer(?Account $definer, Session $session, ?\MySqlMemory\Evaluation\Context $context = null): array
+    public static function definer(?Account $definer, Session $session, ?\MySqlMemory\Evaluation\Context $context = null, ?\MySqlMemory\Session\Diagnostics $diagnostics = null): array
     {
+        $diagnostics ??= $context?->diagnostics;
         if ($definer instanceof AccountName) {
             $identity = \MySqlMemory\Account\Identity::of($definer->username(), $definer->hostname());
             $host = $identity->host;
-            if ($context !== null && $session->instance->accounts->find($identity) === null) {
-                $context->note(AccountError::NoSuchUser, $identity->user, $host);
+            if ($diagnostics !== null && $session->instance->accounts->find($identity) === null) {
+                $diagnostics->note(AccountError::NoSuchUser, AccountError::NoSuchUser->message($identity->user, $host));
             }
 
             return [$identity->user, $host];

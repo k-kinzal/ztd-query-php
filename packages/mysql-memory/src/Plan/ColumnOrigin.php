@@ -18,8 +18,9 @@ final class ColumnOrigin
      * @param string $column The column name as declared
      * @param int $flags The key and default flags of the column
      * @param bool $exact Whether the flags are all a result reports for the column but NOT NULL, as for a column of a system table, rather than those its type adds to
+     * @param self|null $underlying The origin before a merged view supplies its public identity
      */
-    public function __construct(public readonly string $schema, public readonly string $table, public readonly string $originalTable, public readonly string $column, public readonly int $flags = 0, public readonly bool $exact = false)
+    public function __construct(public readonly string $schema, public readonly string $table, public readonly string $originalTable, public readonly string $column, public readonly int $flags = 0, public readonly bool $exact = false, public readonly ?self $underlying = null)
     {
     }
 
@@ -28,7 +29,7 @@ final class ColumnOrigin
      */
     public function unkeyed(): self
     {
-        return new self($this->schema, $this->table, $this->originalTable, $this->column, $this->flags & ~(2 | 4 | 8 | \MySqlMemory\Result\ColumnFlag::PartKey->value), $this->exact);
+        return new self($this->schema, $this->table, $this->originalTable, $this->column, $this->flags & ~(2 | 4 | 8 | \MySqlMemory\Result\ColumnFlag::PartKey->value), $this->exact, $this->underlying);
     }
 
 }

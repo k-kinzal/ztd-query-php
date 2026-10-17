@@ -57,6 +57,15 @@ final class Materialization
         if (!$enabled || $release === GrammarRelease::MySql5651) {
             return false;
         }
+        return $this->view($query, $release, $facts);
+    }
+
+    /**
+     * Tests the query shape of a view, including releases that materialize derived tables.
+     * View merging predates derived-table merging and retains the view's column identity.
+     */
+    public function view(Query $query, GrammarRelease $release = GrammarRelease::MySql847, ?\SqlSemantics\Statement\Fact\Facts $facts = null): bool
+    {
         while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->with === null && $query->orderBy === [] && $query->limit === null)) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }

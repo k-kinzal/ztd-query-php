@@ -115,6 +115,7 @@ final class CreateUserCommand implements Command
         $plugin = (new Credentials($session->settings()->release()))->default();
         foreach ($statement->users as $user) {
             $identity = $names->identity($user->user, $session);
+            (new Authentication\DefinerReferences())->record($identity, $session, $context);
             $exists = $session->instance->accounts->find($identity) !== null || isset($created[$identity->key()]);
             if ($exists && $statement->ifNotExists) {
                 $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));

@@ -81,7 +81,7 @@ final class RowUse
         }
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
             foreach ($operand->operands() as $part) {
-                if ($part instanceof \SqlSemantics\Statement\Scalar) {
+                if ($part instanceof \SqlSemantics\Statement\Scalar || $part instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable) {
                     $compiler->compile($part, $scope);
                 } else {
                     $this->prepare($part, $compiler, $scope);

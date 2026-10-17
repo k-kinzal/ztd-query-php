@@ -56,6 +56,15 @@ final class FunctionsTest extends TestCase
         $session->query($sql);
     }
 
+    public function testOptionsPrecedesUnsupportedFrameConditions(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1235);
+        $this->expectExceptionMessage("This version of MySQL doesn't yet support 'IGNORE NULLS'");
+        $session->query('SELECT FIRST_VALUE(1) IGNORE NULLS OVER (GROUPS CURRENT ROW)');
+    }
+
     public function testCompileReadsTheOffsetAndTheDefaultOfLag(): void
     {
         $session = (new Instance())->connect();

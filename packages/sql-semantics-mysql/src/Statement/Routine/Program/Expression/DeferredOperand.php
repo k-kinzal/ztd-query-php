@@ -23,7 +23,7 @@ interface DeferredOperand extends Operand
     /**
      * Exposes the dependencies in their preparation order.
      *
-     * @return non-empty-list<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|DeferredOperand>
+     * @return non-empty-list<\SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable|\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|DeferredOperand>
      */
     public function operands(): array;
 

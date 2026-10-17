@@ -75,11 +75,16 @@ final class Windowing
             return [$input, false, false];
         }
         $windows = (new Resolution())->resolve($select, $calls);
+        $functions = new Functions($this->planner);
+        foreach ($calls as $call) {
+            if ($call instanceof WindowFunction) {
+                $functions->options($call);
+            }
+        }
         $frames = new Frames($this->planner);
         foreach ($windows as $window) {
             $frames->check($window, $scope);
         }
-        $functions = new Functions($this->planner);
         $analytics = [];
         $direct = $this->direct($select, $scope);
         $input = (new SiblingInputs($this->planner))->grouped($select, $input, $scope, $direct);

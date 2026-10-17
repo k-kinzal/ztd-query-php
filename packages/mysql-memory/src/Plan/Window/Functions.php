@@ -76,9 +76,7 @@ final class Functions
         if (!$call instanceof WindowFunction) {
             throw StatementError::NotSupportedYet->error(Resolution::named($call) . ' as a window function');
         }
-        if ($call->nulls === NullTreatment::Ignore || $call->edge === CountingEdge::Last) {
-            throw StatementError::NotSupportedYet->error($call->nulls === NullTreatment::Ignore ? 'IGNORE NULLS' : 'FROM LAST');
-        }
+        $this->options($call);
         $name = Resolution::named($call);
         $arguments = array_map(static fn (Operand $argument): Evaluable => $compiler->compile($argument, $scope), $call->kind === WindowFunctionKind::Tile || $call->kind === WindowFunctionKind::NthValue ? [] : array_values(array_filter($call->arguments, static fn (int $position): bool => $position !== 1, ARRAY_FILTER_USE_KEY)));
 
@@ -89,6 +87,18 @@ final class Functions
             WindowFunctionKind::Lead, WindowFunctionKind::Lag => new Analytic($call->kind, null, $arguments, isset($call->arguments[1]) ? $this->count($call->arguments[1], $name, 0) : 1, $domain),
             WindowFunctionKind::NthValue => new Analytic($call->kind, null, [$compiler->compile($call->arguments[0], $scope)], $this->nth($call->arguments[1], $name), $domain),
         };
+    }
+
+    /**
+     * Checks function options after names resolve and before frame validation.
+     *
+     * @throws SqlError When the written NULL treatment or counting edge is unsupported
+     */
+    public function options(WindowFunction $call): void
+    {
+        if ($call->nulls === NullTreatment::Ignore || $call->edge === CountingEdge::Last) {
+            throw StatementError::NotSupportedYet->error($call->nulls === NullTreatment::Ignore ? 'IGNORE NULLS' : 'FROM LAST');
+        }
     }
 
     /**

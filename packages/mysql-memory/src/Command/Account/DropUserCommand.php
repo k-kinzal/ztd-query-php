@@ -58,6 +58,9 @@ final class DropUserCommand implements Command
         $dropped = [];
         foreach ($listed as $name) {
             $identity = $names->identity($name, $session);
+            if ($statement instanceof DropUser) {
+                (new Authentication\DefinerReferences())->record($identity, $session, $context);
+            }
             $names->ascii($identity, 7, $context->diagnostics);
             if (($accounts->find($identity) === null && $accounts->stored($identity) === null) || isset($dropped[$identity->key()])) {
                 $missing[] = $identity;

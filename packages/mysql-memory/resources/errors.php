@@ -499,6 +499,7 @@ return [
     3982 => ['HY000', 'The user attribute must be a valid JSON object'],
     3995 => ['HY000', "Character set '%s' cannot be used in conjunction with '%s' in call to %s."],
     3998 => ['HY000', 'Cannot cast value to TIMESTAMP WITH TIME ZONE.'],
+    4005 => ['HY000', "User '%s'@'%s' is referenced as a definer account in %s."],
     4007 => ['HY000', 'Decimal number in regular expression is too large.'],
     4027 => ['HY000', 'User account %s is directly or indirectly granted to the role %s. The GRANT would create a loop'],
     4023 => ['HY000', 'AUTOEXTEND_SIZE should be a multiple of %s'],

@@ -1565,3 +1565,35 @@ and 240 direct-construction observations. The latter reuse 60 function objects
 through absent-database, existing-database, duplicate-function and dropped-function
 states with unrelated request text. These are focused return-domain witnesses;
 they do not close the outstanding whole-model construction and fuzzing gates.
+
+
+Stored window invocations now preserve non-scalar argument roles in
+`DeferredWindowFunction`, separately from ordinary `WindowFunction` scalars.
+The shared argument-position rules retain stable counts, value arguments and
+primary-expression row numbers; the deferred form also retains the OVER clause,
+NULL treatment and counting edge. Reaching the instruction prepares its
+arguments before the retained width condition. A skipped instruction does not
+prepare the call. Function-option conditions precede frame limitations after
+name resolution. Native integration on 8.0, 8.4 and 9.1 compares 597 SQL
+observations and 180 creation/invocation observations for 45 directly constructed
+routines, covering FIRST_VALUE, LAST_VALUE, LEAD, LAG and NTH_VALUE. Their same
+CALL objects are skipped, reached and skipped again over populated tables with
+unrelated request text.
+
+Definer preparation now preserves the order of table/database resolution,
+account notices, query errors and view-target checks. Event definer notices
+precede schedule evaluation, while earlier schedule restrictions retain their
+priority. Creating or dropping an account reports references from existing
+events, views, stored routines and triggers in native family order. View
+materialization rules distinguish views from derived tables on MySQL 5.6;
+result origins retain both the public view identity and the underlying column
+identity. Direct references, aliases, nested views and derived-table references
+retain their different metadata without recovering SQL source. Native
+integration across 5.6, 5.7, 8.0, 8.4 and 9.1 compares 350 SQL observations and
+360 definition/read observations for 60 directly constructed views. The same
+objects run before account creation, after creation and after removal, reading
+three fixture rows at every stage.
+
+These focused comparisons preserve all result columns, metadata, errors and
+warnings. They do not close the outstanding whole-model construction gate or
+replace the required supplied-seed and unseeded differential campaigns.

@@ -84,7 +84,7 @@ final class ViewCommand implements Command
         $query = $resolvedStatement->definition->query;
         $algorithm = self::algorithm($definition->algorithm, $query, $context);
         $check = self::checkOption($definition->check);
-        $schema->views[$name] = $view = new View($database, $name, ProgramSource::definer($definition->definer, $session, $context), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query, $session->variables->database), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')]);
+        $schema->views[$name] = $view = new View($database, $name, ProgramSource::definer($definition->definer, $session, $statement instanceof AlterView ? $context : null), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query, $session->variables->database), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')]);
         $view->hints = (new \MySqlMemory\Hint\Hints())->view($query, $session);
 
         return new Completion(0, 0, $context->diagnostics->raised());

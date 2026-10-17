@@ -9,17 +9,13 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\WindowResults;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
-use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
-use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
-use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
@@ -68,19 +64,11 @@ final class WindowFunction implements Scalar
         public readonly ?CountingEdge $edge = null,
     ) {
         $values = [];
-        foreach (Check::listOf($arguments, Operand::class, 'Window function arguments are values.') as $position => $argument) {
-            Check::input($argument instanceof Scalar || ($argument instanceof RoutineVariable && $position === $kind->counted()), 'A routine variable is accepted only as a window count or offset.');
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->checked($kind, $arguments, $nulls, $edge) as $argument) {
+            Check::input($argument instanceof Scalar || $argument instanceof RoutineVariable, 'An ordinary window call requires scalar arguments.');
             $values[] = $argument;
         }
         $this->arguments = $values;
-        [$minimum, $maximum] = $kind->arity();
-        Check::input(count($arguments) >= $minimum && count($arguments) <= $maximum, 'The grammar does not accept this number of arguments for ' . $kind->value . '.');
-        Check::input($nulls === null || $kind->treatsNulls(), $kind->value . ' takes no NULL treatment.');
-        Check::input($edge === null || $kind === WindowFunctionKind::NthValue, 'Only NTH_VALUE counts from an edge.');
-        $counted = $arguments[$kind->counted() ?? -1] ?? null;
-        Check::input($counted === null || $counted instanceof NumberLiteral || $counted instanceof Parameter || $counted instanceof UserVariable || $counted instanceof RoutineVariable, 'The count is an integer, a parameter marker or a variable.');
-        Check::input(!$counted instanceof NumberLiteral || $counted->form === \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Integer, 'A window count or offset literal is an unsigned 64-bit integer token.');
-        Check::input($kind !== WindowFunctionKind::NthValue || ($arguments[1] instanceof Scalar && (new Precedence())->admits($arguments[1], Precedence::SIMPLE_EXPR)), 'The row number of NTH_VALUE needs a grouping.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

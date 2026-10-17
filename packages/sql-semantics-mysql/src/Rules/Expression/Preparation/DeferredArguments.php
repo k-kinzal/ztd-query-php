@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Scalar;
 final class DeferredArguments
 {
     /**
-     * @param non-empty-list<Scalar|RowOperand|DeferredOperand> $operands Dependencies in preparation order
+     * @param non-empty-list<\SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable|Scalar|RowOperand|DeferredOperand> $operands Dependencies in preparation order
      * @throws LogicException When no operand retains a deferred condition
      */
     public function problem(array $operands): Diagnostic

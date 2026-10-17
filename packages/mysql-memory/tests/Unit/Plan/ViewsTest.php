@@ -213,4 +213,17 @@ final class ViewsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $read2);
         self::assertSame('bee', $read2->rows[0][8]);
     }
+    public function testOriginsRetainsMergedViewAndUnderlyingColumnIdentities(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); INSERT INTO t VALUES(1); CREATE VIEW v(x,y) AS SELECT a,a+1 FROM t');
+        $direct = $session->query('SELECT * FROM v')[0];
+        $derived = $session->query('SELECT * FROM (SELECT * FROM v) q')[0];
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertInstanceOf(ResultSet::class, $derived);
+        self::assertSame(['v', 'v', 't', ''], [$direct->columns[0]->originalTable, $direct->columns[1]->originalTable, $derived->columns[0]->originalTable, $derived->columns[1]->originalTable]);
+        self::assertSame([['1', '2']], $direct->rows);
+        self::assertSame($direct->rows, $derived->rows);
+    }
+
 }

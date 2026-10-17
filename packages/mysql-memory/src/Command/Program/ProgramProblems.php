@@ -145,7 +145,11 @@ final class ProgramProblems
         if ($schema === null) {
             throw QueryError::BadDatabase->error($database);
         }
-        \MySqlMemory\Command\View\ViewCommand::checkName($statement, $schema, $database, $name->name->value);
+        if ($statement instanceof AlterView) {
+            \MySqlMemory\Command\View\ViewCommand::checkName($statement, $schema, $database, $name->name->value);
+        } else {
+            ProgramSource::definer($statement->definition->definer, $session, diagnostics: $session->diagnostics);
+        }
     }
 
     /**

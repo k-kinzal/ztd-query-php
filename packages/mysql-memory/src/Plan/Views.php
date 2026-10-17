@@ -55,15 +55,36 @@ final class Views
     {
         $plan = $this->query($view);
         $names = array_map(static fn ($column): string => $column->name->value, $view->declaration->columns);
-        $merged = $view->algorithm !== 'TEMPTABLE' && $relations->mergeable($view->query);
+        $merged = $view->algorithm !== 'TEMPTABLE' && ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $this->planner->settings->resolution()->derivedMerge) && (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->view($view->query, $this->planner->settings->release(), $view->operation->facts);
         $placed = array_map(static fn (Domain $domain): Domain => !$merged && $domain->kind === Kind::Null ? new Domain(Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), true) : $domain, $relations->shaped($reference, $plan->domains));
         $scope->place($reference, $placed, $names);
-        $scope->merged[spl_object_id($reference)] = array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $merged
-            ? new ColumnOrigin($origin !== null && $origin->originalTable !== '' ? $view->schema : '', '', $view->name, $origin->column ?? '', $origin->flags ?? 0)
-            : $origin?->unkeyed(), array_pad($plan->origins, count($plan->domains), null));
+        $scope->merged[spl_object_id($reference)] = $this->origins($view, $plan, $merged);
         $scope->derived[spl_object_id($reference)] = $reference->alias->value ?? $view->name;
 
         return new Materialize($plan);
+    }
+
+    /**
+     * Preserves the public view identity separately from its underlying column origin.
+     * Materialized legacy views omit database names; computed modern columns name the view.
+     *
+     * @return list<ColumnOrigin>
+     */
+    public function origins(View $view, QueryPlan $plan, bool $merged): array
+    {
+        $legacy = $this->planner->settings->legacy();
+        return array_map(static function (Domain $domain, ?ColumnOrigin $origin) use ($view, $merged, $legacy): ColumnOrigin {
+            if ($merged) {
+                $source = $origin->underlying ?? $origin;
+                $computed = $source === null || $source->originalTable === '';
+                $flags = $computed ? $domain->flags() : ($origin->flags ?? 0);
+                $base = $source ?? new ColumnOrigin('', '', '', '', $domain->flags(), true);
+                return new ColumnOrigin($computed ? '' : $view->schema, '', $view->name, $origin->column ?? '', $flags, $computed || ($origin->exact ?? false), $base);
+            }
+            $source = $origin?->unkeyed();
+            $original = $source->originalTable ?? '';
+            return new ColumnOrigin($legacy ? '' : ($source->schema ?? $view->schema), '', $original === '' && !$legacy ? $view->name : $original, $source->column ?? '', $source->flags ?? 0);
+        }, $plan->domains, array_pad($plan->origins, count($plan->domains), null));
     }
 
     /**

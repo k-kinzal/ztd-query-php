@@ -156,4 +156,18 @@ final class StagesTest extends TestCase
 
         $session->query('CREATE TABLE c (a INT, FOREIGN KEY (a) REFERENCES nope(id))');
     }
+    public function testViewTargetRetainsOnlyTheOwningDefinitionKindCheck(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CREATE VIEW v AS SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\CreateView::class, $statement);
+        $target = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind($statement->definition->name, \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView);
+        $other = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind(new QualifiedName(new Name('v')), \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView);
+
+        self::assertTrue(Stages::viewTarget($statement, $target));
+        self::assertTrue(Stages::answered($statement, $target));
+        self::assertFalse(Stages::viewTarget($statement, $other));
+        self::assertFalse(Stages::viewTarget($session->analyze('SELECT 1')->statement, $target));
+    }
+
 }
