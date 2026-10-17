@@ -10,17 +10,26 @@ use SqlFixture\Schema\TableSchema;
 
 /**
  * Fetches table schemas from MySQL databases using SHOW CREATE TABLE.
+ *
+ * The statement that reads the declaration and the declaration it answers are
+ * both read with the grammar of the server, so neither the name written into
+ * the statement nor the definition read back is taken apart as text.
  */
 final class MySqlSchemaFetcher implements SchemaFetcherInterface
 {
     private MySqlSchemaParser $parser;
 
+    private Schema\CreateTableQuery $query;
+
     /**
-     * Initializes the collaborators and declared state for this object.
+     * Reads the issued statement and the declaration it answers with the grammar of one release.
+     *
+     * @param string|null $version The version tag of the release; null selects the default
      */
-    public function __construct(?MySqlSchemaParser $parser = null)
+    public function __construct(?MySqlSchemaParser $parser = null, ?string $version = null)
     {
-        $this->parser = $parser ?? new MySqlSchemaParser();
+        $this->parser = $parser ?? new MySqlSchemaParser($version);
+        $this->query = new Schema\CreateTableQuery(new Schema\ShowCreateTable($version));
     }
 
     /**
@@ -28,8 +37,6 @@ final class MySqlSchemaFetcher implements SchemaFetcherInterface
      */
     public function fetchSchema(PDO $pdo, string $tableName): TableSchema
     {
-        $createTableSql = (new Schema\CreateTableQuery())->fetchCreateTableSql($pdo, $tableName);
-        return $this->parser->parse($createTableSql);
+        return $this->parser->parse($this->query->fetchCreateTableSql($pdo, $tableName));
     }
-
 }

@@ -4,90 +4,112 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\PostgreSql\Schema;
 
+use SqlFixture\Schema\TypeShape;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\IntervalSpan;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\NamedOnPath;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Parameterized;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
+use SqlSemantics\Statement\Type\TypeDescriptor;
+
 /**
- * TypeDeclaration.
+ * Reads the type of a column from the type the analysis resolved for it.
+ *
+ * Types are named after their catalog entries, as the catalog reader names
+ * them, so INT and INT4 are INTEGER and DEC is NUMERIC. SERIAL and its
+ * variants are the integer types they declare, fed by a sequence.
  *
  * @visibility root
  */
 final class TypeDeclaration
 {
     /**
-     * Reads the type name without consuming column constraints.
+     * The names of the sequence-backed pseudo types.
      */
-    public function extractType(string $rest): string
+    public const SERIALS = ['smallserial', 'serial2', 'serial', 'serial4', 'bigserial', 'serial8'];
+
+    /**
+     * Returns the type name and modifiers of the declared type; an array keeps the modifiers of its element type.
+     */
+    public function shape(TypeDescriptor $declared, TypeName $written): TypeShape
     {
-        $multiWordTypes = [
-            'DOUBLE PRECISION',
-            'TIMESTAMP WITH TIME ZONE',
-            'TIMESTAMP WITHOUT TIME ZONE',
-            'TIME WITH TIME ZONE',
-            'TIME WITHOUT TIME ZONE',
-            'CHARACTER VARYING',
-        ];
+        $element = $declared instanceof ArrayOf ? $declared->element : $declared;
+        $numbers = match (true) {
+            $element instanceof Parameterized => $element->modifiers,
+            $element instanceof IntervalSpan => $element->precision === null ? [] : [$element->precision],
+            $element instanceof NamedOnPath => $this->writtenModifiers($written),
+            default => [],
+        };
 
-        $upperRest = strtoupper($rest);
-        foreach ($multiWordTypes as $multiWord) {
-            if (str_starts_with($upperRest, $multiWord)) {
-                return $multiWord;
-            }
-        }
-
-        if (preg_match('/^\w+(?:\[\])?/', $rest, $matches) === 1) {
-            return strtoupper($matches[0]);
-        }
-
-        return 'TEXT';
+        return TypeShape::fromNumbers($this->name($declared), $numbers, $element instanceof Parameterized && $element->base === Builtin::Numeric, $this->serial($written));
     }
 
     /**
-     * Recognizes the dialect numeric types that accept precision and scale.
+     * Names a resolved type after its catalog entry; an array is named after its element type.
      */
-    public function isDecimalType(string $type): bool
+    public function name(TypeDescriptor $type): string
     {
-        return in_array(strtoupper($type), ['DECIMAL', 'NUMERIC', 'DEC'], true);
+        return match (true) {
+            $type instanceof ArrayOf => $this->name($type->element) . '_ARRAY',
+            $type instanceof Builtin => $this->catalogType($type->value),
+            $type instanceof Parameterized => $this->catalogType($type->base->value),
+            $type instanceof IntervalSpan => 'INTERVAL',
+            $type instanceof NamedOnPath => $this->catalogType($type->name->name->value),
+            default => strtoupper($type->name()),
+        };
     }
 
     /**
-     * Interprets the declared type parameters before column constraints are applied.
+     * Names a catalog type as the value generators know it: the SQL name of a built-in type, and the upper-cased name of any other.
      */
-    public function parse(string $rest): \SqlFixture\Schema\TypeShape
+    public function catalogType(string $catalogName): string
     {
-        $type = $this->extractType($rest);
-        $length = null;
-        $precision = null;
-        $scale = null;
-        $autoIncrement = false;
+        return match ($catalogName) {
+            'int2' => 'SMALLINT',
+            'int4' => 'INTEGER',
+            'int8' => 'BIGINT',
+            'float4' => 'REAL',
+            'float8' => 'DOUBLE PRECISION',
+            'bool' => 'BOOLEAN',
+            'bpchar' => 'CHAR',
+            default => strtoupper($catalogName),
+        };
+    }
 
-        if (in_array($type, ['SERIAL', 'BIGSERIAL', 'SMALLSERIAL'], true)) {
-            $autoIncrement = true;
-            $type = match ($type) {
-                'SERIAL' => 'INTEGER',
-                'BIGSERIAL' => 'BIGINT',
-                'SMALLSERIAL' => 'SMALLINT',
-            };
+    /**
+     * Returns the integer modifiers written after a type the analysis does not know.
+     *
+     * @return list<int>
+     */
+    public function writtenModifiers(TypeName $written): array
+    {
+        $designation = $written->designation;
+        if (!$designation instanceof NamedDesignation) {
+            return [];
         }
-
-        if (preg_match('/^(\w+(?:\s+\w+)?)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/', $rest, $typeMatches) === 1) {
-            $parsedType = strtoupper($typeMatches[1]);
-            if (!$autoIncrement) {
-                $type = $parsedType;
+        $numbers = [];
+        foreach ($designation->modifiers as $modifier) {
+            $digits = $modifier instanceof Constant ? $modifier->integerValue() : null;
+            if ($digits === null) {
+                return [];
             }
-            if (isset($typeMatches[3])) {
-                $precision = (int) $typeMatches[2];
-                $scale = (int) $typeMatches[3];
-            } else {
-                if ((new TypeDeclaration())->isDecimalType($parsedType)) {
-                    $precision = (int) $typeMatches[2];
-                    $scale = 0;
-                } else {
-                    $length = (int) $typeMatches[2];
-                }
-            }
+            $numbers[] = (int) $digits;
         }
 
-        if (str_ends_with($type, '[]')) {
-            $type = substr($type, 0, -2) . '_ARRAY';
-        }
-        return new \SqlFixture\Schema\TypeShape($type, $length, $precision, $scale, $autoIncrement);
+        return $numbers;
+    }
+
+    /**
+     * Tells whether the column is written with SERIAL or one of its variants.
+     */
+    public function serial(TypeName $written): bool
+    {
+        $designation = $written->designation;
+
+        return $written->array === null && $designation instanceof NamedDesignation && count($designation->name->parts) === 1
+            && in_array($designation->catalogName()->value, self::SERIALS, true);
     }
 }
