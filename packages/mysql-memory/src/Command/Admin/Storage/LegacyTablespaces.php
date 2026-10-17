@@ -66,19 +66,7 @@ final class LegacyTablespaces
     public function create(CreateTablespace $statement, Session $session): void
     {
         $options = array_values(array_filter($statement->options, static fn ($option): bool => !$option instanceof EngineOption));
-        try {
-            (new TablespaceCommand())->create(new CreateTablespace($statement->name, $statement->datafile, $statement->logfileGroup, $options), $session->instance->registry);
-        } catch (SqlError $error) {
-            if ($error->error !== SchemaError::WrongFileName) {
-                throw $error;
-            }
-            $name = $statement->name->value;
-            $file = $statement->datafile === null ? '' : (new \MySqlMemory\Command\Admin\Literals())->bytes($statement->datafile);
-            throw new SqlError(SchemaError::WrongFileName, SchemaError::WrongFileName->message(explode("\0", $file, 2)[0]), $error, [
-                [SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message('TABLESPACE ' . $name)],
-                [SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)],
-            ]);
-        }
+        (new TablespaceCommand())->create(new CreateTablespace($statement->name, $statement->datafile, $statement->logfileGroup, $options), $session->instance->registry, true, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known((string) $session->variables->read('character_set_client')));
     }
 
     /**

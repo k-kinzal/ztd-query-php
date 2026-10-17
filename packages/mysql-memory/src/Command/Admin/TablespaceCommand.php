@@ -88,7 +88,7 @@ final class TablespaceCommand implements Command
             return new Completion(0, 0, $context->diagnostics->raised());
         }
         match (true) {
-            $statement instanceof CreateTablespace => $this->create($statement, $registry),
+            $statement instanceof CreateTablespace => $this->create($statement, $registry, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known((string) $session->variables->read('character_set_client'))),
             $statement instanceof CreateUndoTablespace => $this->createUndo($statement, $registry),
             $statement instanceof RenameTablespace => $this->rename($statement, $registry),
             $statement instanceof AlterTablespace => $this->alter($statement->name->value, $statement->options, $registry),
@@ -108,24 +108,26 @@ final class TablespaceCommand implements Command
      *
      * @throws SqlError When the engine, the name, the file or an option is refused
      */
-    public function create(CreateTablespace $statement, Registry $registry): void
+    public function create(CreateTablespace $statement, Registry $registry, bool $legacy = false, ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null): void
     {
         $name = $statement->name->value;
         $this->engine($statement->options, 'CREATE TABLESPACE');
         $this->reserved($name);
         if ($this->exists($name, $registry)) {
+            if ($legacy) {
+                throw new SqlError(SchemaError::TablespaceExists, 'InnoDB: A tablespace named `' . $name . '` already exists.', following: [
+                    [SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message('TABLESPACE ' . $name)],
+                    [SchemaError::TablespaceExists->value, SchemaError::TablespaceExists->message($name)],
+                ]);
+            }
             throw SchemaError::TablespaceExists->error($name);
         }
         $failed = 'TABLESPACE ' . $name;
         $file = $statement->datafile === null ? '' : (new Literals())->bytes($statement->datafile);
-        if ($statement->datafile !== null) {
-            $this->file($file, '.ibd', $failed, $name, $registry);
+        if ($client !== null) {
+            $file = \MySqlMemory\Value\Encoding::convert($file, $client, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'));
         }
-        foreach ($statement->options as $option) {
-            if ($option instanceof SizeOption && $option->kind === SizeOptionKind::FileBlock && !in_array($this->size($option), ['1024', '2048', '4096', '8192', '16384'], true)) {
-                throw new SqlError(SchemaError::IllegalCreateOption, 'InnoDB does not support FILE_BLOCK_SIZE=' . $this->size($option), null, [[SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message($failed)], [SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)]]);
-            }
-        }
+        (new Storage\CreationOptions())->check($statement, $registry, $legacy, $file);
         $this->options($statement->options, [SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message($failed)], $name, true);
         $registry->tablespaces[$name] = new Tablespace($name, false, $file);
     }

@@ -1597,3 +1597,24 @@ three fixture rows at every stage.
 These focused comparisons preserve all result columns, metadata, errors and
 warnings. They do not close the outstanding whole-model construction gate or
 replace the required supplied-seed and unseeded differential campaigns.
+
+The following tablespace creation campaign used snapshot
+`/storage149-work-20261017`, the previous revision plus the tablespace changes.
+All 350 SQL observations across MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0
+matched, including zero/default and refused file block sizes, filename lengths,
+character-set conversion and ordered engine conditions. Another 32 directly
+constructed definitions were each reused before creation, with their names
+already registered, and after removal: all 96 observations matched. The 5.7
+existing-name path retains its three conditions instead of collapsing them to
+one error. Static checks, 17,961 unit/property/doctests and all nine native tests
+passed on this snapshot.
+
+The preceding whole-model campaign on `06de198f1a9` visited all 244 roots with
+seed `row-roles-20261017`. It matched 95 successful outcomes and 148 SQL errors;
+one root (index 118, `Resignal`) failed before comparison because its native
+connection timed out. Repeating that exact index and seed on the same snapshot
+matched its SQL error. All 159 database-transition observations for 53 structures
+matched. The original failed process remains recorded; it is not represented as
+a clean uninterrupted run. Intrinsic construction gaps remain, including
+ordinary window frames/options and query-role restrictions, so these comparisons
+do not close the construction acceptance gate.

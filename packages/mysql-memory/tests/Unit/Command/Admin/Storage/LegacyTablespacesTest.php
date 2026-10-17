@@ -30,6 +30,16 @@ final class LegacyTablespacesTest extends TestCase
         self::assertSame([['Error', 3121, "Incorrect File Name 'text'."], ['Error', 1528, 'Failed to create TABLESPACE s'], ['Error', 1031, "Table storage engine for 's' doesn't have this option"]], $session->diagnostics->conditions);
     }
 
+    public function testCreatePreservesTheExistingTablespaceConditionChain(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("CREATE TABLESPACE s ADD DATAFILE 's.ibd'");
+        $session->run("CREATE TABLESPACE s ADD DATAFILE 's.ibd'");
+
+        self::assertSame([['Error', 1813, 'InnoDB: A tablespace named `s` already exists.'], ['Error', 1528, 'Failed to create TABLESPACE s'], ['Error', 1813, "Tablespace 's' exists."]], $session->diagnostics->conditions);
+        self::assertArrayHasKey('s', $session->instance->registry->tablespaces);
+    }
+
     public function testDropAcceptsAnExplicitEngineAfterCreation(): void
     {
         $session = (new Instance('5.7.44'))->connect();
