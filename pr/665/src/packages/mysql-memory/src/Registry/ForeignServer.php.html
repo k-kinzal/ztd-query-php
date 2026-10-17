@@ -60,22 +60,30 @@
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$name</span>;</span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * The current lookup name, initially the original operand and refreshed from storage by ALTER SERVER.</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * The lookup name, initially padded after its first NUL; null when a storage reload cannot index that name.</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-id">string</span> <span class="tok-var">$lookupName</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> ?<span class="tok-id">string</span> <span class="tok-var">$lookupName</span>;</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param string $name The server name, as the statement that created it wrote it</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param string $wrapper The FOREIGN DATA WRAPPER name</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param array&lt;string, string|int&gt; $options The value of each option, by lower-case option name: host, database, user, password, socket, owner and port</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$wrapper</span>, <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$options</span> = [])</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    {</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span> = <span class="tok-id">mb_substr</span>(<span class="tok-var">$name</span>, <span class="tok-num">0</span>, <span class="tok-num">64</span>, <span class="tok-str">&#039;UTF-8&#039;</span>);</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lookupName</span> = <span class="tok-var">$name</span>;</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    }</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>}</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @var array&lt;string, string|int&gt; The decoded options before storage, refreshed from stored fields by ALTER</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$cachedOptions</span>;</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param string $name The server name, as the statement that created it wrote it</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param string $wrapper The FOREIGN DATA WRAPPER name</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param array&lt;string, string|int&gt; $options The value of each option, by lower-case option name: host, database, user, password, socket, owner and port</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * @param bool $legacy Whether MySQL 5.6 stores the padded lookup bytes</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * @param array&lt;string, string|int&gt;|null $cachedOptions The initial decoded options before field conversion</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$wrapper</span>, <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$options</span> = [], <span class="tok-id">bool</span> <span class="tok-var">$legacy</span> = <span class="tok-id">false</span>, ?<span class="tok-kw">array</span> <span class="tok-var">$cachedOptions</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    {</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lookupName</span> = <span class="tok-id">str_pad</span>(<span class="tok-id">explode</span>(<span class="tok-str">&quot;\0&quot;</span>, <span class="tok-var">$name</span>, <span class="tok-num">2</span>)[<span class="tok-num">0</span>], <span class="tok-id">strlen</span>(<span class="tok-var">$name</span>), <span class="tok-str">&quot;\0&quot;</span>);</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span> = <span class="tok-id">rtrim</span>(<span class="tok-id">mb_substr</span>(<span class="tok-var">$legacy</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">lookupName</span> : <span class="tok-var">$name</span>, <span class="tok-num">0</span>, <span class="tok-num">64</span>, <span class="tok-str">&#039;UTF-8&#039;</span>), <span class="tok-str">&#039; &#039;</span>);</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">cachedOptions</span> = <span class="tok-var">$cachedOptions</span> ?? <span class="tok-var">$options</span>;</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>}</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
