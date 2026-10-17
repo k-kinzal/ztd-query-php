@@ -11,7 +11,7 @@ use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Statement\Node;
 
 /**
  * Refuses a statement that names a temporary table more than once (ER_CANT_REOPEN_TABLE).
@@ -34,9 +34,9 @@ final class Reopened
      *
      * @throws SqlError When it does
      */
-    public function check(Statement $statement, Session $session, \SqlSemantics\Statement\Fact\Facts $facts): void
+    public function check(Node $statement, Session $session, \SqlSemantics\Statement\Fact\Facts $facts): void
     {
-        if ($session->temporaries->tables === [] || \MySqlMemory\Command\Program\ProgramProblems::stores($statement)) {
+        if ($session->temporaries->tables === [] || ($statement instanceof \SqlSemantics\Statement\Statement && \MySqlMemory\Command\Program\ProgramProblems::stores($statement))) {
             return;
         }
         $seen = [];
@@ -63,7 +63,7 @@ final class Reopened
      *
      * @return list<TableReference>
      */
-    public function reads(\SqlSemantics\Statement\Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, array $active = []): array
+    public function reads(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, array $active = []): array
     {
         if ($statement instanceof TableReference) {
             $resolution = $facts->covers($statement) ? $facts->relation($statement)->table : null;
@@ -88,7 +88,7 @@ final class Reopened
             $node = array_pop($pending);
             if (is_array($node)) {
                 array_push($pending, ...array_reverse(array_values($node)));
-            } elseif ($node instanceof \SqlSemantics\Statement\Node) {
+            } elseif ($node instanceof Node) {
                 array_push($references, ...$this->reads($node, $facts, $active));
             }
         }

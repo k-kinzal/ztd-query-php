@@ -66,8 +66,8 @@ final class ResultSlotsTest extends TestCase
     public function testValuesNumbersTheRowOfAnotherLengthAndReportsAnEmptyRow(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $longer = $semantics->analyze('VALUES ROW(1), ROW(2), ROW(3, 4)')->facts->diagnostics;
-        $empty = $semantics->analyze('VALUES ROW(), ROW(1)')->facts->diagnostics;
+        $longer = $semantics->analyze('CREATE PROCEDURE p() VALUES ROW(1), ROW(2), ROW(3, 4)')->facts->diagnostics;
+        $empty = $semantics->analyze('CREATE PROCEDURE p() VALUES ROW(), ROW(1)')->facts->diagnostics;
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch::class, $longer[0]);
         self::assertSame(3, $longer[0]->row);

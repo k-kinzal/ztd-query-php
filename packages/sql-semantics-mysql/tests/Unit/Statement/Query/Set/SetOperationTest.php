@@ -84,7 +84,7 @@ final class SetOperationTest extends TestCase
 
     public function testDeriveQueryReportsOperandsOfDifferentLengths(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 1, 2');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 UNION SELECT 1, 2');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);

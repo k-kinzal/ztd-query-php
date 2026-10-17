@@ -12,6 +12,7 @@ use MySqlMemory\Session\Access\OpenedTables;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Locations;
 use MySqlMemory\Session\Problem\Stages;
+use MySqlMemory\Session\Resolution\QueryPreparation;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
@@ -59,15 +60,17 @@ final class Problems
      *
      * @throws SqlError When the operation has a problem
      */
-    public function raise(Operation $operation, Session $session): void
+    public function raise(Operation|QueryPreparation $operation, Session $session): void
     {
-        $this->signals($operation, $session);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
+        if ($operation instanceof Operation) {
+            $this->signals($operation, $session);
+        }
+        if ($operation instanceof Operation && $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
             (new Problem\Reading())->into($operation->statement, $session);
 
             return;
         }
-        if (Stages::selfChecked($operation->statement) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this) || Stages::opensTableFirst($operation->statement)) {
+        if ($operation instanceof Operation && (Stages::selfChecked($operation->statement) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this) || Stages::opensTableFirst($operation->statement))) {
             return;
         }
         $calls = $this->calls($operation);
@@ -132,7 +135,7 @@ final class Problems
      *
      * @return list<FunctionCall>
      */
-    public function calls(Operation $operation): array
+    public function calls(Operation|QueryPreparation $operation): array
     {
         $calls = array_values(array_filter((new Walker())->find($operation->statement, FunctionCall::class), static fn (FunctionCall $call): bool => Locations::undeclared($call, $operation)));
         if ($calls !== [] && (new Walker())->find($operation->statement, CommonTableExpression::class) !== []) {
@@ -150,7 +153,7 @@ final class Problems
      *
      * @return list<Diagnostic>
      */
-    public function pending(Operation $operation, Session $session): array
+    public function pending(Operation|QueryPreparation $operation, Session $session): array
     {
         $grouping = $session->modes()->has('ONLY_FULL_GROUP_BY');
         $database = $session->variables->database;
@@ -166,7 +169,7 @@ final class Problems
     /**
      * Tells whether every block that writes `*` without tables is a query EXISTS tests, which takes it (verified on live 5.6.51 and 8.4.7 servers).
      */
-    public function tested(Operation $operation): bool
+    public function tested(Operation|QueryPreparation $operation): bool
     {
         $existing = Locations::existing($operation);
         if ($existing === []) {
@@ -192,7 +195,7 @@ final class Problems
      *
      * @throws SqlError When a path of a JSON_TABLE is invalid
      */
-    public function paths(Operation $operation, Session $session, array $diagnostics): void
+    public function paths(Operation|QueryPreparation $operation, Session $session, array $diagnostics): void
     {
         $path = (new JsonTables())->first($operation->statement);
         if ($path === null) {
@@ -218,7 +221,7 @@ final class Problems
      *
      * @throws SqlError When a table the statement reads does not exist
      */
-    public function opened(Operation $operation, Session $session, array $diagnostics): void
+    public function opened(Operation|QueryPreparation $operation, Session $session, array $diagnostics): void
     {
         (new OpenedTables())->prepare($this->reached($operation->statement), $operation->facts, $session);
         $missing = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof MissingTable));
@@ -276,13 +279,15 @@ final class Problems
      *
      * @throws SqlError When the statement has such a clause
      */
-    public function prepared(Operation $operation, Session $session): void
+    public function prepared(Operation|QueryPreparation $operation, Session $session): void
     {
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable) {
-            (new \MySqlMemory\Command\Access\LoadDataCommand())->prepare($operation, $session);
+        if ($operation instanceof Operation) {
+            if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable) {
+                (new \MySqlMemory\Command\Access\LoadDataCommand())->prepare($operation, $session);
+            }
+            (new Problem\Definition\CheckQueries())->prepare($operation, $session, $this);
+            (new Problem\Definition\FunctionalQueries())->prepare($operation, $session, $this);
         }
-        (new Problem\Definition\CheckQueries())->prepare($operation, $session, $this);
-        (new Problem\Definition\FunctionalQueries())->prepare($operation, $session, $this);
         (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
         $special = static fn (Node $node): bool => $node instanceof Select && ($node->groupBy?->modifier === GroupingModifier::Cube || $node->qualify !== null);
         if (array_filter((new Walker())->find($operation->statement, Select::class), $special) === []) {

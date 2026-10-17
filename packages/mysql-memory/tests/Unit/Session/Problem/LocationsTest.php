@@ -210,7 +210,10 @@ final class LocationsTest extends TestCase
     public function testSetsPlacesAColumnCountMismatchOnceTheRightOperandIsResolved(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $operation = $session->analyze('SELECT nofn() UNION SELECT 1, 2');
+        $declaration = $session->analyze('CREATE PROCEDURE p() SELECT nofn() UNION SELECT 1, 2');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $declaration->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $declaration->statement->body);
+        $operation = new \MySqlMemory\Session\Resolution\QueryPreparation($declaration->statement->body->query, $declaration->facts, $declaration->profile());
         $located = array_values((new Locations())->sets($operation, (new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
         $function = $session->run('SELECT nofn() UNION SELECT 1, 2')[0];
         $count = $session->run('SELECT 1 UNION SELECT 1, 2 UNION SELECT zz')[0];

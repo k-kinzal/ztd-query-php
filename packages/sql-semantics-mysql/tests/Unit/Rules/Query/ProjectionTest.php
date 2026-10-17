@@ -67,7 +67,7 @@ final class ProjectionTest extends TestCase
 
     public function testStarReportsAStarWithoutTables(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT *');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT *');
 
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
     }

@@ -35,7 +35,7 @@ final class StoredSelections
     /**
      * Retains a complete stored selection whose projection or filter needs deferred preparation.
      */
-    public function read(Node $node): DeferredSelection|\SqlSemantics\Platform\MySql\Statement\QueryRoot|null
+    public function read(Node $node): DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery|\SqlSemantics\Platform\MySql\Statement\QueryRoot|null
     {
         $parts = $this->frontier($node);
         if ($parts === null) {
@@ -64,7 +64,7 @@ final class StoredSelections
         \SqlSemantics\Diagnostic\Check::invariant($grouping === null || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping, 'An ordinary grouping has scalar or ordinal items.');
         $order = array_values(array_filter($ordering, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\OrderItem));
         $select = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Query\Select($options, $ordinary, $input, $predicate, $grouping, $having, orderBy: $order, limit: $limit), $node);
-        return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($select), $node);
+        return $this->lowering->origins->record((new QueryMeaning())->of($select), $node);
     }
 
     /**

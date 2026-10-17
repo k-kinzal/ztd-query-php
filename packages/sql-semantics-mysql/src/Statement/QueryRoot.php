@@ -16,9 +16,23 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Query bodies also occur in subqueries and INSERT sources, whose grammar
  * positions admit different forms. Only this wrapper implements the statement
- * role. Its checks concern that grammatical position, not execution eligibility.
+ * role. Its checks concern that grammatical position and fixed output columns,
+ * independently of catalog resolution or execution eligibility.
  *
  * @visibility public
+ * @example Refusing a statement without read columns
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a tableless star in a read statement
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing inconsistent VALUES widths in a read statement
+ *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]);
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([$one, new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing INSERT defaults in a read statement
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest()])])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing inconsistent fixed set widths in a read statement
+ *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]);
+ *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')])]);
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($one, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $two)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the body of a SELECT statement
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1');
  *     $operation->statement->query::class // => \SqlSemantics\Platform\MySql\Statement\Query\Select::class
@@ -33,6 +47,7 @@ final class QueryRoot implements Explainable, \SqlSemantics\Statement\Selection
     public function __construct(public readonly Query $query)
     {
         (new StatementQuery())->check($query);
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'A read statement has coherent fixed output columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

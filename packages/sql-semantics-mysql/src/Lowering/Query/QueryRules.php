@@ -66,11 +66,14 @@ final class QueryRules
      */
     public function statement(Node $statement): Statement
     {
-        $selection = (new Shared\StoredSelections($this->lowering))->read($statement);
+        $selection = (new Shared\StoredSelections($this->lowering))->read($statement) ?? $this->lowering->origins->record((new Shared\QueryMeaning())->of($this->query($statement)), $statement);
         if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection), (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0, false);
         }
-        return $selection ?? $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($this->query($statement)), $statement);
+        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery($selection), (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0, false);
+        }
+        return $selection;
     }
 
     /**

@@ -11,6 +11,7 @@ use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Plan\Window\Resolution;
 use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Session\Locator;
+use MySqlMemory\Session\Resolution\QueryPreparation;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
@@ -62,7 +63,7 @@ final class Locations
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
      * @return array{array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>, array<int, true>}
      */
-    public function located(Operation $operation, array $calls, array $diagnostics, Session $session): array
+    public function located(Operation|QueryPreparation $operation, array $calls, array $diagnostics, Session $session): array
     {
         $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release()))->statement($operation->statement);
         [$located, $matched] = $this->names($operation, $locator, $calls, $diagnostics);
@@ -98,7 +99,7 @@ final class Locations
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
      * @return array{array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>, array<int, true>}
      */
-    public function names(Operation $operation, Locator $locator, array $calls, array $diagnostics): array
+    public function names(Operation|QueryPreparation $operation, Locator $locator, array $calls, array $diagnostics): array
     {
         $dropped = array_diff(array_map(spl_object_id(...), $operation->facts->diagnostics), array_map(spl_object_id(...), $diagnostics));
         $searched = [];
@@ -131,9 +132,9 @@ final class Locations
      * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
      */
-    public function defaults(Operation $operation, Locator $locator, Session $session, array $located): array
+    public function defaults(Operation|QueryPreparation $operation, Locator $locator, Session $session, array $located): array
     {
-        foreach ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? (new Walker())->find($operation->statement, DefaultOfColumn::class) : [] as $default) {
+        foreach ($operation instanceof QueryPreparation || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? (new Walker())->find($operation->statement, DefaultOfColumn::class) : [] as $default) {
             $place = $locator->place($default->column);
             $name = $place === null ? null : $this->undefaulted($default, $operation, $session);
             if ($place !== null && $name !== null) {
@@ -179,7 +180,7 @@ final class Locations
      * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
      */
-    public function stars(Operation $operation, Locator $locator, array $diagnostics, array $located): array
+    public function stars(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
         $misuses = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables));
         if ($misuses === []) {
@@ -201,7 +202,7 @@ final class Locations
      *
      * @return list<\SqlSemantics\Platform\MySql\Statement\Query\Select>
      */
-    public static function existing(Operation $operation): array
+    public static function existing(Operation|QueryPreparation $operation): array
     {
         $blocks = [];
         foreach ((new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists::class) as $exists) {
@@ -271,7 +272,7 @@ final class Locations
      * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
      */
-    public function sets(Operation $operation, Locator $locator, array $diagnostics, array $located): array
+    public function sets(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
         $claimed = [];
         foreach ($locator->sets as [$set, $at]) {
@@ -299,7 +300,7 @@ final class Locations
      * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
      */
-    public function widths(Operation $operation, Locator $locator, array $diagnostics, array $located): array
+    public function widths(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
         $claimed = [];
         foreach ($locator->predicates as [$predicate, $clause, $at]) {
@@ -334,7 +335,7 @@ final class Locations
     /**
      * Tells whether a call names a function that is neither native nor declared: a stored function the server does not find.
      */
-    public static function undeclared(FunctionCall $call, Operation $operation): bool
+    public static function undeclared(FunctionCall $call, Operation|QueryPreparation $operation): bool
     {
         if (!$operation->facts->covers($call)) {
             return false;
@@ -355,7 +356,7 @@ final class Locations
     /**
      * Answers the problem of a located node: the diagnostic a name or an ordinal resolves to, a call of a function the server does not find, or a clock call whose precision is above 6.
      */
-    public function problem(ColumnUse|OutputOrdinal|FunctionCall|ClockCall $node, Operation $operation): Diagnostic|FunctionCall|ClockCall|null
+    public function problem(ColumnUse|OutputOrdinal|FunctionCall|ClockCall $node, Operation|QueryPreparation $operation): Diagnostic|FunctionCall|ClockCall|null
     {
         if ($node instanceof FunctionCall) {
             return self::undeclared($node, $operation) ? $node : null;
@@ -377,7 +378,7 @@ final class Locations
      * The server refuses such a DEFAULT() where it resolves it (ER_NO_DEFAULT_FOR_FIELD), whether
      * any row is read or not; an AUTO_INCREMENT column reads as 0 (verified on a live 8.4 server).
      */
-    public function undefaulted(DefaultOfColumn $default, Operation $operation, Session $session): ?string
+    public function undefaulted(DefaultOfColumn $default, Operation|QueryPreparation $operation, Session $session): ?string
     {
         $resolution = $operation->facts->covers($default->column) ? $operation->facts->scalar($default->column)->resolution : null;
         $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
@@ -409,7 +410,7 @@ final class Locations
      * @param list<Diagnostic> $claimed The problems already answered for another predicate
      * @return array{OperandColumns, bool}|null
      */
-    public function width(InQuery|QuantifiedComparison $predicate, Operation $operation, array $diagnostics, array $claimed): ?array
+    public function width(InQuery|QuantifiedComparison $predicate, Operation|QueryPreparation $operation, array $diagnostics, array $claimed): ?array
     {
         $early = Locator::early($predicate, $operation->profile()->grammar);
         foreach ($diagnostics as $diagnostic) {

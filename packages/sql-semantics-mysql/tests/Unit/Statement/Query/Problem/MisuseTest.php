@@ -19,7 +19,7 @@ final class MisuseTest extends TestCase
 {
     public function testMessageAnswersTheWordsOfTheServer(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM DUAL');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT * FROM DUAL');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertSame('No tables used', $operation->facts->diagnostics[0]->message());

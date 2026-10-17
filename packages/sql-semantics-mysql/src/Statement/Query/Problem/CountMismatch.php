@@ -12,7 +12,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the lengths of a set operation that disagree
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 UNION SELECT 1, 2');
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 UNION SELECT 1, 2');
  *     [$query->facts->diagnostics[0]->expected, $query->facts->diagnostics[0]->actual] // => [1, 2]
  */
 final class CountMismatch implements Diagnostic

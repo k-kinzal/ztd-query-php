@@ -80,7 +80,7 @@ final class BodyStructure
         if ($kind !== ProgramKind::Function && $kind !== ProgramKind::Trigger) {
             return null;
         }
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection || ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery && !(new ProgramRestrictions())->into($statement->query))) {
             return new ProgramProblem(ProgramRule::ResultSet, strtolower($kind->value));
         }
         if ($statement instanceof PrivilegeChange) {

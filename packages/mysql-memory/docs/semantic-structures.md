@@ -247,7 +247,19 @@ A statement rejected at a later token can already have produced semantic conditi
 
 MySQL query bodies implement `Query`, while `QueryRoot` implements the standalone `Statement` and `Explainable` roles. Read an analyzed SELECT through `$operation->statement->query`; construct a standalone query with `new QueryRoot($query)`. Subqueries, INSERT sources and view definitions retain query bodies directly. This distinction puts position-specific invariants in the model: MySQL 5.7 admits a no-FROM filter in a subquery or INSERT source even though the same standalone SELECT needs a modern profile. MySQL 5.6 does not admit that subquery form. Profile selection must therefore precede execution of directly generated structures.
 
-A cursor declaration also holds a `QueryRoot`, because CURSOR FOR takes the statement grammar position. The query-role property constructs filtered scalar subqueries directly across the profiles that admit them, including an outer SQL_CACHE query on 5.7. The statement inventory requires that no query-body variant implements the standalone statement role and that each statement has an explicit command route. View rebinding resolves its retained query in a view-definition structure, preserving that query's grammatical position.
+`QueryRoot` excludes fixed contradictions in its written output: empty VALUES
+rows, differing row or set widths, INSERT defaults, and a bare star without input.
+Unknown catalog widths remain resolution dependencies. A stored
+`Selection\DeferredQuery` retains these queries, including their earlier column,
+function and table dependencies, without implementing `Statement` or `Scalar`.
+Standalone input refusals retain that same structure in `RefusedQuery`. Memory
+prepares the complete query using the shared diagnostic ordering; it does not
+manufacture an invalid `QueryRoot` or require source SQL. Function-body result-set
+restrictions still distinguish SELECT INTO from a query returning rows. These
+checks cover written output bodies and do not by themselves establish invariants
+for every nested subquery, derived relation or CTE.
+
+A cursor declaration holds a `QueryRoot` or a stored `Selection\DeferredQuery`, because CURSOR FOR takes the statement grammar position but delays preparation until OPEN. The query-role property constructs filtered scalar subqueries directly across the profiles that admit them, including an outer SQL_CACHE query on 5.7. The statement inventory requires that no query-body variant implements the standalone statement role and that each statement has an explicit command route. View rebinding resolves its retained query in a view-definition structure, preserving that query's grammatical position.
 
 Replication source log positions accept decimal number spellings; relay log positions retain the hexadecimal form permitted by their grammar. JSON_TABLE column collations must name a collation, and CLONE directory operands must be quoted text. Composition checks also separate legacy password hashes, authenticated GRANT lists and repeated WITH options from modern authentication factors, random passwords and dynamic privileges. These checks reject contradictory models during construction, without consulting database state.
 

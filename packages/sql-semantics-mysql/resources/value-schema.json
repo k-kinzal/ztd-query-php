@@ -1699,6 +1699,9 @@
         "release": "SqlSemantics\\Contract\\GrammarRelease",
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\GroupingRule"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedQuery": {
+        "query": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedSelection": {
         "selection": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection"
     },
@@ -2263,7 +2266,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\CursorDeclaration": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "query": "SqlSemantics\\Platform\\MySql\\Statement\\QueryRoot"
+        "query": "SqlSemantics\\Platform\\MySql\\Statement\\QueryRoot|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\FetchCursor": {
         "cursor": "SqlSemantics\\Statement\\Identifier\\Name",
@@ -2488,6 +2491,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredOrderItem": {
         "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
         "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery": {
+        "query": "SqlSemantics\\Statement\\Query"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredKill": {
         "process": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",

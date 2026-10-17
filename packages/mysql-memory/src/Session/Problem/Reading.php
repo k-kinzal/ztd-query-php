@@ -10,6 +10,7 @@ use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Placement;
+use MySqlMemory\Session\Resolution\QueryPreparation;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
@@ -47,9 +48,9 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function read(Operation $operation, Session $session): void
+    public function read(Operation|QueryPreparation $operation, Session $session): void
     {
-        if (in_array($operation->statement::class, \MySqlMemory\Command\InternalCommand::STATEMENTS, true)) {
+        if ($operation instanceof Operation && in_array($operation->statement::class, \MySqlMemory\Command\InternalCommand::STATEMENTS, true)) {
             throw (new \MySqlMemory\Command\InternalCommand())->error($operation);
         }
         (new \MySqlMemory\Command\Explain\ExplainCommand())->format($operation->statement);
@@ -57,9 +58,13 @@ final class Reading
             $this->targets($operation->statement, $session);
         }
         $this->parsed($operation, $session);
-        (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation->statement, $session, true);
+        if ($operation instanceof Operation) {
+            (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation->statement, $session, true);
+        }
         $this->targets($operation->statement, $session);
-        (new \MySqlMemory\Command\Access\HandlerPreparation())->database($operation, $session);
+        if ($operation instanceof Operation) {
+            (new \MySqlMemory\Command\Access\HandlerPreparation())->database($operation, $session);
+        }
         $this->grouping($operation, $session);
         $this->variables($operation, $session);
         $this->legacyWrites($operation, $session);
@@ -73,7 +78,7 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function parsed(Operation $operation, Session $session): void
+    public function parsed(Operation|QueryPreparation $operation, Session $session): void
     {
         (new Identifiers())->check($operation->statement, $session->settings()->release());
         foreach ($operation->facts->diagnostics as $diagnostic) {
@@ -88,7 +93,7 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function grouping(Operation $operation, Session $session): void
+    public function grouping(Operation|QueryPreparation $operation, Session $session): void
     {
         if (!in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return;
@@ -114,7 +119,7 @@ final class Reading
      *
      * @throws SqlError When the operation names such a variable
      */
-    public function variables(Operation $operation, Session $session): void
+    public function variables(Operation|QueryPreparation $operation, Session $session): void
     {
         $reached = array_fill_keys(array_map(spl_object_id(...), (new \MySqlMemory\Session\Problems())->reached($operation->statement)), true);
         $program = \MySqlMemory\Command\Dispatcher::program($operation->statement);
@@ -144,12 +149,12 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function diagnosed(Operation $operation, Session $session): void
+    public function diagnosed(Operation|QueryPreparation $operation, Session $session): void
     {
         $alias = null;
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && Stages::selfChecked($operation->statement))) {
-                if ($diagnostic instanceof UnknownSystemVariable) {
+            if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && $operation instanceof Operation && Stages::selfChecked($operation->statement))) {
+                if ($diagnostic instanceof UnknownSystemVariable && $operation instanceof Operation) {
                     (new \MySqlMemory\Command\Program\ProgramProblems())->variables($operation->statement);
                 }
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
@@ -179,7 +184,7 @@ final class Reading
      *
      * @throws SqlError When the block names such a variable
      */
-    public function declared(Select $select, bool $ended, Session $session, Operation $operation): void
+    public function declared(Select $select, bool $ended, Session $session, Operation|QueryPreparation $operation): void
     {
         if ($ended) {
             $this->aliased($select, $operation, $session);
@@ -200,7 +205,7 @@ final class Reading
      *
      * @throws SqlError When the block names a table twice
      */
-    public function aliased(Select $select, Operation $operation, Session $session): void
+    public function aliased(Select $select, Operation|QueryPreparation $operation, Session $session): void
     {
         $aliases = [];
         foreach ($select->from === null ? [] : (new Walker())->find($select->from, Node::class, false) as $node) {
@@ -261,7 +266,7 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function legacyWrites(Operation $operation, Session $session): void
+    public function legacyWrites(Operation|QueryPreparation $operation, Session $session): void
     {
         $release = $session->settings()->release();
         if ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744) {

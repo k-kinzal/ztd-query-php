@@ -104,7 +104,7 @@ final class Interpreter
     {
         return match (true) {
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignments => $this->assignments($statement),
-            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection => $this->selection($statement),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection => $this->selection($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill => $this->kill($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel => $this->deferredCondition($statement),
             $statement instanceof Block => $this->block($statement),
@@ -149,9 +149,9 @@ final class Interpreter
     /**
      * Prepares a stored selection through the current program's handlers.
      */
-    public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $statement): ?Jump
+    public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $statement): ?Jump
     {
-        $jump = $this->instruction(fn () => (new Expression\SelectionUse())->raise($statement, $this->session));
+        $jump = $this->instruction(fn () => ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery ? new Expression\QueryUse() : new Expression\SelectionUse())->raise($statement, $this->session));
         return $jump?->flow === Flow::Resume ? null : $jump;
     }
 

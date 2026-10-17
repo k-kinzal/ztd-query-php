@@ -41,7 +41,7 @@ final class DefaultRequestTest extends TestCase
 
     public function testDeriveScalarReportsDefaultOutsideAnAssignment(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('VALUES ROW(DEFAULT)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() VALUES ROW(DEFAULT)');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(WriteMisuse::class, $operation->facts->diagnostics[0]);

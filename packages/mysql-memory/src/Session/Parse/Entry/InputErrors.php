@@ -75,6 +75,7 @@ final class InputErrors
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar => $this->scalar($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation => (new EvaluationInput())->deferred($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery => $this->selection($diagnostic->query, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => $this->selection($diagnostic->selection, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption => \MySqlMemory\Error\Family\StatementError::CantUseOptionHere->error($diagnostic->option->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion => $this->union($diagnostic, $session),
@@ -97,10 +98,10 @@ final class InputErrors
     /**
      * Resolves a retained selection condition without bypassing input notice ordering.
      */
-    public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $selection, Session $session): SqlError
+    public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $selection, Session $session): SqlError
     {
         try {
-            (new \MySqlMemory\Program\Expression\SelectionUse())->raise($selection, $session, false);
+            ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery ? new \MySqlMemory\Program\Expression\QueryUse() : new \MySqlMemory\Program\Expression\SelectionUse())->raise($selection, $session, false);
         } catch (SqlError $error) {
             return $error;
         }
