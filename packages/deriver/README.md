@@ -65,7 +65,7 @@ $analyzer = new Analyzer();
 $candidates = $analyzer->analyze($files, 'query#return');
 
 foreach ($candidates as $candidate) {
-    // type is 'analyzed' or 'partials'; type_name is the inferred PHP type.
+    // type is a CandidateStatus enum; type_name is the inferred PHP type.
     // result is a native value when concrete, otherwise a Term.
     // term provides a uniform value representation; evidence retains the derivation.
     var_dump($candidate->type, $candidate->result);
@@ -76,6 +76,8 @@ echo $candidates->toJson();
 `analyze()` reads exactly the supplied files on each call, without executing them. It accepts file paths; directory traversal and wildcard expansion belong to the finder. Changed contents are captured on the next call, even when the same `Analyzer` is reused. Duplicate paths, unreadable files and malformed PHP raise `InvalidInputException`.
 
 This query retains both `SELECT * FROM default_table` and a concatenation with the unresolved formal parameter `table`. A formal parameter with no captured caller is unresolved, even when its declaration has a default. At an actual call that omits the argument, the default applies.
+
+`Candidate::$type` is `Deriver\Result\CandidateStatus::Analyzed` for a concrete value or `CandidateStatus::Partials` for an unresolved expression. Compare the enum cases directly; use `$candidate->type->value` for the string. JSON reports retain `"analyzed"` and `"partials"`. `type_name` remains a string because it can contain an application class name.
 
 Every candidate has its own nonempty `evidence` list. Equal values share one candidate record, while their different derivations remain separate evidence alternatives. Concrete values alone do not prove that a runtime execution reaches them: Deriver collects the origins in the captured source and supplied models.
 

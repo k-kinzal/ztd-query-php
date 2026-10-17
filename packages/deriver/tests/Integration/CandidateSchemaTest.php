@@ -57,7 +57,7 @@ final class CandidateSchemaTest extends TestCase
     {
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('defaults.php', '<?php function f($x=30){return $x;}')]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ParameterQuery('f', 'x'));
-        self::assertSame('partials', $result->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[0]->type);
         self::assertSame('$x', $result->candidates[0]->term->literal);
         $called = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('defaults.php', '<?php function f($x=30){return $x;}function caller(){return f();}')]), new \Deriver\Project\Configuration()));
         self::assertSame(30, $called->derive(new ReturnQuery('caller'))->candidates[0]->result);
@@ -73,7 +73,7 @@ final class CandidateSchemaTest extends TestCase
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('throw.php', '<?php function f(){' . $body . '}')]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('f'));
         self::assertCount(1, $result);
-        self::assertSame('partials', $result->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[0]->type);
         self::assertSame('never', $result->candidates[0]->type_name);
         self::assertSame('NO_VALUE_DEFINITION', $result->candidates[0]->term->attributes['reason']);
     }
@@ -87,7 +87,7 @@ final class CandidateSchemaTest extends TestCase
         $result = $session->derive(new ValueQuery($session->callsTo('observe')[0]->argument(0)));
         self::assertCount(2, $result);
         self::assertSame('SELECT * FROM default_table', $result->candidates[0]->result);
-        self::assertSame('partials', $result->candidates[1]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[1]->type);
         $typo = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('sql.php', '<?php function select($table){$table="SELECT * FROM $table";observe($sql);}')]), new \Deriver\Project\Configuration()));
         $unknown = $typo->derive(new ValueQuery($typo->callsTo('observe')[0]->argument(0)));
         self::assertSame('$sql', $unknown->candidates[0]->term->literal);

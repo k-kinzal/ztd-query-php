@@ -19,7 +19,7 @@ final class SessionTest extends TestCase
     public function testDeriveKeepsPartialExpressions(): void
     {
         $result = A::returns('function target($x){return 1+$x;}');
-        self::assertSame('partials', $result->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[0]->type);
         self::assertSame(1, $result->candidates[0]->term->operands[0]->native());
     }
 

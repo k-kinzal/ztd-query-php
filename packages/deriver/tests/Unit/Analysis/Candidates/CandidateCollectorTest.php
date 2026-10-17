@@ -19,7 +19,7 @@ final class CandidateCollectorTest extends TestCase
     {
         $r = C::argument(C::session('function target($x){observe(5+$x);}'));
         self::assertCount(1, $r->candidates);
-        self::assertSame('partials', $r->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $r->candidates[0]->type);
         self::assertSame(5, $r->candidates[0]->term->operands[0]->native());
     }
     /**

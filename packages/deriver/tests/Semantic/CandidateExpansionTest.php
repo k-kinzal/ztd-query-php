@@ -74,7 +74,7 @@ final class CandidateExpansionTest extends TestCase
         $result = $session->derive(new ReturnQuery('f'));
         self::assertSame($expected, array_map(static fn ($candidate) => $candidate->result, $result->candidates));
         foreach ($result as $candidate) {
-            self::assertSame('analyzed', $candidate->type);
+            self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $candidate->type);
             self::assertSame('observation', $candidate->evidence[0]->root->kind);
             foreach ($candidate->evidence as $proof) {
                 $nodes = $proof->nodes();
@@ -114,7 +114,7 @@ final class CandidateExpansionTest extends TestCase
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('fixture.php', '<?php function f($a,$b){return $a?10:($b?20:30);}') ]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('f', budget: new Budget(maxCandidates: 2)));
         self::assertCount(2, $result);
-        self::assertSame('partials', $result->candidates[1]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[1]->type);
         self::assertSame('unexpanded-choice', $result->candidates[1]->term->kind);
         $values = iterator_to_array((new \Deriver\Candidate\Choices())->alternatives($result->candidates[1]->term->operands[0]), false);
         self::assertSame([20, 30], array_map(static fn ($row) => array_values($row[0]->operands)[0]->native(), $values));

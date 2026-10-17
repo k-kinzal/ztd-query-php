@@ -32,7 +32,7 @@ final class Encoding
                 && (!is_int($value) || abs($value) <= 9007199254740991);
             $result = $native ? $value : ['kind' => $term->kind, 'root' => $root, 'nodes' => (object) $graph->records];
             $evidence = array_map(static fn ($alternative): object => (object) $alternative->toArray(), $candidate->evidence);
-            $records[] = (object) ['type' => $candidate->type, 'type_name' => $candidate->type_name, 'result' => $result, 'evidence' => (new JsonText())->tree($evidence)];
+            $records[] = (object) ['type' => $candidate->type->value, 'type_name' => $candidate->type_name, 'result' => $result, 'evidence' => (new JsonText())->tree($evidence)];
         }
         return $records;
     }

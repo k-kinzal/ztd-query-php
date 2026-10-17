@@ -66,7 +66,7 @@ final class ArrayConstructionTest extends TestCase
     {
         $result = \Tests\Fake\CandidateApi::returns('function target($b){$x=$b?1:2;return ["head",$x,"tail"];}', budget:new \Deriver\Query\Budget(partitions:1));
         $candidate = $result->candidates[0];
-        self::assertSame('partials', $candidate->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $candidate->type);
         self::assertSame('head', $candidate->term->operands[0]->literal);
         self::assertSame('tail', $candidate->term->operands[2]->literal);
         self::assertSame('ENUMERATION_LIMIT', $candidate->term->attributes['reason']);

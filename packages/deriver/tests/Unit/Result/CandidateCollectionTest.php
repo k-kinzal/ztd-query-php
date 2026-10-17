@@ -29,7 +29,7 @@ final class CandidateCollectionTest extends TestCase
     {
         $candidate = A::returns()->getIterator()[0];
         self::assertNotNull($candidate);
-        self::assertSame('analyzed', $candidate->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $candidate->type);
     }
 
     /**

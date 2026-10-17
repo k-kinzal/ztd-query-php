@@ -69,6 +69,6 @@ final class DemandTest extends TestCase
         $r = C::session('function target(){return 1;}')->derive(new \Deriver\Query\ReturnQuery('target'));
         self::assertSame([1], C::native($r));
         $missing = C::session('function target(){return missing();}')->derive(new \Deriver\Query\ReturnQuery('target'));
-        self::assertSame('partials', $missing->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $missing->candidates[0]->type);
     }
 }

@@ -10,6 +10,7 @@ use Deriver\Project\SourceFile;
 use Deriver\Query\Budget;
 use Deriver\Query\ReturnQuery;
 use Deriver\Result\CandidateCollection;
+use Deriver\Result\CandidateStatus;
 
 if (($argv[1] ?? '') !== '--worker') {
     $measurements = [];
@@ -41,8 +42,8 @@ function quality(CandidateCollection $result): array
 {
     return [
         'candidates' => count($result),
-        'analyzed' => count(array_filter($result->candidates, static fn ($candidate): bool => $candidate->type === 'analyzed')),
-        'partials' => count(array_filter($result->candidates, static fn ($candidate): bool => $candidate->type === 'partials')),
+        'analyzed' => count(array_filter($result->candidates, static fn ($candidate): bool => $candidate->type === CandidateStatus::Analyzed)),
+        'partials' => count(array_filter($result->candidates, static fn ($candidate): bool => $candidate->type === CandidateStatus::Partials)),
         'interrupted' => $result->interrupted,
         'statistics' => $result->statistics,
     ];
@@ -117,7 +118,7 @@ foreach ($scenarios as $name => $program) {
     $start = hrtime(true);
     $result = (new Deriver\Session\Session(new ProjectInput([new SourceFile($name . '.php', $program)]), new Configuration(closedWorld: true)))->derive(new ReturnQuery('target', budget: new Budget(iterations: 256)));
     $expected = ['deep-helpers' => 2, 'repeated-helper' => 400, 'mutable-builder' => [['one', 'two'], ['three']]];
-    if (isset($expected[$name]) && $result->candidates[0]->type === 'analyzed' && $result->candidates[0]->result !== $expected[$name]) {
+    if (isset($expected[$name]) && $result->candidates[0]->type === CandidateStatus::Analyzed && $result->candidates[0]->result !== $expected[$name]) {
         throw new RuntimeException('A benchmark scenario produced an incorrect definite value: ' . $name);
     }
     $scenarioResults[$name] = ['seconds' => (hrtime(true) - $start) / 1e9, ...quality($result)];

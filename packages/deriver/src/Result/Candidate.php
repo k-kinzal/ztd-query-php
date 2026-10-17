@@ -10,7 +10,7 @@ use Deriver\Value\Term;
  * A concrete value or a structured residual, with every supporting derivation.
  * @example Reading a derived literal
  *     $session = (new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f(){return 42;}')]), new \Deriver\Project\Configuration()));
- *     $session->derive(new \Deriver\Query\ReturnQuery('f'))->candidates[0]->type // => 'analyzed'
+ *     $session->derive(new \Deriver\Query\ReturnQuery('f'))->candidates[0]->type === \Deriver\Result\CandidateStatus::Analyzed // => true
  * @visibility public
  */
 final class Candidate
@@ -18,7 +18,7 @@ final class Candidate
     /**
      * Whether the value is fully analyzed or contains residual dependencies.
      */
-    public readonly string $type;
+    public readonly CandidateStatus $type;
     /**
      * The known PHP type, or mixed when no narrower type is justified.
      */
@@ -35,7 +35,7 @@ final class Candidate
      */
     public function __construct(public readonly Term $term, public readonly array $evidence)
     {
-        $this->type = $term->isConcrete() ? 'analyzed' : 'partials';
+        $this->type = $term->isConcrete() ? CandidateStatus::Analyzed : CandidateStatus::Partials;
         $this->type_name = match ($term->kind) {
             'constant' => get_debug_type($term->literal),
             'array', 'array-set' => 'array',

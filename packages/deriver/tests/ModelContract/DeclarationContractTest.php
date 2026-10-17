@@ -39,7 +39,7 @@ final class DeclarationContractTest extends TestCase
         self::assertSame('call-write', $result->candidates[0]->term->kind);
         self::assertSame(1, $result->candidates[0]->term->operands[0]->native());
         self::assertContains('MISSING_SOURCE', array_column(\Tests\Semantic\CandidateContractTest::frontiers($result), 'code'));
-        self::assertSame('partials', $result->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[0]->type);
         self::assertSame(['stubs.php' => 'declarations'], $session->snapshot()->sourceModes);
     }
 
