@@ -42,7 +42,7 @@ final class FunctionCallStateTest extends TestCase
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             foreach ([new FunctionCall(new Name('ABS'), schema: new Name('d')), new FunctionCall(new Name(str_starts_with($release, '5.') ? 'REGEXP_LIKE' : 'X'))] as $call) {
                 $name = new QualifiedName(new Name($call->name->value), new Name('d'));
-                $create = new CreateFunction($name, new ParameterList([]), new Integral(IntegralKind::Int), new ReturnStatement(new NumberLiteral('7')), characteristics: [new Determinism(true)]);
+                $create = new CreateFunction($name, new ParameterList([]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new ReturnStatement(new NumberLiteral('7')), [new Determinism(true)]));
                 yield $release . ':' . $call->name->value => [$release, [$call, $create, $call, new DropProgram(ProgramKind::Function, new QualifiedName(new Name($call->name->value), new Name('d'))), $call]];
             }
         }

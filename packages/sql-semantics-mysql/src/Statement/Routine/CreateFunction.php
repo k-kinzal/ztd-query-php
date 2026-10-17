@@ -12,12 +12,12 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic;
+use SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\FunctionBody;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -28,16 +28,16 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
  * @example Rejecting a body with no RETURN instruction
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block())) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @example Rejecting a body that contradicts its language
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('code'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('code')))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @example Rejecting a client marker without a binding scope
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @example Rejecting a multi-valued index cast in a stored body
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Boolean), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Boolean), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true)))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @visibility public
  * @example Reading a function definition
@@ -62,20 +62,18 @@ final class CreateFunction implements Statement
      * @param QualifiedName $name The function name with its optional database
      * @param ParameterList $parameters The parameters; none has a direction
      * @param DeclaredName $returns The return type
-     * @param Node $body The body: a program statement, an SQL statement, or external code
+     * @param FunctionImplementation $implementation The body and its interpreting characteristics
      * @param CollationName|null $collation The COLLATE clause; a named override requires a character set carried by the return type, and known names must be compatible
-     * @param list<Characteristic> $characteristics The characteristics in written order
      * @param Account|null $definer The DEFINER clause, when written
      * @param bool $ifNotExists Whether IF NOT EXISTS is written (MySQL 8.0.29 and later)
-     * @throws InvalidConstruction When a parameter has a direction, or the body or a characteristic is of another class
+     * @throws InvalidConstruction When the name, parameter directions or combined declaration domains are inconsistent
      */
     public function __construct(
         public readonly QualifiedName $name,
         public readonly ParameterList $parameters,
         public readonly DeclaredName $returns,
-        Node $body,
+        FunctionImplementation $implementation,
         public readonly ?CollationName $collation = null,
-        array $characteristics = [],
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
     ) {
@@ -85,11 +83,8 @@ final class CreateFunction implements Statement
         foreach ($parameters->parameters as $parameter) {
             Check::input($parameter->mode === null, 'A function parameter has no direction.');
         }
-        $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyLanguage())->check($body, $this->characteristics);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($body, ProgramKind::Function, $name);
-        Check::input($body instanceof ExternalBody || $body instanceof FunctionBody, 'A function body is external code or an instruction shape containing RETURN.');
-        $this->body = $body;
+        $this->characteristics = $implementation->characteristics;
+        $this->body = $implementation->body;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

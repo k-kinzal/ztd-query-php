@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -183,18 +182,13 @@ final class CreateFunctionTest extends TestCase
     {
         $this->expectExceptionMessage('A function parameter has no direction.');
 
-        new CreateFunction(
-            new QualifiedName(new Name('f')),
-            new ParameterList([new Parameter(new Name('x'), new Integral(IntegralKind::Int), null, ParameterMode::In)]),
-            new Integral(IntegralKind::Int),
-            new Block([]),
-        );
+        new CreateFunction(new QualifiedName(new Name('f')), new ParameterList([new Parameter(new Name('x'), new Integral(IntegralKind::Int), null, ParameterMode::In)]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())));
     }
 
     public function testANameWithACatalogIsRejected(): void
     {
         $this->expectExceptionMessage('A routine name has at most a database qualifier.');
 
-        new CreateFunction(new QualifiedName(new Name('f'), new Name('shop'), new Name('def')), new ParameterList([]), new Integral(IntegralKind::Int), new Block([]));
+        new CreateFunction(new QualifiedName(new Name('f'), new Name('shop'), new Name('def')), new ParameterList([]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())));
     }
 }

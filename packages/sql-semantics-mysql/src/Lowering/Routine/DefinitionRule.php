@@ -134,7 +134,7 @@ final class DefinitionRule
 
         $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_fdparam_list']);
         (new DefinitionBody())->check($body, ProgramKind::Function, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, $parameters, $type, $collation, (new DefinitionBody())->typeEnds($parts['sp_fdparam_list'], $parts['type_with_opt_collate'] ?? $parts['type']), (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0, language: $language);
-        return new CreateFunction($name, $parameters, $type, $body, $collation, $characteristics, $definer, $exists);
+        return new CreateFunction($name, $parameters, $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, $characteristics), $collation, $definer, $exists);
     }
 
     /**

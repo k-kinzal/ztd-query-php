@@ -102,7 +102,7 @@ final class CreationTest extends TestCase
         $session = (new Instance($release, [], ['d']))->connect('root', 'localhost', 'd');
         $session->text = 'unrelated invalid input';
         $execution = new Execution();
-        $statement = new CreateFunction(new QualifiedName(new Name('f')), new ParameterList([new Parameter(new Name('a'), new Integral(IntegralKind::Int))]), new Integral(IntegralKind::Int), new ReturnStatement(new ColumnUse(new Name('a'))), characteristics: [new Determinism(true)]);
+        $statement = new CreateFunction(new QualifiedName(new Name('f')), new ParameterList([new Parameter(new Name('a'), new Integral(IntegralKind::Int))]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new ReturnStatement(new ColumnUse(new Name('a'))), [new Determinism(true)]));
 
         $created = $execution->runIn($session, $statement);
         $called = $execution->runIn($session, new FunctionCall(new Name('f'), [new CallArgument(new NumberLiteral($value))]));

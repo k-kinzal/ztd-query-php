@@ -29,7 +29,7 @@ final class FunctionConstructionTest extends TestCase
      */
     public static function providerSeeds(): iterable
     {
-        for ($index = 0; $index < 20; $index++) {
+        for ($index = 0; $index < 120; $index++) {
             yield 'body-domain:' . $index => ['body-domain:' . $index];
         }
     }

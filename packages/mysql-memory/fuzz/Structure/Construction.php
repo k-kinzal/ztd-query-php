@@ -106,8 +106,10 @@ final class Construction
             } catch (InvalidConstruction $failure) {
                 $key = $concrete . ': ' . $failure->getMessage();
                 $this->rejections[$key] = ($this->rejections[$key] ?? 0) + 1;
-                $failureKey = $key;
-                $repeats = $sample->failure === $key ? $sample->repeats + 1 : 1;
+                // A diagnostic may name sampled operands; only its invariant site identifies progress.
+                $site = $failure->getTrace()[0] ?? [];
+                $failureKey = $concrete . ':' . ($site['file'] ?? $failure->getFile()) . ':' . ($site['line'] ?? $failure->getLine());
+                $repeats = $sample->failure === $failureKey ? $sample->repeats + 1 : 1;
             } catch (Exhausted) {
                 // Keep completed dependencies while trying another argument combination.
             }

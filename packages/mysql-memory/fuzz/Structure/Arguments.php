@@ -15,7 +15,7 @@ final class Arguments
 {
     /**
      * @param array<int, mixed> $values Generated values indexed by constructor position
-     * @param string $failure The most recently rejected constructor invariant
+     * @param string $failure The concrete type and call site of the most recently rejected invariant
      * @param int $repeats Consecutive trials rejected by that same invariant
      */
     public function __construct(public readonly array $values, public readonly string $failure = '', public readonly int $repeats = 0)

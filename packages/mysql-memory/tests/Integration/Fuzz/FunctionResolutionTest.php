@@ -48,7 +48,7 @@ final class FunctionResolutionTest extends TestCase
                 $calls[] = new FunctionCall(new Name($name), [new CallArgument(new NumberLiteral('3'))]);
                 $calls[] = new FunctionCall(new Name($name), [new CallArgument(new NumberLiteral('3'))], new Name('d'));
                 $type = new Integral(IntegralKind::Int);
-                $definitions[] = new CreateFunction(new QualifiedName(new Name($name), new Name('d')), new ParameterList([new Parameter(new Name('x'), $type)]), new Integral(IntegralKind::Int), new ReturnStatement(new NumberLiteral('7')));
+                $definitions[] = new CreateFunction(new QualifiedName(new Name($name), new Name('d')), new ParameterList([new Parameter(new Name('x'), $type)]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new ReturnStatement(new NumberLiteral('7'))));
                 $missing = match ($name) {
                     'COLLATION', 'ORDER' => 1630,
                     'window' => str_starts_with($release, '5.') ? 1305 : 1630,

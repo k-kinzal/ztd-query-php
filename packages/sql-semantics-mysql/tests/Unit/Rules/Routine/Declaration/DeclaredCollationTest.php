@@ -60,7 +60,7 @@ final class DeclaredCollationTest extends TestCase
         foreach ([new Integral(IntegralKind::Int), new Character(CharacterKind::VarChar, '3'), new Character(CharacterKind::Char, '3', charset: new CharsetAttribute(CharsetForm::Binary))] as $index => $type) {
             yield $index . ': parameter' => [static fn (): Node => new Parameter(new Name('x'), $type, $collation)];
             yield $index . ': variable' => [static fn (): Node => new VariableDeclaration([new Name('x')], $type, $collation)];
-            yield $index . ': return' => [static fn (): Node => new CreateFunction(new QualifiedName(new Name('f')), new ParameterList([]), $type, new ReturnStatement(new NullLiteral()), $collation)];
+            yield $index . ': return' => [static fn (): Node => new CreateFunction(new QualifiedName(new Name('f')), new ParameterList([]), $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new ReturnStatement(new NullLiteral())), $collation)];
         }
     }
 

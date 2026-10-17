@@ -49,7 +49,7 @@ final class ExternalRoutineStateTest extends TestCase
             $language = new RoutineLanguage(new Name($index === 0 ? 'JAVASCRIPT' : 'PYTHON'));
             $function = new Name('f' . $index);
             $procedure = new QualifiedName(new Name('p' . $index));
-            $nodes[] = new CreateFunction(new QualifiedName($function), new ParameterList([]), new Integral(IntegralKind::Int), $body, characteristics: [new RoutineLanguage(), $language, new Determinism(true)]);
+            $nodes[] = new CreateFunction(new QualifiedName($function), new ParameterList([]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, [new RoutineLanguage(), $language, new Determinism(true)]));
             $nodes[] = new FunctionCall($function);
             $nodes[] = new CreateProcedure($procedure, new ParameterList([]), $body, [$language]);
             $nodes[] = new ProcedureCall($procedure);

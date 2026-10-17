@@ -40,7 +40,7 @@ final class DatabaseCreationStateTest extends TestCase
     {
         $name = new QualifiedName(new Name('f'), new Name("schema'with`quotes"));
         $body = new ReturnStatement(new NumberLiteral('12345'));
-        $node = new CreateFunction($name, new ParameterList([]), new Integral(IntegralKind::Int), $body, characteristics: [new Determinism(true)]);
+        $node = new CreateFunction($name, new ParameterList([]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, [new Determinism(true)]));
         $observation = (new Comparison())->compare($node, new LanguageProfile($release), '');
 
         self::assertTrue($observation['matches'], serialize($observation));

@@ -52,7 +52,8 @@ final class ListingTest extends TestCase
             yield 'unrelated field ' . $field => [[$guard, array_replace($row, [$field => $value])], $after];
         }
         yield 'future elapsed time' => [[$guard, array_replace($row, [5 => 102])], $after];
-        yield 'negative idle time' => [[array_replace($guard, [5 => -1]), $row], $after];
+        yield 'idle time below the observed clock bracket' => [[array_replace($guard, [5 => -2]), $row], $after];
+        yield 'negative idle time outside zero samples' => [[array_replace($guard, [5 => -1]), $row], new Sample(7, 101, 'OFF', [2 => array_replace($guard, [5 => 1]), 7 => $row])];
         yield 'another current identity' => [[$guard, $row], new Sample(8, 101, 'OFF', $rows)];
         yield 'missing daemon' => [[$guard, $row], new Sample(7, 101, 'ON', $rows)];
         yield 'lost row after observation' => [[$guard, $row], new Sample(7, 101, 'OFF', [7 => $row])];
@@ -70,6 +71,18 @@ final class ListingTest extends TestCase
         $observation = ['results' => [['columns' => $columns, 'rows' => $rows]], 'warnings' => []];
 
         self::assertSame($observation, (new Listing($before, 2))->validated($observation, $after));
+    }
+
+    public function testRowsAcceptsTheObservedTransientRepairClockBetweenZeroSamples(): void
+    {
+        $current = [7, 'root', 'localhost:1234', 'fz', 'Query', 100, 'init', 'SHOW PROCESSLIST'];
+        $guard = [2, 'memory_guard', 'localhost:2345', null, 'Sleep', 0, '', null];
+        $rows = [2 => $guard, 7 => $current];
+        $sample = new Sample(7, 100, 'OFF', $rows);
+        $listing = new Listing($sample, 2);
+
+        self::assertSame($listing->rows($rows, $sample), $listing->rows([2 => array_replace($guard, [5 => -1]), 7 => $current], $sample));
+        self::assertNull($listing->rows([2 => array_replace($guard, [4 => 'Query', 5 => -1]), 7 => $current], $sample));
     }
 
     public function testRowsKeepsEveryStaticFieldAndChecksTheDaemon(): void

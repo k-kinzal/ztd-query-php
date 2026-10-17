@@ -2119,6 +2119,10 @@
         "table": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTable",
         "time": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTime"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Definition\\FunctionImplementation": {
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\FunctionBody",
+        "characteristics": "array"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\DollarQuotedText": {
         "tag": "string",
         "text": "string"

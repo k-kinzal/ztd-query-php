@@ -34,7 +34,7 @@ final class BodyStructure
     /**
      * Refuses an instruction arrangement with no interpretation for its declaration kind.
      */
-    public function check(Node $body, ProgramKind $kind, QualifiedName $name): void
+    public function check(Node $body, ProgramKind $kind, ?QualifiedName $name = null): void
     {
         $problem = $this->problem($body, $kind, $name);
         Check::input($problem === null, $problem?->message() ?? 'The body fits its declaration kind.');
@@ -45,7 +45,7 @@ final class BodyStructure
     /**
      * Answers the first immediate restriction or the highest-priority body-wide restriction.
      */
-    public function problem(Node $body, ProgramKind $kind, QualifiedName $name): ?ProgramProblem
+    public function problem(Node $body, ProgramKind $kind, ?QualifiedName $name = null): ?ProgramProblem
     {
         if ($body instanceof ExternalBody) {
             return null;
@@ -69,7 +69,7 @@ final class BodyStructure
             }
             array_push($pending, ...array_reverse($search->nested($current)));
         }
-        return $found ?? ($kind === ProgramKind::Function && !$search->found($body) ? new ProgramProblem(ProgramRule::MissingReturn, $name->name->value) : null);
+        return $found ?? ($kind === ProgramKind::Function && !$search->found($body) ? new ProgramProblem(ProgramRule::MissingReturn, $name?->name->value ?? '') : null);
     }
 
     /**

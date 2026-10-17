@@ -15,7 +15,10 @@ use RuntimeException;
  * connections identify themselves with CONNECTION_ID(); an enabled scheduler must contribute
  * exactly one additional daemon. Client ports must be valid and unchanged in both samples.
  * Current-query time must follow SYSDATE minus the pinned timestamp; idle and daemon times
- * must lie between their sampled values. Only these validated fields become interchangeable.
+ * must lie between their sampled values. A sleeping repair connection can briefly
+ * report -1 between two zero samples (observed on independent MySQL 8.4 servers);
+ * only that exact clock bracket admits the negative value. Only these validated
+ * fields become interchangeable.
  * All columns, rows, users, host names, databases, commands, states, query text and warnings
  * remain in the comparison. Missing, additional, duplicated or malformed rows stay raw.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html.
@@ -143,7 +146,8 @@ final class Listing
             $lower = $role === 'current' ? $before->age : $first[5];
             $upper = $role === 'current' ? $after->age : $last[5];
             $host = $this->host($row, $first, $last, $role);
-            if ($host === null || $row[5] < $lower || $row[5] > $upper || ($role !== 'current' && $row[5] < 0) || ($role === 'daemon' && ($row[1] !== 'event_scheduler' || $row[4] !== 'Daemon'))) {
+            $transient = $role === 'guard' && $row[4] === 'Sleep' && $first[4] === 'Sleep' && $last[4] === 'Sleep' && $lower === 0 && $upper === 0 && $row[5] === -1;
+            if ($host === null || (!$transient && ($row[5] < $lower || $row[5] > $upper || ($role !== 'current' && $row[5] < 0))) || ($role === 'daemon' && ($row[1] !== 'event_scheduler' || $row[4] !== 'Daemon'))) {
                 return null;
             }
             $result[] = ['{' . self::CONTRACT . ':' . $role . '}', $row[1], $host, $row[3], $row[4], '{' . self::CONTRACT . ':elapsed}', $row[6], $row[7]];

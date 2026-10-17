@@ -14,7 +14,7 @@ The campaign discovers concrete types from the reviewed semantic value inventori
 
 Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. The selected root can use the shared 2,000-attempt cap. Each nested constructor retains a smaller depth-dependent cap that includes its descendants, preventing one nested alternative from taking the entire root search budget. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
 
-A rejected constructor keeps its completed arguments so the next trial can resample one argument instead of rebuilding unrelated children. Repeated rejection by the same invariant switches that candidate to complete resampling until the rejected constraint changes. Both strategies use the same shared attempt cap. They inspect constructor types and invariant refusals only; they do not use MySQL outcomes to choose or discard values. Exhaustion remains a failure. Some deeply constrained function declarations still exhaust the bounded search; neither a passing inventory run nor a repaired seed establishes that every random construction search will finish.
+A rejected constructor keeps its completed arguments so the next trial can resample one argument instead of rebuilding unrelated children. Repeated rejection by the same invariant switches that candidate to complete resampling until the rejected constraint changes. The invariant is identified by its constructor type and check call site, rather than a message containing generated names. Detailed messages remain in the rejection report. Both strategies use the same shared attempt cap. They inspect constructor types and invariant refusals only; they do not use MySQL outcomes to choose or discard values. Exhaustion remains a failure. The bounded search can still exhaust; neither a passing inventory run nor a repaired seed establishes that every random construction search will finish.
 
 `Scalar` and `RowOperand` are separate roles. A row contains at least two fields; a subquery with a fixed multi-column projection has a row role, while an unknown catalog-dependent width remains a resolution dependency. Ordinary comparisons and membership constructors reject incompatible fixed shapes. Stored programs additionally need operand roles whose preparation is deferred until an instruction is reached. These values preserve their complete operands and do not implement `Scalar`. A stored definition can therefore retain a row-valued condition, assignment or projection without making that value valid in an ordinary scalar position.
 
@@ -1337,3 +1337,36 @@ completed invalid radix value before later syntax errors. Unused CTE definitions
 keep their delayed preparation. Native observations compare values, metadata,
 ordered conditions and subsequent statements across five releases. These checks
 do not establish the outstanding whole-model construction property.
+
+`CreateFunction` takes a `FunctionImplementation` combining the body and its
+interpreting characteristics. Its constructor checks the effective LANGUAGE,
+RETURN presence and function-body restrictions independently of the declaration's
+name, parameters and return type. It is a declaration operand, not a program
+instruction. The completed function retains the same body and ordered
+characteristics for resolution and execution. This makes the coupled invariant
+available when constructing that operand, instead of repeatedly rebuilding
+unrelated declaration fields after an inconsistent language/body choice.
+
+Process-list comparison admits one additional observed clock bracket: a sleeping
+repair connection can report TIME = -1 between two process-table samples whose
+TIME values are both zero. Two independent MySQL 8.4.7 instances received the
+same 1,000 probe sequences; one reported only zero brackets, while the other
+reported six `[0, -1, 0]` brackets. The exception is limited to that identified
+repair connection, its unchanged sleeping state and exactly those sampled
+bounds. Other negative times, wider bounds and all non-clock fields retain their
+previous checks. Memory continues to report its own elapsed time.
+
+The function-implementation revision passed all 120 `body-domain` seeds at the
+unchanged 2,000-attempt cap, 8,068 SQL Semantics tests, 15,574 Memory unit,
+property and documentation tests, and 57 native routine/process comparisons.
+Static checks include dependency boundaries and the 890 retained-value schemas.
+These results do not replace the pending whole-model native campaign.
+
+The preceding `1e26e29cc78` unseeded campaign failed after 464.3 seconds and
+675 inputs: 673 matched, one process-clock observation lacked a comparison
+contract, and one event schedule reported a scalar-width condition before its
+native dependency restriction. The clock bracket above addresses the observed
+comparison case. Event schedules still need a model that preserves dependency
+priority, unused CTE preparation and invocation-time checks in stored programs.
+This campaign does not meet the 900-second gate; all nine supplied seed corpora
+and an unseeded campaign must pass together on the final revision.

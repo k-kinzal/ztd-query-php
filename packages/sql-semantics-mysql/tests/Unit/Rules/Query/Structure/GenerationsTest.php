@@ -291,7 +291,7 @@ final class GenerationsTest extends TestCase
     public function testCheckRejectsConflictingRequirementsOnOneRoutine(): void
     {
         $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
-        new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new NumberLiteral('1')), collation: new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null), ifNotExists: true);
+        new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new NumberLiteral('1'))), collation: new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null), ifNotExists: true);
     }
 
     public function testCheckRejectsDefaultCharsetWithModernDatabaseOptions(): void

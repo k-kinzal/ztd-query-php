@@ -80,7 +80,7 @@ final class RoutineDeclarationTest extends TestCase
             $nodes[] = new CreateProcedure($local, new ParameterList([]), new Block([new VariableDeclaration([new Name('x')], $type, $collation, $value)], [$select]));
             $nodes[] = new ProcedureCall($local);
             $nodes[] = new ProcedureCall($local);
-            $nodes[] = new CreateFunction($function, new ParameterList([]), $type, new ReturnStatement($value), $collation);
+            $nodes[] = new CreateFunction($function, new ParameterList([]), $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new ReturnStatement($value)), $collation);
             $nodes[] = new KeywordCall(KeywordFunction::Collation, [new FunctionCall($function->name, schema: new Name('d'))]);
             $nodes[] = new KeywordCall(KeywordFunction::Collation, [new FunctionCall($function->name, schema: new Name('d'))]);
         }

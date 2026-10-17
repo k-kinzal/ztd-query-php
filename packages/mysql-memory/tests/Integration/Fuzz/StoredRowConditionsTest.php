@@ -82,7 +82,7 @@ final class StoredRowConditionsTest extends TestCase
         }
         $returned = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new Row([new NumberLiteral('1'), new NumberLiteral('2')]));
         $body = new Block([], [new IfStatement([new ConditionalBranch(new UserVariable(new Name('run')), [$returned])]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new NumberLiteral('7'))]);
-        $history[] = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f_return')), new ParameterList([]), new Elementary(ElementaryKind::Boolean), $body, characteristics: [new \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism(true)]);
+        $history[] = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new QualifiedName(new Name('f_return')), new ParameterList([]), new Elementary(ElementaryKind::Boolean), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, [new \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism(true)]));
         $call = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new Name('f_return')))]));
         foreach (['0', '1', '0'] as $run) {
             $history[] = new SetVariables([new UserAssignment(new UserVariable(new Name('run')), new NumberLiteral($run))]);
