@@ -46,6 +46,7 @@ final class DefaultSetting implements AlterCommand
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
+        $this->column->deriveName($derivation, $scope->relations[0]->name ?? null);
         $this->default?->deriveAttribute($derivation, $scope);
     }
 

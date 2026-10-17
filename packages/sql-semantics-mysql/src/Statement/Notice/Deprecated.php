@@ -53,6 +53,7 @@ enum Deprecated: string
     case NoCache = "'SQL_NO_CACHE' is deprecated and will be removed in a future release.";
     case Cache = "'SQL_CACHE' is deprecated and will be removed in a future release.";
     case DotColumn = "'.<table>.<column>' is deprecated and will be removed in a future release. Please use the table.column name without a dot prefix instead";
+    case DotDefinitionName = "'.<column>' is deprecated and will be removed in a future release. Please use the column name without a dot prefix instead";
     case DotTable = "'.<table>' is deprecated and will be removed in a future release. Please use the table name without a dot prefix instead";
     case BinaryBitwise = "Bitwise operations on BINARY will change behavior in a future version, check the 'Bit functions' section in the manual.";
     case ProcedureAnalyse = "'PROCEDURE ANALYSE' is deprecated and will be removed in a future release.";
@@ -104,7 +105,7 @@ enum Deprecated: string
             self::Ucs2Collation => 4079,
             self::National => 3720,
             self::IntoInsideQuery => 3962,
-            self::BinaryAttribute, self::AsciiCharset, self::UnicodeCharset, self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3, self::Ucs2, self::DisableOnSlave, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::MasterPosWait, self::WaitUntilSqlThreadAfterGtids, self::JsonMerge, self::JsonTableResponseOrder, self::SpatialFunction, self::SystemVariable, self::LowPriorityWrite => 1287,
+            self::BinaryAttribute, self::AsciiCharset, self::UnicodeCharset, self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::DotDefinitionName, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3, self::Ucs2, self::DisableOnSlave, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::MasterPosWait, self::WaitUntilSqlThreadAfterGtids, self::JsonMerge, self::JsonTableResponseOrder, self::SpatialFunction, self::SystemVariable, self::LowPriorityWrite => 1287,
         };
     }
 
@@ -132,7 +133,7 @@ enum Deprecated: string
             return in_array($this, [self::DelayedInsert, self::DelayedReplace, self::OldPassword, self::SystemVariable, self::LowPriorityWrite, self::AlterIgnore], true);
         }
         if ($release === GrammarRelease::MySql5744) {
-            return in_array($this, [self::InsertDelayed, self::ReplaceDelayed, self::Cache, self::NoCache, self::ProcedureAnalyse, self::GroupByDirection, self::DotColumn, self::DotTable, self::BinaryBitwise, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::JsonMerge, self::SystemVariable, self::LowPriorityWrite], true);
+            return in_array($this, [self::InsertDelayed, self::ReplaceDelayed, self::Cache, self::NoCache, self::ProcedureAnalyse, self::GroupByDirection, self::DotColumn, self::DotTable, self::DotDefinitionName, self::BinaryBitwise, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::JsonMerge, self::SystemVariable, self::LowPriorityWrite], true);
         }
 
         if ($this === self::DisableOnSlave) {

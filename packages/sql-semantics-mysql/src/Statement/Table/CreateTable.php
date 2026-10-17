@@ -99,6 +99,7 @@ final class CreateTable implements Statement, Relation
             !$enclosed || ($this->elements === [] && $this->options === [] && $partitioning !== null && $query !== null && $query->duplicate === null && (new EnclosedQuery())->accepts($query->query)),
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -133,6 +134,7 @@ final class CreateTable implements Statement, Relation
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
         foreach ($this->elements as $element) {
+            (new ElementFacts())->names($element, $derivation, $this->name);
             if ($element instanceof ColumnDefinition) {
                 (new TypeNotices())->type($element->specification->dataType(), $derivation);
                 (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation);

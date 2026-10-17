@@ -1438,6 +1438,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "dot": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
         "table": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse": {
@@ -1463,6 +1464,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ObjectNameKind": {
         "name": "string",
         "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Problem\\MismatchedDefinitionName": {
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "target": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\TableWildcard": {
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"

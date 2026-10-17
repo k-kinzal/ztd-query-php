@@ -48,6 +48,9 @@ final class ElementFacts
      */
     public function element(TableElement $element, Derivation $derivation, Environment $scope, ?Table $defined = null, ?QualifiedName $definedName = null, bool $typeNotices = false): void
     {
+        if ($typeNotices) {
+            $this->names($element, $derivation, $scope->relations[0]->name ?? null);
+        }
         if ($typeNotices && $element instanceof ColumnDefinition) {
             (new TypeNotices())->type($element->specification->dataType(), $derivation);
         }
@@ -57,6 +60,24 @@ final class ElementFacts
         $element->deriveElement($derivation, $scope);
         $references = $element instanceof ForeignKey ? $element->references : ($element instanceof ColumnDefinition ? $this->references($element->specification) : null);
         $references?->deriveReferences($derivation, $defined, $definedName);
+    }
+
+    /**
+     * Reads definition-name notices before type and expression notices of an element.
+     */
+    public function names(TableElement $element, Derivation $derivation, ?QualifiedName $target = null): void
+    {
+        if ($element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition || $element instanceof ForeignKey) {
+            $element->constraint?->name?->deriveName($derivation, $target);
+        }
+        if ($element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint) {
+            $element->name?->name?->deriveName($derivation, $target);
+        }
+        if ($element instanceof ColumnDefinition) {
+            $element->name->deriveName($derivation, $target);
+        } elseif ($element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition || $element instanceof ForeignKey) {
+            $element->name?->deriveName($derivation, $target);
+        }
     }
 
     /**

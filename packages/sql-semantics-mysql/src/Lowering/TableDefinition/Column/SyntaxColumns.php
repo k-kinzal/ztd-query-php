@@ -57,7 +57,9 @@ final class SyntaxColumns
             return null;
         }
         try {
-            if ($legacy && $node->name === 'field_spec') {
+            if ($legacy && $node->name === 'field_ident') {
+                $lowering->names->columnName($node);
+            } elseif ($legacy && $node->name === 'field_spec') {
                 $lowering->tableDefinitions->tableElement($node);
             } elseif ($node->name === 'create_table_stmt') {
                 $lowering->tableDefinitions->statement($node);

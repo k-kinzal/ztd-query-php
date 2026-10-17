@@ -79,6 +79,7 @@ final class InputErrors
     public function source(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName => (new Definition\DefinitionNameInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand => (new \MySqlMemory\Program\Expression\KillUse())->error($diagnostic->process, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand => (new Event\Alteration())->operand($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration => (new Event\Alteration())->error($diagnostic, $session),

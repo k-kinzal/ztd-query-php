@@ -40,6 +40,7 @@ final class SyntaxNames
             return match ($node->name) {
                 'table_ident' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable,
                 'simple_ident_q' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotColumn,
+                'field_ident' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotDefinitionName,
                 default => null,
             };
         }

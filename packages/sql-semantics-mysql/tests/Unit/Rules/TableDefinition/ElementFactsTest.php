@@ -124,4 +124,14 @@ final class ElementFactsTest extends TestCase
         self::assertInstanceOf(ColumnDefinition::class, $element0);
         self::assertSame('p', (new ElementFacts())->references($element0->specification)?->table->name->value);
     }
+    public function testNamesResolvesTheDefinitionQualifierBeforeExpressionFacts(): void
+    {
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('other')));
+        $element = new ColumnDefinition($name, new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        (new ElementFacts())->names($element, $derivation, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName::class, $derivation->facts()->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
+    }
+
 }

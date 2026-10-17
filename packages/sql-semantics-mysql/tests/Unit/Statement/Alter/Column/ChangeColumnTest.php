@@ -40,4 +40,20 @@ final class ChangeColumnTest extends TestCase
     {
         self::assertSame('ALTER TABLE t CHANGE COLUMN a b INT FIRST, MODIFY COLUMN c TEXT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
     }
+    public function testRejectsADotPrefixThatWouldChangeTheOldNameInterpretation(): void
+    {
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('b'), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition($name, new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+        $this->expectExceptionMessage('A dot-prefixed CHANGE definition follows a fully qualified old name.');
+        new ChangeColumn(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), $definition);
+    }
+
+    public function testACompleteOldQualifierSeparatesADotPrefixedNewName(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $operation = $semantics->analyze('ALTER TABLE d.t CHANGE d.t.a .b INT');
+        self::assertInstanceOf(AlterTable::class, $operation->statement);
+        self::assertSame('ALTER TABLE d.t CHANGE COLUMN d.t.a .b INT', $operation->toString());
+    }
+
 }

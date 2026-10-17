@@ -292,6 +292,7 @@ final class NameRule
     /**
      * Lowers the name of a column at a position that defines or alters it.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the qualifier contradicts the definition target
      * @throws ImplementationGap When the production has no rule
      */
     public function columnName(Node $field): ColumnName
@@ -302,12 +303,19 @@ final class NameRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->lowering->leaves->record(new ColumnName($this->identifier($form->node($positions[0])), $this->qualifier($form, $positions[1], $positions[2])));
+        $name = new ColumnName($this->identifier($form->node($positions[0])), $this->qualifier($form, $positions[1], $positions[2]), $form->signature === 'field_ident: . ident' ? OptionalWords::Written : OptionalWords::Omitted);
+        $target = $this->lowering->columnTable;
+        $problem = $target === null ? null : (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->problem($name, $target);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($field)[1] ?? 0, true);
+        }
+        return $this->lowering->leaves->record($name);
     }
 
     /**
      * Lowers the optional name of an index or constraint, which MySQL 5.x lets a table name qualify.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the qualifier contradicts the definition target
      * @throws ImplementationGap When the production has no rule
      */
     public function optionalColumnName(Node $name): ?ColumnName
