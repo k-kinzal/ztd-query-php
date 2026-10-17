@@ -41,6 +41,7 @@ final class RowSubquery implements RowOperand
     public function __construct(public readonly Query $query)
     {
         Check::input((new QueryWidth())->of($query) > 1, 'A row subquery has a fixed output of at least two columns.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'An ordinary subquery operand has coherent fixed read columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

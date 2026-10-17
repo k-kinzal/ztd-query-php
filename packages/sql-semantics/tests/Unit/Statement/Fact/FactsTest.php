@@ -24,6 +24,19 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class FactsTest extends TestCase
 {
+    public function testForQueryKeepsItsConditionsAndResolvedDependenciesWithoutSiblingConditions(): void
+    {
+        $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (SELECT missing_a), missing_b');
+        $expression = $operation->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $expression);
+        $facts = $operation->facts->forQuery($expression->query);
+
+        self::assertCount(2, $operation->facts->diagnostics);
+        self::assertSame([$operation->facts->diagnostics[0]], $facts->diagnostics);
+        self::assertSame($operation->facts->query($expression->query), $facts->output);
+        self::assertSame($operation->facts->scalar($expression), $facts->scalar($expression));
+    }
+
     public function testReferencedRelationRetainsTheBoundOccurrence(): void
     {
         $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE d.t FROM e.t, d.t');

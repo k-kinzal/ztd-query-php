@@ -3842,6 +3842,11 @@
         "program": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "view": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\Problem\\RefusedQuery": {
+        "alter": "bool",
+        "query": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedQuery|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedSelection",
+        "view": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewAlgorithm": {
         "name": "string",
         "value": "string"

@@ -47,6 +47,9 @@ final class SelectionUse
         $derivation = new Derivation($context);
         $selection->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         $this->diagnosed($derivation->facts(), $session);
+        if ($selection->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star && ($selection->from === null || $selection->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual)) {
+            throw \MySqlMemory\Error\Family\QueryError::NoTablesUsed->error();
+        }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($selection, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
@@ -84,7 +87,7 @@ final class SelectionUse
             }
         }
         foreach ($facts->diagnostics as $problem) {
-            if ($problem instanceof MissingTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier || ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::StarWithoutTables)) {
+            if ($problem instanceof MissingTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier) {
                 throw (new Errors())->error($problem, $session);
             }
         }

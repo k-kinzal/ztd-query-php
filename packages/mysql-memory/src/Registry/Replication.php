@@ -64,6 +64,11 @@ final class Replication
     public int $port = 3306;
 
     /**
+     * The unsigned retry interval, including a value retained after repository storage fails.
+     */
+    public int $connectRetry = 60;
+
+    /**
      * The effective source host, retained across RESET without ALL.
      */
     public string $host = '';
@@ -86,6 +91,7 @@ final class Replication
         if ($all) {
             $this->heartbeatPeriods = [];
             $this->port = 3306;
+            $this->connectRetry = 60;
             $this->host = '';
             $this->connectionFailure = false;
             $this->autoPosition = false;

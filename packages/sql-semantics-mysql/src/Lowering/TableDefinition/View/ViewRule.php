@@ -136,7 +136,7 @@ final class ViewRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function definition(Node $tail, ?ViewAlgorithm $algorithm, ?Account $definer): ViewDefinition
+    public function definition(Node $tail, ?ViewAlgorithm $algorithm, ?Account $definer, bool $alter = false): ViewDefinition
     {
         $form = $this->lowering->productions->form($tail);
         $suid = $this->lowering->productions->form($form->node(0));
@@ -163,7 +163,14 @@ final class ViewRule
             throw ImplementationGap::production($check);
         }
 
-        $read = $this->lowering->queries->statement($query->node(0));
+        try {
+            $read = $this->lowering->queries->statement($query->node(0));
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery && !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection) {
+                throw $failure;
+            }
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery($identity, $alter, $failure->problem), $failure->end, false);
+        }
         \SqlSemantics\Diagnostic\Check::invariant($read instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'A view definition retains a complete read query.');
         $this->lowering->origins->forget($read);
         return new ViewDefinition($identity, $read->query, $columns, $algorithm, $definer, self::SECURITY[$suid->signature], self::CHECKS[$check->signature], $exists);
@@ -214,7 +221,7 @@ final class ViewRule
     {
         [$algorithm, $definer, $tail] = self::ALTERS[$form->signature] ?? throw ImplementationGap::production($form);
 
-        return new AlterView($this->definition($form->node($tail), $algorithm === null ? null : $this->algorithm($form->node($algorithm)), $this->lowering->users->definer($form->node($definer))));
+        return new AlterView($this->definition($form->node($tail), $algorithm === null ? null : $this->algorithm($form->node($algorithm)), $this->lowering->users->definer($form->node($definer)), true));
     }
 
     /**

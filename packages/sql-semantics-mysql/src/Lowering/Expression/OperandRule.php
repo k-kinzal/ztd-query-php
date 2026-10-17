@@ -70,7 +70,7 @@ final class OperandRule
     public function subquery(Query $query): Subquery\ScalarSubquery|Subquery\RowSubquery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery
     {
         $width = (new QueryWidth())->of($query);
-        if ($width === 0) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) !== null) {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery($query);
         }
         return $width > 1 ? new Subquery\RowSubquery($query) : new Subquery\ScalarSubquery($query);

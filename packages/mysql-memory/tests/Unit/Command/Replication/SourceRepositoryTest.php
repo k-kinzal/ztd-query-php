@@ -43,6 +43,20 @@ final class SourceRepositoryTest extends TestCase
         self::assertSame([2147483648, 2147483648, 3306], [$failed, $preserved, $session->instance->registry->replication->port]);
     }
 
+    public function testUpdateRetainsUnsignedRetryIntervalsAcrossAFailedFlush(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=2147483648');
+        $failed = $session->instance->registry->replication->connectRetry;
+        $session->run('CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=4294967296');
+        $preserved = $session->instance->registry->replication->connectRetry;
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=4294967297');
+        $repaired = $session->instance->registry->replication->connectRetry;
+        $session->query('RESET REPLICA ALL');
+
+        self::assertSame([2147483648, 2147483648, 1, 60], [$failed, $preserved, $repaired, $session->instance->registry->replication->connectRetry]);
+    }
+
     public function testCheckPreservesTheResetFailureAndAllClearsThePort(): void
     {
         $session = (new Instance())->connect();

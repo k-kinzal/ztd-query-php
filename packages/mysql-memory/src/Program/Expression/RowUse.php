@@ -76,6 +76,9 @@ final class RowUse
     public function prepare(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
     {
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery) {
+            $session = $compiler->connection->session();
+            \SqlSemantics\Diagnostic\Check::invariant($session !== null, 'A deferred query prepares in its invocation session.');
+            (new \MySqlMemory\Session\Problems())->raise(new \MySqlMemory\Session\Resolution\QueryPreparation($operand->query, $compiler->facts->forQuery($operand->query), $session->semantics()->profile()), $session);
             $compiler->planner->query($operand->query, $scope);
             return;
         }
@@ -153,6 +156,9 @@ final class RowUse
         $problem = $operand->problem();
         return match (true) {
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow => QueryError::ValuesEmptyRow->error(),
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse => (new Errors())->misuse($problem),
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch => (new Errors())->counted($problem),
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse => (new Errors())->write($problem, null),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns => QueryError::OperandColumns->error($problem->expected),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion => $problem->operand ? \MySqlMemory\Error\Family\DataError::TimeZoneCast->error() : \MySqlMemory\Error\Family\DataError::UnknownTimeZone->error($problem->expression->zone->value),
             default => throw new LogicException('An unimplemented deferred operand condition: ' . $problem::class),

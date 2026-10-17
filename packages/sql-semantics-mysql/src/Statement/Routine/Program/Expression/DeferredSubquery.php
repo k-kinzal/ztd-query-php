@@ -6,11 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -21,11 +19,12 @@ use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * A stored value use of a query whose first written row has no columns.
+ * A stored value use of a query with an intrinsic read-column constraint.
  *
  * The complete query remains available for invocation-time dependency checks.
  * It cannot supply an ordinary Scalar, but an unreached stored instruction may
- * retain it. A zero-column output is distinct from an unknown catalog width.
+ * retain it. Empty or inconsistent written rows, INSERT-only defaults and a
+ * tableless star differ from a catalog-dependent wildcard width.
  *
  * @visibility public
  * @example Keeping a zero-column subquery outside the scalar domain
@@ -43,11 +42,11 @@ final class DeferredSubquery implements DeferredOperand
     use Snapshot;
 
     /**
-     * @param Query $query The complete query with a fixed zero-column output
+     * @param Query $query The complete query with an intrinsic read-column constraint
      */
     public function __construct(public readonly Query $query)
     {
-        Check::input((new QueryWidth())->of($query) === 0, 'A deferred subquery value retains a fixed zero-column output.');
+        Check::input((new ReadColumns())->problem($query) !== null, 'A deferred subquery value retains an intrinsic read-column constraint.');
         (new SubqueryOptions())->check($query);
         (new Generations())->check($this);
     }
@@ -73,11 +72,13 @@ final class DeferredSubquery implements DeferredOperand
     }
 
     /**
-     * Answers the missing-column condition; earlier query dependencies may fail first.
+     * Answers the fixed read-column condition; earlier dependencies may fail first.
      */
     public function problem(): Diagnostic
     {
-        return new Misuse(MisuseRule::EmptyValuesRow);
+        $problem = (new ReadColumns())->problem($this->query);
+        Check::invariant($problem !== null, 'A deferred subquery value retains its read-column constraint.');
+        return $problem;
     }
 
     /**

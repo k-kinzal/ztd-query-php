@@ -62,10 +62,7 @@ final class Derivation
      */
     private array $declarations = [];
 
-    /**
-     * @var list<Diagnostic>
-     */
-    private array $diagnostics = [];
+    private readonly Conditions $conditions;
 
     private readonly Warnings $warnings;
 
@@ -75,11 +72,6 @@ final class Derivation
     public array $introducedVariables = [];
 
     private ?Node $reading = null;
-
-    /**
-     * @var array<int, list<Diagnostic>> The diagnostics withheld until a definition is used, by the object id of the definition
-     */
-    private array $withheld = [];
 
     private ?QueryFact $output = null;
 
@@ -100,6 +92,7 @@ final class Derivation
     public function __construct(public AnalysisContext $context, public readonly \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap(), private readonly array $parameters = [])
     {
         $this->warnings = new Warnings($sources);
+        $this->conditions = new Conditions();
         $this->instructions = new InstructionScope();
     }
 
@@ -274,7 +267,7 @@ final class Derivation
         $this->reading = $outer;
         $this->scalars[] = [$node, $fact];
         if ($fact->resolution instanceof Diagnostic) {
-            $this->diagnostics[] = $fact->resolution;
+            $this->conditions->report($fact->resolution);
         }
 
         return $fact;
@@ -300,7 +293,7 @@ final class Derivation
     {
         $this->relations[] = [$node, $fact];
         if ($fact->table instanceof Diagnostic) {
-            $this->diagnostics[] = $fact->table;
+            $this->conditions->report($fact->table);
         }
 
         return $fact;
@@ -321,7 +314,7 @@ final class Derivation
     {
         $previous = $this->reading;
         $this->reading = $node;
-        $fact = $node->deriveQuery($this, $outer);
+        $fact = $this->conditions->query(fn (): QueryFact => $node->deriveQuery($this, $outer));
         $this->reading = $previous;
         $this->queries[] = [$node, $fact];
 
@@ -341,11 +334,7 @@ final class Derivation
      */
     public function deferred(Node $definition, Closure $derive): mixed
     {
-        $before = count($this->diagnostics);
-        $result = $derive();
-        $this->withheld[spl_object_id($definition)] = array_splice($this->diagnostics, $before);
-
-        return $result;
+        return $this->conditions->deferred($definition, $derive);
     }
 
     /**
@@ -359,9 +348,7 @@ final class Derivation
         if ($name->schema === null) {
             $common = $environment->commonTable($name->name);
             if ($common !== null) {
-                $id = spl_object_id($common->definition);
-                array_push($this->diagnostics, ...($this->withheld[$id] ?? []));
-                unset($this->withheld[$id]);
+                $this->conditions->release($common->definition);
 
                 return new CommonTable($common->definition);
             }
@@ -392,7 +379,7 @@ final class Derivation
      */
     public function report(Diagnostic $diagnostic): void
     {
-        $this->diagnostics[] = $diagnostic;
+        $this->conditions->report($diagnostic);
     }
 
     /**
@@ -432,6 +419,6 @@ final class Derivation
      */
     public function facts(): Facts
     {
-        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->diagnostics, $this->readingWarnings(), $this->warnings->instructions(), array_values($this->references));
+        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->conditions->all(), $this->readingWarnings(), $this->warnings->instructions(), array_values($this->references));
     }
 }

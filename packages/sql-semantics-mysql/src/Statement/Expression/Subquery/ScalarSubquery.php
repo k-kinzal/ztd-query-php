@@ -38,6 +38,14 @@ use SqlSemantics\Statement\Snapshot;
  *     $items = [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))];
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], $items)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
+ * @example Refusing a tableless star as an ordinary scalar subquery
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing inconsistent written rows as an ordinary scalar subquery
+ *     $one = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([$one]), new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')])]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Comparing with a scalar subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = (SELECT 1)');
@@ -57,6 +65,7 @@ final class ScalarSubquery implements Scalar
     public function __construct(public readonly Query $query)
     {
         \SqlSemantics\Diagnostic\Check::input(((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth())->of($query) ?? 1) === 1, 'A scalar subquery has one output column when its width is fixed.');
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'An ordinary subquery operand has coherent fixed read columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

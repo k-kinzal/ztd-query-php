@@ -85,6 +85,7 @@
     },
     "SqlSemantics\\Statement\\Fact\\QueryFact": {
         "aggregates": "array",
+        "diagnostics": "array",
         "names": "SqlSemantics\\Statement\\Identifier\\Comparison",
         "projection": "array",
         "shape": "SqlSemantics\\Statement\\Shape\\RowShape"

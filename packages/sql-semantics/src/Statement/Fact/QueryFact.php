@@ -48,14 +48,21 @@ final class QueryFact
     public readonly array $aggregates;
 
     /**
+     * @var list<Diagnostic> Conditions belonging to this query, including reached nested dependencies
+     */
+    public readonly array $diagnostics;
+
+    /**
      * @param array<array-key, object> $projection The output fields and unexpandable stars in order, as a list of Field and OpenStar
      * @param Comparison $names How output names are compared
      * @param list<Scalar> $aggregates The resolved aggregate occurrences owned by this query block
+     * @param list<Diagnostic> $diagnostics The conditions emitted while deriving this query
      *
      * @throws InvalidConstruction When projection or aggregate items do not have their required roles
      */
-    public function __construct(array $projection, public readonly Comparison $names, array $aggregates = [])
+    public function __construct(array $projection, public readonly Comparison $names, array $aggregates = [], array $diagnostics = [])
     {
+        $this->diagnostics = Check::listOf($diagnostics, Diagnostic::class, 'Query conditions are diagnostic values.');
         $this->aggregates = Check::listOf($aggregates, Scalar::class, 'Aggregates are scalar occurrences.');
         $slots = [];
         $missing = [];

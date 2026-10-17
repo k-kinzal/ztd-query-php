@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 /**
  * Retains connection settings independently of whether the metadata repository accepts them.
  *
- * The port is unsigned modulo 2^32; zero preserves the old port. TABLE metadata
- * stores only signed nonnegative ports. A rejected value survives until a later
+ * The port and connection retry interval are unsigned modulo 2^32; zero preserves
+ * the previous value. TABLE metadata stores signed nonnegative integers. A rejected value survives until a later
  * nonzero assignment or RESET REPLICA ALL. Observed through SQL on 8.0.44,
  * 8.4.7 and 9.1.0, including errors competing with compression and relay settings.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
@@ -43,13 +43,21 @@ final class SourceRepository
             $period = (float) $heartbeat->text;
             $state->heartbeatPeriods[$channel] = $period < 0.001 ? 0.0 : $period;
         }
-        $value = $options[SourceOptionKind::Port->value]->value ?? null;
-        if ($value instanceof Numeral) {
+        foreach ([SourceOptionKind::Port, SourceOptionKind::ConnectRetry] as $kind) {
+            $value = $options[$kind->value]->value ?? null;
+            if (!$value instanceof Numeral) {
+                continue;
+            }
             $number = (new Literals())->number($value);
             $number = bccomp($number, '18446744073709551615') > 0 ? '18446744073709551615' : $number;
-            $port = (int) bcmod($number, '4294967296');
-            if ($port !== 0) {
-                $state->port = $port;
+            $number = (int) bcmod($number, '4294967296');
+            if ($number === 0) {
+                continue;
+            }
+            if ($kind === SourceOptionKind::Port) {
+                $state->port = $number;
+            } else {
+                $state->connectRetry = $number;
             }
         }
     }
@@ -57,11 +65,16 @@ final class SourceRepository
     /**
      * Reports the repository error and the command-specific following conditions.
      *
-     * @throws SqlError When the connection port cannot be stored in the TABLE repository
+     * @throws SqlError When a connection parameter cannot be stored in the TABLE repository
      */
     public function check(Replication $state, bool $reset = false): void
     {
-        if ($state->port <= 2147483647) {
+        $column = match (true) {
+            $state->port > 2147483647 => 'Port',
+            $state->connectRetry > 2147483647 => 'Connect_retry',
+            default => null,
+        };
+        if ($column === null) {
             return;
         }
         $state->connectionFailure = $state->connectionFailure || $reset;
@@ -74,7 +87,7 @@ final class SourceRepository
             $following[] = [StatementError::UnknownError->value, StatementError::UnknownError->message()];
         }
 
-        throw new SqlError($error, $error->message('Port'), following: $following);
+        throw new SqlError($error, $error->message($column), following: $following);
     }
     /**
      * Retries connection metadata initialization before reading any new settings.

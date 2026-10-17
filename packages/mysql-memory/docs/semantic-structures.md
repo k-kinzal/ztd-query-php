@@ -1860,3 +1860,40 @@ The earlier account-rename snapshot `/rename290-work-20261018`, labeled
 That snapshot precedes the window changes. It is not the required final-revision
 unseeded result, and it does not replace replaying all nine supplied corpora after
 the remaining structural repairs.
+
+### Read-column ownership and replication retry intervals
+
+The `query312` validation snapshot excludes tableless stars, inconsistent fixed
+VALUES or set widths, and INSERT-only defaults from ordinary scalar/row subquery
+construction. View definitions also reject fixed read-column contradictions.
+Retained input conditions preserve the complete query and the view target, so
+ALTER target checks precede body preparation without consulting source text.
+A query fact now retains its own diagnostics, including reached dependencies;
+nested preparation selects those conditions without inheriting sibling clauses.
+The derivation recorder still withholds unused definition conditions.
+
+Black-box comparisons passed for 560 subquery observations on five releases,
+230 view observations on five releases, and 525 observations of 15 directly
+constructed scalar-query objects reused across seven catalog/cardinality states
+on five releases. The scalar-query state campaign ran on `query310`; `query312`
+also fixes the legacy view wrapper and reruns the view comparisons. Ordinary
+reads succeed with empty and single-row tables, then report the native row-count
+or binding error after the corresponding state changes. These domain checks do
+not establish closure of all query forms: the additional 1,810-observation
+predicate campaign currently has 82 differences and remains a failing input set.
+
+The same changes retain the unsigned connection retry interval after failed
+replication metadata writes, zero/modulo-zero assignments and RESET. Native
+history replay passed 168 observations; PDO comparison passed 240 commands on
+8.0.44, 8.4.7 and 9.1.0. The original unseeded failure used
+`SOURCE_CONNECT_RETRY=2147483648`, which previously succeeded in Memory while
+MySQL reported the `Connect_retry` metadata error. Probes that also read
+`mysql.slave_master_info` exposed missing system-table row data; that separate
+surface remains unresolved.
+
+The all-root campaign on commit `cd4ecc19094fd4be4aaa1603dcb891cd55397b2f`
+failed: 97 matching successes, 144 matching SQL errors, two view profile failures,
+and one native connection timeout. Its unseeded campaign failed on its first
+input, and its seed campaigns found view target-order differences. A prior
+900-second success on the account-fix snapshot does not replace a passing
+campaign on the final revision. The acceptance contract remains unmet.

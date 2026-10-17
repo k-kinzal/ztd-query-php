@@ -73,6 +73,7 @@ final class InputErrors
     public function query(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery => $this->view($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar => $this->scalar($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation => (new EvaluationInput())->deferred($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery => $this->selection($diagnostic->query, $session),
@@ -81,6 +82,33 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion => $this->union($diagnostic, $session),
             default => null,
         };
+    }
+
+    /**
+     * Opens read dependencies and the ALTER target before preparing a refused view body.
+     */
+    public function view(\SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery $problem, Session $session): SqlError
+    {
+        $query = $problem->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery ? $problem->query->query : $problem->query->selection;
+        $database = $problem->view->schema->value ?? $session->variables->database;
+        if ($database === '') {
+            return \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+        }
+        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution());
+        $derivation = new \SqlSemantics\Construction\Derivation($context);
+        $query->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
+        (new \MySqlMemory\Program\Expression\SelectionUse())->diagnosed($derivation->facts(), $session);
+        if ($problem->alter) {
+            $schema = $session->instance->dictionary->schema($database);
+            $name = $problem->view->name->value;
+            if ($schema?->table($name) !== null) {
+                return SchemaError::WrongObject->error($database, $name, 'VIEW');
+            }
+            if (!isset($schema->views[$name])) {
+                return \MySqlMemory\Error\Family\QueryError::NoSuchTable->error($database, $name);
+            }
+        }
+        return $this->selection($query, $session);
     }
 
     /**

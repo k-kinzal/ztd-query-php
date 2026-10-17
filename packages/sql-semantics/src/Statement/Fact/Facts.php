@@ -174,6 +174,17 @@ final class Facts
     }
 
     /**
+     * Retains resolved dependencies while selecting the conditions of one query.
+     *
+     * Nested preparation does not inherit diagnostics belonging to sibling clauses.
+     */
+    public function forQuery(Query $query): self
+    {
+        $output = $this->query($query);
+        return new self(array_values($this->scalars), array_values($this->relations), array_values($this->queries), $this->declarations, $output, $output->diagnostics, $this->warnings, $this->warningInstructions, array_values($this->references));
+    }
+
+    /**
      * Tells whether a node has a fact of any kind in this operation.
      */
     public function covers(Node $node): bool

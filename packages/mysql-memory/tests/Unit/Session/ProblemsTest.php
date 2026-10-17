@@ -390,7 +390,7 @@ final class ProblemsTest extends TestCase
         $session = (new Instance())->connect();
 
         self::assertTrue((new Problems())->tested($session->analyze('SELECT EXISTS (SELECT *)')));
-        self::assertFalse((new Problems())->tested($session->analyze('SELECT EXISTS (SELECT *), (SELECT * FROM DUAL)')));
+        self::assertFalse((new Problems())->tested($session->analyze('SELECT EXISTS (SELECT *) FROM (SELECT * FROM DUAL) AS d')));
         self::assertFalse((new Problems())->tested($session->analyze('SELECT 1')));
     }
 

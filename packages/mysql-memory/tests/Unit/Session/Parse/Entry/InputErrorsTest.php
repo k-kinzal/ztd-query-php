@@ -19,6 +19,23 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testViewUsesItsRetainedTargetBeforePreparingTheBody(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v'));
+        $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()]));
+        $problem = new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery($name, true, new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery($body));
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1146, (new InputErrors())->view($problem, $session)->getCode());
+        $session->query('CREATE TABLE v(a INT)');
+        self::assertSame(1347, (new InputErrors())->view($problem, $session)->getCode());
+        $session->query('DROP TABLE v; CREATE VIEW v AS SELECT 1');
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1096, (new InputErrors())->view($problem, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testScalarBindsTheRetainedOperandWithoutLosingPriorNotices(): void
     {
         $session = (new Instance())->connect();
