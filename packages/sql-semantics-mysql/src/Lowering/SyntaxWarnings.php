@@ -47,9 +47,10 @@ final class SyntaxWarnings
         $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');
         $lowering = new Lowering($productions, new Leaves(), $profile);
         $operands = new Notice\OperandCompletion();
+        $passwords = new Account\Authentication\SyntaxPasswords();
         $header = new Routine\Program\NoticeHeader();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $replicaNetTimeout): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $passwords, $replicaNetTimeout): void {
                 if ($state->aborted) {
                     return;
                 }
@@ -64,7 +65,7 @@ final class SyntaxWarnings
                     return;
                 }
                 $derived = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? (new Query\Legacy\DerivedAliases())->rejected($node, $lowering) : null;
-                $log = $derived ?? (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
+                $log = $passwords->starting($node, $lookahead, $lowering, $tokens) ?? $derived ?? (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
                 if ($log !== null && $log->end <= $end) {
                     $state->record($log->end, new ParseFailure($log->problem, true));
                     return;

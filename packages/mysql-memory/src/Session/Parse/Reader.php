@@ -153,7 +153,7 @@ final class Reader
         if ($partition && (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($parser, $statement, $session->semantics()->profile()) !== null) {
             return (new Entry\PartitionInput())->error($failure, $statement, $session);
         }
-        $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
+        $error = $partition ? (new Entry\PartitionInput())->error($failure, $statement, $session) : (new Entry\InputErrors())->refused($failure, $statement, $session);
         $error = new SqlError($error->error, $error->getMessage(), $failure, $error->following, $error->signalled, $error->getCode(), $error->recorded);
         $target = (new Entry\DerivedInput())->refusal($failure, $statement, $session);
         $error = $target ?? $error;
@@ -171,7 +171,7 @@ final class Reader
             $statement = substr($statement, 0, $lexical->offset);
             $tokens = $parser->tokenize($statement);
         }
-        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $failure->end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, (new Entry\InputErrors())->noticeEnd($failure), $session->semantics()->profile(), $session->resolution()->replicaNetTimeout);
         if ($target !== null) {
             $notices = array_values(array_filter($notices, static fn (array $notice): bool => !$notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
         }

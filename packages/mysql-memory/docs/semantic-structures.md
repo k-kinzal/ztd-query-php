@@ -1618,3 +1618,18 @@ matched. The original failed process remains recorded; it is not represented as
 a clean uninterrupted run. Intrinsic construction gaps remain, including
 ordinary window frames/options and query-role restrictions, so these comparisons
 do not close the construction acceptance gate.
+
+The account authentication campaign on `/auth157-work-20261017` excludes
+`Credential::PasswordHash` from `AlterUser` construction. Legacy CREATE USER
+and GRANT retain that form. SQL lowering rejects its ALTER USER use before
+publishing a statement, including in unreachable stored instructions and before
+later malformed clauses. The refusal carries only a diagnostic and a transient
+input boundary; SQL excerpts remain an input-adapter responsibility. MySQL 8.0
+also retains its enabled native-password plugin instead of inheriting 8.4's
+disabled default. All 230 SQL observations across five releases matched. Another
+48 directly constructed alterations were reused with the account absent,
+present and removed: all 144 observations matched, with unrelated request text.
+Both packages' static checks, 8,367 Semantics MySQL tests, 17,964 Memory
+unit/property/doctests and nine native integration tests passed. These repairs
+close the account-authentication examples; the combined acceptance gate remains
+open for the other recorded domains and the final complete fuzz campaigns.

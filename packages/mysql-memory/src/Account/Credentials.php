@@ -12,7 +12,7 @@ use SqlSemantics\Contract\GrammarRelease;
 /**
  * The authentication plugins of the server, the authentication strings they store, and the passwords it generates.
  *
- * caching_sha2_password and sha256_password are loaded; mysql_native_password is disabled, and
+ * caching_sha2_password and sha256_password are loaded; mysql_native_password is disabled from 8.4, and
  * any other plugin is not loaded (ER_PLUGIN_IS_NOT_LOADED). A password is stored as a salted
  * SHA-256 crypt string: `$A$005$`, 20 salt bytes and 43 digest characters for
  * caching_sha2_password, `$5$`, the salt, `$` and the digest for sha256_password; an empty
@@ -74,6 +74,9 @@ final class Credentials
     {
         $plugin = strtolower($name);
         $loaded = $this->legacy() ? ['mysql_native_password', 'sha256_password'] : ['caching_sha2_password', 'sha256_password'];
+        if (in_array($this->release, [GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830], true)) {
+            $loaded[] = 'mysql_native_password';
+        }
         if ($this->release === GrammarRelease::MySql5651) {
             $loaded[] = 'mysql_old_password';
         }

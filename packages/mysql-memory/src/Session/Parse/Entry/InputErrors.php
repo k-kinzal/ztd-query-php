@@ -22,6 +22,26 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 final class InputErrors
 {
     /**
+     * Excludes a refusal at the lookahead token from its own preceding notices.
+     */
+    public function noticeEnd(\SqlSemantics\Construction\RejectedInput $failure): int
+    {
+        return $failure->end - ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash ? 1 : 0);
+    }
+
+    /**
+     * Formats a refusal whose excerpt boundary belongs to the input exception.
+     */
+    public function refused(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
+    {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash) {
+            return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($failure->end, $statement, $session->following, $failure, true, $session->semantics()->parser());
+        }
+
+        return (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
+    }
+
+    /**
      * Formats an input refusal, or leaves other diagnostics to their semantic family.
      */
     public function error(Diagnostic $diagnostic, Session $session): ?SqlError

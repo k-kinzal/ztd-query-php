@@ -19,6 +19,25 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testNoticeEndExcludesTheRefusedLookaheadAndKeepsCompletedOperands(): void
+    {
+        $errors = new InputErrors();
+
+        self::assertSame(35, $errors->noticeEnd(new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash(), 36)));
+        self::assertSame(36, $errors->noticeEnd(new \SqlSemantics\Construction\RejectedInput(new NotSupportedYet('example'), 36)));
+    }
+
+    public function testRefusedUsesTheTransientExcerptBoundaryForAnAlterUserHash(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $sql = "ALTER USER u IDENTIFIED BY PASSWORD 'text'";
+        $failure = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash(), strlen('ALTER USER u IDENTIFIED BY PASSWORD '));
+        $errors = new InputErrors();
+
+        self::assertSame("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''text'' at line 1", $errors->refused($failure, $sql, $session)->getMessage());
+        self::assertSame(1235, $errors->refused(new \SqlSemantics\Construction\RejectedInput(new NotSupportedYet('example'), 0), '', $session)->getCode());
+    }
+
     public function testSelectionReturnsItsConditionWithoutConsultingInputText(): void
     {
         $session = (new Instance())->connect();

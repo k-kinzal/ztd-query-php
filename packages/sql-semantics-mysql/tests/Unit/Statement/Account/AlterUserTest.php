@@ -10,17 +10,16 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash;
 
 #[CoversClass(AlterUser::class)]
 #[Medium]
 final class AlterUserTest extends TestCase
 {
-    public function testDeriveStatementReportsPasswordHashProblems(): void
+    public function testDeriveStatementAcceptsPluginAuthenticationStrings(): void
     {
-        $hash = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("ALTER USER u IDENTIFIED BY PASSWORD '*AB'");
+        $hash = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("ALTER USER u IDENTIFIED WITH mysql_native_password AS '*0123456789012345678901234567890123456789'");
 
-        self::assertInstanceOf(RejectedPasswordHash::class, $hash->facts->diagnostics[0]);
+        self::assertSame([], $hash->facts->diagnostics);
     }
 
     public function testRenderWritesEveryClause(): void

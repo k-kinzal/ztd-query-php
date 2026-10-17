@@ -19,6 +19,12 @@ final class CredentialsTest extends TestCase
         self::assertSame('sha256_password', (new Credentials())->plugin('SHA256_PASSWORD'));
     }
 
+    public function testPluginKeepsNativePasswordLoadedBeforeMySql84(): void
+    {
+        self::assertSame('mysql_native_password', (new Credentials(\SqlSemantics\Contract\GrammarRelease::MySql8044))->plugin('mysql_native_password'));
+        self::assertSame('mysql_native_password', (new Credentials(\SqlSemantics\Contract\GrammarRelease::MySql830))->plugin('mysql_native_password'));
+    }
+
     public function testPluginRefusesThePluginsThatAreNotLoaded(): void
     {
         $this->expectException(SqlError::class);

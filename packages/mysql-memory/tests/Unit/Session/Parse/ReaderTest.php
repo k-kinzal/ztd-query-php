@@ -21,6 +21,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ReaderTest extends TestCase
 {
+    public function testRejectionFormatsAHashRefusalBeforeTheIncompleteSuffix(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run("ALTER USER u IDENTIFIED BY PASSWORD 'text' REQUIRE");
+
+        self::assertSame([['Error', 1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''text' REQUIRE' at line 1"]], $session->diagnostics->conditions);
+    }
+
     public function testOperandKeepsTheDebugEntryBeforeDateInterpretation(): void
     {
         $session = (new Instance())->connect();
