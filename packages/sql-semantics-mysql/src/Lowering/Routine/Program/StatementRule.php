@@ -101,6 +101,10 @@ final class StatementRule
      */
     public function sql(Node $node): ProgramStatement|Statement
     {
+        $process = (new \SqlSemantics\Platform\MySql\Lowering\Server\ProcessOperand($this->lowering))->program($node);
+        if ($process !== null) {
+            return $process;
+        }
         $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->read($node);
         if ($selection !== null) {
             return $selection;

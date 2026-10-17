@@ -132,7 +132,8 @@ final class ConditionRule
             $this->lowering->options->skip($form->node(2));
         }
 
-        return new TruthTest((new OperandRule())->scalar($this->boolean($form->node(0)), $form->node(0)), $truth, $negated);
+        $operand = $this->boolean($form->node(0));
+        return $operand instanceof Scalar ? new TruthTest($operand, $truth, $negated) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest($operand, $truth, $negated);
     }
 
     /**

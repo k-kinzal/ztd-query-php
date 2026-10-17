@@ -74,8 +74,11 @@ final class OperandRule
      *
      * @throws RejectedInput When the operands contradict one another
      */
-    public function comparison(ComparisonOperator $operator, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $left, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $right, Node $source): Comparison
+    public function comparison(ComparisonOperator $operator, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $left, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $right, Node $source): Comparison|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredComparison
     {
+        if ($left instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand || $right instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredComparison($operator, $left, $right);
+        }
         $left = $this->row($left, $source);
         $right = $this->row($right, $source);
         $this->check((new RowShapes())->problem($left, $right), $source);

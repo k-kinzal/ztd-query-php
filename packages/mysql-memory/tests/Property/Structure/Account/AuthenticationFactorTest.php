@@ -31,6 +31,34 @@ use SqlSemantics\Statement\Identifier\Name;
 final class AuthenticationFactorTest extends TestCase
 {
     /**
+     * Reuses CURRENT_USER unchanged across removal and recreation of its account.
+     */
+    #[DataProvider('providerHistories')]
+    public function testCurrentUserRetainsPrimaryAuthenticationAcrossAnAccountTransition(string $release, int $seed): void
+    {
+        $choices = new Choices('current-user-factor:' . $seed);
+        $account = new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser($choices->one(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::cases()));
+        $method = static fn () => new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Password, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('password_' . $choices->integer(0, 100000)));
+        $factors = array_map(static fn () => $method(), range(1, $choices->integer(1, 2)));
+        $statement = new CreateUser(false, [new UserSpecification($account, $method(), $factors)]);
+        $session = (new Instance($release))->connect();
+        $session->text = 'unrelated invalid source';
+        $execution = new Execution();
+        try {
+            $execution->runIn($session, $statement);
+            self::fail('The connected account already exists.');
+        } catch (SqlError $failure) {
+            self::assertSame(1396, $failure->getCode());
+            self::assertSame([], $session->diagnostics->conditions);
+        }
+        $execution->runIn($session, new \SqlSemantics\Platform\MySql\Statement\Account\DropUser(false, [$account]));
+        $reply = $execution->runIn($session, $statement);
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame(0, $reply->warnings());
+        self::assertNotNull($session->instance->accounts->find(new \MySqlMemory\Account\Identity($session->user, $session->host)));
+    }
+
+    /**
      * @return iterable<string, array{string, int}>
      */
     public static function providerHistories(): iterable

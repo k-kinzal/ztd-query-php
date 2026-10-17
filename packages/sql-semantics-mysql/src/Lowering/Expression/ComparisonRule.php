@@ -36,7 +36,8 @@ final class ComparisonRule
         if ($problem !== null) {
             throw new RejectedInput($problem, (new SourceRanges())->span($source)[1] ?? 0, false);
         }
-        return (new OperandRule())->comparison($operator, $left, $right, $source);
+        (new OperandRule())->check((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->problem($left, $right), $source);
+        return new Comparison($operator, $left, $right);
     }
 
     /**

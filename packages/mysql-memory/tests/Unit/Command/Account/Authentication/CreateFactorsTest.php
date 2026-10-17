@@ -15,6 +15,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CreateFactorsTest extends TestCase
 {
+    public function testCheckCurrentUserReportsExistenceWithoutAdditionalFactorWarnings(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = $session->run('CREATE USER CURRENT_USER IDENTIFIED BY RANDOM PASSWORD AND IDENTIFIED BY RANDOM PASSWORD');
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(1396, $answers[0]->getCode());
+        self::assertSame([1396], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testCheckReportsOnlyTheFirstOmittedFactorBeforeExistence(): void
     {
         $session = (new Instance())->connect();

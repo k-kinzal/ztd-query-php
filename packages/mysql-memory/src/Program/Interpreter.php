@@ -105,6 +105,7 @@ final class Interpreter
         return match (true) {
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignments => $this->assignments($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection => $this->selection($statement),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill => $this->kill($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel => $this->deferredCondition($statement),
             $statement instanceof Block => $this->block($statement),
             $statement instanceof IfStatement => $this->branches($statement->branches, $statement->otherwise, null, false),
@@ -151,6 +152,15 @@ final class Interpreter
     public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $statement): ?Jump
     {
         $jump = $this->instruction(fn () => (new Expression\SelectionUse())->raise($statement, $this->session));
+        return $jump?->flow === Flow::Resume ? null : $jump;
+    }
+
+    /**
+     * Prepares a reached KILL operand through the current program's handlers.
+     */
+    public function kill(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill $statement): ?Jump
+    {
+        $jump = $this->instruction(fn () => (new Expression\KillUse())->raise($statement->process, $this->session));
         return $jump?->flow === Flow::Resume ? null : $jump;
     }
 

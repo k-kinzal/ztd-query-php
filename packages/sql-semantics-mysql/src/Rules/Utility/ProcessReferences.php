@@ -36,7 +36,7 @@ final class ProcessReferences
         $native = new NativeFunctions();
         while ($pending !== []) {
             $node = array_pop($pending);
-            if ($node instanceof TableReference || $node instanceof ExplicitTable || ($node instanceof FunctionCall && ($node->schema !== null || !$native->exists($derivation->context->profile->grammar, $node->name->value)))) {
+            if ($node instanceof TableReference || $node instanceof ExplicitTable || (($node instanceof FunctionCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall) && ($node->schema !== null || !$native->exists($derivation->context->profile->grammar, $node->name->value)))) {
                 $derivation->report(new NotSupportedYet(Kill::DEPENDENCIES));
 
                 return;

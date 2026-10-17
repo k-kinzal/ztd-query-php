@@ -23,6 +23,9 @@ use SqlSemantics\Statement\Scalar;
  * statement is resolved is evaluated then, and refused when it is more than one character; one
  * known only when the statement runs, such as USER() or a user variable, is checked when the
  * first row is matched, so a LIKE never evaluated never refuses it.
+ * MySQL 5.6 and 5.7 also read a constant pattern once during preparation,
+ * even for NULL subjects, unused branches and empty inputs. Row evaluation
+ * reads it again. Verified with populated tables and session-variable patterns.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-comparison-functions.html#operator_like.
  *
  * @visibility MySqlMemory\Evaluation
@@ -57,6 +60,12 @@ final class Patterns
         [$collation] = Collations::aggregate([$operand->domain(), $pattern->domain()], 'like', $this->compiler->settings->connectionCollation, true, $this->compiler->settings->release());
         $operand = \MySqlMemory\Evaluation\Operator\Transcoded::of($operand, $collation, $this->compiler->constancy($node->operand) === Constancy::Resolved, $this->compiler->connection->context);
         $pattern = \MySqlMemory\Evaluation\Operator\Transcoded::of($pattern, $collation, $this->compiler->constancy($node->pattern) === Constancy::Resolved, $this->compiler->connection->context);
+        $context = $this->compiler->connection->context;
+        $reported = $context->reported;
+        if ($this->compiler->settings->legacy() && $this->compiler->constancy($node->pattern)->constant() && !isset($reported[$node])) {
+            $reported[$node] = true;
+            $pattern->evaluate(new Frame($context));
+        }
 
         return new Pattern($operand, $pattern, $escape, $collation, $node->negated, $this->compiler->domain($node), $constancy === Constancy::Statement);
     }

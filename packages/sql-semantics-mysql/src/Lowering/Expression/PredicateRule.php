@@ -91,12 +91,12 @@ final class PredicateRule
             'predicate: bit_expr IN_SYM ( expr )' => (new OperandRule())->inList($operand, [$expressions->operand($form->node(3 + $offset))], $negated, $form->node),
             'predicate: bit_expr IN_SYM ( expr , expr_list )' => (new OperandRule())->inList($operand, [$expressions->operand($form->node(3 + $offset)), ...$expressions->operands($form->node(5 + $offset))], $negated, $form->node),
             'predicate: bit_expr BETWEEN_SYM bit_expr AND_SYM predicate' => new Between((new OperandRule())->scalar($operand, $form->node(0)), $expressions->bitExpression($form->node(2 + $offset)), (new OperandRule())->scalar($this->predicate($form->node(4 + $offset)), $form->node(4 + $offset)), $negated),
-            'predicate: bit_expr LIKE simple_expr opt_escape' => new Like((new OperandRule())->scalar($operand, $form->node(0)), $expressions->simpleExpression($form->node(2 + $offset)), $this->escape($form->node(3 + $offset)), $negated),
-            'predicate: bit_expr LIKE simple_expr' => new Like((new OperandRule())->scalar($operand, $form->node(0)), $expressions->simpleExpression($form->node(2 + $offset)), null, $negated),
-            'predicate: bit_expr LIKE simple_expr ESCAPE_SYM simple_expr' => new Like((new OperandRule())->scalar($operand, $form->node(0)), $expressions->simpleExpression($form->node(2 + $offset)), $expressions->simpleExpression($form->node(4 + $offset)), $negated),
+            'predicate: bit_expr LIKE simple_expr opt_escape' => $this->like($operand, (new PrimaryRule($this->lowering))->simpleExpression($form->node(2 + $offset)), $this->escape($form->node(3 + $offset)), $negated),
+            'predicate: bit_expr LIKE simple_expr' => $this->like($operand, (new PrimaryRule($this->lowering))->simpleExpression($form->node(2 + $offset)), null, $negated),
+            'predicate: bit_expr LIKE simple_expr ESCAPE_SYM simple_expr' => $this->like($operand, (new PrimaryRule($this->lowering))->simpleExpression($form->node(2 + $offset)), (new PrimaryRule($this->lowering))->simpleExpression($form->node(4 + $offset)), $negated),
             'predicate: bit_expr REGEXP bit_expr' => new Regexp((new OperandRule())->scalar($operand, $form->node(0)), $expressions->bitExpression($form->node(2 + $offset)), $negated),
             'predicate: bit_expr SOUNDS_SYM LIKE bit_expr' => new SoundsLike((new OperandRule())->scalar($operand, $form->node(0)), $expressions->bitExpression($form->node(3))),
-            'predicate: bit_expr MEMBER_SYM opt_of ( simple_expr )' => $this->member($form, (new OperandRule())->scalar($operand, $form->node(0))),
+            'predicate: bit_expr MEMBER_SYM opt_of ( simple_expr )' => $this->member($form, $operand),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -106,14 +106,24 @@ final class PredicateRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function member(Form $form, Scalar $operand): MemberOf
+    public function member(Form $form, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand): MemberOf|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf
     {
         $of = $this->lowering->form($form->node(2));
         if ($of->signature !== 'opt_of: OF_SYM' && $of->signature !== 'opt_of:') {
             throw ImplementationGap::production($of);
         }
 
-        return new MemberOf($operand, $this->lowering->expressions->simpleExpression($form->node(4)), $of->signature === 'opt_of: OF_SYM' ? OptionalWords::Written : OptionalWords::Omitted);
+        $array = (new PrimaryRule($this->lowering))->simpleExpression($form->node(4));
+        $words = $of->signature === 'opt_of: OF_SYM' ? OptionalWords::Written : OptionalWords::Omitted;
+        return $operand instanceof Scalar && $array instanceof Scalar ? new MemberOf($operand, $array, $words) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf($operand, $array, $words);
+    }
+
+    /**
+     * Retains row-valued LIKE dependencies for stored instructions.
+     */
+    public function like(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $pattern, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $escape, bool $negated): Like|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredLike
+    {
+        return $operand instanceof Scalar && $pattern instanceof Scalar && ($escape === null || $escape instanceof Scalar) ? new Like($operand, $pattern, $escape, $negated) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredLike($operand, $pattern, $escape, $negated);
     }
 
     /**
@@ -121,13 +131,13 @@ final class PredicateRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function escape(Node $escape): ?Scalar
+    public function escape(Node $escape): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null
     {
         $form = $this->lowering->form($escape);
 
         return match ($form->signature) {
             'opt_escape:' => null,
-            'opt_escape: ESCAPE_SYM simple_expr' => $this->lowering->expressions->simpleExpression($form->node(1)),
+            'opt_escape: ESCAPE_SYM simple_expr' => (new PrimaryRule($this->lowering))->simpleExpression($form->node(1)),
             default => throw ImplementationGap::production($form),
         };
     }

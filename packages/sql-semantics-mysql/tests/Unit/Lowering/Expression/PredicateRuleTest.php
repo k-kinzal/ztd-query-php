@@ -24,6 +24,18 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 #[Medium]
 final class PredicateRuleTest extends TestCase
 {
+    public function testLikeRetainsNonScalarPatternOperands(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new PredicateRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $like = $rule->like(new NumberLiteral('0'), $row, null, true);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredLike::class, $like);
+        self::assertSame($row, $like->pattern);
+        self::assertTrue($like->negated);
+    }
+
     public function testPredicateLowersANegatedRangeWithARangeInTheUpperBound(): void
     {
         $platform = new Platform();

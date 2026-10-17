@@ -114,6 +114,15 @@ final class AuthenticationFactorTest extends TestCase
             'CREATE PROCEDURE d.p() BEGIN SELECT @@missing; ALTER USER u DROP 2 FACTOR DROP 2 FACTOR; END',
             'CREATE PROCEDURE d.p() BEGIN ALTER USER u DROP 2 FACTOR DROP 2 FACTOR; SELECT @@missing; END',
         ];
+        $statements = [...$statements,
+            'CREATE USER CURRENT_USER IDENTIFIED BY RANDOM PASSWORD AND IDENTIFIED BY RANDOM PASSWORD',
+            "CREATE USER CURRENT_USER() IDENTIFIED BY 'pw' AND IDENTIFIED BY 'pw'",
+            "CREATE USER CURRENT_USER IDENTIFIED WITH missing BY 'pw' AND IDENTIFIED BY 'pw'",
+            "CREATE USER 'root'@'%' IDENTIFIED BY 'pw' AND IDENTIFIED BY 'pw'",
+            'DROP USER CURRENT_USER',
+            "CREATE USER CURRENT_USER IDENTIFIED BY 'pw' AND IDENTIFIED BY 'pw'",
+            "SELECT COUNT(*) FROM mysql.user WHERE User='root' AND Host='%'",
+        ];
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

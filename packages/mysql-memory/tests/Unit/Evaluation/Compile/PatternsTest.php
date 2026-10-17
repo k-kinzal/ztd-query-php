@@ -9,6 +9,7 @@ use MySqlMemory\Evaluation\Compile\Patterns;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -16,6 +17,31 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PatternsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerPreparedPatterns(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.4.7'] as $release) {
+            $extra = str_starts_with($release, '5.') ? 1 : 0;
+            foreach (["'x' LIKE CAST('x' AS SIGNED)" => 1, "NULL LIKE CAST('x' AS SIGNED)" => 0, "IF(0, 'x' LIKE CAST('x' AS SIGNED), 1)" => 0, 'NULL LIKE CAST(@v AS SIGNED)' => 0] as $expression => $warnings) {
+                yield $release . ' ' . $expression => [$release, $expression, $extra + $warnings];
+            }
+        }
+    }
+
+    #[DataProvider('providerPreparedPatterns')]
+    public function testLikePreparesLegacyConstantPatternsEvenWhenNoMatchIsEvaluated(string $release, string $expression, int $count): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->query("SET @v='x'");
+        $session->query('SELECT ' . $expression);
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(array_fill(0, $count, ['Warning', '1292', "Truncated incorrect INTEGER value: 'x'"]), $warnings->rows);
+    }
+
     public function testLikeMatchesAPatternInTheCollationOfTheOperands(): void
     {
         $session = (new Instance())->connect();

@@ -136,7 +136,7 @@ final class Stages
     {
         return $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction
             || $diagnostic instanceof UnknownSystemVariable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable
-            || ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === 'AT LOCAL')
+            || ($diagnostic instanceof NotSupportedYet && in_array($diagnostic->feature, ['AT LOCAL', 'LIMIT & IN/ALL/ANY/SOME subquery'], true))
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem;
     }

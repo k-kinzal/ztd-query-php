@@ -14,7 +14,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  * Checks additional authentication methods after the first method has been accepted.
  * The first omitted plugin reports the authentication-policy warning. Existing accounts
  * reach their existence error without loading additional plugins; new accounts validate
- * the second factor before the third. Verified on live MySQL 8.0, 8.4 and 9.1 servers.
+ * the second factor before the third. CURRENT_USER retains only its primary authentication
+ * method, including when the account was removed earlier in the same connection.
+ * Verified on live MySQL 8.0, 8.4 and 9.1 servers.
  *
  * @visibility MySqlMemory
  */
@@ -27,6 +29,9 @@ final class CreateFactors
      */
     public function check(UserSpecification $user, bool $exists, Session $session): void
     {
+        if ($user->user instanceof \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser) {
+            return;
+        }
         foreach ($user->factors as $index => $factor) {
             if ($factor->plugin === null) {
                 $session->diagnostics->warning(AccountError::FactorPolicyMismatch, AccountError::FactorPolicyMismatch->message((string) ($index + 2)));

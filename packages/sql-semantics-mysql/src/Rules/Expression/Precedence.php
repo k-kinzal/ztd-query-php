@@ -189,7 +189,7 @@ final class Precedence
         return match (true) {
             $expression instanceof Logical => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
             $expression instanceof Arithmetic, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
-            $expression instanceof Comparison => [self::BOOL_PRI, self::BOOL_PRI, $expression->left, $expression->right],
+            $expression instanceof Comparison, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredComparison => [self::BOOL_PRI, self::BOOL_PRI, $expression->left, $expression->right],
             $expression instanceof Concatenation => [self::SIMPLE_EXPR, self::SIMPLE_EXPR, $expression->left, $expression->right],
             $expression instanceof Not => [self::NEGATION, self::NEGATION, null, $expression->operand],
             $expression instanceof Unary => [self::PRIMARY, self::PREFIX, null, $expression->operand],
@@ -208,13 +208,13 @@ final class Precedence
     public function postfix(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression): ?array
     {
         return match (true) {
-            $expression instanceof TruthTest => [self::TRUTH, self::TRUTH, $expression->operand, null],
+            $expression instanceof TruthTest, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest => [self::TRUTH, self::TRUTH, $expression->operand, null],
             $expression instanceof NullTest => [self::BOOL_PRI, self::BOOL_PRI, $expression->operand, null],
             $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate => [$expression->operator === null ? self::PREDICATE : self::BOOL_PRI, $expression->operator === null ? self::PREDICATE : self::BOOL_PRI, $expression->operand, null],
             $expression instanceof QuantifiedComparison => [self::BOOL_PRI, self::BOOL_PRI, $expression->operand, null],
-            $expression instanceof InList, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMembership, $expression instanceof InQuery, $expression instanceof MemberOf => [self::PREDICATE, self::PREDICATE, $expression->operand, null],
+            $expression instanceof InList, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMembership, $expression instanceof InQuery, $expression instanceof MemberOf, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf => [self::PREDICATE, self::PREDICATE, $expression->operand, null],
             $expression instanceof Between => [self::PREDICATE, self::BOOL_PRI, $expression->operand, $expression->high],
-            $expression instanceof Like => [self::PREDICATE, self::BIT_XOR, $expression->operand, $expression->escape ?? $expression->pattern],
+            $expression instanceof Like, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredLike => [self::PREDICATE, self::BIT_XOR, $expression->operand, $expression->escape ?? $expression->pattern],
             $expression instanceof Regexp, $expression instanceof SoundsLike => [self::PREDICATE, self::PREDICATE, $expression->operand, $expression->pattern],
             $expression instanceof IntervalArithmetic => [self::ADDITIVE, self::ADDITIVE, $expression->operand, null],
             $expression instanceof Collated => [self::COLLATION, self::COLLATION, $expression->operand, null],
