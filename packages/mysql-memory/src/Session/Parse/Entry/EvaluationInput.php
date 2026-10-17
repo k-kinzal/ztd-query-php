@@ -18,6 +18,18 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard;
 final class EvaluationInput
 {
     /**
+     * Resolves every retained DO dependency before reporting its operand constraint.
+     */
+    public function deferred(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation $problem, Session $session): SqlError
+    {
+        try {
+            (new \MySqlMemory\Program\Expression\EvaluationUse())->raise($problem->evaluation, $session, false);
+        } catch (SqlError $error) {
+            return $error;
+        }
+    }
+
+    /**
      * Answers the native refusal without constructing or executing a replacement statement.
      */
     public function error(EvaluationWildcard $problem, Session $session): SqlError

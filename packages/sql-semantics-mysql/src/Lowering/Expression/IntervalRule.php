@@ -59,4 +59,18 @@ final class IntervalRule
 
         return self::UNITS[$form->signature] ?? throw ImplementationGap::production($form);
     }
+
+    /**
+     * Retains non-scalar date and quantity operands until invocation preparation.
+     */
+    public function arithmetic(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Node $quantity, Node $unit, bool $subtract = false, bool $leading = false): \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval
+    {
+        $value = $this->lowering->expressions->operand($quantity);
+        $kind = $this->unit($unit);
+        if (!$operand instanceof \SqlSemantics\Statement\Scalar || !$value instanceof \SqlSemantics\Statement\Scalar) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval($operand, $value, $kind, $subtract, $leading);
+        }
+        $interval = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval($value, $kind);
+        return $leading ? new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition($interval, $operand) : new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic($operand, $interval, $subtract);
+    }
 }

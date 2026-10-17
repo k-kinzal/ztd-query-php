@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\FunctionBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -30,6 +29,8 @@ use SqlSemantics\Statement\Snapshot;
  * @example Constructing a SQL implementation independently of a function name
  *     $implementation = new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
  *     count($implementation->characteristics) // => 0
+ * @example Excluding values that cannot contain a RETURN instruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()) // throws \TypeError
  */
 final class FunctionImplementation
 {
@@ -46,16 +47,15 @@ final class FunctionImplementation
     public readonly array $characteristics;
 
     /**
-     * @param Node $body The SQL instruction structure or external code
+     * @param ExternalBody|FunctionBody $body The SQL instruction structure capable of containing RETURN, or external code
      * @param list<Characteristic> $characteristics The characteristics in written order
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the language or instruction structure is inconsistent
      */
-    public function __construct(Node $body, array $characteristics = [])
+    public function __construct(ExternalBody|FunctionBody $body, array $characteristics = [])
     {
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
         (new BodyLanguage())->check($body, $this->characteristics);
         (new BodyStructure())->check($body, ProgramKind::Function);
-        Check::input($body instanceof ExternalBody || $body instanceof FunctionBody, 'A function body is external code or an instruction shape containing RETURN.');
         $this->body = $body;
     }
 

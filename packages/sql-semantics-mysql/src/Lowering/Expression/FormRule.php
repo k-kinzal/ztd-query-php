@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\JsonExtraction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Expression\Row;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
@@ -68,7 +67,7 @@ final class FormRule
             'simple_expr: { ident expr }' => new OdbcEscape($names->identifier($form->node(1)), $expressions->expression($form->node(2))),
             'simple_expr: DEFAULT ( simple_ident )', 'simple_expr: DEFAULT_SYM ( simple_ident )' => new DefaultOfColumn($names->column($form->node(2))),
             'simple_expr: VALUES ( simple_ident_nospvar )' => new InsertedColumn($names->column($form->node(2))),
-            'simple_expr: INTERVAL_SYM expr interval + expr' => new IntervalAddition($expressions->interval($form->node(1), $form->node(2)), $expressions->expression($form->node(4))),
+            'simple_expr: INTERVAL_SYM expr interval + expr' => (new IntervalRule($this->lowering))->arithmetic($expressions->operand($form->node(4)), $form->node(1), $form->node(2), leading: true),
             'simple_expr: simple_ident JSON_SEPARATOR_SYM TEXT_STRING_literal' => new JsonExtraction($names->column($form->node(0)), $this->lowering->literals->text($form->node(2))),
             'simple_expr: simple_ident JSON_UNQUOTED_SEPARATOR_SYM TEXT_STRING_literal' => new JsonExtraction($names->column($form->node(0)), $this->lowering->literals->text($form->node(2)), true),
             default => (new ConstructRule($this->lowering))->lower($form),

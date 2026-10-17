@@ -187,14 +187,14 @@ final class Precedence
     public function edges(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression): ?array
     {
         return match (true) {
-            $expression instanceof Logical => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
+            $expression instanceof Logical, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredLogical => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
             $expression instanceof Arithmetic, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
             $expression instanceof Comparison, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredComparison => [self::BOOL_PRI, self::BOOL_PRI, $expression->left, $expression->right],
             $expression instanceof Concatenation => [self::SIMPLE_EXPR, self::SIMPLE_EXPR, $expression->left, $expression->right],
             $expression instanceof Not, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot => [self::NEGATION, self::NEGATION, null, $expression->operand],
             $expression instanceof Unary, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary => [self::PRIMARY, self::PREFIX, null, $expression->operand],
             $expression instanceof BinaryCast => [self::PRIMARY, self::PRIMARY, null, $expression->operand],
-            $expression instanceof IntervalAddition => [self::PRIMARY, self::NEGATION, null, $expression->operand],
+            $expression instanceof IntervalAddition, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval && $expression->leading => [self::PRIMARY, self::NEGATION, null, $expression->operand],
             $expression instanceof VariableAssignment => [self::PRIMARY, self::ASSIGNMENT, null, $expression->value],
             default => $this->postfix($expression),
         };
@@ -216,7 +216,7 @@ final class Precedence
             $expression instanceof Between => [self::PREDICATE, self::BOOL_PRI, $expression->operand, $expression->high],
             $expression instanceof Like, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredLike => [self::PREDICATE, self::BIT_XOR, $expression->operand, $expression->escape ?? $expression->pattern],
             $expression instanceof Regexp, $expression instanceof SoundsLike => [self::PREDICATE, self::PREDICATE, $expression->operand, $expression->pattern],
-            $expression instanceof IntervalArithmetic => [self::ADDITIVE, self::ADDITIVE, $expression->operand, null],
+            $expression instanceof IntervalArithmetic, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval => [self::ADDITIVE, self::ADDITIVE, $expression->operand, null],
             $expression instanceof Collated, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated => [self::COLLATION, self::COLLATION, $expression->operand, null],
             default => null,
         };
@@ -256,7 +256,7 @@ final class Precedence
      */
     public function top(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression): int
     {
-        if ($expression instanceof IntervalArithmetic) {
+        if ($expression instanceof IntervalArithmetic || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval && !$expression->leading)) {
             return self::BIT_XOR;
         }
 

@@ -29,23 +29,29 @@ final class EvaluationItems
 
     /**
      * @return list<SelectExpression> The expression items
-     * @throws RejectedInput When DO requests a wildcard
+     * @throws RejectedInput When DO requests a wildcard or a non-scalar operand
      */
     public function read(Node $node): array
     {
-        $items = $this->lowering->queries->selectItems($node);
+        $items = $node->name === 'expr_list'
+            ? array_map(static fn ($value) => $value instanceof \SqlSemantics\Statement\Scalar ? new SelectExpression($value) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($value), (new \SqlSemantics\Platform\MySql\Lowering\Expression\ListRule($this->lowering))->operands($node))
+            : (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->items($node);
         $expressions = [];
         $wildcard = null;
         foreach ($items as $item) {
             if ($item instanceof SelectExpression) {
                 $expressions[] = $item;
-            } else {
+            } elseif (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection) {
                 $wildcard ??= $item;
             }
         }
         if ($wildcard !== null) {
             $end = (new SourceRanges())->span($node)[1] ?? 0;
             throw new RejectedInput(new EvaluationWildcard($wildcard instanceof TableWildcard ? $wildcard->table : null, $this->requiresDatabase($expressions)), $end, false);
+        }
+        $stored = $this->stored($items);
+        if ($stored instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation) {
+            throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation($stored), (new SourceRanges())->span($node)[1] ?? 0, false);
         }
 
         return $expressions;

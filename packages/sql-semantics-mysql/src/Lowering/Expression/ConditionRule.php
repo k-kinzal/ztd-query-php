@@ -107,7 +107,8 @@ final class ConditionRule
         }
         $result = $this->unit($form);
         foreach (array_reverse($pending) as [$operator, $right, $symbolic]) {
-            $result = new Logical($operator, (new OperandRule())->scalar($result, $expression), $this->lowering->expressions->expression($right), $symbolic);
+            $operand = $this->lowering->expressions->operand($right);
+            $result = $result instanceof Scalar && $operand instanceof Scalar ? new Logical($operator, $result, $operand, $symbolic) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredLogical($operator, $result, $operand, $symbolic);
         }
 
         return $this->lowering->origins->record($result, $expression);

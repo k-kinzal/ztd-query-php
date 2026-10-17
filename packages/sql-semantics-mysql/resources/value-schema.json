@@ -1008,6 +1008,9 @@
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedEvaluation": {
+        "evaluation": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredEvaluation"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedLoadOptions": {
         "assignments": "array",
         "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
@@ -2388,6 +2391,19 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredCollated": {
         "collation": "SqlSemantics\\Statement\\Identifier\\Name",
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredInterval": {
+        "leading": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "quantity": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "subtract": "bool",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredLogical": {
+        "left": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\LogicalOperator",
+        "right": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "symbolic": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredNot": {
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"

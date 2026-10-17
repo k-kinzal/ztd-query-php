@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Statement\Scalar;
 
@@ -73,7 +72,7 @@ final class BitRule
         foreach (array_reverse($pending) as $operation) {
             $operator = self::OPERATORS[$operation->signature] ?? null;
             $result = $operator === null
-                ? new IntervalArithmetic((new OperandRule())->scalar($result, $operation->node(0)), $this->lowering->expressions->interval($operation->node(3), $operation->node(4)), self::INTERVALS[$operation->signature])
+                ? (new IntervalRule($this->lowering))->arithmetic($result, $operation->node(3), $operation->node(4), self::INTERVALS[$operation->signature])
                 : $this->arithmetic($operator, $result, $this->bitExpression($operation->node(2)));
         }
 

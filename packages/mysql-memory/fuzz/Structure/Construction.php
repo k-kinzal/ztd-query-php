@@ -87,7 +87,8 @@ final class Construction
             $arguments = $sample->repeats >= max(1, count($slots) * 2) ? [] : $sample->values;
             $failureKey = '';
             $repeats = 0;
-            $replace = $arguments === [] || $slots === [] ? -1 : $this->choices->integer(0, count($slots) - 1);
+            /** Visit each argument under a stagnant invariant; random slot selection can miss its constrained operand. */
+            $replace = $arguments === [] || $slots === [] ? -1 : ($sample->repeats - 1) % count($slots);
             try {
                 foreach ($slots as $index => $parameter) {
                     if ($index !== $replace && array_key_exists($index, $arguments)) {

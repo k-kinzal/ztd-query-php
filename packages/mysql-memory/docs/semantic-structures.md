@@ -14,7 +14,7 @@ The campaign discovers concrete types from the reviewed semantic value inventori
 
 Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. The selected root can use the shared 2,000-attempt cap. Each nested constructor retains a smaller depth-dependent cap that includes its descendants, preventing one nested alternative from taking the entire root search budget. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
 
-A rejected constructor keeps its completed arguments so the next trial can resample one argument instead of rebuilding unrelated children. Repeated rejection by the same invariant switches that candidate to complete resampling until the rejected constraint changes. The invariant is identified by its constructor type and check call site, rather than a message containing generated names. Detailed messages remain in the rejection report. Both strategies use the same shared attempt cap. They inspect constructor types and invariant refusals only; they do not use MySQL outcomes to choose or discard values. Exhaustion remains a failure. The bounded search can still exhaust; neither a passing inventory run nor a repaired seed establishes that every random construction search will finish.
+A rejected constructor keeps its completed arguments so the next trial can resample one argument instead of rebuilding unrelated children. Under a repeated invariant, the argument positions are visited in order so that no slot is starved by random selection. Repeated rejection by the same invariant switches that candidate to complete resampling until the rejected constraint changes. The invariant is identified by its constructor type and check call site, rather than a message containing generated names. Detailed messages remain in the rejection report. Both strategies use the same shared attempt cap. They inspect constructor types and invariant refusals only; they do not use MySQL outcomes to choose or discard values. Exhaustion remains a failure. The bounded search can still exhaust; neither a passing inventory run nor a repaired seed establishes that every random construction search will finish.
 
 `Scalar` and `RowOperand` are separate roles. A row contains at least two fields; a subquery with a fixed multi-column projection has a row role, while an unknown catalog-dependent width remains a resolution dependency. Ordinary comparisons and membership constructors reject incompatible fixed shapes. Stored programs additionally need operand roles whose preparation is deferred until an instruction is reached. These values preserve their complete operands and do not implement `Scalar`. A stored definition can therefore retain a row-valued condition, assignment or projection without making that value valid in an ordinary scalar position.
 
@@ -1662,3 +1662,36 @@ had missed. Static checks, 17,977 unit/property/doctests (74,351 assertions), an
 18 native integration tests (438 assertions) passed. This closes these table
 format examples; the intrinsic window/query domains and complete final-revision
 acceptance campaigns remain open.
+
+The 2026-10-17 DO dependency repair retains the complete refused instruction in
+`RefusedEvaluation`. Interval arithmetic and logical operations with non-scalar
+operands have explicit `DeferredInterval` and `DeferredLogical` program values.
+Their date/quantity/unit and left/operator/right roles remain available during
+preparation. They are not ordinary scalars. A later subquery's missing table can
+therefore be resolved before an earlier scalar-width condition without reading
+source SQL or a parser tree. Ambiguous interval row spelling is rejected at
+construction; grouped rows and explicit `ROW` quantities preserve their grammar
+roles. A function implementation now accepts only external code or an instruction
+type capable of containing RETURN, matching its retained body type.
+
+Adding the values exposed constructor-search starvation in `body-domain:80`.
+Repeated invariant failures now visit argument positions in order before complete
+resampling. The same seed constructed its selected function root in 94 attempts,
+within the unchanged shared limit of 2,000. The 120 function-construction seeds
+remain in the test suite; neither a selected root nor an accepted construction is
+discarded based on execution results.
+
+Frozen snapshot `do179-work-20261017` passed all static checks of MySQL Memory and
+SQL Semantics MySQL, including dependency boundaries and all 920 retained-value
+schemas. SQL Semantics MySQL passed 8,382 tests / 17,687 assertions; MySQL Memory
+passed 17,978 tests / 74,354 assertions. `DeferredEvaluationTest` passed 10 native
+integration datasets / 395 assertions on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1. These
+compare 898 SQL observations and 90 directly constructed procedure definitions
+followed by 360 calls across skipped, reached, populated and skipped-again states.
+The direct consumer receives an unrelated invalid request label throughout.
+
+This includes the original unseeded failure at index 259 on `e975b42235e`, which
+stopped after 158.052 seconds with 259 matches and one difference: native 1146
+versus memory 1241. Repairing that input does not turn the interrupted run into a
+900-second pass. Whole-model intrinsic query/window issues and the final-revision
+whole-model, nine-corpus and unseeded acceptance gates remain open.

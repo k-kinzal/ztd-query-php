@@ -45,7 +45,8 @@ final class DeferredArithmetic implements DeferredOperand
         $precedence = new Precedence();
         Check::input($precedence->fits($left, $operator->level(), $operator->level()), 'The left arithmetic operand needs grouping.');
         Check::input($precedence->opening($right) > $operator->level(), 'The right arithmetic operand needs grouping.');
-        Check::input(!$precedence->leading($right) instanceof IntervalAddition || ($operator !== ArithmeticOperator::Plus && $operator !== ArithmeticOperator::Minus), 'A leading interval needs grouping after this operator.');
+        $leading = $precedence->leading($right);
+        Check::input(!($leading instanceof IntervalAddition || ($leading instanceof Operator\DeferredInterval && $leading->leading)) || ($operator !== ArithmeticOperator::Plus && $operator !== ArithmeticOperator::Minus), 'A leading interval needs grouping after this operator.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

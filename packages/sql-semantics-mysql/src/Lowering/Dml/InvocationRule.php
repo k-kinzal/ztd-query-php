@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare;
 use SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Scalar;
 
@@ -53,7 +52,7 @@ final class InvocationRule
     {
         switch ($form->signature) {
             case 'do: DO_SYM expr_list':
-                return new Evaluation(array_map(static fn (Scalar $expression): SelectExpression => new SelectExpression($expression), $this->lowering->expressions->expressions($form->node(1))));
+                return new Evaluation((new EvaluationItems($this->lowering))->read($form->node(1)));
             case 'do_stmt: DO_SYM empty_select_options select_item_list':
                 $this->lowering->options->skip($form->node(1));
 

@@ -33,11 +33,13 @@ final class EvaluationUse
      * @throws \MySqlMemory\Error\SqlError When expansion or operand preparation is refused
      * @throws LogicException When a deferred instruction has no preparation condition
      */
-    public function raise(DeferredEvaluation $statement, Session $session): never
+    public function raise(DeferredEvaluation $statement, Session $session, bool $invocation = true): never
     {
-        \MySqlMemory\Session\State\StatementCounters::query($session);
-        \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_do');
-        $session->diagnostics->clear();
+        if ($invocation) {
+            \MySqlMemory\Session\State\StatementCounters::query($session);
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_do');
+            $session->diagnostics->clear();
+        }
         if ($statement->problem() instanceof EvaluationWildcard) {
             throw (new Errors())->error($statement->problem(), $session);
         }

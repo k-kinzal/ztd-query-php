@@ -28,4 +28,11 @@ final class IntervalRuleTest extends TestCase
         self::assertSame(IntervalUnit::MinuteMicrosecond, $rule->unit($platform->parser($profile)->parse("SELECT 1 + INTERVAL '1' MINUTE_MICROSECOND")->find('interval')[0]));
         self::assertSame(IntervalUnit::Day, $rule->unit($platform->parser($profile)->parse('SELECT 1 + INTERVAL 1 SQL_TSI_DAY')->find('interval')[0]));
     }
+    public function testArithmeticKeepsTheDateQuantityAndUnitOfADeferredInstruction(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('CREATE PROCEDURE p() DO INTERVAL ((1,2)) DAY + 3');
+        self::assertSame('CREATE PROCEDURE p() DO INTERVAL ((1, 2)) DAY + 3', $operation->toString());
+        self::assertSame([], $operation->facts->diagnostics);
+    }
 }
