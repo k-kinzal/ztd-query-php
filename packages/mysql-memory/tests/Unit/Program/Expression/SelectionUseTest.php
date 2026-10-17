@@ -22,6 +22,16 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class SelectionUseTest extends TestCase
 {
+    public function testDiagnosedReportsGrammarConditionsBeforeQueryPreparation(): void
+    {
+        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow), new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('nosuch')]);
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1193);
+        (new SelectionUse())->diagnosed($facts, $session);
+    }
+
     public function testClausesPrepareTheWhereDependencyBeforeTheHavingRow(): void
     {
         $session = (new Instance())->connect();

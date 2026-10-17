@@ -6,6 +6,7 @@ namespace MySqlMemory\Program\Expression;
 
 use LogicException;
 use MySqlMemory\Session\Problem\Errors;
+use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
@@ -45,16 +46,7 @@ final class SelectionUse
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
         $selection->deriveProgram($derivation, new ProgramScope($derivation->environment()));
-        foreach ($derivation->facts()->diagnostics as $problem) {
-            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
-                throw (new Errors())->error($problem, $session);
-            }
-        }
-        foreach ($derivation->facts()->diagnostics as $problem) {
-            if ($problem instanceof MissingTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier || ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::StarWithoutTables)) {
-                throw (new Errors())->error($problem, $session);
-            }
-        }
+        $this->diagnosed($derivation->facts(), $session);
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($selection, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
@@ -73,6 +65,30 @@ final class SelectionUse
         $this->clauses($selection, $planner, $scope);
 
     }
+    /**
+     * Reports grammar conditions before relation binding and operand preparation.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a retained diagnostic precedes preparation
+     */
+    public function diagnosed(\SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    {
+        foreach ($facts->diagnostics as $problem) {
+            if (Stages::parsed($problem)) {
+                throw (new Errors())->error($problem, $session);
+            }
+        }
+        foreach ($facts->diagnostics as $problem) {
+            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
+                throw (new Errors())->error($problem, $session);
+            }
+        }
+        foreach ($facts->diagnostics as $problem) {
+            if ($problem instanceof MissingTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier || ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::StarWithoutTables)) {
+                throw (new Errors())->error($problem, $session);
+            }
+        }
+    }
+
     /**
      * Prepares filters and sort items in their native order before any rows are read.
      *

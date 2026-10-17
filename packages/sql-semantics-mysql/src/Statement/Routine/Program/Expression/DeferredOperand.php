@@ -21,9 +21,10 @@ use SqlSemantics\Statement\Operand;
 interface DeferredOperand extends Operand
 {
     /**
-     * Exposes the dependencies in their preparation order.
+     * Exposes scalar dependencies in their preparation order. Query dependencies
+     * are retained separately by their owning form and may have no scalar operands.
      *
-     * @return non-empty-list<\SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable|\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|DeferredOperand>
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable|\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|DeferredOperand>
      */
     public function operands(): array;
 

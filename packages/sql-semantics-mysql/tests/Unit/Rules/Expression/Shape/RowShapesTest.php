@@ -38,6 +38,15 @@ final class RowShapesTest extends TestCase
         self::assertNull((new RowShapes())->query(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), $query));
     }
 
+    public function testQueryDoesNotTreatZeroOutputColumnsAsOneScalar(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]);
+        $problem = (new RowShapes())->query(new NumberLiteral('1'), $query);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $problem);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow, $problem->rule);
+    }
+
     public function testPairsDistinguishesUnknownWidthFromOneValue(): void
     {
         self::assertNull((new RowShapes())->pairs(null, [null, null]));

@@ -22,6 +22,16 @@ A rejected constructor keeps its completed arguments so the next trial can resam
 
 Deferred CAST/CONVERT operands, IF arguments and CASE branches retain their complete expression roles. An unselected result branch can still require preparation when its enclosing SELECT is reached. The same stored instruction is tested while skipped, reached and skipped again; a successful skipped call does not erase prior conditions on every release.
 
+A fixed zero-column subquery is distinct from an unknown catalog-dependent
+width. Scalar subqueries, membership and quantified comparisons exclude that
+fixed shape from their ordinary scalar roles. Stored instructions retain it as
+`DeferredSubquery` or `DeferredSubqueryPredicate`, including the complete query
+needed to resolve earlier dependency conditions when reached. A standalone
+scalar-position refusal retains the same dependencies in `RefusedScalar`.
+These diagnostics retain neither SQL text nor parser objects. Empty rows remain
+available as direct INSERT sources, where MySQL interprets them as default rows.
+The restriction does not yet establish every query's read-role invariant.
+
 CREATE TRIGGER histories distinguish an absent database, an absent table, a populated target and a repeated definition. Legacy releases report a missing target table even when its database does not exist; modern releases report the missing database. MySQL 5.6 also rejects a second trigger for the same table, timing and event. These are observations of database state, not constructor rejection rules.
 
 Explicit SHOW database identities must be nonempty; the empty database operand of SHOW OPEN TABLES remains a listing filter. View column lists have a release-dependent domain: legacy releases accept names that modern releases reject, including an empty name or trailing whitespace. Composition checks exclude combining that legacy column domain with modern query forms. Modern input lowering retains a typed column refusal, the view identity and its enclosing stored-program identity. The consumer can therefore resolve the default-database dependency without consulting SQL. CREATE/DROP VIEW also carry the function/trigger restriction imposed by their implicit transaction boundary.

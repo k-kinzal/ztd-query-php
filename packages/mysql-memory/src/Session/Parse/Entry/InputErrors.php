@@ -73,12 +73,25 @@ final class InputErrors
     public function query(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar => $this->scalar($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation => (new EvaluationInput())->deferred($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => $this->selection($diagnostic->selection, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption => \MySqlMemory\Error\Family\StatementError::CantUseOptionHere->error($diagnostic->option->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion => $this->union($diagnostic, $session),
             default => null,
         };
+    }
+
+    /**
+     * Resolves a refused operand without discarding its earlier dependency conditions.
+     */
+    public function scalar(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar $problem, Session $session): SqlError
+    {
+        try {
+            (new \MySqlMemory\Program\Expression\RowUse())->raise($problem->operand, $session, false);
+        } catch (SqlError $error) {
+            return $error;
+        }
     }
 
     /**

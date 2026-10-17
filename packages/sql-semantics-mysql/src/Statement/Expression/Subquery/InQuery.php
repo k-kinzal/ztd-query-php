@@ -30,6 +30,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Testing membership in a subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a NOT IN (SELECT 1)');
  *     $query->statement->query->where->negated // => true
+ * @example Refusing membership in a fixed zero-column output
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class InQuery implements Scalar
 {

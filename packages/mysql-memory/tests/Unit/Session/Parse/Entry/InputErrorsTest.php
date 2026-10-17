@@ -19,6 +19,19 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testScalarBindsTheRetainedOperandWithoutLosingPriorNotices(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $session->diagnostics->warning(1681, 'Earlier grammar notice');
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('missing')), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($row);
+
+        self::assertSame(1054, (new InputErrors())->scalar($problem, $session)->getCode());
+        self::assertSame([['Warning', 1681, 'Earlier grammar notice']], $session->diagnostics->conditions);
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testNoticeEndExcludesTheRefusedLookaheadAndKeepsCompletedOperands(): void
     {
         $errors = new InputErrors();

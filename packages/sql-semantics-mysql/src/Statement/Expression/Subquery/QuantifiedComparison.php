@@ -38,6 +38,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Comparing with every row
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a >= ALL (SELECT 1)');
  *     [$query->statement->query->where->operator->value, $query->statement->query->where->quantifier->value] // => ['>=', 'ALL']
+ * @example Refusing quantification over a fixed zero-column output
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal, \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any, $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class QuantifiedComparison implements Scalar
 {

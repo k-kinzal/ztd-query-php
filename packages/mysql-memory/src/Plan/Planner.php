@@ -283,6 +283,9 @@ final class Planner
         $rows = [];
         $columns = [];
         foreach ($query->rows as $row) {
+            if ($row->values === []) {
+                throw QueryError::ValuesEmptyRow->error();
+            }
             $compiled = [];
             foreach ($row->values as $position => $value) {
                 $evaluable = $this->compiler->compile($value, $scope);

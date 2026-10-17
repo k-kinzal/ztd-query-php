@@ -7,6 +7,7 @@ namespace MySqlMemory\Program\Expression;
 use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Session\Problem\Errors;
+use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
@@ -32,12 +33,12 @@ final class RowUse
      *
      * @throws \MySqlMemory\Error\SqlError Always, after resolving the row's operands
      */
-    public function raise(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Session $session): never
+    public function raise(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Session $session, bool $invocation = true): never
     {
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
-        if ($session->settings()->release() === GrammarRelease::MySql5651) {
+        if ($invocation && $session->settings()->release() === GrammarRelease::MySql5651) {
             $session->diagnostics->retain();
-        } else {
+        } elseif ($invocation) {
             $session->diagnostics->clear();
         }
         $database = $session->variables->database;
@@ -45,6 +46,11 @@ final class RowUse
         $derivation = new Derivation($context);
         $derivation->scalar($operand, new Environment($context));
         $problems = $derivation->facts()->diagnostics;
+        foreach ($problems as $problem) {
+            if (Stages::parsed($problem)) {
+                throw (new Errors())->error($problem, $session);
+            }
+        }
         foreach ($problems as $problem) {
             if ($problem instanceof MissingTable) {
                 throw (new Errors())->error($problem, $session);
@@ -69,6 +75,10 @@ final class RowUse
      */
     public function prepare(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
     {
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery) {
+            $compiler->planner->query($operand->query, $scope);
+            return;
+        }
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate) {
             (new SubqueryUse())->raise($operand, $compiler, $scope);
         }
@@ -142,6 +152,7 @@ final class RowUse
         }
         $problem = $operand->problem();
         return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow => QueryError::ValuesEmptyRow->error(),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns => QueryError::OperandColumns->error($problem->expected),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion => $problem->operand ? \MySqlMemory\Error\Family\DataError::TimeZoneCast->error() : \MySqlMemory\Error\Family\DataError::UnknownTimeZone->error($problem->expression->zone->value),
             default => throw new LogicException('An unimplemented deferred operand condition: ' . $problem::class),

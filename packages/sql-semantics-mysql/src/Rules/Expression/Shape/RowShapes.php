@@ -11,6 +11,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Row;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -55,9 +57,12 @@ final class RowShapes
     /**
      * Compares an operand with a query whose width may depend on declarations.
      */
-    public function query(Scalar|RowOperand $operand, \SqlSemantics\Statement\Query $query): ?OperandColumns
+    public function query(Scalar|RowOperand $operand, \SqlSemantics\Statement\Query $query): OperandColumns|Misuse|null
     {
         $width = (new QueryWidth())->of($query);
+        if ($width === 0) {
+            return new Misuse(MisuseRule::EmptyValuesRow);
+        }
         return $this->pairs($this->parts($operand), $width === null ? null : ($width === 1 ? [] : array_fill(0, $width, null)));
     }
 

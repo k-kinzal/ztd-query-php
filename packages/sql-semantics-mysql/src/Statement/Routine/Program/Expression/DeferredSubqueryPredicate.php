@@ -85,7 +85,7 @@ final class DeferredSubqueryPredicate implements DeferredOperand
     /**
      * Describes the fixed shape conflict, independently of catalog resolution.
      */
-    public function shape(): ?OperandColumns
+    public function shape(): OperandColumns|\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse|null
     {
         if ($this->operand instanceof DeferredOperand) {
             return null;

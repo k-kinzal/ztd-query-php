@@ -6,6 +6,7 @@ namespace MySqlMemory\Program\Expression;
 
 use LogicException;
 use MySqlMemory\Session\Problem\Errors;
+use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
@@ -48,6 +49,11 @@ final class EvaluationUse
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
         $statement->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        foreach ($derivation->facts()->diagnostics as $problem) {
+            if (Stages::parsed($problem)) {
+                throw (new Errors())->error($problem, $session);
+            }
+        }
         foreach ($derivation->facts()->diagnostics as $problem) {
             if ($problem instanceof MissingTable) {
                 throw (new Errors())->error($problem, $session);

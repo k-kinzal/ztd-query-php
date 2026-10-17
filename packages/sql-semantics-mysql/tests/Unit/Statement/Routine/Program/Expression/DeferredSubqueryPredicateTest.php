@@ -41,7 +41,7 @@ final class DeferredSubqueryPredicateTest extends TestCase
     public function testShapeDescribesTheFixedWidthConflict(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate $predicate): void
     {
         $shape = $predicate->shape();
-        self::assertNotNull($shape);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $shape);
         self::assertSame([1,2], [$shape->expected,$shape->actual]);
     }
 

@@ -37,7 +37,7 @@ final class OperandRule
         if ($operand instanceof Scalar) {
             return $operand;
         }
-        throw new RejectedInput($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand ? $operand->problem() : new OperandColumns(1, count((new RowShapes())->parts($operand) ?? [])), (new SourceRanges())->span($source)[1] ?? 0, false);
+        throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($operand), (new SourceRanges())->span($source)[1] ?? 0, false);
     }
 
     /**
@@ -67,9 +67,13 @@ final class OperandRule
     /**
      * Distinguishes fixed multi-column projections from scalar or catalog-dependent output.
      */
-    public function subquery(Query $query): Subquery\ScalarSubquery|Subquery\RowSubquery
+    public function subquery(Query $query): Subquery\ScalarSubquery|Subquery\RowSubquery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery
     {
-        return (new QueryWidth())->of($query) > 1 ? new Subquery\RowSubquery($query) : new Subquery\ScalarSubquery($query);
+        $width = (new QueryWidth())->of($query);
+        if ($width === 0) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery($query);
+        }
+        return $width > 1 ? new Subquery\RowSubquery($query) : new Subquery\ScalarSubquery($query);
     }
 
     /**

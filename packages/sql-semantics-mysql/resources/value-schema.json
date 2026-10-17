@@ -1248,6 +1248,9 @@
         "expected": "int",
         "expression": "?SqlSemantics\\Statement\\Scalar"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedScalar": {
+        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedTemporalLiteral": {
         "form": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalForm",
         "text": "string"
@@ -2369,6 +2372,9 @@
         "elements": "array",
         "negated": "bool",
         "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredSubquery": {
+        "query": "SqlSemantics\\Statement\\Query"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredSubqueryPredicate": {
         "negated": "bool",
