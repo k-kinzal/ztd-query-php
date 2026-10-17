@@ -58,7 +58,7 @@ final class OwnedDiagnosticTest extends TestCase
     public static function providerStructures(): iterable
     {
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
-            $window = new WindowFunction(WindowFunctionKind::FirstValue, [new QuantifiedComparison(new BooleanLiteral(false), ComparisonOperator::Less, Quantifier::All, new ValuesQuery([new ValueRow([])]))], new Name('\\'), NullTreatment::Ignore);
+            $window = new WindowFunction(WindowFunctionKind::FirstValue, [new QuantifiedComparison(new BooleanLiteral(false), ComparisonOperator::Less, Quantifier::All, new ValuesQuery([new ValueRow([new NumberLiteral('1')])]))], new Name('\\'), NullTreatment::Ignore);
             $cast = new Comparison(ComparisonOperator::GreaterOrEqual, new AtTimeZone(new TimestampCall(TimestampOperation::Add, IntervalUnit::Minute, new NumberLiteral('1.5'), new Parameter('?')), new Text('1')), new DefaultOfColumn(new ColumnUse(new Name('utf8mb4'))));
             yield $release . ':window' => [$release, $window, 3579];
             yield $release . ':conversion' => [$release, $cast, 3998];

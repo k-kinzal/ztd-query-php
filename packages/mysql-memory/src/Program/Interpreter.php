@@ -8,8 +8,7 @@ use Closure;
 use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
-use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
@@ -104,6 +103,8 @@ final class Interpreter
     public function statement(Node $statement): ?Jump
     {
         return match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignments => $this->assignments($statement),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection => $this->selection($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel => $this->deferredCondition($statement),
             $statement instanceof Block => $this->block($statement),
             $statement instanceof IfStatement => $this->branches($statement->branches, $statement->otherwise, null, false),
@@ -119,6 +120,38 @@ final class Interpreter
             $statement instanceof Statement => $this->sql($statement),
             default => throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('the stored program statement ' . $statement::class),
         };
+    }
+
+    /**
+     * Runs stored SET items in order, preserving completed assignments before a later failure.
+     */
+    public function assignments(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignments $statement): ?Jump
+    {
+        $scope = null;
+        foreach ($statement->items as $item) {
+            if (($item instanceof NameAssignment || $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignment) && $item->scope !== null) {
+                $scope = $item->scope;
+            }
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignment) {
+                $jump = $this->instruction(fn () => (new Expression\AssignmentUse())->raise($item, $this->session));
+                $jump = $jump?->flow === Flow::Resume ? null : $jump;
+            } else {
+                $jump = $this->sql(new SetVariables([(new Expression\AssignmentUse())->inherited($item, $scope)]));
+            }
+            if ($jump !== null) {
+                return $jump;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Prepares a stored selection through the current program's handlers.
+     */
+    public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $statement): ?Jump
+    {
+        $jump = $this->instruction(fn () => (new Expression\SelectionUse())->raise($statement, $this->session));
+        return $jump?->flow === Flow::Resume ? null : $jump;
     }
 
     /**
@@ -297,10 +330,10 @@ final class Interpreter
      *
      * @throws SqlError When a statement raises an error no handler handles
      */
-    public function branches(array $branches, array $otherwise, ?Scalar $operand, bool $exhaustive): ?Jump
+    public function branches(array $branches, array $otherwise, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $operand, bool $exhaustive): ?Jump
     {
         foreach ($branches as $branch) {
-            [$taken, $jump] = $this->test($operand === null ? $branch->condition : new Comparison(ComparisonOperator::Equal, $operand, $branch->condition));
+            [$taken, $jump] = $this->test($branch->condition, $operand);
             if ($taken === null) {
                 return $jump;
             }
@@ -354,11 +387,11 @@ final class Interpreter
      *
      * @throws SqlError When the condition raises an error no handler handles
      */
-    public function test(Scalar $condition): array
+    public function test(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $condition, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $compared = null): array
     {
         $true = false;
-        $jump = $this->instruction(function () use ($condition, &$true): void {
-            $true = $this->statements->truth($condition);
+        $jump = $this->instruction(function () use ($condition, $compared, &$true): void {
+            $true = $this->statements->truth($condition, $compared);
         });
 
         return $jump === null ? [$true, null] : [null, $jump->flow === Flow::Resume ? null : $jump];
@@ -369,7 +402,7 @@ final class Interpreter
      *
      * @throws SqlError When the value raises an error no handler handles
      */
-    public function returned(Scalar $value): ?Jump
+    public function returned(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $value): ?Jump
     {
         $result = null;
         $jump = $this->instruction(function () use ($value, &$result): void {

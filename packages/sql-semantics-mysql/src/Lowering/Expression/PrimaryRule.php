@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -76,7 +77,7 @@ final class PrimaryRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function simpleExpression(Node $expression): Scalar
+    public function simpleExpression(Node $expression): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $pending = [];
         $form = $this->lowering->form($expression);
@@ -87,8 +88,8 @@ final class PrimaryRule
         $result = $this->unit($form);
         foreach (array_reverse($pending) as $operation) {
             $result = $operation->signature === 'simple_expr: simple_expr OR_OR_SYM simple_expr'
-                ? new Concatenation($result, $this->simpleExpression($operation->node(2)))
-                : new Collated($result, $this->lowering->names->identifier($operation->node(2)));
+                ? new Concatenation((new OperandRule())->scalar($result, $operation->node(0)), $this->lowering->expressions->simpleExpression($operation->node(2)))
+                : (new OperandRule())->collated($result, $this->lowering->names->identifier($operation->node(2)), $operation->node(2));
         }
 
         return $this->lowering->origins->record($result, $expression);
@@ -99,7 +100,7 @@ final class PrimaryRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function unit(Form $form): Scalar
+    public function unit(Form $form): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         if (isset(self::CALLS[$form->signature])) {
             return $this->lowering->calls->call($form->node(0));
@@ -112,10 +113,10 @@ final class PrimaryRule
             $keyword = $prefix === UnaryOperator::Not && $this->negation($form->node(0));
             $operand = $this->lowering->form($form->node(1));
             if ($prefix === UnaryOperator::Not && !$keyword && $this->paired($form, $operand)) {
-                return new Unary(UnaryOperator::PairedNot, $this->simpleExpression($operand->node(1)));
+                return new Unary(UnaryOperator::PairedNot, $this->lowering->expressions->simpleExpression($operand->node(1)));
             }
 
-            return new Unary($prefix, $this->simpleExpression($form->node(1)), $keyword);
+            return new Unary($prefix, $this->lowering->expressions->simpleExpression($form->node(1)), $keyword);
         }
 
         return (new FormRule($this->lowering))->lower($form);

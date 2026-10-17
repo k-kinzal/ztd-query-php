@@ -20,6 +20,16 @@ use SqlSemantics\Statement\Node;
 final class Scope
 {
     /**
+     * The clause used when a retained operand cannot bind a column.
+     */
+    public string $clause = 'field list';
+
+    /**
+     * The aggregate slots collected while preparing a deferred projection, when applicable.
+     */
+    public ?\MySqlMemory\Plan\Grouping\Collected $grouping = null;
+
+    /**
      * @var array<int, int> The offset of each relation occurrence, by object id
      */
     public array $offsets = [];
@@ -89,6 +99,16 @@ final class Scope
      */
     public function __construct(public readonly ?Scope $outer = null)
     {
+    }
+
+    /**
+     * Keeps the relation positions while choosing an operand's diagnostic clause.
+     */
+    public function inClause(string $clause): self
+    {
+        $scope = clone $this;
+        $scope->clause = $clause;
+        return $scope;
     }
 
     /**

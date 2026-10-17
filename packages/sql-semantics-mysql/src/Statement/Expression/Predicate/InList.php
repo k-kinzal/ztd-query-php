@@ -29,6 +29,10 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_in.
  * Status: Implemented.
  *
+ * @example Refusing incompatible row membership
+ *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList($row, [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading the elements of a list
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a NOT IN (1, 2)');
@@ -39,19 +43,26 @@ final class InList implements Scalar
     use Snapshot;
 
     /**
-     * @var non-empty-list<Scalar> The elements in order
+     * @var non-empty-list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand> The elements in order
      */
     public readonly array $elements;
 
     /**
-     * @param Scalar $operand The tested expression
-     * @param list<Scalar> $elements The elements in order; at least one
+     * @param Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand The tested expression
+     * @param list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand> $elements The elements in order; at least one
      * @param bool $negated Whether NOT is written before IN
      */
-    public function __construct(public readonly Scalar $operand, array $elements, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, array $elements, public readonly bool $negated = false)
     {
         Check::input((new Precedence())->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of IN needs a grouping to keep its place.');
-        $this->elements = Check::listOf($elements, Scalar::class, 'An IN list has at least one element.', 1);
+        $checked = Check::listOf($elements, \SqlSemantics\Statement\Operand::class, 'An IN list has at least one element.', 1);
+        $accepted = [];
+        foreach ($checked as $element) {
+            Check::input($element instanceof Scalar || $element instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand, 'An IN element is a scalar or a row.');
+            Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->problem($operand, $element) === null, 'IN operands have compatible nested row shapes.');
+            $accepted[] = $element;
+        }
+        $this->elements = $accepted;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

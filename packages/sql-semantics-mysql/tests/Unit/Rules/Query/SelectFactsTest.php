@@ -51,18 +51,24 @@ final class SelectFactsTest extends TestCase
         self::assertSame($t->columns[0], $operation->field('x')->column());
     }
 
-    public function testDeriveReportsARowWhereTheServerTakesOneValue(): void
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerScalarPositions(): iterable
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $messages = array_map(static fn ($diagnostic): string => $diagnostic->message(), [
-            ...$semantics->analyze('SELECT (1, 2)')->facts->diagnostics,
-            ...$semantics->analyze('SELECT 1 FROM DUAL WHERE (1, 2)')->facts->diagnostics,
-            ...$semantics->analyze('SELECT 1 HAVING (SELECT 1, 2)')->facts->diagnostics,
-            ...$semantics->analyze('SELECT 1 ORDER BY (1, 2)')->facts->diagnostics,
-            ...$semantics->analyze('SELECT 1 GROUP BY ROW(1, 2, 3)')->facts->diagnostics,
-        ]);
+        yield 'projection' => ['SELECT (1, 2)', 2];
+        yield 'where' => ['SELECT 1 FROM DUAL WHERE (1, 2)', 2];
+        yield 'having' => ['SELECT 1 HAVING (SELECT 1, 2)', 2];
+        yield 'ordering' => ['SELECT 1 ORDER BY (1, 2)', 2];
+        yield 'grouping' => ['SELECT 1 GROUP BY ROW(1, 2, 3)', 3];
+    }
 
-        self::assertSame(['Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 3.'], $messages);
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerScalarPositions')]
+    public function testDeriveReportsARowWhereTheServerTakesOneValue(string $sql, int $width): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not ' . $width . '.');
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 
     public function testWindowsReportsANameDefinedTwice(): void

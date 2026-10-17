@@ -55,6 +55,8 @@ final class RoutineLookupTest extends TestCase
         self::assertInstanceOf(ShowWhere::class, $statement->filter);
         $condition = $statement->filter->condition;
         self::assertInstanceOf(Comparison::class, $condition);
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $condition->left);
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $condition->right);
 
         self::assertSame('db', RoutineLookup::column($condition->left, $condition->right, $operation->facts));
         self::assertSame('', RoutineLookup::column($condition->right, $condition->left, $operation->facts));

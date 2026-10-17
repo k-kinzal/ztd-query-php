@@ -137,10 +137,10 @@ final class InputPrefix
     /**
      * Resolves prefix scopes using the ordinary rules for declarations and condition names.
      */
-    public function diagnostic(Block $body, ParameterList $parameters): ?Diagnostic
+    public function diagnostic(Block $body, ParameterList $parameters, bool $scopeComplete = true): ?Diagnostic
     {
         $derivation = new Derivation(new AnalysisContext($this->lowering->profile, [new Name(SessionDatabase::UNNAMED)], complete: false, columnNames: Comparison::AsciiInsensitive));
-        (new ProgramFacts())->routine($parameters, $body, ProgramKind::Procedure, new QualifiedName(new Name('prefix')), $derivation);
+        (new ProgramFacts())->routine($parameters, $body, ProgramKind::Procedure, new QualifiedName(new Name('prefix')), $derivation, scopeComplete: $scopeComplete);
         foreach ($derivation->facts()->diagnostics as $problem) {
             if ($problem instanceof UnknownSystemVariable || ($problem instanceof ProgramProblem && in_array($problem->rule, [ProgramRule::DuplicateVariable, ProgramRule::DuplicateCondition, ProgramRule::DuplicateCursor, ProgramRule::DuplicateHandler, ProgramRule::DuplicateParameter, ProgramRule::UndefinedCondition, ProgramRule::UndefinedCursor, ProgramRule::SignalConditionKind, ProgramRule::ZeroErrorCode, ProgramRule::DuplicateSignalItem, ProgramRule::DeclarationAfterCursorOrHandler, ProgramRule::CursorAfterHandler], true))) {
                 return $problem;

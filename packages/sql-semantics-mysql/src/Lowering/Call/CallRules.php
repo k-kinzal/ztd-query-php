@@ -54,7 +54,7 @@ final class CallRules
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function call(Node $call): Scalar
+    public function call(Node $call): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall
     {
         $form = $this->lowering->form($call);
         if (in_array($form->signature, ['function_call_conflict: geometry_function', 'set_function_specification: sum_expr', 'set_function_specification: grouping_operation'], true)) {
@@ -76,7 +76,7 @@ final class CallRules
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function function(Form $form): Scalar
+    public function function(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall
     {
         $functions = new FunctionRule($this->lowering);
         if ($functions->claims($form->signature)) {

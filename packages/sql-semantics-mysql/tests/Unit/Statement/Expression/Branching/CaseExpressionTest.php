@@ -12,8 +12,6 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
-use SqlSemantics\Platform\MySql\Statement\Expression\Row;
-use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
@@ -47,14 +45,6 @@ final class CaseExpressionTest extends TestCase
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
-    public function testDeriveScalarReportsAValueOfAnotherWidthThanTheOperand(): void
-    {
-        $platform = new Platform();
-        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
-        $derivation->scalar(new CaseExpression(new NumberLiteral('1'), [new CaseBranch(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), new NullLiteral())], new StringLiteral(['x'])), $derivation->environment());
-
-        self::assertSame('Operand should contain 1 column(s), not 2.', $derivation->facts()->diagnostics[0]->message());
-    }
 
     public function testRenderWritesTheSimpleForm(): void
     {
@@ -65,18 +55,17 @@ final class CaseExpressionTest extends TestCase
         self::assertSame("CASE 1 WHEN 1 THEN 'a' ELSE 'b' END", (new Lexical())->join($out->pieces()));
     }
 
-    public function testDeriveScalarRequiresSingleValuesEvenWhenRowsHaveEqualWidths(): void
+    public function testCaseRequiresScalarOperandsEvenWhenRowsHaveEqualWidths(): void
     {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CASE (1, 2) WHEN (1, 2) THEN 1 ELSE 0 END');
-
-        self::assertSame(['Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.'], array_map(static fn ($problem): string => $problem->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CASE (1, 2) WHEN (1, 2) THEN 1 ELSE 0 END');
     }
 
-    public function testDeriveScalarChecksWhenBeforeTheComparedOperand(): void
+    public function testWhenOperandIsRefusedBeforeTheComparedNameIsResolved(): void
     {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CASE missing WHEN (1, 2) THEN 1 END');
-
-        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->facts->diagnostics[0]->message());
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CASE missing WHEN (1, 2) THEN 1 END');
     }
 
     public function testACaseWithoutBranchesIsRejected(): void

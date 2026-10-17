@@ -20,6 +20,7 @@ use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Contract\SearchPath;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Statement\Operation;
@@ -112,10 +113,13 @@ final class Statements
      *
      * @throws SqlError When the expression is refused or its value cannot be stored
      */
-    public function value(Scalar $expression, ?Variable $target = null, bool $assigned = false): array
+    public function value(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression, ?Variable $target = null, bool $assigned = false): array
     {
         $session = $this->session;
         \MySqlMemory\Session\State\StatementCounters::query($session);
+        if (!$expression instanceof Scalar) {
+            (new Expression\RowUse())->raise($expression, $session);
+        }
         $select = new Select([], [new SelectExpression($expression)]);
         $operation = $this->operation(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($select));
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
@@ -140,8 +144,15 @@ final class Statements
      *
      * @throws SqlError When the condition is refused
      */
-    public function truth(Scalar $condition): bool
+    public function truth(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $condition, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $compared = null): bool
     {
+        if ($compared !== null) {
+            if (!$condition instanceof Scalar || !$compared instanceof Scalar) {
+                $this->value($compared);
+            } else {
+                $condition = new \SqlSemantics\Platform\MySql\Statement\Expression\Comparison(\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal, $compared, $condition);
+            }
+        }
         [$value, $domain] = $this->value($condition);
 
         return Convert::toBool($value, $domain, new Context($this->session->modes(), $this->session->diagnostics, $this->session->variables, microtime(true))) === true;

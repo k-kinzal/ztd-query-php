@@ -1077,9 +1077,9 @@
         "operand": "?SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Comparison": {
-        "left": "SqlSemantics\\Statement\\Scalar",
+        "left": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand",
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\ComparisonOperator",
-        "right": "SqlSemantics\\Statement\\Scalar"
+        "right": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\ComparisonOperator": {
         "name": "string",
@@ -1102,6 +1102,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped": {
         "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\GroupedRow": {
+        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit": {
         "name": "string",
@@ -1178,7 +1181,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Predicate\\InList": {
         "elements": "array",
         "negated": "bool",
-        "operand": "SqlSemantics\\Statement\\Scalar"
+        "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Predicate\\Like": {
         "escape": "?SqlSemantics\\Statement\\Scalar",
@@ -1245,11 +1248,11 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\InQuery": {
         "negated": "bool",
-        "operand": "SqlSemantics\\Statement\\Scalar",
+        "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand",
         "query": "SqlSemantics\\Statement\\Query"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\QuantifiedComparison": {
-        "operand": "SqlSemantics\\Statement\\Scalar",
+        "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand",
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\ComparisonOperator",
         "quantifier": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\Quantifier",
         "query": "SqlSemantics\\Statement\\Query"
@@ -1257,6 +1260,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\Quantifier": {
         "name": "string",
         "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\RowSubquery": {
+        "query": "SqlSemantics\\Statement\\Query"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\ScalarSubquery": {
         "query": "SqlSemantics\\Statement\\Query"
@@ -1656,6 +1662,9 @@
         "position": "int",
         "release": "SqlSemantics\\Contract\\GrammarRelease",
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\GroupingRule"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedSelection": {
+        "selection": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Option\\RestrictedSelectOption": {
         "option": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption"
@@ -2206,6 +2215,15 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\OpenCursor": {
         "cursor": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredAssignment": {
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope",
+        "target": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemTarget|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredAssignments": {
+        "items": "array"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredEvaluation": {
         "items": "array"
     },
@@ -2216,8 +2234,48 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredGrantLevel": {
         "request": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredProjection": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection": {
+        "from": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource|SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual|null",
+        "items": "array",
+        "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredArithmetic": {
+        "left": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\ArithmeticOperator",
+        "right": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredCall": {
+        "arguments": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "schema": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredCallArgument": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredGrouped": {
+        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredMembership": {
+        "elements": "array",
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredSubqueryPredicate": {
+        "negated": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\Expression\\ComparisonOperator",
+        "quantifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\Quantifier",
+        "query": "SqlSemantics\\Statement\\Query"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\ConditionalBranch": {
-        "condition": "SqlSemantics\\Statement\\Scalar",
+        "condition": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "statements": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\IfStatement": {
@@ -2236,13 +2294,13 @@
         "statements": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\RepeatLoop": {
-        "condition": "SqlSemantics\\Statement\\Scalar",
+        "condition": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "endLabel": "?SqlSemantics\\Statement\\Identifier\\Name",
         "label": "?SqlSemantics\\Statement\\Identifier\\Name",
         "statements": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\ReturnStatement": {
-        "value": "SqlSemantics\\Statement\\Scalar"
+        "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\SearchedCase": {
         "branches": "array",
@@ -2250,11 +2308,11 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\SimpleCase": {
         "branches": "array",
-        "operand": "SqlSemantics\\Statement\\Scalar",
+        "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "otherwise": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\WhileLoop": {
-        "condition": "SqlSemantics\\Statement\\Scalar",
+        "condition": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "endLabel": "?SqlSemantics\\Statement\\Identifier\\Name",
         "label": "?SqlSemantics\\Statement\\Identifier\\Name",
         "statements": "array"
@@ -2276,7 +2334,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\VariableDeclaration": {
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
-        "default": "?SqlSemantics\\Statement\\Scalar",
+        "default": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "names": "array",
         "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },

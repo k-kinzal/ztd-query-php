@@ -14,6 +14,12 @@ The campaign discovers concrete types from the reviewed semantic value inventori
 
 Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. The selected root can use the shared 2,000-attempt cap. Each nested constructor retains a smaller depth-dependent cap that includes its descendants, preventing one nested alternative from taking the entire root search budget. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
 
+A rejected constructor keeps its completed arguments so the next trial can resample one argument instead of rebuilding unrelated children. Repeated rejection by the same invariant switches that candidate to complete resampling until the rejected constraint changes. Both strategies use the same shared attempt cap. They inspect constructor types and invariant refusals only; they do not use MySQL outcomes to choose or discard values. Exhaustion remains a failure. Some deeply constrained function declarations still exhaust the bounded search; neither a passing inventory run nor a repaired seed establishes that every random construction search will finish.
+
+`Scalar` and `RowOperand` are separate roles. A row contains at least two fields; a subquery with a fixed multi-column projection has a row role, while an unknown catalog-dependent width remains a resolution dependency. Ordinary comparisons and membership constructors reject incompatible fixed shapes. Stored programs additionally need operand roles whose preparation is deferred until an instruction is reached. These values preserve their complete operands and do not implement `Scalar`. A stored definition can therefore retain a row-valued condition, assignment or projection without making that value valid in an ordinary scalar position.
+
+`DeferredSelection` retains a plain SELECT's complete item list, optional input relation and filter. `DeferredAssignments` retains all SET items and their written scopes. Their consumers bind names and subqueries from those structures in the invocation's current state. Direct native tests reuse the same stored definition and CALL object before and after creating a table, adding a column, populating it and dropping it. Standalone selections with deferred operands are refused as ordinary query values; their typed `RefusedSelection` diagnostic retains the semantic dependencies needed to select the correct SQL error. It retains no source SQL or parser AST. SELECT forms with additional clauses still use their existing query rules; this model extension does not establish the deferred-operand property for every query form.
+
 The generated root is a MySQL statement or an ordinary expression placed in a SELECT item. The runner derives its semantic facts against a fresh in-memory session and sends the result directly to statement execution. Every parameter occurrence receives an explicit NULL value and its type before derivation, so the fixture supplies bindings without relying on unresolved parameter types. Separate properties exercise non-NULL bindings and their occurrence order. The generator has no list of supported SQL commands and does not use execution success or semantic diagnostics to select inputs.
 
 Typed optimizer hints are read from the original structure independently of the
@@ -48,6 +54,14 @@ The arguments are `COUNT [SEED] [CLASS|-|@each] [RELEASE] [START] [native|compar
 ```sh
 composer fuzz:structures -- 245 all-model-roots @each
 ```
+
+The constructor search shares one 2,000-attempt cap across each root and its
+children. When a constructor rejects an argument combination, the search retains
+its completed child values and resamples one argument for the same concrete type
+and depth. This lets constraints involving several fields be explored without
+repeatedly rebuilding unrelated children. Constructor rejection is the only
+reason to retry; an accepted root is submitted unchanged, and later profile or
+execution failures remain failures.
 
 The default `auto` release selects a compatible test environment before execution. To state that selection explicitly:
 

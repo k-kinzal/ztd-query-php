@@ -25,9 +25,9 @@ final class PurgeLogsBeforeTest extends TestCase
 
     public function testDeriveStatementRequiresOneColumnForTheMoment(): void
     {
-        $purge = (new Semantics(Dialect::MySql))->analyze('PURGE BINARY LOGS BEFORE ROW(1,2)');
-
-        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2)], $purge->facts->diagnostics);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new Semantics(Dialect::MySql))->analyze('PURGE BINARY LOGS BEFORE ROW(1,2)');
     }
 
     public function testRenderWritesTheMoment(): void

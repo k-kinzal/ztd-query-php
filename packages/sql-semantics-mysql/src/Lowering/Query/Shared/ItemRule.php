@@ -173,8 +173,15 @@ final class ItemRule
      */
     public function expression(Node $expression, Node $alias): SelectExpression
     {
+        return $this->resolved($this->lowering->expressions->expression($expression), $expression, $alias);
+    }
+
+    /**
+     * Names an already lowered scalar projection without creating another operand occurrence.
+     */
+    public function resolved(\SqlSemantics\Statement\Scalar $lowered, Node $expression, Node $alias): SelectExpression
+    {
         $name = $this->alias($alias);
-        $lowered = $this->lowering->expressions->expression($expression);
         $naming = new ItemNaming($this->lowering->profile);
         $layout = $name === null && $naming->keeps($lowered) ? (new ItemLayout($this->lowering->profile->grammar))->of($expression, $naming->own($lowered) instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) : null;
         $layout = $layout === null ? null : (new ItemLayout($this->lowering->profile->grammar))->names($layout, $lowered, $this->lowering->profile, $this->lowering->client);

@@ -50,9 +50,9 @@ final class WriteScopeTest extends TestCase
 
     public function testValueReportsARowAsTheWrittenValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('UPDATE t SET a = (1, 2)');
-
-        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new Semantics(Dialect::MySql))->analyze('UPDATE t SET a = (1, 2)');
     }
 
     public function testAssignAnswersTheAssignedColumns(): void

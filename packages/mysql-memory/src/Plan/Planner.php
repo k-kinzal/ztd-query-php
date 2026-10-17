@@ -93,13 +93,13 @@ final class Planner
     public ?array $carried = null;
 
     /**
-     * @param Statement|Query $statement The bound statement
+     * @param Statement|Query|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $statement The bound statement, query or stored expression being prepared
      * @param Facts $facts The facts of the statement
      * @param Settings $settings The session settings
      * @param Connection $connection What the statement reads of its connection
      * @param Dictionary $dictionary The databases of the server
      */
-    public function __construct(public readonly Statement|Query $statement, Facts $facts, public readonly Settings $settings, Connection $connection, public readonly Dictionary $dictionary)
+    public function __construct(public readonly Statement|Query|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $statement, Facts $facts, public readonly Settings $settings, Connection $connection, public readonly Dictionary $dictionary)
     {
         $this->compiler = new Compiler($facts, $settings, $this, $connection);
         $this->blocks = new Blocks($this);

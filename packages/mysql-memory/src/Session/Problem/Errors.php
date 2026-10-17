@@ -457,7 +457,7 @@ final class Errors
     /**
      * Answers the error of a call of a stored function that does not exist, in the database the call names or the current one.
      */
-    public function routine(FunctionCall $call, Session $session): SqlError
+    public function routine(FunctionCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall $call, Session $session): SqlError
     {
         $database = $session->variables->database;
         if ($call->schema === null && $database === '') {

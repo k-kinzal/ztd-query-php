@@ -31,4 +31,8 @@ final class ValueRuleTest extends TestCase
         self::assertInstanceOf(SystemAssignment::class, $set->statement->items[1]);
         self::assertNotInstanceOf(BareName::class, $set->statement->items[1]->value);
     }
+    public function testOperandPreservesAStoredRowValue(): void
+    {
+        self::assertSame('CREATE PROCEDURE p(x INT) SET x = (1, 2)', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SET x=(1,2)')->toString());
+    }
 }

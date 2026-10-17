@@ -34,9 +34,9 @@ final class SystemAssignmentTest extends TestCase
 
     public function testDeriveItemReportsARowAsTheValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SET @@SESSION.sort_buffer_size = (1, 2)');
-
-        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new Semantics(Dialect::MySql))->analyze('SET @@SESSION.sort_buffer_size = (1, 2)');
     }
 
     public function testDeriveItemChecksTheValueBeforeTheTargetInModernReleases(): void

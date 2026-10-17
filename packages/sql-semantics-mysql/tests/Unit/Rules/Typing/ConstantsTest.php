@@ -140,7 +140,7 @@ final class ConstantsTest extends TestCase
     public function testSubqueryEvaluatesASingleConstantWithoutATable(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $outer = $semantics->analyze('SELECT (SELECT -3), (SELECT -3 FROM t), (SELECT -3, 1)')->statement;
+        $outer = $semantics->analyze('SELECT (SELECT -3), (SELECT -3 FROM t)')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $outer);
         $outer = $outer->query;
 

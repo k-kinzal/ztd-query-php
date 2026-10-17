@@ -51,6 +51,11 @@ final class ItemRuleTest extends TestCase
         self::assertSame('SELECT 1+1, 1 + 1, a, 2 AS b FROM t', $operation->toString());
     }
 
+    public function testResolvedKeepsAStoredScalarOccurrenceBesideADeferredProjection(): void
+    {
+        self::assertSame('CREATE PROCEDURE p() SELECT 1+1, (2, 3)', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1+1, (2,3)')->toString());
+    }
+
     public function testMarkAnswersWhetherAnAliasIsWrittenAfterAs(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 x, 2 AS y, 3 'z', 4 FROM t");

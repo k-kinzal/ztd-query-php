@@ -20,8 +20,9 @@ use SqlSemantics\Statement\Snapshot;
  * The subquery sees the enclosing positions as its outer scope.
  *
  * Rule: MYSQL-SCALAR-SUBQUERY-001. Facts: MYSQL-SUBQUERY-ROWS-001; a
- * subquery of one column has its type, one of several columns is a row,
- * and either is NULL when no row is returned. A tableless, unfiltered row subquery
+ * a one-column subquery has that column's type and is NULL when no row is
+ * returned. Explicit multi-column output uses RowSubquery instead. Wildcard
+ * output remains a declaration-dependent width constraint. A tableless, unfiltered row subquery
  * retains its columns' combined NULL attribute, subject to the release's LIMIT rule.
  * MySQL 5.6 instead reports a nonnullable attribute for tableless unfiltered rows and
  * tableless UNION rows, independently of NULL values in their columns.
@@ -32,6 +33,10 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/scalar-subqueries.html,
  * https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  * Status: Implemented.
+ *
+ * @example Refusing a fixed row as a scalar subquery
+ *     $items = [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))];
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], $items)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @visibility public
  * @example Comparing with a scalar subquery
@@ -51,6 +56,7 @@ final class ScalarSubquery implements Scalar
      */
     public function __construct(public readonly Query $query)
     {
+        \SqlSemantics\Diagnostic\Check::input(((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth())->of($query) ?? 1) === 1, 'A scalar subquery has one output column when its width is fixed.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

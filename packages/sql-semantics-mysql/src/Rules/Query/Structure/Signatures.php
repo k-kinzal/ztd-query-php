@@ -25,7 +25,7 @@ final class Signatures
     /**
      * Finds a common language for all calls and the enclosing grammar requirements.
      *
-     * @param list<FunctionCall> $calls The calls retained in one structure
+     * @param list<FunctionCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall> $calls The calls retained in one structure
      * @param int $generation Legacy (1), modern (2), or unrestricted (0) forms
      * @param int $transition MySQL 5.6-only (1), 5.7-or-later (2), or unrestricted (0) forms
      */

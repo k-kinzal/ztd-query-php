@@ -20,8 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a row where a single value is required
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE (a, b) + 1');
- *     $query->facts->diagnostics[0]->message() // => 'Operand should contain 1 column(s), not 2.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2))->message() // => 'Operand should contain 1 column(s), not 2.'
  */
 final class OperandColumns implements Diagnostic
 {

@@ -106,10 +106,10 @@ final class Ranges
      */
     public function inList(InList $node, Scope $scope): Evaluable
     {
-        if ($this->compiler->rows->elements($node->operand) !== null) {
+        if ($this->compiler->rows->tuple($node->operand)) {
             return $this->compiler->rows->in($node->operand, $node->elements, $node->negated, $scope);
         }
-        if (count($node->elements) === 1 && $this->compiler->rows->elements($node->elements[0]) === null) {
+        if (count($node->elements) === 1 && !$this->compiler->rows->tuple($node->elements[0])) {
             return $this->compiler->operators->compare($node->negated ? ComparisonOperator::NotEqual : ComparisonOperator::Equal, $node->operand, $node->elements[0], $scope, $node);
         }
         $connection = $this->compiler->settings->connectionCollation;
@@ -119,6 +119,9 @@ final class Ranges
         $fixed = true;
         $fields = new FieldConstants($this->compiler);
         foreach ($node->elements as $element) {
+            if (!$element instanceof \SqlSemantics\Statement\Scalar) {
+                throw \MySqlMemory\Error\Family\QueryError::OperandColumns->error(1);
+            }
             $compiled[] = (new \MySqlMemory\Evaluation\Compile\FieldStrings($this->compiler))->check($node->operand, $operand, $element, $fields->stored($node->operand, $operand, $element, $this->compiler->compile($element, $scope)), false);
             $modes[] = $this->membershipComparator($operand->domain(), $compiled[count($compiled) - 1]->domain())->mode;
             $fixed = $fixed && $this->compiler->constancy($element)->constant();

@@ -68,10 +68,9 @@ final class CollatedTest extends TestCase
 
     public function testDeriveScalarReportsAnUnknownCollationBeforeTheOperand(): void
     {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT ROW(1, 2) COLLATE zz');
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $operation->facts->diagnostics[0]);
-        self::assertCount(2, $operation->facts->diagnostics);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Unknown collation: 'zz'");
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT ROW(1, 2) COLLATE zz');
     }
 
     public function testRenderChainsCollationsFromTheLeft(): void

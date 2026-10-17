@@ -11,6 +11,7 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Expression\Shape\ComparisonWidth;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -29,13 +30,13 @@ final class ComparisonRule
      *
      * @throws RejectedInput When written rows have incompatible outer widths
      */
-    public function lower(ComparisonOperator $operator, Scalar $left, Scalar $right, Node $source, GrammarRelease $release): Comparison
+    public function lower(ComparisonOperator $operator, Scalar|RowOperand $left, Scalar|RowOperand $right, Node $source, GrammarRelease $release): Comparison
     {
         $problem = (new ComparisonWidth())->problem($left, $right, $release);
         if ($problem !== null) {
             throw new RejectedInput($problem, (new SourceRanges())->span($source)[1] ?? 0, false);
         }
-        return new Comparison($operator, $left, $right);
+        return (new OperandRule())->comparison($operator, $left, $right, $source);
     }
 
     /**

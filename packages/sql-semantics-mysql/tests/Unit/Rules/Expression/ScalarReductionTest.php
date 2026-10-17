@@ -40,7 +40,6 @@ final class ScalarReductionTest extends TestCase
         yield 'aggregate' => ['SELECT COUNT(*)', false];
         yield 'window' => ['SELECT ROW_NUMBER() OVER ()', false];
         yield 'set' => ['SELECT 1 UNION SELECT 2', false];
-        yield 'row' => ['SELECT 1, 2', false];
     }
 
     #[DataProvider('providerQueries')]
@@ -53,6 +52,17 @@ final class ScalarReductionTest extends TestCase
 
         self::assertSame($reduced, $expression !== null);
         self::assertSame($expression, $operation->facts->scalar($subquery)->replacement);
+    }
+
+    public function testExpressionRetainsMultipleColumnsAsARow(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (1,2)=(SELECT 1,2)');
+        $comparison = $operation->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Comparison::class, $comparison);
+        $subquery = $comparison->right;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery::class, $subquery);
+        self::assertNull((new ScalarReduction())->expression($subquery->query));
+        self::assertNull($operation->facts->scalar($subquery)->replacement);
     }
 
     public function testFilteredKeepsFalseAndUnknownConditions(): void

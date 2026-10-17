@@ -25,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
 use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
@@ -74,7 +75,7 @@ final class ItemText
     /**
      * Writes an expression.
      */
-    public function text(Scalar $scalar): string
+    public function text(Scalar|RowOperand $scalar): string
     {
         return $this->scalar($scalar) ?? $this->rendered($scalar);
     }
@@ -82,7 +83,7 @@ final class ItemText
     /**
      * Writes an expression as SQL Semantics renders it.
      */
-    public function rendered(Scalar $scalar): string
+    public function rendered(Scalar|RowOperand $scalar): string
     {
         $out = new Output(new Codec($this->release));
         $out->layout(null, $scalar);
@@ -93,8 +94,11 @@ final class ItemText
     /**
      * Writes an expression, or answers null for one the writer does not know.
      */
-    public function scalar(Scalar $scalar): ?string
+    public function scalar(Scalar|RowOperand $scalar): ?string
     {
+        if ($scalar instanceof RowOperand) {
+            return $this->rendered($scalar);
+        }
         return match (true) {
             $scalar instanceof Grouped => $this->scalar($scalar->operand),
             $scalar instanceof ColumnUse => '`' . str_replace('`', '``', $this->names[mb_strtolower($scalar->name->value)] ?? $scalar->name->value) . '`',
@@ -175,7 +179,7 @@ final class ItemText
     /**
      * Writes a binary operation in parentheses.
      */
-    public function binary(Scalar $left, string $operator, Scalar $right): ?string
+    public function binary(Scalar|RowOperand $left, string $operator, Scalar|RowOperand $right): ?string
     {
         return $this->joined([$this->scalar($left), $this->scalar($right)], '(', ' ' . $operator . ' ', ')');
     }
@@ -197,7 +201,7 @@ final class ItemText
     /**
      * Writes an expression between a prefix and a suffix.
      */
-    public function wrap(Scalar $operand, string $before, string $after): ?string
+    public function wrap(Scalar|RowOperand $operand, string $before, string $after): ?string
     {
         $text = $this->scalar($operand);
 

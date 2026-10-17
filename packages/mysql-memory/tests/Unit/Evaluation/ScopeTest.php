@@ -93,4 +93,13 @@ final class ScopeTest extends TestCase
 
         self::assertSame([$outer, 2, [0, $grouped], null, ['a', 'b'], 'x'], [$grouped->outer, $grouped->width(), $grouped->locate($relation), $grouped->bound($node), $grouped->names[spl_object_id($relation)], $grouped->derived[spl_object_id($relation)]]);
     }
+    public function testInClauseKeepsTheRelationPositionsAndLeavesTheOriginalClause(): void
+    {
+        $scope = new Scope();
+        $scope->offsets = [42 => 3];
+        $where = $scope->inClause('where clause');
+        self::assertSame([42 => 3], $where->offsets);
+        self::assertSame('where clause', $where->clause);
+        self::assertSame('field list', $scope->clause);
+    }
 }

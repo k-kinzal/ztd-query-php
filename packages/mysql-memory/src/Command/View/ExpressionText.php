@@ -82,6 +82,12 @@ final class ExpressionText
      */
     public function scalar(Operand $scalar): ?string
     {
+        if ($scalar instanceof \SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow) {
+            return $this->scalar($scalar->operand);
+        }
+        if ($scalar instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery) {
+            return $this->subquery('(', $scalar->query, ')');
+        }
         if (!$scalar instanceof Scalar) {
             return null;
         }
@@ -165,7 +171,7 @@ final class ExpressionText
     /**
      * Writes a binary operation in parentheses.
      */
-    public function binary(Scalar $left, string $operator, Scalar $right): ?string
+    public function binary(Operand $left, string $operator, Operand $right): ?string
     {
         $first = $this->scalar($left);
         $second = $this->scalar($right);
@@ -176,7 +182,7 @@ final class ExpressionText
     /**
      * Writes an expression between a prefix and a suffix.
      */
-    public function wrap(Scalar $operand, string $before, string $after, bool $refused = false): ?string
+    public function wrap(Operand $operand, string $before, string $after, bool $refused = false): ?string
     {
         $text = $this->scalar($operand);
 

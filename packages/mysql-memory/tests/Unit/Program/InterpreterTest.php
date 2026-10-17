@@ -229,4 +229,24 @@ final class InterpreterTest extends TestCase
 
         $session->query('SELECT f()');
     }
+    public function testSelectionStartsItsOwnDiagnosticsAreaWhenReached(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE PROCEDURE p() SELECT (1,2)');
+        $session->query("SELECT 'old'+0");
+        $session->run('CALL p()');
+        self::assertSame([['Error', 1241, 'Operand should contain 1 column(s)']], $session->diagnostics->conditions);
+    }
+
+    public function testAssignmentsPreservesEarlierUserVariableWritesWhenALaterItemFails(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE PROCEDURE p() SET @x=10,@y=(1,2); SET @x=1,@y=2');
+        $failure = $session->run('CALL p()')[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $failure);
+        self::assertSame(1241, $failure->getCode());
+        $result = $session->query('SELECT @x,@y')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['10','2']], $result->rows);
+    }
 }

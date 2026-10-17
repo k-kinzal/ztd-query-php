@@ -9,6 +9,11 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 
 /**
  * Samples public constructors, rejecting only their own declared invariants.
+ *
+ * After a refusal, retains the completed dependencies and resamples one argument
+ * at a time for the same concrete type and depth. Cross-field constraints can
+ * then be solved without repeatedly rebuilding every unrelated child. No accepted
+ * parent is discarded, and every trial still shares the same attempt cap.
  */
 final class Construction
 {
@@ -62,6 +67,8 @@ final class Construction
         $implementations = interface_exists($class) ? $this->catalogue->implementations($class) : [$class];
         $depths = array_values(array_filter(range(0, $depth), fn (int $remaining): bool => $this->depth->object($class, $remaining)));
         $deadline = $this->attempts === 0 ? 2000 : min(2000, $this->attempts + 24 * 2 ** $depth);
+        /** @var array<string, Arguments> $samples */
+        $samples = [];
         while ($this->attempts < $deadline) {
             $this->attempts++;
             $remaining = interface_exists($class) || !$this->depth->object($class, 0) ? $this->choices->one($depths) : $depth;
@@ -73,25 +80,38 @@ final class Construction
             if (!$reflection->isInstantiable()) {
                 throw new Exhausted('No public constructor for ' . $concrete);
             }
+            $sampleKey = $concrete . ':' . $remaining;
+            $slots = $reflection->getConstructor()?->getParameters() ?? [];
+            $sample = $samples[$sampleKey] ?? new Arguments([]);
+            /** A stagnant invariant switches to complete resampling until another constraint is reached. */
+            $arguments = $sample->repeats >= max(1, count($slots) * 2) ? [] : $sample->values;
+            $failureKey = '';
+            $repeats = 0;
+            $replace = $arguments === [] || $slots === [] ? -1 : $this->choices->integer(0, count($slots) - 1);
             try {
-                $arguments = [];
-                foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
+                foreach ($slots as $index => $parameter) {
+                    if ($index !== $replace && array_key_exists($index, $arguments)) {
+                        continue;
+                    }
                     $type = $parameters[$parameter->getName()] ?? null;
                     $fits = $type === null ? $this->depth->native($parameter->getType(), $concrete, $remaining) : $this->depth->type($type, $concrete, $remaining);
                     if ($parameter->isDefaultValueAvailable() && (!$fits || $this->choices->integer(0, 3) !== 0)) {
-                        $arguments[] = $parameter->getDefaultValue();
+                        $arguments[$index] = $parameter->getDefaultValue();
                         continue;
                     }
-                    $arguments[] = $type === null ? $this->types->native($parameter->getType(), $concrete, $remaining) : $this->types->generate($type, $concrete, $remaining);
+                    $arguments[$index] = $type === null ? $this->types->native($parameter->getType(), $concrete, $remaining) : $this->types->generate($type, $concrete, $remaining);
                 }
 
                 return $reflection->newInstanceArgs($arguments);
             } catch (InvalidConstruction $failure) {
                 $key = $concrete . ': ' . $failure->getMessage();
                 $this->rejections[$key] = ($this->rejections[$key] ?? 0) + 1;
+                $failureKey = $key;
+                $repeats = $sample->failure === $key ? $sample->repeats + 1 : 1;
             } catch (Exhausted) {
-                // Try another combination within the same finite budget.
+                // Keep completed dependencies while trying another argument combination.
             }
+            $samples[$sampleKey] = new Arguments($arguments, $failureKey, $repeats);
         }
 
         throw new Exhausted('No constructor-accepted combination for ' . $class);

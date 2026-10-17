@@ -182,13 +182,13 @@ final class Precedence
      * otherwise (the upper bound of BETWEEN is a predicate, the pattern of
      * LIKE a simple_expr).
      *
-     * @return array{int, int, Scalar|null, Scalar|null}|null Null for a form that is closed on both edges
+     * @return array{int, int, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null}|null Null for a form that is closed on both edges
      */
-    public function edges(Scalar $expression): ?array
+    public function edges(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression): ?array
     {
         return match (true) {
             $expression instanceof Logical => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
-            $expression instanceof Arithmetic => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
+            $expression instanceof Arithmetic, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic => [$expression->operator->level(), $expression->operator->level(), $expression->left, $expression->right],
             $expression instanceof Comparison => [self::BOOL_PRI, self::BOOL_PRI, $expression->left, $expression->right],
             $expression instanceof Concatenation => [self::SIMPLE_EXPR, self::SIMPLE_EXPR, $expression->left, $expression->right],
             $expression instanceof Not => [self::NEGATION, self::NEGATION, null, $expression->operand],
@@ -203,15 +203,16 @@ final class Precedence
     /**
      * Answers the edges of a form whose operator follows its first operand.
      *
-     * @return array{int, int, Scalar|null, Scalar|null}|null Null for a form that is closed on both edges
+     * @return array{int, int, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null}|null Null for a form that is closed on both edges
      */
-    public function postfix(Scalar $expression): ?array
+    public function postfix(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression): ?array
     {
         return match (true) {
             $expression instanceof TruthTest => [self::TRUTH, self::TRUTH, $expression->operand, null],
             $expression instanceof NullTest => [self::BOOL_PRI, self::BOOL_PRI, $expression->operand, null],
+            $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate => [$expression->operator === null ? self::PREDICATE : self::BOOL_PRI, $expression->operator === null ? self::PREDICATE : self::BOOL_PRI, $expression->operand, null],
             $expression instanceof QuantifiedComparison => [self::BOOL_PRI, self::BOOL_PRI, $expression->operand, null],
-            $expression instanceof InList, $expression instanceof InQuery, $expression instanceof MemberOf => [self::PREDICATE, self::PREDICATE, $expression->operand, null],
+            $expression instanceof InList, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMembership, $expression instanceof InQuery, $expression instanceof MemberOf => [self::PREDICATE, self::PREDICATE, $expression->operand, null],
             $expression instanceof Between => [self::PREDICATE, self::BOOL_PRI, $expression->operand, $expression->high],
             $expression instanceof Like => [self::PREDICATE, self::BIT_XOR, $expression->operand, $expression->escape ?? $expression->pattern],
             $expression instanceof Regexp, $expression instanceof SoundsLike => [self::PREDICATE, self::PREDICATE, $expression->operand, $expression->pattern],
@@ -224,7 +225,7 @@ final class Precedence
     /**
      * Answers the weakest level on the left edge of an expression.
      */
-    public function opening(Scalar $expression): int
+    public function opening(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression): int
     {
         $weakest = self::CLOSED;
         for ($edges = $this->edges($expression); $edges !== null; $edges = $edges[2] === null ? null : $this->edges($edges[2])) {
@@ -237,7 +238,7 @@ final class Precedence
     /**
      * Answers the expression written first in an expression: the end of its left edge.
      */
-    public function leading(Scalar $expression): Scalar
+    public function leading(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         for ($edges = $this->edges($expression); $edges !== null && $edges[2] !== null; $edges = $this->edges($expression)) {
             $expression = $edges[2];
@@ -253,7 +254,7 @@ final class Precedence
      * takes the precedence of INTERVAL, so every bit_expr operator written
      * after it applies to the whole of it: it stands at the strongest bit_expr level.
      */
-    public function top(Scalar $expression): int
+    public function top(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression): int
     {
         if ($expression instanceof IntervalArithmetic) {
             return self::BIT_XOR;
@@ -268,7 +269,7 @@ final class Precedence
      * The operator binds with the given precedence and takes a left operand
      * of at least the given level.
      */
-    public function absorbs(Scalar $expression, int $precedence, int $minimum): bool
+    public function absorbs(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression, int $precedence, int $minimum): bool
     {
         for ($edges = $this->edges($expression); $edges !== null && $edges[3] !== null; $edges = $this->edges($edges[3])) {
             if ($precedence > $edges[1] && $this->top($edges[3]) >= $minimum) {
@@ -282,7 +283,7 @@ final class Precedence
     /**
      * Tells whether an expression keeps its place as the left operand of an operator of a precedence that takes a left operand of at least a level.
      */
-    public function fits(Scalar $left, int $precedence, int $minimum): bool
+    public function fits(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $left, int $precedence, int $minimum): bool
     {
         return $this->top($left) >= $minimum && !$this->absorbs($left, $precedence, $minimum);
     }
@@ -295,7 +296,7 @@ final class Precedence
      * operator keyword additionally needs that the keyword does not bind
      * into the operand (`absorbs()`).
      */
-    public function admits(Scalar $operand, int $slot): bool
+    public function admits(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, int $slot): bool
     {
         return $this->opening($operand) >= $slot;
     }

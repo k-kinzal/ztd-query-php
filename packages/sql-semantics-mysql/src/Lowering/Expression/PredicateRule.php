@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Statement\Scalar;
 
@@ -58,7 +59,7 @@ final class PredicateRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function predicate(Node $predicate): Scalar
+    public function predicate(Node $predicate): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $form = $this->lowering->form($predicate);
         $bits = new BitRule($this->lowering);
@@ -79,23 +80,23 @@ final class PredicateRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function operation(Form $form, Scalar $operand, int $offset): Scalar
+    public function operation(Form $form, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, int $offset): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $negated = $offset === 1;
         $expressions = $this->lowering->expressions;
 
         return match (str_replace(' not ', ' ', $form->signature)) {
-            'predicate: bit_expr IN_SYM ( subselect )' => new InQuery($operand, $this->lowering->queries->query($form->node(3 + $offset)), $negated),
-            'predicate: bit_expr IN_SYM table_subquery' => new InQuery($operand, $this->lowering->queries->query($form->node(2 + $offset)), $negated),
-            'predicate: bit_expr IN_SYM ( expr )' => new InList($operand, [$expressions->expression($form->node(3 + $offset))], $negated),
-            'predicate: bit_expr IN_SYM ( expr , expr_list )' => new InList($operand, [$expressions->expression($form->node(3 + $offset)), ...$expressions->expressions($form->node(5 + $offset))], $negated),
-            'predicate: bit_expr BETWEEN_SYM bit_expr AND_SYM predicate' => new Between($operand, $expressions->bitExpression($form->node(2 + $offset)), $this->predicate($form->node(4 + $offset)), $negated),
-            'predicate: bit_expr LIKE simple_expr opt_escape' => new Like($operand, $expressions->simpleExpression($form->node(2 + $offset)), $this->escape($form->node(3 + $offset)), $negated),
-            'predicate: bit_expr LIKE simple_expr' => new Like($operand, $expressions->simpleExpression($form->node(2 + $offset)), null, $negated),
-            'predicate: bit_expr LIKE simple_expr ESCAPE_SYM simple_expr' => new Like($operand, $expressions->simpleExpression($form->node(2 + $offset)), $expressions->simpleExpression($form->node(4 + $offset)), $negated),
-            'predicate: bit_expr REGEXP bit_expr' => new Regexp($operand, $expressions->bitExpression($form->node(2 + $offset)), $negated),
-            'predicate: bit_expr SOUNDS_SYM LIKE bit_expr' => new SoundsLike($operand, $expressions->bitExpression($form->node(3))),
-            'predicate: bit_expr MEMBER_SYM opt_of ( simple_expr )' => $this->member($form, $operand),
+            'predicate: bit_expr IN_SYM ( subselect )' => (new OperandRule())->inQuery($operand, $this->lowering->queries->query($form->node(3 + $offset)), $negated, $form->node),
+            'predicate: bit_expr IN_SYM table_subquery' => (new OperandRule())->inQuery($operand, $this->lowering->queries->query($form->node(2 + $offset)), $negated, $form->node),
+            'predicate: bit_expr IN_SYM ( expr )' => (new OperandRule())->inList($operand, [$expressions->operand($form->node(3 + $offset))], $negated, $form->node),
+            'predicate: bit_expr IN_SYM ( expr , expr_list )' => (new OperandRule())->inList($operand, [$expressions->operand($form->node(3 + $offset)), ...$expressions->operands($form->node(5 + $offset))], $negated, $form->node),
+            'predicate: bit_expr BETWEEN_SYM bit_expr AND_SYM predicate' => new Between((new OperandRule())->scalar($operand, $form->node(0)), $expressions->bitExpression($form->node(2 + $offset)), (new OperandRule())->scalar($this->predicate($form->node(4 + $offset)), $form->node(4 + $offset)), $negated),
+            'predicate: bit_expr LIKE simple_expr opt_escape' => new Like((new OperandRule())->scalar($operand, $form->node(0)), $expressions->simpleExpression($form->node(2 + $offset)), $this->escape($form->node(3 + $offset)), $negated),
+            'predicate: bit_expr LIKE simple_expr' => new Like((new OperandRule())->scalar($operand, $form->node(0)), $expressions->simpleExpression($form->node(2 + $offset)), null, $negated),
+            'predicate: bit_expr LIKE simple_expr ESCAPE_SYM simple_expr' => new Like((new OperandRule())->scalar($operand, $form->node(0)), $expressions->simpleExpression($form->node(2 + $offset)), $expressions->simpleExpression($form->node(4 + $offset)), $negated),
+            'predicate: bit_expr REGEXP bit_expr' => new Regexp((new OperandRule())->scalar($operand, $form->node(0)), $expressions->bitExpression($form->node(2 + $offset)), $negated),
+            'predicate: bit_expr SOUNDS_SYM LIKE bit_expr' => new SoundsLike((new OperandRule())->scalar($operand, $form->node(0)), $expressions->bitExpression($form->node(3))),
+            'predicate: bit_expr MEMBER_SYM opt_of ( simple_expr )' => $this->member($form, (new OperandRule())->scalar($operand, $form->node(0))),
             default => throw ImplementationGap::production($form),
         };
     }

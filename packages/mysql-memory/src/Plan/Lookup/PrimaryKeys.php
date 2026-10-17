@@ -59,6 +59,9 @@ final class PrimaryKeys
                 continue;
             }
             foreach ([[$condition->left, $condition->right], [$condition->right, $condition->left]] as [$column, $value]) {
+                if (!$column instanceof Scalar || !$value instanceof Scalar) {
+                    continue;
+                }
                 $binding = $this->binding($column, $value, $select->from, $input, $scope, $runtime);
                 if ($binding !== null) {
                     $bindings[$binding[0]] ??= $binding;

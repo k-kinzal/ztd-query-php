@@ -18,7 +18,7 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Row;
@@ -37,7 +37,7 @@ final class NestedRowStructureTest extends TestCase
     public static function providerStructures(): iterable
     {
         $literal = static fn (?int $value): Scalar => $value === null ? new NullLiteral() : new NumberLiteral((string) $value);
-        $row = static fn (?int $one, ?int $two, ?int $three): Row => new Row([new Grouped(new Row([$literal($one), $literal($two)], OptionalWords::Written)), $literal($three)]);
+        $row = static fn (?int $one, ?int $two, ?int $three): Row => new Row([new GroupedRow(new Row([$literal($one), $literal($two)], OptionalWords::Written)), $literal($three)]);
         $structures = [];
         foreach (ComparisonOperator::cases() as $operator) {
             foreach ([[1, 2, 3, 1, 2, 3], [1, 2, 3, 2, 1, 2], [2, 1, 2, 1, 2, 3], [1, null, 3, 1, 2, 4], [1, null, 3, 1, 2, 3], [1, null, 3, 1, null, 3], [null, 2, 3, null, 2, 4], [1, 2, null, 1, 2, 3]] as [$a, $b, $c, $d, $e, $f]) {

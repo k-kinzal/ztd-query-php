@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
@@ -95,7 +96,7 @@ final class ConditionRule
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
-    public function expression(Node $expression): Scalar
+    public function expression(Node $expression): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $pending = [];
         $form = $this->lowering->form($expression);
@@ -106,7 +107,7 @@ final class ConditionRule
         }
         $result = $this->unit($form);
         foreach (array_reverse($pending) as [$operator, $right, $symbolic]) {
-            $result = new Logical($operator, $result, $this->expression($right), $symbolic);
+            $result = new Logical($operator, (new OperandRule())->scalar($result, $expression), $this->lowering->expressions->expression($right), $symbolic);
         }
 
         return $this->lowering->origins->record($result, $expression);
@@ -118,20 +119,20 @@ final class ConditionRule
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
-    public function unit(Form $form): Scalar
+    public function unit(Form $form): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         if ($form->signature === 'expr: bool_pri') {
             return $this->boolean($form->node(0));
         }
         if ($form->signature === 'expr: NOT_SYM expr') {
-            return new Not($this->expression($form->node(1)));
+            return new Not($this->lowering->expressions->expression($form->node(1)));
         }
         [$truth, $negated] = self::TRUTH[$form->signature] ?? throw ImplementationGap::production($form);
         if ($negated) {
             $this->lowering->options->skip($form->node(2));
         }
 
-        return new TruthTest($this->boolean($form->node(0)), $truth, $negated);
+        return new TruthTest((new OperandRule())->scalar($this->boolean($form->node(0)), $form->node(0)), $truth, $negated);
     }
 
     /**
@@ -140,7 +141,7 @@ final class ConditionRule
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
-    public function boolean(Node $expression): Scalar
+    public function boolean(Node $expression): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $pending = [];
         $form = $this->lowering->form($expression);
@@ -165,17 +166,17 @@ final class ConditionRule
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
-    public function apply(Form $form, Scalar $left): Scalar
+    public function apply(Form $form, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $left): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $predicates = new PredicateRule($this->lowering);
 
         return match ($form->signature) {
-            'bool_pri: bool_pri IS NULL_SYM' => new NullTest($left),
-            'bool_pri: bool_pri IS not NULL_SYM' => $this->negatedNull($form, $left),
-            'bool_pri: bool_pri EQUAL_SYM predicate' => (new ComparisonRule())->lower(ComparisonOperator::NullSafeEqual, $left, $predicates->predicate($form->node(2)), $form->node, $this->lowering->profile->grammar),
-            'bool_pri: bool_pri comp_op predicate' => (new ComparisonRule())->lower($this->operator($form->node(1)), $left, $predicates->predicate($form->node(2)), $form->node, $this->lowering->profile->grammar),
-            'bool_pri: bool_pri comp_op all_or_any ( subselect )' => new QuantifiedComparison($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(4))),
-            'bool_pri: bool_pri comp_op all_or_any table_subquery' => new QuantifiedComparison($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(3))),
+            'bool_pri: bool_pri IS NULL_SYM' => new NullTest((new OperandRule())->scalar($left, $form->node(0))),
+            'bool_pri: bool_pri IS not NULL_SYM' => $this->negatedNull($form, (new OperandRule())->scalar($left, $form->node(0))),
+            'bool_pri: bool_pri EQUAL_SYM predicate' => (new OperandRule())->comparison(ComparisonOperator::NullSafeEqual, $left, $predicates->predicate($form->node(2)), $form->node),
+            'bool_pri: bool_pri comp_op predicate' => (new OperandRule())->comparison($this->operator($form->node(1)), $left, $predicates->predicate($form->node(2)), $form->node),
+            'bool_pri: bool_pri comp_op all_or_any ( subselect )' => (new OperandRule())->quantified($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(4)), $form->node),
+            'bool_pri: bool_pri comp_op all_or_any table_subquery' => (new OperandRule())->quantified($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(3)), $form->node),
             default => throw ImplementationGap::production($form),
         };
     }

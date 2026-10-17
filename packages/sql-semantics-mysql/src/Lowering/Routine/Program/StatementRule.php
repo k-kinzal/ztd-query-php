@@ -101,6 +101,14 @@ final class StatementRule
      */
     public function sql(Node $node): ProgramStatement|Statement
     {
+        $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->read($node);
+        if ($selection !== null) {
+            return $selection;
+        }
+        $assignments = (new \SqlSemantics\Platform\MySql\Lowering\Utility\Set\StoredAssignments($this->lowering))->read($node);
+        if ($assignments !== null) {
+            return $assignments;
+        }
         $evaluation = (new \SqlSemantics\Platform\MySql\Lowering\Dml\EvaluationItems($this->lowering))->program($node);
         if ($evaluation !== null) {
             return $evaluation;

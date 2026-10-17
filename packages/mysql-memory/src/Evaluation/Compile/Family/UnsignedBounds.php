@@ -41,6 +41,9 @@ final class UnsignedBounds
         }
         $fields = new FieldConstants($this->compiler);
         foreach ([[$node->left, $node->right], [$node->right, $node->left]] as [$column, $literal]) {
+            if (!$column instanceof Scalar || !$literal instanceof Scalar) {
+                continue;
+            }
             $number = $fields->number($literal);
             if ($fields->column($column) === null || $number === null || (float) $number >= 0) {
                 continue;

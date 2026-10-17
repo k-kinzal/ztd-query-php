@@ -144,7 +144,7 @@ final class LocationsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
-        $operation = $session->analyze('SELECT 1 = ALL (SELECT a, b FROM t) FROM t');
+        $operation = $session->analyze('SELECT 1 = ALL (SELECT * FROM t) FROM t');
         $located = array_values((new Locations())->widths($operation, (new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
 
         self::assertCount(1, $located);
@@ -181,7 +181,7 @@ final class LocationsTest extends TestCase
     {
         $session = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
-        $operation = $session->analyze('SELECT 1 = ALL (SELECT a, b FROM t) FROM t');
+        $operation = $session->analyze('SELECT 1 = ALL (SELECT * FROM t) FROM t');
         $located = array_values((new Locations())->widths($operation, (new \MySqlMemory\Session\Locator(true))->statement($operation->statement), $operation->facts->diagnostics, []));
 
         self::assertSame(['field list', [1, 0, 2]], $located[0][1]);

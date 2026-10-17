@@ -445,6 +445,9 @@ final class Compiler
             $node instanceof KeywordCall => $this->calls->keyword($node, $scope),
             $node instanceof ClockCall => $this->calls->clock($node, $scope),
             Windowing::windowed($node) => throw QueryError::WindowFunctionMisplaced->error(Resolution::named($node)),
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate => $scope->grouping?->compile($node, $scope) ?? throw QueryError::InvalidGroupFunctionUse->error(),
             $node instanceof SetFunction => throw QueryError::InvalidGroupFunctionUse->error(),
             default => null,
         };

@@ -96,15 +96,11 @@ final class ComparisonTest extends TestCase
         self::assertSame('the declaration of relation t', $left->type->missing[0]->describe());
     }
 
-    public function testDeriveScalarLocatesTheOperandWidthDiagnostic(): void
+    public function testIntrinsicWidthMismatchIsRejectedBeforePublishingAnOperation(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 WHERE (1,2)=3');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $diagnostic = $operation->facts->diagnostics[0];
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $diagnostic);
-        self::assertSame($operation->statement->query->where, $diagnostic->expression);
-        self::assertSame([2, 1], [$diagnostic->expected, $diagnostic->actual]);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 2 column(s), not 3.');
+        (new Semantics(Dialect::MySql))->analyze('SELECT 1 WHERE (1,2)=(3,4,5)');
     }
 
     public function testRenderWritesTheOperandsAroundTheOperatorInTheOrderWritten(): void
@@ -163,4 +159,12 @@ final class ComparisonTest extends TestCase
 
         new Comparison(ComparisonOperator::Equal, new VariableAssignment(new UserVariable(new Name('n')), new NumberLiteral('1')), new NumberLiteral('2'));
     }
+
+    public function testIntrinsicScalarRowMismatchIsRejectedBeforePublication(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 2 column(s), not 1.');
+        (new Semantics(Dialect::MySql))->analyze('SELECT 1 WHERE (1,2)=3');
+    }
+
 }

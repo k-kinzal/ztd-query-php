@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
@@ -63,10 +62,8 @@ final class BetweenTest extends TestCase
 
     public function testDeriveScalarRefusesARowAsAnyOperand(): void
     {
-        $diagnostics = (new Semantics(Dialect::MySql))->analyze('SELECT ROW(1, 2) BETWEEN ROW(1, 2) AND ROW(3, 4)')->facts->diagnostics;
-
-        self::assertCount(1, $diagnostics);
-        self::assertInstanceOf(OperandColumns::class, $diagnostics[0]);
-        self::assertSame([1, 2], [$diagnostics[0]->expected, $diagnostics[0]->actual]);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new Semantics(Dialect::MySql))->analyze('SELECT ROW(1, 2) BETWEEN ROW(1, 2) AND ROW(3, 4)');
     }
 }

@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\FlowFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
@@ -23,6 +24,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * The facts follow MYSQL-PROGRAM-FLOW-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/while.html.
+ *
+ * Row operands remain stored program values. Their scalar-use condition is
+ * checked when control reaches this instruction, after binding its operands.
+ * They do not become ordinary Scalar expressions.
  *
  * @visibility public
  * @example Reading a labeled loop
@@ -39,13 +44,13 @@ final class WhileLoop implements FunctionBody
     public readonly array $statements;
 
     /**
-     * @param Scalar $condition The search condition checked before every pass
+     * @param Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $condition The search condition checked before every pass
      * @param list<ProgramStatement|Statement> $statements The repeated statements; at least one
      * @param Name|null $label The label written before the loop
      * @param Name|null $endLabel The label written after the loop; only a labeled loop has one
      * @throws InvalidConstruction When there is no statement, a member is of another class, or an end label is given without a label
      */
-    public function __construct(public readonly Scalar $condition, array $statements, public readonly ?Name $label = null, public readonly ?Name $endLabel = null)
+    public function __construct(public readonly Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $condition, array $statements, public readonly ?Name $label = null, public readonly ?Name $endLabel = null)
     {
         $this->statements = (new StatementSequence())->members($statements, 1);
         Check::input($endLabel === null || $label !== null, 'Only a labeled loop has an end label.');

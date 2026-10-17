@@ -42,7 +42,7 @@ final class SyntaxStatements
             }
             return new ParseFailure($parameters->problem, $parameters->aborts);
         }
-        $problem = $prefix->diagnostic($frame->body(), $parameters);
+        $problem = $prefix->diagnostic($frame->body(), $parameters, false);
 
         return $problem instanceof UnknownSystemVariable ? new ParseFailure($problem, true) : null;
     }

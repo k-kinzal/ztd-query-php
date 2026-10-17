@@ -175,7 +175,7 @@ final class CallsTest extends TestCase
         self::assertSame([['1', '1']], $result1->rows);
     }
 
-    public function testStoredRefusesAnotherNumberOfArguments(): void
+    public function testArityRefusesAnotherNumberOfArguments(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');
@@ -203,4 +203,37 @@ final class CallsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $second);
         self::assertSame([[['Warning', '1300', "Invalid utf8mb4 character string: 'FF4344'"], ['Warning', '1300', "Invalid ascii character string: 'FF'"]], [['Warning', '1292', "Incorrect datetime value: 'x'"]]], [$first->rows, $second->rows]);
     }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerStoredArityOrder(): iterable
+    {
+        yield 'legacy 5.6' => ['5.6.51', 1054];
+        yield 'legacy 5.7' => ['5.7.44', 1054];
+        yield 'modern 8.0' => ['8.0.44', 1318];
+        yield 'modern 8.4' => ['8.4.7', 1318];
+        yield 'modern 9.1' => ['9.1.0', 1318];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerStoredArityOrder')]
+    public function testStoredResolvesArgumentsBeforeArityOnlyOnLegacyReleases(string $release, int $code): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE FUNCTION f(x INT) RETURNS INT DETERMINISTIC RETURN x');
+        $this->expectExceptionCode($code);
+        $session->query('SELECT f(0, absent_column)');
+    }
+
+    public function testResolveFindsTheStoredTargetBeforeItsRowArguments(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE PROCEDURE p() IF f((missing_column,2)) THEN DO 0; END IF');
+        $session->run('CALL p()');
+        self::assertSame(1305, $session->diagnostics->conditions[0][1]);
+        $session->query('CREATE FUNCTION f(x INT) RETURNS INT DETERMINISTIC RETURN x');
+        $session->run('CALL p()');
+        self::assertSame(1054, $session->diagnostics->conditions[0][1]);
+    }
+
 }

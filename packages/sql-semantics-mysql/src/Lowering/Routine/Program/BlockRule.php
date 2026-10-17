@@ -143,13 +143,13 @@ final class BlockRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function initial(Node $default): ?Scalar
+    public function initial(Node $default): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null
     {
         $form = $this->lowering->form($default);
 
         return match ($form->signature) {
             'sp_opt_default:' => null,
-            'sp_opt_default: DEFAULT expr', 'sp_opt_default: DEFAULT_SYM expr' => $this->lowering->expressions->expression($form->node(1)),
+            'sp_opt_default: DEFAULT expr', 'sp_opt_default: DEFAULT_SYM expr' => $this->lowering->expressions->operand($form->node(1)),
             default => throw ImplementationGap::production($form),
         };
     }

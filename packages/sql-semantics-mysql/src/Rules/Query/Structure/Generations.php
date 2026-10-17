@@ -77,7 +77,7 @@ final class Generations
                     $spelling = $value;
                 }
                 $namedParameters = $namedParameters || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter && $value->marker !== '?');
-                if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall) {
+                if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall) {
                     $calls[] = $value;
                 }
                 $requirements |= $this->requirement($value);

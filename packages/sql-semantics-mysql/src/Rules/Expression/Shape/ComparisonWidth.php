@@ -9,6 +9,7 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Expression\Row;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Statement\Scalar;
@@ -28,7 +29,7 @@ final class ComparisonWidth
     /**
      * Records an early condition only when both operands are written rows.
      */
-    public function notice(Scalar $left, Scalar $right, Derivation $derivation): void
+    public function notice(Scalar|RowOperand $left, Scalar|RowOperand $right, Derivation $derivation): void
     {
         $problem = $this->problem($left, $right, $derivation->context->profile->grammar);
         if ($problem !== null) {
@@ -39,7 +40,7 @@ final class ComparisonWidth
     /**
      * Finds an outer width contradiction checked before expression preparation.
      */
-    public function problem(Scalar $left, Scalar $right, GrammarRelease $release): ?OperandColumns
+    public function problem(Scalar|RowOperand $left, Scalar|RowOperand $right, GrammarRelease $release): ?OperandColumns
     {
         $one = $this->row($left);
         $two = $this->row($right);
@@ -49,9 +50,9 @@ final class ComparisonWidth
     /**
      * Finds a written row through grouping, without inspecting subquery output.
      */
-    public function row(Scalar $operand): ?Row
+    public function row(Scalar|RowOperand $operand): ?Row
     {
-        while ($operand instanceof Grouped) {
+        while ($operand instanceof Grouped || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow) {
             $operand = $operand->operand;
         }
         return $operand instanceof Row ? $operand : null;

@@ -18,6 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
 use SqlSemantics\Platform\MySql\Statement\Call\TrimSide;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCallArgument;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -149,7 +151,7 @@ final class FunctionRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function call(Form $form): Scalar
+    public function call(Form $form): Scalar|DeferredCall
     {
         if (isset(self::KEYWORDS[$form->signature])) {
             return $this->keyword($form, ...self::KEYWORDS[$form->signature]);
@@ -167,9 +169,9 @@ final class FunctionRule
             'function_call_keyword: CURRENT_USER optional_braces' => $this->niladic($form, KeywordFunction::CurrentUser),
             'function_call_nonkeyword: POSITION_SYM ( bit_expr IN_SYM expr )' => new Position($expressions->bitExpression($form->node(2)), $this->expression($form, 4)),
             'function_call_generic: IDENT_sys ( opt_udf_expr_list )' => $this->generic($form),
-            'function_call_generic: ident . ident ( opt_expr_list )' => new FunctionCall(
+            'function_call_generic: ident . ident ( opt_expr_list )' => $this->compose(
                 $this->lowering->names->identifier($form->node(2)),
-                array_map(static fn (Scalar $argument): CallArgument => new CallArgument($argument), $expressions->expressions($form->node(4))),
+                array_map(fn ($argument) => $this->argumentValue($argument), $expressions->operands($form->node(4))),
                 $this->lowering->names->identifier($form->node(0)),
             ),
             default => throw ImplementationGap::production($form),
@@ -181,17 +183,17 @@ final class FunctionRule
      *
      * @throws \SqlSemantics\Construction\RejectedInput When a completed native call is outside its operand domain
      */
-    public function generic(Form $form): FunctionCall
+    public function generic(Form $form): FunctionCall|DeferredCall
     {
         $arguments = $this->arguments($form->node(2));
         $name = $this->lowering->names->identifier($form->node(0));
-        $named = array_filter($arguments, static fn (CallArgument $argument): bool => $argument->alias !== null) !== [];
+        $named = array_filter($arguments, static fn (CallArgument|DeferredCallArgument $argument): bool => $argument->alias !== null) !== [];
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->problem($this->lowering->profile->grammar, $name, count($arguments), $named);
         if ($problem !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651);
         }
 
-        return new FunctionCall($name, $arguments);
+        return $this->compose($name, $arguments);
     }
 
     /**
@@ -232,7 +234,7 @@ final class FunctionRule
     /**
      * Lowers the arguments of an unqualified call: a node of opt_udf_expr_list.
      *
-     * @return list<CallArgument>
+     * @return list<CallArgument|DeferredCallArgument>
      * @throws ImplementationGap When a production has no rule
      */
     public function arguments(Node $list): array
@@ -259,19 +261,45 @@ final class FunctionRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function argument(Node $argument): CallArgument
+    public function argument(Node $argument): CallArgument|DeferredCallArgument
     {
         $form = $this->lowering->form($argument);
         if ($form->signature === 'udf_expr: remember_name expr remember_end select_alias') {
             $this->lowering->options->skip($form->node(0));
             $this->lowering->options->skip($form->node(2));
 
-            return new CallArgument($this->expression($form, 1), $this->lowering->queries->alias($form->node(3)), $this->lowering->queries->mark($form->node(3)));
+            return $this->argumentValue($this->lowering->expressions->operand($form->node(1)), $this->lowering->queries->alias($form->node(3)), $this->lowering->queries->mark($form->node(3)));
         }
         if ($form->signature !== 'udf_expr: expr select_alias') {
             throw ImplementationGap::production($form);
         }
 
-        return new CallArgument($this->expression($form, 0), $this->lowering->queries->alias($form->node(1)), $this->lowering->queries->mark($form->node(1)));
+        return $this->argumentValue($this->lowering->expressions->operand($form->node(0)), $this->lowering->queries->alias($form->node(1)), $this->lowering->queries->mark($form->node(1)));
     }
+
+    /**
+     * Retains a call argument's scalar, row or deferred-computation role.
+     */
+    public function argumentValue(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, ?\SqlSemantics\Statement\Identifier\Name $alias = null, \SqlSemantics\Platform\MySql\Statement\Name\AliasMark $mark = \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As): CallArgument|DeferredCallArgument
+    {
+        return $operand instanceof Scalar ? new CallArgument($operand, $alias, $mark) : new DeferredCallArgument($operand, $alias, $mark);
+    }
+
+    /**
+     * Selects ordinary or deferred call construction from the retained argument roles.
+     *
+     * @param list<CallArgument|DeferredCallArgument> $arguments The interpreted arguments
+     */
+    public function compose(\SqlSemantics\Statement\Identifier\Name $name, array $arguments, ?\SqlSemantics\Statement\Identifier\Name $schema = null): FunctionCall|DeferredCall
+    {
+        $scalars = [];
+        foreach ($arguments as $argument) {
+            if ($argument instanceof DeferredCallArgument) {
+                return new DeferredCall($name, $arguments, $schema);
+            }
+            $scalars[] = $argument;
+        }
+        return new FunctionCall($name, $scalars, $schema);
+    }
+
 }

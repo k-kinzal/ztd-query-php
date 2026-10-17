@@ -85,13 +85,32 @@ final class Calls
     }
 
     /**
-     * Compiles a call of a stored function of the database the call names, else of the current one; answers null when there is no such function.
+     * Compiles a stored call in the named or current database; without a session, leaves it unresolved.
      *
      * The database is found without regard to letter case when no database has the name exactly (verified on a live 8.4 server).
      *
-     * @throws \MySqlMemory\Error\SqlError When the number of arguments is not that of the parameters (ER_SP_WRONG_NO_OF_ARGS)
+     * @throws \MySqlMemory\Error\SqlError When the function is missing or its parameter count differs
      */
     public function stored(FunctionCall $call, Scope $scope): ?Evaluable
+    {
+        $session = $this->compiler->connection->session();
+        $routine = $this->resolve($call);
+        if ($routine === null || $session === null) {
+            return null;
+        }
+        $arguments = array_map(fn ($argument): Evaluable => $this->compiler->compile($argument->expression, $scope), $call->arguments);
+        $this->arity($call, $routine);
+
+        return new \MySqlMemory\Evaluation\Function\StoredCall($routine, $arguments, WeakReference::create($session), (new Printer())->expression($call));
+    }
+
+    /**
+     * Resolves a stored call target and the arity checked before its argument operands.
+     * Legacy releases defer the count until the argument dependencies are prepared.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the target is absent or its arity differs
+     */
+    public function resolve(FunctionCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall $call): ?\MySqlMemory\Dictionary\Routine
     {
         $session = $this->compiler->connection->session();
         $database = $call->schema->value ?? $this->compiler->settings->database;
@@ -103,16 +122,29 @@ final class Calls
         if ($session !== null) {
             (new \MySqlMemory\Session\Access\OpenedTables())->routine($routine, $session);
         }
-        if ($routine === null || $session === null) {
+        if ($routine === null && $session !== null) {
+            throw (new \MySqlMemory\Session\Problem\Errors())->routine($call, $session);
+        }
+        if ($routine === null) {
             return null;
         }
+        if (!$this->compiler->settings->legacy()) {
+            $this->arity($call, $routine);
+        }
+        return $routine;
+    }
+
+    /**
+     * Checks the stored target's parameter count at the release's preparation stage.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the actual and formal counts differ
+     */
+    public function arity(FunctionCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall $call, \MySqlMemory\Dictionary\Routine $routine): void
+    {
         $count = $routine->parameterCount();
         if ($count !== count($call->arguments)) {
             throw ProgramError::RoutineArgumentCount->error('FUNCTION', $routine->schema . '.' . $routine->name, $count, count($call->arguments));
         }
-        $arguments = array_map(fn ($argument): Evaluable => $this->compiler->compile($argument->expression, $scope), $call->arguments);
-
-        return new \MySqlMemory\Evaluation\Function\StoredCall($routine, $arguments, WeakReference::create($session), (new Printer())->expression($call));
     }
 
     /**

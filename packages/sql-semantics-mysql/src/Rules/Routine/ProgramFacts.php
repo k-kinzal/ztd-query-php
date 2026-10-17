@@ -63,7 +63,7 @@ final class ProgramFacts
     /**
      * Derives the parameters and the body of a stored procedure or function.
      */
-    public function routine(ParameterList $parameters, ExternalBody|ProgramStatement|Statement $body, ProgramKind $kind, QualifiedName $name, Derivation $derivation, ?\SqlSemantics\Platform\MySql\Statement\Type\TypeName $returns = null, ?\SqlSemantics\Platform\MySql\Statement\Name\CollationName $collation = null): void
+    public function routine(ParameterList $parameters, ExternalBody|ProgramStatement|Statement $body, ProgramKind $kind, QualifiedName $name, Derivation $derivation, ?\SqlSemantics\Platform\MySql\Statement\Type\TypeName $returns = null, ?\SqlSemantics\Platform\MySql\Statement\Name\CollationName $collation = null, bool $scopeComplete = true): void
     {
         $fact = $derivation->relation($parameters, $derivation->environment());
         if ($returns !== null) {
@@ -84,7 +84,7 @@ final class ProgramFacts
             $context = new \SqlSemantics\Contract\AnalysisContext($context->profile, [$name->schema], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema, $context->session, $context->foldedSchemas);
         }
         $environment = new Environment($context, null, [new VisibleRelation($parameters, $fact->shape)]);
-        (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, $kind));
+        (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, $kind, complete: $scopeComplete));
         if ($kind === ProgramKind::Function && !(new ReturnSearch())->found($body)) {
             $derivation->report(new ProgramProblem(ProgramRule::MissingReturn, $name->name->value));
         }

@@ -66,6 +66,7 @@ final class Locations
     {
         $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release()))->statement($operation->statement);
         [$located, $matched] = $this->names($operation, $locator, $calls, $diagnostics);
+        $located = (new Location\Calls())->located($locator, $session, $located);
         foreach ($locator->arrays as [$cast, $clause, $at]) {
             $refusal = new NotSupportedYet(Cast::ARRAY_OUTSIDE_INDEX);
             $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];

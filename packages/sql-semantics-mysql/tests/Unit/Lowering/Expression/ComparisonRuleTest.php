@@ -62,11 +62,15 @@ final class ComparisonRuleTest extends TestCase
         self::assertNull((new ComparisonRule())->writtenWidth($scalar, $lowering));
     }
 
-    public function testLowerRetainsTheLegacyPreparationCondition(): void
+    public function testLowerRejectsLegacyWidthWithoutPublishingAnInvalidComparison(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (1,2)=(3,4,5)');
-        self::assertInstanceOf(OperandColumns::class, $operation->facts->diagnostics[0]);
-        self::assertSame([], $operation->facts->warnings);
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (1,2)=(3,4,5)');
+            self::fail('A contradictory comparison has no scalar interpretation.');
+        } catch (RejectedInput $failure) {
+            self::assertInstanceOf(OperandColumns::class, $failure->problem);
+            self::assertSame([2, 3, false], [$failure->problem->expected, $failure->problem->actual, $failure->aborts]);
+        }
     }
 
     public function testLowerKeepsAValidComparison(): void

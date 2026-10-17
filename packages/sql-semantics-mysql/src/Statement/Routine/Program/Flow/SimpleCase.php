@@ -10,6 +10,7 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Routine\FlowFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
@@ -23,6 +24,9 @@ use SqlSemantics\Statement\Snapshot;
  * CASE and fails when no branch matches and there is no ELSE. The facts
  * follow MYSQL-PROGRAM-FLOW-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/case.html.
+ *
+ * A stored row operand is retained until this instruction is reached. It cannot
+ * supply a scalar result, but an unreachable instruction does not evaluate it.
  *
  * @visibility public
  * @example Reading a simple CASE statement
@@ -44,12 +48,12 @@ final class SimpleCase implements FunctionBody
     public readonly array $otherwise;
 
     /**
-     * @param Scalar $operand The value every WHEN value is compared with
+     * @param Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand The value every WHEN value is compared with
      * @param list<ConditionalBranch> $branches The WHEN branches; at least one
      * @param list<ProgramStatement|Statement> $otherwise The statements of ELSE; empty without ELSE
      * @throws InvalidConstruction When there is no branch or a member is of another class
      */
-    public function __construct(public readonly Scalar $operand, array $branches, array $otherwise = [])
+    public function __construct(public readonly Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, array $branches, array $otherwise = [])
     {
         $this->branches = Check::listOf($branches, ConditionalBranch::class, 'CASE holds at least one WHEN branch.', 1);
         $this->otherwise = (new StatementSequence())->members($otherwise);

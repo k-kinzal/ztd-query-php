@@ -13,8 +13,11 @@ use MySqlMemory\Evaluation\Operator\Logic;
 use MySqlMemory\Evaluation\Scope;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Row;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -37,11 +40,11 @@ final class Rows
     /**
      * Answers the elements of a row constructor, or null for a single value.
      *
-     * @return list<Scalar>|null
+     * @return list<Scalar|RowOperand>|null
      */
-    public function elements(Scalar $node): ?array
+    public function elements(Scalar|RowOperand $node): ?array
     {
-        while ($node instanceof Grouped) {
+        while ($node instanceof Grouped || $node instanceof GroupedRow) {
             $node = $node->operand;
         }
 
@@ -50,10 +53,12 @@ final class Rows
 
     /**
      * Tells whether the operand is a written row or resolves to a multi-column subquery.
+     *
+     * @phpstan-assert-if-false Scalar $node
      */
-    public function tuple(Scalar $node): bool
+    public function tuple(Scalar|RowOperand $node): bool
     {
-        if ($this->elements($node) !== null) {
+        if ($node instanceof RowOperand || $this->elements($node) !== null) {
             return true;
         }
         $type = $this->compiler->facts->covers($node) ? $this->compiler->facts->scalar($node)->type : null;
@@ -64,13 +69,13 @@ final class Rows
     /**
      * Finds a row subquery through grouping parentheses.
      */
-    public function subquery(Scalar $node): ?ScalarSubquery
+    public function subquery(Scalar|RowOperand $node): ScalarSubquery|RowSubquery|null
     {
-        while ($node instanceof Grouped) {
+        while ($node instanceof Grouped || $node instanceof GroupedRow) {
             $node = $node->operand;
         }
 
-        return $node instanceof ScalarSubquery ? $node : null;
+        return $node instanceof ScalarSubquery || $node instanceof RowSubquery ? $node : null;
     }
 
     /**
@@ -78,7 +83,7 @@ final class Rows
      *
      * @throws \MySqlMemory\Error\SqlError When the rows have different widths
      */
-    public function compare(ComparisonOperator $operator, Scalar $left, Scalar $right, Scope $scope): Evaluable
+    public function compare(ComparisonOperator $operator, Scalar|RowOperand $left, Scalar|RowOperand $right, Scope $scope): Evaluable
     {
         if ($this->subquery($left) !== null || $this->subquery($right) !== null) {
             return $this->subqueried($operator, $left, $right, $scope);
@@ -102,11 +107,12 @@ final class Rows
      * @return list<array{Scalar, Scalar}>
      * @throws \MySqlMemory\Error\SqlError When corresponding rows have different shapes
      */
-    public function paired(Scalar $left, Scalar $right): array
+    public function paired(Scalar|RowOperand $left, Scalar|RowOperand $right): array
     {
         $one = $this->elements($left);
         $two = $this->elements($right);
         if ($one === null && $two === null) {
+            assert($left instanceof Scalar && $right instanceof Scalar);
             return [[$left, $right]];
         }
         $one ??= [$left];
@@ -129,11 +135,11 @@ final class Rows
      *
      * @return list<Evaluable>|\MySqlMemory\Evaluation\Subquery\SingleRow
      */
-    public function operand(Scalar $node, Scope $scope): array|\MySqlMemory\Evaluation\Subquery\SingleRow
+    public function operand(Scalar|RowOperand $node, Scope $scope): array|\MySqlMemory\Evaluation\Subquery\SingleRow
     {
         $query = $this->subquery($node);
 
-        return $query !== null ? $this->compiler->subqueries->row($query, $scope) : array_map(fn (Scalar $element): Evaluable => $this->compiler->compile($element, $scope), $this->elements($node) ?? [$node]);
+        return $query !== null ? $this->compiler->subqueries->row($query, $scope) : array_map(fn (Scalar|RowOperand $element): Evaluable => $this->compiler->compile($element, $scope), $this->elements($node) ?? [$node]);
     }
 
     /**
@@ -141,7 +147,7 @@ final class Rows
      *
      * @throws \MySqlMemory\Error\SqlError When the operands have different column counts
      */
-    public function subqueried(ComparisonOperator $operator, Scalar $left, Scalar $right, Scope $scope): Evaluable
+    public function subqueried(ComparisonOperator $operator, Scalar|RowOperand $left, Scalar|RowOperand $right, Scope $scope): Evaluable
     {
         $one = $this->operand($left, $scope);
         $two = $this->operand($right, $scope);
@@ -161,9 +167,9 @@ final class Rows
     /**
      * Compiles `row [NOT] IN (row, ...)` as a disjunction of row equalities.
      *
-     * @param list<Scalar> $elements
+     * @param list<Scalar|RowOperand> $elements
      */
-    public function in(Scalar $operand, array $elements, bool $negated, Scope $scope): Evaluable
+    public function in(Scalar|RowOperand $operand, array $elements, bool $negated, Scope $scope): Evaluable
     {
         $result = null;
         $json = false;

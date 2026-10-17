@@ -62,10 +62,15 @@ final class QueryRules
      * Lowers a query statement: a node of `select` (5.6, 5.7) or `select_stmt` (8.0 and later).
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a standalone selection has deferred operands
      */
     public function statement(Node $statement): Statement
     {
-        return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($this->query($statement)), $statement);
+        $selection = (new Shared\StoredSelections($this->lowering))->read($statement);
+        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection), (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0, false);
+        }
+        return $selection ?? $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($this->query($statement)), $statement);
     }
 
     /**

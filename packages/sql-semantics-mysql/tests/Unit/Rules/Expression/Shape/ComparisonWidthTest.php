@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Expression\Shape\ComparisonWidth;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\Row;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase;
@@ -35,28 +35,19 @@ final class ComparisonWidthTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerReleases')]
     public function testNoticeDistinguishesGrammarContextualizationAndPreparation(string $release, ?NoticePhase $phase): void
     {
-        $comparison = new \SqlSemantics\Platform\MySql\Statement\Expression\Comparison(\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal, new Grouped(new Row([new NumberLiteral('1'), new NumberLiteral('2')])), new Row([new NumberLiteral('3'), new NumberLiteral('4'), new NumberLiteral('5')]));
+        $left = new GroupedRow(new Row([new NumberLiteral('1'), new NumberLiteral('2')]));
+        $right = new Row([new NumberLiteral('3'), new NumberLiteral('4'), new NumberLiteral('5')]);
         $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql, $release))->context());
-        (new ComparisonWidth())->notice($comparison->left, $comparison->right, $derivation);
+        (new ComparisonWidth())->notice($left, $right, $derivation);
         $notices = array_values(array_filter($derivation->facts()->warnings, static fn ($warning): bool => $warning instanceof ParseFailure));
         self::assertSame($phase, $notices[0]->phase ?? null);
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function providerDeferred(): iterable
+    public function testNoticeDoesNotMoveScalarRowChecksIntoContextualization(): void
     {
-        yield 'scalar against row' => ['SELECT (1,2)=3'];
-        yield 'nested shape' => ['SELECT (1,(2,3))=((1,2),3)'];
-        yield 'subquery' => ['SELECT (1,2)=(SELECT 1)'];
-        yield 'membership' => ['SELECT (1,2) IN ((1,2,3))'];
-    }
-
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerDeferred')]
-    public function testNoticeDoesNotMoveDeferredOperandChecksIntoContextualization(string $sql): void
-    {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze($sql)->facts->warnings);
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        (new ComparisonWidth())->notice(new NumberLiteral('1'), new Row([new NumberLiteral('2'), new NumberLiteral('3')]), $derivation);
+        self::assertSame([], $derivation->facts()->warnings);
     }
 
     public function testProblemRetainsBothOuterWidthsOnlyInTheEarlyCheckReleases(): void
@@ -72,7 +63,7 @@ final class ComparisonWidthTest extends TestCase
     public function testRowRecognizesWrittenRowsThroughParentheses(): void
     {
         $row = new Row([new NumberLiteral('1'), new NumberLiteral('2')]);
-        self::assertSame($row, (new ComparisonWidth())->row(new Grouped($row)));
+        self::assertSame($row, (new ComparisonWidth())->row(new GroupedRow($row)));
         self::assertNull((new ComparisonWidth())->row(new NumberLiteral('1')));
     }
 }

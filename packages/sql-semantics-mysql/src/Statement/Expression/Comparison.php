@@ -43,11 +43,12 @@ final class Comparison implements Scalar
 
     /**
      * @param ComparisonOperator $operator The operator
-     * @param Scalar $left The left operand
-     * @param Scalar $right The right operand
+     * @param Scalar|RowOperand $left The left operand
+     * @param Scalar|RowOperand $right The right operand
      */
-    public function __construct(public readonly ComparisonOperator $operator, public readonly Scalar $left, public readonly Scalar $right)
+    public function __construct(public readonly ComparisonOperator $operator, public readonly Scalar|RowOperand $left, public readonly Scalar|RowOperand $right)
     {
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->problem($left, $right) === null, 'Compared operands have compatible nested row shapes.');
         $precedence = new Precedence();
         Check::input($precedence->fits($left, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The left operand of a comparison needs a grouping to keep its place.');
         Check::input($precedence->opening($right) >= Precedence::PREDICATE, 'The right operand of a comparison needs a grouping to keep its place.');
@@ -61,7 +62,6 @@ final class Comparison implements Scalar
     {
         $left = $derivation->scalar($this->left, $environment);
         $right = $derivation->scalar($this->right, $environment);
-        (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\ComparisonWidth())->notice($this->left, $this->right, $derivation);
         $operands = new Operands();
         $operands->comparable([$left, $right], $derivation, $this);
         $operands->collated([$left, $right], $this->operator->value, $derivation);

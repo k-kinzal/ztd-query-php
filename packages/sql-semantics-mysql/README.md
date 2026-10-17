@@ -246,6 +246,21 @@ dependent on session state. Analysis does not open, advance or close a handler;
 the consumer supplies a new snapshot after those operations. Key values, predicate
 parameters and LIMIT parameters retain their positions in the original statement.
 
+Rows have an explicit `Statement\Expression\RowOperand` role. `Row`,
+`GroupedRow` and a fixed multi-column `RowSubquery` do not implement `Scalar`.
+Comparisons and membership predicates explicitly accept row operands and check
+fixed widths and nested shapes at construction. `ScalarSubquery` accepts a
+known one-column query or a query whose width depends on its catalog; changes
+to a wildcard's table declaration are resolved against each supplied context.
+
+Stored-program conditions, variable defaults, CASE operands and RETURN values
+also accept `RowOperand`. This models a stored instruction, whose scalar use is
+checked when control reaches it. For example, a procedure can contain a row-valued
+IF condition behind another IF that is false. The definition remains valid; the
+consumer must bind the row's names and report its scalar-use error if that
+instruction is reached. It must not replace the row with an ordinary scalar or
+require the original SQL to prepare it.
+
 `Settings::$fullTextParsers` supplies the available full-text parser plugins as
 a list of `Name` values. An empty list means no parser plugins are available;
 `null` leaves availability unspecified. `WITH PARSER` resolves names without

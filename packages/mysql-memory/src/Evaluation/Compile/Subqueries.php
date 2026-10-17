@@ -63,7 +63,7 @@ final class Subqueries
     /**
      * Plans a multi-column subquery used as one row, independently of scalar value types.
      */
-    public function row(ScalarSubquery $node, Scope $scope): \MySqlMemory\Evaluation\Subquery\SingleRow
+    public function row(ScalarSubquery|\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery $node, Scope $scope): \MySqlMemory\Evaluation\Subquery\SingleRow
     {
         $plan = $this->compiler->planner->query($node->query, $scope);
         $once = Constancy::of($node->query, $this->compiler->facts, variableReadsVary: $this->compiler->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651, release: $this->compiler->settings->release()) !== Constancy::Row && (new Walker())->find($node->query, VariableAssignment::class) === [];
@@ -110,7 +110,7 @@ final class Subqueries
      *
      * @throws \MySqlMemory\Error\SqlError When the subquery has more than one column
      */
-    public function quantified(\SqlSemantics\Statement\Scalar $operand, ComparisonOperator $operator, bool $all, bool $negated, \SqlSemantics\Statement\Query $query, Scope $scope, \SqlSemantics\Statement\Scalar $node): Evaluable
+    public function quantified(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, ComparisonOperator $operator, bool $all, bool $negated, \SqlSemantics\Statement\Query $query, Scope $scope, \SqlSemantics\Statement\Scalar $node): Evaluable
     {
         if ($this->compiler->rows->tuple($operand)) {
             return $this->membership($operand, $query, $scope, $negated || $all);
@@ -134,7 +134,7 @@ final class Subqueries
      *
      * @throws \MySqlMemory\Error\SqlError When the subquery has a different number of columns
      */
-    public function membership(\SqlSemantics\Statement\Scalar $operand, \SqlSemantics\Statement\Query $query, Scope $scope, bool $negated): Evaluable
+    public function membership(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, \SqlSemantics\Statement\Query $query, Scope $scope, bool $negated): Evaluable
     {
         $values = $this->compiler->rows->operand($operand, $scope);
         $domains = $values instanceof \MySqlMemory\Evaluation\Subquery\SingleRow ? $values->domains() : array_map(static fn (Evaluable $value): \MySqlMemory\Typing\Domain => $value->domain(), $values);
@@ -167,7 +167,7 @@ final class Subqueries
      * A missing key or a runtime filter does not change NULL in either release.
      * Verified through SQL and EXPLAIN on MySQL 5.6 and 5.7.
      */
-    public function membershipUnknown(\SqlSemantics\Statement\Scalar $operand, \SqlSemantics\Statement\Query $query, Scope $scope): bool
+    public function membershipUnknown(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, \SqlSemantics\Statement\Query $query, Scope $scope): bool
     {
         $query = $this->innermost($query);
         if (!$this->compiler->settings->legacy() || !$this->compiler->constancy($operand)->constant() || !$query instanceof Select) {
@@ -186,7 +186,7 @@ final class Subqueries
      * Tells whether a keyed membership result can be retained for the statement.
      * Function calls in the subquery remain uncached until their execution dependency is known.
      */
-    public function membershipConstant(\SqlSemantics\Statement\Scalar $operand, \SqlSemantics\Statement\Query $query): bool
+    public function membershipConstant(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, \SqlSemantics\Statement\Query $query): bool
     {
         return $this->compiler->constancy($operand)->constant()
             && Constancy::of($query, $this->compiler->facts, release: $this->compiler->settings->release()) !== Constancy::Row

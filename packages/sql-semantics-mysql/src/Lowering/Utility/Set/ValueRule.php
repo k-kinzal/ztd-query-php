@@ -52,12 +52,23 @@ final class ValueRule
      */
     public function value(Node $value, bool $system): Scalar|BareName|SetWord
     {
+        $operand = $this->operand($value, $system);
+        return $operand instanceof BareName || $operand instanceof SetWord ? $operand : (new \SqlSemantics\Platform\MySql\Lowering\Expression\OperandRule())->scalar($operand, $value);
+    }
+
+    /**
+     * Reads an assignment operand while preserving a stored row or deferred computation.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function operand(Node $value, bool $system): Scalar|BareName|SetWord|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+    {
         $form = $this->lowering->form($value);
         if ($form->signature !== 'set_expr_or_default: expr') {
             return self::WORDS[$form->signature] ?? throw ImplementationGap::production($form);
         }
 
-        return $this->word($form->node(0), $system) ?? $this->lowering->expressions->expression($form->node(0));
+        return $this->word($form->node(0), $system) ?? $this->lowering->expressions->operand($form->node(0));
     }
 
     /**

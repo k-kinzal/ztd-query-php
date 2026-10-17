@@ -13,7 +13,6 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
-use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -71,17 +70,6 @@ final class ScalarSubqueryTest extends TestCase
         self::assertTrue($derivation->facts()->covers($fact->replacement));
     }
 
-    public function testDeriveScalarIsARowForSeveralColumns(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
-        $subquery = (new Lowering($platform->productions($profile), new Leaves(), $profile))->expressions->expression($platform->parser($profile)->parse('SELECT (SELECT 1, 2)')->find('expr')[0]);
-        $derivation = new Derivation($platform->context($profile, null, [], true));
-        $fact = $derivation->scalar($subquery, $derivation->environment());
-
-        self::assertInstanceOf(Known::class, $fact->type);
-        self::assertEquals(new Tuple(2), $fact->type->descriptor);
-    }
 
     public function testDeriveScalarPreservesTheNullabilityOfAConstantRowSubquery(): void
     {

@@ -36,13 +36,14 @@ final class InQuery implements Scalar
     use Snapshot;
 
     /**
-     * @param Scalar $operand The tested expression
+     * @param Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand The tested expression
      * @param Query $query The query whose rows are searched
      * @param bool $negated Whether NOT is written before IN
      */
-    public function __construct(public readonly Scalar $operand, public readonly Query $query, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, public readonly Query $query, public readonly bool $negated = false)
     {
         Check::input((new Precedence())->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of IN needs a grouping to keep its place.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->query($operand, $query) === null, 'Compared operand and subquery have compatible row shapes.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
