@@ -88,7 +88,7 @@ final class TriggerRule
         $event = $this->lowering->form($parts['trg_event']);
 
         $name = $this->lowering->names->qualified($parts['sp_name']);
-        $body = (new StatementRule($this->lowering))->statement($parts['sp_proc_stmt']);
+        $body = (new StatementRule($this->lowering->inProgram($name)))->statement($parts['sp_proc_stmt']);
         (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0);
         return new CreateTrigger(
             $name,

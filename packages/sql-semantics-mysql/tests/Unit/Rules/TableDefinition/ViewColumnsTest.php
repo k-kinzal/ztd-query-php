@@ -76,4 +76,11 @@ final class ViewColumnsTest extends TestCase
         self::assertSame(str_repeat('a', 191), $columns->cut(str_repeat('a', 200), true));
         self::assertEquals(new Name('x'), new Name($columns->cut('x', false)));
     }
+    public function testExplicitFindsTheFirstInvalidModernColumnName(): void
+    {
+        self::assertNull(ViewColumns::explicit(null));
+        self::assertNull(ViewColumns::explicit([new Name('a')]));
+        self::assertSame('', ViewColumns::explicit([new Name('a'), new Name(''), new Name('bad ')])?->column->value);
+    }
+
 }

@@ -66,7 +66,7 @@ use SqlSemantics\Statement\Query;
  * DEALLOCATE PREPARE, no FLUSH and no RESET, RESET PERSIST included, which
  * the grammar reads as the same RESET command (rule `reset` of
  * sql_yacc.yy) (ER_STMT_NOT_ALLOWED_IN_SF_OR_TRG). Limit: the implicit commit of a data
- * definition statement in a stored function or trigger is not reported.
+ * definition statement other than CREATE/DROP VIEW in a stored function or trigger is not reported.
  * Terminates: the INTO search descends into strict parts of a query.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-program-restrictions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html ("The USE
@@ -120,7 +120,7 @@ final class ProgramRestrictions
     {
         return match (true) {
             $this->results($statement) => new ProgramProblem(ProgramRule::ResultSet, strtolower($kind->value)),
-            $statement instanceof Commit, $statement instanceof Rollback, $statement instanceof StartTransaction => new ProgramProblem(ProgramRule::CommitInFunction),
+            $statement instanceof Commit, $statement instanceof Rollback, $statement instanceof StartTransaction, $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView, $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\DropView => new ProgramProblem(ProgramRule::CommitInFunction),
             $statement instanceof Prepare, $statement instanceof Execute, $statement instanceof Deallocate => new ProgramProblem(ProgramRule::FunctionStatement, 'Dynamic SQL'),
             $statement instanceof Flush, $statement instanceof FlushTables => new ProgramProblem(ProgramRule::FunctionStatement, 'FLUSH'),
             $statement instanceof Reset, $statement instanceof ResetPersist => new ProgramProblem(ProgramRule::FunctionStatement, 'RESET'),

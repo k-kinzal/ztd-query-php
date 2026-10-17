@@ -141,4 +141,17 @@ final class LoweringTest extends TestCase
         self::assertSame(['QB_NAME(`q`)'], array_map(static fn ($hint): string => $hint->text(), $lowering->hints($tree->tokens()[0])));
         self::assertSame([], $lowering->hints($tree->tokens()[1]));
     }
+    public function testInProgramScopesTheDatabaseWithoutReplacingInputOrigins(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('d'));
+        $scoped = $lowering->inProgram($name);
+        self::assertNull($lowering->programName);
+        self::assertSame($name, $scoped->inProgram(null)->programName);
+        self::assertSame($lowering->origins, $scoped->origins);
+        self::assertSame($lowering->leaves, $scoped->leaves);
+    }
+
 }

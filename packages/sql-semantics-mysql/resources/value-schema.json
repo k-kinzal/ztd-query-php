@@ -3662,6 +3662,11 @@
         "ifExists": "bool",
         "views": "array"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\Problem\\RefusedColumns": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "program": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "view": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewAlgorithm": {
         "name": "string",
         "value": "string"

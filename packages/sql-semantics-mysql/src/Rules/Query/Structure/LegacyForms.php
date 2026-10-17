@@ -70,6 +70,7 @@ final class LegacyForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition => \SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewColumns::explicit($value->columns) !== null,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram => $value->legacyName(),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable => $value->charset !== null && $value->charset->name === null,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption => strtoupper($value->algorithm->value ?? '') === 'DEFAULT',

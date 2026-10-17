@@ -123,7 +123,7 @@ final class DefinitionRule
         $name = $this->lowering->names->qualified($parts['sp_name']);
         $characteristics = (new CharacteristicRule($this->lowering))->characteristics($parts['sp_c_chistics']);
         $bodyTree = $parts['stored_routine_body'] ?? $parts['sp_proc_stmt'];
-        $body = (new StatementRule($this->lowering))->body($bodyTree);
+        $body = (new StatementRule($this->lowering->inProgram($name)))->body($bodyTree);
         $language = (new DefinitionBody())->language($body, $characteristics, $bodyTree);
         if ($tail->name === 'sp_tail') {
             $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_pdparam_list']);

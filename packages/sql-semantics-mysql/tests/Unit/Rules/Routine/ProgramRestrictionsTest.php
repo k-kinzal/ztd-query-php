@@ -364,4 +364,15 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'a TABLE statement' => ['TABLE t', false];
         yield 'a VALUES statement' => ['VALUES ROW(1)', false];
     }
+    public function testFunctionRefusesViewDefinitionTransactionBoundaries(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $create = $semantics->analyze('CREATE VIEW v AS SELECT 1')->statement;
+        $drop = $semantics->analyze('DROP VIEW v')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\CreateView::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\DropView::class, $drop);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, (new ProgramRestrictions())->function($create, ProgramKind::Function)?->rule);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, (new ProgramRestrictions())->function($drop, ProgramKind::Trigger)?->rule);
+    }
+
 }

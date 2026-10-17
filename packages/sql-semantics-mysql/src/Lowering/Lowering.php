@@ -185,7 +185,7 @@ final class Lowering
      * @param \SqlSemantics\Construction\Origins $origins The input locations recorded for this lowering
      * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null $client The character set of identifier bytes in this input
      */
-    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins(), public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null)
+    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins(), public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $programName = null)
     {
         $this->names = new NameRule($this);
         $this->literals = new LiteralRule($this);
@@ -315,6 +315,15 @@ final class Lowering
             Family::TableDefinition => $this->tableDefinitions->statement($statement),
             Family::Utility => $this->utility->statement($statement),
         };
+    }
+
+    /**
+     * Interprets a stored body in its declared database while sharing input origins.
+     * The scope belongs to lowering only; published refusals retain decoded names.
+     */
+    public function inProgram(?\SqlSemantics\Statement\Identifier\QualifiedName $name): self
+    {
+        return new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $name ?? $this->programName);
     }
 
     /**

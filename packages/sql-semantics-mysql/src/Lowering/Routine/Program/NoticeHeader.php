@@ -65,10 +65,13 @@ final class NoticeHeader
     }
 
     /**
-     * Attaches the typed header to an empty event instruction without publishing an invalid body.
+     * Attaches the typed header to a refused view column or empty event instruction.
      */
     public function scoped(ParseFailure $notice): ParseFailure
     {
+        if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns && $this->kind !== null) {
+            return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns($notice->problem->view, $notice->problem->column, $this->name), $notice->aborts, $notice->phase);
+        }
         if (!$notice->problem instanceof EmptyEventAlteration || $this->name === null || $this->kind === null) {
             return $notice;
         }

@@ -53,4 +53,14 @@ final class NoticeHeaderTest extends TestCase
 
         self::assertSame($notice, (new NoticeHeader())->scoped($notice));
     }
+    public function testScopedRetainsTheDatabaseScopeForRefusedViewColumns(): void
+    {
+        $sql = 'CREATE PROCEDURE db.p() BEGIN CREATE VIEW v (``) AS SELECT 1; END';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+        $notice = $notices[0][1];
+        self::assertInstanceOf(ParseFailure::class, $notice);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns::class, $notice->problem);
+        self::assertSame('db', $notice->problem->program?->schema?->value);
+    }
+
 }

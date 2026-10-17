@@ -95,4 +95,16 @@ final class InputErrorsTest extends TestCase
         self::assertSame(1234, (new InputErrors())->error($problem, $session)?->getCode());
     }
 
+    public function testErrorResolvesTheViewDatabaseBeforeItsRefusedColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $problem = new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), new \SqlSemantics\Statement\Identifier\Name(''));
+        self::assertSame(1046, (new InputErrors())->error($problem, $session)?->getCode());
+        $session->run('CREATE DATABASE d; USE d');
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1166, (new InputErrors())->error($problem, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
 }

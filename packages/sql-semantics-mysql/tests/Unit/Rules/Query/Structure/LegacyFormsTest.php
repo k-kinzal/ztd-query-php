@@ -104,4 +104,12 @@ final class LegacyFormsTest extends TestCase
         self::assertTrue((new LegacyForms())->definition(new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption(new \SqlSemantics\Statement\Identifier\Name('DEFAULT'))));
     }
 
+    public function testDefinitionRecognizesLegacyViewColumnNames(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v'));
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+        self::assertTrue((new LegacyForms())->definition(new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query, [new \SqlSemantics\Statement\Identifier\Name('')])));
+        self::assertFalse((new LegacyForms())->definition(new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query, [new \SqlSemantics\Statement\Identifier\Name('a')])));
+    }
+
 }

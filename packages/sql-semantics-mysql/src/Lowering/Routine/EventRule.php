@@ -96,7 +96,7 @@ final class EventRule
 
         $name = $this->lowering->names->qualified($form->node($first + 2));
         $schedule = $this->schedule($form->node($first + 5));
-        $body = (new StatementRule($this->lowering))->event($form->node($first + 10));
+        $body = (new StatementRule($this->lowering->inProgram($name)))->event($form->node($first + 10));
         (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node($first + 2))[1] ?? 0);
 
         return new CreateEvent(
@@ -141,7 +141,7 @@ final class EventRule
         $definer = $this->lowering->users->definer($form->node(1));
         $instruction = match ($body->signature) {
             'opt_ev_sql_stmt:' => null,
-            'opt_ev_sql_stmt: DO_SYM ev_sql_stmt' => (new StatementRule($this->lowering))->event($body->node(1)),
+            'opt_ev_sql_stmt: DO_SYM ev_sql_stmt' => (new StatementRule($this->lowering->inProgram($name)))->event($body->node(1)),
             default => throw ImplementationGap::production($body),
         };
         if ($instruction !== null) {
