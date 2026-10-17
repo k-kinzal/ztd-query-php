@@ -119,18 +119,27 @@ final class NumberRule
     /**
      * Lowers a size in bytes, written alone or as the AUTOEXTEND_SIZE option.
      *
+     * @throws RejectedInput When the size is outside its intrinsic domain
      * @throws ImplementationGap When the production has no rule
      */
     public function size(Node $size): ByteSize
     {
         $form = $this->lowering->productions->form($size);
 
-        return match ($form->signature) {
-            'size_number: real_ulonglong_num' => $this->lowering->leaves->record(new ByteSize($this->numeral($form->node(0)))),
-            'size_number: IDENT_sys' => $this->lowering->leaves->record(new ByteSize(null, $this->lowering->names->identifier($form->node(0)))),
-            'option_autoextend_size: AUTOEXTEND_SIZE_SYM opt_equal size_number' => $this->size($form->node(2)),
+        if ($form->signature === 'option_autoextend_size: AUTOEXTEND_SIZE_SYM opt_equal size_number') {
+            return $this->size($form->node(2));
+        }
+        [$number, $word] = match ($form->signature) {
+            'size_number: real_ulonglong_num' => [$this->numeral($form->node(0)), null],
+            'size_number: IDENT_sys' => [null, $this->lowering->names->identifier($form->node(0))],
             default => throw ImplementationGap::production($form),
         };
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\StorageSizes())->problem($number, $word);
+        if ($problem !== null) {
+            throw new RejectedInput($problem, (new SourceRanges())->span($size)[1] ?? 0);
+        }
+
+        return $this->lowering->leaves->record(new ByteSize($number, $word));
     }
 
     /**

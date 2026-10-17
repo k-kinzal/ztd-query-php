@@ -17,6 +17,8 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Holding the option
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\NodegroupOption(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2')))->group->text // => '2'
+ * @example Refusing a fractional group number
+ *     new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\NodegroupOption(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class NodegroupOption implements StorageOption
 {
@@ -27,6 +29,7 @@ final class NodegroupOption implements StorageOption
      */
     public function __construct(public readonly Numeral $group)
     {
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($group), 'A node-group number is an integer token.');
     }
 
     /**

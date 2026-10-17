@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateUndoTablespace;
 
 #[CoversClass(CreateUndoTablespace::class)]
@@ -21,11 +20,11 @@ final class CreateUndoTablespaceTest extends TestCase
         self::assertSame("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE innodb", (new Semantics(Dialect::MySql))->analyze("create undo tablespace u add datafile 'u.ibu' engine innodb")->toString());
     }
 
-    public function testDeriveStatementReportsRejectedOptions(): void
+    public function testDeriveStatementAcceptsAConsistentOptionList(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE a ENGINE b");
+        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE a");
 
-        self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testValueRejectsAnUnquotedDatafile(): void

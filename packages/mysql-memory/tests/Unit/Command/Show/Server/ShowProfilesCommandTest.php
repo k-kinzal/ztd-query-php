@@ -73,6 +73,19 @@ final class ShowProfilesCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([10, 8], [$result->columns[0]->length, $result->columns[1]->length]);
     }
+
+    public function testExecuteSkipsTheReadingWarningOnlyWhenCountAndOffsetAreZero(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SHOW PROFILE LIMIT 0');
+
+        self::assertSame([], $session->diagnostics->conditions);
+        $session->query('SHOW PROFILE LIMIT 0 OFFSET 1');
+        self::assertCount(1, $session->diagnostics->conditions);
+        $legacy = (new Instance('5.6.51'))->connect();
+        $legacy->query('SHOW PROFILE LIMIT 0');
+        self::assertCount(1, $legacy->diagnostics->conditions);
+    }
     public function testHeadingsKeepLegacyResourceCounterWidths(): void
     {
         $headings = (new ShowProfilesCommand())->headings([ProfileSection::Swaps], true);

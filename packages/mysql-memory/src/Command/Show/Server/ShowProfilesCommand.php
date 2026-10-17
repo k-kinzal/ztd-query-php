@@ -26,7 +26,8 @@ use SqlSemantics\Statement\Operation;
  * SHOW PROFILES warns when defined. SHOW PROFILE warns when defined on 5.6,
  * and during unprepared execution on 5.7 and later. SQL Semantics retains
  * definition notices; prepared execution does not issue them again. Undeclared
- * LIMIT variables precede the notice. Observed on 5.6, 5.7, 8.0, 8.4 and 9.1.
+ * LIMIT variables precede the notice. A zero count with a zero or absent offset
+ * avoids reading profile rows and their execution warning from MySQL 5.7 on. Observed on 5.6, 5.7, 8.0, 8.4 and 9.1.
  * The emulator does not profile statements, as a session that
  * has not set profiling does not, so they list none. SHOW PROFILE answers the status and
  * duration of each stage and the columns of the sections it names, read from
@@ -58,7 +59,11 @@ final class ShowProfilesCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowProfiles || $statement instanceof ShowProfile);
         if ($statement instanceof ShowProfile && !$session->replayed && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            $context->warning(StatementError::DeprecatedSyntax, 'SHOW PROFILE', 'Performance Schema');
+            $limit = $statement->limit;
+            $bounds = new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary));
+            if (!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $bounds->bound($limit->count, null) !== 0 || ($limit->offset !== null && $bounds->bound($limit->offset, null) !== 0)) {
+                $context->warning(StatementError::DeprecatedSyntax, 'SHOW PROFILE', 'Performance Schema');
+            }
         }
         if ($statement instanceof ShowProfiles) {
             $flags = ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value;

@@ -163,10 +163,12 @@ final class StorageOptionRule
      *
      * @return list<StorageOption>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an option is repeated outside its constructor domain
      */
     public function options(Node $list): array
     {
         $options = [];
+        $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         $pending = [$list];
         while ($pending !== []) {
             $node = array_pop($pending);
@@ -176,6 +178,10 @@ final class StorageOptionRule
             }
             if (isset(self::SLOTS[$form->signature])) {
                 $options[] = $this->option($form->node(0));
+                $problem = $legacy ? (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($options, true) : null;
+                if ($problem !== null) {
+                    throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
+                }
                 continue;
             }
             if (!in_array($form->signature, self::LISTS, true)) {
@@ -189,6 +195,11 @@ final class StorageOptionRule
                     $pending[] = $child;
                 }
             }
+        }
+
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($options, $legacy);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
         }
 
         return $options;
@@ -213,7 +224,7 @@ final class StorageOptionRule
         $kind = self::OTHERS[$form->signature] ?? throw ImplementationGap::production($form);
 
         return match ($kind) {
-            'nodegroup' => new NodegroupOption($this->lowering->numbers->numeral($this->value($form, 2))),
+            'nodegroup' => new NodegroupOption($this->lowering->numbers->integral($this->value($form, 2))),
             'comment' => new CommentOption($this->lowering->literals->text($this->value($form, 2))),
             'engine' => $this->engine($form),
             'wait' => new WaitOption(true),

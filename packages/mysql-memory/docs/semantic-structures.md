@@ -1775,3 +1775,20 @@ warns again. These tests do not close the full structure contract. Additional
 probes still expose differences in NUL-containing server-name lookup on MySQL
 5.7 and physical row reuse/order on MySQL 5.6; independent native replays matched,
 so those differences have not been classified as volatile exceptions.
+
+Storage values now exclude intrinsically inconsistent ordinary structures.
+Every tablespace, undo-tablespace and logfile-group constructor uses the same
+option-list invariant: settings accepted once cannot repeat, except for the
+specified unset sentinels. `ByteSize` admits integer tokens or bounded K/M/G
+coefficients, and node-group values require integer tokens. SQL input outside
+these domains retains a typed refusal before an ordinary structure is published.
+Size checks precede later malformed input; option conflict checks preserve the
+different phases of legacy statements, modern ordinary tablespaces and modern
+undo tablespaces. The native input test compares 790 observations on five
+releases, including SHOW PARSE_TREE and stored-program definitions. A separate
+test reuses accepted storage structures for 210 observations across missing,
+created, duplicate and removed definitions, without supplying their source SQL
+to Memory. The profile metadata test also preserves the release-specific
+warning behavior of a zero LIMIT and its offset. These checks strengthen the
+construction contract; ordinary window and nested-query constraints remain
+separate unresolved work.

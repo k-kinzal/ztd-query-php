@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Server\Storage;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -33,5 +34,30 @@ final class StorageOptionRuleTest extends TestCase
     public function testEngineSkipsStorage(): void
     {
         self::assertSame('DROP TABLESPACE ts ENGINE innodb', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('drop tablespace ts storage engine = innodb')->toString());
+    }
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerRefusedOptions(): array
+    {
+        return [
+            ['ALTER UNDO TABLESPACE u SET ACTIVE ENGINE a ENGINE b'],
+            ["ALTER TABLESPACE ts ADD DATAFILE 'f' INITIAL_SIZE 1X"],
+            ['ALTER TABLESPACE ts ENGINE a ENGINE b'],
+            ["CREATE LOGFILE GROUP g ADD UNDOFILE 'f' COMMENT 'a' COMMENT 'b'"],
+            ["CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE a ENGINE b"],
+            ["ALTER LOGFILE GROUP g ADD UNDOFILE 'f' ENGINE a ENGINE b"],
+            ['DROP TABLESPACE ts ENGINE a ENGINE b'],
+            ["CREATE TABLESPACE ts ADD DATAFILE 'f' NODEGROUP 1 NODEGROUP 2"],
+            ['DROP LOGFILE GROUP g ENGINE a ENGINE b'],
+            ['DROP UNDO TABLESPACE u ENGINE a ENGINE b'],
+        ];
+    }
+
+    #[DataProvider('providerRefusedOptions')]
+    public function testOptionsRefusesConflictsBeforePublishingAnOrdinaryStructure(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 }
