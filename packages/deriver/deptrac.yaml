@@ -64,6 +64,8 @@ deptrac:
       collectors:
         - type: directory
           value: 'src/Query/.*'
+        - type: classLike
+          value: '^Deriver\\Query$'
     # The input vocabulary: captured files, entry points, target profile, limits, configuration,
     # replacement rules, the captured project view and the declaration facts it exposes.
     - name: Project
@@ -300,7 +302,7 @@ deptrac:
       - ModelOperations
       - ModelCompilation
       - ModelRegistration
-    AnalysisSelection: [Exception, Reference, Value, Query, ControlFlow, SourceDeclaration, ModelBuiltin, ModelRegistration, Candidate]
+    AnalysisSelection: [Exception, Reference, Value, Query, Project, ControlFlow, SourceDeclaration, ModelBuiltin, ModelRegistration, Candidate]
     AnalysisCandidates:
       - Exception
       - Reference
@@ -351,6 +353,7 @@ deptrac:
       - AnalysisCandidates
       - AnalysisExecution
     Facade:
+      - AnalysisSelection
       - SourceDiscovery
       - Exception
       - Reference

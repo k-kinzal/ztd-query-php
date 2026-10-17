@@ -60,10 +60,9 @@ Pass the selected paths and a query to `Analyzer::analyze()`:
 
 ```php
 use Deriver\Analyzer;
-use Deriver\Query\ReturnQuery;
 
 $analyzer = new Analyzer();
-$candidates = $analyzer->analyze($files, new ReturnQuery('query'));
+$candidates = $analyzer->analyze($files, 'query#return');
 
 foreach ($candidates as $candidate) {
     // type is 'analyzed' or 'partials'; type_name is the inferred PHP type.
@@ -82,23 +81,33 @@ Every candidate has its own nonempty `evidence` list. Equal values share one can
 
 ## Selecting a target
 
-- `ReturnQuery('name')` selects a function or method's return value.
-- `ParameterQuery('name', 'parameter')` selects a formal parameter.
+`Analyzer::analyze(array $files, string $query)` accepts a selector string:
 
-`ValueQuery`, `TupleQuery` and `StateQuery` operate on snapshot-specific references supplied by the lower-level analysis contracts. `ReturnQuery` and `ParameterQuery` can be constructed directly from names before calling `analyze()`.
+| Selector | Selected value |
+| --- | --- |
+| `App\Repository::find#return` | Return candidates of the named function or method |
+| `App\Repository::find#parameter(id)` | Values reaching the declared parameter `$id` |
+| `src/Repository.php:25:5#argument(0)` | The first argument expression of the call at that source position |
+| `src/Repository.php:25:5#argument(sql)` | The argument explicitly named `sql:` at that call |
 
-To bind a specific input, supply an entrypoint:
+Paths are unquoted and may contain spaces or `#`. A source position is the exact start of a call expression: lines and byte columns start at 1, and argument indices start at 0 in source order. For a method call, the position starts at the receiver expression. Relative paths are resolved against the working directory, just like paths supplied in `$files`. The file must already be included in `$files`; a selector does not discover or read additional files. Missing or ambiguous calls and unsupported selector forms raise `InvalidInputException`.
+
+`Query` is the parsed syntax, independent of the captured source:
 
 ```php
-use Deriver\Project\EntryPoint;
-use Deriver\Query\QueryScope;
-use Deriver\Value\Term;
+use Deriver\Query;
 
-$candidates = $analyzer->analyze($files, new ReturnQuery('query', QueryScope::fromEntrypoints([
-    new EntryPoint('query', [Term::constant('users')]),
-])));
-echo $candidates->candidates[0]->result; // SELECT * FROM users
+$query = Query::parse('src/Repository.php:25:5#argument(0)');
+$query->target;    // 'src/Repository.php'
+$query->line;      // 25
+$query->column;    // 5
+$query->selector;  // 'argument'
+$query->arguments; // [0]
+
+$candidates = $analyzer->analyze($files, $query->toString());
 ```
+
+Callable selectors have null `line` and `column`. Parsing performs no filesystem access or symbol lookup. It accepts selector names and comma-separated identifier or nonnegative integer arguments; the analyzer validates their supported meaning. `toString()` reconstructs the selector with canonical spacing, preserving the parsed fields. Empty parentheses are omitted. Coordinates must be positive integers, and numeric components cannot have leading zeroes. Selector arguments describe what to select; they are not inputs passed to application code.
 
 ## Replacing functions and expressions
 
@@ -113,7 +122,7 @@ $configuration = new Configuration(expansionRules: [
     Rule::constantFunction('count-one', '1', 'count', Term::constant(1)),
 ]);
 $analyzer = new Analyzer($configuration);
-$candidates = $analyzer->analyze($files, new ReturnQuery('query'));
+$candidates = $analyzer->analyze($files, 'query#return');
 ```
 
 A `Rule` callback receives a `Request` and can demand only the operands it needs through `input($key)`. Return `null` to decline and continue normal expansion; return a residual `Term` to record an unsupported selected case. `constantExpression()` replaces a syntax operation such as `binary` with operator `+`. Rules can also select an exact source path and byte range. Priorities resolve competing matches; duplicate identities or selectors at equal priority are rejected. Change a rule's version when its semantics change: identity and version are part of the snapshot manifest and replay contract.
@@ -122,7 +131,7 @@ Models of PHP functions and framework calls are part of the library, not of its 
 
 ## Bounds and partial results
 
-`Budget` controls reference depth, recursion, loop expansion, work, value nodes, evidence nodes and candidate enumeration. `maxCandidates` includes the final partial record retaining any unenumerated alternatives. Choices remain nested in the shared graph; independent branches do not require materializing their full Cartesian product. Reaching a limit preserves a residual with its stopping reason and the known expression structure.
+Analysis uses bounded reference depth, recursion, loop expansion, work, value nodes, evidence nodes and candidate enumeration. Selector strings contain only the target and selection; they do not encode execution scopes or budgets. `maxCandidates` includes the final partial record retaining any unenumerated alternatives. Choices remain nested in the shared graph; independent branches do not require materializing their full Cartesian product. Reaching a limit preserves a residual with its stopping reason and the known expression structure.
 
 Set `Configuration(resources: new ResourceLimits(seconds: 2.0))` for a cooperative time limit. Source capture is separately bounded by `sourceLimits`. Parsing, trusted callbacks and individual PHP operations cannot be preempted; use a separate process for a hard deadline. Resource-interrupted results are not cached as completed dependencies.
 
@@ -140,11 +149,11 @@ Normal JSON is an array of candidate records with exactly `type`, `type_name`, `
 
 Each evidence alternative owns a derivation root, a context root, all referenced DAG nodes, and a snapshot manifest. Nodes describe definitions, argument binding, operations, choices, calls, models and expansion stops. Source locations retain the file hash, byte range and line/byte-column coordinates. `$candidates->forCaller('callerName')` projects the set by caller context without choosing one value.
 
-`Deriver\Replay::verify($json, $input, $configuration, $query)` rederives the candidate set from captured bytes and compares the complete export. It detects changed candidates, omitted derivations and changed source or model manifests. It is deterministic revalidation by this analyzer, not an independent proof of PHP semantics. Keep the source bytes, query, target profile and versioned rule implementations with an exported result.
+`Deriver\Replay::verify($json, $input, $configuration, $query)` accepts the same selector string, rederives the candidate set from captured bytes and compares the complete export. It detects changed candidates, omitted derivations and changed source or model manifests. It is deterministic revalidation by this analyzer, not an independent proof of PHP semantics. Keep the source bytes, query, target profile and versioned rule implementations with an exported result.
 
 ## Migration from execution-shaped results
 
-The public API is `Finder`, `Analyzer`, `AnalysisSession`, `Replay`, `ExecutionSession`, the inputs under `Project` and `Query`, the outputs under `Result`, `Reference`, `Evidence` and `Diagnostic`, `Value\Term`, `Value\Projection`, and the exceptions. Classes moved to match that surface:
+The public API is `Finder`, `Analyzer`, `Deriver\Query`, `AnalysisSession`, `Replay`, `ExecutionSession`, the inputs under `Project` and `Query`, the outputs under `Result`, `Reference`, `Evidence` and `Diagnostic`, `Value\Term`, `Value\Projection`, and the exceptions. Classes moved to match that surface:
 
 | Former name | Name |
 | --- | --- |
@@ -162,7 +171,7 @@ The public API is `Finder`, `Analyzer`, `AnalysisSession`, `Replay`, `ExecutionS
 `Configuration` no longer accepts `models`, `providers`, `domains`, `intrinsics` or `stateSlots`; those are contributed by the library. `ObservationProvider::queries()` receives a `CapturedProject`, the read-only view every session implements.
 
 
-`Analyzer::open()` has been removed. Pass a list of file paths and a query to `Analyzer::analyze($files, $query)`, which returns `CandidateCollection`. Supply configuration through `new Analyzer($configuration)`. File discovery belongs to `Finder`; callers no longer need to construct a `ProjectInput` to analyze files. Iterate its candidates or read `candidates`; replace `normalOutcomes[*]->values['return']` with each candidate's `result` or `term`. Inspect each candidate's evidence instead of a global `frontiers` or `candidateGraph` field. Normal JSON no longer includes execution states, normal/exceptional outcomes or an assessment wrapper.
+`Analyzer::open()` has been removed. Pass a list of file paths and a selector string to `Analyzer::analyze($files, $query)`, which returns `CandidateCollection`. Replace `new ReturnQuery('name')` with `'name#return'` and `new ParameterQuery('name', 'parameter')` with `'name#parameter(parameter)'`. Supply configuration through `new Analyzer($configuration)`. File discovery belongs to `Finder`; callers no longer need to construct a `ProjectInput` to analyze files. Iterate its candidates or read `candidates`; replace `normalOutcomes[*]->values['return']` with each candidate's `result` or `term`. Inspect each candidate's evidence instead of a global `frontiers` or `candidateGraph` field. Normal JSON no longer includes execution states, normal/exceptional outcomes or an assessment wrapper.
 
 Applications intentionally using ordered execution analysis can construct `Deriver\ExecutionSession($input, $configuration)` explicitly. That API retains `DerivationResult` and `ExecutionResultSet`; `Configuration::forExecution()` and the `analysisContract` option have been removed. The candidate engine never switches to execution analysis automatically.
 

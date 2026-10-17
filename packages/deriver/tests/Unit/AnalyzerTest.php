@@ -16,6 +16,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Analyzer::class)]
+#[UsesClass(\Deriver\Query::class)]
+#[UsesClass(\Deriver\Analysis\Selection\SelectorResolution::class)]
 #[UsesClass(\Deriver\Analysis\Execution\QueryExecution::class)]
 #[UsesClass(\Deriver\Analysis\Selection\QueryValidation::class)]
 #[UsesClass(\Deriver\Analysis\Execution\ResultAssessment::class)]
@@ -139,7 +141,7 @@ final class AnalyzerTest extends TestCase
     {
         $source = new \Tests\Fake\SourceDirectory();
         $path = $source->write('target.php', '<?php throw new RuntimeException("never execute"); function target() { $x="before"; $x="after"; return $x . ":done"; }');
-        $result = (new Analyzer())->analyze([$path], new ReturnQuery('target'));
+        $result = (new Analyzer())->analyze([$path], 'target#return');
         self::assertSame('after:done', $result->candidates[0]->result);
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
     }
@@ -155,7 +157,7 @@ final class AnalyzerTest extends TestCase
         $source->write('excluded/broken.php', '<?php function broken(');
         $files = (new \Deriver\Finder())->in($source->path)->include('**/*.php')->exclude('excluded/**')->files();
         $source->write('helper.php', '<?php function helper(){return 42;}');
-        $result = (new Analyzer())->analyze($files, new ReturnQuery('target'));
+        $result = (new Analyzer())->analyze($files, 'target#return');
         self::assertSame(42, $result->candidates[0]->result);
         self::assertCount(2, $result->candidates[0]->evidence[0]->snapshot->sources);
     }
@@ -168,7 +170,7 @@ final class AnalyzerTest extends TestCase
         $source = new \Tests\Fake\SourceDirectory();
         $path = $source->write('target.php', '<?php function target(){return missing();}');
         $analyzer = new Analyzer();
-        $query = new ReturnQuery('target');
+        $query = 'target#return';
         $before = $analyzer->analyze([$path], $query);
         $added = $source->write('added.php', '<?php function missing(){return 7;}');
         $after = $analyzer->analyze([$path, $added], $query);
@@ -187,7 +189,7 @@ final class AnalyzerTest extends TestCase
         $source = new \Tests\Fake\SourceDirectory();
         $path = $source->write('target.php', '<?php function target(){$f=fn()=>7;return $f();}');
         $analyzer = new Analyzer();
-        $query = new ReturnQuery('target');
+        $query = 'target#return';
         $first = $analyzer->analyze([$path], $query);
         $added = $source->write('added.php', '<?php function unrelated(){}');
         $result = $analyzer->analyze([$path, $added], $query);
@@ -205,7 +207,7 @@ final class AnalyzerTest extends TestCase
         $source = new \Tests\Fake\SourceDirectory();
         $path = $source->write('target.php', '<?php function target(){return 1;}');
         $analyzer = new Analyzer();
-        $query = new ReturnQuery('target');
+        $query = 'target#return';
         $first = $analyzer->analyze([$path], $query);
         $source->write('target.php', '<?php function target(){return 2;}');
         $second = $analyzer->analyze([$path], $query);
@@ -224,7 +226,7 @@ final class AnalyzerTest extends TestCase
         $configuration = new \Deriver\Project\Configuration(expansionRules: [
             \Deriver\Project\Expansion\Rule::constantFunction('count-one', '1', 'count', \Deriver\Value\Term::constant(1)),
         ]);
-        $result = (new Analyzer($configuration))->analyze([$path], new ReturnQuery('target'));
+        $result = (new Analyzer($configuration))->analyze([$path], 'target#return');
         self::assertSame(1, $result->candidates[0]->result);
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
     }
@@ -237,7 +239,7 @@ final class AnalyzerTest extends TestCase
         $source = new \Tests\Fake\SourceDirectory();
         $path = $source->write('broken.php', '<?php function broken(');
         $this->expectException(\Deriver\Exception\InvalidInputException::class);
-        (new Analyzer())->analyze([$path], new ReturnQuery('target'));
+        (new Analyzer())->analyze([$path], 'target#return');
     }
 
     /**
@@ -250,7 +252,7 @@ final class AnalyzerTest extends TestCase
         $files = (new \Deriver\Finder())->in($source->path)->files();
         self::assertTrue(unlink($path));
         $this->expectException(\Deriver\Exception\InvalidInputException::class);
-        (new Analyzer())->analyze($files, new ReturnQuery('target'));
+        (new Analyzer())->analyze($files, 'target#return');
     }
 
     /**
@@ -259,7 +261,7 @@ final class AnalyzerTest extends TestCase
     public function testAnalyzeRejectsDirectoriesInsteadOfExpandingThem(): void
     {
         $this->expectException(\Deriver\Exception\InvalidInputException::class);
-        (new Analyzer())->analyze([__DIR__], new ReturnQuery('target'));
+        (new Analyzer())->analyze([__DIR__], 'target#return');
     }
 
     /**
@@ -270,7 +272,7 @@ final class AnalyzerTest extends TestCase
         $source = new \Tests\Fake\SourceDirectory();
         $path = $source->write('target.php', '<?php function target(){return 1;}');
         $this->expectException(\Deriver\Exception\InvalidInputException::class);
-        (new Analyzer())->analyze([$path, $path], new ReturnQuery('target'));
+        (new Analyzer())->analyze([$path, $path], 'target#return');
     }
 
     /**
@@ -280,7 +282,7 @@ final class AnalyzerTest extends TestCase
     {
         $source = new \Tests\Fake\SourceDirectory();
         $path = $source->write('target.php', '<?php function target(){return 42;}');
-        $result = (new Analyzer())->analyze([$path], new ReturnQuery('target'));
+        $result = (new Analyzer())->analyze([$path], 'target#return');
         $configuration = new \Deriver\Project\Configuration();
         (new \Deriver\Replay())->verify($result->toJson(), ProjectInput::fromFiles([$path]), $configuration, new ReturnQuery('target'));
         self::assertSame(42, $result->candidates[0]->result);

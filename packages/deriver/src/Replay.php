@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Deriver;
 
+use Deriver\Analysis\Selection\SelectorResolution;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
-use Deriver\Query\Query;
+use Deriver\Query\Query as AnalysisQuery;
 use JsonException;
 
 /**
@@ -25,13 +26,16 @@ use JsonException;
 class Replay
 {
     /**
+     * @param string|AnalysisQuery $query Selector string or a lower-level analysis request
      * @throws InvalidInputException If values, origins, context, or evidence differ
      * @throws JsonException If fixture or captured metadata cannot be encoded
      */
-    public function verify(string $json, ProjectInput $input, Configuration $configuration, Query $query): void
+    public function verify(string $json, ProjectInput $input, Configuration $configuration, string|AnalysisQuery $query): void
     {
         $actual = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-        $fresh = (new Session\Session($input, $configuration))->derive($query);
+        $session = new Session\Session($input, $configuration);
+        $request = is_string($query) ? (new SelectorResolution($session->program))->resolve(Query::parse($query)) : $query;
+        $fresh = $session->derive($request);
         $expected = json_decode($fresh->toJson(), true, 512, JSON_THROW_ON_ERROR);
         if ($actual !== $expected) {
             throw new InvalidInputException('EVIDENCE_MISMATCH: the exported values or derivations do not match this source snapshot, query and rule manifest.');
