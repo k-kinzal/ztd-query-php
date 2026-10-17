@@ -269,8 +269,28 @@
 <span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a></span>
 <span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT f()&#039;</span>);</span>
 <span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a>    }</span>
-<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a>}</span>
-<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a></span>
+<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSelectionStartsItsOwnDiagnosticsAreaWhenReached</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>    {</span>
+<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>(<span class="tok-str">&#039;5.6.51&#039;</span>))-&gt;<span class="tok-id">connect</span>();</span>
+<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE DATABASE d; USE d; CREATE PROCEDURE p() SELECT (1,2)&#039;</span>);</span>
+<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;SELECT &#039;old&#039;+0&quot;</span>);</span>
+<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">run</span>(<span class="tok-str">&#039;CALL p()&#039;</span>);</span>
+<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([[<span class="tok-str">&#039;Error&#039;</span>, <span class="tok-num">1241</span>, <span class="tok-str">&#039;Operand should contain 1 column(s)&#039;</span>]], <span class="tok-var">$session</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">conditions</span>);</span>
+<span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a>    }</span>
+<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a></span>
+<span class="src-line" id="L241" data-diff="added"><a class="ln" href="#L241">241</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testAssignmentsPreservesEarlierUserVariableWritesWhenALaterItemFails</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a>    {</span>
+<span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
+<span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE DATABASE d; USE d; CREATE PROCEDURE p() SET @x=10,@y=(1,2); SET @x=1,@y=2&#039;</span>);</span>
+<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>        <span class="tok-var">$failure</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">run</span>(<span class="tok-str">&#039;CALL p()&#039;</span>)[<span class="tok-num">0</span>];</span>
+<span class="src-line" id="L246" data-diff="added"><a class="ln" href="#L246">246</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\MySqlMemory\Error\SqlError</span>::<span class="tok-kw">class</span>, <span class="tok-var">$failure</span>);</span>
+<span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">1241</span>, <span class="tok-var">$failure</span>-&gt;<span class="tok-id">getCode</span>());</span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a>        <span class="tok-var">$result</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT @x,@y&#039;</span>)[<span class="tok-num">0</span>];</span>
+<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\MySqlMemory\Result\ResultSet</span>::<span class="tok-kw">class</span>, <span class="tok-var">$result</span>);</span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([[<span class="tok-str">&#039;10&#039;</span>,<span class="tok-str">&#039;2&#039;</span>]], <span class="tok-var">$result</span>-&gt;<span class="tok-id">rows</span>);</span>
+<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>    }</span>
+<span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a>}</span>
+<span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

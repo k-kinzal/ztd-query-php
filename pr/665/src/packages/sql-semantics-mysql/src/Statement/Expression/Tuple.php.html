@@ -56,9 +56,10 @@
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * @example Reading the width of a row</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t WHERE (a, b) IS NULL&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t WHERE (a, b) IS NULL&#039;);</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-com"> *     $query-&gt;facts-&gt;scalar($query-&gt;statement-&gt;where-&gt;operand)-&gt;type-&gt;descriptor-&gt;width // =&gt; 2</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $query-&gt;facts-&gt;scalar($query-&gt;statement-&gt;query-&gt;where-&gt;operand)-&gt;type-&gt;descriptor-&gt;width // =&gt; 2</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t WHERE (a, b) = (1, 2)&#039;);</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $query-&gt;facts-&gt;scalar($query-&gt;statement-&gt;query-&gt;where-&gt;left)-&gt;type-&gt;descriptor-&gt;width // =&gt; 2</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Tuple</span> <span class="tok-kw">implements</span> <span class="tok-id">TypeDescriptor</span></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>{</span>
