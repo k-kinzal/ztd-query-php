@@ -9,7 +9,7 @@ use Deriver\Value\Term;
 /**
  * A concrete value or a structured residual, with every supporting derivation.
  * @example Reading a derived literal
- *     $session = (new \Deriver\Analyzer())->open(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f(){return 42;}')]));
+ *     $session = (new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f(){return 42;}')]), new \Deriver\Project\Configuration()));
  *     $session->derive(new \Deriver\Query\ReturnQuery('f'))->candidates[0]->type // => 'analyzed'
  * @visibility public
  */

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Deriver\Analyzer;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
@@ -34,7 +33,7 @@ final class CandidateEvidenceTest extends TestCase
     public function testE01E02OuterCallersDisambiguateAnIdenticalInnerSite(string $caller, int $expected): void
     {
         $source = '<?php function ttl(int $n){return $n+5;} function recipe(int $n){return ttl($n);} function controllerA(){return recipe(30);} function controllerB(){return recipe(60);}';
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('calls.php', $source)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('calls.php', $source)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('ttl'));
         self::assertSame([35, 65], array_map(static fn ($candidate) => $candidate->result, $result->candidates));
 
@@ -53,7 +52,7 @@ final class CandidateEvidenceTest extends TestCase
     public function testE03EqualValuesKeepBothCallers(): void
     {
         $source = '<?php function ttl($n){return $n+5;}function a(){return ttl(30);}function b(){return ttl(30);}';
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('calls.php', $source)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('calls.php', $source)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('ttl'));
         self::assertCount(1, $result);
         self::assertCount(2, $result->candidates[0]->evidence);
@@ -67,7 +66,7 @@ final class CandidateEvidenceTest extends TestCase
     public function testE07E08WarmDependencyEvidenceSurvivesSessionRelease(): void
     {
         $source = '<?php function f($n){$x=5+$n;observe($x);return $x;}function caller(){return f(30);}';
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('calls.php', $source)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('calls.php', $source)]), new \Deriver\Project\Configuration()));
         $query = new ReturnQuery('f');
         $cold = $session->derive($query)->toJson();
         $session->release();
@@ -88,7 +87,7 @@ final class CandidateEvidenceTest extends TestCase
     public function testE09LiteralHasExactUtf8AndCrlfSourceCoordinates(): void
     {
         $source = "<?php\r\nfunction f(){ /* 日本語 */ observe(42);observe(65);}\r\n";
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('unicode.php', $source)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('unicode.php', $source)]), new \Deriver\Project\Configuration()));
         $start = strpos($source, '65');
         self::assertNotFalse($start);
         $result = $session->derive(new ValueQuery($session->expression('unicode.php', $start, $start + 2)));

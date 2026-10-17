@@ -165,7 +165,8 @@ final class CandidateIntegrityTest extends TestCase
      */
     public function testG12SourceAndModelChangesDoNotReuseAnotherSnapshot(): void
     {
-        $analyzer = new \Deriver\Analyzer();
+        $syntaxCache = new \Deriver\Source\Parsing\ParseCache();
+        $loweringCache = new \Deriver\Source\Lowering\LoweringCache();
         $results = [];
         $snapshots = [];
         foreach ([1, 2] as $version) {
@@ -174,7 +175,7 @@ final class CandidateIntegrityTest extends TestCase
             $session = new \Deriver\Session\Session($input, new Configuration(), new \Deriver\Model\Registration\Contributions(models: [$model]));
             $results[] = CandidateContractTest::native($session->derive(new ReturnQuery('target')), 'return');
             $snapshots[] = $session->snapshot()->id;
-            $changed = $analyzer->open(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('source.php', '<?php function target(){return ' . $version . ';}')]));
+            $changed = (new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('source.php', '<?php function target(){return ' . $version . ';}')]), new Configuration(), parsing: $syntaxCache, lowering: $loweringCache));
             self::assertSame([$version], CandidateContractTest::native($changed->derive(new ReturnQuery('target')), 'return'));
         }
         self::assertSame([[1], [2]], $results);

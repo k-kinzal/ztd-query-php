@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-use Deriver\Analyzer;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\ResourceLimits;
@@ -23,7 +22,7 @@ foreach (array_slice($argv, 1) as $path) {
             foreach ($fixture['sources'] as $name => $source) {
                 $files[] = new SourceFile($name, $source);
             }
-            $session = (new Analyzer())->open(new ProjectInput($files), new Configuration(resources: new ResourceLimits(seconds: 0.2)));
+            $session = (new Deriver\Session\Session(new ProjectInput($files), new Configuration(resources: new ResourceLimits(seconds: 0.2))));
             foreach (['query', 'prepare', 'exec', 'mysqli_query', 'mysqli_prepare'] as $name) {
                 foreach ($session->callsTo($name) as $site) {
                     if ($site->arguments === []) {

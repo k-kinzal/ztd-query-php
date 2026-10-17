@@ -6,7 +6,6 @@ declare(strict_types=1);
 // Example: php -d xdebug.mode=off -d opcache.enable_cli=0 -d memory_limit=1G bench/Practical.php tags 8192
 require getenv('DERIVER_BENCH_AUTOLOAD') ?: dirname(__DIR__) . '/vendor/autoload.php';
 
-use Deriver\Analyzer;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\ResourceLimits;
@@ -28,7 +27,7 @@ $source = match ($scenario) {
     'shared' => '<?php function helper($n){' . str_repeat('$n+=1;', 100) . 'return $n;} function sink($x){} function target(){$n=helper(0);' . str_repeat('sink($n);', $size) . '}',
 };
 $start = hrtime(true);
-$session = (new Analyzer())->open(new ProjectInput([new SourceFile('benchmark.php', $source)]), new Configuration(resources: new ResourceLimits(seconds: $seconds)));
+$session = (new Deriver\Session\Session(new ProjectInput([new SourceFile('benchmark.php', $source)]), new Configuration(resources: new ResourceLimits(seconds: $seconds))));
 $opened = hrtime(true);
 $queries = in_array($scenario, ['array', 'negative-key', 'negative-string-key', 'tags'], true)
     ? [new ReturnQuery('target')]

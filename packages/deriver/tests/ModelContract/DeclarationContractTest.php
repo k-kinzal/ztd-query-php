@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\ModelContract;
 
-use Deriver\Analyzer;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
@@ -35,7 +34,7 @@ final class DeclarationContractTest extends TestCase
      */
     public function testSignatureOnlyDeclarationsDoNotBehaveAsEmptyBodies(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('app.php', '<?php function target(){$x=1;external($x);return $x;}'), new SourceFile('stubs.php', '<?php function external(int &$value): int {return 99;}', true)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php function target(){$x=1;external($x);return $x;}'), new SourceFile('stubs.php', '<?php function external(int &$value): int {return 99;}', true)]), new Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame('call-write', $result->candidates[0]->term->kind);
         self::assertSame(1, $result->candidates[0]->term->operands[0]->native());
@@ -49,7 +48,7 @@ final class DeclarationContractTest extends TestCase
      */
     public function testDeclaredArgumentErrorsOccurBeforeTheUnavailableBody(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('app.php', '<?php function target(){try{return external(value: []);}catch(TypeError $e){return "typed";}}'), new SourceFile('stubs.php', '<?php function external(int $value): int {}', true)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php function target(){try{return external(value: []);}catch(TypeError $e){return "typed";}}'), new SourceFile('stubs.php', '<?php function external(int $value): int {}', true)]), new Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame('typed', $result->candidates[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
@@ -74,9 +73,10 @@ final class DeclarationContractTest extends TestCase
      */
     public function testSourceModeChangesInvalidateLoweringAndSnapshotCaches(): void
     {
-        $analyzer = new Analyzer();
-        $stub = $analyzer->open(new ProjectInput([new SourceFile('library.php', '<?php function target(){return 7;}', true)]));
-        $source = $analyzer->open(new ProjectInput([new SourceFile('library.php', '<?php function target(){return 7;}')]));
+        $syntaxCache = new \Deriver\Source\Parsing\ParseCache();
+        $loweringCache = new \Deriver\Source\Lowering\LoweringCache();
+        $stub = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('library.php', '<?php function target(){return 7;}', true)]), new Configuration(), parsing: $syntaxCache, lowering: $loweringCache));
+        $source = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('library.php', '<?php function target(){return 7;}')]), new Configuration(), parsing: $syntaxCache, lowering: $loweringCache));
         self::assertNotSame($stub->snapshot()->id, $source->snapshot()->id);
         self::assertNotEmpty(\Tests\Semantic\CandidateContractTest::frontiers($stub->derive(new ReturnQuery('target'))));
         self::assertSame(7, $source->derive(new ReturnQuery('target'))->candidates[0]->term->native());
@@ -100,7 +100,7 @@ final class DeclarationContractTest extends TestCase
      */
     public function testExternalClassAccessStillUsesSourceVisibility(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('app.php', '<?php function target(){try{return Box::privateMethod();}catch(Error $e){return "private";}}'), new SourceFile('stubs.php', '<?php class Box{private static function privateMethod(){}}', true)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php function target(){try{return Box::privateMethod();}catch(Error $e){return "private";}}'), new SourceFile('stubs.php', '<?php class Box{private static function privateMethod(){}}', true)]), new Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame('private', $result->candidates[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));

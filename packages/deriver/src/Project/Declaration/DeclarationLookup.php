@@ -8,7 +8,7 @@ namespace Deriver\Project\Declaration;
  * Read-only declaration facts captured from sources and explicit stubs.
  * @visibility public
  * @example Inspecting an empty captured project
- *     (new \Deriver\Analyzer())->open(new \Deriver\Project\ProjectInput([]))->declarations()->symbols() // => []
+ *     (new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([]), new \Deriver\Project\Configuration()))->declarations()->symbols() // => []
  */
 interface DeclarationLookup
 {

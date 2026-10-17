@@ -22,7 +22,7 @@ final class ReplayTest extends TestCase
         $input = new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function target(){return 42;}')]);
         $config = new Configuration();
         $query = new ReturnQuery('target');
-        $result = (new \Deriver\Analyzer())->open($input, $config)->derive($query);
+        $result = (new \Deriver\Session\Session($input, $config))->derive($query);
         (new Subject())->verify($result->toJson(), $input, $config, $query);
         $this->expectException(\Deriver\Exception\InvalidInputException::class);
         (new Subject())->verify('[]', $input, $config, $query);

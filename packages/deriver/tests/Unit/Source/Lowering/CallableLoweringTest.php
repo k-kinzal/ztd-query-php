@@ -260,7 +260,7 @@ final class CallableLoweringTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerInitializerFiles')]
     public function testParametersUsesTheDeclarationFileModeAcrossCallerFiles(string $library, string $application, string $expectedJson): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
         self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));

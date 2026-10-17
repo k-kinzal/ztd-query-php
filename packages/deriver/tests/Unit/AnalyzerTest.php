@@ -135,42 +135,154 @@ final class AnalyzerTest extends TestCase
     /**
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public function testOpenPreservesTheSemanticContract(): void
+    public function testAnalyzeReadsPathsAndDoesNotExecuteApplicationCode(): void
     {
-        $result = \Tests\Fake\Analysis::returns('<?php function target() { $x="before"; $x="after"; return $x . ":done"; }');
-        self::assertSame('after:done', $result->normalOutcomes[0]->values['return']->native());
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('target.php', '<?php throw new RuntimeException("never execute"); function target() { $x="before"; $x="after"; return $x . ":done"; }');
+        $result = (new Analyzer())->analyze([$path], new ReturnQuery('target'));
+        self::assertSame('after:done', $result->candidates[0]->result);
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
     }
+
     /**
-     * @throws JsonException If fixture metadata cannot be encoded
+     * @throws JsonException If captured metadata cannot be encoded
      */
-    public function testOpenInvalidatesMissingDeclarationsWhenTheWorldGrows(): void
+    public function testAnalyzeUsesOnlySelectedFilesAndReadsThemAfterDiscovery(): void
     {
+        $source = new \Tests\Fake\SourceDirectory();
+        $source->write('target.php', '<?php function target(){return helper();}');
+        $source->write('helper.php', '<?php function helper(){return 1;}');
+        $source->write('excluded/broken.php', '<?php function broken(');
+        $files = (new \Deriver\Finder())->in($source->path)->include('**/*.php')->exclude('excluded/**')->files();
+        $source->write('helper.php', '<?php function helper(){return 42;}');
+        $result = (new Analyzer())->analyze($files, new ReturnQuery('target'));
+        self::assertSame(42, $result->candidates[0]->result);
+        self::assertCount(2, $result->candidates[0]->evidence[0]->snapshot->sources);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAnalyzeInvalidatesMissingDeclarationsWhenFilesAreAdded(): void
+    {
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('target.php', '<?php function target(){return missing();}');
         $analyzer = new Analyzer();
-        $source = new SourceFile('target.php', '<?php function target(){return missing();}');
-        $first = $analyzer->open(new ProjectInput([$source]));
-        $before = $first->derive(new ReturnQuery('target'));
-        $second = $analyzer->open(new ProjectInput([$source,new SourceFile('added.php', '<?php function missing(){return 7;}')]));
-        $after = $second->derive(new ReturnQuery('target'));
+        $query = new ReturnQuery('target');
+        $before = $analyzer->analyze([$path], $query);
+        $added = $source->write('added.php', '<?php function missing(){return 7;}');
+        $after = $analyzer->analyze([$path, $added], $query);
         self::assertNotEmpty(\Tests\Semantic\CandidateContractTest::frontiers($before));
-        self::assertSame(7, $after->candidates[0]->term->native());
+        self::assertSame(7, $after->candidates[0]->result);
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($after));
-        self::assertNotSame($first->snapshot()->id, $second->snapshot()->id);
-        self::assertSame($before, $first->derive(new ReturnQuery('target')));
+        self::assertNotSame($before->candidates[0]->evidence[0]->snapshot->id, $after->candidates[0]->evidence[0]->snapshot->id);
+        self::assertSame($before->toJson(), $analyzer->analyze([$path], $query)->toJson());
     }
+
     /**
-     * @throws JsonException If fixture metadata cannot be encoded
+     * @throws JsonException If captured metadata cannot be encoded
      */
-    public function testOpenKeepsWarmClosureSemanticsAndNewSnapshotReferences(): void
+    public function testAnalyzeKeepsWarmClosureSemanticsAndNewSnapshotReferences(): void
     {
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('target.php', '<?php function target(){$f=fn()=>7;return $f();}');
         $analyzer = new Analyzer();
-        $source = new SourceFile('target.php', '<?php function target(){$f=fn()=>7;return $f();}');
-        $first = $analyzer->open(new ProjectInput([$source]));
-        $first->derive(new ReturnQuery('target'));
-        $second = $analyzer->open(new ProjectInput([$source,new SourceFile('added.php', '<?php function unrelated(){}')]));
-        $result = $second->derive(new ReturnQuery('target'));
-        self::assertSame(7, $result->candidates[0]->term->native());
-        self::assertSame([$second->snapshot()->id], array_values(array_unique(array_map(static fn ($node): ?string => $node->source?->snapshotId, array_filter($result->candidates[0]->evidence[0]->nodes(), static fn ($node): bool => $node->source !== null)))));
+        $query = new ReturnQuery('target');
+        $first = $analyzer->analyze([$path], $query);
+        $added = $source->write('added.php', '<?php function unrelated(){}');
+        $result = $analyzer->analyze([$path, $added], $query);
+        self::assertSame(7, $result->candidates[0]->result);
+        $manifest = $result->candidates[0]->evidence[0]->snapshot;
+        self::assertNotSame($first->candidates[0]->evidence[0]->snapshot->id, $manifest->id);
+        self::assertSame([$manifest->id], array_values(array_unique(array_map(static fn ($node): ?string => $node->source?->snapshotId, array_filter($result->candidates[0]->evidence[0]->nodes(), static fn ($node): bool => $node->source !== null)))));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAnalyzeReadsChangedContentsOnEveryCall(): void
+    {
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('target.php', '<?php function target(){return 1;}');
+        $analyzer = new Analyzer();
+        $query = new ReturnQuery('target');
+        $first = $analyzer->analyze([$path], $query);
+        $source->write('target.php', '<?php function target(){return 2;}');
+        $second = $analyzer->analyze([$path], $query);
+        self::assertSame(1, $first->candidates[0]->result);
+        self::assertSame(2, $second->candidates[0]->result);
+        self::assertNotSame($first->toJson(), $second->toJson());
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAnalyzePreservesConfigurationAndRuleReplacements(): void
+    {
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('target.php', '<?php function target(){return count(unknown());}');
+        $configuration = new \Deriver\Project\Configuration(expansionRules: [
+            \Deriver\Project\Expansion\Rule::constantFunction('count-one', '1', 'count', \Deriver\Value\Term::constant(1)),
+        ]);
+        $result = (new Analyzer($configuration))->analyze([$path], new ReturnQuery('target'));
+        self::assertSame(1, $result->candidates[0]->result);
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAnalyzeRejectsMalformedSource(): void
+    {
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('broken.php', '<?php function broken(');
+        $this->expectException(\Deriver\Exception\InvalidInputException::class);
+        (new Analyzer())->analyze([$path], new ReturnQuery('target'));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAnalyzeRejectsFilesRemovedAfterDiscovery(): void
+    {
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('target.php', '<?php function target(){return 1;}');
+        $files = (new \Deriver\Finder())->in($source->path)->files();
+        self::assertTrue(unlink($path));
+        $this->expectException(\Deriver\Exception\InvalidInputException::class);
+        (new Analyzer())->analyze($files, new ReturnQuery('target'));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAnalyzeRejectsDirectoriesInsteadOfExpandingThem(): void
+    {
+        $this->expectException(\Deriver\Exception\InvalidInputException::class);
+        (new Analyzer())->analyze([__DIR__], new ReturnQuery('target'));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAnalyzeRejectsRepeatedPaths(): void
+    {
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('target.php', '<?php function target(){return 1;}');
+        $this->expectException(\Deriver\Exception\InvalidInputException::class);
+        (new Analyzer())->analyze([$path, $path], new ReturnQuery('target'));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAnalyzeRetainsEvidenceAfterTheAnalyzerIsReleased(): void
+    {
+        $source = new \Tests\Fake\SourceDirectory();
+        $path = $source->write('target.php', '<?php function target(){return 42;}');
+        $result = (new Analyzer())->analyze([$path], new ReturnQuery('target'));
+        $configuration = new \Deriver\Project\Configuration();
+        (new \Deriver\Replay())->verify($result->toJson(), ProjectInput::fromFiles([$path]), $configuration, new ReturnQuery('target'));
+        self::assertSame(42, $result->candidates[0]->result);
     }
 }

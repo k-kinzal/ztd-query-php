@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Fuzz\Target;
 
-use Deriver\Analyzer;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
@@ -29,7 +28,7 @@ final class DeriveTarget
     {
         $source = '<?php function target($input) {' . $input . '}';
         try {
-            $session = (new Analyzer())->open(new ProjectInput([new SourceFile('fuzz.php', $source)]));
+            $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('fuzz.php', $source)]), new \Deriver\Project\Configuration()));
         } catch (InvalidInputException $failure) {
             if (str_starts_with($failure->getMessage(), 'SOURCE_LIMIT:') || str_starts_with($failure->getMessage(), 'Malformed captured PHP in ')) {
                 return;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Semantic;
 
-use Deriver\Analyzer;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\Budget;
@@ -71,7 +70,7 @@ final class CandidateExpansionTest extends TestCase
     #[DataProvider('providerCases')]
     public function testExpansion(string $source, array $expected): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('fixture.php', '<?php ' . $source)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('fixture.php', '<?php ' . $source)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('f'));
         self::assertSame($expected, array_map(static fn ($candidate) => $candidate->result, $result->candidates));
         foreach ($result as $candidate) {
@@ -98,7 +97,7 @@ final class CandidateExpansionTest extends TestCase
             $branches = str_repeat('if($unrelated){$a=1;}else{$a=2;}', $count);
             foreach (['observe("SELECT 1");', '$sql="SELECT 1";' . $branches . 'observe($sql);', 'observe(helper());'] as $body) {
                 $source = '<?php function helper(){' . $branches . 'return "SELECT 1";} function f($unrelated){' . $branches . $body . '}';
-                $session = (new Analyzer())->open(new ProjectInput([new SourceFile('fixture.php', $source)]));
+                $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('fixture.php', $source)]), new \Deriver\Project\Configuration()));
                 $result = $session->derive(new ValueQuery($session->callsTo('observe')[0]->argument(0)));
                 self::assertCount(1, $result);
                 self::assertSame('SELECT 1', $result->candidates[0]->result);
@@ -112,7 +111,7 @@ final class CandidateExpansionTest extends TestCase
      */
     public function testL02RetainsUnenumeratedCandidates(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('fixture.php', '<?php function f($a,$b){return $a?10:($b?20:30);}') ]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('fixture.php', '<?php function f($a,$b){return $a?10:($b?20:30);}') ]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('f', budget: new Budget(maxCandidates: 2)));
         self::assertCount(2, $result);
         self::assertSame('partials', $result->candidates[1]->type);

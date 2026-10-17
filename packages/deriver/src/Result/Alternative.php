@@ -10,7 +10,7 @@ use Deriver\Project\ProjectSnapshot;
 /**
  * One derivation and its call context, retained independently of a session.
  * @example Inspecting candidate-specific evidence
- *     $session = (new \Deriver\Analyzer())->open(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f(){return 42;}')]));
+ *     $session = (new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f(){return 42;}')]), new \Deriver\Project\Configuration()));
  *     $proof = $session->derive(new \Deriver\Query\ReturnQuery('f'))->candidates[0]->evidence[0];
  *     $proof->root->kind // => 'observation'
  * @visibility public

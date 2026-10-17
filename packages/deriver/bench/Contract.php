@@ -45,7 +45,7 @@ if ($shape === 'receiver-choice') {
 }
 $cpuStart = getrusage();
 $start = microtime(true);
-$session = (new Deriver\Analyzer())->open(new Deriver\Project\ProjectInput([new Deriver\Project\SourceFile('fixture.php', $source)]));
+$session = (new Deriver\Session\Session(new Deriver\Project\ProjectInput([new Deriver\Project\SourceFile('fixture.php', $source)]), new Deriver\Project\Configuration()));
 $capture = microtime(true);
 $receiver = in_array($shape, ['receiver', 'receiver-choice'], true);
 $sites = $session->callsTo($receiver ? 'query' : 'observe');

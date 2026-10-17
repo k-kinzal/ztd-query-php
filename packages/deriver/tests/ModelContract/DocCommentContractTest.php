@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\ModelContract;
 
-use Deriver\Analyzer;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
@@ -81,9 +80,10 @@ final class DocCommentContractTest extends TestCase
      */
     public function testDocCommentsSurviveGraphReuseAcrossSnapshots(): void
     {
-        $analyzer = new Analyzer();
-        $analyzer->open(new ProjectInput([new SourceFile('app.php', self::SOURCE)]))->declarations()->signature('posts');
-        $later = $analyzer->open(new ProjectInput([new SourceFile('app.php', self::SOURCE), new SourceFile('other.php', '<?php function other() {}')]));
+        $syntaxCache = new \Deriver\Source\Parsing\ParseCache();
+        $loweringCache = new \Deriver\Source\Lowering\LoweringCache();
+        (new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', self::SOURCE)]), new \Deriver\Project\Configuration(), parsing: $syntaxCache, lowering: $loweringCache))->declarations()->signature('posts');
+        $later = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', self::SOURCE), new SourceFile('other.php', '<?php function other() {}')]), new \Deriver\Project\Configuration(), parsing: $syntaxCache, lowering: $loweringCache));
         self::assertSame('/** @global wpdb $wpdb */', $later->declarations()->signature('posts')?->docComment);
     }
 

@@ -15,7 +15,7 @@ use Deriver\Result\ResultSet;
  *
  * @visibility public
  * @example Opening an empty source snapshot
- *     $session = (new \Deriver\Analyzer())->open(new \Deriver\Project\ProjectInput([]));
+ *     $session = (new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([]), new \Deriver\Project\Configuration()));
  *     $session->snapshot()->sources // => []
  */
 interface AnalysisSession extends CapturedProject

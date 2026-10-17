@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Semantic;
 
-use Deriver\Analyzer;
 use Deriver\Project\Configuration;
 use Deriver\Project\EntryPoint;
 use Deriver\Project\ProjectInput;
@@ -194,10 +193,10 @@ final class CatalogFeedbackTest extends TestCase
     public function testSourceDeclarationsTakePrecedenceOverStubsInEitherFileOrder(): void
     {
         foreach ([['a.php','z.php'], ['z.php','a.php']] as [$sourcePath,$stubPath]) {
-            $session = (new Analyzer())->open(new ProjectInput([
+            $session = (new \Deriver\Session\Session(new ProjectInput([
                 new SourceFile($stubPath, '<?php class DB {function query(){}} function helper(){}', true),
                 new SourceFile($sourcePath, '<?php class DB {function query(){return "source";}} function helper(){return 3;} function target(){return [(new DB)->query(),helper()];}'),
-            ]));
+            ]), new Configuration()));
             self::assertSame([], $session->snapshot()->diagnostics);
             self::assertSame(['source',3], $session->derive(new ReturnQuery('target'))->candidates[0]->term->native());
         }

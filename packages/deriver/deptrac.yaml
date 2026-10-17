@@ -100,6 +100,10 @@ deptrac:
 
     # --- Source stages -------------------------------------------------------------
     # Parsing: bytes and a target profile become a resolved syntax tree with diagnostics.
+    - name: SourceDiscovery
+      collectors:
+        - type: directory
+          value: 'src/Source/Discovery/.*'
     - name: SourceParsing
       collectors:
         - type: directory
@@ -226,7 +230,7 @@ deptrac:
     - name: Facade
       collectors:
         - type: classLike
-          value: '^Deriver\\(Analyzer|ExecutionSession|Replay)$'
+          value: '^Deriver\\(Analyzer|Finder|ExecutionSession|Replay)$'
         - type: classLike
           value: '^Deriver\\Analysis\\ExecutionSession$'
         - type: classLike
@@ -243,6 +247,7 @@ deptrac:
     Result: [Exception, Reference, Evidence, Value, Diagnostic, Project, Query]
     SessionContract: [Exception, Reference, Project, Query, Result]
     ControlFlow: [Reference, Value, Diagnostic]
+    SourceDiscovery: [Exception]
     SourceParsing: [Exception, Project, PhpParser]
     SourceDeclaration: [Exception, Reference, Value, Diagnostic, Project, ControlFlow, SourceParsing, SourceLowering, PhpParser]
     SourceLowering: [Exception, Reference, Value, Diagnostic, Project, ControlFlow, SourceParsing, SourceDeclaration, PhpParser]
@@ -346,6 +351,7 @@ deptrac:
       - AnalysisCandidates
       - AnalysisExecution
     Facade:
+      - SourceDiscovery
       - Exception
       - Reference
       - Query

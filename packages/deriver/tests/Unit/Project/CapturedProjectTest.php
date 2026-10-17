@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Project;
 
-use Deriver\Analyzer;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use JsonException;
@@ -19,7 +18,7 @@ final class CapturedProjectTest extends TestCase
      */
     public function testCallsToListsTheCapturedCallSites(): void
     {
-        self::assertSame('f', (new Analyzer())->open(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]))->callsTo('f')[0]->target);
+        self::assertSame('f', (new \Deriver\Session\Session(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]), new \Deriver\Project\Configuration()))->callsTo('f')[0]->target);
     }
 
     /**
@@ -27,7 +26,7 @@ final class CapturedProjectTest extends TestCase
      */
     public function testDeclarationsExposeTheCapturedSymbols(): void
     {
-        self::assertContains('f', (new Analyzer())->open(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]))->declarations()->symbols());
+        self::assertContains('f', (new \Deriver\Session\Session(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]), new \Deriver\Project\Configuration()))->declarations()->symbols());
     }
 
     /**
@@ -35,7 +34,7 @@ final class CapturedProjectTest extends TestCase
      */
     public function testEntrypointsAreEmptyWithoutProviders(): void
     {
-        self::assertSame([], (new Analyzer())->open(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]))->entrypoints());
+        self::assertSame([], (new \Deriver\Session\Session(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]), new \Deriver\Project\Configuration()))->entrypoints());
     }
 
     /**
@@ -43,7 +42,7 @@ final class CapturedProjectTest extends TestCase
      */
     public function testSnapshotNamesTheCapturedFiles(): void
     {
-        self::assertSame(['a.php'], array_keys((new Analyzer())->open(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]))->snapshot()->sources));
+        self::assertSame(['a.php'], array_keys((new \Deriver\Session\Session(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]), new \Deriver\Project\Configuration()))->snapshot()->sources));
     }
 
     /**
@@ -51,7 +50,7 @@ final class CapturedProjectTest extends TestCase
      */
     public function testCommentsReadTheDocblocksOfADeclaration(): void
     {
-        self::assertSame([], (new Analyzer())->open(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]))->comments('f'));
+        self::assertSame([], (new \Deriver\Session\Session(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]), new \Deriver\Project\Configuration()))->comments('f'));
     }
 
     /**
@@ -59,7 +58,7 @@ final class CapturedProjectTest extends TestCase
      */
     public function testExpressionSelectsAnExactByteRange(): void
     {
-        $project = (new Analyzer())->open(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]));
+        $project = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('a.php', '<?php function f($x){} function g(){f(1);}')]), new \Deriver\Project\Configuration()));
         $site = $project->callsTo('f')[0];
         self::assertSame($site->argument(0)->register, $project->expression('a.php', $site->argument(0)->source->start, $site->argument(0)->source->end)->register);
     }

@@ -17,7 +17,7 @@ use JsonException;
  *     $input = new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function f(){return 42;}')]);
  *     $config = new \Deriver\Project\Configuration();
  *     $query = new \Deriver\Query\ReturnQuery('f');
- *     $result = (new \Deriver\Analyzer())->open($input, $config)->derive($query);
+ *     $result = (new \Deriver\Session\Session($input, $config))->derive($query);
  *     (new \Deriver\Replay())->verify($result->toJson(), $input, $config, $query);
  *     $result->candidates[0]->result // => 42
  * @visibility public
@@ -31,7 +31,7 @@ class Replay
     public function verify(string $json, ProjectInput $input, Configuration $configuration, Query $query): void
     {
         $actual = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-        $fresh = (new Analyzer())->open($input, $configuration)->derive($query);
+        $fresh = (new Session\Session($input, $configuration))->derive($query);
         $expected = json_decode($fresh->toJson(), true, 512, JSON_THROW_ON_ERROR);
         if ($actual !== $expected) {
             throw new InvalidInputException('EVIDENCE_MISMATCH: the exported values or derivations do not match this source snapshot, query and rule manifest.');

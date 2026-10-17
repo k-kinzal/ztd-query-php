@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Deriver\Analyzer;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Project\Configuration;
 use Deriver\Project\EntryPoint;
@@ -96,7 +95,7 @@ final class SessionContractTest extends TestCase
     public function testMalformedSourceIsAnInputError(): void
     {
         $this->expectException(InvalidInputException::class);
-        (new Analyzer())->open(new ProjectInput([new SourceFile('good.php', '<?php function target(){return 42;}'), new SourceFile('bad.php', '<?php function broken(')]));
+        (new \Deriver\Session\Session(new ProjectInput([new SourceFile('good.php', '<?php function target(){return 42;}'), new SourceFile('bad.php', '<?php function broken(')]), new Configuration()));
     }
 
     /**
@@ -106,8 +105,8 @@ final class SessionContractTest extends TestCase
     {
         $a = new SourceFile('a.php', '<?php function target(){return helper();}');
         $b = new SourceFile('b.php', '<?php function helper(){return 42;}');
-        $first = (new Analyzer())->open(new ProjectInput([$a, $b]));
-        $second = (new Analyzer())->open(new ProjectInput([$b, $a]));
+        $first = (new \Deriver\Session\Session(new ProjectInput([$a, $b]), new Configuration()));
+        $second = (new \Deriver\Session\Session(new ProjectInput([$b, $a]), new Configuration()));
         $one = $first->derive(new ReturnQuery('target'));
         $two = $second->derive(new ReturnQuery('target'));
         self::assertSame($first->snapshot()->id, $second->snapshot()->id);

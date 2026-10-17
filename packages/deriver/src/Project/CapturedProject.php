@@ -14,7 +14,7 @@ use Deriver\Reference\SourceComment;
  *
  * @visibility public
  * @example Reading the captured project through a session
- *     $session = (new \Deriver\Analyzer())->open(new \Deriver\Project\ProjectInput([]));
+ *     $session = (new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([]), new \Deriver\Project\Configuration()));
  *     $session->callsTo('missing') // => []
  */
 interface CapturedProject

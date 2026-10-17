@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Differential;
 
-use Deriver\Analyzer;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
@@ -53,7 +52,7 @@ final class InitializerSemanticsTest extends TestCase
         $expected = json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR);
         $runtimeSource = $application.' eval('.var_export(substr($library, 5), true).');';
         self::assertSame($expected, RuntimeOracle::evaluate($runtimeSource)->native());
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
         self::assertCount(1, $result->candidates);

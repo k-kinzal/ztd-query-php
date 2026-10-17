@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Deriver\Analyzer;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
@@ -35,7 +34,7 @@ final class CallableIdentityTest extends TestCase
      */
     public function testScriptQueriesKeepCaseSensitiveCapturedPathsDistinct(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('A.php', '<?php return 1;'),new SourceFile('a.php', '<?php return 2;')]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('A.php', '<?php return 1;'),new SourceFile('a.php', '<?php return 2;')]), new Configuration()));
         $upper = $session->derive(new ReturnQuery('script:A.php'));
         $lower = $session->derive(new ReturnQuery('script:a.php'));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($upper));
@@ -56,9 +55,10 @@ final class CallableIdentityTest extends TestCase
             new SourceFile('a.php', '<?php function other(){return (fn()=>2)();}'),
             new SourceFile('main.php', '<?php function target(){return [first(),other()];}'),
         ]);
-        $analyzer = new Analyzer();
-        $first = $analyzer->open($input)->derive(new ReturnQuery('target'));
-        $second = $analyzer->open($input)->derive(new ReturnQuery('target'));
+        $syntaxCache = new \Deriver\Source\Parsing\ParseCache();
+        $loweringCache = new \Deriver\Source\Lowering\LoweringCache();
+        $first = (new \Deriver\Session\Session($input, new Configuration(), parsing: $syntaxCache, lowering: $loweringCache))->derive(new ReturnQuery('target'));
+        $second = (new \Deriver\Session\Session($input, new Configuration(), parsing: $syntaxCache, lowering: $loweringCache))->derive(new ReturnQuery('target'));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($first));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($second));
         self::assertSame([1,2], $first->candidates[0]->term->native());
@@ -83,10 +83,10 @@ final class CallableIdentityTest extends TestCase
      */
     public function testCallSelectorsFindClosuresInEveryCaseSensitivePath(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([
+        $session = (new \Deriver\Session\Session(new ProjectInput([
             new SourceFile('A.php', '<?php function first(){return fn()=>sink(1);}'),
             new SourceFile('a.php', '<?php function other(){return fn()=>sink(2);}'),
-        ]));
+        ]), new Configuration()));
         $calls = $session->callsTo('\\SINK');
         self::assertCount(2, $calls);
         self::assertSame('A.php', $calls[0]->source->path);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Deriver\Analyzer;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ParameterQuery;
@@ -34,7 +33,7 @@ final class CandidateSchemaTest extends TestCase
      */
     public function testJsonIsACandidateArrayAndPartialExpressionsAreStructured(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('schema.php', '<?php function f(int $foo){return 1+$foo;}')]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('schema.php', '<?php function f(int $foo){return 1+$foo;}')]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('f'));
         $json = $result->toJson();
         $records = json_decode($json, false, 512, JSON_THROW_ON_ERROR);
@@ -56,11 +55,11 @@ final class CandidateSchemaTest extends TestCase
      */
     public function testT06UncalledParameterDoesNotTakeItsDefault(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('defaults.php', '<?php function f($x=30){return $x;}')]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('defaults.php', '<?php function f($x=30){return $x;}')]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ParameterQuery('f', 'x'));
         self::assertSame('partials', $result->candidates[0]->type);
         self::assertSame('$x', $result->candidates[0]->term->literal);
-        $called = (new Analyzer())->open(new ProjectInput([new SourceFile('defaults.php', '<?php function f($x=30){return $x;}function caller(){return f();}')]));
+        $called = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('defaults.php', '<?php function f($x=30){return $x;}function caller(){return f();}')]), new \Deriver\Project\Configuration()));
         self::assertSame(30, $called->derive(new ReturnQuery('caller'))->candidates[0]->result);
     }
 
@@ -71,7 +70,7 @@ final class CandidateSchemaTest extends TestCase
     public function testThrowOnlyDoesNotManufactureNull(string $body): void
     {
 
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('throw.php', '<?php function f(){' . $body . '}')]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('throw.php', '<?php function f(){' . $body . '}')]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('f'));
         self::assertCount(1, $result);
         self::assertSame('partials', $result->candidates[0]->type);
@@ -84,12 +83,12 @@ final class CandidateSchemaTest extends TestCase
      */
     public function testT12SqlExampleKeepsDefaultAndUnresolvedBranches(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('sql.php', '<?php function select($table){if($table===null){$table="default_table";}$sql="SELECT * FROM $table";observe($sql);}')]));
+        $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('sql.php', '<?php function select($table){if($table===null){$table="default_table";}$sql="SELECT * FROM $table";observe($sql);}')]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ValueQuery($session->callsTo('observe')[0]->argument(0)));
         self::assertCount(2, $result);
         self::assertSame('SELECT * FROM default_table', $result->candidates[0]->result);
         self::assertSame('partials', $result->candidates[1]->type);
-        $typo = (new Analyzer())->open(new ProjectInput([new SourceFile('sql.php', '<?php function select($table){$table="SELECT * FROM $table";observe($sql);}')]));
+        $typo = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('sql.php', '<?php function select($table){$table="SELECT * FROM $table";observe($sql);}')]), new \Deriver\Project\Configuration()));
         $unknown = $typo->derive(new ValueQuery($typo->callsTo('observe')[0]->argument(0)));
         self::assertSame('$sql', $unknown->candidates[0]->term->literal);
     }

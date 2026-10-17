@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-use Deriver\Analyzer;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
@@ -55,10 +54,11 @@ for ($i = 1; $i < $size; $i++) {
     $source .= "\nfunction fixture" . $i . '(){return ' . $i . ';}';
 }
 $input = new ProjectInput([new SourceFile('generated.php', $source)]);
-$analyzer = new Analyzer();
+$syntaxCache = new Deriver\Source\Parsing\ParseCache();
+$loweringCache = new Deriver\Source\Lowering\LoweringCache();
 $largeProject = new Configuration(sourceLimits: new Deriver\Project\SourceLimits(bytes: 134217728, fileBytes: 16777216, nodes: 1500000));
 $start = hrtime(true);
-$session = $analyzer->open($input, $largeProject);
+$session = (new Deriver\Session\Session($input, $largeProject, parsing: $syntaxCache, lowering: $loweringCache));
 $coldOpen = (hrtime(true) - $start) / 1e9;
 $query = new ReturnQuery('fixture0');
 $start = hrtime(true);
@@ -87,14 +87,14 @@ if ($warm !== $cold) {
 }
 unset($session);
 $start = hrtime(true);
-$session = $analyzer->open($input, $largeProject);
+$session = (new Deriver\Session\Session($input, $largeProject, parsing: $syntaxCache, lowering: $loweringCache));
 $warmOpen = (hrtime(true) - $start) / 1e9;
 $start = hrtime(true);
 $session->deriveMany($queries);
 $warmBatch = (hrtime(true) - $start) / 1e9;
 unset($session);
 $start = hrtime(true);
-$coldBatchSession = (new Analyzer())->open($input, $largeProject);
+$coldBatchSession = (new Deriver\Session\Session($input, $largeProject));
 $coldBatchOpen = (hrtime(true) - $start) / 1e9;
 $start = hrtime(true);
 $coldBatchSession->deriveMany($queries);
@@ -115,7 +115,7 @@ $scenarios = [
 $scenarioResults = [];
 foreach ($scenarios as $name => $program) {
     $start = hrtime(true);
-    $result = (new Analyzer())->open(new ProjectInput([new SourceFile($name . '.php', $program)]), new Configuration(closedWorld: true))->derive(new ReturnQuery('target', budget: new Budget(iterations: 256)));
+    $result = (new Deriver\Session\Session(new ProjectInput([new SourceFile($name . '.php', $program)]), new Configuration(closedWorld: true)))->derive(new ReturnQuery('target', budget: new Budget(iterations: 256)));
     $expected = ['deep-helpers' => 2, 'repeated-helper' => 400, 'mutable-builder' => [['one', 'two'], ['three']]];
     if (isset($expected[$name]) && $result->candidates[0]->type === 'analyzed' && $result->candidates[0]->result !== $expected[$name]) {
         throw new RuntimeException('A benchmark scenario produced an incorrect definite value: ' . $name);

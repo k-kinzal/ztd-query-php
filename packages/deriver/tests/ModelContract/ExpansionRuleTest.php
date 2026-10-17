@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\ModelContract;
 
-use Deriver\Analyzer;
 use Deriver\Project\Configuration;
 use Deriver\Project\Expansion\Rule;
 use Deriver\Project\ProjectInput;
@@ -30,7 +29,7 @@ final class ExpansionRuleTest extends TestCase
     {
         foreach ([['count(expensive())', Rule::constantFunction('count-is-one', '1', 'count', Term::constant(1)), 1], ['1+expensive()', Rule::constantExpression('seven', '1', 'binary', '+', Term::constant(7)), 7], ['42', Rule::constantExpression('literal', '1', 'constant', '', Term::constant(7)), 7]] as [$expression, $rule, $expected]) {
             $source = '<?php function expensive(){return missing();} function f(){return ' . $expression . ';}';
-            $session = (new Analyzer())->open(new ProjectInput([new SourceFile('rule.php', $source)]), new Configuration(expansionRules: [$rule]));
+            $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('rule.php', $source)]), new Configuration(expansionRules: [$rule])));
             $result = $session->derive(new ReturnQuery('f'));
             self::assertSame($expected, $result->candidates[0]->result);
             self::assertSame([], $result->statistics->expandedBodies);
