@@ -265,4 +265,11 @@ final class ExecutionTest extends TestCase
         self::assertSame([], $session->diagnostics->conditions);
     }
 
+    public function testRetainsIncludesTheImplicitCurrentDatabaseGrantLevel(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $grant = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
+        self::assertTrue((new Execution($session))->retains($grant, new \MySqlMemory\Command\Account\GrantCommand()));
+    }
+
 }

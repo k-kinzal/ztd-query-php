@@ -306,7 +306,7 @@ final class Execution
         if ($command instanceof \MySqlMemory\Command\Account\GrantCommand || $command instanceof \MySqlMemory\Command\Account\RevokeCommand) {
             $level = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges ? $statement->level : null;
 
-            return $level === null || $level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel || $level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel;
+            return $level === null || in_array($level::class, [\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel::class], true);
         }
 
         return ($command instanceof \MySqlMemory\Command\QueryCommand || $command instanceof \MySqlMemory\Command\SetCommand || $command instanceof \MySqlMemory\Command\DoCommand || $command instanceof \MySqlMemory\Command\Explain\ExplainCommand)
