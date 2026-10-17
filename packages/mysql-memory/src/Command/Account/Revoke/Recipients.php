@@ -41,9 +41,6 @@ final class Recipients
     {
         $names = new Names($session->settings()->release());
         $identities = array_map(static fn ($user): Identity => $names->identity($user, $session), $names->users($statement->users));
-        foreach ($identities as $identity) {
-            $names->resolve($identity, $session->diagnostics);
-        }
         $first = null;
         foreach ($identities as $identity) {
             try {

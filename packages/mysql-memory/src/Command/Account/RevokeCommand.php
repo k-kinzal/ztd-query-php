@@ -101,8 +101,13 @@ final class RevokeCommand implements Command
         $names->check($names->users($statement->users));
         $levels = new Levels($session->settings()->release());
         $target = $levels->target($statement->kind, $statement->level, $session);
+        foreach ($statement->users as $user) {
+            $names->resolve($names->identity($user->user, $session), $session->diagnostics);
+        }
+        if ($statement->kind === \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table || $statement->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel) {
+            $levels->dynamic($statement->privileges, $target, $session, $statement->ifExists);
+        }
         $levels->parsed($operation, $session);
-        $levels->dynamic($statement->privileges, $target, $session, $statement->ifExists);
         (new Recipients())->run($statement, $operation, $target, $session);
     }
 

@@ -46,6 +46,12 @@ final class GrantRuleTest extends TestCase
         self::assertSame('REVOKE SELECT ON t FROM u', (new Semantics(Dialect::MySql))->analyze('revoke select on table t from u')->toString());
     }
 
+    public function testRevokePrivilegesRefusesRoutineColumnsBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze('REVOKE SELECT(a) ON PROCEDURE p FROM u');
+    }
+
     public function testRevokeAllLowersAllPrivileges(): void
     {
         self::assertSame('REVOKE ALL ON db.* FROM u', (new Semantics(Dialect::MySql))->analyze('revoke all on db.* from u')->toString());

@@ -60,6 +60,11 @@ final class PrivilegeInput
         if ($request->as !== null && !$request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel) {
             return \MySqlMemory\Error\Family\AccountError::UnsupportedGrantAs->error();
         }
+        if (!$session->settings()->legacy() || !$request->columnLevel()) {
+            foreach ($request->grantees as $grantee) {
+                $names->resolve($names->identity($grantee->user, $session), $session->diagnostics);
+            }
+        }
         return $problem->condition->error === 'ER_ILLEGAL_PRIVILEGE_LEVEL'
             ? \MySqlMemory\Error\Family\AccountError::IllegalPrivilegeLevel->error($request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel ? $request->level->name->name->value : strtoupper($problem->condition->privilege))
             : \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
@@ -80,7 +85,11 @@ final class PrivilegeInput
      */
     public function columns(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege $problem, Session $session): SqlError
     {
-        if ($session->settings()->legacy() && !$problem->object) {
+        $level = $problem->level;
+        if (($level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel || ($level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel && $level->name->schema === null)) && $session->variables->database === '') {
+            return QueryError::NoDatabase->error();
+        }
+        if ($session->settings()->legacy() && !$level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel) {
             return \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
         }
         $parser = $session->semantics()->parser();

@@ -82,9 +82,11 @@ final class ContinuingRefusal
         }
         $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session)];
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+        $contextual = true;
         $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($parser->parse($statement), $session->semantics()->profile());
         if ($target !== null && $target->schema === null && $session->variables->database === '') {
             $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+            $contextual = false;
         }
         $append = array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure) === [];
         try {
@@ -92,6 +94,11 @@ final class ContinuingRefusal
         } catch (SqlError $debug) {
             $error = $debug;
             $append = true;
+            $contextual = false;
+        }
+        if ($append && $contextual) {
+            $notices[] = [$end, new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true)];
+            $append = false;
         }
 
         return $warnings->recorded(array_column($notices, 1), $error, $session, $append);

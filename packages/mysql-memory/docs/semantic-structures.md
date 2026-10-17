@@ -43,6 +43,15 @@ integer token retains its spelling for the input adapter. Direct comparisons
 reuse the same CREATE/ALTER values with an absent, present and removed account,
 and check the persisted options through SHOW CREATE USER.
 
+GRANT and REVOKE column privileges require a table kind. A routine-column
+refusal retains its typed privilege level, including any current-database
+dependency; the consumer does not recover that target from SQL. Host warnings
+precede target validation and object/account lookup, while malformed recipient
+names and non-global AS clauses retain their earlier refusal. Direct comparisons
+reuse the same valid GRANT and REVOKE objects with absent accounts, absent
+objects, a populated table and subsequent removal, retaining an unrelated
+request label throughout execution.
+
 CREATE TRIGGER histories distinguish an absent database, an absent table, a populated target and a repeated definition. Legacy releases report a missing target table even when its database does not exist; modern releases report the missing database. MySQL 5.6 also rejects a second trigger for the same table, timing and event. These are observations of database state, not constructor rejection rules.
 
 Explicit SHOW database identities must be nonempty; the empty database operand of SHOW OPEN TABLES remains a listing filter. View column lists have a release-dependent domain: legacy releases accept names that modern releases reject, including an empty name or trailing whitespace. Composition checks exclude combining that legacy column domain with modern query forms. Modern input lowering retains a typed column refusal, the view identity and its enclosing stored-program identity. The consumer can therefore resolve the default-database dependency without consulting SQL. CREATE/DROP VIEW also carry the function/trigger restriction imposed by their implicit transaction boundary.
@@ -203,7 +212,7 @@ Each trial has a fresh native server so partial effects cannot leak into another
 trial. `MYSQL_MEMORY_STRUCTURE_NATIVE_PORT` optionally fixes its published port;
 otherwise Testcontainers chooses it. Every comparison record includes the SQL,
 profile and both original observations. Comparison copies may use explicit,
-recorded exception contracts: legacy missing-library OS errno 2/11, and physical
+recorded exception contracts: release-specific missing-library process errno, and physical
 engine reports validated by the same rules as SQL differential fuzzing. The
 engine contract requires an empty memory report and a recognized native payload;
 metadata, warnings, errors and connection termination remain exact. Tests compare

@@ -113,7 +113,7 @@ final class Differential
         $normalized = $library->comparable($expected, $this->version);
         $recordedContracts = $expected['contracts'] ?? null;
         $contracts = is_array($recordedContracts) ? array_values(array_filter($recordedContracts, 'is_string')) : [];
-        $contracts = [...$contracts, ...($normalized === $expected ? [] : ['missing-library-os-errno-2-or-11'])];
+        $contracts = [...$contracts, ...($normalized === $expected ? [] : [LibraryErrors::CONTRACT])];
         $expected = $normalized;
         $again = $library->comparable($again, $this->version);
         if ($expected !== $again) {
@@ -245,7 +245,7 @@ final class Differential
      */
     public function run(string $dsn, string $user, string $password, string $sql): array
     {
-        $clock = TableTimes::handles($sql, $this->version) ? new TableTimes() : null;
+        $clock = TableTimes::handles($sql, $this->version) ? new TableTimes($this->version) : null;
         $pdo = $this->connect($dsn, $user, $password, $clock);
         if ($this->baseline !== null) {
             Baseline::mutexes($pdo, $this->version);

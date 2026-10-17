@@ -47,7 +47,7 @@ final class CommandPrefix
             if ($token->end() > $end) {
                 break;
             }
-            if (in_array(strtoupper($tokens[$index + 1]->text ?? ''), ['.', 'PARTITION'], true)) {
+            if ($token->name === '@' || in_array(strtoupper($tokens[$index + 1]->text ?? ''), ['.', 'PARTITION'], true)) {
                 continue;
             }
             if ($command === 'REVOKE' && in_array(strtoupper($tokens[$index + 1]->text ?? ''), ['AS', 'BY'], true)) {

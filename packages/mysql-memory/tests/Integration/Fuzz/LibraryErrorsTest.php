@@ -23,6 +23,9 @@ final class LibraryErrorsTest extends TestCase
         $eleven = str_replace('errno: 2 ', 'errno: 11 ', $two);
         yield '5.6 process errno' => ['5.6.51', $two, $eleven, true];
         yield '5.7 process errno' => ['5.7.44', $two, $eleven, true];
+        yield '8.0 process errno' => ['8.0.44', str_replace('errno: 2 ', 'errno: 0 ', $two), $eleven, true];
+        yield '8.0 unobserved errno stays exact' => ['8.0.44', $two, $eleven, false];
+        yield 'legacy unobserved zero stays exact' => ['5.7.44', $two, str_replace('errno: 2 ', 'errno: 0 ', $two), false];
         yield 'modern release stays exact' => ['8.4.7', $two, $eleven, false];
         yield 'unobserved errno fails' => ['5.7.44', $two, str_replace('errno: 2 ', 'errno: 13 ', $two), false];
         yield 'different path fails' => ['5.7.44', $two, str_replace('/plugin/', '/other/', $two), false];
@@ -48,5 +51,13 @@ final class LibraryErrorsTest extends TestCase
         $observation = ['error' => [1128, 'HY000', $message], 'warnings' => [['Warning', 1126, $message]]];
 
         self::assertSame($observation, (new LibraryErrors())->comparable($observation, '5.7.44'));
+    }
+
+    public function testComparableKeepsErrnoTextInsideTheLibraryNameExact(): void
+    {
+        $first = "Can't open shared library 'text (errno: 2 ' (errno: 2 /plugin/text: cannot open shared object file: No such file or directory)";
+        $second = "Can't open shared library 'text (errno: 11 ' (errno: 2 /plugin/text: cannot open shared object file: No such file or directory)";
+
+        self::assertNotSame((new LibraryErrors())->comparable(['error' => [1126, 'HY000', $first]], '5.7.44'), (new LibraryErrors())->comparable(['error' => [1126, 'HY000', $second]], '5.7.44'));
     }
 }

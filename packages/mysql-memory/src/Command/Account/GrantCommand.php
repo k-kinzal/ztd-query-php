@@ -89,6 +89,12 @@ final class GrantCommand implements Command
         $names->check([...$names->users($statement->grantees), $statement->as?->user, ...$statement->as->roles->roles ?? []]);
         $levels = new Levels($session->settings()->release());
         $target = $levels->target($statement->kind, $statement->level, $session);
+        $grantees = [];
+        foreach ($statement->grantees as $grantee) {
+            $identity = $names->identity($grantee->user, $session);
+            $names->resolve($identity, $context->diagnostics);
+            $grantees[] = $identity;
+        }
         $levels->parsed($operation, $session);
         $levels->objects($operation, $session, $statement->privileges, $target);
         if ($statement->as !== null) {
@@ -99,12 +105,6 @@ final class GrantCommand implements Command
             if ($grantee->identification?->credential === Credential::PasswordHash) {
                 $session->diagnostics->warning(1287, "'IDENTIFIED BY PASSWORD' is deprecated and will be removed in a future release. Please use IDENTIFIED WITH <plugin> AS <hash> instead");
             }
-        }
-        $grantees = [];
-        foreach ($statement->grantees as $grantee) {
-            $identity = $names->identity($grantee->user, $session);
-            $names->resolve($identity, $context->diagnostics);
-            $grantees[] = $identity;
         }
         $found = [];
         $session->databaseGrants->refused($target);

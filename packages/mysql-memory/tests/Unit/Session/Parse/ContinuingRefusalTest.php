@@ -77,4 +77,14 @@ final class ContinuingRefusalTest extends TestCase
         self::assertSame([1287, 1103], array_column($session->diagnostics->conditions, 1));
     }
 
+    public function testErrorRetainsContextualWarningsAfterGrammarNotices(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->run('GRANT SUPER ON d.t TO u@host, v@other')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1144, $reply->getCode());
+        self::assertSame([1287, 1285, 1285, 1144], array_column($session->diagnostics->conditions, 1));
+    }
+
 }

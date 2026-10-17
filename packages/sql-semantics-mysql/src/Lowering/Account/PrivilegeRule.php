@@ -57,7 +57,7 @@ final class PrivilegeRule
     {
         foreach ($items as $item) {
             if ($kind !== ObjectKind::Table && $item instanceof StaticPrivilege && $item->columns !== []) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege($end, $level instanceof ObjectLevel), $end);
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege($end, $level), $end);
             }
         }
     }

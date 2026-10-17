@@ -43,6 +43,7 @@ final class CommandPrefixTest extends TestCase
     {
         foreach (['5.6.51', '5.7.44'] as $release) {
             foreach ([
+                'REVOKE SUPER ON TABLE t FROM u@host BROKEN' => null,
                 'CREATE TEMPORARY TEMPORARY TABLE t (a INT) SECONDARY_ENGINE NULL' => 1046,
                 'CREATE TEMPORARY TEMPORARY TABLE d.t (a INT) SECONDARY_ENGINE NULL' => null,
                 "LOAD DATA INFILE 'f' INTO TABLE t IGNORE 1.5 LINES" => 1046,

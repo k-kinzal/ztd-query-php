@@ -135,14 +135,7 @@ final class GrantRule
                 $this->lowering->users->accounts($form->node(4)),
                 $ignore,
             ),
-            'revoke: REVOKE if_exists role_or_privilege_list ON_SYM opt_acl_type grant_ident FROM user_list opt_ignore_unknown_user' => new RevokePrivileges(
-                $ifExists,
-                $privileges->granted($form->node(2), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
-                $privileges->kind($form->node(4)),
-                $privileges->level($form->node(5)),
-                $this->specifications($form->node(7)),
-                $ignore,
-            ),
+            'revoke: REVOKE if_exists role_or_privilege_list ON_SYM opt_acl_type grant_ident FROM user_list opt_ignore_unknown_user' => $this->revokePrivileges($form, $ifExists, $ignore),
             'revoke: REVOKE if_exists ALL opt_privileges ON_SYM opt_acl_type grant_ident FROM user_list opt_ignore_unknown_user' => $this->revokeAll($form, $ifExists, $ignore),
             'revoke: REVOKE if_exists ALL opt_privileges , GRANT OPTION FROM user_list opt_ignore_unknown_user' => $this->everything($form, $ifExists, $ignore),
             'revoke: REVOKE if_exists PROXY_SYM ON_SYM user FROM user_list opt_ignore_unknown_user' => new RevokeProxy(
@@ -153,6 +146,20 @@ final class GrantRule
             ),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Reads all recipients before refusing a routine's column privileges.
+     */
+    public function revokePrivileges(Form $form, bool $ifExists, bool $ignore): RevokePrivileges
+    {
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0;
+        $items = $this->privileges->granted($form->node(2), $end);
+        $kind = $this->privileges->kind($form->node(4));
+        $level = $this->privileges->level($form->node(5));
+        $users = $this->specifications($form->node(7));
+        $this->privileges->columnKind($items, $kind, $level, $end);
+        return new RevokePrivileges($ifExists, $items, $kind, $level, $users, $ignore);
     }
 
     /**

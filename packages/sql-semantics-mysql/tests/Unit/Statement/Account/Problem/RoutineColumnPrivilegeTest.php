@@ -15,6 +15,6 @@ final class RoutineColumnPrivilegeTest extends TestCase
 {
     public function testMessageDescribesTheIntrinsicMismatch(): void
     {
-        self::assertSame('Column privileges apply only to tables.', (new RoutineColumnPrivilege(12, false))->message());
+        self::assertSame('Column privileges apply only to tables.', (new RoutineColumnPrivilege(12, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel()))->message());
     }
 }

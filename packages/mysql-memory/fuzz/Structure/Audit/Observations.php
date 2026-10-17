@@ -24,7 +24,7 @@ final class Observations
         $library = new LibraryErrors();
         $left = $library->comparable($expected, $release);
         $right = $library->comparable($actual, $release);
-        $contracts = $left !== $expected && $right !== $actual ? ['missing-library-os-errno-2-or-11'] : [];
+        $contracts = $left !== $expected && $right !== $actual ? [LibraryErrors::CONTRACT] : [];
         $left = $status?->comparable($left, false) ?? $left;
         $right = $status?->comparable($right, true) ?? $right;
         $left = $password?->comparable($left, false) ?? $left;

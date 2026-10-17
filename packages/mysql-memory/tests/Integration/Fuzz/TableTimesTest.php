@@ -21,7 +21,8 @@ final class TableTimesTest extends TestCase
     {
         yield 'canonical inspection' => ['SHOW TABLE STATUS', '8.4.7', true];
         yield 'whitespace and terminator' => [" show\n table status ; ", '8.0.44', true];
-        yield 'legacy creation clock' => ['SHOW TABLE STATUS', '5.7.44', false];
+        yield 'legacy creation and update clocks' => ['SHOW TABLE STATUS', '5.7.44', true];
+        yield 'legacy creation clock with null update' => ['SHOW TABLE STATUS', '5.6.51', true];
         yield 'other database' => ['SHOW TABLE STATUS FROM sys', '8.4.7', false];
         yield 'arbitrary predicate' => ['SHOW TABLE STATUS WHERE some_function()', '8.4.7', false];
         yield 'preceding write' => ['INSERT INTO t1 VALUES(9); SHOW TABLE STATUS', '8.4.7', false];
@@ -30,7 +31,7 @@ final class TableTimesTest extends TestCase
     }
 
     #[DataProvider('providerStatements')]
-    public function testHandlesOnlyThePlainModernInspection(string $sql, string $version, bool $handled): void
+    public function testHandlesOnlyThePlainInspection(string $sql, string $version, bool $handled): void
     {
         self::assertSame($handled, TableTimes::handles($sql, $version));
     }
@@ -112,5 +113,28 @@ final class TableTimesTest extends TestCase
         self::assertFalse($clock->contains('t1', '2026-10-32 00:00:00'));
         self::assertFalse($clock->contains('t2', '2026-11-01 00:00:00'));
         self::assertFalse($clock->contains('missing', '2026-11-01 00:00:00'));
+    }
+
+    public function testRowChecksLegacyCreationAndNullUpdateSeparately(): void
+    {
+        $clock = new TableTimes('5.6.51');
+        $clock->creations = ['t1' => ['2026-10-18 00:00:00', '2026-10-18 00:00:01']];
+        $row = [0 => 't1', 11 => '2026-10-18 00:00:01', 12 => null];
+
+        self::assertSame([0 => 't1', 11 => '{' . TableTimes::CREATION . '}', 12 => null], $clock->row($row));
+        self::assertNull($clock->row([0 => 't1', 11 => '2026-10-18 00:00:02', 12 => null]));
+        self::assertNull($clock->row([0 => 't1', 11 => '2026-10-18 00:00:01', 12 => '2026-10-18 00:00:01']));
+        self::assertNull($clock->row([0 => 't1', 11 => '2026-10-18 00:00:01']));
+    }
+
+    public function testRowCannotExchangeCreationAndInsertionIntervals(): void
+    {
+        $clock = new TableTimes('5.7.44');
+        $clock->creations = ['t1' => ['2026-10-18 00:00:00', '2026-10-18 00:00:01']];
+        $clock->intervals = ['t1' => ['2026-10-18 00:00:03', '2026-10-18 00:00:04']];
+
+        self::assertSame([0 => 't1', 11 => '{' . TableTimes::CREATION . '}', 12 => '{' . TableTimes::CONTRACT . '}'], $clock->row([0 => 't1', 11 => '2026-10-18 00:00:01', 12 => '2026-10-18 00:00:04']));
+        self::assertNull($clock->row([0 => 't1', 11 => '2026-10-18 00:00:04', 12 => '2026-10-18 00:00:01']));
+        self::assertNull($clock->row([0 => 't1', 11 => '2026-10-18 00:00:01', 12 => null]));
     }
 }

@@ -65,13 +65,22 @@ final class PrivilegeInputTest extends TestCase
     {
         $session = (new Instance('8.4.7'))->connect();
         $session->text = "GRANT\nSELECT(a) ON FUNCTION d.p TO u";
-        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege(strlen($session->text), true);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege(strlen($session->text), new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('d'))));
         $error = (new PrivilegeInput())->columns($problem, $session);
 
         self::assertSame(1064, $error->getCode());
         self::assertStringContainsString("near '' at line 2", $error->getMessage());
         $session->text .= ';';
         self::assertSame($error->getMessage(), (new PrivilegeInput())->columns($problem, $session)->getMessage());
+    }
+
+    public function testColumnsKeepsTheTypedCurrentDatabaseDependency(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege(0, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))));
+        $session = (new Instance('5.7.44'))->connect();
+        $session->text = 'unrelated input';
+
+        self::assertSame(1046, (new PrivilegeInput())->columns($problem, $session)->getCode());
     }
 
     public function testDatabasePrecedesAnInvalidPrivilegeAndRecipient(): void

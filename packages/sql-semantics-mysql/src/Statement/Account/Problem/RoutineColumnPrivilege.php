@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the intrinsic privilege mismatch
- *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege(12, true))->message() // => 'Column privileges apply only to tables.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege(12, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel()))->message() // => 'Column privileges apply only to tables.'
  */
 final class RoutineColumnPrivilege implements Diagnostic
 {
@@ -25,9 +25,9 @@ final class RoutineColumnPrivilege implements Diagnostic
 
     /**
      * @param int $offset The exclusive end of the completed grant
-     * @param bool $object Whether the privilege level names one object
+     * @param \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel $level The typed target, retaining its current-database dependency
      */
-    public function __construct(public readonly int $offset, public readonly bool $object)
+    public function __construct(public readonly int $offset, public readonly \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel $level)
     {
         Check::input($offset >= 0, 'A completed grant ends at a nonnegative offset.');
     }

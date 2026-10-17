@@ -243,7 +243,7 @@
         "roleExpected": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RoutineColumnPrivilege": {
-        "object": "bool",
+        "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
         "offset": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\UnknownGrantColumn": {

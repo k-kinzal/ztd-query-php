@@ -56,6 +56,7 @@ final class StructureObservationContractTest extends TestCase
     {
         yield '5.6.51' => [GrammarRelease::MySql5651];
         yield '5.7.44' => [GrammarRelease::MySql5744];
+        yield '8.0.44' => [GrammarRelease::MySql8044];
     }
 
     #[DataProvider('providerLibraryReleases')]
@@ -67,8 +68,8 @@ final class StructureObservationContractTest extends TestCase
         $observations = [$comparison->compare($node, $profile), $comparison->compare($node, $profile)];
 
         self::assertSame([true, true], array_column($observations, 'matches'));
-        self::assertSame(array_fill(0, 2, ['missing-library-os-errno-2-or-11']), array_column($observations, 'contracts'));
+        self::assertSame(array_fill(0, 2, [\Fuzz\Target\LibraryErrors::CONTRACT]), array_column($observations, 'contracts'));
         self::assertSame(array_fill(0, 2, 1126), array_column(array_column(array_column($observations, 'native'), 'error'), 0));
-        self::assertStringNotContainsString('{2|11}', serialize(array_column($observations, 'native')));
+        self::assertStringNotContainsString('{' . \Fuzz\Target\LibraryErrors::CONTRACT . '}', serialize(array_column($observations, 'native')));
     }
 }

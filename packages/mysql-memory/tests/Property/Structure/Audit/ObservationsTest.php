@@ -35,7 +35,7 @@ final class ObservationsTest extends TestCase
         $node = new CreateLoadableFunction(new Name('f'), LoadableResult::String, new Text('absent'));
         $compare = new Observations();
 
-        self::assertSame(['matches' => true, 'contracts' => ['missing-library-os-errno-2-or-11']], $compare->compare($node, '5.7.44', $left, $right));
+        self::assertSame(['matches' => true, 'contracts' => [\Fuzz\Target\LibraryErrors::CONTRACT]], $compare->compare($node, '5.7.44', $left, $right));
         self::assertSame($first, $left['error'][2]);
         self::assertFalse($compare->compare($node, '8.4.7', $left, $right)['matches']);
         $right['warnings'][0][1] = '1127';

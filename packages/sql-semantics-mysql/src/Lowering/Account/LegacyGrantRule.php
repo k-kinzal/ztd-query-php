@@ -135,7 +135,9 @@ final class LegacyGrantRule
         $items = $privileges->privileges($command->node(0));
         $level = $privileges->level($command->node(3));
         (new Privilege\LegacyColumns())->requireTable($items, $level, (new \SqlSemantics\Construction\SourceRanges())->span($command->node(3))[1] ?? 0);
-        return new RevokePrivileges(false, $items, $kind, $level, $this->users($command->node(5)));
+        $users = $this->users($command->node(5));
+        $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        return new RevokePrivileges(false, $items, $kind, $level, $users);
     }
 
     /**
