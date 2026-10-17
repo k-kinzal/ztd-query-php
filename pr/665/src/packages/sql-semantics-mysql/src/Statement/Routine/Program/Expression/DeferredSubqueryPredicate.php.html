@@ -125,7 +125,7 @@
 <span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a><span class="tok-com">     * Describes the fixed shape conflict, independently of catalog resolution.</span></span>
 <span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">shape</span>(): ?<span class="tok-id">OperandColumns</span></span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">shape</span>(): <span class="tok-id">OperandColumns</span>|<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse</span>|<span class="tok-id">null</span></span>
 <span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    {</span>
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">operand</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredOperand</span>) {</span>
 <span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
