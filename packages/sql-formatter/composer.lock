@@ -12,15 +12,15 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-parser",
-                "reference": "34544537ad7ffaf85f335edf68fcac0438269f30"
+                "reference": "4d4eff099d668b494342ea9420865d8653e6e5ce"
             },
             "require": {
-                "ext-zlib": "*",
                 "php": "^8.1"
             },
             "require-dev": {
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
+                "ext-zlib": "*",
                 "fakerphp/faker": "^1.23",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/bison-parser": "dev-main",
@@ -36,6 +36,7 @@
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
             "suggest": {
+                "ext-zlib": "Read legacy deflated custom parse-table caches; shipped tables do not require it",
                 "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL parse tables with bin/build-mysql.php and bin/build-pg.php",
                 "k-kinzal/lemon-parser": "To rebuild the SQLite parse tables with bin/build-sqlite.php"
             },
@@ -158,7 +159,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite built from the official grammars",
+            "description": "Lossless LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite, built from the official grammars",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"
@@ -1253,7 +1254,7 @@
             "dist": {
                 "type": "path",
                 "url": "../container",
-                "reference": "f825a526b2cd9ba9fa97421aaf4579ab76413227"
+                "reference": "f67644d906374f5c92510baee03e2a9bae05ae52"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1261,15 +1262,7 @@
                 "php": "^8.1"
             },
             "require-dev": {
-                "brianium/paratest": "^7.3",
-                "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.25",
-                "k-kinzal/php-ai-toolkit": "dev-main",
-                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5",
-                "squizlabs/php_codesniffer": "^4.0.4"
+                "friendsofphp/php-cs-fixer": "^3.95.25"
             },
             "suggest": {
                 "ext-pdo_mysql": "Required for MySQL containers",
@@ -1281,76 +1274,18 @@
                     "Container\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/"
-                }
-            },
             "scripts": {
-                "autoload:check": [
-                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
-                ],
-                "compat": [
-                    "phpcs"
-                ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
-                ],
-                "docgen": [
-                    "docgen --packages=. --title=k-kinzal/container"
-                ],
-                "docgen:diff": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --diff=origin/main --serve"
-                ],
-                "docgen:fresh": [
-                    "@docgen --no-cache"
-                ],
-                "docgen:serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --serve"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
-                ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
                 ],
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ],
-                "lint": [
-                    "@autoload:check",
-                    "@format:check",
-                    "@phpstan",
-                    "@compat",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac"
-                ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
-                ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
-                ],
-                "tree-guard": [
-                    "tree-guard --config=tree.yaml"
                 ]
             },
             "license": [
                 "MIT"
             ],
-            "description": "Shared container definitions for ZTD Query integration and fuzz testing",
+            "description": "Container definitions for testcontainers-php used across k-kinzal/ztd-query-php",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
@@ -1516,7 +1451,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "3abb12ca287d64843fff42dbb2a31c1e4483be77"
+                "reference": "d074fd59cb7e49dacd352d2c6fc56f6ccca84121"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1662,7 +1597,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Faker Provider for generating syntactically valid SQL statements",
+            "description": "Grammar-based SQL generator for MySQL, PostgreSQL, and SQLite, with a FakerPHP provider",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/"
@@ -2865,16 +2800,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "10.5.65",
+            "version": "10.5.66",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "b4f678d4ebb686d6d3bd6a7c193e8a067d1a7f01"
+                "reference": "747c9889613d0b3ffa08b74272e50ed3b8fa6d72"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/b4f678d4ebb686d6d3bd6a7c193e8a067d1a7f01",
-                "reference": "b4f678d4ebb686d6d3bd6a7c193e8a067d1a7f01",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/747c9889613d0b3ffa08b74272e50ed3b8fa6d72",
+                "reference": "747c9889613d0b3ffa08b74272e50ed3b8fa6d72",
                 "shasum": ""
             },
             "require": {
@@ -2946,7 +2881,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.65"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.66"
             },
             "funding": [
                 {
@@ -2954,7 +2889,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2026-09-23T10:01:12+00:00"
+            "time": "2026-10-05T05:46:26+00:00"
         },
         {
             "name": "psr/cache",
