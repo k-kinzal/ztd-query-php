@@ -41,6 +41,9 @@ final class JsonTables
      */
     public function first(Node $statement): ?SqlError
     {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain) {
+            return $this->first($statement->statement);
+        }
         $tables = match (true) {
             $statement instanceof Update, $statement instanceof MultipleDelete => $statement->tables,
             default => array_filter([(new Placement())->first($statement)?->from]),

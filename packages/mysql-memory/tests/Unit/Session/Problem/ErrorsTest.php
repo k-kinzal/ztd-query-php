@@ -622,6 +622,7 @@ final class ErrorsTest extends TestCase
         self::assertInstanceOf(Update::class, $update);
 
         self::assertSame('The target table d of the UPDATE is not updatable', (new Errors())->write(new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('d')), $update)->getMessage());
+        self::assertSame('The target table d of the UPDATE is not updatable', (new Errors())->write(new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('d')), new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($update))->getMessage());
         self::assertSame('The target table d of the DELETE is not updatable', (new Errors())->write(new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('d')), null)->getMessage());
         self::assertSame([1054, "Unknown column '*' in 'field list'"], [(new Errors())->write(new WriteMisuse(WriteRule::WildcardColumn), null)->getCode(), (new Errors())->write(new WriteMisuse(WriteRule::WildcardColumn), null)->getMessage()]);
     }

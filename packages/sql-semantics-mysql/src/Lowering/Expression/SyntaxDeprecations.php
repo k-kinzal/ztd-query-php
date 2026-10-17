@@ -25,14 +25,7 @@ final class SyntaxDeprecations
      */
     public function completed(Node $node, GrammarRelease $release): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|null
     {
-        $first = $node->children[0] ?? null;
-        $assignment = $node->children[$node->name === 'variable_aux' ? 1 : 2] ?? null;
-        $construct = match (true) {
-            $node->name === 'text_literal' && $first instanceof Token && $first->name === 'NCHAR_STRING' => Deprecated::National,
-            $node->name === 'simple_expr' && $first instanceof Token && in_array($first->name, ['BINARY', 'BINARY_SYM'], true) => Deprecated::BinaryOperator,
-            in_array($node->name, ['variable_aux', 'in_expression_user_variable_assignment'], true) && $assignment instanceof Token && $assignment->name === 'SET_VAR' => Deprecated::AssignmentInExpression,
-            default => $this->jsonTable($node),
-        };
+        $construct = $this->notice($node);
 
         if ($construct === Deprecated::BinaryOperator && $construct->warnedIn($release) && $release !== GrammarRelease::MySql8044 && $this->stopsBinary($node)) {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($construct, aborts: true);
@@ -40,6 +33,22 @@ final class SyntaxDeprecations
 
         return $construct !== null && $construct->warnedIn($release) ? $construct : null;
     }
+    /**
+     * Identifies the construct completed by an expression or grouping item, independently of its release.
+     */
+    public function notice(Node $node): ?Deprecated
+    {
+        $first = $node->children[0] ?? null;
+        $assignment = $node->children[$node->name === 'variable_aux' ? 1 : 2] ?? null;
+        return match (true) {
+            $node->name === 'grouping_expr' && count($node->children) === 2 => Deprecated::GroupByDirection,
+            $node->name === 'text_literal' && $first instanceof Token && $first->name === 'NCHAR_STRING' => Deprecated::National,
+            $node->name === 'simple_expr' && $first instanceof Token && in_array($first->name, ['BINARY', 'BINARY_SYM'], true) => Deprecated::BinaryOperator,
+            in_array($node->name, ['variable_aux', 'in_expression_user_variable_assignment'], true) && $assignment instanceof Token && $assignment->name === 'SET_VAR' => Deprecated::AssignmentInExpression,
+            default => $this->jsonTable($node),
+        };
+    }
+
     /**
      * Reads the completed reversed pair, excluding a single ON ERROR response.
      */

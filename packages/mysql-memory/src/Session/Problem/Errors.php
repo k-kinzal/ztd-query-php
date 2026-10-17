@@ -365,6 +365,9 @@ final class Errors
      */
     public function write(WriteMisuse $misuse, ?Node $statement): SqlError
     {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain) {
+            return $this->write($misuse, $statement->statement);
+        }
         return match ($misuse->rule) {
             WriteRule::DefaultOutsideInsert => QueryError::ValuesDefault->error(),
             WriteRule::OrderedMultipleUpdate => StatementError::WrongUsage->error('UPDATE', 'ORDER BY'),

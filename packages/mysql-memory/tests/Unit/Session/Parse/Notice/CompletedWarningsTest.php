@@ -14,6 +14,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CompletedWarningsTest extends TestCase
 {
+    public function testBeforeKeepsGroupingDirectionsAheadOfMalformedInput(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $sql = 'SELECT 1 FROM DUAL GROUP BY 1 ASC,1 DESC BROKEN';
+
+        self::assertSame([1287, 1287], array_values(array_map(static fn ($notice): int => $notice->code(), (new CompletedWarnings())->before($sql, strlen($sql), $session))));
+    }
+
     public function testBeforeKeepsCompletedOccurrencesAndRespectsTheInputBoundary(): void
     {
         $session = (new Instance('5.6.51'))->connect();

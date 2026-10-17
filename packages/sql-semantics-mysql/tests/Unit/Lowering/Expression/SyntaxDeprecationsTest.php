@@ -17,6 +17,14 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class SyntaxDeprecationsTest extends TestCase
 {
+    public function testNoticeRetainsEachExplicitLegacyGroupingDirection(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');
+        $items = $parser->parse('SELECT * FROM DUAL GROUP BY 1,2 ASC,3 DESC')->find('grouping_expr');
+
+        self::assertSame([null, Deprecated::GroupByDirection, Deprecated::GroupByDirection], array_map(static fn (Node $node) => (new SyntaxDeprecations())->notice($node), $items));
+    }
+
     public function testJsonTablePreservesResponseOrderBeforeTargetRefusal(): void
     {
         $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');
