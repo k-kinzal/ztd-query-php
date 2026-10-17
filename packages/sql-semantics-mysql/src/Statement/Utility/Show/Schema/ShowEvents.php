@@ -28,6 +28,9 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-events.html.
  * Status: Implemented.
  *
+ * @example Rejecting an empty database operand
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents(database: new \SqlSemantics\Statement\Identifier\Name('')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW EVENTS FROM shop LIKE 'a%'");
@@ -43,6 +46,7 @@ final class ShowEvents implements Statement, Relation
      */
     public function __construct(public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($database?->value !== '', 'A SHOW database operand is nonempty.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

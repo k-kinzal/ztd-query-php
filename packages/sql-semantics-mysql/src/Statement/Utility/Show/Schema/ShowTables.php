@@ -32,6 +32,9 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-tables.html.
  * Status: Implemented.
  *
+ * @example Rejecting an empty database operand
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables(database: new \SqlSemantics\Statement\Identifier\Name('')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW FULL TABLES FROM shop LIKE 'o%'");
@@ -48,6 +51,7 @@ final class ShowTables implements Statement, Relation
      */
     public function __construct(public readonly ?ShowListing $listing = null, public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($database?->value !== '', 'A SHOW database operand is nonempty.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

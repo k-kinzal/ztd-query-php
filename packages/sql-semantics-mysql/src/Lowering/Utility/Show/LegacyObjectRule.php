@@ -126,7 +126,7 @@ final class LegacyObjectRule
             'triggers' => new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2)), $clauses->filter($form->node(3))),
             'events' => new ShowEvents($clauses->database($form->node(1)), $clauses->filter($form->node(2))),
             'tableStatus' => new ShowTableStatus($clauses->database($form->node(2)), $clauses->filter($form->node(3))),
-            'openTables' => new ShowOpenTables($clauses->database($form->node(2)), $clauses->filter($form->node(3))),
+            'openTables' => new ShowOpenTables($clauses->database($form->node(2), true), $clauses->filter($form->node(3))),
             'columns' => $this->columns($form),
             'keys' => $this->keys($form),
             'createDatabase' => new ShowCreateDatabase($names->identifier($form->node(3)), $this->lowering->options->present($form->node(2))),

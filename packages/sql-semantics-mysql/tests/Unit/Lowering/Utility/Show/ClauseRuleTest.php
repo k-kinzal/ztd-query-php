@@ -31,6 +31,31 @@ final class ClauseRuleTest extends TestCase
         self::assertSame('SHOW EVENTS FROM db', (new Semantics(Dialect::MySql))->analyze('show events in db')->toString());
     }
 
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDatabaseOperands(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
+            foreach (['TABLES', 'TRIGGERS', 'EVENTS', 'TABLE STATUS', 'COLUMNS FROM t', 'KEYS FROM t'] as $form) {
+                yield $release . ' ' . $form => [$release, 'SHOW ' . $form . ' FROM ``'];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDatabaseOperands')]
+    public function testDatabaseRefusesEmptyDatabaseIdentities(string $release, string $sql): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect database name ''");
+        (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze($sql);
+    }
+
+    public function testDatabaseAllowsAnEmptyOpenTableFilter(): void
+    {
+        self::assertSame('SHOW OPEN TABLES FROM ``', (new Semantics(Dialect::MySql))->analyze('SHOW OPEN TABLES FROM ``')->toString());
+    }
+
     public function testPrepositionAcceptsFromAndIn(): void
     {
         self::assertSame('SHOW COLUMNS FROM t FROM db', (new Semantics(Dialect::MySql))->analyze('show columns in t in db')->toString());

@@ -72,7 +72,7 @@ final class ObjectRule
             case 'show_table_status_stmt: SHOW TABLE_SYM STATUS_SYM opt_db opt_wild_or_where':
                 return new ShowTableStatus($clauses->database($form->node(3)), $clauses->filter($form->node(4)));
             case 'show_open_tables_stmt: SHOW OPEN_SYM TABLES opt_db opt_wild_or_where':
-                return new ShowOpenTables($clauses->database($form->node(3)), $clauses->filter($form->node(4)));
+                return new ShowOpenTables($clauses->database($form->node(3), true), $clauses->filter($form->node(4)));
             case 'show_columns_stmt: SHOW opt_show_cmd_type COLUMNS from_or_in table_ident opt_db opt_wild_or_where':
                 $clauses->preposition($form->node(3));
 

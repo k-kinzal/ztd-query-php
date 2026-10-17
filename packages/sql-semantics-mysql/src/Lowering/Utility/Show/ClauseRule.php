@@ -124,9 +124,12 @@ final class ClauseRule
     /**
      * Lowers the database clause: a node of `opt_db`.
      *
+     * @param bool $listingFilter Whether the operand filters open-table entries rather than naming a database
+     * @throws \SqlSemantics\Construction\RejectedInput When an explicit database name is empty
+     *
      * @throws ImplementationGap When a production has no rule
      */
-    public function database(Node $database): ?Name
+    public function database(Node $database, bool $listingFilter = false): ?Name
     {
         $form = $this->lowering->form($database);
         if ($form->signature === 'opt_db:') {
@@ -137,7 +140,12 @@ final class ClauseRule
         }
         $this->preposition($form->node(0));
 
-        return $this->lowering->names->identifier($form->node(1));
+        $name = $this->lowering->names->identifier($form->node(1));
+        if (!$listingFilter && $name->value === '') {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Database), (new \SqlSemantics\Construction\SourceRanges())->span($database)[1] ?? 0, false);
+        }
+
+        return $name;
     }
 
     /**
