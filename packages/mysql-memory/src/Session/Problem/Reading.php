@@ -73,7 +73,7 @@ final class Reading
     {
         (new Identifiers())->check($operation->statement, $session->settings()->release());
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof UnknownCollation && $diagnostic->name !== '' || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset) {
+            if ($diagnostic instanceof UnknownCollation && $diagnostic->name !== '' || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }

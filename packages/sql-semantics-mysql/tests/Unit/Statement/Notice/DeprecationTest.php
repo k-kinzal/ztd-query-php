@@ -17,6 +17,14 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 #[Medium]
 final class DeprecationTest extends TestCase
 {
+    public function testCharsetWarningSharesTheDecodedNameMapping(): void
+    {
+        self::assertSame(Deprecated::Utf8Alias, Deprecation::charsetWarning('UTF8'));
+        self::assertSame(Deprecated::Utf8mb3, Deprecation::charsetWarning('utf8mb3'));
+        self::assertSame(Deprecated::Ucs2, Deprecation::charsetWarning('Ucs2'));
+        self::assertNull(Deprecation::charsetWarning('utf8mb4'));
+    }
+
     public function testPhaseSeparatesFunctionContextualizationFromGrammarWarnings(): void
     {
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, (new Deprecation(Deprecated::FoundRows))->phase());

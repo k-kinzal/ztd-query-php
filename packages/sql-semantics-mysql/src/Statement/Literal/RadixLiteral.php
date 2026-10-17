@@ -66,6 +66,11 @@ final class RadixLiteral implements LiteralExpression
             Deprecation::charset($this->introducer->value, $derivation);
         }
 
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Literal\Utf32Radix())->problem($this, $derivation->context->profile->grammar);
+        if ($problem !== null) {
+            $derivation->report($problem);
+        }
+
         return new ScalarFact(new Known(Literals::of($derivation->context)->radix($this)), Nullability::NotNull);
     }
 

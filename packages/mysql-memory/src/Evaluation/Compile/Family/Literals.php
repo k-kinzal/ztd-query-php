@@ -92,11 +92,7 @@ final class Literals
     public function string(StringLiteral $literal): Constant
     {
         $domain = $this->typed($literal, $this->rules()->string($literal));
-        $value = $literal->value();
-        $unit = $domain->collation->charset->minLength();
-        if ($literal->introducer !== null && strlen($value) % $unit !== 0) {
-            $value = str_repeat("\0", $unit - strlen($value) % $unit) . $value;
-        }
+        $value = $literal->introducer === null ? $literal->value() : $this->padded($literal->value(), $domain);
 
         return new Constant($domain, $value);
     }
@@ -108,7 +104,21 @@ final class Literals
     {
         $domain = $this->typed($literal, $this->rules()->radix($literal));
 
-        return new Constant($literal->introducer === null ? $domain->withNumericBytes() : $domain, $literal->bytes());
+        return $literal->introducer === null
+            ? new Constant($domain->withNumericBytes(), $literal->bytes())
+            : new Constant($domain, $this->padded($literal->bytes(), $domain));
+    }
+
+    /**
+     * Completes the leading character unit of an introduced text, hexadecimal or bit literal.
+     * Verified with UCS-2, UTF-16, UTF-16LE and UTF-32 on live 5.6 through 9.1 servers.
+     */
+    public function padded(string $value, Domain $domain): string
+    {
+        $unit = $domain->collation->charset->minLength();
+        $remainder = strlen($value) % $unit;
+
+        return $remainder === 0 ? $value : str_repeat("\0", $unit - $remainder) . $value;
     }
 
     /**

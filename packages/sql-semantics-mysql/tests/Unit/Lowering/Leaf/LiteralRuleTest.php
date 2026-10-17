@@ -32,6 +32,15 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Medium]
 final class LiteralRuleTest extends TestCase
 {
+    public function testRadixNoticePrecedesARefusedMarkerOnlyOnMySql56(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        $sql = "SELECT _utf32 X'00110000', ?";
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser('mysql-5.6.51'), $sql, strlen($sql), $profile);
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString('utf32', "\0\x11\0"), true)], array_column($notices, 1));
+    }
+
     public function testTemporalRefusesDateTextOutsideTheValueDomain(): void
     {
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);

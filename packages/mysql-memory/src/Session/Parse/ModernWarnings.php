@@ -22,7 +22,8 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseStop;
 /**
  * Preserves modern operator and SELECT-modifier warnings before a syntax refusal.
  *
- * A candidate must have been accepted at its original position by SQL Parser.
+ * Operator candidates must have been accepted at their original position by SQL Parser.
+ * Character-set introducers warn when lexed, including as a refused lookahead.
  * The versioned warning descriptors belong to SQL Semantics. No fragment is
  * executed. Observed on native MySQL 8.0.44, 8.4.7 and 9.1.0 connections.
  *
@@ -140,7 +141,7 @@ final class ModernWarnings
      */
     public function before(array $tokens, string $statement, int $end, SqlParser $parser): array
     {
-        $warnings = [];
+        $warnings = $this->introducers($tokens, $end);
         $modifiers = false;
         $bangs = 0;
         foreach ($tokens as $index => $token) {
@@ -163,6 +164,27 @@ final class ModernWarnings
             }
         }
 
+        return $warnings;
+    }
+
+    /**
+     * Preserves lexical character-set warnings through the refused lookahead token.
+     *
+     * @param list<Token> $tokens The lexer output, with quoted text already distinguished
+     * @return array<int, Deprecated> Notices indexed by introducer offsets
+     */
+    public function introducers(array $tokens, int $end): array
+    {
+        $warnings = [];
+        foreach ($tokens as $token) {
+            if ($token->offset > $end) {
+                break;
+            }
+            $notice = $token->name === 'UNDERSCORE_CHARSET' ? \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::charsetWarning(substr($token->text, 1)) : null;
+            if ($notice !== null) {
+                $warnings[$token->offset] = $notice;
+            }
+        }
         return $warnings;
     }
 

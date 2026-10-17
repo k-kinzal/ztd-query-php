@@ -1327,3 +1327,13 @@ same table name. Execution, row locking, LOCK TABLES checks and read-only
 transaction checks consume these bindings. Direct construction tests preserve
 one DELETE object while switching the current database; native histories also
 compare populated tables and asymmetric READ/WRITE locks across databases.
+
+Character-set introducers retain their notices even when the following literal
+is unfinished or the introducer is a refused lookahead. Text, hexadecimal and
+bit literals with wide character units receive leading zero padding. UTF-32
+radix values carry a typed invalid-character diagnostic for out-of-range code
+points and, on modern releases, surrogate code points. MySQL 5.6 reports a
+completed invalid radix value before later syntax errors. Unused CTE definitions
+keep their delayed preparation. Native observations compare values, metadata,
+ordered conditions and subsequent statements across five releases. These checks
+do not establish the outstanding whole-model construction property.

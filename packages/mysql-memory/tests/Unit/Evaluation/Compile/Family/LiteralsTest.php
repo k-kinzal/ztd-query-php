@@ -165,4 +165,13 @@ final class LiteralsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['0061', '00000061', '6162', '61']], $result->rows);
     }
+
+    public function testPaddedCompletesIntroducedWideCharactersWithoutChangingBinaryBytes(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(_ucs2 B'01100001'), HEX(_utf16 X'616263'), HEX(_utf16le B'1'), HEX(_utf32 X'61'), HEX(_utf32 X''), HEX(_binary X'61')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0061', '00616263', '0001', '00000061', '', '61']], $result->rows);
+    }
 }

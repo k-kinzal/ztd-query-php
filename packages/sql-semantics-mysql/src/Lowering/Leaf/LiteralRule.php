@@ -169,6 +169,24 @@ final class LiteralRule
     }
 
     /**
+     * Preserves the invalid UTF-32 value MySQL 5.6 checks before reading later input.
+     */
+    public function radixNotice(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($node->name !== 'literal' || $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return null;
+        }
+        $form = $this->lowering->form($node);
+        if (!in_array($form->signature, ['literal: UNDERSCORE_CHARSET HEX_NUM', 'literal: UNDERSCORE_CHARSET BIN_NUM'], true)) {
+            return null;
+        }
+        $literal = $this->constant($form);
+        $problem = $literal instanceof RadixLiteral ? (new \SqlSemantics\Platform\MySql\Rules\Literal\Utf32Radix())->problem($literal, $this->lowering->profile->grammar) : null;
+
+        return $problem === null ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true);
+    }
+
+    /**
      * Lowers a literal in a position that also accepts a signed number.
      *
      * @throws ImplementationGap When the production has no rule

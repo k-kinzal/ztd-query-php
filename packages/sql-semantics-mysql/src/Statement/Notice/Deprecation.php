@@ -88,15 +88,23 @@ final class Deprecation implements CodedWarning
      */
     public static function charset(string $name, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null): void
     {
-        $construct = match (strtolower($name)) {
+        $construct = self::charsetWarning($name);
+        if ($construct !== null) {
+            self::raise($construct, $derivation, $at);
+        }
+    }
+
+    /**
+     * Answers the warning descriptor shared by parsed literals and lexical introducers.
+     */
+    public static function charsetWarning(string $name): ?Deprecated
+    {
+        return match (strtolower($name)) {
             'utf8' => Deprecated::Utf8Alias,
             'utf8mb3' => Deprecated::Utf8mb3,
             'ucs2' => Deprecated::Ucs2,
             default => null,
         };
-        if ($construct !== null) {
-            self::raise($construct, $derivation, $at);
-        }
     }
 
     /**

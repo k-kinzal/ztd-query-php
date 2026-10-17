@@ -1216,6 +1216,10 @@
         "operands": "array",
         "operation": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\InvalidCharacterString": {
+        "bytes": "string",
+        "charset": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\NotSupportedYet": {
         "feature": "string"
     },

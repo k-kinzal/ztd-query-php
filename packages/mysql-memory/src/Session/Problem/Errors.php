@@ -301,6 +301,7 @@ final class Errors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument => DataError::InvalidJsonType->error(1, 'json_value'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath => DataError::InvalidJsonPath->error($diagnostic->position),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize => $this->typeSize($diagnostic),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString => DataError::InvalidCharacterString->error($diagnostic->charset, strtoupper(bin2hex($diagnostic->bytes))),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral => DataError::WrongValue->error($diagnostic->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp ? 'DATETIME' : $diagnostic->form->value, substr($diagnostic->text, 0, 128)),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion => $diagnostic->operand ? DataError::TimeZoneCast->error() : DataError::UnknownTimeZone->error($diagnostic->expression->zone->value),
             $diagnostic instanceof OperandColumns => QueryError::OperandColumns->error($diagnostic->expected),

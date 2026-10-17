@@ -18,6 +18,14 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class ModernWarningsTest extends TestCase
 {
+    public function testIntroducersStopsAfterTheRefusedLookaheadAndIgnoresQuotedNames(): void
+    {
+        $sql = "SELECT '_utf8mb3', _utf8mb3 X'00', _ucs2 X'00'";
+        $tokens = (new Instance())->connect()->semantics()->parser()->tokenize($sql);
+
+        self::assertSame([19 => Deprecated::Utf8mb3], (new ModernWarnings())->introducers($tokens, 19));
+    }
+
     public function testRecordedPreservesReplicationKeywordWarnings(): void
     {
         $session = (new Instance('8.0.44'))->connect();
@@ -91,6 +99,12 @@ final class ModernWarningsTest extends TestCase
         yield 'quoted text' => ["SELECT 'SQL_NO_CACHE !',?", []];
         yield 'executable comment' => ['SELECT /*! SQL_NO_CACHE */ !?', [Deprecated::NoCache, Deprecated::BangNot]];
         yield 'earlier syntax refusal' => ['SELECT 1, SQL_NO_CACHE ?', []];
+        yield 'introduced string before refusal' => ["SELECT _utf8mb3 'a',?", [Deprecated::Utf8mb3]];
+        yield 'introduced radix before refusal' => ["SELECT _utf8mb3 X'0f',?", [Deprecated::Utf8mb3]];
+        yield 'introducer without literal' => ['SELECT _utf8mb3 ?', [Deprecated::Utf8mb3]];
+        yield 'introducer as refused lookahead' => ['SHOW _utf8mb3 ?', [Deprecated::Utf8mb3]];
+        yield 'introduced adjacent string' => ["SELECT _utf8mb3 'a' 'b',?", [Deprecated::Utf8mb3]];
+        yield 'ordinary charset' => ["SELECT _utf8mb4 X'0f',?", []];
     }
 
     /**
