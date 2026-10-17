@@ -27,4 +27,12 @@ final class CastNoticesTest extends TestCase
         self::assertEquals([new Deprecation(Deprecated::National)], $derivation->facts()->warnings);
         self::assertSame([], $derivation->facts()->diagnostics);
     }
+
+    public function testCharsetRetainsTheUnknownNameAsATypedLookupCondition(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        (new CastNotices())->charset('missing_charset', $derivation);
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset('missing_charset')], $derivation->facts()->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
+    }
 }

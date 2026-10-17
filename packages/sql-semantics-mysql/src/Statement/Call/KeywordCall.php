@@ -72,6 +72,7 @@ final class KeywordCall implements Scalar
         if ($this->function === KeywordFunction::OldPassword) {
             Deprecation::raise(Deprecated::OldPassword, $derivation);
         }
+        Deprecation::spatial($this->function->value, $derivation);
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);

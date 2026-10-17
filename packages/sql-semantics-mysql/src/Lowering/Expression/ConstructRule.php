@@ -63,11 +63,11 @@ final class ConstructRule
         $expressions = $this->lowering->expressions;
 
         return match ($form->signature) {
-            'simple_expr: CASE_SYM opt_expr when_list opt_else END' => new CaseExpression($this->optional($form->node(1)), $this->branches($form->node(2)), $this->optional($form->node(3))),
+            'simple_expr: CASE_SYM opt_expr when_list opt_else END' => $this->caseExpression($form),
             'simple_expr: CAST_SYM ( expr AS cast_type )', 'simple_expr: CONVERT_SYM ( expr , cast_type )', 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' => $this->cast($form),
             'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )' => throw new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($form->node)[1] ?? 0, false),
             'simple_expr: CAST_SYM ( expr AT_SYM TIME_SYM ZONE_SYM opt_interval TEXT_STRING_literal AS DATETIME_SYM type_datetime_precision )' => $this->zone($form),
-            'simple_expr: CONVERT_SYM ( expr USING charset_name )' => new CharsetConversion($expressions->expression($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
+            'simple_expr: CONVERT_SYM ( expr USING charset_name )' => $this->charset($form),
             'simple_expr: BINARY simple_expr', 'simple_expr: BINARY_SYM simple_expr' => new BinaryCast($expressions->simpleExpression($form->node(1))),
             'simple_expr: MATCH ident_list_arg AGAINST ( bit_expr fulltext_options )' => $this->search($form),
             default => throw ImplementationGap::production($form),
@@ -88,13 +88,23 @@ final class ConstructRule
         if ($problem !== null) {
             throw new RejectedInput($problem, (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
         }
-        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+        if (!$operand instanceof Scalar) {
             if ($array) {
                 throw new RejectedInput(new NotSupportedYet(Cast::ARRAY_OUTSIDE_INDEX), (new SourceRanges())->span($form->node)[1] ?? 0, false);
             }
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast($operand, $target);
         }
         return new Cast((new OperandRule())->scalar($operand, $form->node(2)), $target, $array);
+    }
+
+    /**
+     * Retains a character-set conversion's ordinary or deferred operand role.
+     */
+    public function charset(Form $form): CharsetConversion|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCharsetConversion
+    {
+        $operand = $this->lowering->expressions->operand($form->node(2));
+        $charset = $this->lowering->charsets->charset($form->node(4));
+        return $operand instanceof Scalar ? new CharsetConversion($operand, $charset) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCharsetConversion($operand, $charset);
     }
 
     /**
@@ -118,18 +128,37 @@ final class ConstructRule
     }
 
     /**
+     * Retains all CASE roles before choosing the ordinary or stored expression domain.
+     */
+    public function caseExpression(Form $form): CaseExpression|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase
+    {
+        $operand = $this->optional($form->node(1));
+        $branches = $this->branches($form->node(2));
+        $else = $this->optional($form->node(3));
+        if (($operand !== null && !$operand instanceof Scalar) || ($else !== null && !$else instanceof Scalar) || array_filter($branches, static fn ($branch): bool => !$branch instanceof CaseBranch) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase($operand, $branches, $else);
+        }
+        $ordinary = [];
+        foreach ($branches as $branch) {
+            \SqlSemantics\Diagnostic\Check::invariant($branch instanceof CaseBranch, 'An ordinary CASE retains only scalar branches.');
+            $ordinary[] = $branch;
+        }
+        return new CaseExpression($operand, $ordinary, $else);
+    }
+
+    /**
      * Lowers the optional operand of CASE or its ELSE result: a node of opt_expr or opt_else.
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function optional(Node $optional): ?Scalar
+    public function optional(Node $optional): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null
     {
         $form = $this->lowering->form($optional);
 
         return match ($form->signature) {
             'opt_expr:', 'opt_else:' => null,
-            'opt_expr: expr' => $this->lowering->expressions->expression($form->node(0)),
-            'opt_else: ELSE expr' => $this->lowering->expressions->expression($form->node(1)),
+            'opt_expr: expr' => $this->lowering->expressions->operand($form->node(0)),
+            'opt_else: ELSE expr' => $this->lowering->expressions->operand($form->node(1)),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -137,7 +166,7 @@ final class ConstructRule
     /**
      * Lowers the WHEN branches of a CASE expression.
      *
-     * @return list<CaseBranch>
+     * @return list<CaseBranch|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCaseBranch>
      * @throws ImplementationGap When a production has no rule
      */
     public function branches(Node $list): array
@@ -149,7 +178,9 @@ final class ConstructRule
         $items = (new Lists())->items($list);
         $branches = [];
         for ($index = 0; $index + 1 < count($items); $index += 2) {
-            $branches[] = new CaseBranch($this->lowering->expressions->expression($items[$index]), $this->lowering->expressions->expression($items[$index + 1]));
+            $condition = $this->lowering->expressions->operand($items[$index]);
+            $result = $this->lowering->expressions->operand($items[$index + 1]);
+            $branches[] = $condition instanceof Scalar && $result instanceof Scalar ? new CaseBranch($condition, $result) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCaseBranch($condition, $result);
         }
 
         return $branches;

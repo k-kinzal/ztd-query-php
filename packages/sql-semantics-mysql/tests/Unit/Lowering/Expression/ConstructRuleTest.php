@@ -229,4 +229,18 @@ final class ConstructRuleTest extends TestCase
         self::assertSame(OptionalWords::Written, $search->stated);
         self::assertSame(FullTextMode::NaturalLanguage, $search->mode);
     }
+
+    public function testCharsetRetainsARowAsAStoredOperand(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('CREATE PROCEDURE p() SELECT CONVERT((1,2) USING utf8mb4)');
+        self::assertSame('CREATE PROCEDURE p() SELECT CONVERT((1, 2) USING utf8mb4)', $operation->toString());
+    }
+
+    public function testCaseExpressionRetainsAnUnselectedRowResult(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1,2) END');
+        self::assertSame('CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1, 2) END', $operation->toString());
+    }
 }

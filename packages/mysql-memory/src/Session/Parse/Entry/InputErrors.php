@@ -27,7 +27,7 @@ final class InputErrors
     public function error(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => (new \MySqlMemory\Program\Expression\SelectionUse())->raise($diagnostic->selection, $session, false),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => $this->selection($diagnostic->selection, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName => str_starts_with($diagnostic->name->value, '#mysql50#') ? ($diagnostic->identifierTooLong() ? SchemaError::TooLongIdentifier : SchemaError::WrongDatabaseName)->error((new \MySqlMemory\Error\DiagnosticText())->bytes($diagnostic->name->value, 100, true)) : \MySqlMemory\Error\Family\StatementError::WrongUsage->error('ALTER DATABASE UPGRADE DATA DIRECTORY NAME', 'name'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody => (new ProgramInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege => (new PrivilegeInput())->columns($diagnostic, $session),
@@ -47,6 +47,18 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedLogSubquery => (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($diagnostic->offset, $session->text, $session->following, new RuntimeException($diagnostic->message()), true, $session->semantics()->parser()),
             default => $this->source($diagnostic, $session),
         };
+    }
+
+    /**
+     * Resolves a retained selection condition without bypassing input notice ordering.
+     */
+    public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $selection, Session $session): SqlError
+    {
+        try {
+            (new \MySqlMemory\Program\Expression\SelectionUse())->raise($selection, $session, false);
+        } catch (SqlError $error) {
+            return $error;
+        }
     }
 
     /**

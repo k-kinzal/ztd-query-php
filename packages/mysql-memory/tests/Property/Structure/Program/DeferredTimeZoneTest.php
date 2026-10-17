@@ -38,7 +38,7 @@ final class DeferredTimeZoneTest extends TestCase
     {
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             for ($seed = 0; $seed < 20; $seed++) {
-                foreach (['plain', 'not', 'minus', 'null', 'not-null', 'cast'] as $form) {
+                foreach (['plain', 'not', 'minus', 'null', 'not-null', 'cast', 'charset', 'if', 'case'] as $form) {
                     yield $release . ':' . $seed . ':' . $form => [$release, $seed, $form];
                 }
             }
@@ -63,6 +63,9 @@ final class DeferredTimeZoneTest extends TestCase
         };
         $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'), $choices->integer(0, 1) === 1, (string) $choices->integer(0, 6));
         $value = match ($form) {
+            'charset' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCharsetConversion($value, new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new Name('utf8mb4'))),
+            'if' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::If, [new NumberLiteral('0'), $value, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]),
+            'case' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase(null, [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCaseBranch(new NumberLiteral('0'), $value)]),
             'cast' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast($value, new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char)),
             'not' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot($value),
             'minus' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, $value),

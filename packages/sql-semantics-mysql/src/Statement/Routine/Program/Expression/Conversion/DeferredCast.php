@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices;
 use SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Rendering\Output;
@@ -33,10 +34,10 @@ final class DeferredCast implements DeferredOperand
     use Snapshot;
 
     /**
-     * @param DeferredOperand $operand The retained invocation-time expression
+     * @param RowOperand|DeferredOperand $operand The retained invocation-time expression
      * @param CastTarget $target The scalar cast target
      */
-    public function __construct(public readonly DeferredOperand $operand, public readonly CastTarget $target)
+    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly CastTarget $target)
     {
         Check::input((new CastProblems())->precision($target) === null, 'A CAST precision must fit its target type.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -50,11 +51,11 @@ final class DeferredCast implements DeferredOperand
         $fact = $derivation->scalar($this->operand, $environment);
         (new CastNotices())->derive($this->target, $derivation);
 
-        return $fact;
+        return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($this->problem()), $fact->nullability);
     }
 
     /**
-     * @return non-empty-list<DeferredOperand> The retained preparation dependency
+     * @return non-empty-list<RowOperand|DeferredOperand> The retained preparation dependency
      */
     public function operands(): array
     {
@@ -66,7 +67,7 @@ final class DeferredCast implements DeferredOperand
      */
     public function problem(): Diagnostic
     {
-        return $this->operand->problem();
+        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem($this->operands());
     }
 
     /**

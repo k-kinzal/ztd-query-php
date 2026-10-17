@@ -9,9 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
-use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
@@ -62,13 +60,8 @@ final class CharsetConversion implements Scalar
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         $name = $this->charset->name;
         Check::invariant($name !== null, 'CONVERT … USING names a character set.');
-        Deprecation::charset($name->value, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->charset($name->value, $derivation);
         $charset = Charset::named($name->value);
-        if ($charset === null) {
-            $problem = new UnknownCharset($name->value);
-            $derivation->report($problem);
-            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
-        }
         $type = strtolower($name->value) === 'binary' ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(charset: new CharsetAttribute(CharsetForm::Named, $name));
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null || $charset === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);

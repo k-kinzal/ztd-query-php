@@ -22,10 +22,30 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 final class SyntaxCalls
 {
     /**
+     * Keeps a completed keyword's notice even when an argument is later refused.
+     */
+    public function deprecation(Node $node, \SqlSemantics\Contract\GrammarRelease $release): \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|null
+    {
+        $first = $node->children[0] ?? null;
+        if (!$first instanceof \SqlParser\Lexer\Token) {
+            return null;
+        }
+        if ($node->name === 'geometry_function' && $first->name === 'CONTAINS_SYM') {
+            return \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::spatialWarning('CONTAINS', $release);
+        }
+        $construct = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::OldPassword;
+        return $node->name === 'function_call_conflict' && $first->name === 'OLD_PASSWORD' && $construct->warnedIn($release) ? $construct : null;
+    }
+
+    /**
      * Answers a completed unqualified native call's refusal, if any.
      */
-    public function completed(Node $node, Lowering $lowering): ?ParseFailure
+    public function completed(Node $node, Lowering $lowering): \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
     {
+        $notice = $this->deprecation($node, $lowering->profile->grammar);
+        if ($notice !== null) {
+            return $notice;
+        }
         if ($node->name !== 'function_call_generic' || $lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return null;
         }

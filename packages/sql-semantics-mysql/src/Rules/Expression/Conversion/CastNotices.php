@@ -29,12 +29,21 @@ final class CastNotices
             Deprecation::raise(Deprecated::National, $derivation);
         }
         if ($target->charset?->charset !== null) {
-            Deprecation::charset($target->charset->charset->value, $derivation);
-            if (Charset::named($target->charset->charset->value) === null) {
-                $problem = new UnknownCharset($target->charset->charset->value);
-                $derivation->report($problem);
-                $derivation->warn(new ParseFailure($problem, true));
-            }
+            $this->charset($target->charset->charset->value, $derivation);
+        }
+    }
+
+
+    /**
+     * Derives a character-set spelling and its lookup condition.
+     */
+    public function charset(string $name, Derivation $derivation): void
+    {
+        Deprecation::charset($name, $derivation);
+        if (Charset::named($name) === null) {
+            $problem = new UnknownCharset($name);
+            $derivation->report($problem);
+            $derivation->warn(new ParseFailure($problem, true));
         }
     }
 }

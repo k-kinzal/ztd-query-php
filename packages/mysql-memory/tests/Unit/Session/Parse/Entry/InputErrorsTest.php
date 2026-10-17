@@ -19,6 +19,18 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testSelectionReturnsItsConditionWithoutConsultingInputText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]);
+        $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($row)]);
+
+        self::assertSame(1241, (new InputErrors())->selection($selection, $session)->getCode());
+        self::assertSame([], $session->diagnostics->conditions);
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testColumnResolvesItsDeclarationScopeWithoutInputText(): void
     {
         $session = (new Instance())->connect();

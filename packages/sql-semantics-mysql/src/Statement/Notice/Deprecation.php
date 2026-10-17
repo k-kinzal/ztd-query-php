@@ -66,8 +66,14 @@ final class Deprecation implements CodedWarning
     {
         $name = strtoupper($name);
 
-        return Deprecated::SpatialFunction->warnedIn($release) && in_array($name, ['SRID', 'DIMENSION', 'GEOMETRYTYPE', 'ISEMPTY', 'NUMGEOMETRIES'], true)
-            ? new self(Deprecated::SpatialFunction, "'" . $name . "' is deprecated and will be removed in a future release. Please use ST_" . $name . ' instead') : null;
+        $replacement = match ($name) {
+            'CONTAINS' => 'MBRCONTAINS',
+            'SRID', 'DIMENSION', 'GEOMETRYTYPE', 'ISEMPTY', 'NUMGEOMETRIES' => 'ST_' . $name,
+            default => null,
+        };
+
+        return Deprecated::SpatialFunction->warnedIn($release) && $replacement !== null
+            ? new self(Deprecated::SpatialFunction, "'" . $name . "' is deprecated and will be removed in a future release. Please use " . $replacement . ' instead') : null;
     }
 
     /**

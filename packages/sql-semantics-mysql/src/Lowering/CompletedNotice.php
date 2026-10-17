@@ -38,7 +38,7 @@ final class CompletedNotice
     /**
      * Interprets primitive name and cast operands before their enclosing constructs.
      */
-    public function operands(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
+    public function operands(Node $node, Lowering $lowering): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
     {
         $load = (new TableDefinition\Column\SyntaxColumns())->completed($node, $lowering) ?? $lowering->literals->radixNotice($node) ?? (new Server\Instance\SpatialRule($lowering))->completed($node) ?? (new Dml\ChangeRule($lowering))->completed($node) ?? (new TableDefinition\Key\SyntaxPrefixes())->completed($node, $lowering) ?? (new Leaf\SyntaxJsonAttribute())->completed($node, $lowering) ?? (new Dml\SyntaxLoadInput())->completed($node, $lowering);
         if ($load !== null) {

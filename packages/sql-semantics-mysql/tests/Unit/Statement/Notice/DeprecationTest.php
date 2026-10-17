@@ -66,6 +66,16 @@ final class DeprecationTest extends TestCase
         self::assertNull(Deprecation::spatialWarning('ST_SRID', \SqlSemantics\Contract\GrammarRelease::MySql5744));
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT CONTAINS(NULL,NULL)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE PROCEDURE p() BEGIN IF @run THEN SELECT CONTAINS((1,2),NULL); END IF; END'])]
+    public function testContainsRetainsItsMbrReplacementInOrdinaryAndStoredCalls(string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $warnings = $semantics->analyze($sql)->facts->warnings;
+        self::assertCount(1, $warnings);
+        self::assertSame("'CONTAINS' is deprecated and will be removed in a future release. Please use MBRCONTAINS instead", $warnings[0]->message());
+    }
+
     public function testCodeIsThatOfTheConstruct(): void
     {
         self::assertSame(3005, (new Deprecation(Deprecated::InsertDelayed))->code());

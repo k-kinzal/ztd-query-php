@@ -15,7 +15,9 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
  * A routine DDL invalidates these session entries; table flushes do not. The definition
  * supplies typed collation occurrences and function names, without reparsing stored display text.
  * Loading a definition with notices replaces preceding conditions from MySQL 5.7 onward;
- * a silent load leaves them intact. MySQL 5.6 accumulates notices within the statement.
+ * a silent load leaves them intact. In MySQL 5.6 loading OLD_PASSWORD discards
+ * preceding conditions without publishing the suppressed load warning; subsequent
+ * cached calls retain them. Other load notices accumulate within the statement.
  * Observed with repeated calls, ALTER PROCEDURE and independent connections on MySQL 5.6–9.1.
  *
  * @visibility MySqlMemory
@@ -38,6 +40,9 @@ final class LoadNotices
             return;
         }
         $prepared->routines[$identity] = true;
+        if ($this->discards($routine, $session)) {
+            $session->diagnostics->clear();
+        }
         $stale = $session->diagnostics->stale;
         if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $session->diagnostics->stale = true;
@@ -62,4 +67,21 @@ final class LoadNotices
             $session->diagnostics->stale = $stale;
         }
     }
+    /**
+     * Recognizes the MySQL 5.6 load whose suppressed notice replaces prior conditions.
+     */
+    public function discards(Routine $routine, Session $session): bool
+    {
+        if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || $routine->statement === null) {
+            return false;
+        }
+        $calls = [...(new Walker())->find($routine->statement, \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall::class), ...(new Walker())->find($routine->statement, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall::class)];
+        foreach ($calls as $call) {
+            if ($call->function === \SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::OldPassword) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

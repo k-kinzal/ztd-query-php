@@ -151,7 +151,7 @@ final class FunctionRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function call(Form $form): Scalar|DeferredCall
+    public function call(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         if (isset(self::KEYWORDS[$form->signature])) {
             return $this->keyword($form, ...self::KEYWORDS[$form->signature]);
@@ -202,17 +202,24 @@ final class FunctionRule
      * @param list<int> $positions The positions of the expressions
      * @param int|null $list The position of an expression list that follows them
      */
-    public function keyword(Form $form, KeywordFunction $function, array $positions, ?int $list): KeywordCall
+    public function keyword(Form $form, KeywordFunction $function, array $positions, ?int $list): KeywordCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall
     {
         $arguments = [];
         foreach ($positions as $position) {
-            $arguments[] = $this->expression($form, $position);
+            $arguments[] = $this->lowering->expressions->operand($form->node($position));
         }
         if ($list !== null) {
-            array_push($arguments, ...$this->lowering->expressions->expressions($form->node($list)));
+            array_push($arguments, ...$this->lowering->expressions->operands($form->node($list)));
         }
-
-        return new KeywordCall($function, $arguments);
+        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall($function, $arguments);
+        }
+        $scalars = [];
+        foreach ($arguments as $argument) {
+            \SqlSemantics\Diagnostic\Check::invariant($argument instanceof Scalar, 'An ordinary keyword call retains only scalar arguments.');
+            $scalars[] = $argument;
+        }
+        return new KeywordCall($function, $scalars);
     }
 
     /**
