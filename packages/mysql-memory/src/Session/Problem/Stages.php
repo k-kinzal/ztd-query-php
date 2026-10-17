@@ -227,11 +227,25 @@ final class Stages
      *
      * IGNORE NULLS and FROM LAST are checked with window function arguments. Unsupported frames
      * are checked after resolving names and refusing misplaced calls. Aggregate diagnostics with
-     * an owning expression are located at the end of their own block by Locations
+     * an owning expression are located in their own window by Locations. A RANGE
+     * boundary constraint remains after its ordering type and runtime offset checks.
+     * ROWS with interval or parameter operands likewise prepares those inputs first
      * (verified on MySQL 8.0.44, 8.4.7 and 9.1.0).
      */
     public static function planned(Diagnostic $diagnostic): bool
     {
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint && !$diagnostic->positional) {
+            $frame = $diagnostic->window->frame;
+            if ($frame?->unit === \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Range) {
+                return true;
+            }
+            foreach ([$frame?->start, $frame?->end] as $bound) {
+                if ($bound !== null && ($bound->unit !== null || ($bound->offset !== null && !$bound->offset instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral))) {
+                    return true;
+                }
+            }
+            return false;
+        }
         return $diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null;
     }
 }

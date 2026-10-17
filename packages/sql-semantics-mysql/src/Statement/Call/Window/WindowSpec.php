@@ -76,11 +76,18 @@ final class WindowSpec implements WindowSpecification
         foreach ($this->frame?->offsets() ?? [] as $offset) {
             (new Arguments())->one($offset, $derivation, $environment);
         }
+        $constraints = new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints();
+        if ($constraints->positional($this)) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint($this, true));
+        }
+        if ($constraints->reversed($this)) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint($this, false));
+        }
         if ($this->frame?->unit === FrameUnit::Groups) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupsUnit));
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupsUnit, $this));
         }
         if ($this->frame?->exclusion !== null) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::Exclusion));
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::Exclusion, $this));
         }
     }
 

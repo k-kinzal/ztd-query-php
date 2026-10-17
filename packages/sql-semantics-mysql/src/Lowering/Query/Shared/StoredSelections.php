@@ -85,7 +85,7 @@ final class StoredSelections
      */
     public function frontier(Node $node): ?array
     {
-        $wrappers = ['statement', 'simple_statement', 'select', 'select_init', 'select_init2', 'select_stmt', 'select_part2', 'select_options_and_item_list', 'select_into', 'select_from', 'query_expression', 'query_expression_body', 'query_primary', 'query_specification'];
+        $wrappers = ['statement', 'simple_statement', 'select', 'select_init', 'select_init2', 'select_stmt', 'select_part2', 'select_options_and_item_list', 'select_into', 'select_from', 'view_select_aux', 'query_expression_with_opt_locking_clauses', 'query_expression', 'query_expression_body', 'query_primary', 'query_specification'];
         $list = null;
         $from = null;
         $where = null;

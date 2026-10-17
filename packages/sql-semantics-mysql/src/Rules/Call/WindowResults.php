@@ -56,10 +56,10 @@ final class WindowResults
     public function result(WindowFunction $call, array $arguments, Derivation $derivation): ScalarFact
     {
         if ($call->nulls === NullTreatment::Ignore) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::IgnoreNulls));
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::IgnoreNulls, $call));
         }
         if ($call->edge === CountingEdge::Last) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::FromLast));
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::FromLast, $call));
         }
 
         return match ($call->kind) {

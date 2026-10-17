@@ -45,6 +45,7 @@ final class Collected
     {
         $input = clone $scope;
         $input->grouping = null;
+        $input->windowing = null;
         $value = (new Grouping($this->planner))->accumulation($node, $input);
         $read = new ColumnRead($value->domain, $this->offset + count($this->values));
         $this->values[] = $value;

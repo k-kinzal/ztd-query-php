@@ -89,6 +89,8 @@ final class WindowResultsTest extends TestCase
 
         self::assertInstanceOf(UnsupportedWindowing::class, $diagnostics[0]);
         self::assertInstanceOf(UnsupportedWindowing::class, $diagnostics[1]);
+        self::assertSame($call, $diagnostics[0]->expression);
+        self::assertSame($call, $diagnostics[1]->expression);
         self::assertSame([WindowingLimit::IgnoreNulls, WindowingLimit::FromLast], [$diagnostics[0]->limit, $diagnostics[1]->limit]);
     }
 

@@ -1825,3 +1825,38 @@ cannot simply be rejected while lowering stored definitions: a skipped stored
 instruction is valid, while missing tables, columns and named windows can
 precede the reached option refusal. The final construction, supplied-seed and
 900-second unseeded gates must still pass together after those repairs.
+
+Window diagnostics now identify their owning call or specification. Consumers
+locate unsupported options and fixed ROWS boundary constraints in each window,
+after the block's names and window ordering items. Named windows precede inline
+windows; an earlier window's frame condition precedes a later window's function
+option condition. Semantics retains positional ordering and reversed boundary
+kind constraints, and Memory preserves the earlier input checks of RANGE and
+parameterized frames. Those latter checks still require complete preparation
+support before this work meets the ordinary-construction contract.
+
+A deferred selection prepares ordinary window arguments before a later row-valued
+projection or predicate. Nested calls retain their restrictions; a directly named
+window is checked before that later operand, while an inline window specification
+is checked after the block's clauses. CREATE VIEW retains the complete refused
+selection instead of reporting its isolated row operand, preserving preceding
+table and column dependencies. Temporary read-statement wrappers do not escape
+into the published source-location map.
+
+The window preparation-order test compares 119 queries across direct execution,
+PREPARE, view definitions, and skipped/reached stored instructions: 3,939
+observations on MySQL 8.0, 8.4 and 9.1 pass. Direct construction reuses 15 stored
+structures on each release through missing, empty, populated and altered table
+states, with unrelated request text: all 315 observations pass. A separate replay
+of 1,533 recorded native observations also matches. The revision's static checks,
+925 retained-value schemas, 8,462 Semantics tests and 18,021 Memory tests pass.
+These checks establish the repaired information and preparation ordering. They
+do not close the remaining ordinary window and nested-query constructor domains;
+unsupported options can still be constructed in an ordinary WindowFunction.
+
+The earlier account-rename snapshot `/rename290-work-20261018`, labeled
+`2f79d41a51f-with-rename290`, completes an unseeded 900-second differential run:
+1,153 matches, zero differences and zero volatile outcomes in 900.400 seconds.
+That snapshot precedes the window changes. It is not the required final-revision
+unseeded result, and it does not replace replaying all nine supplied corpora after
+the remaining structural repairs.

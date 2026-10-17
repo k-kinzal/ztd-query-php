@@ -48,6 +48,16 @@ final class StagesTest extends TestCase
         self::assertFalse(Stages::planned(new Misuse(MisuseRule::DuplicateWindow, new Name('w'))));
     }
 
+    public function testPlannedPreservesRangePreparationBeforeTheBoundaryKindCondition(): void
+    {
+        $start = new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::Following, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+        $end = new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow);
+        $rows = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows, $start, $end));
+        $range = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Range, $start, $end));
+        self::assertFalse(Stages::planned(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint($rows, false)));
+        self::assertTrue(Stages::planned(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint($range, false)));
+    }
+
     public function testPlannedLeavesOwnedAggregateDiagnosticsToTheirBlockLocation(): void
     {
         $call = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')], over: new Name('w'));

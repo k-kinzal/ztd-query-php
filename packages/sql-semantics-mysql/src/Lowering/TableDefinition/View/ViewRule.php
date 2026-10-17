@@ -163,7 +163,10 @@ final class ViewRule
             throw ImplementationGap::production($check);
         }
 
-        return new ViewDefinition($identity, $this->lowering->queries->query($query->node(0)), $columns, $algorithm, $definer, self::SECURITY[$suid->signature], self::CHECKS[$check->signature], $exists);
+        $read = $this->lowering->queries->statement($query->node(0));
+        \SqlSemantics\Diagnostic\Check::invariant($read instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'A view definition retains a complete read query.');
+        $this->lowering->origins->forget($read);
+        return new ViewDefinition($identity, $read->query, $columns, $algorithm, $definer, self::SECURITY[$suid->signature], self::CHECKS[$check->signature], $exists);
     }
 
     /**

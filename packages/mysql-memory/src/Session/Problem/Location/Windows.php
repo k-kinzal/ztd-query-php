@@ -45,6 +45,16 @@ final class Windows
         }
 
         foreach ($diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint) {
+                $id = spl_object_id($diagnostic->window);
+                $at = $locator->windowChecks[$id] ?? null;
+                if ($at !== null) {
+                    $name = $locator->windowNames[$id];
+                    $error = ($diagnostic->positional ? \MySqlMemory\Error\Family\QueryError::WindowPositionalOrdering : \MySqlMemory\Error\Family\QueryError::WindowFrameIllegal)->error($name);
+                    $position = $diagnostic->positional ? [...array_slice($at, 0, -3), 7, PHP_INT_MAX, $at[count($at) - 2]] : [...array_slice($at, 0, -1), 2];
+                    $located[spl_object_id($diagnostic)] = [$error, ['field list', $position]];
+                }
+            }
             if ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression !== null) {
                 $at = $locator->windowChecks[spl_object_id($diagnostic->expression)] ?? null;
                 if ($at !== null) {

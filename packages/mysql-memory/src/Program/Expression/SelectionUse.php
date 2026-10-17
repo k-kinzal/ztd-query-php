@@ -53,6 +53,7 @@ final class SelectionUse
         $scope = new \MySqlMemory\Evaluation\Scope();
         $width = $selection->from === null ? 0 : $planner->relations->plan($selection->from, $scope)->width();
         $scope->grouping = new \MySqlMemory\Plan\Grouping\Collected($planner, $width);
+        $scope->windowing = new \MySqlMemory\Plan\Window\Collected($planner, $width);
         foreach ($selection->items as $item) {
             if ($item instanceof DeferredProjection) {
                 (new RowUse())->prepare($item->expression, $planner->compiler, $scope);
@@ -99,6 +100,7 @@ final class SelectionUse
     {
         $ungrouped = clone $scope;
         $ungrouped->grouping = null;
+        $ungrouped->windowing = null;
         if ($selection->where !== null) {
             $this->operand($selection->where, $planner->compiler, $ungrouped->inClause('where clause'));
         }
@@ -106,7 +108,9 @@ final class SelectionUse
             $this->operand($item->expression, $planner->compiler, $ungrouped->inClause('group statement'));
         }
         if ($selection->having !== null) {
-            $this->operand($selection->having, $planner->compiler, $scope->inClause('having clause'));
+            $having = $scope->inClause('having clause');
+            $having->windowing = null;
+            $this->operand($selection->having, $planner->compiler, $having);
         }
         foreach ($selection->orderBy as $item) {
             $this->operand($item->expression, $planner->compiler, $scope->inClause('order clause'));

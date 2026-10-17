@@ -94,6 +94,11 @@ final class Locator
     public array $windowChecks = [];
 
     /**
+     * @var array<int, string> The labels of window specifications, by semantic owner
+     */
+    public array $windowNames = [];
+
+    /**
      * @var list<array{SetOperation|OrderedSetOperation, list<int>}> Each set operation, with the resolution order its operands are compared at: once its right operand is resolved
      */
     public array $sets = [];
@@ -399,14 +404,32 @@ final class Locator
     public function specifications(Select $select, array $order): void
     {
         $windows = [];
+        $named = [];
         foreach ($select->windows as $definition) {
             if ($definition->specification instanceof WindowSpec) {
                 $windows[] = $definition->specification;
+                $id = spl_object_id($definition->specification);
+                $named[strtolower($definition->name->value)] = $id;
+                $this->windowNames[$id] = $definition->name->value;
             }
         }
         foreach ([...$windows, ...$this->specifications] as $index => $window) {
+            $this->windowNames[spl_object_id($window)] ??= '<unnamed window>';
+            $this->windowChecks[spl_object_id($window)] = [...$order, 8, $index, 1];
             $this->visit($window->partition, 'window partition by', [...$order, 6, PHP_INT_MAX, $index, 0]);
             $this->visit($window->order, 'window order by', [...$order, 6, PHP_INT_MAX, $index, 1]);
+        }
+        foreach ($this->functions as [$call, , $at]) {
+            $place = $this->windowChecks[spl_object_id($call)] ?? [];
+            if (array_slice($place, 0, count($order) + 1) !== [...$order, 8]) {
+                continue;
+            }
+            $over = $call->over;
+            $id = $over instanceof Name ? ($named[strtolower($over->value)] ?? null) : ($over === null ? null : spl_object_id($over));
+            $window = $id === null ? null : ($this->windowChecks[$id] ?? null);
+            if ($window !== null) {
+                $this->windowChecks[spl_object_id($call)] = [...array_slice($window, 0, -1), 0, ...$at];
+            }
         }
     }
 }

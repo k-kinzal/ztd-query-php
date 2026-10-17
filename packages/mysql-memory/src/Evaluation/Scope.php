@@ -30,6 +30,11 @@ final class Scope
     public ?\MySqlMemory\Plan\Grouping\Collected $grouping = null;
 
     /**
+     * The window inputs collected before a deferred clause's preparation condition.
+     */
+    public ?\MySqlMemory\Plan\Window\Collected $windowing = null;
+
+    /**
      * @var array<int, int> The offset of each relation occurrence, by object id
      */
     public array $offsets = [];
