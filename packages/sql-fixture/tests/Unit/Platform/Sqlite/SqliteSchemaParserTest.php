@@ -19,15 +19,20 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(SchemaParseException::class)]
 #[CoversClass(\SqlFixture\Platform\Sqlite\Schema\ColumnParser::class)]
 #[CoversClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
-#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\DefinitionList::class)]
-#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\TableSyntax::class)]
 #[CoversClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
-#[CoversClass(\SqlFixture\Schema\DefinitionSegments::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnConstraints::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableStatement::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\Identifier::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
+#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
+#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[UsesClass(\SqlFixture\Syntax\SqlText::class)]
 final class SqliteSchemaParserTest extends TestCase
 {
     #[Test]
@@ -264,7 +269,7 @@ final class SqliteSchemaParserTest extends TestCase
     #[Test]
     public function testThrowsExceptionForEmptyTable(): void
     {
-        $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new SqliteSchemaParser())->parse('CREATE TABLE test ()');
     }
 
@@ -311,7 +316,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (flag INTEGER DEFAULT 1)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertTrue($schema->columns['flag']->default);
+        self::assertSame(1, $schema->columns['flag']->default);
     }
 
     #[Test]
@@ -320,7 +325,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (flag INTEGER DEFAULT 0)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertFalse($schema->columns['flag']->default);
+        self::assertSame(0, $schema->columns['flag']->default);
     }
 
     #[Test]
@@ -770,13 +775,9 @@ final class SqliteSchemaParserTest extends TestCase
             )
             SQL;
 
-        $schema = (new SqliteSchemaParser())->parse($sql);
-
-        self::assertCount(2, $schema->columns);
-        self::assertArrayHasKey('id', $schema->columns);
-        self::assertArrayHasKey('name', $schema->columns);
-        self::assertSame('TEXT', $schema->columns['name']->type);
-        self::assertFalse($schema->columns['name']->nullable);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        $this->expectExceptionMessage("Unexpected 'name'");
+        (new SqliteSchemaParser())->parse($sql);
     }
 
     #[Test]
@@ -794,13 +795,9 @@ final class SqliteSchemaParserTest extends TestCase
             )
             SQL;
 
-        $schema = (new SqliteSchemaParser())->parse($sql);
-
-        self::assertCount(4, $schema->columns);
-        self::assertArrayHasKey('name', $schema->columns);
-        self::assertArrayHasKey('email', $schema->columns);
-        self::assertArrayHasKey('age', $schema->columns);
-        self::assertSame('INTEGER', $schema->columns['age']->type);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        $this->expectExceptionMessage("Unexpected 'name'");
+        (new SqliteSchemaParser())->parse($sql);
     }
 
     #[Test]
@@ -948,7 +945,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (user_id INTEGER DEFAULT 1 REFERENCES users(id))';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertTrue($schema->columns['user_id']->default);
+        self::assertSame(1, $schema->columns['user_id']->default);
     }
 
     #[Test]

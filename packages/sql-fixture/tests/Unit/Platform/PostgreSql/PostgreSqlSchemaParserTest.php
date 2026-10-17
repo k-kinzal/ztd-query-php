@@ -19,15 +19,22 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(SchemaParseException::class)]
 #[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\ColumnParser::class)]
 #[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
-#[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\DefinitionList::class)]
-#[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\TableSyntax::class)]
 #[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\TypeDeclaration::class)]
-#[CoversClass(\SqlFixture\Schema\DefinitionSegments::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogExpression::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\ColumnConstraints::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CreateTableStatement::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\Identifier::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\StringLiteral::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
+#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
+#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[UsesClass(\SqlFixture\Syntax\SqlText::class)]
 final class PostgreSqlSchemaParserTest extends TestCase
 {
     #[Test]
@@ -586,10 +593,9 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function testParseColumnWithEmptyType(): void
     {
-        $sql = 'CREATE TABLE test (id)';
-        $schema = (new PostgreSqlSchemaParser())->parse($sql);
-
-        self::assertSame('TEXT', $schema->columns['id']->type);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        $this->expectExceptionMessage('Unexpected end of input');
+        (new PostgreSqlSchemaParser())->parse('CREATE TABLE test (id)');
     }
 
     #[Test]
@@ -678,15 +684,14 @@ final class PostgreSqlSchemaParserTest extends TestCase
     {
         $sql = 'CREATE TABLE test (name TEXT DEFAULT "hello")';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
-        self::assertSame('hello', $schema->columns['name']->default);
+        self::assertSame('"hello"', $schema->columns['name']->default);
     }
 
     #[Test]
     public function testParseColumnWithNoTypeGetsTextDefault(): void
     {
-        $sql = 'CREATE TABLE test (col)';
-        $schema = (new PostgreSqlSchemaParser())->parse($sql);
-        self::assertSame('TEXT', $schema->columns['col']->type);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        (new PostgreSqlSchemaParser())->parse('CREATE TABLE test (col)');
     }
 
     #[Test]
@@ -1059,11 +1064,9 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function testParseColumnWithNoTypeReturnsTextViaExtractType(): void
     {
-        $sql = 'CREATE TABLE test (col1, col2 INTEGER)';
-        $schema = (new PostgreSqlSchemaParser())->parse($sql);
-
-        self::assertSame('TEXT', $schema->columns['col1']->type);
-        self::assertSame('INTEGER', $schema->columns['col2']->type);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        $this->expectExceptionMessage("Unexpected 'INTEGER'");
+        (new PostgreSqlSchemaParser())->parse('CREATE TABLE test (col1, col2 INTEGER)');
     }
 
     #[Test]
@@ -1187,7 +1190,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (name TEXT DEFAULT "value_here")';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('value_here', $schema->columns['name']->default);
+        self::assertSame('"value_here"', $schema->columns['name']->default);
     }
 
     #[Test]

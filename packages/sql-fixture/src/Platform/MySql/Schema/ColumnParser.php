@@ -4,62 +4,51 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
-use PhpMyAdmin\SqlParser\Components\CreateDefinition;
-use PhpMyAdmin\SqlParser\Components\DataType;
-use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Syntax\NodeReader;
+use SqlParser\Parser\Node;
 
 /**
- * Reads a column declaration into a schema value.
+ * Reads a column_def node into a schema column.
  *
  * @visibility root
  */
 final class ColumnParser
 {
     /**
+     * Returns the column the node declares, or null when it names no typed column.
+     *
      * @param list<string> $primaryKeyColumns
      */
-    public function parseColumnDefinition(
-        CreateDefinition $field,
-        string $columnName,
-        array $primaryKeyColumns,
-    ): ?ColumnDefinition {
-        $type = $field->type;
-        if (!$type instanceof DataType || $type->name === null) {
+    public function parseColumnDefinition(Node $columnDef, array $primaryKeyColumns): ?ColumnDefinition
+    {
+        $reader = new NodeReader();
+        $ident = $reader->child($columnDef, 'ident');
+        $fieldDef = $reader->child($columnDef, 'field_def');
+        $type = $fieldDef === null ? null : $reader->child($fieldDef, 'type');
+        $name = $ident === null ? null : (new Identifier())->decode($ident);
+        if ($name === null || $name === '' || $fieldDef === null || $type === null) {
             return null;
         }
 
-        $typeName = strtoupper($type->name);
-        $options = $field->options;
-
-        $nullable = !($options instanceof OptionsArray && ($options->has('NOT NULL') !== false || $options->has('PRIMARY KEY') !== false))
-            && !in_array($columnName, $primaryKeyColumns, true);
-        $unsigned = ($options instanceof OptionsArray && $options->has('UNSIGNED') !== false)
-            || $type->options->has('UNSIGNED') !== false;
-        $autoIncrement = $options instanceof OptionsArray && $options->has('AUTO_INCREMENT') !== false;
-        $generated = $options instanceof OptionsArray && ($options->has('GENERATED') !== false || $options->has('AS') !== false);
-
+        $attributes = (new ColumnAttributes())->read($fieldDef);
         $shape = (new TypeParameters())->parse($type);
-        $parameters = $type->parameters;
-
-        $default = (new DefaultExpression())->extractDefault($options);
-
-        $enumValues = null;
-        if ($typeName === 'ENUM' || $typeName === 'SET') {
-            $enumValues = (new TypeParameters())->extractEnumValues($parameters);
-        }
+        $autoIncrement = $attributes->autoIncrement || $shape->autoIncrement;
+        $nullable = $attributes->nullable && !$shape->autoIncrement && !in_array($name, $primaryKeyColumns, true);
+        $default = $attributes->default === null ? null : (new DefaultExpression())->extractDefault($attributes->default);
+        $enumValues = in_array($shape->type, ['ENUM', 'SET'], true) ? (new TypeParameters())->extractEnumValues($type) : null;
 
         return new ColumnDefinition(
-            name: $columnName,
-            type: $typeName,
+            name: $name,
+            type: $shape->type,
             length: $shape->length,
             precision: $shape->precision,
             scale: $shape->scale,
             nullable: $nullable,
-            unsigned: $unsigned,
+            unsigned: $reader->containsToken($type, 'UNSIGNED_SYM') || $shape->autoIncrement,
             default: $default,
             autoIncrement: $autoIncrement,
-            generated: $generated,
+            generated: $reader->token($fieldDef, 'AS') !== null,
             enumValues: $enumValues,
         );
     }

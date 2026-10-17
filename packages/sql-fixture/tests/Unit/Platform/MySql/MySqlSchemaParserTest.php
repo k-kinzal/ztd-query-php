@@ -19,15 +19,21 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(SchemaParseException::class)]
 #[CoversClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
 #[CoversClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
-#[CoversClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
 #[CoversClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[CoversClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableStatement::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\Identifier::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\StringLiteral::class)]
+#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
+#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
+#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[UsesClass(\SqlFixture\Syntax\SqlText::class)]
 final class MySqlSchemaParserTest extends TestCase
 {
     #[Test]
@@ -608,7 +614,7 @@ final class MySqlSchemaParserTest extends TestCase
     public function testDdlTheParserCannotFinishReadingIsRejected(): void
     {
         $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
-        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
+        $this->expectExceptionMessage('expected ), ,');
 
         (new MySqlSchemaParser())->parse(
             'CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)'
@@ -619,7 +625,7 @@ final class MySqlSchemaParserTest extends TestCase
     public function testAnUnknownKeywordDoesNotSilentlyDropLaterColumns(): void
     {
         $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
-        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
+        $this->expectExceptionMessage('expected ), ,');
 
         (new MySqlSchemaParser())->parse('CREATE TABLE test (id INT WOMBAT, name TEXT NOT NULL)');
     }
@@ -665,7 +671,7 @@ final class MySqlSchemaParserTest extends TestCase
     public function testTruncationIsFoundEvenAfterAColumnWithItsOwnBrackets(): void
     {
         $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
-        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
+        $this->expectExceptionMessage('expected ), ,');
 
         (new MySqlSchemaParser())->parse('CREATE TABLE test (a VARCHAR(9) WOMBAT, b INT)');
     }

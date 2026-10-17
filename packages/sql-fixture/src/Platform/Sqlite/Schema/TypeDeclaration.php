@@ -4,44 +4,46 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite\Schema;
 
+use SqlFixture\Schema\TypeShape;
+use SqlFixture\Syntax\NodeReader;
+use SqlParser\Parser\Node;
+
 /**
- * TypeDeclaration.
+ * Reads the declared type name and its dimensions from a typetoken node.
  *
  * @visibility root
  */
 final class TypeDeclaration
 {
     /**
-     * Reads the type name without consuming column constraints.
+     * Returns the declared type words, or BLOB when the column declares no type.
      */
-    public function extractType(string $rest): string
+    public function typeName(Node $typetoken): string
     {
-        if (preg_match('/^\w+/', $rest, $matches) === 1) {
-            return strtoupper($matches[0]);
+        $reader = new NodeReader();
+        $typename = $reader->child($typetoken, 'typename');
+        $words = $typename === null ? [] : array_map('strtoupper', $reader->wordsOutsideParentheses($typename));
+        if (count($words) >= 2 && $words[count($words) - 2] === 'GENERATED' && $words[count($words) - 1] === 'ALWAYS') {
+            array_splice($words, -2);
         }
 
-        return 'BLOB';
+        return $words === [] ? 'BLOB' : implode(' ', $words);
     }
 
     /**
      * Interprets the declared type parameters before column constraints are applied.
      */
-    public function parse(string $rest): \SqlFixture\Schema\TypeShape
+    public function parse(Node $typetoken): TypeShape
     {
-        $type = $this->extractType($rest);
-        $length = null;
-        $precision = null;
-        $scale = null;
-
-        if (preg_match('/^(\w+)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/', $rest, $typeMatches) === 1) {
-            $type = strtoupper($typeMatches[1]);
-            if (isset($typeMatches[3])) {
-                $precision = (int) $typeMatches[2];
-                $scale = (int) $typeMatches[3];
-            } else {
-                $length = (int) $typeMatches[2];
+        $name = $this->typeName($typetoken);
+        $numbers = [];
+        foreach ($typetoken->find('signed') as $signed) {
+            foreach ($signed->tokens() as $token) {
+                if ($token->is('INTEGER') || $token->is('FLOAT')) {
+                    $numbers[] = (int) $token->text;
+                }
             }
         }
-        return new \SqlFixture\Schema\TypeShape($type, $length, $precision, $scale);
+        return TypeShape::fromNumbers($name, $numbers);
     }
 }

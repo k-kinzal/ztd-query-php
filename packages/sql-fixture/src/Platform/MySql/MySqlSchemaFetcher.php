@@ -7,20 +7,28 @@ namespace SqlFixture\Platform\MySql;
 use PDO;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\TableSchema;
+use SqlParser\MySql\MySqlParser;
 
 /**
  * Fetches table schemas from MySQL databases using SHOW CREATE TABLE.
+ *
+ * The statement that reads the declaration and the declaration it answers are
+ * both read with the grammar of the server, so neither the name written into
+ * the statement nor the definition read back is taken apart as text.
  */
 final class MySqlSchemaFetcher implements SchemaFetcherInterface
 {
     private MySqlSchemaParser $parser;
 
+    private Schema\CreateTableQuery $query;
+
     /**
-     * Initializes the collaborators and declared state for this object.
+     * Shares one grammar between the statement that is issued and the declaration it answers.
      */
-    public function __construct(?MySqlSchemaParser $parser = null)
+    public function __construct(?MySqlSchemaParser $parser = null, MySqlParser $grammar = new MySqlParser())
     {
-        $this->parser = $parser ?? new MySqlSchemaParser();
+        $this->parser = $parser ?? new MySqlSchemaParser($grammar);
+        $this->query = new Schema\CreateTableQuery(new Schema\ShowCreateTable($grammar));
     }
 
     /**
@@ -28,8 +36,6 @@ final class MySqlSchemaFetcher implements SchemaFetcherInterface
      */
     public function fetchSchema(PDO $pdo, string $tableName): TableSchema
     {
-        $createTableSql = (new Schema\CreateTableQuery())->fetchCreateTableSql($pdo, $tableName);
-        return $this->parser->parse($createTableSql);
+        return $this->parser->parse($this->query->fetchCreateTableSql($pdo, $tableName));
     }
-
 }
