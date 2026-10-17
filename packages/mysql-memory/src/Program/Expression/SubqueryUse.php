@@ -36,7 +36,7 @@ final class SubqueryUse
         if (!$operandFirst) {
             $this->operand($predicate, $compiler, $scope);
         }
-        throw QueryError::OperandColumns->error($predicate->problem()->expected);
+        throw (new RowUse())->error($predicate);
     }
 
     /**

@@ -15,6 +15,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TimeZonesTest extends TestCase
 {
+    public function testRowsOfAnUninitializedCatalogHasNoNamedZoneRows(): void
+    {
+        $session = (new Instance(namedTimeZones: false))->connect();
+        $zones = $session->query('SELECT * FROM mysql.time_zone')[0];
+        $names = $session->query('SELECT * FROM mysql.time_zone_name')[0];
+        self::assertInstanceOf(ResultSet::class, $zones);
+        self::assertInstanceOf(ResultSet::class, $names);
+        self::assertSame([], $zones->rows);
+        self::assertSame([], $names->rows);
+    }
+
     public function testRowsNumbersTheZonesAsTheServerDoes(): void
     {
         $s = (new Instance())->connect();

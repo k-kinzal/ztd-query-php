@@ -4,7 +4,7 @@
 /**
  * Runs an in-memory MySQL server.
  *
- * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]... [--global-null=NAME]... [--client-host=HOST] [--unsupervised] [--no-resource-priorities] [--resource-processors=N] [--routine-time=KIND:NAME:CREATED:MODIFIED]... [--help-stdin]
+ * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]... [--global-null=NAME]... [--client-host=HOST] [--unsupervised] [--no-resource-priorities] [--resource-processors=N] [--routine-time=KIND:NAME:CREATED:MODIFIED]... [--help-stdin] [--empty-time-zones]
  * Prints "ready ADDRESS" once it accepts connections.
  */
 
@@ -28,8 +28,11 @@ $resourcePriorities = true;
 $resourceProcessors = 8;
 $routineTimestamps = [];
 $help = [];
+$namedTimeZones = true;
 foreach (array_slice($argv, 1) as $argument) {
-    if ($argument === '--help-stdin') {
+    if ($argument === '--empty-time-zones') {
+        $namedTimeZones = false;
+    } elseif ($argument === '--help-stdin') {
         $help = (new MySqlMemory\Server\InitialHelp())->read(STDIN);
     } elseif (str_starts_with($argument, '--listen=')) {
         $listen = substr($argument, 9);
@@ -60,7 +63,7 @@ foreach (array_slice($argv, 1) as $argument) {
     }
 }
 
-$listener = new MySqlMemory\Server\Listener(new MySqlMemory\Instance($release, $globals, $databases, $clientHost, $supervised, $routineTimestamps, $resourcePriorities, $resourceProcessors, $help), $listen);
+$listener = new MySqlMemory\Server\Listener(new MySqlMemory\Instance($release, $globals, $databases, $clientHost, $supervised, $routineTimestamps, $resourcePriorities, $resourceProcessors, $help, $namedTimeZones), $listen);
 $address = $listener->open();
 fwrite(STDOUT, 'ready ' . $address . "\n");
 fflush(STDOUT);

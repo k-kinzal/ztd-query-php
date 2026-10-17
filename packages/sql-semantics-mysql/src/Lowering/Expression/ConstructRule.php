@@ -58,7 +58,7 @@ final class ConstructRule
      * @throws ImplementationGap When a production has no rule
      * @throws RejectedInput When the construct has no semantic expression domain
      */
-    public function lower(Form $form): Scalar
+    public function lower(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone
     {
         $expressions = $this->lowering->expressions;
 
@@ -97,7 +97,7 @@ final class ConstructRule
      * @throws ImplementationGap When a production has no rule
      * @throws RejectedInput When the fractional precision exceeds six
      */
-    public function zone(Form $form): AtTimeZone
+    public function zone(Form $form): AtTimeZone|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone
     {
         $operand = $this->lowering->expressions->expression($form->node(2));
         $zone = $this->lowering->literals->text($form->node(7));
@@ -106,7 +106,9 @@ final class ConstructRule
             throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision((int) $precision, 'CAST'), (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
         }
 
-        return new AtTimeZone($operand, $zone, $this->flag($form->node(6)), $precision);
+        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($operand) === false
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, $zone, $this->flag($form->node(6)), $precision)
+            : new AtTimeZone($operand, $zone, $this->flag($form->node(6)), $precision);
     }
 
     /**

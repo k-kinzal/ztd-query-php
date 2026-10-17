@@ -61,10 +61,10 @@ final class Casts
     {
         $operand = $this->compiler->compile($node->operand, $scope);
         $domain = $operand->domain();
-        if ($domain->field !== Field::Timestamp && $domain->kind !== Kind::Null) {
+        if ($domain->field !== Field::Timestamp && $domain->kind !== Kind::Null && (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($node->operand) !== true) {
             throw DataError::TimeZoneCast->error();
         }
-        if ($node->zone->value !== 'UTC' && $node->zone->value !== '+00:00') {
+        if (($node->zone->value !== 'UTC' && $node->zone->value !== '+00:00') || $this->compiler->connection->context->timeZone($node->zone->value) === null) {
             throw DataError::UnknownTimeZone->error($node->zone->value);
         }
 

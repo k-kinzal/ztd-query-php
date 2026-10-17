@@ -24,7 +24,7 @@ final class StatementIdentitiesTest extends TestCase
         yield 'explicit session' => ['SHOW SESSION VARIABLES', '8.0.44', true];
         yield 'local scope' => [" show\nlocal variables ; ", '9.1.0', true];
         yield 'global scope' => ['SHOW GLOBAL VARIABLES', '8.4.7', false];
-        yield 'legacy' => ['SHOW VARIABLES', '5.7.44', false];
+        yield 'legacy' => ['SHOW VARIABLES', '5.7.44', true];
         yield 'filtered' => ["SHOW VARIABLES LIKE 'statement_id'", '8.4.7', false];
         yield 'multiple statements' => ['SHOW VARIABLES; SELECT 1', '8.4.7', false];
     }
@@ -75,6 +75,19 @@ final class StatementIdentitiesTest extends TestCase
         self::assertSame($observation, $result);
     }
 
+    public function testValidatedLegacyListingPreservesHistoryValuesAndChecksTheAllocatedIdentity(): void
+    {
+        $columns = [['Variable_name', 'VARIABLES', 'VAR_STRING', 64, 0, ['not_null']], ['Value', 'VARIABLES', 'VAR_STRING', 1024, 0, []]];
+        $rows = [['pseudo_thread_id', '7'], ['last_insert_id', '42']];
+        $observation = ['results' => [['columns' => $columns, 'rows' => $rows]], 'warnings' => []];
+        $expected = $observation;
+        $expected['results'][0]['rows'][0][1] = '{' . StatementIdentities::LEGACY_CONTRACT . ':pseudo_thread_id}';
+        $expected['contracts'] = [StatementIdentities::LEGACY_CONTRACT];
+        self::assertSame($expected, (new StatementIdentities(null, 7, 'VARIABLES'))->validated($observation, 0));
+        self::assertSame($observation, (new StatementIdentities(null, 8, 'VARIABLES'))->validated($observation, 0));
+        self::assertNull((new StatementIdentities(null, 7, 'VARIABLES'))->positions([...$rows, ['pseudo_thread_id', '7']], 0));
+    }
+
     public function testValidatedRejectsAnErrorOrUnrelatedShape(): void
     {
         $contract = new StatementIdentities(100, 7);
@@ -92,7 +105,12 @@ final class StatementIdentitiesTest extends TestCase
     public static function providerListings(): iterable
     {
         if (str_starts_with((string) getenv('MYSQL_VERSION'), '5.')) {
+            yield 'legacy allocated identity' => ['SHOW VARIABLES', [StatementIdentities::LEGACY_CONTRACT]];
             yield 'legacy fixed identity' => ["SET pseudo_thread_id=42; SHOW VARIABLES LIKE 'pseudo_thread_id'", []];
+            if (getenv('MYSQL_VERSION') === '5.7.44') {
+                yield 'legacy compatibility GTID visibility' => ["SET GLOBAL show_compatibility_56=ON; SHOW VARIABLES LIKE 'gtid_executed'; SHOW GLOBAL VARIABLES LIKE 'gtid_executed'; SELECT VARIABLE_NAME,VARIABLE_VALUE FROM information_schema.SESSION_VARIABLES WHERE VARIABLE_NAME='gtid_executed'; SELECT VARIABLE_NAME,VARIABLE_VALUE FROM performance_schema.session_variables WHERE VARIABLE_NAME='gtid_executed'; SET GLOBAL show_compatibility_56=OFF", []];
+            }
+            yield 'legacy GTID visibility' => ["SHOW VARIABLES LIKE 'gtid_executed'; SHOW GLOBAL VARIABLES LIKE 'gtid_executed'; SELECT @@session.gtid_executed", []];
 
             return;
         }

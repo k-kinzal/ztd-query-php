@@ -42,9 +42,9 @@ final class AtTimeZoneTest extends TestCase
     {
         $platform = new Platform();
         $out = new Output($platform->codec($platform->profile('mysql-8.4.7', null, ParameterStyle::Native)));
-        (new AtTimeZone(new NumberLiteral('1'), new Text('+00:00'), true))->render($out);
+        (new AtTimeZone(new NullLiteral(), new Text('+00:00'), true))->render($out);
 
-        self::assertSame("CAST(1 AT TIME ZONE INTERVAL '+00:00' AS DATETIME)", (new Lexical())->join($out->pieces()));
+        self::assertSame("CAST(NULL AT TIME ZONE INTERVAL '+00:00' AS DATETIME)", (new Lexical())->join($out->pieces()));
     }
 
     public function testAHexadecimalZoneIsRejected(): void
@@ -57,7 +57,7 @@ final class AtTimeZoneTest extends TestCase
     public function testDeriveScalarRetainsTheConversionThatOwnsItsTypeCondition(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
-        $operation = $semantics->analyze("SELECT CAST(1 AT TIME ZONE '+00:00' AS DATETIME), missing");
+        $operation = $semantics->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE '+00:00' AS DATETIME), missing");
         $diagnostic = $operation->facts->diagnostics[0];
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $diagnostic);

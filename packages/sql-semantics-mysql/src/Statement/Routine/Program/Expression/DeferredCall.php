@@ -113,7 +113,7 @@ final class DeferredCall implements DeferredOperand
      *
      * @throws LogicException If the constructor invariant has been bypassed
      */
-    public function problem(): OperandColumns
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
         foreach ($this->arguments as $argument) {
             $operand = $argument->expression;

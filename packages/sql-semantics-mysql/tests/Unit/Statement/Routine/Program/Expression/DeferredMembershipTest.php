@@ -35,7 +35,9 @@ final class DeferredMembershipTest extends TestCase
     public function testProblemPreservesTheExpectedRowWidth(): void
     {
         $value = new DeferredMembership(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), [new NumberLiteral('3')]);
-        self::assertSame([2, 1], [$value->problem()->expected, $value->problem()->actual]);
+        $problem1 = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem1);
+        self::assertSame([2, 1], [$problem1->expected, $problem1->actual]);
     }
 
     public function testRenderRoundTripsTheDeferredProgramRole(): void

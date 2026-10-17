@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression;
 
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Statement\Operand;
 
 /**
- * A stored computation whose operand-shape constraint is checked on invocation.
+ * A stored computation whose intrinsic operand constraint is checked on invocation.
  *
  * This domain belongs to program instructions, not general Scalar positions.
  * Its operands retain their own semantic roles and resolve in the invocation's
@@ -29,7 +28,7 @@ interface DeferredOperand extends Operand
     public function operands(): array;
 
     /**
-     * Answers the first fixed operand-shape constraint of this computation.
+     * Answers the first fixed intrinsic operand constraint of this computation.
      */
-    public function problem(): OperandColumns;
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic;
 }

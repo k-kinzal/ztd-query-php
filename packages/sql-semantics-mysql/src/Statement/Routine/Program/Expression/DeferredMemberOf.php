@@ -74,7 +74,7 @@ final class DeferredMemberOf implements DeferredOperand
      *
      * @throws LogicException If the constructor invariant has been bypassed
      */
-    public function problem(): OperandColumns
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
         foreach ($this->operands() as $operand) {
             if (!$operand instanceof Scalar) {

@@ -107,7 +107,7 @@ final class DeferredSubqueryPredicate implements DeferredOperand
      *
      * @throws LogicException If the constructor invariant was bypassed
      */
-    public function problem(): OperandColumns
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
         return $this->operand instanceof DeferredOperand ? $this->operand->problem() : ($this->shape() ?? throw new LogicException('A deferred subquery predicate has a fixed operand constraint.'));
     }

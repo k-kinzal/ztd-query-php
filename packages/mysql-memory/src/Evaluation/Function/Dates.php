@@ -102,7 +102,7 @@ final class Dates
             return null;
         }
         $domain = $argument->domain();
-        if ($kind === Kind::Time && ($domain->kind === Kind::Time || ($domain->kind === Kind::String && Temporal::parseTime((string) $value) !== null))) {
+        if ($kind === Kind::Time) {
             $time = (new Moments())->time($value, $domain, 6, $frame->context);
             if ($time === null) {
                 return null;

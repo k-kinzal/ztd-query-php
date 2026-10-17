@@ -37,6 +37,8 @@ final class DeferredOperandTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerOperands')]
     public function testProblemPreservesTheScalarUseConstraint(DeferredOperand $value, int $count): void
     {
-        self::assertSame([1, 2, $count], [$value->problem()->expected, $value->problem()->actual, count($value->operands())]);
+        $problem1 = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem1);
+        self::assertSame([1, 2, $count], [$problem1->expected, $problem1->actual, count($value->operands())]);
     }
 }

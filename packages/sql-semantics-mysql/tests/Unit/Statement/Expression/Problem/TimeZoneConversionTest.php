@@ -18,7 +18,7 @@ final class TimeZoneConversionTest extends TestCase
     public function testMessageDistinguishesResolvedOperandAndZoneConditions(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $type = $semantics->analyze("SELECT CAST(1 AT TIME ZONE 'bad' AS DATETIME)")->facts->diagnostics[0];
+        $type = $semantics->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE 'bad' AS DATETIME)")->facts->diagnostics[0];
         $zone = $semantics->analyze("SELECT CAST(NULL AT TIME ZONE 'bad' AS DATETIME)")->facts->diagnostics[0];
 
         self::assertInstanceOf(TimeZoneConversion::class, $type);

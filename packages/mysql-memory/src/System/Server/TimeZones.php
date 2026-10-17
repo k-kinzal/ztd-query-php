@@ -32,7 +32,7 @@ final class TimeZones implements SystemRows
     #[Override]
     public function rows(Reading $reading): array
     {
-        $zones = Zone::catalog($reading->release);
+        $zones = $reading->instance->namedTimeZones ? Zone::catalog($reading->release) : [];
         if ($reading->table->name === 'time_zone') {
             return array_map(static fn (array $zone): array => ['Time_zone_id' => $zone[1], 'Use_leap_seconds' => $zone[2] ? 'Y' : 'N'], $zones);
         }

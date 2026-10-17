@@ -35,7 +35,7 @@ final class Fixture
         $servers = new Servers();
         $identity = $servers->rows($bootstrap, 'SELECT USER()')[0][0];
         $host = substr($identity, (int) strrpos($identity, '@') + 1);
-        $instance = new Instance($release, $servers->globals($bootstrap, $release), ['test'], $host, $supervised, $servers->routineTimestamps($bootstrap), $servers->resourcePriorities($bootstrap, $release), $servers->resourceProcessors($bootstrap, $release), $servers->help($bootstrap));
+        $instance = new Instance($release, $servers->globals($bootstrap, $release), ['test'], $host, $supervised, $servers->routineTimestamps($bootstrap), $servers->resourcePriorities($bootstrap, $release), $servers->resourceProcessors($bootstrap, $release), $servers->help($bootstrap), $servers->namedTimeZones($bootstrap));
         $credentials = new Credentials(GrammarRelease::from('mysql-' . $release));
         foreach (['%', 'localhost'] as $rootHost) {
             $account = $instance->accounts->find(new Identity($endpoint->username, $rootHost));

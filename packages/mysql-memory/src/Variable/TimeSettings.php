@@ -10,7 +10,6 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
-use MySqlMemory\Value\Zone;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale;
 
@@ -56,7 +55,7 @@ final class TimeSettings
         if ($domain->kind !== Kind::String) {
             throw AdministrationError::WrongTypeForVariable->error('time_zone');
         }
-        $zone = Zone::named((string) $value, $this->context->modes->release);
+        $zone = $this->context->timeZone((string) $value);
         if ($zone === null) {
             throw DataError::UnknownTimeZone->error((string) $value);
         }

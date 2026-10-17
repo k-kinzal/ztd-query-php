@@ -31,7 +31,9 @@ final class DeferredGroupedTest extends TestCase
     public function testProblemKeepsTheEnclosedWidth(): void
     {
         $value = new DeferredGrouped(new DeferredArithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new Row([new NumberLiteral('2'), new NumberLiteral('3')])));
-        self::assertSame([1, 2], [$value->problem()->expected, $value->problem()->actual]);
+        $problem1 = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem1);
+        self::assertSame([1, 2], [$problem1->expected, $problem1->actual]);
     }
 
     public function testRenderKeepsTheParentheses(): void

@@ -20,19 +20,22 @@ use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
- * A TIMESTAMP value converted to a DATETIME at a time zone: `CAST(expr AT TIME ZONE [INTERVAL] 'zone' AS DATETIME[(p)])` (`Item_func_at_time_zone`, MySQL 8.0.22 and later).
+ * A TIMESTAMP value converted to a DATETIME at a time zone: `CAST(expr AT TIME ZONE [INTERVAL] 'zone' AS DATETIME[(p)])` (MySQL 8.0.22 and later).
  *
- * The server accepts the zone `'UTC'`, and `'+00:00'` written with
- * INTERVAL; the INTERVAL keyword is kept because it decides which spelling
- * is accepted.
+ * The server accepts UTC conversions. The INTERVAL keyword and the zone name
+ * remain distinct semantic operands; named zones depend on the zone catalog.
+ * A literal input is TIMESTAMP or NULL. Other inputs retain their dependencies
+ * for resolution against the current schema.
  *
  * Rule: MYSQL-AT-TIME-ZONE-001. Facts: a DATETIME of the given precision;
- * NULL when the operand is. Precision is between zero and six; input lowering
+ * Nullable, including for a non-null operand, because conversion can fail. Precision is between zero and six; input lowering
  * reports a larger precision before publishing a scalar. Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast.
  * Status: Implemented.
  *
  * @visibility public
+ * @example Refusing a literal without a TIMESTAMP input role
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the zone
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CAST(a AT TIME ZONE 'UTC' AS DATETIME(6))");
  *     [$query->statement->query->where->zone->value, $query->statement->query->where->precision] // => ['UTC', '6']
@@ -54,6 +57,7 @@ final class AtTimeZone implements Scalar
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
         Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($operand) !== false, 'An AT TIME ZONE literal has a TIMESTAMP or NULL input role.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -64,14 +68,14 @@ final class AtTimeZone implements Scalar
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($fact->type);
-        if ($domain !== null && $domain->field !== Field::Timestamp && $domain->kind !== Kind::Null) {
+        if ($domain !== null && $domain->field !== Field::Timestamp && $domain->kind !== Kind::Null && (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($this->operand) !== true) {
             $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion($this, true));
         } elseif ($domain !== null && $this->zone->value !== 'UTC' && $this->zone->value !== '+00:00') {
             $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion($this, false));
         }
         $decimals = (int) ($this->precision ?? '0');
 
-        return new ScalarFact(new Known(new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, null, [], Coercibility::Numeric)), $fact->nullability);
+        return new ScalarFact(new Known(new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, null, [], Coercibility::Numeric)), \SqlSemantics\Statement\Type\Nullability::Nullable);
     }
 
     /**

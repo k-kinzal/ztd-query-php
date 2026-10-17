@@ -1425,3 +1425,18 @@ Administrative deprecations belong to semantic operands. Each legacy QUERY
 CACHE flush item retains its notice, including repeated items, later input
 failures and a stored routine's first load. These input and history properties
 are separate from the outstanding whole-model constructor invariant gate.
+
+AT TIME ZONE distinguishes the input role of a TIMESTAMP literal from its
+DATETIME output field. Ordinary `AtTimeZone` constructors reject incompatible
+literal operands, including grouped literals. Stored definitions instead retain
+`DeferredTimeZone`, which is not a `Scalar`; its typed condition is raised only
+when the instruction is reached. Deferred arithmetic, calls and predicates carry
+that condition without converting it into a row-width error. Names and compound
+expression types still depend on resolution. This literal-domain constraint does
+not close the outstanding whole-model invariant gate.
+
+Named time-zone availability is initial instance state, independent of the SQL
+structure. An empty named catalog retains numeric offsets and SYSTEM, while
+named conversions and mysql.time_zone queries observe the empty state. Native
+comparison fixtures initialize the same empty or populated catalog before
+executing constructed structures; they do not replace or exempt query results.

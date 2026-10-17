@@ -61,7 +61,7 @@ final class DeferredTruthTest implements DeferredOperand
     /**
      * Answers the retained computation's first scalar-use constraint.
      */
-    public function problem(): OperandColumns
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
         return $this->operand instanceof DeferredOperand ? $this->operand->problem() : new OperandColumns(1, count((new RowShapes())->parts($this->operand) ?? []));
     }

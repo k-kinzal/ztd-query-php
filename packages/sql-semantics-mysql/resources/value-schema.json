@@ -1245,7 +1245,7 @@
         "text": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\TimeZoneConversion": {
-        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\AtTimeZone",
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\AtTimeZone|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredTimeZone",
         "operand": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\TooBigPrecision": {
@@ -2327,6 +2327,12 @@
         "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\Expression\\ComparisonOperator",
         "quantifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Subquery\\Quantifier",
         "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredTimeZone": {
+        "interval": "bool",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "precision": "?string",
+        "zone": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredTruthTest": {
         "negated": "bool",

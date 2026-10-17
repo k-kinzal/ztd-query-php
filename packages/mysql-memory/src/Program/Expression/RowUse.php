@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program\Expression;
 
+use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
@@ -56,7 +57,7 @@ final class RowUse
         foreach ($problems as $problem) {
             throw (new Errors())->error($problem, $session);
         }
-        throw QueryError::OperandColumns->error(1);
+        throw $this->error($operand);
     }
 
     /**
@@ -84,7 +85,7 @@ final class RowUse
                     $compiler->compile($part, $scope);
                 } else {
                     $this->prepare($part, $compiler, $scope);
-                    throw QueryError::OperandColumns->error(1);
+                    throw $this->error($part);
                 }
             }
             return;
@@ -114,7 +115,7 @@ final class RowUse
         foreach ($operand->operands() as $index => $part) {
             if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
                 $this->prepare($part, $compiler, $scope);
-                throw QueryError::OperandColumns->error($part->problem()->expected);
+                throw $this->error($part);
             }
             if ($part instanceof RowOperand) {
                 $this->prepare($part, $compiler, $scope);
@@ -128,4 +129,23 @@ final class RowUse
             }
         }
     }
+
+    /**
+     * Maps the retained intrinsic condition after its dependencies have prepared.
+     *
+     * @throws LogicException When a deferred condition has no execution implementation
+     */
+    public function error(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand): \MySqlMemory\Error\SqlError
+    {
+        if ($operand instanceof RowOperand) {
+            return QueryError::OperandColumns->error(1);
+        }
+        $problem = $operand->problem();
+        return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns => QueryError::OperandColumns->error($problem->expected),
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion => $problem->operand ? \MySqlMemory\Error\Family\DataError::TimeZoneCast->error() : \MySqlMemory\Error\Family\DataError::UnknownTimeZone->error($problem->expression->zone->value),
+            default => throw new LogicException('An unimplemented deferred operand condition: ' . $problem::class),
+        };
+    }
+
 }

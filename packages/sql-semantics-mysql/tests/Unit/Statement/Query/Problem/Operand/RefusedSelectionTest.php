@@ -27,6 +27,7 @@ final class RefusedSelectionTest extends TestCase
     {
         $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], where: new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'),new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')]));
         $problem = (new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection))->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem);
         self::assertSame([1,2], [$problem->expected,$problem->actual]);
     }
 }

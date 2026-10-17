@@ -92,6 +92,14 @@ final class DatesTest extends TestCase
         self::assertSame([['10', '272', '5', '3', '123456', '10']], $result->rows);
     }
 
+    public function testPartReadsClockDigitsWithoutReinterpretingThemAsCalendarDates(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query("SELECT HOUR('x'), MINUTE('2001-01-01'), SECOND(123456), MICROSECOND('.1'), HOUR('12:99:00')")[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '20', '56', '100000', null]], $result->rows);
+    }
+
     public function testPartReadsTypedTemporalValues(): void
     {
         $session = (new Instance())->connect();

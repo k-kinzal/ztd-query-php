@@ -58,6 +58,21 @@ final class ShowVariablesCommandTest extends TestCase
         self::assertSame(['1700000000.500000', (string) $session->id, 'ON'], [$local['timestamp'], $local['pseudo_thread_id'], $local['autocommit']]);
     }
 
+    public function testVariablesOmitsTheLegacySessionGtidListingWithoutRemovingTheReadableValue(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $local = $session->query("SHOW VARIABLES LIKE 'gtid_executed'")[0];
+        $global = $session->query("SHOW GLOBAL VARIABLES LIKE 'gtid_executed'")[0];
+        $read = $session->query('SELECT @@session.gtid_executed')[0];
+
+        self::assertInstanceOf(ResultSet::class, $local);
+        self::assertInstanceOf(ResultSet::class, $global);
+        self::assertInstanceOf(ResultSet::class, $read);
+        self::assertSame([], $local->rows);
+        self::assertSame([['gtid_executed', '']], $global->rows);
+        self::assertSame([['']], $read->rows);
+    }
+
     public function testStatusListsTheStatusVariablesWithTheStatementCounters(): void
     {
         $s = (new Instance())->connect();

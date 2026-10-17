@@ -311,6 +311,7 @@ Seven bounded comparison contracts handle measured nondeterministic fields:
 
 - `random-password-retains-primary-and-discards-secondary` additionally applies when the isolated current-account random change uses `RETAIN CURRENT PASSWORD`. Each server must store its own independently sampled previous primary hash as the secondary, preserve it through an ordinary primary update, then remove it with `DISCARD OLD PASSWORD` while keeping the primary unchanged. Failed checks retain the raw observation. This contract verifies SQL credential state; connections still accept any password.
 
+- `pseudo-id-equals-connection` applies to the same unfiltered session-variable listing on MySQL 5.6 and 5.7, which do not expose `statement_id`. The unique positive pseudo thread ID must equal that connection's independently sampled `CONNECTION_ID()`. This contract is confined to a fresh fixture and a plain listing; statements assigning a pseudo thread ID are ineligible and remain exact. All other variables and metadata remain exact.
 - `statement-id-between-samples-and-pseudo-id-equals-connection` applies only to unfiltered `SHOW [SESSION|LOCAL] VARIABLES` on modern releases. Each server's statement ID must fall strictly between independently sampled statement IDs around the observation, and its pseudo thread ID must equal the sampled connection ID. Only those two validated values are interchangeable. Other variables, metadata, warnings and fixture contents remain exact.
 
 - `process-identities-and-ports-stable-between-samples-with-bounded-time` applies only to isolated `SHOW [FULL] PROCESSLIST`. The fixture restarts an enabled scheduler after replacing the database, preventing a previous event's pending wait from leaking into this observation. Each connection identifies itself independently; process-table reads before and after the statement must contain the same complete set of identities and valid, unchanged TCP source ports. The current query's elapsed time must fall between independent `SYSDATE()` minus `@@timestamp` samples; idle and daemon times must fall between their own process-table samples. Only validated IDs, port numbers and elapsed times are interchangeable. Every row, host name, user, database, command, state, query text, column definition, warning and fixture value remains compared. Additional, missing or malformed rows leave the observation unnormalized.
@@ -375,3 +376,9 @@ The differential runner reads the reference server's installed help rows before 
 SQL and initializes memory with the same data. It compares `HELP` output normally, including
 column metadata and row order; it neither imports expected `HELP` results nor exempts them.
 Independent custom-data tests check the search rules across the five supported release profiles.
+
+Pass `namedTimeZones: false` to `Instance` or `Server::start()` (or use the
+`--empty-time-zones` server option) to start with empty named time-zone tables.
+Numeric offsets and `SYSTEM` remain available. The default loads the bundled
+release catalog. Differential fixtures must match the reference server's initial
+time-zone catalog; this setting does not normalize query results.

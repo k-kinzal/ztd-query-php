@@ -64,7 +64,7 @@ final class SelectionUse
         foreach ($selection->items as $item) {
             if ($item instanceof DeferredProjection) {
                 (new RowUse())->prepare($item->expression, $planner->compiler, $scope);
-                throw QueryError::OperandColumns->error($item->expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand ? $item->expression->problem()->expected : 1);
+                throw (new RowUse())->error($item->expression);
             }
             if ($item instanceof SelectExpression) {
                 $planner->compiler->compile($item->expression, $scope);
@@ -73,6 +73,7 @@ final class SelectionUse
         $scope->grouping = null;
         if ($selection->where !== null && !$selection->where instanceof Scalar) {
             (new RowUse())->prepare($selection->where, $planner->compiler, $scope->inClause('where clause'));
+            throw (new RowUse())->error($selection->where);
         }
         throw QueryError::OperandColumns->error(1);
     }

@@ -68,7 +68,9 @@ final class OperandRuleTest extends TestCase
         $source = (new Semantics(Dialect::MySql))->parser()->parse('SELECT 1');
         $deferred = (new OperandRule())->inQuery(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), new Select([], [new SelectExpression(new NumberLiteral('1'))]), false, $source);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate::class, $deferred);
-        self::assertSame(2, $deferred->problem()->expected);
+        $problem1 = $deferred->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem1);
+        self::assertSame(2, $problem1->expected);
     }
 
     public function testQuantifiedKeepsTheScalarOnlyConstraintInTheDeferredRole(): void
@@ -76,7 +78,9 @@ final class OperandRuleTest extends TestCase
         $source = (new Semantics(Dialect::MySql))->parser()->parse('SELECT 1');
         $deferred = (new OperandRule())->quantified(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), ComparisonOperator::Greater, Quantifier::Any, new Select([], [new SelectExpression(new NumberLiteral('1')), new SelectExpression(new NumberLiteral('2'))]), $source);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate::class, $deferred);
-        self::assertSame(1, $deferred->problem()->expected);
+        $problem2 = $deferred->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem2);
+        self::assertSame(1, $problem2->expected);
     }
 
     public function testCheckRetainsTheTypedProblem(): void

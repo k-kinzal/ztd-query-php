@@ -56,9 +56,9 @@ final class ShowVariablesCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowVariables || $statement instanceof ShowStatus);
         $global = $statement->scope === VariableScope::Global;
-        $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context) : $this->status($session, $global, $context->started, $context->zone());
+        $oldest = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && in_array($session->variables->read('show_compatibility_56'), ['ON', 1], true));
+        $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context, $oldest) : $this->status($session, $global, $context->started, $context->zone());
         $table = ($global ? 'global_' : 'session_') . ($statement instanceof ShowVariables ? 'variables' : 'status');
-        $oldest = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
         if ($oldest) {
             $table = $statement instanceof ShowVariables ? 'VARIABLES' : 'STATUS';
         }
@@ -99,14 +99,14 @@ final class ShowVariablesCommand implements Command
      *
      * @return list<list<string>>
      */
-    public function variables(Session $session, bool $global, Context $context): array
+    public function variables(Session $session, bool $global, Context $context, bool $compatibility = false): array
     {
         $variables = $session->variables;
         $definitions = $variables->catalog->definitions;
         ksort($definitions, SORT_STRING);
         $rows = [];
         foreach ($definitions as $name => $definition) {
-            if ($global && $definition->reach === Reach::Session) {
+            if (($global && $definition->reach === Reach::Session) || (!$global && !$compatibility && $name === 'gtid_executed' && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744)) {
                 continue;
             }
             $value = match (true) {

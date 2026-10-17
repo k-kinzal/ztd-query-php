@@ -112,6 +112,7 @@ final class Moments
         $numeric = !$from->kind->temporal() && $from->kind !== Kind::String;
         $time = $this->clock($value, $from, $numeric, $shown, $context);
         if ($time === null) {
+            (new TemporalDelimiters())->warn($shown, false, $context);
             return null;
         }
         [$negative, $hours, $minute, $second, $digits, $rest] = $time;
@@ -119,18 +120,21 @@ final class Moments
         if ($hours > 838 || ($hours === 838 && $minute === 59 && $second === 59 && $micro > 0)) {
             if ($numeric && $hours > 838) {
                 $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
+                (new TemporalDelimiters())->warn($shown, true, $context);
 
                 return null;
             }
             if (!$numeric) {
                 $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
             }
+            (new TemporalDelimiters())->warn($shown, true, $context);
 
             return Temporal::time($negative, 838, 59, 59, 0, $decimals);
         }
         if ($rest !== '') {
             $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
         }
+        (new TemporalDelimiters())->warn($shown, $rest === '', $context);
         $micro = Temporal::scale($micro % 1000000, $decimals, $truncate) + intdiv($micro, 1000000) * 1000000;
         $seconds = $hours * 3600 + $minute * 60 + $second + intdiv($micro, 1000000);
 
@@ -157,7 +161,7 @@ final class Moments
 
             return [false, $moment[3], $moment[4], $moment[5], $moment[6], $moment[8]];
         }
-        $time = Temporal::scanTime($text);
+        $time = $this->clockText($text, in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
         if ($time === null || $time[2] > 59 || $time[3] > 59) {
             $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
 
@@ -165,6 +169,33 @@ final class Moments
         }
 
         return $time;
+    }
+
+    /**
+     * Reads runtime clock text, including a fraction without whole seconds.
+     *
+     * Scientific notation is not a time. Legacy releases read nonempty text
+     * without an initial clock number as zero, retaining its sign and reporting
+     * the unconsumed text. Empty text and a lone minus still fail conversion.
+     * Verified through HOUR, MICROSECOND and CAST on MySQL 5.6, 5.7 and 8.4.
+     *
+     * @return array{bool, int, int, int, string, string}|null
+     */
+    public function clockText(string $text, bool $legacy): ?array
+    {
+        $text = trim($text, " \t\n\r\v\f");
+        if (preg_match('/\A-?[0-9]+(?:\.[0-9]*)?[eE][+-]?[0-9]/', $text) === 1) {
+            return null;
+        }
+        if (preg_match('/\A(-)?\.([0-9]+)/', $text, $fraction) === 1) {
+            return [$fraction[1] === '-', 0, 0, 0, $fraction[2], substr($text, strlen($fraction[0]))];
+        }
+        $time = Temporal::scanTime($text);
+        if ($time !== null || !$legacy || $text === '' || $text === '-') {
+            return $time;
+        }
+
+        return [str_starts_with($text, '-'), 0, 0, 0, '', $text];
     }
 
     /**

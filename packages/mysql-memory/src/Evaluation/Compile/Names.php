@@ -315,6 +315,7 @@ final class Names
         if ($variable->instance !== null) {
             return $this->keyCache($variable, $definition, $domain);
         }
+        (new \MySqlMemory\Variable\ReadNotices())->read($name, $scope, $this->compiler->connection->context);
         if ($name === 'warning_count' || $name === 'error_count') {
             return new Constant($domain, $this->compiler->connection->context->diagnostics->previous[$name === 'warning_count' ? 0 : 1]);
         }

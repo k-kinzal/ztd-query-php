@@ -26,14 +26,18 @@ final class DeferredArithmeticTest extends TestCase
         $fact = $derivation->scalar($value, $derivation->environment());
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Invalid::class, $fact->type);
         self::assertSame([], $derivation->facts()->diagnostics);
-        self::assertSame(2, $value->problem()->actual);
+        $problem1 = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem1);
+        self::assertSame(2, $problem1->actual);
     }
 
     public function testProblemFollowsNestedOperandOrder(): void
     {
         $left = new DeferredGrouped(new DeferredArithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new Row([new NumberLiteral('2'), new NumberLiteral('3')])));
         $value = new DeferredArithmetic(ArithmeticOperator::Plus, $left, new Row([new NumberLiteral('1'), new NumberLiteral('2'), new NumberLiteral('3')]));
-        self::assertSame([1, 2], [$value->problem()->expected, $value->problem()->actual]);
+        $problem2 = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem2);
+        self::assertSame([1, 2], [$problem2->expected, $problem2->actual]);
     }
 
     public function testRenderRetainsTheStoredComputationThroughLowering(): void

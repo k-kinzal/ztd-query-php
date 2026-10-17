@@ -89,6 +89,7 @@ final class Instance
      * A server of MySQL 5.6 or 5.7 starts with latin1 connections, as it greets its clients in latin1
      * (verified on live 5.6.51 and 5.7.44 servers).
      *
+     * @param bool $namedTimeZones Whether the initial named time-zone catalog is loaded
      * @param string $version The MySQL release emulated, as `8.4.7`
      * @param array<string, string|int|null> $globals Global variable values the server starts with, by name
      * @param list<string> $databases Databases created at start, besides the system ones
@@ -99,7 +100,7 @@ final class Instance
      * @param positive-int $resourceProcessors The number of logical processors visible to resource groups
      * @param array<string, array{int, int}> $routineTimestamps Installation creation and modification epochs, keyed by FUNCTION:name or PROCEDURE:name
      */
-    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8, public readonly array $help = [])
+    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8, public readonly array $help = [], public readonly bool $namedTimeZones = true)
     {
         $release = GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847;
         $this->catalog = SystemVariables::of($release);

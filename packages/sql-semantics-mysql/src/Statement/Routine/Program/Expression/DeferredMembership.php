@@ -9,7 +9,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -86,7 +85,7 @@ final class DeferredMembership implements DeferredOperand
      *
      * @throws LogicException If the constructor invariant was bypassed
      */
-    public function problem(): OperandColumns
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
         if ($this->operand instanceof DeferredOperand) {
             return $this->operand->problem();

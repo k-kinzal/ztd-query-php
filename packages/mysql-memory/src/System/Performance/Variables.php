@@ -37,7 +37,7 @@ final class Variables
     public static function rows(array $values, Reading $reading): array
     {
         $legacy = SystemTables::key($reading->table->schema, $reading->table->name) === SystemTables::key('information_schema', $reading->table->name);
-        if ($legacy && $reading->release === GrammarRelease::MySql5744) {
+        if ($legacy && $reading->release === GrammarRelease::MySql5744 && !in_array($reading->connection->variables->read('show_compatibility_56'), ['ON', 1], true)) {
             throw StatementError::FeatureDisabledSeeDoc->error('INFORMATION_SCHEMA.' . $reading->table->name, 'show_compatibility_56');
         }
         if ($legacy) {
@@ -56,7 +56,7 @@ final class Variables
      */
     public static function system(Session $session, bool $global, bool $threaded, Reading $reading): array
     {
-        $values = (new ShowVariablesCommand())->variables($session, $global, $reading->connection->context);
+        $values = (new ShowVariablesCommand())->variables($session, $global, $reading->connection->context, strcasecmp($reading->table->schema, 'information_schema') === 0);
         if (!$threaded) {
             return array_map(static fn (array $row): array => [$row[0] ?? '', $row[1] ?? ''], $values);
         }

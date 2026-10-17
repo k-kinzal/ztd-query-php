@@ -251,7 +251,7 @@ final class Differential
             Baseline::mutexes($pdo, $this->version);
         }
         $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1) : null;
-        $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo) : null;
+        $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo, $this->version) : null;
         if (Process\Listing::handles($sql)) {
             Process\Listing::prepare($pdo);
         }

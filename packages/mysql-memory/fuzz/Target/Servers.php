@@ -83,11 +83,20 @@ final class Servers
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
-        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version), resourceProcessors: $this->resourceProcessors($native, $version), help: $this->help($native));
+        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version), resourceProcessors: $this->resourceProcessors($native, $version), help: $this->help($native), namedTimeZones: $this->namedTimeZones($native));
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
         return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server, $reference), 'mysql-' . $version, $server];
+    }
+
+    /**
+     * Captures whether the reference initialized its named time-zone tables.
+     */
+    public function namedTimeZones(PDO $native): bool
+    {
+        $statement = $native->query('SELECT COUNT(*) FROM mysql.time_zone_name');
+        return $statement !== false && (int) $statement->fetchColumn() > 0;
     }
 
     /**

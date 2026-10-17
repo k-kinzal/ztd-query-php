@@ -24,7 +24,9 @@ final class DeferredTruthTestTest extends TestCase
         $fact = $derivation->scalar($value, $derivation->environment());
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Invalid::class, $fact->type);
         self::assertSame([], $derivation->facts()->diagnostics);
-        self::assertSame(2, $value->problem()->actual);
+        $problem1 = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem1);
+        self::assertSame(2, $problem1->actual);
         self::assertCount(1, $value->operands());
     }
 
@@ -46,6 +48,8 @@ final class DeferredTruthTestTest extends TestCase
     public function testProblemIdentifiesTheFirstNonScalarUse(): void
     {
         $value = new DeferredTruthTest(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), \SqlSemantics\Platform\MySql\Statement\Expression\Truth::True);
-        self::assertSame([1, 2], [$value->problem()->expected, $value->problem()->actual]);
+        $problem2 = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem2);
+        self::assertSame([1, 2], [$problem2->expected, $problem2->actual]);
     }
 }

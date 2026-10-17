@@ -18,6 +18,29 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class NamesTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, list<array{string, int, string}>}>
+     */
+    public static function providerGtidReads(): iterable
+    {
+        foreach (['5.6.51', '5.7.44'] as $release) {
+            foreach (['', 'session.', 'local.', 'global.'] as $scope) {
+                yield $release . ':' . $scope => [$release, $scope, $release === '5.7.44' && $scope !== 'global.' ? [['Warning', 1681, "'@@SESSION.GTID_EXECUTED' is deprecated and will be removed in a future release."]] : []];
+            }
+        }
+    }
+
+    /**
+     * @param list<array{string, int, string}> $warnings
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerGtidReads')]
+    public function testSystemVariableKeepsTheLegacySessionGtidDeprecation(string $release, string $scope, array $warnings): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->query('SELECT @@' . $scope . 'gtid_executed');
+        self::assertSame($warnings, $session->diagnostics->conditions);
+    }
+
     public function testColumnReportsAnUnknownQualifierInDiagnosticsWithoutTables(): void
     {
         $session = (new Instance())->connect();

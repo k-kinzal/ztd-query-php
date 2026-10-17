@@ -95,7 +95,16 @@ final class Context
      */
     public function zone(): Zone
     {
-        return Zone::named((string) $this->variables->read('time_zone'), $this->modes->release) ?? Zone::utc();
+        return $this->timeZone((string) $this->variables->read('time_zone')) ?? Zone::utc();
+    }
+
+    /**
+     * Resolves a zone using the instance's initial catalog; offsets and SYSTEM need no named rows.
+     */
+    public function timeZone(string $name): ?Zone
+    {
+        $zone = Zone::named($name, $this->modes->release);
+        return $zone !== null && ($zone->rules === null || $this->variables->instance->namedTimeZones) ? $zone : null;
     }
 
     /**

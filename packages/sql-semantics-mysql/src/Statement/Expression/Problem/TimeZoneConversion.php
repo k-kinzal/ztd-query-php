@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the conversion condition before a later missing column
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT CAST(1 AT TIME ZONE '+00:00' AS DATETIME), missing");
+ *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE '+00:00' AS DATETIME), missing");
  *     $operation->facts->diagnostics[0]->message() // => 'Cannot cast value to TIMESTAMP WITH TIME ZONE.'
  */
 final class TimeZoneConversion implements Diagnostic
@@ -26,10 +26,10 @@ final class TimeZoneConversion implements Diagnostic
     use Snapshot;
 
     /**
-     * @param AtTimeZone $expression The conversion that owns the condition
+     * @param AtTimeZone|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone $expression The conversion that owns the condition
      * @param bool $operand Whether the operand type is unsuitable, rather than the zone
      */
-    public function __construct(public readonly AtTimeZone $expression, public readonly bool $operand)
+    public function __construct(public readonly AtTimeZone|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone $expression, public readonly bool $operand)
     {
     }
 

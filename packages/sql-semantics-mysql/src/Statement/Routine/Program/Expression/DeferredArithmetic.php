@@ -72,7 +72,7 @@ final class DeferredArithmetic implements DeferredOperand
     /**
      * Answers the first operand-width constraint, following operand order.
      */
-    public function problem(): OperandColumns
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
         $operand = $this->left instanceof Scalar ? $this->right : $this->left;
         return $operand instanceof DeferredOperand ? $operand->problem() : new OperandColumns(1, count((new RowShapes())->parts($operand) ?? []));

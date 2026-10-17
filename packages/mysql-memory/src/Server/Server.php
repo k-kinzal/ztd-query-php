@@ -34,6 +34,7 @@ final class Server
     /**
      * Starts a server process.
      *
+     * @param bool $namedTimeZones Whether the initial named time-zone catalog is loaded
      * @param string $version The MySQL release emulated
      * @param list<string> $databases Databases created at start
      * @param array<string, string|int|null> $globals Global variable values the server starts with
@@ -46,9 +47,12 @@ final class Server
      *
      * @throws RuntimeException When the process cannot be started
      */
-    public static function start(string $version = '8.4.7', array $databases = [], array $globals = [], ?string $clientHost = null, bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8, array $help = []): self
+    public static function start(string $version = '8.4.7', array $databases = [], array $globals = [], ?string $clientHost = null, bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8, array $help = [], bool $namedTimeZones = true): self
     {
         $command = [PHP_BINARY, '-d', 'memory_limit=-1', '-d', 'xdebug.mode=off', dirname(__DIR__, 2) . '/bin/mysql-memory', '--listen=tcp://127.0.0.1:0', '--release=' . $version, '--resource-processors=' . $resourceProcessors, '--help-stdin'];
+        if (!$namedTimeZones) {
+            $command[] = '--empty-time-zones';
+        }
         if (!$supervised) {
             $command[] = '--unsupervised';
         }

@@ -20,6 +20,13 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class RowUseTest extends TestCase
 {
+    public function testErrorPreservesTheDeferredConversionCondition(): void
+    {
+        $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'));
+        self::assertSame(3998, (new RowUse())->error($value)->getCode());
+        self::assertSame(1241, (new RowUse())->error(new Row([new NumberLiteral('1'), new NumberLiteral('2')]))->getCode());
+    }
+
     /**
      * @return iterable<string, array{RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand, int}>
      */

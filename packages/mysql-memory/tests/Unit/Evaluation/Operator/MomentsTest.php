@@ -21,6 +21,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class MomentsTest extends TestCase
 {
+    public function testClockTextRetainsLegacyZeroPrefixesAndRejectsScientificNotation(): void
+    {
+        $moments = new Moments();
+        self::assertSame([true, 0, 0, 0, '', '-x'], $moments->clockText('-x', true));
+        self::assertNull($moments->clockText('-x', false));
+        self::assertNull($moments->clockText('-', true));
+        self::assertNull($moments->clockText('1e2', true));
+        self::assertNull($moments->clockText('1e2', false));
+        self::assertSame([false, 0, 0, 0, '1', ''], $moments->clockText('.1', false));
+    }
     public function testConvertReadsNumbersAsDateDigits(): void
     {
         $session = (new Instance())->connect();

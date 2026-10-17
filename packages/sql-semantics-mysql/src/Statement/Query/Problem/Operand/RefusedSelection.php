@@ -40,7 +40,7 @@ final class RefusedSelection implements Diagnostic
     /**
      * Describes the first written operand constraint; dependency errors may precede it.
      */
-    public function problem(): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns
+    public function problem(): Diagnostic
     {
         $operand = $this->selection->where;
         foreach ($this->selection->items as $item) {

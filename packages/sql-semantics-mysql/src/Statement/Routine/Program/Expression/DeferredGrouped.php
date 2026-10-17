@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -52,7 +51,7 @@ final class DeferredGrouped implements DeferredOperand
     /**
      * Keeps the enclosed computation's operand constraint.
      */
-    public function problem(): OperandColumns
+    public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
         return $this->operand->problem();
     }

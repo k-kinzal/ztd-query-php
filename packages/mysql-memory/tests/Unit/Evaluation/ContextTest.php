@@ -19,6 +19,21 @@ use stdClass;
 #[Small]
 final class ContextTest extends TestCase
 {
+    public function testTimeZoneWithAnEmptyNamedCatalogPreservesOffsetsAndSystemTime(): void
+    {
+        $session = (new Instance(namedTimeZones: false))->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        self::assertNull($context->timeZone('UTC'));
+        self::assertNull($context->timeZone('Asia/Tokyo'));
+        self::assertSame('+09:00', $context->timeZone('+09:00')?->name);
+        self::assertSame('SYSTEM', $context->timeZone('SYSTEM')?->name);
+        $result = $session->query("SELECT CONVERT_TZ('2024-01-01 00:00:00','UTC','+00:00')")[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([[null]], $result->rows);
+        $this->expectExceptionCode(1298);
+        $session->query("SET time_zone='UTC'");
+    }
+
     public function testTableHandleReservesDistinctOccurrencesAndReusesReplannedOnes(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

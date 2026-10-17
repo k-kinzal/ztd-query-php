@@ -7,12 +7,13 @@ namespace Fuzz\Target;
 use PDO;
 
 /**
- * Validates the two independently allocated identities in a plain SHOW VARIABLES result.
+ * Validates independently allocated identities in a plain SHOW VARIABLES result.
  *
  * The pseudo thread id must equal this connection's independently sampled CONNECTION_ID().
  * The statement id must be strictly between this server's statement ids sampled before and
  * after the observation. Only those validated identity values become interchangeable;
  * missing or duplicate names, malformed ids and all other observations stay exact.
+ * MySQL 5.x exposes only the pseudo thread id, checked against CONNECTION_ID().
  * Source: https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html.
  */
 final class StatementIdentities
@@ -23,26 +24,37 @@ final class StatementIdentities
     public const CONTRACT = 'statement-id-between-samples-and-pseudo-id-equals-connection';
 
     /**
-     * @param int $before The preceding statement's id
-     * @param int $connection The connection id before SHOW VARIABLES
+     * The legacy contract validates the allocated connection identity only.
      */
-    public function __construct(public readonly int $before, public readonly int $connection)
+    public const LEGACY_CONTRACT = 'pseudo-id-equals-connection';
+
+    /**
+     * @param int|null $before The preceding statement id, absent on MySQL 5.x
+     * @param int $connection The connection id before SHOW VARIABLES
+     * @param string $table The release's result-column origin table
+     */
+    public function __construct(public readonly ?int $before, public readonly int $connection, public readonly string $table = 'session_variables')
     {
     }
 
     /**
-     * Selects only an unfiltered read of the session variables on modern releases.
+     * Selects only an unfiltered read of the session variables on supported releases.
      */
     public static function handles(string $sql, string $version): bool
     {
-        return !str_starts_with($version, '5.') && preg_match('/\A\s*SHOW\s+(?:(?:SESSION|LOCAL)\s+)?VARIABLES\s*;?\s*\z/i', $sql) === 1;
+        return preg_match('/\A\s*SHOW\s+(?:(?:SESSION|LOCAL)\s+)?VARIABLES\s*;?\s*\z/i', $sql) === 1;
     }
 
     /**
      * Samples the lower statement bound and connection identity before the target statement.
      */
-    public static function capture(PDO $pdo): ?self
+    public static function capture(PDO $pdo, string $version): ?self
     {
+        if (str_starts_with($version, '5.')) {
+            $statement = $pdo->query('SELECT CONNECTION_ID()');
+            $connection = $statement === false ? false : $statement->fetchColumn();
+            return is_int($connection) ? new self(null, $connection, str_starts_with($version, '5.6.') ? 'VARIABLES' : 'session_variables') : null;
+        }
         $statement = $pdo->query('SELECT @@statement_id, CONNECTION_ID()');
         $row = $statement === false ? false : $statement->fetch(PDO::FETCH_NUM);
 
@@ -57,6 +69,9 @@ final class StatementIdentities
      */
     public function comparable(PDO $pdo, array $observation): array
     {
+        if ($this->before === null) {
+            return $this->validated($observation, 0);
+        }
         $statement = $pdo->query('SELECT @@statement_id');
         $after = $statement === false ? false : $statement->fetchColumn();
 
@@ -77,19 +92,21 @@ final class StatementIdentities
         }
         $rows = $results[0]['rows'] ?? null;
         $columns = $results[0]['columns'] ?? null;
-        if (!is_array($rows) || !is_array($columns) || count($columns) !== 2 || !is_array($columns[0] ?? null) || !is_array($columns[1] ?? null) || array_slice($columns[0], 0, 2) !== ['Variable_name', 'session_variables'] || array_slice($columns[1], 0, 2) !== ['Value', 'session_variables']) {
+        $table = $this->table;
+        if (!is_array($rows) || !is_array($columns) || count($columns) !== 2 || !is_array($columns[0] ?? null) || !is_array($columns[1] ?? null) || array_slice($columns[0], 0, 2) !== ['Variable_name', $table] || array_slice($columns[1], 0, 2) !== ['Value', $table]) {
             return $observation;
         }
         $found = $this->positions($rows, $after);
         if ($found === null) {
             return $observation;
         }
+        $contract = $this->before === null ? self::LEGACY_CONTRACT : self::CONTRACT;
         foreach ($found as $name => $index) {
-            $rows[$index] = [$name, '{' . self::CONTRACT . ':' . $name . '}'];
+            $rows[$index] = [$name, '{' . $contract . ':' . $name . '}'];
         }
         $results[0]['rows'] = $rows;
         $observation['results'] = $results;
-        $observation['contracts'] = [self::CONTRACT];
+        $observation['contracts'] = [$contract];
 
         return $observation;
     }
@@ -108,18 +125,18 @@ final class StatementIdentities
                 return null;
             }
             $name = $row[0];
-            if (!in_array($name, ['statement_id', 'pseudo_thread_id'], true)) {
+            if (!in_array($name, $this->before === null ? ['pseudo_thread_id'] : ['statement_id', 'pseudo_thread_id'], true)) {
                 continue;
             }
             if (isset($found[$name]) || preg_match('/\A[1-9][0-9]*\z/', $row[1]) !== 1 || (string) (int) $row[1] !== $row[1]) {
                 return null;
             }
             $value = (int) $row[1];
-            if ($name === 'statement_id' ? $value <= $this->before || $value >= $after : $value !== $this->connection) {
+            if ($name === 'statement_id' ? $this->before === null || $value <= $this->before || $value >= $after : $value !== $this->connection) {
                 return null;
             }
             $found[$name] = $index;
         }
-        return count($found) === 2 ? $found : null;
+        return count($found) === ($this->before === null ? 1 : 2) ? $found : null;
     }
 }
