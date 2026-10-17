@@ -44,7 +44,7 @@
 <span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">Deriver\Session</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\DerivationResult</span>;</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Execution\DerivationResult</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">WeakMap</span>;</span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a></span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com">/**</span></span>
@@ -54,7 +54,7 @@
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ResultRetention</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a>{</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     * @var array&lt;string, DerivationResult|\Deriver\Result\Candidates\CandidateCollection&gt; Recent small results, including interrupted observations</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     * @var array&lt;string, DerivationResult|\Deriver\Result\CandidateCollection&gt; Recent small results, including interrupted observations</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-kw">private</span> <span class="tok-kw">array</span> <span class="tok-var">$recent</span> = [];</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a></span>
@@ -75,9 +75,9 @@
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * Caps both the number and structural size of retained graphs without serializing them.</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @param DerivationResult|\Deriver\Result\Candidates\CandidateCollection $result New observation</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @param DerivationResult|\Deriver\Result\CandidateCollection $result New observation</span></span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">remember</span>(<span class="tok-id">DerivationResult</span>|<span class="tok-id">\Deriver\Result\Candidates\CandidateCollection</span> <span class="tok-var">$result</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">remember</span>(<span class="tok-id">DerivationResult</span>|<span class="tok-id">\Deriver\Result\CandidateCollection</span> <span class="tok-var">$result</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    {</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">capacity</span> === <span class="tok-num">0</span> || !<span class="tok-var">$this</span>-&gt;<span class="tok-id">small</span>(<span class="tok-var">$result</span>)) {</span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>            <span class="tok-kw">return</span>;</span>
@@ -91,10 +91,10 @@
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a></span>
 <span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     * Bounds the complete retained object graph, arrays, and literal payloads, including query inputs.</span></span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-com">     * @param DerivationResult|\Deriver\Result\Candidates\CandidateCollection $result Candidate result</span></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-com">     * @param DerivationResult|\Deriver\Result\CandidateCollection $result Candidate result</span></span>
 <span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     * @return bool Whether it fits 4,096 visited entries and one MiB of string payloads</span></span>
 <span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">small</span>(<span class="tok-id">DerivationResult</span>|<span class="tok-id">\Deriver\Result\Candidates\CandidateCollection</span> <span class="tok-var">$result</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">small</span>(<span class="tok-id">DerivationResult</span>|<span class="tok-id">\Deriver\Result\CandidateCollection</span> <span class="tok-var">$result</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    {</span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-var">$seen</span> = <span class="tok-kw">new</span> <span class="tok-id">WeakMap</span>();</span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-var">$pending</span> = [<span class="tok-var">$result</span>];</span>

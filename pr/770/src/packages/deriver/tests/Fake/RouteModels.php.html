@@ -47,11 +47,14 @@
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Plan\Action</span>;</span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Plan\Expression</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Plan\SemanticPlan</span>;</span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Signature\Parameter</span>;</span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Signature\Signature</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Signature\Parameter</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Signature\Signature</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\Declaration\Parameter</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\Declaration\Signature</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Query\QueryScope</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Query\ValueQuery</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Alternative</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Alternative</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Execution\Alternative</span>;</span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Value\Term</span>;</span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">JsonException</span>;</span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">RuntimeException</span>;</span>
@@ -81,14 +84,14 @@
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     * Derives the SQL argument and the receiver of the first query() call.</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">44</span><span class="tok-com">     * @param \Deriver\Analysis\ExecutionSession $session Analysis session</span></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * @param \Deriver\ExecutionSession $session Analysis session</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * @param \Deriver\Session\ExecutionSession $session Analysis session</span></span>
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param QueryScope $scope Entrypoint scope</span></span>
 <span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     * @return array{list&lt;Alternative&gt;, list&lt;Alternative&gt;} SQL and receiver observations</span></span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     * @throws RuntimeException If the fixture has no method call to query()</span></span>
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com">     * @throws JsonException If captured metadata cannot be encoded</span></span>
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">50</span>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">observe</span>(<span class="tok-id">\Deriver\Analysis\ExecutionSession</span> <span class="tok-var">$session</span>, <span class="tok-id">QueryScope</span> <span class="tok-var">$scope</span>): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">observe</span>(<span class="tok-id">\Deriver\ExecutionSession</span> <span class="tok-var">$session</span>, <span class="tok-id">QueryScope</span> <span class="tok-var">$scope</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">observe</span>(<span class="tok-id">\Deriver\Session\ExecutionSession</span> <span class="tok-var">$session</span>, <span class="tok-id">QueryScope</span> <span class="tok-var">$scope</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    {</span>
 <span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        <span class="tok-var">$call</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">callsTo</span>(<span class="tok-str">&#039;query&#039;</span>)[<span class="tok-num">0</span>] ?? <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-kw">if</span> (<span class="tok-var">$call</span>?-&gt;<span class="tok-id">receiver</span> === <span class="tok-id">null</span>) {</span>

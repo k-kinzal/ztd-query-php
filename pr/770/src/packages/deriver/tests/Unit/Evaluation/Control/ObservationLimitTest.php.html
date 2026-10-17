@@ -47,10 +47,13 @@
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Operations\Lattice</span>;</span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Query\Budget</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Reference\SourceRef</span>;</span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Alternative</span>;</span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Exceptional</span>;</span>
-<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\StorageSnapshot</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Alternative</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Exceptional</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\StorageSnapshot</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-kw">use</span> <span class="tok-id">Deriver\Value\Lattice</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Execution\Alternative</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Execution\Exceptional</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Execution\StorageSnapshot</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Value\Term</span>;</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Small</span>;</span>
@@ -75,11 +78,13 @@
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Project\TargetProfile</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">Budget</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Query\QueryScope</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Query\ResourceLimits</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">37</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Query\ResourceLimits</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Project\ResourceLimits</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Query\ReturnQuery</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">SourceRef</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">Alternative</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Result\Frontier</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">41</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Result\Frontier</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Diagnostic\Frontier</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">StorageSnapshot</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">43</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Source\Cache\SyntaxCache</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">44</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\Deriver\Source\Cache\SyntaxTree</span>::<span class="tok-kw">class</span>)]</span>

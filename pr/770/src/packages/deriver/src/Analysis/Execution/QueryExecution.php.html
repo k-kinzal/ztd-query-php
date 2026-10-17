@@ -64,8 +64,8 @@
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Query\ValueQuery</span>;</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Reference\ResultRef</span>;</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Reference\SourceRef</span>;</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Alternative</span>;</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\DerivationResult</span>;</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Execution\Alternative</span>;</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Execution\DerivationResult</span>;</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Serialization\QueryEncoding</span>;</span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Result\Statistics</span>;</span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Value\Term</span>;</span>
@@ -137,14 +137,14 @@
 <span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a><span class="tok-com">     * Observes one symbolic callable once under a shared resource and logical budget.</span></span>
 <span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a><span class="tok-com">     * @param list&lt;Query&gt; $queries Observations in requested output order</span></span>
-<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a><span class="tok-com">     * @return \Deriver\Result\ExecutionResultSet Independent observations from the shared execution</span></span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a><span class="tok-com">     * @return \Deriver\Result\Execution\ExecutionResultSet Independent observations from the shared execution</span></span>
 <span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a><span class="tok-com">     * @throws InvalidInputException If owners, scopes, or budgets differ</span></span>
 <span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a><span class="tok-com">     * @throws JsonException If query metadata cannot be encoded</span></span>
 <span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">together</span>(<span class="tok-kw">array</span> <span class="tok-var">$queries</span>): <span class="tok-id">\Deriver\Result\ExecutionResultSet</span></span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">together</span>(<span class="tok-kw">array</span> <span class="tok-var">$queries</span>): <span class="tok-id">\Deriver\Result\Execution\ExecutionResultSet</span></span>
 <span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>    {</span>
 <span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>        <span class="tok-kw">if</span> (<span class="tok-var">$queries</span> === []) {</span>
-<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">\Deriver\Result\ExecutionResultSet</span>([]);</span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">\Deriver\Result\Execution\ExecutionResultSet</span>([]);</span>
 <span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>        }</span>
 <span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>        <span class="tok-var">$symbol</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">owner</span>(<span class="tok-var">$queries</span>[<span class="tok-num">0</span>]);</span>
 <span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>        <span class="tok-var">$keys</span> = [];</span>
@@ -165,7 +165,7 @@
 <span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a>            <span class="tok-var">$results</span>[] = <span class="tok-var">$this</span>-&gt;<span class="tok-id">result</span>(<span class="tok-var">$batch</span>-&gt;<span class="tok-id">synchronize</span>(<span class="tok-var">$index</span>), <span class="tok-var">$symbol</span>, <span class="tok-var">$start</span>, <span class="tok-var">$identity</span>);</span>
 <span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a>        }</span>
 <span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a>        <span class="tok-var">$context</span>-&gt;<span class="tok-id">batch</span> = <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">\Deriver\Result\ExecutionResultSet</span>(<span class="tok-var">$results</span>);</span>
+<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">\Deriver\Result\Execution\ExecutionResultSet</span>(<span class="tok-var">$results</span>);</span>
 <span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a>    }</span>
 <span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a></span>
 <span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a>    <span class="tok-com">/**</span></span>
