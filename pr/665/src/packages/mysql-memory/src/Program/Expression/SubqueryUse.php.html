@@ -76,7 +76,7 @@
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$operandFirst</span>) {</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">operand</span>(<span class="tok-var">$predicate</span>, <span class="tok-var">$compiler</span>, <span class="tok-var">$scope</span>);</span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        }</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">throw</span> <span class="tok-id">QueryError</span>::<span class="tok-id">OperandColumns</span>-&gt;<span class="tok-id">error</span>(<span class="tok-var">$predicate</span>-&gt;<span class="tok-id">problem</span>()-&gt;<span class="tok-id">expected</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">throw</span> (<span class="tok-kw">new</span> <span class="tok-id">RowUse</span>())-&gt;<span class="tok-id">error</span>(<span class="tok-var">$predicate</span>);</span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    }</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>

@@ -80,7 +80,7 @@
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * Describes the first written operand constraint; dependency errors may precede it.</span></span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(): <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns</span></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(): <span class="tok-id">Diagnostic</span></span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    {</span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-var">$operand</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">selection</span>-&gt;<span class="tok-id">where</span>;</span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">selection</span>-&gt;<span class="tok-id">items</span> <span class="tok-kw">as</span> <span class="tok-var">$item</span>) {</span>

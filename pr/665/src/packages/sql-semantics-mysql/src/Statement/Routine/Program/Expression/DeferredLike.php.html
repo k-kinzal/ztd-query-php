@@ -115,7 +115,7 @@
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-com">     * @throws LogicException If the constructor invariant has been bypassed</span></span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(): <span class="tok-id">OperandColumns</span></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(): <span class="tok-id">\SqlSemantics\Statement\Fact\Diagnostic</span></span>
 <span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    {</span>
 <span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">operands</span>() <span class="tok-kw">as</span> <span class="tok-var">$operand</span>) {</span>
 <span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>            <span class="tok-kw">if</span> (!<span class="tok-var">$operand</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar</span>) {</span>

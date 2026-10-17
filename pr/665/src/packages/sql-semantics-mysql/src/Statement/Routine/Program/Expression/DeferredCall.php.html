@@ -153,7 +153,7 @@
 <span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L114" data-diff="added"><a class="ln" href="#L114">114</a><span class="tok-com">     * @throws LogicException If the constructor invariant has been bypassed</span></span>
 <span class="src-line" id="L115" data-diff="added"><a class="ln" href="#L115">115</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L116" data-diff="added"><a class="ln" href="#L116">116</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(): <span class="tok-id">OperandColumns</span></span>
+<span class="src-line" id="L116" data-diff="added"><a class="ln" href="#L116">116</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(): <span class="tok-id">\SqlSemantics\Statement\Fact\Diagnostic</span></span>
 <span class="src-line" id="L117" data-diff="added"><a class="ln" href="#L117">117</a>    {</span>
 <span class="src-line" id="L118" data-diff="added"><a class="ln" href="#L118">118</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">arguments</span> <span class="tok-kw">as</span> <span class="tok-var">$argument</span>) {</span>
 <span class="src-line" id="L119" data-diff="added"><a class="ln" href="#L119">119</a>            <span class="tok-var">$operand</span> = <span class="tok-var">$argument</span>-&gt;<span class="tok-id">expression</span>;</span>
