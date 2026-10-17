@@ -45,6 +45,7 @@ final class SpatialResults
             'MULTIPOLYGON' => $geometry,
             'GEOMETRYCOLLECTION' => $geometry,
             'GEOMCOLLECTION' => $geometry,
+            'CONTAINS' => static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 21),
         ];
         foreach (['', 'ST_'] as $prefix) {
             $rules[$prefix . 'DIMENSION'] = $integer;

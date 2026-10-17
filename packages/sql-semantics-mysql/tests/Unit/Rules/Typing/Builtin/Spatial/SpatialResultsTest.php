@@ -47,6 +47,8 @@ final class SpatialResultsTest extends TestCase
         self::assertSame(1, $rules['ST_ISEMPTY']($call)?->length);
         self::assertSame(10, $rules['ST_NUMGEOMETRIES']($call)?->length);
         self::assertSame(Field::Long, $rules['ST_DIMENSION']($call)?->storageField);
+        self::assertSame(21, $rules['CONTAINS']($call)?->length);
+        self::assertSame(Field::LongLong, $rules['CONTAINS']($call)->field);
     }
     public function testRulesResolveGeometryAsBinaryWithCoercibleCollation(): void
     {
