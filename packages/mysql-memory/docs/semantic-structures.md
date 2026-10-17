@@ -59,6 +59,22 @@ changing the timeout above and below its period, then restores the timeout.
 
 For MySQL 5.6 and 5.7, `UpgradeDatabaseName` consumes a `LegacyDatabaseName`, whose decoded component excludes the fixed `#mysql50#` marker. Its constructor checks the directory spelling and the character and byte limits; an ordinary database identifier cannot occupy this role. Stored-program constructors reject this instruction, including in an unreachable branch. Its command moves table declarations and data to the upgraded name, retains view and trigger references, and removes stored routines and events. SQL Semantics supplies the 5.7 deprecation fact. Differential histories against isolated servers check the resulting rows, metadata, warnings and errors, including invalid references after the move. A separate test executes the same directly constructed object before creation, against a populated legacy database, and after its successful move, with an unrelated request label.
 
+Stored-program constructors exclude every table HANDLER operation, including
+operations in unreachable branches. Condition handlers declared with DECLARE
+remain a separate supported role. Input lowering retains the declaration header
+and the version-specific stopping boundary: 5.6/5.7 refuse a HANDLER operation
+keyword, while later versions first require the complete HANDLER statement.
+
+Generated-column constructors reject DEFAULT, ON UPDATE, AUTO_INCREMENT,
+SERIAL DEFAULT VALUE, COLUMN_FORMAT, STORAGE and the SERIAL type. These
+combinations are rejected by MySQL even inside unreachable stored instructions.
+SQL lowering and direct construction share the same attribute rule. Column
+collations retain their lookup diagnostics before table resolution. For ordinary
+columns, later DEFAULT and ON UPDATE clauses replace earlier clauses; an
+incompatible earlier clock expression does not invalidate a compatible final
+clause. Other intrinsic column type/attribute combinations still require
+constructor-level constraints.
+
 Engine attributes on columns, indexes, tables and tablespaces share a constructor invariant: quoted text must be empty (reset) or a complete JSON document, with finite numbers and no more than 100 nested containers. An invalid document is rejected even inside an unreachable stored-program instruction. SQL input lowering applies the same rule and retains a typed operand diagnostic before publishing a statement. Memory formats that diagnostic without parsing JSON again. The same directly constructed secondary attribute is tested before its table exists, against a populated table, and after the table is dropped.
 
 Every failure record includes its seed index, concrete root class, exception, and constructor rejection counts. To replay one trial from the same revision, give its index as the final argument:

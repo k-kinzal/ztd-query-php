@@ -22,10 +22,44 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 final class SyntaxDefinitions
 {
     /**
+     * Refuses a completed HANDLER name followed by its operation keyword in a stored body.
+     *
+     * READ, OPEN and CLOSE stop before later operands, including incomplete reads.
+     * A DECLARE ... HANDLER condition handler has a different grammar role.
+     *
+     * @param list<\SqlParser\Lexer\Token> $tokens Transient tokens of the current input
+     * @param bool $legacy Whether the operation keyword is the stopping boundary (MySQL 5.6/5.7)
+     */
+    public function handler(Node $node, \SqlParser\Lexer\Token $lookahead, array $tokens, bool $legacy = true): ?RejectedInput
+    {
+        if (!$legacy) {
+            return in_array($node->name, ['handler', 'handler_stmt'], true) ? $this->rejected($node) : null;
+        }
+        $allowed = $lookahead->name === 'OPEN_SYM' ? ['table_ident'] : (in_array($lookahead->name, ['READ_SYM', 'CLOSE_SYM'], true) ? ['table_ident_nodb', 'ident'] : []);
+        if (!in_array($node->name, $allowed, true)) {
+            return null;
+        }
+        $begin = (new SourceRanges())->span($node)[0] ?? 0;
+        $previous = null;
+        foreach ($tokens as $token) {
+            if ($token->offset >= $begin) {
+                break;
+            }
+            $previous = $token;
+        }
+        return $previous?->name === 'HANDLER_SYM' ? new RejectedInput(new ProgramProblem(ProgramRule::BadStatement, 'HANDLER'), $lookahead->end(), true) : null;
+    }
+
+    /**
      * Answers an immediate nested declaration restriction at its input boundary.
      */
     public function rejected(Node $node): ?RejectedInput
     {
+        if (in_array($node->name, ['handler', 'handler_stmt'], true)) {
+            $operation = $node->children[2];
+            \SqlSemantics\Diagnostic\Check::invariant($operation instanceof \SqlParser\Lexer\Token, 'A HANDLER statement has an operation keyword.');
+            return new RejectedInput(new ProgramProblem(ProgramRule::BadStatement, 'HANDLER'), $operation->end(), true);
+        }
         $kind = match ($node->name) {
             'sp_tail' => 'PROCEDURE',
             'sf_tail' => 'FUNCTION',

@@ -246,6 +246,9 @@ final class ProgramRestrictionsTest extends TestCase
      */
     public static function providerAnywhereAnswersTheProblemOfTheStatement(): iterable
     {
+        foreach (['HANDLER t OPEN', 'HANDLER t CLOSE', 'HANDLER t READ NEXT', 'HANDLER t READ a FIRST', 'HANDLER t READ a = (1)'] as $statement) {
+            yield $statement => [$statement, 'HANDLER is not allowed in stored procedures'];
+        }
         yield 'LOCK TABLES' => ['LOCK TABLES t READ', 'LOCK is not allowed in stored procedures'];
         yield 'UNLOCK TABLES' => ['UNLOCK TABLES', 'UNLOCK is not allowed in stored procedures'];
         yield 'ALTER VIEW' => ['ALTER VIEW v AS SELECT 1', 'ALTER VIEW is not allowed in stored procedures'];

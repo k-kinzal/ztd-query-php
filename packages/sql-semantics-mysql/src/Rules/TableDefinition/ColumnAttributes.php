@@ -28,7 +28,37 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 final class ColumnAttributes
 {
     /**
-     * Answers incompatible column attributes in declaration order.
+     * Names the first attribute, or the SERIAL type, excluded from a generated column.
+     *
+     * These declarations are rejected even inside an unreachable stored instruction.
+     * Verified on MySQL 5.7.44 and 8.4.7 using CREATE and ALTER TABLE.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute> $attributes The attributes in written order
+     */
+    public function generated(\SqlSemantics\Platform\MySql\Statement\Type\TypeName $type, array $attributes): ?string
+    {
+        foreach ($attributes as $attribute) {
+            $word = match (true) {
+                $attribute instanceof DefaultLiteral, $attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression => 'DEFAULT',
+                $attribute instanceof OnUpdate => 'ON UPDATE',
+                $attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute && in_array($attribute->keyword, [\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::AutoIncrement, \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::SerialDefaultValue], true) => $attribute->keyword->value,
+                $attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\FormatAttribute => 'COLUMN_FORMAT',
+                $attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute => 'STORAGE',
+                default => null,
+            };
+            if ($word !== null) {
+                return $word;
+            }
+        }
+
+        return $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Elementary && $type->kind === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Serial ? 'SERIAL' : null;
+    }
+
+    /**
+     * Answers incompatible effective column attributes in declaration order.
+     *
+     * The last DEFAULT and ON UPDATE clauses replace earlier clauses, including
+     * an incompatible clock expression. Verified on MySQL 8.4.7.
      *
      * @return list<InvalidColumnAttribute>
      */
@@ -36,7 +66,20 @@ final class ColumnAttributes
     {
         $problems = [];
         $type = $column->specification->dataType();
-        foreach ($column->specification->columnAttributes() as $attribute) {
+        $attributes = $column->specification->columnAttributes();
+        $default = null;
+        $update = null;
+        foreach ($attributes as $position => $attribute) {
+            if ($attribute instanceof DefaultLiteral || $attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression) {
+                $default = $position;
+            } elseif ($attribute instanceof OnUpdate) {
+                $update = $position;
+            }
+        }
+        foreach ($attributes as $position => $attribute) {
+            if ($attribute instanceof DefaultLiteral && $position !== $default || $attribute instanceof OnUpdate && $position !== $update) {
+                continue;
+            }
             if ($attribute instanceof SridAttribute && !$type instanceof Spatial) {
                 $problems[] = new InvalidColumnAttribute($column->name->column, 'SRID');
             }

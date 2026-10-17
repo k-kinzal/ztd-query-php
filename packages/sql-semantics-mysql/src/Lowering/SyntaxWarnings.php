@@ -137,7 +137,7 @@ final class SyntaxWarnings
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) {
                     $failure = new \SqlSemantics\Construction\RejectedInput((new Utility\Set\SyntaxNames())->scoped($tree, $failure->problem, $lowering), $failure->end, $failure->aborts);
                 }
-                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && in_array($failure->problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ArrayCast, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::RecursiveCreate, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::EventRecursion], true)) {
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && in_array($failure->problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadStatement, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ArrayCast, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::RecursiveCreate, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::EventRecursion], true)) {
                     $failure = (new Routine\RefusedBodyHeader())->wrap($tree, $failure, $lowering);
                 }
                 return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;

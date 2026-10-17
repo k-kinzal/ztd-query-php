@@ -47,6 +47,26 @@ final class NoticeHeaderTest extends TestCase
         self::assertInstanceOf(EmptyEventAlteration::class, $notice->problem->problem);
     }
 
+    public function testObserveRefusesAHandlerReadBeforeItsOperandsAndLaterSyntax(): void
+    {
+        $sql = 'CREATE PROCEDURE db.p() BEGIN IF 0 THEN HANDLER t READ NEXT WHERE ABS(); END IF; BOGUS; END';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+        $notice = $notices[0][1];
+
+        self::assertInstanceOf(ParseFailure::class, $notice);
+        self::assertInstanceOf(RefusedProgramBody::class, $notice->problem);
+        self::assertSame('db', $notice->problem->name->schema?->value);
+        self::assertSame('HANDLER is not allowed in stored procedures', $notice->problem->problem->message());
+        self::assertTrue($notice->aborts);
+    }
+
+    public function testObserveLeavesDeclaredConditionHandlersAvailable(): void
+    {
+        $sql = 'CREATE PROCEDURE db.p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; END';
+
+        self::assertSame([], (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847)));
+    }
+
     public function testScopedLeavesStandaloneStatementsUnwrapped(): void
     {
         $notice = new ParseFailure(new EmptyEventAlteration(new QualifiedName(new Name('e'))), true);

@@ -37,6 +37,14 @@ final class BodyStructureTest extends TestCase
         self::assertSame(ProgramRule::CommitInFunction, (new BodyStructure())->problem($body, ProgramKind::Function, new QualifiedName(new Name('f')))?->rule);
     }
 
+    public function testCheckRejectsAHandlerStatementInAnUnreachableBranch(): void
+    {
+        $body = new IfStatement([new ConditionalBranch(new NumberLiteral('0'), [new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose(new Name('t'))])]);
+        $this->expectExceptionMessage('HANDLER is not allowed in stored procedures');
+
+        (new BodyStructure())->check($body, ProgramKind::Procedure, new QualifiedName(new Name('p')));
+    }
+
     public function testContainedDependsOnTheDeclarationKind(): void
     {
         $rules = new BodyStructure();

@@ -56,6 +56,7 @@ final class GeneratedColumn implements ColumnSpecification
         public readonly ?References $references = null,
     ) {
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->generated($type, $this->attributes) === null, 'A generated column cannot have a DEFAULT, ON UPDATE, AUTO_INCREMENT, SERIAL DEFAULT VALUE, COLUMN_FORMAT, STORAGE or SERIAL type.');
     }
 
     /**
@@ -81,6 +82,9 @@ final class GeneratedColumn implements ColumnSpecification
      */
     public function deriveSpecification(Derivation $derivation, Environment $scope): void
     {
+        if ($this->collation !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts())->encoding($this->collation, $derivation, $this);
+        }
         $derivation->scalar($this->expression, $scope);
         foreach ($this->attributes as $attribute) {
             $attribute->deriveAttribute($derivation, $scope);

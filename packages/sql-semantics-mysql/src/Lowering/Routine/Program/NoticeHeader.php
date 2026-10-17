@@ -46,21 +46,27 @@ final class NoticeHeader
                 $this->name = $lowering->names->qualified($node);
                 $this->nameEnd = (new SourceRanges())->span($node)[1] ?? 0;
             }
-            if ($this->kind !== null || $this->name === null) {
+            if ($this->name === null) {
                 return null;
             }
-            if ($node->name === 'sp_c_chistics') {
+            if ($this->kind === null && $node->name === 'sp_c_chistics') {
                 $function = array_filter($tokens, fn (Token $token): bool => $token->offset < $this->nameEnd && strtoupper($token->text) === 'FUNCTION') !== [];
                 $this->kind = $function ? ProgramKind::Function : ProgramKind::Procedure;
-            } elseif ($node->name === 'trigger_follows_precedes_clause' || $node->name === 'trg_event') {
+            } elseif ($this->kind === null && ($node->name === 'trigger_follows_precedes_clause' || $node->name === 'trg_event')) {
                 $this->kind = ProgramKind::Trigger;
-            } elseif ($node->name === 'opt_ev_comment' && $lookahead->name === 'DO_SYM') {
+            } elseif ($this->kind === null && $node->name === 'opt_ev_comment' && $lookahead->name === 'DO_SYM') {
                 $this->kind = ProgramKind::Event;
             }
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             return $failure;
         }
 
+        $legacy = in_array($lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        $failure = $this->kind === null ? null : (new SyntaxDefinitions())->handler($node, $lookahead, $tokens, $legacy);
+        if ($failure !== null) {
+            \SqlSemantics\Diagnostic\Check::invariant($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem, 'A stored HANDLER has a program restriction.');
+            return new \SqlSemantics\Construction\RejectedInput(new RefusedProgramBody($this->name, $this->kind, $failure->problem, $this->definer, nameEnd: $this->nameEnd), $failure->end, true);
+        }
         return null;
     }
 

@@ -97,6 +97,11 @@ final class ProgramRestrictions
     public function anywhere(Statement $statement): ?ProgramProblem
     {
         return match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek => new ProgramProblem(ProgramRule::BadStatement, 'HANDLER'),
             $statement instanceof LockTables => new ProgramProblem(ProgramRule::BadStatement, 'LOCK'),
             $statement instanceof UnlockTables => new ProgramProblem(ProgramRule::BadStatement, 'UNLOCK'),
             $statement instanceof AlterView => new ProgramProblem(ProgramRule::BadStatement, 'ALTER VIEW'),

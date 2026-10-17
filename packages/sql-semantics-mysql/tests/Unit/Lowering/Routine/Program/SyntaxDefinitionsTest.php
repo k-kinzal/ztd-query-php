@@ -20,6 +20,30 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
 #[Medium]
 final class SyntaxDefinitionsTest extends TestCase
 {
+    public function testHandlerRecognizesTheOperationBoundaryWithoutItsFollowingOperands(): void
+    {
+        $tree = (new MySqlParser('mysql-8.4.7'))->parse('HANDLER t READ NEXT');
+        $node = $tree->find('handler_stmt')[0];
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $node->children[1]);
+        self::assertInstanceOf(\SqlParser\Lexer\Token::class, $node->children[2]);
+        $failure = (new SyntaxDefinitions())->handler($node->children[1], $node->children[2], $tree->tokens());
+
+        self::assertSame('HANDLER is not allowed in stored procedures', $failure?->problem->message());
+        self::assertSame(strlen('HANDLER t READ'), $failure->end);
+        self::assertTrue($failure->aborts);
+        self::assertNull((new SyntaxDefinitions())->handler($node->children[1], $node->children[2], $tree->tokens(), false));
+        self::assertSame('HANDLER is not allowed in stored procedures', (new SyntaxDefinitions())->handler($node, $node->children[2], $tree->tokens(), false)?->problem->message());
+    }
+
+    public function testRejectedPreservesAHandlerRestrictionBeforeItsInvalidOperands(): void
+    {
+        $tree = (new MySqlParser('mysql-8.4.7'))->parse('CREATE PROCEDURE d.p() HANDLER t READ NEXT WHERE ABS()');
+        $failure = (new SyntaxWarnings())->rejected($tree, new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertInstanceOf(RefusedProgramBody::class, $failure?->problem);
+        self::assertSame('HANDLER is not allowed in stored procedures', $failure->problem->problem->message());
+    }
+
     public function testRejectedPreservesTheOuterHeaderBeforeANestedFunctionOperand(): void
     {
         $sql = "CREATE PROCEDURE d.p() CREATE DEFINER='u'@'localhost' FUNCTION f() RETURNS INT RETURN CAST(1 AS SIGNED ARRAY)";

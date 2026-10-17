@@ -10,20 +10,11 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Spine;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\FormatAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Scalar;
 
@@ -152,21 +143,9 @@ final class ColumnRule
      */
     public function refuse(array $attributes, TypeName $type): void
     {
-        foreach ($attributes as $attribute) {
-            $word = match (true) {
-                $attribute instanceof DefaultLiteral, $attribute instanceof DefaultExpression => 'DEFAULT',
-                $attribute instanceof OnUpdate => 'ON UPDATE',
-                $attribute instanceof KeywordAttribute && ($attribute->keyword === ColumnKeyword::AutoIncrement || $attribute->keyword === ColumnKeyword::SerialDefaultValue) => $attribute->keyword->value,
-                $attribute instanceof FormatAttribute => 'COLUMN_FORMAT',
-                $attribute instanceof StorageAttribute => 'STORAGE',
-                default => null,
-            };
-            if ($word !== null) {
-                throw new AnalysisException('Incorrect usage of ' . $word . ' and generated column');
-            }
-        }
-        if ($type instanceof Elementary && $type->kind === ElementaryKind::Serial) {
-            throw new AnalysisException('Incorrect usage of SERIAL and generated column');
+        $word = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->generated($type, $attributes);
+        if ($word !== null) {
+            throw new AnalysisException('Incorrect usage of ' . $word . ' and generated column');
         }
     }
 
