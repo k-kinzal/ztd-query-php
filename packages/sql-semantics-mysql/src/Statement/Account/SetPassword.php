@@ -46,10 +46,11 @@ final class SetPassword implements Statement
     }
 
     /**
-     * Derives nothing: the statement names no relation and no expression.
+     * Derives the retained password function notice.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $this->password?->derivePassword($derivation);
     }
 
     /**

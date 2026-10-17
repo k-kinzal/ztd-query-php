@@ -38,6 +38,18 @@ final class LoadNoticesTest extends TestCase
         self::assertSame([], $session->diagnostics->conditions);
     }
 
+    public function testDiscardsAnUnreachedPasswordAssignmentOnInitialLoad(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("CREATE DATABASE d; CREATE PROCEDURE d.p() BEGIN IF FALSE THEN SET PASSWORD = OLD_PASSWORD('text'); END IF; END");
+        $session->query('CALL d.p()');
+        self::assertSame([], $session->diagnostics->conditions);
+        $session->query('SELECT OLD_PASSWORD(1); CALL d.p()');
+        self::assertSame([1287], array_column($session->diagnostics->conditions, 1));
+        $session->query("ALTER PROCEDURE d.p COMMENT 'changed'; SELECT OLD_PASSWORD(1); CALL d.p()");
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testRecordFollowsSessionLoadsAndRoutineInvalidation(): void
     {
         $instance = new Instance();

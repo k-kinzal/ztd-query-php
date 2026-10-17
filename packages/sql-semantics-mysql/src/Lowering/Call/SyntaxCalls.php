@@ -34,7 +34,7 @@ final class SyntaxCalls
             return \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::spatialWarning('CONTAINS', $release);
         }
         $construct = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::OldPassword;
-        return $node->name === 'function_call_conflict' && $first->name === 'OLD_PASSWORD' && $construct->warnedIn($release) ? $construct : null;
+        return in_array($node->name, ['function_call_conflict', 'text_or_password'], true) && $first->name === 'OLD_PASSWORD' && $construct->warnedIn($release) ? $construct : null;
     }
 
     /**

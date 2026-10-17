@@ -30,4 +30,12 @@ final class PasswordTest extends TestCase
 
         new Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('ab', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
     }
+    public function testDerivePasswordReportsTheLegacyFunctionWithoutParsing(): void
+    {
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]));
+        (new Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('pw'), \SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::OldPassword))->derivePassword($derivation);
+        self::assertCount(1, $derivation->facts()->warnings);
+        self::assertSame("'OLD_PASSWORD' is deprecated and will be removed in a future release. Please use PASSWORD instead", $derivation->facts()->warnings[0]->message());
+    }
+
 }

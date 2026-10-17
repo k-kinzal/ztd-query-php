@@ -89,6 +89,11 @@ final class CredentialsTest extends TestCase
         self::assertSame('*7B9EBEED26AA52ED10C0F549FA863F13C39E0209', (new Credentials(\SqlSemantics\Contract\GrammarRelease::MySql5744))->hash('mysql_native_password', 'p'));
     }
 
+    public function testHashKeepsTheOldPluginDistinctFromTheNativePlugin(): void
+    {
+        self::assertSame('60671c896665c3fa', (new Credentials(\SqlSemantics\Contract\GrammarRelease::MySql5651))->hash('mysql_old_password', 'a'));
+    }
+
     public function testCheckRefusesAMySqlNativePasswordStringOfAnotherLength(): void
     {
         $this->expectException(SqlError::class);

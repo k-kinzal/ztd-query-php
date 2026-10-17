@@ -92,7 +92,10 @@ final class Credentials
         if ($password === '') {
             return '';
         }
-        if ($plugin === 'mysql_native_password' || $plugin === 'mysql_old_password') {
+        if ($plugin === 'mysql_old_password') {
+            return (new LegacyPassword())->hash($password);
+        }
+        if ($plugin === 'mysql_native_password') {
             return '*' . strtoupper(sha1(sha1($password, true)));
         }
         $salt = '';

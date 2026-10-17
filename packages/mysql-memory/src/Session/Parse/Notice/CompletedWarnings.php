@@ -26,7 +26,7 @@ final class CompletedWarnings
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
         $warnings = [];
         foreach ((new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout) as [$offset, $notice]) {
-            if ($notice instanceof HeartbeatPeriod || $notice === Deprecated::FlushQueryCache) {
+            if ($notice instanceof HeartbeatPeriod || in_array($notice, [Deprecated::FlushQueryCache, Deprecated::OldPassword], true)) {
                 $warnings[$offset] = $notice;
             }
         }

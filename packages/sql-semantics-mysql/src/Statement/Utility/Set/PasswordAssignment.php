@@ -17,8 +17,8 @@ use SqlSemantics\Statement\Snapshot;
  * as one item of the SET list; it assigns the password of the account, or
  * of the current user without FOR, in order with the other items. A SET
  * whose only item is a password is the account statement SET PASSWORD of
- * the account family. Facts: none; the password is a literal or a hashing
- * call the account family models. Terminates: the parts are leaves.
+ * the account family. Facts retain the password function notice; the password is a literal
+ * or a hashing call the account family models. Terminates: the parts are leaves.
  * Source: https://dev.mysql.com/doc/refman/5.6/en/set-password.html,
  * https://dev.mysql.com/doc/refman/5.6/en/set-variable.html.
  * Status: Implemented.
@@ -41,10 +41,11 @@ final class PasswordAssignment implements SetItem
     }
 
     /**
-     * Derives nothing: the parts are literals and account names.
+     * Derives the retained password function notice.
      */
     public function deriveItem(Derivation $derivation): void
     {
+        $this->password->derivePassword($derivation);
     }
 
     /**

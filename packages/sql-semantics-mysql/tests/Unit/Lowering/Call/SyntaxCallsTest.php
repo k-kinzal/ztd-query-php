@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
 final class SyntaxCallsTest extends TestCase
 {
     #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', 'SELECT OLD_PASSWORD((1,2))', 'function_call_conflict', 'PASSWORD'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', "SET PASSWORD = OLD_PASSWORD('text')", 'text_or_password', 'PASSWORD'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['5.7.44', 'SELECT CONTAINS((1,2),NULL)', 'geometry_function', 'MBRCONTAINS'])]
     public function testDeprecationKeepsKeywordNoticesBeforeOperandRefusals(string $release, string $sql, string $production, string $replacement): void
     {

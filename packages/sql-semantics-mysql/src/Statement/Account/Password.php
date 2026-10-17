@@ -36,6 +36,16 @@ final class Password implements Node
     }
 
     /**
+     * Records the versioned notice of the retained password function.
+     */
+    public function derivePassword(\SqlSemantics\Construction\Derivation $derivation): void
+    {
+        if ($this->function === PasswordFunction::OldPassword) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::OldPassword, $derivation, $this);
+        }
+    }
+
+    /**
      * Writes the string, inside its function when one is written.
      */
     public function render(Output $out): void

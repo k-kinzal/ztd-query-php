@@ -98,7 +98,7 @@ final class LoadNotices
                 return true;
             }
         }
-        return false;
+        return array_filter((new Walker())->find($routine->statement, \SqlSemantics\Platform\MySql\Statement\Account\Password::class), static fn ($password): bool => $password->function === \SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::OldPassword) !== [];
     }
 
 }

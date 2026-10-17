@@ -31,9 +31,9 @@ use SqlSemantics\Statement\Operation;
  * which must match for the account of the session and is refused for another account. TO RANDOM
  * answers the generated password (verified on a live 8.4 server). MySQL 5.7 warns that the PASSWORD()
  * form is deprecated (verified on a live 5.7.44 server). MySQL 5.6 takes a string as the hash
- * itself, which must be empty or have 41 characters starting with `*` (ER_PASSWD_LENGTH), and
- * hashes the text of PASSWORD(); OLD_PASSWORD() makes a hash of 16 digits, which it refuses
- * likewise (verified on a live 5.6.51 server).
+ * itself. The recipient plugin determines its format: mysql_native_password accepts 41
+ * characters starting with `*`, mysql_old_password accepts 16 characters and warns, and
+ * sha256_password requires its own hash format (verified on a live 5.6.51 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-password.html.
  *
  * @visibility MySqlMemory
@@ -55,7 +55,7 @@ final class SetPasswordCommand implements Command
             throw AccountError::PasswordNoMatch->error();
         }
         $checked = clone $account;
-        $this->legacy($checked, new SetPassword($item->user, $item->password));
+        $this->legacy($checked, new SetPassword($item->user, $item->password), $session);
 
         return static function () use ($account, $checked, $session): void {
             $session->transaction->commit();
@@ -76,25 +76,33 @@ final class SetPasswordCommand implements Command
     }
 
     /**
-     * Sets the password as MySQL 5.6 does: PASSWORD() hashes the text, and a string is the hash itself, which must be empty or have 41 characters starting with `*`; OLD_PASSWORD() makes a hash of 16 digits, which is refused.
+     * Checks the computed or literal hash against the recipient plugin before assigning it.
      *
      * @throws SqlError When the hash does not have the form
      */
-    public function legacy(Account $account, SetPassword $statement): void
+    public function legacy(Account $account, SetPassword $statement, Session $session): void
     {
         $text = $statement->password->text->value ?? '';
         $function = $statement->password?->function;
-        if ($function === PasswordFunction::Password) {
-            $account->hash = (new Credentials(GrammarRelease::MySql5651))->hash('mysql_native_password', $text);
-            $account->password = $text;
-
-            return;
+        $credentials = new Credentials(GrammarRelease::MySql5651);
+        $hash = match ($function) {
+            PasswordFunction::Password => $credentials->hash('mysql_native_password', $text),
+            PasswordFunction::OldPassword => $credentials->hash('mysql_old_password', $text),
+            null => $text,
+        };
+        $length = $account->plugin === 'mysql_old_password' ? 16 : 41;
+        if (in_array($account->plugin, ['mysql_old_password', 'mysql_native_password'], true)) {
+            if ($hash !== '' && (strlen($hash) !== $length || ($length === 41 && $hash[0] !== '*'))) {
+                throw AccountError::PasswordLength->error($length);
+            }
+        } elseif ($hash !== '' && !str_starts_with($hash, '$5$')) {
+            throw AccountError::PasswordFormat->error("The password hash doesn't have the expected format. Check if the correct password algorithm is being used with the PASSWORD() function.");
         }
-        if (($function === PasswordFunction::OldPassword && $text !== '') || ($function === null && $text !== '' && (strlen($text) !== 41 || $text[0] !== '*'))) {
-            throw AccountError::PasswordLength->error(41);
+        if ($length === 16 && $hash !== '') {
+            $session->diagnostics->warning(1287, "'pre-4.1 password hash' is deprecated and will be removed in a future release. Please use post-4.1 password hash instead");
         }
-        $account->hash = $text;
-        $account->password = $text === '' ? '' : null;
+        $account->hash = $hash;
+        $account->password = $text === '' || $function !== null ? $text : null;
     }
 
     /**
@@ -123,7 +131,7 @@ final class SetPasswordCommand implements Command
         $credentials = new Credentials($session->settings()->release());
         $password = $statement->password === null ? $credentials->generate((int) $session->variables->read('generated_random_password_length')) : $statement->password->text->value;
         if ($session->settings()->release() === GrammarRelease::MySql5651) {
-            $this->legacy($account, $statement);
+            $this->legacy($account, $statement, $session);
         } else {
             (new \MySqlMemory\Account\SecondaryPassword())->change($account, $account->plugin, $password === '', $statement->retainCurrent);
             $account->hash = $credentials->hash($account->plugin, $password);
