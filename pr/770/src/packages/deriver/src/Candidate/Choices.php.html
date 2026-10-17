@@ -79,7 +79,7 @@
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">alternatives</span>(<span class="tok-id">Term</span> <span class="tok-var">$value</span>): <span class="tok-id">Generator</span></span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    {</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-var">$cursor</span> = <span class="tok-kw">new</span> <span class="tok-id">Enumeration\Cursor</span>(<span class="tok-var">$value</span>);</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-var">$cursor</span> = <span class="tok-kw">new</span> <span class="tok-id">Enumeration\Enumerator</span>(<span class="tok-var">$value</span>);</span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-kw">while</span> ((<span class="tok-var">$next</span> = <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">next</span>()) !== <span class="tok-id">null</span>) {</span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            <span class="tok-kw">yield</span> <span class="tok-var">$next</span>;</span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        }</span>

@@ -46,7 +46,7 @@
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Candidate\Derivation</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Candidate\Frame</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Candidate\Memory\Mutations</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Candidate\Index\BodyIndex</span>;</span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Candidate\Storage</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
@@ -76,8 +76,8 @@
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>                <span class="tok-kw">if</span> (<span class="tok-var">$write</span>-&gt;<span class="tok-id">operation</span> === <span class="tok-str">&#039;alias&#039;</span>) {</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>                    <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>                }</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>                <span class="tok-kw">if</span> (<span class="tok-id">Mutations</span>::<span class="tok-id">writes</span>(<span class="tok-var">$write</span>)) {</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>                    <span class="tok-var">$root</span> = <span class="tok-id">Mutations</span>::<span class="tok-id">root</span>(<span class="tok-var">$frame</span>-&gt;<span class="tok-id">graph</span>, <span class="tok-var">$write</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>                <span class="tok-kw">if</span> (<span class="tok-id">BodyIndex</span>::<span class="tok-id">writes</span>(<span class="tok-var">$write</span>)) {</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>                    <span class="tok-var">$root</span> = <span class="tok-var">$frame</span>-&gt;<span class="tok-id">graph</span>-&gt;<span class="tok-id">root</span>(<span class="tok-var">$write</span>);</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>                    <span class="tok-kw">if</span> (<span class="tok-var">$root</span> !== <span class="tok-id">null</span> &amp;&amp; (<span class="tok-var">$storage</span>-&gt;<span class="tok-id">key</span>(<span class="tok-var">$frame</span>, <span class="tok-var">$root</span>-&gt;<span class="tok-id">result</span>) === <span class="tok-var">$wanted</span> || <span class="tok-var">$root</span>-&gt;<span class="tok-id">operation</span> === <span class="tok-str">&#039;dynamic-local&#039;</span>)) {</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>                        <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>                    }</span>
