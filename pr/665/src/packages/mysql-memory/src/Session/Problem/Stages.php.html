@@ -267,15 +267,29 @@
 <span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a><span class="tok-com">     * IGNORE NULLS and FROM LAST are checked with window function arguments. Unsupported frames</span></span>
 <span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a><span class="tok-com">     * are checked after resolving names and refusing misplaced calls. Aggregate diagnostics with</span></span>
-<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a><span class="tok-com">     * an owning expression are located at the end of their own block by Locations</span></span>
-<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a><span class="tok-com">     * (verified on MySQL 8.0.44, 8.4.7 and 9.1.0).</span></span>
-<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">planned</span>(<span class="tok-id">Diagnostic</span> <span class="tok-var">$diagnostic</span>): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>    {</span>
-<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a>        <span class="tok-kw">return</span> <span class="tok-var">$diagnostic</span> <span class="tok-kw">instanceof</span> <span class="tok-id">UnsupportedWindowing</span> &amp;&amp; <span class="tok-var">$diagnostic</span>-&gt;<span class="tok-id">expression</span> === <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a>    }</span>
-<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a>}</span>
-<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a></span>
+<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a><span class="tok-com">     * an owning expression are located in their own window by Locations. A RANGE</span></span>
+<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a><span class="tok-com">     * boundary constraint remains after its ordering type and runtime offset checks.</span></span>
+<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a><span class="tok-com">     * ROWS with interval or parameter operands likewise prepares those inputs first</span></span>
+<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a><span class="tok-com">     * (verified on MySQL 8.0.44, 8.4.7 and 9.1.0).</span></span>
+<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">planned</span>(<span class="tok-id">Diagnostic</span> <span class="tok-var">$diagnostic</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a>    {</span>
+<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a>        <span class="tok-kw">if</span> (<span class="tok-var">$diagnostic</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint</span> &amp;&amp; !<span class="tok-var">$diagnostic</span>-&gt;<span class="tok-id">positional</span>) {</span>
+<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a>            <span class="tok-var">$frame</span> = <span class="tok-var">$diagnostic</span>-&gt;<span class="tok-id">window</span>-&gt;<span class="tok-id">frame</span>;</span>
+<span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a>            <span class="tok-kw">if</span> (<span class="tok-var">$frame</span>?-&gt;<span class="tok-id">unit</span> === <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit</span>::<span class="tok-id">Range</span>) {</span>
+<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a>                <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L241" data-diff="added"><a class="ln" href="#L241">241</a>            }</span>
+<span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a>            <span class="tok-kw">foreach</span> ([<span class="tok-var">$frame</span>?-&gt;<span class="tok-id">start</span>, <span class="tok-var">$frame</span>?-&gt;<span class="tok-id">end</span>] <span class="tok-kw">as</span> <span class="tok-var">$bound</span>) {</span>
+<span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a>                <span class="tok-kw">if</span> (<span class="tok-var">$bound</span> !== <span class="tok-id">null</span> &amp;&amp; (<span class="tok-var">$bound</span>-&gt;<span class="tok-id">unit</span> !== <span class="tok-id">null</span> || (<span class="tok-var">$bound</span>-&gt;<span class="tok-id">offset</span> !== <span class="tok-id">null</span> &amp;&amp; !<span class="tok-var">$bound</span>-&gt;<span class="tok-id">offset</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral</span>))) {</span>
+<span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a>                    <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>                }</span>
+<span class="src-line" id="L246" data-diff="added"><a class="ln" href="#L246">246</a>            }</span>
+<span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a>        }</span>
+<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a>        <span class="tok-kw">return</span> <span class="tok-var">$diagnostic</span> <span class="tok-kw">instanceof</span> <span class="tok-id">UnsupportedWindowing</span> &amp;&amp; <span class="tok-var">$diagnostic</span>-&gt;<span class="tok-id">expression</span> === <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>    }</span>
+<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>}</span>
+<span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
