@@ -198,7 +198,7 @@ final class CatalogFeedbackTest extends TestCase
                 new SourceFile($sourcePath, '<?php class DB {function query(){return "source";}} function helper(){return 3;} function target(){return [(new DB)->query(),helper()];}'),
             ]), new Configuration()));
             self::assertSame([], $session->snapshot()->diagnostics);
-            self::assertSame(['source',3], $session->derive(new ReturnQuery('target'))->candidates[0]->term->native());
+            self::assertSame(['source',3], $session->derive(new ReturnQuery('target'))[0]->term->native());
         }
     }
 

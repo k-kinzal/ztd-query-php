@@ -225,7 +225,11 @@ final class Session implements AnalysisSession
             }
         }
         $derived ??= throw new InvalidInputException('Unknown or released result reference for this session; retain the CandidateCollection while using explain().');
-        return array_merge(...array_map(static fn ($candidate): array => $candidate->evidence, $derived->candidates));
+        $evidence = [];
+        foreach ($derived as $candidate) {
+            array_push($evidence, ...$candidate->evidence);
+        }
+        return $evidence;
     }
 
     /**

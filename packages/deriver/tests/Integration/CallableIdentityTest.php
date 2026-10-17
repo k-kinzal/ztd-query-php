@@ -39,10 +39,10 @@ final class CallableIdentityTest extends TestCase
         $lower = $session->derive(new ReturnQuery('script:a.php'));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($upper));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($lower));
-        self::assertCount(1, $upper->candidates);
-        self::assertCount(1, $lower->candidates);
-        self::assertSame(1, $upper->candidates[0]->term->native());
-        self::assertSame(2, $lower->candidates[0]->term->native());
+        self::assertCount(1, $upper);
+        self::assertCount(1, $lower);
+        self::assertSame(1, $upper[0]->term->native());
+        self::assertSame(2, $lower[0]->term->native());
     }
 
     /**
@@ -61,8 +61,8 @@ final class CallableIdentityTest extends TestCase
         $second = (new \Deriver\Session\Session($input, new Configuration(), parsing: $syntaxCache, lowering: $loweringCache))->derive(new ReturnQuery('target'));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($first));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($second));
-        self::assertSame([1,2], $first->candidates[0]->term->native());
-        self::assertSame([1,2], $second->candidates[0]->term->native());
+        self::assertSame([1,2], $first[0]->term->native());
+        self::assertSame([1,2], $second[0]->term->native());
     }
 
     /**
@@ -93,8 +93,8 @@ final class CallableIdentityTest extends TestCase
         self::assertSame('a.php', $calls[1]->source->path);
         $upper = $session->derive(new ValueQuery($calls[0]->argument(0)));
         $lower = $session->derive(new ValueQuery($calls[1]->argument(0)));
-        self::assertSame(1, $upper->candidates[0]->term->native());
-        self::assertSame(2, $lower->candidates[0]->term->native());
+        self::assertSame(1, $upper[0]->term->native());
+        self::assertSame(2, $lower[0]->term->native());
     }
 
     /**

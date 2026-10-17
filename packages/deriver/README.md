@@ -73,6 +73,8 @@ foreach ($candidates as $candidate) {
 echo $candidates->toJson();
 ```
 
+`CandidateCollection` supports read-only array access: `$candidates[0]->term` reads the first candidate's term. Offsets are zero-based integers; `isset($candidates[0])`, `count($candidates)` and `foreach` are supported. Reading a missing or non-integer offset throws `OutOfBoundsException`; use `$candidates[0] ?? null` when the set may be empty. Assignment, append and `unset` throw `RuntimeException`. The backing array is private; use `iterator_to_array($candidates)` when an array is needed.
+
 `analyze()` reads exactly the supplied files on each call, without executing them. It accepts file paths; directory traversal and wildcard expansion belong to the finder. Changed contents are captured on the next call, even when the same `Analyzer` is reused. Duplicate paths, unreadable files and malformed PHP raise `InvalidInputException`.
 
 This query retains both `SELECT * FROM default_table` and a concatenation with the unresolved formal parameter `table`. A formal parameter with no captured caller is unresolved, even when its declaration has a default. At an actual call that omits the argument, the default applies.
@@ -173,7 +175,7 @@ The public API is `Finder`, `Analyzer`, `Deriver\Query`, `AnalysisSession`, `Rep
 `Configuration` no longer accepts `models`, `providers`, `domains`, `intrinsics` or `stateSlots`; those are contributed by the library. `ObservationProvider::queries()` receives a `CapturedProject`, the read-only view every session implements.
 
 
-`Analyzer::open()` has been removed. Pass a list of file paths and a selector string to `Analyzer::analyze($files, $query)`, which returns `CandidateCollection`. Replace `new ReturnQuery('name')` with `'name#return'` and `new ParameterQuery('name', 'parameter')` with `'name#parameter(parameter)'`. Supply configuration through `new Analyzer($configuration)`. File discovery belongs to `Finder`; callers no longer need to construct a `ProjectInput` to analyze files. Iterate its candidates or read `candidates`; replace `normalOutcomes[*]->values['return']` with each candidate's `result` or `term`. Inspect each candidate's evidence instead of a global `frontiers` or `candidateGraph` field. Normal JSON no longer includes execution states, normal/exceptional outcomes or an assessment wrapper.
+`Analyzer::open()` has been removed. Pass a list of file paths and a selector string to `Analyzer::analyze($files, $query)`, which returns `CandidateCollection`. Replace `new ReturnQuery('name')` with `'name#return'` and `new ParameterQuery('name', 'parameter')` with `'name#parameter(parameter)'`. Supply configuration through `new Analyzer($configuration)`. File discovery belongs to `Finder`; callers no longer need to construct a `ProjectInput` to analyze files. Iterate the collection or read `$collection[0]`; replace `$collection->candidates[$index]` with `$collection[$index]` and `normalOutcomes[*]->values['return']` with each candidate's `result` or `term`. Inspect each candidate's evidence instead of a global `frontiers` or `candidateGraph` field. Normal JSON no longer includes execution states, normal/exceptional outcomes or an assessment wrapper.
 
 Applications intentionally using ordered execution analysis can construct `Deriver\ExecutionSession($input, $configuration)` explicitly. That API retains `DerivationResult` and `ExecutionResultSet`; `Configuration::forExecution()` and the `analysisContract` option have been removed. The candidate engine never switches to execution analysis automatically.
 

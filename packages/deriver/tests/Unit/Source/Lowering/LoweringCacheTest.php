@@ -191,9 +191,9 @@ final class LoweringCacheTest extends TestCase
         $trait = new SourceFile('trait.php', '<?php trait T{function f(){return 2;}}');
         $first = (new \Deriver\Session\Session(new ProjectInput([$trait,new SourceFile('consumer.php', '<?php class B{use T;}function target(){try{return (new B)->f();}catch(Error $e){return "private";}}')]), new \Deriver\Project\Configuration(), parsing: $syntaxCache, lowering: $loweringCache));
         $secondInput = new ProjectInput([$trait,new SourceFile('consumer.php', '<?php class B{use T{f as private;}}function target(){try{return (new B)->f();}catch(Error $e){return "private";}}')]);
-        self::assertSame(2, $first->derive(new ReturnQuery('target'))->candidates[0]->term->native());
-        self::assertSame('private', (new \Deriver\Session\Session($secondInput, new \Deriver\Project\Configuration(), parsing: $syntaxCache, lowering: $loweringCache))->derive(new ReturnQuery('target'))->candidates[0]->term->native());
-        self::assertSame(2, $first->derive(new ReturnQuery('target'))->candidates[0]->term->native());
+        self::assertSame(2, $first->derive(new ReturnQuery('target'))[0]->term->native());
+        self::assertSame('private', (new \Deriver\Session\Session($secondInput, new \Deriver\Project\Configuration(), parsing: $syntaxCache, lowering: $loweringCache))->derive(new ReturnQuery('target'))[0]->term->native());
+        self::assertSame(2, $first->derive(new ReturnQuery('target'))[0]->term->native());
     }
     public function testReadEvictsByAggregateRetentionCost(): void
     {

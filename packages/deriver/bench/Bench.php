@@ -42,8 +42,8 @@ function quality(CandidateCollection $result): array
 {
     return [
         'candidates' => count($result),
-        'analyzed' => count(array_filter($result->candidates, static fn ($candidate): bool => $candidate->type === CandidateStatus::Analyzed)),
-        'partials' => count(array_filter($result->candidates, static fn ($candidate): bool => $candidate->type === CandidateStatus::Partials)),
+        'analyzed' => count(array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type === CandidateStatus::Analyzed)),
+        'partials' => count(array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type === CandidateStatus::Partials)),
         'interrupted' => $result->interrupted,
         'statistics' => $result->statistics,
     ];
@@ -65,7 +65,7 @@ $query = new ReturnQuery('fixture0');
 $start = hrtime(true);
 $cold = $session->derive($query);
 $coldQuery = (hrtime(true) - $start) / 1e9;
-if ($cold->candidates[0]->result !== 1) {
+if ($cold[0]->result !== 1) {
     throw new RuntimeException('The benchmark produced an incorrect definite value.');
 }
 $queries = [];
@@ -75,7 +75,7 @@ for ($i = 2; $i < 34; $i++) {
     $start = hrtime(true);
     $result = $session->derive($queries[array_key_last($queries)]);
     $times[] = (hrtime(true) - $start) / 1e9;
-    if ($result->candidates[0]->result !== $i) {
+    if ($result[0]->result !== $i) {
         throw new RuntimeException('A benchmark query produced an incorrect definite value.');
     }
 }
@@ -118,7 +118,7 @@ foreach ($scenarios as $name => $program) {
     $start = hrtime(true);
     $result = (new Deriver\Session\Session(new ProjectInput([new SourceFile($name . '.php', $program)]), new Configuration(closedWorld: true)))->derive(new ReturnQuery('target', budget: new Budget(iterations: 256)));
     $expected = ['deep-helpers' => 2, 'repeated-helper' => 400, 'mutable-builder' => [['one', 'two'], ['three']]];
-    if (isset($expected[$name]) && $result->candidates[0]->type === CandidateStatus::Analyzed && $result->candidates[0]->result !== $expected[$name]) {
+    if (isset($expected[$name]) && $result[0]->type === CandidateStatus::Analyzed && $result[0]->result !== $expected[$name]) {
         throw new RuntimeException('A benchmark scenario produced an incorrect definite value: ' . $name);
     }
     $scenarioResults[$name] = ['seconds' => (hrtime(true) - $start) / 1e9, ...quality($result)];

@@ -42,7 +42,7 @@ final class DemandTest extends TestCase
         $s = C::session('function target(){observe(1,2);}');
         $site = $s->callsTo('observe')[0];
         $r = $s->derive(new \Deriver\Query\TupleQuery($site->beforeInvocation(), ['left' => $site->argument(0),'right' => $site->argument(1)]));
-        self::assertSame(['left','right'], array_keys($r->candidates[0]->term->operands));
+        self::assertSame(['left','right'], array_keys($r[0]->term->operands));
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
@@ -50,7 +50,7 @@ final class DemandTest extends TestCase
     public function testReturnsRetainsConditionalImplementations(): void
     {
         $result = \Tests\Fake\CandidateApi::returns('if($flag){function target(){return 1;}}else{function target(){return 2;}}');
-        self::assertSame([1,2], array_column($result->candidates, 'result'));
+        self::assertSame([1,2], array_column(iterator_to_array($result, false), 'result'));
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
@@ -69,6 +69,6 @@ final class DemandTest extends TestCase
         $r = C::session('function target(){return 1;}')->derive(new \Deriver\Query\ReturnQuery('target'));
         self::assertSame([1], C::native($r));
         $missing = C::session('function target(){return missing();}')->derive(new \Deriver\Query\ReturnQuery('target'));
-        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $missing->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $missing[0]->type);
     }
 }

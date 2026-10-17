@@ -20,7 +20,7 @@ final class ReplayMutations
      */
     public function apply(CandidateCollection $result, string $mutation): string
     {
-        $candidates = $result->candidates;
+        $candidates = iterator_to_array($result, false);
         if ($mutation === 'caller') {
             $first = $candidates[0];
             $remaining = array_slice($first->evidence, 0, -1);

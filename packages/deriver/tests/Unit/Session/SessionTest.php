@@ -19,8 +19,8 @@ final class SessionTest extends TestCase
     public function testDeriveKeepsPartialExpressions(): void
     {
         $result = A::returns('function target($x){return 1+$x;}');
-        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[0]->type);
-        self::assertSame(1, $result->candidates[0]->term->operands[0]->native());
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result[0]->type);
+        self::assertSame(1, $result[0]->term->operands[0]->native());
     }
 
     /**
@@ -30,7 +30,7 @@ final class SessionTest extends TestCase
     {
         $session = A::session('function target(){return 1;}function other(){return 2;}');
         $results = $session->deriveMany([new ReturnQuery('other'),new ReturnQuery('target')]);
-        self::assertSame([2,1], array_map(static fn ($result) => $result->candidates[0]->result, $results->results));
+        self::assertSame([2,1], array_map(static fn ($result) => $result[0]->result, $results->results));
     }
 
     /**
@@ -64,7 +64,7 @@ final class SessionTest extends TestCase
         $session = A::session();
         $result = $session->derive(new ReturnQuery('target'));
         $session->remember($result);
-        self::assertSame($result->candidates[0]->evidence, $session->explain($result->reference));
+        self::assertSame($result[0]->evidence, $session->explain($result->reference));
     }
 
     /**
@@ -134,7 +134,7 @@ final class SessionTest extends TestCase
     {
         $session = A::session();
         $reference = $session->expression('candidate.php', 31, 33);
-        self::assertSame(42, $session->derive(new \Deriver\Query\ValueQuery($reference))->candidates[0]->result);
+        self::assertSame(42, $session->derive(new \Deriver\Query\ValueQuery($reference))[0]->result);
     }
 
     /**

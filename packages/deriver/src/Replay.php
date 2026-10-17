@@ -20,7 +20,7 @@ use JsonException;
  *     $query = new \Deriver\Query\ReturnQuery('f');
  *     $result = (new \Deriver\Session\Session($input, $config))->derive($query);
  *     (new \Deriver\Replay())->verify($result->toJson(), $input, $config, $query);
- *     $result->candidates[0]->result // => 42
+ *     $result[0]->result // => 42
  * @visibility public
  */
 class Replay

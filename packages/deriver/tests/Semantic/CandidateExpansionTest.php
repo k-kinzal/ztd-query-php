@@ -72,7 +72,7 @@ final class CandidateExpansionTest extends TestCase
     {
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('fixture.php', '<?php ' . $source)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('f'));
-        self::assertSame($expected, array_map(static fn ($candidate) => $candidate->result, $result->candidates));
+        self::assertSame($expected, array_map(static fn ($candidate) => $candidate->result, iterator_to_array($result, false)));
         foreach ($result as $candidate) {
             self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $candidate->type);
             self::assertSame('observation', $candidate->evidence[0]->root->kind);
@@ -100,7 +100,7 @@ final class CandidateExpansionTest extends TestCase
                 $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('fixture.php', $source)]), new \Deriver\Project\Configuration()));
                 $result = $session->derive(new ValueQuery($session->callsTo('observe')[0]->argument(0)));
                 self::assertCount(1, $result);
-                self::assertSame('SELECT 1', $result->candidates[0]->result);
+                self::assertSame('SELECT 1', $result[0]->result);
                 self::assertLessThan(20, $result->statistics->referenceExpansions);
             }
         }
@@ -114,9 +114,9 @@ final class CandidateExpansionTest extends TestCase
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('fixture.php', '<?php function f($a,$b){return $a?10:($b?20:30);}') ]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('f', budget: new Budget(maxCandidates: 2)));
         self::assertCount(2, $result);
-        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[1]->type);
-        self::assertSame('unexpanded-choice', $result->candidates[1]->term->kind);
-        $values = iterator_to_array((new \Deriver\Candidate\Choices())->alternatives($result->candidates[1]->term->operands[0]), false);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result[1]->type);
+        self::assertSame('unexpanded-choice', $result[1]->term->kind);
+        $values = iterator_to_array((new \Deriver\Candidate\Choices())->alternatives($result[1]->term->operands[0]), false);
         self::assertSame([20, 30], array_map(static fn ($row) => array_values($row[0]->operands)[0]->native(), $values));
     }
 }

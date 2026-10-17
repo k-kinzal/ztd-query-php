@@ -36,7 +36,7 @@ final class ModelsTest extends TestCase
      */
     public function testDemandUsesActualBindingsBeforeSelectingAPlan(): void
     {
-        self::assertSame(3, \Tests\Fake\CandidateApi::returns('function target(){return count([1,2,3]);}')->candidates[0]->result);
+        self::assertSame(3, \Tests\Fake\CandidateApi::returns('function target(){return count([1,2,3]);}')[0]->result);
     }
 
 }

@@ -56,8 +56,8 @@ final class OriginsTest extends TestCase
     public function testBindingEvidenceRetainsActualAndFormalRelation(): void
     {
         $result = \Tests\Fake\CandidateApi::returns('function target($x){return $x;}function caller(){return target(9);}');
-        self::assertSame(9, $result->forCaller('caller')->candidates[0]->result);
-        self::assertContains('argument-binding', array_column($result->candidates[0]->evidence[0]->nodes(), 'kind'));
+        self::assertSame(9, $result->forCaller('caller')[0]->result);
+        self::assertContains('argument-binding', array_column($result[0]->evidence[0]->nodes(), 'kind'));
     }
 
 }

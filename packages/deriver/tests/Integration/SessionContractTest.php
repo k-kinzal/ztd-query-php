@@ -111,7 +111,7 @@ final class SessionContractTest extends TestCase
         $two = $second->derive(new ReturnQuery('target'));
         self::assertSame($first->snapshot()->id, $second->snapshot()->id);
         self::assertSame($one->reference->id, $two->reference->id);
-        self::assertEquals($one->candidates, $two->candidates);
+        self::assertEquals(iterator_to_array($one, false), iterator_to_array($two, false));
     }
 
     /**

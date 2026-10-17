@@ -55,7 +55,7 @@ final class CandidateContractTest extends TestCase
      */
     public static function values(CandidateCollection $result, string $slot = 'value'): array
     {
-        return array_map(static fn ($candidate): Term => $candidate->term, $result->candidates);
+        return array_map(static fn ($candidate): Term => $candidate->term, iterator_to_array($result, false));
     }
 
     /**
@@ -110,7 +110,7 @@ final class CandidateContractTest extends TestCase
     public function testC02KeepsAnIdentifiableParameterAndItsExpression(): void
     {
         $result = self::argument(self::session('function sql($table){$sql="SELECT * FROM ".$table;observe($sql);}'));
-        self::assertCount(1, $result->candidates);
+        self::assertCount(1, $result);
         $value = self::values($result)[0];
         self::assertSame('concat', $value->kind);
         self::assertSame('SELECT * FROM ', $value->operands[0]->literal);
@@ -248,7 +248,7 @@ final class CandidateContractTest extends TestCase
         $site = $session->callsTo('query')[0];
         self::assertNotNull($site->receiver);
         $result = $session->derive(new TupleQuery($site->beforeInvocation(), ['receiver' => $site->receiver, 'sql' => $site->argument(0)], budget: new Budget(maxDepth: 1)));
-        $values = $result->candidates[0]->term->operands;
+        $values = $result[0]->term->operands;
         self::assertSame('PDO', $values['receiver']->attributes['type']);
         self::assertSame('concat', $values['sql']->kind);
         self::assertSame('SELECT n = ', $values['sql']->operands[0]->literal);

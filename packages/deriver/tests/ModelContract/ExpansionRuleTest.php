@@ -31,9 +31,9 @@ final class ExpansionRuleTest extends TestCase
             $source = '<?php function expensive(){return missing();} function f(){return ' . $expression . ';}';
             $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('rule.php', $source)]), new Configuration(expansionRules: [$rule])));
             $result = $session->derive(new ReturnQuery('f'));
-            self::assertSame($expected, $result->candidates[0]->result);
+            self::assertSame($expected, $result[0]->result);
             self::assertSame([], $result->statistics->expandedBodies);
-            $nodes = $result->candidates[0]->evidence[0]->nodes();
+            $nodes = $result[0]->evidence[0]->nodes();
             $applications = array_values(array_filter($nodes, static fn ($node): bool => $node->kind === 'model-application'));
             self::assertCount(1, $applications);
             self::assertSame($rule->id, $applications[0]->attributes['id']);

@@ -35,12 +35,12 @@ final class CandidateEvidenceTest extends TestCase
         $source = '<?php function ttl(int $n){return $n+5;} function recipe(int $n){return ttl($n);} function controllerA(){return recipe(30);} function controllerB(){return recipe(60);}';
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('calls.php', $source)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('ttl'));
-        self::assertSame([35, 65], array_map(static fn ($candidate) => $candidate->result, $result->candidates));
+        self::assertSame([35, 65], array_map(static fn ($candidate) => $candidate->result, iterator_to_array($result, false)));
 
         $selected = $result->forCaller($caller);
         self::assertCount(1, $selected);
-        self::assertSame($expected, $selected->candidates[0]->result);
-        $kinds = array_column($selected->candidates[0]->evidence[0]->nodes(), 'kind');
+        self::assertSame($expected, $selected[0]->result);
+        $kinds = array_column($selected[0]->evidence[0]->nodes(), 'kind');
         self::assertContains('argument-binding', $kinds);
         self::assertContains('source-definition', $kinds);
         self::assertCount(0, $result->forCaller('absent'));
@@ -55,7 +55,7 @@ final class CandidateEvidenceTest extends TestCase
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('calls.php', $source)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('ttl'));
         self::assertCount(1, $result);
-        self::assertCount(2, $result->candidates[0]->evidence);
+        self::assertCount(2, $result[0]->evidence);
         self::assertCount(1, $result->forCaller('a'));
         self::assertCount(1, $result->forCaller('b'));
     }
@@ -91,8 +91,8 @@ final class CandidateEvidenceTest extends TestCase
         $start = strpos($source, '65');
         self::assertNotFalse($start);
         $result = $session->derive(new ValueQuery($session->expression('unicode.php', $start, $start + 2)));
-        self::assertSame(65, $result->candidates[0]->result);
-        $literals = array_values(array_filter($result->candidates[0]->evidence[0]->nodes(), static fn ($node): bool => $node->kind === 'source-definition'));
+        self::assertSame(65, $result[0]->result);
+        $literals = array_values(array_filter($result[0]->evidence[0]->nodes(), static fn ($node): bool => $node->kind === 'source-definition'));
         self::assertCount(1, $literals);
         self::assertNotNull($literals[0]->source);
         self::assertSame([$start, $start + 2, 2, $start - 6, 2, $start - 4], [$literals[0]->source->start, $literals[0]->source->end, $literals[0]->source->line, $literals[0]->source->column, $literals[0]->source->endLine, $literals[0]->source->endColumn]);

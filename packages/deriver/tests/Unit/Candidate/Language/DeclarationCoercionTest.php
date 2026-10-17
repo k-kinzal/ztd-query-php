@@ -25,7 +25,7 @@ final class DeclarationCoercionTest extends TestCase
      */
     public function testCoerceUsesDeclaredSemantics(): void
     {
-        self::assertSame(2.0, \Tests\Fake\CandidateApi::returns('function target():float{return 2;}')->candidates[0]->result);
+        self::assertSame(2.0, \Tests\Fake\CandidateApi::returns('function target():float{return 2;}')[0]->result);
     }
 
     /**
@@ -33,7 +33,7 @@ final class DeclarationCoercionTest extends TestCase
      */
     public function testAcceptUsesDeclaredSemantics(): void
     {
-        self::assertSame([1], \Tests\Fake\CandidateApi::returns('function target():iterable{return [1];}')->candidates[0]->result);
+        self::assertSame([1], \Tests\Fake\CandidateApi::returns('function target():iterable{return [1];}')[0]->result);
     }
 
     /**
@@ -41,7 +41,7 @@ final class DeclarationCoercionTest extends TestCase
      */
     public function testCallableUsesDeclaredSemantics(): void
     {
-        self::assertSame(7, \Tests\Fake\CandidateApi::returns('function f(){return 7;}function accept(callable $f){return $f();}function target(){return accept("f");}')->candidates[0]->result);
+        self::assertSame(7, \Tests\Fake\CandidateApi::returns('function f(){return 7;}function accept(callable $f){return $f();}function target(){return accept("f");}')[0]->result);
     }
 
 }

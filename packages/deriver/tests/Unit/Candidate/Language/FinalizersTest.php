@@ -17,7 +17,7 @@ final class FinalizersTest extends TestCase
     public function testApplyUsesConditionalFinallyCompletion(): void
     {
         $source = 'function helper($x){try{return 1;}finally{if($x){return 2;}}}function target(){return [helper(true),helper(false)];}';
-        self::assertSame([2,1], \Tests\Fake\CandidateApi::returns($source)->candidates[0]->result);
+        self::assertSame([2,1], \Tests\Fake\CandidateApi::returns($source)[0]->result);
     }
 
     /**

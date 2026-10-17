@@ -27,7 +27,7 @@ final class ElementsTest extends TestCase
      */
     public function testMutatePreservesNestedCompoundAndUnset(): void
     {
-        self::assertSame(['x' => ['y' => 3]], A::returns('function target(){$a=["x"=>["y"=>1,"z"=>9]];$a["x"]["y"]+=2;unset($a["x"]["z"]);return $a;}')->candidates[0]->result);
+        self::assertSame(['x' => ['y' => 3]], A::returns('function target(){$a=["x"=>["y"=>1,"z"=>9]];$a["x"]["y"]+=2;unset($a["x"]["z"]);return $a;}')[0]->result);
     }
 
 }

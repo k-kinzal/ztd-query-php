@@ -263,9 +263,9 @@ final class CallableLoweringTest extends TestCase
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
-        self::assertCount(1, $result->candidates);
-        self::assertSame(json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR), $result->candidates[0]->term->native());
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertCount(1, $result);
+        self::assertSame(json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR), $result[0]->term->native());
     }
 
     /**

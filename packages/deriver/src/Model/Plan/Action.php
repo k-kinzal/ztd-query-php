@@ -19,7 +19,7 @@ use Deriver\Model\Binding\LocationRef;
  *     $source = '<?php function routes(Slim\App $app, string $table) { $app->get("/", function () use ($table) { query("SELECT * FROM $table"); }); } function query($sql) {}';
  *     $session = new \Deriver\Session\Session(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('app.php', $source)]), new \Deriver\Project\Configuration(), new \Deriver\Model\Registration\Contributions(models: [$route]));
  *     $scope = \Deriver\Query\QueryScope::fromEntrypoints([new \Deriver\Project\EntryPoint('routes', [\Deriver\Value\Term::parameter('app', 'Slim\App'), \Deriver\Value\Term::constant('users')])]);
- *     $session->derive(new \Deriver\Query\ValueQuery($session->callsTo('query')[0]->argument(0), scope: $scope))->candidates[0]->result // => 'SELECT * FROM users'
+ *     $session->derive(new \Deriver\Query\ValueQuery($session->callsTo('query')[0]->argument(0), scope: $scope))[0]->result // => 'SELECT * FROM users'
  */
 final class Action
 {

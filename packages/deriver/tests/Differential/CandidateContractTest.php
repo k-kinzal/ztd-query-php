@@ -29,7 +29,7 @@ final class CandidateContractTest extends TestCase
         $expected = RuntimeOracle::evaluate($source)->native();
         $result = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('candidate.php', $source)]), new \Deriver\Project\Configuration()))->derive(new ReturnQuery('target'));
         self::assertCount(1, $result);
-        self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $result->candidates[0]->type);
-        self::assertSame($expected, $result->candidates[0]->result);
+        self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $result[0]->type);
+        self::assertSame($expected, $result[0]->result);
     }
 }

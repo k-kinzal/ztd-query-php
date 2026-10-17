@@ -210,7 +210,7 @@ final class CandidateIntegrityTest extends TestCase
         $site = $session->callsTo('query')[0];
         self::assertNotNull($site->receiver);
         $result = $session->derive(new TupleQuery($site->beforeInvocation(), ['receiver' => $site->receiver, 'sql' => $site->argument(0)]));
-        $values = $result->candidates[0]->term->operands;
+        $values = $result[0]->term->operands;
         self::assertSame('PDO', $values['receiver']->attributes['type']);
         self::assertSame('SELECT ', $values['sql']->operands[0]->literal);
         self::assertContains('TIME_LIMIT', array_column(CandidateContractTest::frontiers($result), 'code'));

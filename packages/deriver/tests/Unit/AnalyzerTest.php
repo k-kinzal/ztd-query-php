@@ -142,7 +142,7 @@ final class AnalyzerTest extends TestCase
         $source = new \Tests\Fake\SourceDirectory();
         $path = $source->write('target.php', '<?php throw new RuntimeException("never execute"); function target() { $x="before"; $x="after"; return $x . ":done"; }');
         $result = (new Analyzer())->analyze([$path], 'target#return');
-        self::assertSame('after:done', $result->candidates[0]->result);
+        self::assertSame('after:done', $result[0]->result);
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
     }
 
@@ -158,8 +158,8 @@ final class AnalyzerTest extends TestCase
         $files = (new \Deriver\Finder())->in($source->path)->include('**/*.php')->exclude('excluded/**')->files();
         $source->write('helper.php', '<?php function helper(){return 42;}');
         $result = (new Analyzer())->analyze($files, 'target#return');
-        self::assertSame(42, $result->candidates[0]->result);
-        self::assertCount(2, $result->candidates[0]->evidence[0]->snapshot->sources);
+        self::assertSame(42, $result[0]->result);
+        self::assertCount(2, $result[0]->evidence[0]->snapshot->sources);
     }
 
     /**
@@ -175,9 +175,9 @@ final class AnalyzerTest extends TestCase
         $added = $source->write('added.php', '<?php function missing(){return 7;}');
         $after = $analyzer->analyze([$path, $added], $query);
         self::assertNotEmpty(\Tests\Semantic\CandidateContractTest::frontiers($before));
-        self::assertSame(7, $after->candidates[0]->result);
+        self::assertSame(7, $after[0]->result);
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($after));
-        self::assertNotSame($before->candidates[0]->evidence[0]->snapshot->id, $after->candidates[0]->evidence[0]->snapshot->id);
+        self::assertNotSame($before[0]->evidence[0]->snapshot->id, $after[0]->evidence[0]->snapshot->id);
         self::assertSame($before->toJson(), $analyzer->analyze([$path], $query)->toJson());
     }
 
@@ -193,10 +193,10 @@ final class AnalyzerTest extends TestCase
         $first = $analyzer->analyze([$path], $query);
         $added = $source->write('added.php', '<?php function unrelated(){}');
         $result = $analyzer->analyze([$path, $added], $query);
-        self::assertSame(7, $result->candidates[0]->result);
-        $manifest = $result->candidates[0]->evidence[0]->snapshot;
-        self::assertNotSame($first->candidates[0]->evidence[0]->snapshot->id, $manifest->id);
-        self::assertSame([$manifest->id], array_values(array_unique(array_map(static fn ($node): ?string => $node->source?->snapshotId, array_filter($result->candidates[0]->evidence[0]->nodes(), static fn ($node): bool => $node->source !== null)))));
+        self::assertSame(7, $result[0]->result);
+        $manifest = $result[0]->evidence[0]->snapshot;
+        self::assertNotSame($first[0]->evidence[0]->snapshot->id, $manifest->id);
+        self::assertSame([$manifest->id], array_values(array_unique(array_map(static fn ($node): ?string => $node->source?->snapshotId, array_filter($result[0]->evidence[0]->nodes(), static fn ($node): bool => $node->source !== null)))));
     }
 
     /**
@@ -211,8 +211,8 @@ final class AnalyzerTest extends TestCase
         $first = $analyzer->analyze([$path], $query);
         $source->write('target.php', '<?php function target(){return 2;}');
         $second = $analyzer->analyze([$path], $query);
-        self::assertSame(1, $first->candidates[0]->result);
-        self::assertSame(2, $second->candidates[0]->result);
+        self::assertSame(1, $first[0]->result);
+        self::assertSame(2, $second[0]->result);
         self::assertNotSame($first->toJson(), $second->toJson());
     }
 
@@ -227,7 +227,7 @@ final class AnalyzerTest extends TestCase
             \Deriver\Project\Expansion\Rule::constantFunction('count-one', '1', 'count', \Deriver\Value\Term::constant(1)),
         ]);
         $result = (new Analyzer($configuration))->analyze([$path], 'target#return');
-        self::assertSame(1, $result->candidates[0]->result);
+        self::assertSame(1, $result[0]->result);
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
     }
 
@@ -285,6 +285,6 @@ final class AnalyzerTest extends TestCase
         $result = (new Analyzer())->analyze([$path], 'target#return');
         $configuration = new \Deriver\Project\Configuration();
         (new \Deriver\Replay())->verify($result->toJson(), ProjectInput::fromFiles([$path]), $configuration, new ReturnQuery('target'));
-        self::assertSame(42, $result->candidates[0]->result);
+        self::assertSame(42, $result[0]->result);
     }
 }

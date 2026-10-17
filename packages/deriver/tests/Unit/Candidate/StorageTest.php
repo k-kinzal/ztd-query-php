@@ -88,7 +88,7 @@ final class StorageTest extends TestCase
      */
     public function testReachingKeepsTheSelectedStorageOrigin(): void
     {
-        self::assertSame(3, \Tests\Fake\CandidateApi::returns('function target($x){$v=3;if($x){$a=1;}else{$a=2;}return $v;}')->candidates[0]->result);
+        self::assertSame(3, \Tests\Fake\CandidateApi::returns('function target($x){$v=3;if($x){$a=1;}else{$a=2;}return $v;}')[0]->result);
     }
 
     /**
@@ -96,7 +96,7 @@ final class StorageTest extends TestCase
      */
     public function testDeclarationKeepsTheSelectedStorageOrigin(): void
     {
-        self::assertSame(7, \Tests\Fake\CandidateApi::returns('function target(){global $v;$v=7;return $v;}')->candidates[0]->result);
+        self::assertSame(7, \Tests\Fake\CandidateApi::returns('function target(){global $v;$v=7;return $v;}')[0]->result);
     }
 
 }

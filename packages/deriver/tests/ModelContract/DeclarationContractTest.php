@@ -36,10 +36,10 @@ final class DeclarationContractTest extends TestCase
     {
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php function target(){$x=1;external($x);return $x;}'), new SourceFile('stubs.php', '<?php function external(int &$value): int {return 99;}', true)]), new Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame('call-write', $result->candidates[0]->term->kind);
-        self::assertSame(1, $result->candidates[0]->term->operands[0]->native());
+        self::assertSame('call-write', $result[0]->term->kind);
+        self::assertSame(1, $result[0]->term->operands[0]->native());
         self::assertContains('MISSING_SOURCE', array_column(\Tests\Semantic\CandidateContractTest::frontiers($result), 'code'));
-        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result[0]->type);
         self::assertSame(['stubs.php' => 'declarations'], $session->snapshot()->sourceModes);
     }
 
@@ -50,9 +50,9 @@ final class DeclarationContractTest extends TestCase
     {
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php function target(){try{return external(value: []);}catch(TypeError $e){return "typed";}}'), new SourceFile('stubs.php', '<?php function external(int $value): int {}', true)]), new Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame('typed', $result->candidates[0]->term->native());
+        self::assertSame('typed', $result[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -63,9 +63,9 @@ final class DeclarationContractTest extends TestCase
         $model = new PlanModel(new ModelDescriptor('example.external', '1', 'external', new Signature([new Parameter('value', 'int')], 'int')), new SemanticPlan([Action::returns(Expression::binary('+', Expression::parameter('value'), Expression::literal(Term::constant(1))))]));
         $session = new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php function target(){return external(value: 2);}'), new SourceFile('stubs.php', '<?php function external(int $value): int {}', true)]), new Configuration(), new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame(3, $result->candidates[0]->term->native());
+        self::assertSame(3, $result[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -79,7 +79,7 @@ final class DeclarationContractTest extends TestCase
         $source = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('library.php', '<?php function target(){return 7;}')]), new Configuration(), parsing: $syntaxCache, lowering: $loweringCache));
         self::assertNotSame($stub->snapshot()->id, $source->snapshot()->id);
         self::assertNotEmpty(\Tests\Semantic\CandidateContractTest::frontiers($stub->derive(new ReturnQuery('target'))));
-        self::assertSame(7, $source->derive(new ReturnQuery('target'))->candidates[0]->term->native());
+        self::assertSame(7, $source->derive(new ReturnQuery('target'))[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($source->derive(new ReturnQuery('target'))));
     }
 
@@ -102,9 +102,9 @@ final class DeclarationContractTest extends TestCase
     {
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php function target(){try{return Box::privateMethod();}catch(Error $e){return "private";}}'), new SourceFile('stubs.php', '<?php class Box{private static function privateMethod(){}}', true)]), new Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame('private', $result->candidates[0]->term->native());
+        self::assertSame('private', $result[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -115,8 +115,8 @@ final class DeclarationContractTest extends TestCase
         $model = new PlanModel(new ModelDescriptor('example.same', '1', 'Box::same', new Signature(returnType: 'self')), new SemanticPlan([Action::returns(Expression::receiver())]));
         $session = new \Deriver\Session\Session(new ProjectInput([new SourceFile('app.php', '<?php class Box{}function target(){$box=new Box;$same=$box->same();return $same===$box;}')]), new Configuration(), new \Deriver\Model\Registration\Contributions(models: [$model]));
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertTrue($result->candidates[0]->term->native());
+        self::assertTrue($result[0]->term->native());
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 }

@@ -55,7 +55,7 @@ final class CallbacksTest extends TestCase
      */
     public function testCollectFiltersUsingTheCapturedPredicate(): void
     {
-        self::assertSame([1 => 2,2 => 3], A::returns('function target(){return array_filter([1,2,3],fn($x)=>$x>1);}')->candidates[0]->result);
+        self::assertSame([1 => 2,2 => 3], A::returns('function target(){return array_filter([1,2,3],fn($x)=>$x>1);}')[0]->result);
     }
 
 }

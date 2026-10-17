@@ -183,8 +183,8 @@ final class CandidateDependenciesTest extends TestCase
     {
         $s = CandidateContractTest::session('function target($columns){$sql="SELECT ";foreach($columns as $column){$sql.=$column;}do{$sql.=" FROM t";}while(false);observe($sql);}');
         $result = CandidateContractTest::argument($s);
-        self::assertNotEmpty($result->candidates);
-        $encoded = serialize(array_map(static fn ($candidate) => $candidate->term, $result->candidates));
+        self::assertGreaterThan(0, count($result));
+        $encoded = serialize(array_map(static fn ($candidate) => $candidate->term, iterator_to_array($result, false)));
         self::assertStringContainsString('SELECT ', $encoded);
         self::assertStringContainsString(' FROM t', $encoded);
         self::assertStringContainsString('UNKNOWN_ITERATION_COUNT', $encoded);

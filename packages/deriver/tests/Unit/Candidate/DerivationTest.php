@@ -109,7 +109,7 @@ final class DerivationTest extends TestCase
      */
     public function testExpressionUsesTheSameCallbackAndCastRules(): void
     {
-        self::assertSame('v3', \Tests\Fake\CandidateApi::returns('function target(){return "v".call_user_func(fn($x)=>$x+1,2);}')->candidates[0]->result);
+        self::assertSame('v3', \Tests\Fake\CandidateApi::returns('function target(){return "v".call_user_func(fn($x)=>$x+1,2);}')[0]->result);
     }
 
     /**

@@ -22,7 +22,7 @@ final class EncodingTest extends TestCase
     public function testEncodeExposesTheWireStringForEachEnumStatus(string $source, CandidateStatus $status, string $wire): void
     {
         $result = A::returns($source);
-        self::assertSame($status, $result->candidates[0]->type);
+        self::assertSame($status, $result[0]->type);
         self::assertSame($wire, (new Subject())->encode($result)[0]->type);
         self::assertSame($wire, $result->jsonSerialize()[0]->type);
         $json = json_decode($result->toJson(), true, 512, JSON_THROW_ON_ERROR);

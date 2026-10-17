@@ -19,7 +19,7 @@ final class QueryExecutionTest extends TestCase
     {
         $r = C::argument(C::session('function target(){observe(1);}'));
         self::assertSame(1, $r->count());
-        self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $r->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $r[0]->type);
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
@@ -29,6 +29,6 @@ final class QueryExecutionTest extends TestCase
         $r = C::session('function target(){return 1;}')->derive(new \Deriver\Query\ReturnQuery('target'));
         self::assertSame([1], C::native($r));
         self::assertFalse($r->interrupted);
-        self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $r->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Analyzed, $r[0]->type);
     }
 }

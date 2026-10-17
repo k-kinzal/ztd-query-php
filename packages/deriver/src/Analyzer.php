@@ -22,7 +22,7 @@ use JsonException;
  *     file_put_contents($path, '<?php function answer() { return 42; }');
  *     $result = (new \Deriver\Analyzer())->analyze([$path], 'answer#return');
  *     unlink($path);
- *     $result->candidates[0]->result // => 42
+ *     $result[0]->result // => 42
  */
 final class Analyzer
 {

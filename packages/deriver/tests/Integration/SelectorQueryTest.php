@@ -29,8 +29,8 @@ final class SelectorQueryTest extends TestCase
         $analyzer = new Analyzer();
         $parameters = $analyzer->analyze([$path], 'App\\Repository::find#parameter(id)');
         $returns = $analyzer->analyze([$path], 'App\\Repository::find#return');
-        self::assertSame([3, 5], array_column($parameters->candidates, 'result'));
-        self::assertSame([6, 10], array_column($returns->candidates, 'result'));
+        self::assertSame([3, 5], array_column(iterator_to_array($parameters, false), 'result'));
+        self::assertSame([6, 10], array_column(iterator_to_array($returns, false), 'result'));
     }
 
     /**
@@ -42,8 +42,8 @@ final class SelectorQueryTest extends TestCase
         $path = $source->write('source #1.php', "<?php\n\$x = 3;\nunknown(\$x++, \$x);\n");
         $files = (new Finder())->in($source->path)->include('**/*.php')->files();
         $analyzer = new Analyzer();
-        self::assertSame(3, $analyzer->analyze($files, $path . ':3:1#argument(0)')->candidates[0]->result);
-        self::assertSame(4, $analyzer->analyze($files, $path . ':3:1#argument(1)')->candidates[0]->result);
+        self::assertSame(3, $analyzer->analyze($files, $path . ':3:1#argument(0)')[0]->result);
+        self::assertSame(4, $analyzer->analyze($files, $path . ':3:1#argument(1)')[0]->result);
     }
 
     /**
@@ -58,8 +58,8 @@ final class SelectorQueryTest extends TestCase
         self::assertTrue(chdir($source->path));
         try {
             $query = Query::parse('src/./a.php:2:1#argument(sql)');
-            self::assertSame('SELECT 1', (new Analyzer())->analyze([$path], $query->toString())->candidates[0]->result);
-            self::assertSame('SELECT 1', (new Analyzer())->analyze(['src/a.php'], $path . ':2:1#argument(0)')->candidates[0]->result);
+            self::assertSame('SELECT 1', (new Analyzer())->analyze([$path], $query->toString())[0]->result);
+            self::assertSame('SELECT 1', (new Analyzer())->analyze(['src/a.php'], $path . ':2:1#argument(0)')[0]->result);
         } finally {
             chdir($cwd);
         }
@@ -72,7 +72,7 @@ final class SelectorQueryTest extends TestCase
     {
         $source = new SourceDirectory();
         $path = $source->write('a.php', "<?php\n\$run = function () {\n    unknown('inside');\n};\n");
-        self::assertSame('inside', (new Analyzer())->analyze([$path], $path . ':3:5#argument(0)')->candidates[0]->result);
+        self::assertSame('inside', (new Analyzer())->analyze([$path], $path . ':3:5#argument(0)')[0]->result);
     }
 
     /**
@@ -85,7 +85,7 @@ final class SelectorQueryTest extends TestCase
         $query = $path . ':2:1#argument(0)';
         $result = (new Analyzer())->analyze([$path], $query);
         (new Replay())->verify($result->toJson(), ProjectInput::fromFiles([$path]), new Configuration(), $query);
-        self::assertSame('sql', $result->candidates[0]->result);
+        self::assertSame('sql', $result[0]->result);
     }
 
     /**
@@ -97,7 +97,7 @@ final class SelectorQueryTest extends TestCase
         $prefix = '$label = "日本語"; ';
         $path = $source->write('a.php', "<?php\r\n" . $prefix . "unknown('sql');\r\n");
         $query = $path . ':2:' . (strlen($prefix) + 1) . '#argument(0)';
-        self::assertSame('sql', (new Analyzer())->analyze([$path], $query)->candidates[0]->result);
+        self::assertSame('sql', (new Analyzer())->analyze([$path], $query)[0]->result);
     }
 
     /**

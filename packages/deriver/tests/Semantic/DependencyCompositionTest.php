@@ -32,7 +32,7 @@ final class DependencyCompositionTest extends TestCase
         $result = CandidateContractTest::argument($session);
         self::assertSame(['SELECT * FROM users'], CandidateContractTest::native($result));
         self::assertArrayNotHasKey('BaseRepo::table', $result->statistics->expandedBodies);
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -45,7 +45,7 @@ final class DependencyCompositionTest extends TestCase
         $result = $session->derive(new ReturnQuery('Repository::get'));
         self::assertContains($expected, CandidateContractTest::native($result, 'return'));
         self::assertSame([], CandidateContractTest::frontiers($result));
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -68,7 +68,7 @@ final class DependencyCompositionTest extends TestCase
         $result = CandidateContractTest::argument($session, new Budget(maxDepth: 256));
         self::assertSame([4], CandidateContractTest::native($result));
         self::assertSame([], CandidateContractTest::frontiers($result));
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -84,7 +84,7 @@ final class DependencyCompositionTest extends TestCase
         $values = CandidateContractTest::native($result, 'return');
         self::assertNotContains($symbol === 'Box::__construct' ? 'source_only' : 'method_only', $values);
         self::assertContains('ledger', $values);
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -107,7 +107,7 @@ final class DependencyCompositionTest extends TestCase
         $source = 'class Box{public $value="initial";function '.$method.'($mode){$this->value="source_only";}function get(){return $this->value;}}function target(){'.$call.';}';
         $session = CandidateContractTest::session($source, new Configuration(), contributions: new \Deriver\Model\Registration\Contributions(models: [new \Tests\Fake\PropertyDecisionModel($symbol)]));
         $result = $session->derive(new ReturnQuery('Box::get'));
-        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertSame([], array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->type_name === 'never'));
         if ($mode === 'source') {
             self::assertContains('source_only', CandidateContractTest::native($result, 'return'));
             self::assertArrayHasKey($symbol, $result->statistics->expandedBodies);

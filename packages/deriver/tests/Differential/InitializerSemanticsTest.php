@@ -55,7 +55,7 @@ final class InitializerSemanticsTest extends TestCase
         $session = (new \Deriver\Session\Session(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]), new \Deriver\Project\Configuration()));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
-        self::assertCount(1, $result->candidates);
-        self::assertSame($expected, $result->candidates[0]->term->native());
+        self::assertCount(1, $result);
+        self::assertSame($expected, $result[0]->term->native());
     }
 }

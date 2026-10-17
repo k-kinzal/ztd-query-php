@@ -59,7 +59,7 @@ $json = $result->toJson();
 $export = microtime(true);
 $values = $result instanceof Deriver\Result\Execution\DerivationResult
     ? array_map(static fn ($item) => $item->values, $result->normalOutcomes)
-    : array_map(static fn ($item) => [$item->term], $result->candidates);
+    : array_map(static fn ($item) => [$item->term], iterator_to_array($result, false));
 $quality = [];
 foreach ($values as $row) {
     foreach ($row as $value) {

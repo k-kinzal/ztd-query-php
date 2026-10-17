@@ -4,20 +4,48 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
+use Deriver\Evidence\Node;
 use Deriver\Exception\InvalidInputException;
 use Deriver\Query\Budget;
 use Deriver\Query\ReturnQuery;
+use Deriver\Reference\ResultRef;
+use Deriver\Result\Candidate;
+use Deriver\Result\CandidateCollection;
+use Deriver\Session\ResultRetention;
+use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\Analysis;
+use Tests\Fake\CandidateApi;
 use WeakReference;
 
 #[CoversNothing]
 #[Small]
 final class ResultRetentionTest extends TestCase
 {
+    public function testSmallIncludesPrivateCandidatePayloads(): void
+    {
+        $retention = new ResultRetention();
+        $evidence = [CandidateApi::proof(new Node('literal'))];
+        $small = new CandidateCollection([new Candidate(Term::constant(42), $evidence)], new ResultRef('small'));
+        self::assertTrue($retention->small($small));
+        $large = new CandidateCollection([new Candidate(Term::constant(str_repeat('x', 1048577)), $evidence)], new ResultRef('large'));
+        self::assertFalse($retention->small($large));
+        $weak = WeakReference::create($large);
+        $retention->remember($large);
+        unset($large);
+        self::assertNull($weak->get());
+    }
+
+    public function testSmallIncludesPrivateCandidateEntries(): void
+    {
+        $candidate = new Candidate(Term::constant(42), [CandidateApi::proof(new Node('literal'))]);
+        $collection = new CandidateCollection(array_fill(0, 4097, $candidate), new ResultRef('many'));
+        self::assertFalse((new ResultRetention())->small($collection));
+    }
+
     /**
      * @throws JsonException If source metadata cannot be encoded
      */
@@ -93,7 +121,7 @@ final class ResultRetentionTest extends TestCase
      */
     public function testClearReleasesRecentResults(): void
     {
-        $retention = new \Deriver\Session\ResultRetention();
+        $retention = new ResultRetention();
         $result = Analysis::returns('<?php function target(){return 1;}');
         $weak = WeakReference::create($result);
         $retention->remember($result);

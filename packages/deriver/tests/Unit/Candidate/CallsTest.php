@@ -134,7 +134,7 @@ final class CallsTest extends TestCase
     public function testInvokePreservesCallDependencies(): void
     {
         $result = \Tests\Fake\CandidateApi::returns('function f($x){return $x+1;}function target(){return f(4);}');
-        self::assertSame(5, $result->candidates[0]->result);
+        self::assertSame(5, $result[0]->result);
     }
 
     /**
@@ -143,7 +143,7 @@ final class CallsTest extends TestCase
     public function testMissingPreservesCallDependencies(): void
     {
         $result = \Tests\Fake\CandidateApi::returns('function target(){return external(1);}');
-        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result->candidates[0]->type);
+        self::assertSame(\Deriver\Result\CandidateStatus::Partials, $result[0]->type);
         self::assertStringContainsString('MISSING_SOURCE', $result->toJson());
     }
 

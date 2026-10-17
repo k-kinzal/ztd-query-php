@@ -47,7 +47,7 @@ final class ArrayConstructionTest extends TestCase
      */
     public function testChainPreservesAppendAfterAnExplicitKey(): void
     {
-        self::assertSame([4 => 'a',5 => 'b'], \Tests\Fake\CandidateApi::returns('function target(){return [4=>"a","b"];}')->candidates[0]->result);
+        self::assertSame([4 => 'a',5 => 'b'], \Tests\Fake\CandidateApi::returns('function target(){return [4=>"a","b"];}')[0]->result);
     }
 
     /**
@@ -56,7 +56,7 @@ final class ArrayConstructionTest extends TestCase
     public function testChoicesPreservesCorrelationBetweenArrayEntries(): void
     {
         $result = \Tests\Fake\CandidateApi::returns('function target($b){$x=$b?1:2;return [$x,$x];}');
-        self::assertSame([[1,1],[2,2]], array_column($result->candidates, 'result'));
+        self::assertSame([[1,1],[2,2]], array_column(iterator_to_array($result, false), 'result'));
     }
 
     /**
@@ -65,7 +65,7 @@ final class ArrayConstructionTest extends TestCase
     public function testChoicesLimitRetainsFixedArrayEntries(): void
     {
         $result = \Tests\Fake\CandidateApi::returns('function target($b){$x=$b?1:2;return ["head",$x,"tail"];}', budget:new \Deriver\Query\Budget(partitions:1));
-        $candidate = $result->candidates[0];
+        $candidate = $result[0];
         self::assertSame(\Deriver\Result\CandidateStatus::Partials, $candidate->type);
         self::assertSame('head', $candidate->term->operands[0]->literal);
         self::assertSame('tail', $candidate->term->operands[2]->literal);

@@ -29,7 +29,7 @@ final class BodyIndexTest extends TestCase
      */
     public function testReturnsPreservesTheDefinitionBeforeFinally(): void
     {
-        self::assertSame(2, \Tests\Fake\CandidateApi::returns('function target(){try{return 1;}finally{return 2;}}')->candidates[0]->result);
+        self::assertSame(2, \Tests\Fake\CandidateApi::returns('function target(){try{return 1;}finally{return 2;}}')[0]->result);
     }
 
     /**
