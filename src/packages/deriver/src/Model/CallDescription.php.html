@@ -43,16 +43,16 @@
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">Deriver\Model</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Binding\ArgumentBindings</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Signature\Signature</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\Declaration\Signature</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\TargetProfile</span>;</span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Reference\SourceRef</span>;</span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * Normalized metadata for selecting a declarative call model.</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> * @visibility root</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> * @example Inspecting the contract</span></span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $call = new \Deriver\Model\CallDescription(&#039;key&#039;, new \Deriver\Model\Signature\Signature(), new \Deriver\Project\TargetProfile());</span></span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $call = new \Deriver\Model\CallDescription(&#039;key&#039;, new \Deriver\Project\Declaration\Signature(), new \Deriver\Project\TargetProfile());</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $call-&gt;symbol // =&gt; &#039;key&#039;</span></span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">CallDescription</span></span>
@@ -70,7 +70,7 @@
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param ArgumentBindings|null $arguments Evaluated bindings, or formal signature handles when omitted</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param array&lt;string, string&gt; $dependencyVersions Explicit captured package versions</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param SourceRef|null $source Source call site, shared by preparation and evaluated invocation</span></span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param Metadata\DeclarationLookup|null $declarations Captured parser-independent declaration metadata</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param \Deriver\Project\Declaration\DeclarationLookup|null $declarations Captured parser-independent declaration metadata</span></span>
 <span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$symbol</span>,</span>
@@ -80,7 +80,7 @@
 <span class="src-line" id="L42"><a class="ln" href="#L42">42</a>        ?<span class="tok-id">ArgumentBindings</span> <span class="tok-var">$arguments</span> = <span class="tok-id">null</span>,</span>
 <span class="src-line" id="L43"><a class="ln" href="#L43">43</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$dependencyVersions</span> = [],</span>
 <span class="src-line" id="L44"><a class="ln" href="#L44">44</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">SourceRef</span> <span class="tok-var">$source</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Metadata\DeclarationLookup</span> <span class="tok-var">$declarations</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\Deriver\Project\Declaration\DeclarationLookup</span> <span class="tok-var">$declarations</span> = <span class="tok-id">null</span>,</span>
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a>    ) {</span>
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">arguments</span> = <span class="tok-var">$arguments</span> ?? <span class="tok-id">ArgumentBindings</span>::<span class="tok-id">formal</span>(<span class="tok-var">$signature</span>);</span>
 <span class="src-line" id="L48"><a class="ln" href="#L48">48</a>    }</span>

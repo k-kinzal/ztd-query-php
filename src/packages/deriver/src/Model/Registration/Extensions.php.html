@@ -45,61 +45,60 @@
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Exception\InvalidInputException</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Domain\AbstractDomain</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Intrinsic\PureIntrinsic</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\Configuration</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a></span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * Validates and versions explicitly installed domain and intrinsic contracts.</span></span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility root</span></span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Extensions</span></span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>{</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     * @var array&lt;string, PureIntrinsic&gt; Pure operations by declared name.</span></span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$intrinsics</span> = [];</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">     * @var array&lt;string, AbstractDomain&gt; Abstract lattices by domain identity.</span></span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$domains</span> = [];</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com">     * @var array&lt;string, string&gt; Semantic extension versions and dependency contracts.</span></span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$manifest</span> = [];</span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a></span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param Configuration $configuration Trusted extension objects</span></span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     * @throws InvalidInputException If contracts or identities conflict</span></span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-id">Configuration</span> <span class="tok-var">$configuration</span>)</span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>    {</span>
-<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$configuration</span>-&gt;<span class="tok-id">intrinsics</span> <span class="tok-kw">as</span> <span class="tok-var">$intrinsic</span>) {</span>
-<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>            <span class="tok-var">$descriptor</span> = <span class="tok-var">$intrinsic</span>-&gt;<span class="tok-id">descriptor</span>();</span>
-<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>            <span class="tok-kw">if</span> (<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">id</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">version</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">arity</span> &lt; <span class="tok-num">0</span> || <span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">intrinsics</span>[<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span>], <span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>[<span class="tok-str">&#039;intrinsic:&#039;</span> . <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">id</span>])) {</span>
-<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidInputException</span>(<span class="tok-str">&#039;MODEL_CONFLICT: invalid or repeated intrinsic identity.&#039;</span>);</span>
-<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>            }</span>
-<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">dependencies</span> <span class="tok-kw">as</span> <span class="tok-var">$dependency</span>) {</span>
-<span class="src-line" id="L43"><a class="ln" href="#L43">43</a>                <span class="tok-kw">if</span> (<span class="tok-var">$dependency</span> &lt; <span class="tok-num">0</span> || <span class="tok-var">$dependency</span> &gt;= <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">arity</span>) {</span>
-<span class="src-line" id="L44"><a class="ln" href="#L44">44</a>                    <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidInputException</span>(<span class="tok-str">&#039;MODEL_CONTRACT_VIOLATION: intrinsic dependency index.&#039;</span>);</span>
-<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>                }</span>
-<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>            }</span>
-<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>            <span class="tok-kw">if</span> (<span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">intrinsics</span>[<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span>]) || <span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>[<span class="tok-str">&#039;intrinsic:&#039;</span> . <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">id</span>])) {</span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidInputException</span>(<span class="tok-str">&#039;MODEL_CONFLICT: repeated intrinsic operation or ID.&#039;</span>);</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            }</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">intrinsics</span>[<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span>] = <span class="tok-var">$intrinsic</span>;</span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>[<span class="tok-str">&#039;intrinsic:&#039;</span> . <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">id</span>] = <span class="tok-id">hash</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-id">serialize</span>([<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">version</span>, <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span>, <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">arity</span>, <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">dependencies</span>]));</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        }</span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$configuration</span>-&gt;<span class="tok-id">domains</span> <span class="tok-kw">as</span> <span class="tok-var">$domain</span>) {</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>            [<span class="tok-var">$id</span>, <span class="tok-var">$version</span>] = (<span class="tok-kw">new</span> <span class="tok-id">\Deriver\Model\Domain\DomainOperations</span>())-&gt;<span class="tok-id">registration</span>(<span class="tok-var">$domain</span>);</span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>            <span class="tok-kw">if</span> (<span class="tok-var">$id</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-var">$version</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">domains</span>[<span class="tok-var">$id</span>])) {</span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidInputException</span>(<span class="tok-str">&#039;MODEL_CONFLICT: invalid or repeated domain identity.&#039;</span>);</span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>            }</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">domains</span>[<span class="tok-var">$id</span>] = <span class="tok-var">$domain</span>;</span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>[<span class="tok-str">&#039;domain:&#039;</span> . <span class="tok-var">$id</span>] = <span class="tok-var">$version</span>;</span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>        }</span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>        <span class="tok-id">ksort</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>);</span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>    }</span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>}</span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a></span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a></span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> * Validates and versions explicitly installed domain and intrinsic contracts.</span></span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility root</span></span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Extensions</span></span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a>{</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com">     * @var array&lt;string, PureIntrinsic&gt; Pure operations by declared name.</span></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$intrinsics</span> = [];</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com">     * @var array&lt;string, AbstractDomain&gt; Abstract lattices by domain identity.</span></span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$domains</span> = [];</span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com">     * @var array&lt;string, string&gt; Semantic extension versions and dependency contracts.</span></span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$manifest</span> = [];</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a></span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param Contributions $contributions Trusted extension objects</span></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     * @throws InvalidInputException If contracts or identities conflict</span></span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-id">Contributions</span> <span class="tok-var">$contributions</span>)</span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    {</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$contributions</span>-&gt;<span class="tok-id">intrinsics</span> <span class="tok-kw">as</span> <span class="tok-var">$intrinsic</span>) {</span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>            <span class="tok-var">$descriptor</span> = <span class="tok-var">$intrinsic</span>-&gt;<span class="tok-id">descriptor</span>();</span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>            <span class="tok-kw">if</span> (<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">id</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">version</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">arity</span> &lt; <span class="tok-num">0</span> || <span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">intrinsics</span>[<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span>], <span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>[<span class="tok-str">&#039;intrinsic:&#039;</span> . <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">id</span>])) {</span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidInputException</span>(<span class="tok-str">&#039;MODEL_CONFLICT: invalid or repeated intrinsic identity.&#039;</span>);</span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>            }</span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">dependencies</span> <span class="tok-kw">as</span> <span class="tok-var">$dependency</span>) {</span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>                <span class="tok-kw">if</span> (<span class="tok-var">$dependency</span> &lt; <span class="tok-num">0</span> || <span class="tok-var">$dependency</span> &gt;= <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">arity</span>) {</span>
+<span class="src-line" id="L43"><a class="ln" href="#L43">43</a>                    <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidInputException</span>(<span class="tok-str">&#039;MODEL_CONTRACT_VIOLATION: intrinsic dependency index.&#039;</span>);</span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a>                }</span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>            }</span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>            <span class="tok-kw">if</span> (<span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">intrinsics</span>[<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span>]) || <span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>[<span class="tok-str">&#039;intrinsic:&#039;</span> . <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">id</span>])) {</span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidInputException</span>(<span class="tok-str">&#039;MODEL_CONFLICT: repeated intrinsic operation or ID.&#039;</span>);</span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>            }</span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">intrinsics</span>[<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span>] = <span class="tok-var">$intrinsic</span>;</span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>[<span class="tok-str">&#039;intrinsic:&#039;</span> . <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">id</span>] = <span class="tok-id">hash</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-id">serialize</span>([<span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">version</span>, <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">operation</span>, <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">arity</span>, <span class="tok-var">$descriptor</span>-&gt;<span class="tok-id">dependencies</span>]));</span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>        }</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$contributions</span>-&gt;<span class="tok-id">domains</span> <span class="tok-kw">as</span> <span class="tok-var">$domain</span>) {</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>            [<span class="tok-var">$id</span>, <span class="tok-var">$version</span>] = (<span class="tok-kw">new</span> <span class="tok-id">\Deriver\Model\Operations\DomainOperations</span>())-&gt;<span class="tok-id">registration</span>(<span class="tok-var">$domain</span>);</span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>            <span class="tok-kw">if</span> (<span class="tok-var">$id</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-var">$version</span> === <span class="tok-str">&#039;&#039;</span> || <span class="tok-kw">isset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">domains</span>[<span class="tok-var">$id</span>])) {</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidInputException</span>(<span class="tok-str">&#039;MODEL_CONFLICT: invalid or repeated domain identity.&#039;</span>);</span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>            }</span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">domains</span>[<span class="tok-var">$id</span>] = <span class="tok-var">$domain</span>;</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>[<span class="tok-str">&#039;domain:&#039;</span> . <span class="tok-var">$id</span>] = <span class="tok-var">$version</span>;</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>        }</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>        <span class="tok-id">ksort</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">manifest</span>);</span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>    }</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>}</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

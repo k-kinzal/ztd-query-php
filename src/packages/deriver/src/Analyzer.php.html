@@ -42,11 +42,11 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">Deriver</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Analysis\Session</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\Configuration</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\ProjectInput</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Source\Cache\GraphCache</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Source\Cache\SyntaxCache</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\Configuration</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\ProjectInput</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Session\Session</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Source\Lowering\LoweringCache</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Source\Parsing\ParseCache</span>;</span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">JsonException</span>;</span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
@@ -63,16 +63,16 @@
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com">     * Source-only caches are bounded and shared by sessions opened with this analyzer.</span></span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">SyntaxCache</span> <span class="tok-var">$syntax</span>;</span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">GraphCache</span> <span class="tok-var">$lowered</span>;</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">ParseCache</span> <span class="tok-var">$syntax</span>;</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">LoweringCache</span> <span class="tok-var">$lowered</span>;</span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a></span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     * Creates an analyzer with isolated in-memory source and graph caches.</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>()</span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    {</span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">syntax</span> = <span class="tok-kw">new</span> <span class="tok-id">SyntaxCache</span>();</span>
-<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowered</span> = <span class="tok-kw">new</span> <span class="tok-id">GraphCache</span>();</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">syntax</span> = <span class="tok-kw">new</span> <span class="tok-id">ParseCache</span>();</span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowered</span> = <span class="tok-kw">new</span> <span class="tok-id">LoweringCache</span>();</span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a>    }</span>
 <span class="src-line" id="L39"><a class="ln" href="#L39">39</a></span>
 <span class="src-line" id="L40"><a class="ln" href="#L40">40</a>    <span class="tok-com">/**</span></span>
@@ -84,7 +84,7 @@
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">open</span>(<span class="tok-id">ProjectInput</span> <span class="tok-var">$input</span>, <span class="tok-id">Configuration</span> <span class="tok-var">$configuration</span> = <span class="tok-kw">new</span> <span class="tok-id">Configuration</span>()): <span class="tok-id">AnalysisSession</span></span>
 <span class="src-line" id="L48"><a class="ln" href="#L48">48</a>    {</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Session</span>(<span class="tok-var">$input</span>, <span class="tok-var">$configuration</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">syntax</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowered</span>);</span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Session</span>(<span class="tok-var">$input</span>, <span class="tok-var">$configuration</span>, <span class="tok-id">parsing</span>: <span class="tok-var">$this</span>-&gt;<span class="tok-id">syntax</span>, <span class="tok-id">lowering</span>: <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowered</span>);</span>
 <span class="src-line" id="L50"><a class="ln" href="#L50">50</a>    }</span>
 <span class="src-line" id="L51"><a class="ln" href="#L51">51</a>}</span>
 <span class="src-line" id="L52"><a class="ln" href="#L52">52</a></span>

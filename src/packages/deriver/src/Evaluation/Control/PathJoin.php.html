@@ -44,10 +44,10 @@
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Evaluation\Completion</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Evaluation\Context</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Evaluation\Offset\Address</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Evaluation\State</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Memory\Location</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Value\Lattice</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Evaluation\Memory\Location</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Evaluation\Offset\Address</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Evaluation\State</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Model\Operations\Lattice</span>;</span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Value\Term</span>;</span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">WeakMap</span>;</span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a></span>
@@ -57,7 +57,7 @@
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> * Paths are joined only when they share their control position, aliases, objects, and handlers, and differ only in</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> * plain values. Differing values are widened, so the joined path contains every input path; guards keep their common</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> * entries and constraints are dropped.</span></span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> * @visibility root</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> * @visibility Deriver\Evaluation</span></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">PathJoin</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a>{</span>

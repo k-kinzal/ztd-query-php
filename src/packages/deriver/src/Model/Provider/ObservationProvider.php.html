@@ -42,23 +42,23 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">Deriver\Model\Provider</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\AnalysisSession</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\CapturedProject</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Query\Query</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a></span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com"> * Produces queries from a captured session without changing language semantics.</span></span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> * @visibility root</span></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * @example Queries remain ordinary public API values</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> *     (new \Deriver\Query\ReturnQuery(&#039;run&#039;))-&gt;symbol // =&gt; &#039;run&#039;</span></span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">interface</span> <span class="tok-id">ObservationProvider</span> <span class="tok-kw">extends</span> <span class="tok-id">Provider</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a>{</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     * @param AnalysisSession $session Captured project and call-site index</span></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     * @param CapturedProject $session Captured project and call-site index</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com">     * @return array&lt;string, Query&gt; Named independent queries</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com">     * @throws \Deriver\Exception\ModelException If trusted plugin code fails</span></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">queries</span>(<span class="tok-id">AnalysisSession</span> <span class="tok-var">$session</span>): <span class="tok-kw">array</span>;</span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">queries</span>(<span class="tok-id">CapturedProject</span> <span class="tok-var">$session</span>): <span class="tok-kw">array</span>;</span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a>}</span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a></span>
 </code></pre>

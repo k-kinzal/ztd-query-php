@@ -45,8 +45,8 @@
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\ProjectInput</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\SourceFile</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\TargetProfile</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Source\Compilation\Lowering</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Source\Declaration\ProjectIndex</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Source\Declaration\ProjectIndex</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Deriver\Source\Lowering\LoweringScope</span>;</span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * Supplies captured syntax and independent graph builders for compiler tests.</span></span>
@@ -64,12 +64,12 @@
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a>    }</span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a></span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com">     * @return Lowering New compiler context</span></span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com">     * @return LoweringScope New compiler context</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">lowering</span>(): <span class="tok-id">Lowering</span></span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">lowering</span>(): <span class="tok-id">LoweringScope</span></span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a>    {</span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a>        <span class="tok-var">$index</span> = <span class="tok-id">self</span>::<span class="tok-id">index</span>();</span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Lowering</span>(<span class="tok-var">$index</span>-&gt;<span class="tok-id">builder</span>(<span class="tok-str">&#039;fixture.php&#039;</span>), <span class="tok-var">$index</span>, <span class="tok-str">&#039;target&#039;</span>);</span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">LoweringScope</span>(<span class="tok-var">$index</span>-&gt;<span class="tok-id">builder</span>(<span class="tok-str">&#039;fixture.php&#039;</span>), <span class="tok-var">$index</span>, <span class="tok-str">&#039;target&#039;</span>);</span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    }</span>
 <span class="src-line" id="L36"><a class="ln" href="#L36">36</a>}</span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a></span>

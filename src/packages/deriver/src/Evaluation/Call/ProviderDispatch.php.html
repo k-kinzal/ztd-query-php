@@ -49,7 +49,7 @@
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * Combines provider candidates while keeping completeness and provenance explicit.</span></span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility root</span></span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility Deriver\Evaluation</span></span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ProviderDispatch</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a>{</span>
@@ -70,7 +70,7 @@
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a>        <span class="tok-var">$targets</span> = [];</span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a>        <span class="tok-var">$exhaustive</span> = <span class="tok-id">false</span>;</span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a>        <span class="tok-var">$assumptions</span> = [];</span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">configuration</span>-&gt;<span class="tok-id">providers</span> <span class="tok-kw">as</span> <span class="tok-var">$provider</span>) {</span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">models</span>-&gt;<span class="tok-id">contributions</span>-&gt;<span class="tok-id">providers</span> <span class="tok-kw">as</span> <span class="tok-var">$provider</span>) {</span>
 <span class="src-line" id="L36"><a class="ln" href="#L36">36</a>            <span class="tok-kw">if</span> (!<span class="tok-var">$provider</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DispatchProvider</span>) {</span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a>                <span class="tok-kw">continue</span>;</span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a>            }</span>

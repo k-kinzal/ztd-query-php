@@ -48,7 +48,7 @@
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> * Bounds shared summary retention and removes storage belonging to previous callers.</span></span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility root</span></span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility Deriver\Evaluation</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Retention</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a>{</span>
@@ -82,8 +82,8 @@
 <span class="src-line" id="L44"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L45"><a class="ln" href="#L45">45</a><span class="tok-com">     * Retains the explanation closure of this computation, independently of unrelated caller frontiers.</span></span>
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-com">     * @param list&lt;CompletionRecord&gt; $outcomes Compact isolated completions</span></span>
-<span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-com">     * @param array&lt;string, \Deriver\Result\Derivation&gt; $available Query explanation graph</span></span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a><span class="tok-com">     * @return array&lt;string, \Deriver\Result\Derivation&gt;|null Bounded explanation closure</span></span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-com">     * @param array&lt;string, \Deriver\Result\Execution\Derivation&gt; $available Query explanation graph</span></span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a><span class="tok-com">     * @return array&lt;string, \Deriver\Result\Execution\Derivation&gt;|null Bounded explanation closure</span></span>
 <span class="src-line" id="L49"><a class="ln" href="#L49">49</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L50"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">evidence</span>(<span class="tok-kw">array</span> <span class="tok-var">$outcomes</span>, <span class="tok-kw">array</span> <span class="tok-var">$available</span>): ?<span class="tok-kw">array</span></span>
 <span class="src-line" id="L51"><a class="ln" href="#L51">51</a>    {</span>
