@@ -46,6 +46,7 @@ final class Routine
      * @param array{string, string, string} $charsets The character_set_client, collation_connection and database collation the routine was created with
      * @param CreateProcedure|CreateFunction|null $statement The statement that created the routine, absent for installed metadata
      * @param Program\Installed|null $installed Public metadata of an installed routine, without an implementation body
+     * @param \SqlSemantics\Contract\GrammarRelease $release The release that resolves the stored return declaration
      */
     public function __construct(
         public readonly string $schema,
@@ -64,6 +65,7 @@ final class Routine
         public readonly array $charsets,
         public readonly CreateProcedure|CreateFunction|null $statement,
         public readonly ?Program\Installed $installed = null,
+        public readonly \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847,
     ) {
     }
 
@@ -78,14 +80,14 @@ final class Routine
         if ($this->installed !== null) {
             return $this->returnType = $this->installed->returned();
         }
-        $declared = new \MySqlMemory\Typing\Declared(Collation::named($this->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'));
+        $declared = new \MySqlMemory\Typing\Declared(Collation::named($this->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'), $this->release);
         $statement = $this->statement;
         if (!$statement instanceof CreateFunction) {
             return $this->returnType = \MySqlMemory\Typing\Domain::null();
         }
-        $collation = $statement->collation?->name === null ? null : Collation::named($statement->collation->name->value);
+        $collation = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\ReturnCollation())->resolve($statement->returns, $statement->collation, $declared->collation, $declared->release);
         $domain = $declared->domain($statement->returns, $collation);
-        if ($collation !== null && $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && !$domain->collation->bytes()) {
+        if ($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && !$domain->collation->bytes()) {
             $domain = $domain->withCollation($collation, $domain->coercibility);
         }
 

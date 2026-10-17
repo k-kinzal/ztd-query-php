@@ -201,17 +201,15 @@ final class Declared
      */
     public function charset(?CharsetAttribute $attribute, Collation $collation): Collation
     {
-        if ($attribute === null) {
-            return $collation;
-        }
-
-        return match ($attribute->form) {
-            CharsetForm::Ascii => Collation::known('ascii_general_ci'),
-            CharsetForm::Unicode => Collation::known('utf8mb4_0900_ai_ci'),
+        $named = match ($attribute?->form) {
+            CharsetForm::Ascii => Collation::known('latin1_swedish_ci'),
+            CharsetForm::Unicode => Collation::known('ucs2_general_ci'),
             CharsetForm::Byte => Collation::binary(),
-            CharsetForm::Binary => Collation::named($collation->charset->name . '_bin') ?? Collation::known('utf8mb4_bin'),
             CharsetForm::Named, CharsetForm::CharacterSet => $attribute->charset === null ? $collation : (Charset::named($attribute->charset->value)?->defaultCollation($this->release) ?? $collation),
+            CharsetForm::Binary, null => $collation,
         };
+
+        return $attribute?->binary() === true && !$named->bytes() ? Collation::named($named->charset->name . '_bin') ?? $named : $named;
     }
 
     /**

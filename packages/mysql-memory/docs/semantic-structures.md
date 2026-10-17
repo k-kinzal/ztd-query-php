@@ -1546,3 +1546,22 @@ match 975 SQL observations and 240 creation/invocation observations for 60
 directly constructed routines. The same CALL structure is skipped, reached and
 skipped again with unrelated request text. This establishes the repaired
 composition and phase behavior, not the remaining whole-model invariant gate.
+
+Function return declarations now exclude a non-national character type with an
+unresolved BINARY-only collation at construction. The input adapter reports its
+native condition without constructing that invalid value and preserves notices
+from the completed declaration. Version-dependent national and named character
+sets remain represented; their conditions derive from the release. ENUM and SET
+return declarations keep their distinct binary-attribute rules, including the
+legacy handling of named character sets.
+
+Character-set resolution belongs to SQL Semantics: ASCII selects latin1,
+UNICODE selects ucs2, and a BINARY mark applies after selecting the character
+set. Memory delegates this rule, retains the release of a stored definition,
+and uses the same return collation for evaluation and SHOW CREATE. Loading an
+implicitly materialized deprecated return collation preserves its notice.
+Native integration across 5.6, 5.7, 8.0, 8.4 and 9.1 passes 680 SQL observations
+and 240 direct-construction observations. The latter reuse 60 function objects
+through absent-database, existing-database, duplicate-function and dropped-function
+states with unrelated request text. These are focused return-domain witnesses;
+they do not close the outstanding whole-model construction and fuzzing gates.

@@ -47,6 +47,10 @@ final class LoadNotices
         if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $session->diagnostics->stale = true;
         }
+        $returned = $this->returned($routine, $session->settings()->release());
+        if ($returned !== null) {
+            $session->diagnostics->warning($returned->code(), $returned->message());
+        }
         foreach ((new Walker())->find($routine->statement, \SqlSemantics\Statement\Node::class) as $node) {
             $notice = $this->notice($node, $session->settings()->release());
             if ($notice !== null) {
@@ -84,6 +88,24 @@ final class LoadNotices
         $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias;
         return strtolower($name->value ?? '') === 'utf8' && $notice->warnedIn($release) ? new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice) : null;
     }
+    /**
+     * Reads the explicit return collation materialized when a binary character
+     * declaration is stored. Written COLLATE operands are visited separately.
+     */
+    public function returned(Routine $routine, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation
+    {
+        $definition = $routine->statement;
+        if (!$definition instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction || $definition->collation?->name !== null) {
+            return null;
+        }
+        $collation = $routine->returned()->collation;
+        if ($collation === $collation->charset->defaultCollation($release)) {
+            return null;
+        }
+
+        return (new CollationName(new \SqlSemantics\Statement\Identifier\Name($collation->name)))->deprecation($release);
+    }
+
     /**
      * Recognizes the MySQL 5.6 load whose suppressed notice replaces prior conditions.
      */

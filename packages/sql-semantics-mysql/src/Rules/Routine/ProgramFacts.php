@@ -96,11 +96,7 @@ final class ProgramFacts
      */
     public function returnCollation(\SqlSemantics\Platform\MySql\Statement\Type\TypeName $returns, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet
     {
-        if (($returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Character && (!$returns->national || in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) || $returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) && $returns->charset?->form === \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary) {
-            return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('return value collation');
-        }
-
-        return null;
+        return (new Declaration\ReturnCollation())->problem($returns, $release);
     }
 
     /**

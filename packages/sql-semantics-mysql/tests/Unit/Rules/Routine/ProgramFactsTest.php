@@ -43,9 +43,10 @@ final class ProgramFactsTest extends TestCase
     public function testRoutineRejectsAnImplicitBinaryReturnCollation(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $refused = $semantics->analyze('CREATE FUNCTION f() RETURNS CHAR(2) BINARY RETURN 1');
-
-        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", $refused->facts->diagnostics[0]->message());
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, '2', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary));
+        $problem = (new ProgramFacts())->returnCollation($type, \SqlSemantics\Contract\GrammarRelease::MySql847);
+        self::assertNotNull($problem);
+        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", $problem->message());
         self::assertSame([], $semantics->analyze('CREATE FUNCTION f() RETURNS NCHAR(2) BINARY RETURN 1')->facts->diagnostics);
         self::assertSame([], $semantics->analyze('CREATE FUNCTION f() RETURNS CHAR(2) ASCII BINARY RETURN 1')->facts->diagnostics);
     }

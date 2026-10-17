@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
@@ -130,17 +129,7 @@ final class Declared
      */
     public function charset(?CharsetAttribute $attribute, Collation $collation): Collation
     {
-        if ($attribute === null) {
-            return $collation;
-        }
-
-        return match ($attribute->form) {
-            CharsetForm::Ascii => Collation::known('ascii_general_ci'),
-            CharsetForm::Unicode => Collation::known('utf8mb4_0900_ai_ci'),
-            CharsetForm::Byte => Collation::binary(),
-            CharsetForm::Binary => Collation::named($collation->charset->name . '_bin') ?? Collation::known('utf8mb4_bin'),
-            CharsetForm::Named, CharsetForm::CharacterSet => $attribute->charset === null ? $collation : (Charset::named($attribute->charset->value)?->defaultCollation($this->release) ?? $collation),
-        };
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Declared($this->collation, $this->release))->charset($attribute, $collation);
     }
 
     /**

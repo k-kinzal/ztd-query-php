@@ -90,4 +90,17 @@ final class LoadNoticesTest extends TestCase
         self::assertSame([1681], array_column($session->diagnostics->conditions, 1));
     }
 
+
+    public function testReturnedRetainsTheStoredBinaryCollationNotice(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; SET GLOBAL log_bin_trust_function_creators=1; CREATE FUNCTION d.f() RETURNS CHAR(1) UNICODE BINARY RETURN 'a'");
+        $routine = $session->instance->dictionary->schema('d')?->functions['f'];
+        self::assertNotNull($routine);
+        self::assertSame(4079, (new LoadNotices())->returned($routine, $session->settings()->release())?->code());
+        $session->query('SELECT d.f()');
+        self::assertSame([4079], array_column($session->diagnostics->conditions, 1));
+        $session->query('SELECT d.f()');
+        self::assertSame([], $session->diagnostics->conditions);
+    }
 }

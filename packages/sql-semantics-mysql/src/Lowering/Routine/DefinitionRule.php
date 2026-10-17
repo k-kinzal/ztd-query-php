@@ -103,6 +103,7 @@ final class DefinitionRule
      * Lowers CREATE PROCEDURE or CREATE FUNCTION of a stored function: a node of `sp_tail` or `sf_tail`, and the definer.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the return declaration has no coherent collation
      */
     public function routine(Node $tail, ?Account $definer): CreateProcedure|CreateFunction
     {
@@ -131,6 +132,9 @@ final class DefinitionRule
             return new CreateProcedure($name, $parameters, $body, $characteristics, $definer, $exists);
         }
         [$type, $collation] = (new ParameterRule($this->lowering))->declared($parts['type_with_opt_collate'] ?? $parts['type'], $parts['opt_collate'] ?? null);
+        if ((new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\ReturnCollation())->intrinsic($type)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('return value collation'), ($parts['sp_c_chistics']->tokens()[0] ?? $bodyTree->tokens()[0])->offset, true);
+        }
 
         $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_fdparam_list']);
         (new DefinitionBody())->check($body, ProgramKind::Function, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, $parameters, $type, $collation, (new DefinitionBody())->typeEnds($parts['sp_fdparam_list'], $parts['type_with_opt_collate'] ?? $parts['type']), (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0, language: $language);

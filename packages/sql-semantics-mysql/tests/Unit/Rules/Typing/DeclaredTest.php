@@ -127,8 +127,20 @@ final class DeclaredTest extends TestCase
         $declared = new Declared(Collation::known('latin1_swedish_ci'));
 
         self::assertSame('latin1_swedish_ci', $declared->charset(null, Collation::known('latin1_swedish_ci'))->name);
-        self::assertSame('ascii_general_ci', $declared->charset(new CharsetAttribute(CharsetForm::Ascii), Collation::known('latin1_swedish_ci'))->name);
+        self::assertSame('latin1_swedish_ci', $declared->charset(new CharsetAttribute(CharsetForm::Ascii), Collation::known('latin1_swedish_ci'))->name);
         self::assertSame('latin1_bin', $declared->charset(new CharsetAttribute(CharsetForm::Binary), Collation::known('latin1_swedish_ci'))->name);
+    }
+
+    public function testCharsetAppliesBinaryAfterResolvingTheDeclaredCharacterSet(): void
+    {
+        $declared = new Declared(Collation::known('utf8mb4_0900_ai_ci'));
+        $latin = new CharsetAttribute(CharsetForm::Named, new \SqlSemantics\Statement\Identifier\Name('latin1'), \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Leading);
+        $unicode = new CharsetAttribute(CharsetForm::Unicode, mark: \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Trailing);
+        $bytes = new CharsetAttribute(CharsetForm::Named, new \SqlSemantics\Statement\Identifier\Name('binary'), \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Trailing);
+
+        self::assertSame('latin1_bin', $declared->charset($latin, $declared->collation)->name);
+        self::assertSame('ucs2_bin', $declared->charset($unicode, $declared->collation)->name);
+        self::assertSame('binary', $declared->charset($bytes, $declared->collation)->name);
     }
 
     public function testBinaryHasTheBinaryCollation(): void
@@ -186,7 +198,7 @@ final class DeclaredTest extends TestCase
         $declared = new Declared(Collation::known('latin1_swedish_ci'));
         $ascii = new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(charset: new CharsetAttribute(CharsetForm::Ascii));
 
-        self::assertSame('ascii_general_ci', $declared->domain($ascii)->collation->name);
+        self::assertSame('latin1_swedish_ci', $declared->domain($ascii)->collation->name);
         self::assertSame('binary', $declared->domain(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true))->collation->name);
         self::assertSame('utf8mb3_general_ci', $declared->domain(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(national: true))->collation->name);
     }

@@ -156,6 +156,7 @@ final class RoutineCommand implements Command
             $now,
             ProgramSource::charsets($session, $schema->name),
             $statement,
+            release: $session->settings()->release(),
         );
     }
 
@@ -229,13 +230,13 @@ final class RoutineCommand implements Command
     public function returns(CreateFunction $statement, Schema $schema, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): string
     {
         $default = Collation::named($schema->collation) ?? Collation::known('utf8mb4_0900_ai_ci');
-        $collation = $statement->collation?->name === null ? null : Collation::named($statement->collation->name->value);
+        $collation = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\ReturnCollation())->resolve($statement->returns, $statement->collation, $default, $release);
         $domain = (new Declared($default))->domain($statement->returns, $collation);
-        if ($collation !== null && $domain->kind === Kind::String && !$domain->collation->bytes()) {
+        if ($domain->kind === Kind::String && !$domain->collation->bytes()) {
             $domain = $domain->withCollation($collation, $domain->coercibility);
         }
         $text = (new ColumnText($release))->type($domain, $statement->returns);
-        if (($domain->kind !== Kind::String && $domain->kind !== Kind::Json) || $domain->collation->bytes() || $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Json) {
+        if (($domain->kind !== Kind::String && $domain->kind !== Kind::Json) || ($domain->collation->bytes() && !$statement->returns instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) || $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Json) {
             return $text;
         }
         $charset = $domain->collation->charset;
