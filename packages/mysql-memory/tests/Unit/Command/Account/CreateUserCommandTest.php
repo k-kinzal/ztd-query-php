@@ -40,6 +40,25 @@ final class CreateUserCommandTest extends TestCase
         self::assertNull($session->instance->accounts->find(new Identity('a', '%')));
     }
 
+    public function testRecipientChecksAttributesForNewAccounts(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze("CREATE USER x ATTRIBUTE 'bad'")->statement;
+        assert($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateUser);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3982);
+        (new CreateUserCommand())->recipient($statement, Identity::of('x', null), false, $session);
+    }
+
+    public function testAbsentRecordsAnAttributeFailureAfterEarlierCredentialFailures(): void
+    {
+        $session = (new Instance())->connect();
+        $error = $session->run("CREATE USER x IDENTIFIED WITH missing, y IDENTIFIED BY 'p', z IDENTIFIED WITH absent ATTRIBUTE 'bad'")[0];
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame([1524, [1524, 3982]], [$error->getCode(), array_column($session->diagnostics->conditions, 1)]);
+        self::assertNull($session->instance->accounts->find(Identity::of('y', null)));
+    }
+
     public function testAbsentIgnoresReplacementCredentialsForAnExistingAccount(): void
     {
         $session = (new Instance())->connect();

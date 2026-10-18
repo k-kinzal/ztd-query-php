@@ -127,15 +127,15 @@ final class CreateUserCommand implements Command
                 $options->check($user->initial === null ? $user->identification : null, $plugin);
                 (new Authentication\CreateFactors())->check($user, $exists, $session);
                 if (!$exists) {
-                    if ($rolesRefused) {
-                        throw AccountError::UserDoesNotExist->error($identity->backquoted());
-                    }
-                    $this->defaults($statement, $session);
+                    $this->recipient($statement, $identity, $rolesRefused, $session);
                 }
             } catch (SqlError $error) {
                 $rolesRefused = $rolesRefused || $error->error === AccountError::UserDoesNotExist;
                 $session->diagnostics->error($error->getCode(), $error->getMessage());
                 $first ??= $error;
+                if ($error->error === AccountError::InvalidUserAttributeJson) {
+                    break;
+                }
                 continue;
             }
             if ($exists) {
@@ -152,6 +152,22 @@ final class CreateUserCommand implements Command
         }
 
         return array_values($created);
+    }
+
+    /**
+     * Checks a new recipient's roles and shared attributes after its credentials.
+     *
+     * @throws SqlError When roles or the JSON attributes are invalid
+     */
+    public function recipient(CreateUser $statement, Identity $identity, bool $rolesRefused, Session $session): void
+    {
+        if ($rolesRefused) {
+            throw AccountError::UserDoesNotExist->error($identity->backquoted());
+        }
+        $this->defaults($statement, $session);
+        if ($statement->comment?->kind === \SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Attribute) {
+            (new \MySqlMemory\Account\Attributes())->merge(null, $statement->comment->text->value);
+        }
     }
 
     /**

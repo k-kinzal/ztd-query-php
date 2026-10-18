@@ -2065,3 +2065,20 @@ absent, ordinary, populated partitioned, already-added, incompatible-method and
 recreated tables. Another 860 saved native observations replay without a
 difference. This is evidence for the tested state constraints, not closure of
 all partition constructor invariants or the final fuzz gates.
+
+
+### Account batch preparation
+
+Initial authentication is checked before an existing account is skipped by
+`IF NOT EXISTS`. Replacement primary credentials are still ignored for that
+account. A new recipient checks its shared JSON attributes after its credentials
+and default roles. A malformed attribute stops the batch, preserving conditions
+from earlier recipients and preventing later accounts from being processed.
+
+The `query395` live regression passes 126 initial-authentication observations on
+three modern releases through both text and prepared protocols. The `query403`
+regression passes 102 attribute-batch observations on the same protocols and
+releases. Both include the original generated SQL. The unseeded `query394` run
+stopped after 467.694 seconds with 582 matching inputs, the now-repaired account
+warning difference, and a spatial-catalog state restoration difference. That run
+is not a passing 900-second campaign; spatial restoration remains under repair.
