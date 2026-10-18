@@ -1711,7 +1711,7 @@
         "expected": "int",
         "list": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CountedList",
         "row": "int",
-        "valueRow": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\ValueRow"
+        "valueRow": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\ValueRow|SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\DeferredValueRow|null"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\CountedList": {
         "name": "string",
@@ -1860,6 +1860,12 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\DeferredBody": {
         "selection": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\DeferredValueRow": {
+        "values": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\DeferredValuesQuery": {
+        "rows": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\With": {
         "recursive": "bool",
@@ -2380,6 +2386,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredAggregateKind": {
         "name": "string",
         "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredChar": {
+        "arguments": "array",
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredKeywordCall": {
         "arguments": "array",

@@ -56,4 +56,12 @@ final class SelectionsTest extends TestCase
         $session->query('WITH x AS (SELECT ROW(1,2) REGEXP 3 UNION SELECT 4) SELECT * FROM x');
     }
 
+    public function testValuesPreparesTheRetainedDependencyBeforeItsRowCondition(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1054);
+        $session->query('WITH c AS (VALUES ROW(CHAR(ROW(missing, 2)))) SELECT * FROM c');
+    }
+
 }

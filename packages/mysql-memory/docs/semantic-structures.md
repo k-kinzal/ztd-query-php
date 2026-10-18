@@ -2612,3 +2612,49 @@ database: 810 comparisons, including names, rows, metadata and conditions, with
 unrelated invalid session text. These bounded results do not replace the final
 whole-model, supplied-seed and 900-second gates or close the outstanding
 constructor and matching-error classification audit.
+
+
+### Deferred CHAR codes and VALUES rows
+
+An unseeded comparison stopped after 384 matching inputs because an unused CTE
+contained `CHAR` around a deferred subquery inside a VALUES row. Lowering forced
+the operand into a Scalar and lost the containing definition before resolution.
+Memory consequently reported an unknown variable inside the unused definition,
+while MySQL reported the missing UPDATE destination.
+
+`DeferredChar`, `DeferredValueRow` and `DeferredValuesQuery` now retain the complete
+codes, character set and row sequence. Their constructors require a retained
+non-scalar condition; ordinary `CharCall` and `ValueRow` keep their scalar domains.
+The read-position invariant rejects reached templates as ordinary QueryRoot
+values. Unused CTEs and stored instructions retain those templates. Planning
+prepares their resolved operands in order without source SQL or parser access.
+An unknown CHAR character set remains an aborting declaration notice, including
+inside an unused definition.
+
+The regression corpus passes 318 observations on MySQL 8.0, 8.4 and 9.1
+(106 SQL inputs per release), including the original unseeded
+counterexample, unused/referenced definitions, set operands and skipped/reached
+stored branches. Direct construction reuses 12 query objects across missing,
+populated, renamed-column and restored-table states. Six stored definitions
+exercise conditional reads and cursor opening across missing tables, missing
+columns and populated rows. The two direct-construction checks pass 306
+observations across those releases. These checks retain errors and warnings as compared
+outcomes; they do not classify a matching error as a valid ordinary construction.
+
+The whole-model acceptance contract remains open. In particular, ordinary query
+consumers beyond QueryRoot still require a role audit, alongside the existing
+partition, EXPLAIN and matching-error obligations. Passing these selected
+regressions does not close those obligations or replace the supplied-seed and
+900-second unseeded gates.
+
+A separate native probe confirms why query consumer roles need distinct checks:
+`INSERT ... SELECT CHAR(ROW(1,2))` changes from missing-destination error 1146 to
+operand error 1241 when the destination is created. It never becomes a coherent
+ordinary scalar read. `CREATE TABLE IF NOT EXISTS ... AS` with that same query
+succeeds when the destination already exists, while unconditional creation
+rejects it. Conversely, `VALUES ROW()` is a valid default-row INSERT source but
+an invalid standalone read. A single restriction on the shared Query interface
+would lose these distinctions. Retained templates need ownership by the
+conditional or stored role; ordinary INSERT/read consumers need their own
+structural constraints. These observations are an open audit result, not a
+completed constructor repair.

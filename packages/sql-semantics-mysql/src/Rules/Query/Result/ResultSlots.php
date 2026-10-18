@@ -156,7 +156,7 @@ final class ResultSlots
     /**
      * Derives every value of a VALUES statement and answers its output.
      */
-    public function values(ValuesQuery $values, Derivation $derivation, Environment $outer): QueryFact
+    public function values(ValuesQuery|\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery $values, Derivation $derivation, Environment $outer): QueryFact
     {
         $columns = [];
         $width = count($values->rows[0]->values);
@@ -167,7 +167,7 @@ final class ResultSlots
                 $derivation->report(new ValueCountMismatch(count($target[0]), $count, $index + 1));
             } elseif ($count !== $width) {
                 $derivation->report($target === null ? new CountMismatch(CountedList::ValueRows, $width, $count, $index + 1, $row) : new ValueCountMismatch($width, $count, $index + 1));
-            } elseif ($count === 0 && $target === null) {
+            } elseif ($count === 0 && $target === null && $row instanceof \SqlSemantics\Platform\MySql\Statement\Query\ValueRow) {
                 $derivation->report(new Misuse(MisuseRule::EmptyValuesRow, valueRow: $row));
             }
             foreach ($row->values as $position => $value) {

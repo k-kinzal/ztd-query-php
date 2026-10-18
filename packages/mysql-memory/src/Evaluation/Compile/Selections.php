@@ -102,6 +102,34 @@ final class Selections
     }
 
     /**
+     * Prepares retained VALUES positions in row order before requesting output domains.
+     *
+     * @throws \MySqlMemory\Error\SqlError Always, after preceding operands prepare
+     * @throws LogicException When a retained condition does not reject preparation
+     */
+    public function values(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery $query, \MySqlMemory\Plan\Planner $planner, ?\MySqlMemory\Evaluation\Scope $outer): never
+    {
+        $scope = new \MySqlMemory\Evaluation\Scope($outer);
+        $width = count($query->rows[0]->values);
+        foreach ($query->rows as $index => $row) {
+            if ($width !== count($row->values)) {
+                throw \MySqlMemory\Error\Family\QueryError::WrongValueCountOnRow->error($index + 1);
+            }
+            if ($row->values === []) {
+                throw \MySqlMemory\Error\Family\QueryError::ValuesEmptyRow->error();
+            }
+            foreach ($row->values as $value) {
+                if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest) {
+                    $planner->compiler->compile($value, $scope);
+                } else {
+                    $this->operand($value, $planner->compiler, $scope);
+                }
+            }
+        }
+        throw new LogicException('Deferred VALUES must retain a preparation condition.');
+    }
+
+    /**
      * Prepares set operands in query order before their output types are required.
      *
      * @throws \MySqlMemory\Error\SqlError When a retained query operand cannot prepare

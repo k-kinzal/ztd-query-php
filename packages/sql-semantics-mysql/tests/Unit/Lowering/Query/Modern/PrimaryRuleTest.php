@@ -52,4 +52,11 @@ final class PrimaryRuleTest extends TestCase
     {
         self::assertSame('WITH RECURSIVE a (x) AS (SELECT 1), b AS (SELECT 2) SELECT 3', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('with recursive a (x) as (select 1), b as (select 2) select 3')->toString());
     }
+    public function testValueRowRetainsAllDependenciesOfAnUnusedDefinition(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@bogus)))) SELECT 9');
+        self::assertSame('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@bogus)))) SELECT 9', $operation->toString());
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
 }

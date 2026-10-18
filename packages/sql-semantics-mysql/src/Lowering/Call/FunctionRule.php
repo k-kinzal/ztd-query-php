@@ -164,8 +164,8 @@ final class FunctionRule
         $expressions = $this->lowering->expressions;
 
         return match ($form->signature) {
-            'function_call_keyword: CHAR_SYM ( expr_list )' => new CharCall($expressions->expressions($form->node(2))),
-            'function_call_keyword: CHAR_SYM ( expr_list USING charset_name )' => new CharCall($expressions->expressions($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
+            'function_call_keyword: CHAR_SYM ( expr_list )' => $this->character($expressions->operands($form->node(2))),
+            'function_call_keyword: CHAR_SYM ( expr_list USING charset_name )' => $this->character($expressions->operands($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
             'function_call_keyword: CURRENT_USER optional_braces' => $this->niladic($form, KeywordFunction::CurrentUser),
             'function_call_nonkeyword: POSITION_SYM ( bit_expr IN_SYM expr )' => $this->position((new \SqlSemantics\Platform\MySql\Lowering\Expression\BitRule($this->lowering))->bitExpression($form->node(2)), $expressions->operand($form->node(4))),
             'function_call_generic: IDENT_sys ( opt_udf_expr_list )' => $this->generic($form),
@@ -176,6 +176,24 @@ final class FunctionRule
             ),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Preserves every CHAR code when a template retains a non-scalar operand.
+     *
+     * @param list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $arguments
+     */
+    public function character(array $arguments, ?\SqlSemantics\Platform\MySql\Statement\Name\CharsetName $charset = null): CharCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredChar
+    {
+        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredChar($arguments, $charset);
+        }
+        $scalars = [];
+        foreach ($arguments as $argument) {
+            \SqlSemantics\Diagnostic\Check::invariant($argument instanceof Scalar, 'An ordinary CHAR call retains only scalar codes.');
+            $scalars[] = $argument;
+        }
+        return new CharCall($scalars, $charset);
     }
 
     /**

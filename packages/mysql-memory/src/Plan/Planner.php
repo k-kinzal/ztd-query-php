@@ -115,6 +115,7 @@ final class Planner
     {
         return match (true) {
             $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody => (new \MySqlMemory\Evaluation\Compile\Selections())->bound($query->selection, $this, $outer),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery => (new \MySqlMemory\Evaluation\Compile\Selections())->values($query, $this, $outer),
             $query instanceof Select => $this->blocks->select($query, $outer),
             $query instanceof QueryExpression => $this->expression($query, $outer),
             $query instanceof ParenthesizedQuery => $this->query($query->query, $outer),

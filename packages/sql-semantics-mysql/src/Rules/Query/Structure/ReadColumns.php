@@ -77,7 +77,7 @@ final class ReadColumns
                     return $problem;
                 }
             }
-            if ($node instanceof M\With\DeferredBody) {
+            if ($node instanceof M\With\DeferredBody || $node instanceof M\With\DeferredValuesQuery) {
                 return $node->problem();
             }
             if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification) {
@@ -112,7 +112,7 @@ final class ReadColumns
     /**
      * A read row supplies at least one expression and the same width as its siblings.
      */
-    public function rows(M\ValuesQuery $query): ?Diagnostic
+    public function rows(M\ValuesQuery|M\With\DeferredValuesQuery $query): ?Diagnostic
     {
         $width = count($query->rows[0]->values);
         foreach ($query->rows as $index => $row) {
@@ -120,10 +120,13 @@ final class ReadColumns
             if ($count !== $width) {
                 return new M\Problem\CountMismatch(M\Problem\CountedList::ValueRows, $width, $count, $index + 1, $row);
             }
-            if ($count === 0) {
+            if ($count === 0 && $row instanceof M\ValueRow) {
                 return new M\Problem\Misuse(M\Problem\MisuseRule::EmptyValuesRow, valueRow: $row);
             }
             foreach ($row->values as $value) {
+                if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+                    return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$value]);
+                }
                 if ($value instanceof DefaultRequest) {
                     return new WriteMisuse(WriteRule::DefaultOutsideInsert);
                 }

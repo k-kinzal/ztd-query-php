@@ -68,7 +68,7 @@ final class QueryUse
     public function templates(QueryPreparation $query, Session $session): void
     {
         $reached = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($query->statement);
-        if (array_filter($reached, static fn ($node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) === []) {
+        if (array_filter($reached, static fn ($node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery) === []) {
             return;
         }
         foreach ($query->facts->diagnostics as $problem) {

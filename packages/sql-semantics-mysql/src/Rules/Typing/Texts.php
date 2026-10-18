@@ -115,7 +115,9 @@ final class Texts
         }
         $found = Charset::named($charset);
         if ($found === null) {
-            $derivation->report(new UnknownCharset($charset));
+            $problem = new UnknownCharset($charset);
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
 
             return null;
         }

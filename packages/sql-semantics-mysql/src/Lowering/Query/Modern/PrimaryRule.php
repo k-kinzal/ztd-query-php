@@ -108,7 +108,7 @@ final class PrimaryRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function values(Node $constructor): ValuesQuery
+    public function values(Node $constructor): ValuesQuery|\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery
     {
         $form = $this->lowering->form($constructor);
         if ($form->signature !== 'table_value_constructor: VALUES values_row_list') {
@@ -124,10 +124,53 @@ final class PrimaryRule
             if ($row->signature !== 'row_value_explicit: ROW_SYM ( opt_values )') {
                 throw ImplementationGap::production($row);
             }
-            $rows[] = new ValueRow($this->lowering->dml->rowValues($row->node(2)));
+            $rows[] = $this->valueRow($row->node(2));
         }
 
-        return new ValuesQuery($rows);
+        if (array_filter($rows, static fn ($row): bool => $row instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery($rows);
+        }
+        $ordinary = [];
+        foreach ($rows as $row) {
+            \SqlSemantics\Diagnostic\Check::invariant($row instanceof ValueRow, 'Ordinary VALUES retains scalar/default rows.');
+            $ordinary[] = $row;
+        }
+        return new ValuesQuery($ordinary);
+    }
+
+    /**
+     * Retains complete VALUES operands before assigning an ordinary row role.
+     *
+     * @throws ImplementationGap When a row value has no lowering rule
+     */
+    public function valueRow(Node $values): ValueRow|\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow
+    {
+        $form = $this->lowering->form($values);
+        if ($form->signature === 'opt_values:') {
+            return new ValueRow([]);
+        }
+        $list = $form->signature === 'opt_values: values' ? $form->node(0) : $values;
+        $form = $this->lowering->form($list);
+        if (!in_array($form->signature, ['values: values , expr_or_default', 'values: expr_or_default'], true)) {
+            throw ImplementationGap::production($form);
+        }
+        $items = [];
+        foreach ((new Lists())->items($list) as $item) {
+            $part = $this->lowering->form($item);
+            $items[] = match ($part->signature) {
+                'expr_or_default: expr' => $this->lowering->expressions->operand($part->node(0)),
+                'expr_or_default: DEFAULT', 'expr_or_default: DEFAULT_SYM' => new \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest(),
+                default => throw ImplementationGap::production($part),
+            };
+        }
+        $ordinary = [];
+        foreach ($items as $item) {
+            if (!$item instanceof \SqlSemantics\Statement\Scalar && !$item instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest) {
+                return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow($items);
+            }
+            $ordinary[] = $item;
+        }
+        return new ValueRow($ordinary);
     }
 
     /**

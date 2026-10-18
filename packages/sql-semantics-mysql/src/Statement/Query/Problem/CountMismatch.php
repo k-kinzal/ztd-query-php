@@ -23,10 +23,10 @@ final class CountMismatch implements Diagnostic
      * @param CountedList $list The lists that disagree
      * @param int $expected The length the first list fixes
      * @param int $actual The length of the list that disagrees
-     * @param \SqlSemantics\Platform\MySql\Statement\Query\ValueRow|null $valueRow The VALUES row that owns this mismatch, when supplied
+     * @param \SqlSemantics\Platform\MySql\Statement\Query\ValueRow|\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow|null $valueRow The VALUES row that owns this mismatch, when supplied
      * @param int $row The number of the row that disagrees, counted from 1, for the rows of VALUES
      */
-    public function __construct(public readonly CountedList $list, public readonly int $expected, public readonly int $actual, public readonly int $row = 1, public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\ValueRow $valueRow = null)
+    public function __construct(public readonly CountedList $list, public readonly int $expected, public readonly int $actual, public readonly int $row = 1, public readonly \SqlSemantics\Platform\MySql\Statement\Query\ValueRow|\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow|null $valueRow = null)
     {
         \SqlSemantics\Diagnostic\Check::input($valueRow === null || ($list === CountedList::ValueRows && count($valueRow->values) === $actual && $expected !== $actual), 'A VALUES width condition identifies the mismatching row.');
     }
