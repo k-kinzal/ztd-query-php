@@ -16,6 +16,20 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PartitionsTest extends TestCase
 {
+    public function testAcceptSkipsIgnoredRowsOutsideThePartitionDomainWithTheirWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT) PARTITION BY LIST(a) (PARTITION p VALUES IN(1))');
+        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        self::assertNotNull($definition?->partitioning);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $partitions = new Partitions($definition, $definition->partitioning, $context);
+
+        self::assertTrue($partitions->accept([1], null, false));
+        self::assertFalse($partitions->accept([2], null, true));
+        self::assertSame([['Warning', 1526, 'Table has no partition for value 2']], $session->diagnostics->conditions);
+    }
+
     public function testHashTakesTheAbsoluteValueAndNullAsTwoToTheSixtyThird(): void
     {
         $session = (new Instance())->connect();

@@ -170,18 +170,7 @@ final class Rows
             return true;
         }
         $partitions = new \MySqlMemory\Storage\Partitions($definition, $definition->partitioning, $this->context);
-        try {
-            $partitions->place($row, $this->into->table->partitions === [] ? null : $partitions->selected($this->into->table->partitions));
-        } catch (SqlError $error) {
-            if (!$this->into->ignore || !$error->error instanceof \MySqlMemory\Error\Family\PartitionError) {
-                throw $error;
-            }
-            $this->context->diagnostics->warning($error->error, $error->getMessage());
-
-            return false;
-        }
-
-        return true;
+        return $partitions->accept($row, $this->into->table->partitions === [] ? null : $partitions->selected($this->into->table->partitions), $this->into->ignore);
     }
 
     /**

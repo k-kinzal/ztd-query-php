@@ -24,6 +24,36 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class TableQueriesTest extends TestCase
 {
+    public function testFillRefusesUnpartitionedSourceRowsAndIgnoreSkipsThem(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $refused = $session->run('CREATE TABLE d.t PARTITION BY LIST(a) (PARTITION p VALUES IN(1)) SELECT 2 AS a')[0];
+        $ignored = $session->query('CREATE TABLE d.u PARTITION BY LIST(a) (PARTITION p VALUES IN(1)) IGNORE SELECT 2 AS a')[0];
+        $rows = $session->query('SELECT a FROM d.u')[0];
+
+        self::assertInstanceOf(SqlError::class, $refused);
+        self::assertSame(1526, $refused->getCode());
+        self::assertNull($session->instance->dictionary->table('d', 't'));
+        self::assertInstanceOf(Completion::class, $ignored);
+        self::assertSame('Records: 1  Duplicates: 1  Warnings: 1', $ignored->info);
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([], $rows->rows);
+    }
+
+    public function testCreateRetainsPartitioningWhenQueryColumnsAreMaterialized(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->query('CREATE TABLE d.t PARTITION BY RANGE(a) (PARTITION p VALUES LESS THAN(10)) SELECT 7 AS a');
+
+        $rows = $session->query('SELECT a FROM d.t PARTITION(p)')[0];
+        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['7']], $rows->rows);
+        self::assertNotNull($definition?->partitioning);
+        self::assertSame([0], $definition->partitioning->read);
+    }
+
     public function testFloatingRetainsFixedScaleAndUsesReleaseSpecificDoubleWidths(): void
     {
         $session = (new Instance())->connect();

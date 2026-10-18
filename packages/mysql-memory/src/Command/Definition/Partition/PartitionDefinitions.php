@@ -56,6 +56,20 @@ final class PartitionDefinitions
     }
 
     /**
+     * Applies the complete partition clause after the destination is known to be new.
+     *
+     * @throws SqlError When partitioning is incompatible with the definition
+     */
+    public static function apply(Planner $planner, \SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create, TableDefinition $definition): TableDefinition
+    {
+        if ($create->partitioning instanceof PartitionClause) {
+            $scope = (new \MySqlMemory\Command\Definition\Expression\TableExpressions($planner, $create))->scope($definition);
+            $definition = $definition->withPartitioning((new self($planner, $scope))->partitioning($create->partitioning, $definition));
+        }
+        return $definition;
+    }
+
+    /**
      * Answers the partitioning a clause declares for a table.
      *
      * @throws SqlError When the partitioning is refused

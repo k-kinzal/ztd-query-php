@@ -102,6 +102,7 @@ final class TableQueries
             $columns[] = [$element, null];
         }
         $layout = new TableLayout(new QualifiedName($create->name->name, new Name($schema->name)), $columns, $keys, $create->options, $create->temporaryWords);
+        $layout->partitioning = $create->partitioning;
         $layout->implicitCollations = $this->implicitCollations($plan, $declared);
         $layout->reportedLengths = $this->reportedLengths($plan, $declared);
         $definition = (new TableRebuild($this->session, $this->context, $this->connection))->definition($layout, $this->session->instance->dictionary->declarations());
@@ -355,10 +356,7 @@ final class TableQueries
         try {
             $definition = $table->definition;
             $writer = new Writer($table, $context);
-            $sources = [];
-            foreach ($plan->names as $index => $name) {
-                $sources[mb_strtolower($name)] = $index;
-            }
+            $sources = array_flip(array_map(mb_strtolower(...), $plan->names));
             $iterator = (new Builder())->build($plan->root);
             $frame = new Frame($context);
             $iterator->init($frame);
@@ -372,6 +370,10 @@ final class TableQueries
                     $row[] = $source === null ? $this->defaulted($column, $writer, $store, $frame) : $this->stored($read[$source] ?? null, $plan->domains[$source], $column, $store, $writer);
                 }
                 [$row] = $writer->autoIncrement($row, $context->modes->has('NO_AUTO_VALUE_ON_ZERO'));
+                if (!(new Partition\QueryRows($definition, $context))->accept($row, $duplicate === DuplicateHandling::Ignore)) {
+                    $duplicates++;
+                    continue;
+                }
                 $conflict = $writer->conflict($row);
                 if ($conflict !== null && $duplicate === DuplicateHandling::Ignore) {
                     $context->diagnostics->warning(DataError::DuplicateEntry, DataError::DuplicateEntry->message(...$writer->entry($row, $conflict[1])));

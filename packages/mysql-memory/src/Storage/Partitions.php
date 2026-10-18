@@ -81,6 +81,27 @@ final class Partitions
     }
 
     /**
+     * Checks the destination of a write, preserving IGNORE's warning and skipped row.
+     *
+     * @param list<int|float|string|null> $row The proposed stored values
+     * @param list<int>|null $selected Explicit destination partitions, or all partitions
+     * @throws SqlError When a partition condition is not ignored
+     */
+    public function accept(array $row, ?array $selected, bool $ignore): bool
+    {
+        try {
+            $this->place($row, $selected);
+        } catch (SqlError $error) {
+            if (!$ignore || !$error->error instanceof PartitionError) {
+                throw $error;
+            }
+            $this->context->diagnostics->warning($error->error, $error->getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Answers rows in the order a scan reads them: partition by partition, each in the order it holds them, keeping only the partitions selected.
      *
      * @param array<int, list<int|float|string|null>> $rows The rows by number, in the order of the clustered index

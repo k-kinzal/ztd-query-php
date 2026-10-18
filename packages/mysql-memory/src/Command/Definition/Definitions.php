@@ -19,7 +19,6 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Typing\Declared;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Encoding;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
@@ -91,6 +90,17 @@ final class Definitions
      */
     public function table(CreateTable $create, Table $declaration, string $schema): TableDefinition
     {
+        return PartitionDefinitions::apply($this->planner, $create, $this->shape($create, $declaration, $schema));
+    }
+
+    /**
+     * Builds columns and constraints before the legacy existing-table check.
+     * Partition functions are checked only if the table will actually be created.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the column or key definition is invalid
+     */
+    public function shape(CreateTable $create, Table $declaration, string $schema): TableDefinition
+    {
         $declaration = new Table(new \SqlSemantics\Statement\Identifier\QualifiedName($declaration->name->name, new \SqlSemantics\Statement\Identifier\Name($schema)), $declaration->profile, $declaration->columns, $declaration->implicit, $declaration->complete, $declaration->kind, $declaration->keys, $declaration->partitions);
         $collation = $this->collation($create);
         $engine = (new StorageOptions())->engine($create, $this->planner->compiler->connection->variables);
@@ -125,12 +135,7 @@ final class Definitions
         (new Constraint\IndexOptions())->check($definition);
         $definition = $expressions->computed($definition, $this->planner->settings->connectionCollation->charset->name);
 
-        $definition = $constraints->constrained($definition);
-        if ($create->partitioning instanceof PartitionClause) {
-            $definition = $definition->withPartitioning((new PartitionDefinitions($this->planner, $expressions->scope($definition)))->partitioning($create->partitioning, $definition));
-        }
-
-        return $definition;
+        return $constraints->constrained($definition);
     }
 
     /**

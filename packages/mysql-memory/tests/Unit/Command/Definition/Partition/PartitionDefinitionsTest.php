@@ -16,6 +16,24 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PartitionDefinitionsTest extends TestCase
 {
+    public function testApplyIsDeferredUntilCreationAndPreservedInTheStoredDefinition(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect();
+        $session->query('CREATE TABLE d.t(a INT)');
+
+        $skipped = $session->query('CREATE TABLE IF NOT EXISTS d.t(a INT) PARTITION BY HASH(1)')[0];
+        $session->query('DROP TABLE d.t');
+        $refused = $session->run('CREATE TABLE IF NOT EXISTS d.t(a INT) PARTITION BY HASH(1)')[0];
+        $session->query('CREATE TABLE d.t(a INT) PARTITION BY HASH(a) PARTITIONS 2');
+        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $skipped);
+        self::assertInstanceOf(SqlError::class, $refused);
+        self::assertSame(1486, $refused->getCode());
+        self::assertNotNull($definition?->partitioning);
+        self::assertCount(2, $definition->partitioning->partitions);
+    }
+
     public function testSourceRefusesAConstantPartitionFunctionWithoutCreatingTheTable(): void
     {
         $session = (new Instance())->connect();

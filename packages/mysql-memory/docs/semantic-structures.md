@@ -2562,3 +2562,28 @@ and the original unseeded-fuzz counterexample (288 observations).
 The acceptance contract remains unmet until the outstanding structure audit,
 state witnesses, EXPLAIN comparison obligations, every supplied seed and the
 900-second unseeded campaign pass on the final revision.
+
+## Partitioned creation from retained structures
+
+`CreateTable` retains its complete partition clause when query output supplies
+some or all of the new columns. Memory now carries that clause into the completed
+table definition and checks every materialized row against its partition domain.
+A row outside a RANGE or LIST partition aborts creation, or is skipped by IGNORE.
+MySQL 5.6's distinct diagnostics are retained: ignored out-of-range rows have no
+warning, while an aborted creation appends error 1567 after error 1526.
+
+On legacy releases, column and key checks precede the existing-table shortcut,
+but partition-function checks follow it. Consequently, an existing destination
+allows `CREATE TABLE IF NOT EXISTS` with a constant partition function to complete
+with note 1050. Dropping that table and executing the same request exposes the
+partition-function condition. The request's fields are neither removed nor
+rewritten to obtain the shortcut.
+
+`PartitionCreationStructureTest` constructs 24 creation requests directly,
+varying HASH/RANGE/LIST, column-dependent and constant functions, declared and
+query-supplied columns, source values inside and outside partition domains, and
+IGNORE. The same objects are reused with an absent destination, a populated
+existing table, and a dropped destination. A partition-specific read follows
+each creation. All 720 observations match MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and
+9.1.0 with unrelated invalid session text. These histories establish the repaired
+consumer behavior; they do not close the remaining partition-role audit.

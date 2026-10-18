@@ -298,6 +298,14 @@ Top-level inputs use the fixture's default lexical SQL modes. Inputs under `mode
 
 The acceptance checks are a crash-free replay of SQL Faker's supplied seed corpus and a crash-free unseeded fuzz campaign of at least 15 minutes. Grammar reachability is SQL Faker's responsibility. The seed runner currently returns failure for differing or volatile observations, infrastructure failures and an empty corpus; execution exceptions are described below. Removing grammar measurement does not make unresolved execution differences pass.
 
+Limit concurrent native campaigns to the Docker host's capacity. In particular,
+an InnoDB startup log containing `io_setup() failed with EAGAIN` and `Cannot
+initialize AIO sub-system` indicates that the fixture could not acquire its
+Linux AIO resources. Reduce overlapping campaigns, retain the failed run, and
+repeat the complete affected gate. A startup failure or a reference server that
+cannot restart is not a successful comparison and does not justify excluding
+the lifecycle input.
+
 Pull requests changing this package or its SQL dependencies replay the complete supplied corpus in GitHub Actions. To request another run, dispatch **Fuzz (mysql-memory)** with `canonical_seeds=true` and the desired `mysql_version`. That mode runs only the seed replay and uploads the per-input observations, execution summary and console log, including when replay fails.
 
 Isolated observations on MySQL 8.0 and later reset historical mutex waits with `SET GLOBAL innodb_monitor_reset='latch'` after fixture setup, then restore the original global selector. Background engine activity can produce new waits immediately after a reset. Plain `SHOW ENGINE ALL MUTEX` and `SHOW ENGINE INNODB MUTEX` therefore use the explicit `physical-innodb-mutex-empty-memory-report` contract: native rows must name InnoDB latches with recognized nonnegative counters, and memory must return an empty report. Metadata, diagnostics and SQL-visible selector values remain exact. The same contract applies to directly constructed semantic reports. Other statements and compound requests do not acquire this exception.

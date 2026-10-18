@@ -18,6 +18,18 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class DefinitionsTest extends TestCase
 {
+    public function testShapeChecksLegacyColumnsBeforeTheExistingTableShortcut(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect();
+        $session->query('CREATE TABLE d.t(a INT)');
+
+        $reply = $session->run('CREATE TABLE IF NOT EXISTS d.t(a INT AUTO_INCREMENT) PARTITION BY HASH(1)')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1075, $reply->getCode());
+    }
+
+
     public function testTableRejectsAnEmptyDefinitionAfterCheckingConstraints(): void
     {
         $session = (new Instance())->connect();
