@@ -43,7 +43,7 @@ final class StructureOutcomeTest extends TestCase
                 yield $release->value . ': disconnect' => [$release, new \SqlSemantics\Platform\MySql\Statement\Server\Instance\Shutdown(), false];
             }
         }
-        yield 'unsupported window' => [GrammarRelease::MySql847, new GroupConcat([new NumberLiteral('1')], over: new WindowSpec()), true];
+        yield 'retained window needs a database' => [GrammarRelease::MySql847, new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate(new GroupConcat([new NumberLiteral('1')]), new WindowSpec()))])), true];
     }
 
     /**

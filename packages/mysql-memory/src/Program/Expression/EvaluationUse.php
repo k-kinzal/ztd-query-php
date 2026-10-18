@@ -62,16 +62,31 @@ final class EvaluationUse
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($statement, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
+        $this->prepare($statement, $planner);
+    }
+
+    /**
+     * Binds every DO item before finishing its window preparation conditions.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a reached operand cannot prepare
+     * @throws LogicException When no retained condition refuses preparation
+     */
+    public function prepare(DeferredEvaluation $statement, \MySqlMemory\Plan\Planner $planner): never
+    {
         $scope = new \MySqlMemory\Evaluation\Scope();
+        $scope->windowing = new \MySqlMemory\Plan\Window\Collected($planner, 0);
         foreach ($statement->items as $item) {
             if ($item instanceof DeferredProjection) {
                 (new RowUse())->prepare($item->expression, $planner->compiler, $scope);
-                throw (new RowUse())->error($item->expression);
+                if (!(new RowUse())->pending($item->expression, $scope)) {
+                    throw (new RowUse())->error($item->expression);
+                }
             }
             if ($item instanceof SelectExpression) {
                 $planner->compiler->compile($item->expression, $scope);
             }
         }
+        $scope->windowing->finish($scope);
         throw new LogicException('A deferred evaluation retains a preparation condition.');
     }
 }

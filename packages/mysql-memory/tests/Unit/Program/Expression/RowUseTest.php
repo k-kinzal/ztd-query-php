@@ -20,6 +20,33 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class RowUseTest extends TestCase
 {
+    public function testWindowResolvesItsNameBeforeRejectingAnUnwindowedStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3579);
+        $session->query('KILL LEAD(1) IGNORE NULLS OVER w');
+    }
+
+    public function testWindowKeepsANamedDefinitionVisibleToAForbiddenClause(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3593);
+        $session->query('SELECT 1 WHERE LEAD(1) IGNORE NULLS OVER w WINDOW w AS ()');
+    }
+
+    public function testWindowRetainsTheDiagnosticContextAfterConcatenationOrdering(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t(a INT,b INT)');
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionMessage("Unknown column 'missing' in 'order clause'");
+        $session->query('SELECT GROUP_CONCAT(a ORDER BY b) OVER (), missing FROM t');
+    }
+
     public function testErrorPreservesTheDeferredConversionCondition(): void
     {
         $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'));

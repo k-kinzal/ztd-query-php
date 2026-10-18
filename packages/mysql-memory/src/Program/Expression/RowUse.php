@@ -92,7 +92,7 @@ final class RowUse
             $this->membership($operand, $compiler, $scope);
             return;
         }
-        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction) {
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate) {
             $this->window($operand, $compiler, $scope);
             return;
         }
@@ -129,23 +129,29 @@ final class RowUse
      *
      * @throws \MySqlMemory\Error\SqlError When a call is misplaced or an argument cannot prepare
      */
-    public function window(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction $call, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
+    public function window(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate $call, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
     {
         $windows = $scope->windowing;
         if (!$windows instanceof \MySqlMemory\Plan\Window\Collected) {
-            throw QueryError::WindowFunctionMisplaced->error(strtolower($call->kind->value));
+            if ($call->over instanceof \SqlSemantics\Statement\Identifier\Name && array_filter($scope->windowNames, static fn ($name): bool => strcasecmp($name->value, $call->over->value) === 0) === []) {
+                throw QueryError::WindowNotDefined->error($call->over->value);
+            }
+            throw QueryError::WindowFunctionMisplaced->error($call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction ? strtolower($call->kind->value) : strtolower($call->function->value));
         }
         if ($call->over instanceof \SqlSemantics\Statement\Identifier\Name) {
             $windows->named($call->over);
         }
         $input = clone $scope;
         $input->windowing = null;
-        foreach ($call->arguments as $argument) {
+        foreach ($call->operands() as $argument) {
             if ($argument instanceof RowOperand || $argument instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
                 $this->prepare($argument, $compiler, $input);
                 throw $this->error($argument);
             }
             $compiler->compile($argument, $input);
+        }
+        if ($call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate && $call->order !== []) {
+            $scope->clause = 'order clause';
         }
         $windows->calls[] = [$call, []];
     }
@@ -155,7 +161,7 @@ final class RowUse
      */
     public function pending(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Scope $scope): bool
     {
-        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount);
+        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint);
     }
 
     /**
@@ -204,6 +210,7 @@ final class RowUse
         }
         $problem = $operand->problem();
         return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint => ($problem->positional ? QueryError::WindowPositionalOrdering : QueryError::WindowFrameIllegal)->error('<unnamed window>'),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount => \MySqlMemory\Error\Family\StatementError::WrongArguments->error(strtolower($problem->function->value)),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing => \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($problem->limit->value),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow => QueryError::ValuesEmptyRow->error(),

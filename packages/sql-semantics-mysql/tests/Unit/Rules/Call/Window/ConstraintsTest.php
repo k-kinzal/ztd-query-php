@@ -34,4 +34,13 @@ final class ConstraintsTest extends TestCase
         self::assertFalse((new Constraints())->reversed(new WindowSpec(frame: new Frame(FrameUnit::Rows, $two, $one))));
         self::assertFalse((new Constraints())->reversed(new WindowSpec()));
     }
+    public function testProblemKeepsUnsupportedFramesOutsideOrdinaryInvocationRoles(): void
+    {
+        $window = new WindowSpec(frame: new Frame(FrameUnit::Groups, new FrameBound(FrameBoundKind::CurrentRow)));
+        $problem = (new Constraints())->problem($window);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing::class, $problem);
+        self::assertSame($window, $problem->expression);
+        self::assertNull((new Constraints())->problem(new WindowSpec()));
+        self::assertNull((new Constraints())->problem(new \SqlSemantics\Statement\Identifier\Name('w')));
+    }
 }

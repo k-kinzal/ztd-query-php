@@ -33,6 +33,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class FramesTest extends TestCase
 {
+    public function testCheckDoesNotEvaluateTheOffsetOfAnUnusedWindow(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->query('SELECT 1 WINDOW w AS (ROWS 1.5 PRECEDING)')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $reply);
+        self::assertSame([['1']], $reply->rows);
+    }
+
     public function testCheckRefusesAnIntervalOfARowsFrameFirst(): void
     {
         $session = (new Instance())->connect();

@@ -76,7 +76,7 @@ final class AggregateTest extends TestCase
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
-        $order = new NumberLiteral('1');
+        $order = new NumberLiteral('1.0');
         $fact = $derivation->scalar(new Aggregate(AggregateFunction::Average, [new NumberLiteral('1')], over: new WindowSpec(null, [], [new OrderItem($order)])), $derivation->environment());
 
         self::assertInstanceOf(Known::class, $fact->type);

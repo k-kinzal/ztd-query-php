@@ -2335,3 +2335,41 @@ failures at inputs 577 (`query467`, account attributes) and 177 (`query472`, SHO
 inspection scope) remain saved regression inputs and now pass their focused
 native comparisons. Frame/partition constructor domains and EXPLAIN measured
 output remain unresolved; matching errors do not close those model obligations.
+
+
+### Window invocation domains and nested query ownership
+
+Ordinary scalar invocations now exclude positional window ordering, reversed
+boundary kinds, GROUPS and EXCLUDE. A retained window aggregate owns its function,
+arguments, quantifiers, concatenation ordering, separator and OVER reference
+directly. It contains no ordinary aggregate child whose grouping ownership or
+facts could be lost. SUM, AVG and COUNT with DISTINCT, and GROUP_CONCAT with OVER,
+use that retained role. MIN and MAX preserve their valid inert DISTINCT modifier.
+
+Named definitions remain visible to clauses that prohibit window evaluation.
+Their lookup precedes placement checks; DO instead prepares its windows after
+its item dependencies. Nested query templates keep their query boundary and
+outer operand order. Each lowered query is adopted once, so occurrence metadata
+belongs to the published structure. Unused named windows do not evaluate offset
+values. A refused derived projection still retains its lock target: native
+observations confirm error 3569 before the projection condition for an explicit
+OF target. These behaviors use semantic values, without reconstructing SQL in
+planning or execution.
+
+The `query495` runtime and `query496` expectation correction pass both static
+suites, the 946-definition value schema, 8,640 Semantics tests and 18,126 Memory
+tests. Text and prepared comparisons pass 882 frame observations, 822 aggregate
+observations and 384 placement observations on 8.0, 8.4 and 9.1. Two independently
+generated sets of eight stored objects pass 384 state observations, retaining
+the same objects while changing reachability, tables, columns and populated rows.
+The `query492` whole-root campaign passes 244 roots, 97 matching successes,
+147 matching SQL errors and 174 state observations for 58 objects.
+
+The earlier `query478` unseeded run passed 900 seconds with 788 matching inputs.
+The `query481` supplied-seed replay instead exposed two missing-window/placement
+priority differences on modern releases; the complete inputs are saved in
+`window-placement.json` and pass the repaired native comparisons. An 8.0
+PROCESSLIST observation also failed its bounded process comparison contract and
+remains unresolved. These campaign results predate the complete repair and are
+not final acceptance. Additional frame/partition constructor domains, EXPLAIN
+measured output and same-revision full campaigns remain open.

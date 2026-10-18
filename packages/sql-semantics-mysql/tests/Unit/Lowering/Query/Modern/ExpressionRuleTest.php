@@ -24,6 +24,15 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 #[Medium]
 final class ExpressionRuleTest extends TestCase
 {
+    public function testExpressionPreservesADeferredNestedQueryInsideItsOuterOperands(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $sql = 'CREATE PROCEDURE p() SELECT missing, (SELECT GROUP_CONCAT(1) OVER ())';
+        $operation = $semantics->analyze($sql);
+        self::assertSame($sql, $operation->toString());
+        self::assertSame($sql, $semantics->analyze($operation->toString())->toString());
+    }
+
     public function testStatementFoldsTheClausesIntoASingleBlock(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t ORDER BY a LIMIT 1 FOR UPDATE');

@@ -53,9 +53,9 @@ final class ClauseRuleTest extends TestCase
 
     public function testOrderItemsKeepsIntegersAsWritten(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a, ROW_NUMBER() OVER (ORDER BY 1) FROM t');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a, ROW_NUMBER() OVER (ORDER BY 1) FROM t');
 
-        self::assertSame('SELECT a, ROW_NUMBER() OVER (ORDER BY 1) FROM t', $operation->toString());
+        self::assertSame('CREATE PROCEDURE p() SELECT a, ROW_NUMBER() OVER (ORDER BY 1) FROM t', $operation->toString());
     }
 
     public function testItemsKeepsTheWrittenOrderAndDirections(): void

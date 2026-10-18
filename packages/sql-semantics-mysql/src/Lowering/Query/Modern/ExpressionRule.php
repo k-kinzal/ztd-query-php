@@ -107,6 +107,10 @@ final class ExpressionRule
      */
     public function expression(Node $expression, Trailer $later): Query
     {
+        $retained = $later->empty() ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->body($expression) : null;
+        if ($retained !== null) {
+            return $retained instanceof Query ? $retained : new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($retained);
+        }
         $form = $this->lowering->form($expression);
         $offset = match ($form->signature) {
             'query_expression: query_expression_body opt_order_clause opt_limit_clause' => 0,

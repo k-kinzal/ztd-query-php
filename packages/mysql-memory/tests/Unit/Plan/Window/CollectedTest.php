@@ -14,6 +14,14 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class CollectedTest extends TestCase
 {
+    public function testOptionsPrecedeARefusedFrameAfterNameResolution(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionMessage("This version of MySQL doesn't yet support '<window function>(DISTINCT ..)'");
+        $session->query('SELECT SUM(DISTINCT 1) OVER (GROUPS CURRENT ROW)');
+    }
+
     public function testCompilePreparesAWindowBeforeTheFollowingRowOperand(): void
     {
         $session = (new Instance())->connect();

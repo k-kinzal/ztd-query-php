@@ -23,6 +23,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class EvaluationUseTest extends TestCase
 {
+    public function testPrepareAllowsWindowPreparationInDo(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionMessage("This version of MySQL doesn't yet support 'IGNORE NULLS'");
+        $session->query('DO LEAD(1) IGNORE NULLS OVER ()');
+    }
+
     /**
      * @return iterable<string, array{DeferredEvaluation, int}>
      */

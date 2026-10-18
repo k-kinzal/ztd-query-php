@@ -7,8 +7,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Call;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -25,8 +23,9 @@ use SqlSemantics\Statement\Type\TypeFact;
  * anything else a BIGINT UNSIGNED; they are never NULL. STD, VARIANCE,
  * STDDEV_SAMP and VAR_SAMP are DOUBLE, JSON_ARRAYAGG is JSON, ST_COLLECT a
  * geometry. Every other aggregate is NULL for a group without non-NULL
- * values. DISTINCT in a windowed aggregate is not supported by the server
- * (ER_NOT_SUPPORTED_YET). Terminates: a fixed number of tests on one call.
+ * values. SUM, AVG and COUNT with DISTINCT have no ordinary window invocation.
+ * MIN and MAX accept DISTINCT without changing their result; ST_COLLECT
+ * supports it. Terminates: a fixed number of tests on one call.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/bit-functions.html#function_bit-and,
  * https://dev.mysql.com/doc/refman/8.4/en/window-function-restrictions.html.
@@ -43,9 +42,6 @@ final class AggregateResults
      */
     public function aggregate(Aggregate $call, array $arguments, Derivation $derivation): ScalarFact
     {
-        if ($call->distinct && $call->over !== null && $call->function !== AggregateFunction::Collect) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::DistinctAggregate, $call));
-        }
         $type = $arguments[0]->type ?? new NullOnly();
         $aggregation = new TypeClasses();
 

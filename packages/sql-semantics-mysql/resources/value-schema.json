@@ -668,7 +668,7 @@
         "function": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\UnsupportedWindowing": {
-        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\GroupConcat|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunction|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowFunction|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowSpec|null",
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\GroupConcat|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunction|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowFunction|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowAggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowSpec|null",
         "limit": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowingLimit"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowConstraint": {
@@ -2347,9 +2347,23 @@
         "condition": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "result": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredAggregateKind": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredKeywordCall": {
         "arguments": "array",
         "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordFunction"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowAggregate": {
+        "all": "bool",
+        "arguments": "array",
+        "distinct": "bool",
+        "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateFunction|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredAggregateKind",
+        "order": "array",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification",
+        "separator": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "valueAll": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowFunction": {
         "arguments": "array",

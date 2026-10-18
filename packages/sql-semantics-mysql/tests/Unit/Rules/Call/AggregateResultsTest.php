@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rules\Call\AggregateResults;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
@@ -47,16 +46,15 @@ final class AggregateResultsTest extends TestCase
         self::assertSame(Nullability::NotNull, $bits->nullability);
     }
 
-    public function testAggregateReportsDistinctInAWindow(): void
+    public function testAggregateAllowsInertDistinctInAMinimumWindow(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $int = [new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull)];
-        $call = new Aggregate(AggregateFunction::Sum, [new NumberLiteral('1')], true, false, new Name('w'));
+        $call = new Aggregate(AggregateFunction::Minimum, [new NumberLiteral('1')], true, false, new Name('w'));
         (new AggregateResults())->aggregate($call, $int, $derivation);
 
-        self::assertInstanceOf(UnsupportedWindowing::class, $derivation->facts()->diagnostics[0]);
-        self::assertSame($call, $derivation->facts()->diagnostics[0]->expression);
+        self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testSumIsDecimalForExactNumbersAndDoubleOtherwise(): void

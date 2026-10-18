@@ -44,6 +44,9 @@ use SqlSemantics\Statement\Type\TypeFact;
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['BIGINT', \SqlSemantics\Statement\Type\Nullability::NotNull]
  * @example Refusing several arguments without DISTINCT
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum, [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a fixed frame in an ordinary scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum, [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')], over: $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Aggregate implements SetFunction
 {
@@ -68,12 +71,14 @@ final class Aggregate implements SetFunction
         public readonly bool $all = false,
         public readonly Name|WindowSpecification|null $over = null,
     ) {
+        Check::input($over === null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($function, $distinct) === null, 'An ordinary aggregate uses a supported window quantifier.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'Aggregate arguments are expressions.');
         $star = $arguments === [];
         Check::input(!$star || ($function === AggregateFunction::Count && !$distinct), 'Only COUNT takes the star, and not with DISTINCT.');
         Check::input(count($arguments) <= 1 || ($function === AggregateFunction::Count && $distinct && !$all), 'Only COUNT(DISTINCT ...) takes several arguments.');
         Check::input(!$distinct || $function->distinctive(), 'The grammar does not accept DISTINCT for ' . $function->value . '.');
         Check::input(!($distinct && $all && $function === AggregateFunction::Count), 'COUNT(DISTINCT ...) takes no ALL.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -109,7 +109,7 @@ final class AggregateRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function aggregate(Node $call): Scalar
+    public function aggregate(Node $call): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate
     {
         $form = $this->lowering->form($call);
         if (array_key_exists($form->signature, self::CONCATENATIONS)) {
@@ -120,7 +120,7 @@ final class AggregateRule
             [$keyAll, $key] = $this->operand($form->node(2));
             [$valueAll, $value] = $this->operand($form->node(4));
 
-            return new JsonObjectAggregate($key, $value, $keyAll, $valueAll, $window === null ? null : $this->windows->windowing($form->node($window)));
+            return $this->windowed(new JsonObjectAggregate($key, $value, $keyAll, $valueAll), $window === null ? null : $this->windows->windowing($form->node($window)));
         }
         [$function, $distinct, $argument, $position, $window] = self::AGGREGATES[$form->signature] ?? throw ImplementationGap::production($form);
         [$all, $arguments] = match ($argument) {
@@ -129,21 +129,20 @@ final class AggregateRule
             'star' => [$this->lowering->options->present($form->node($position)), []],
         };
 
-        return new Aggregate($function, $arguments, $distinct, $all, $window === null ? null : $this->windows->windowing($form->node($window)));
+        return $this->windowed(new Aggregate($function, $arguments, $distinct, $all), $window === null ? null : $this->windows->windowing($form->node($window)));
     }
 
     /**
      * Lowers GROUP_CONCAT.
      */
-    public function concatenation(Form $form, ?int $window): GroupConcat
+    public function concatenation(Form $form, ?int $window): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate
     {
-        return new GroupConcat(
+        return $this->windowed(new GroupConcat(
             $this->lowering->expressions->expressions($form->node(3)),
             $this->distinct($form->node(2)),
             $this->ordering($form->node(4)),
             $this->separator($form->node(5)),
-            $window === null ? null : $this->windows->windowing($form->node($window)),
-        );
+        ), $window === null ? null : $this->windows->windowing($form->node($window)));
     }
 
     /**
@@ -239,6 +238,21 @@ final class AggregateRule
             'opt_gconcat_separator:' => null,
             'opt_gconcat_separator: SEPARATOR_SYM text_string' => $this->lowering->literals->text($form->node(1)),
             default => throw ImplementationGap::production($form),
+        };
+    }
+    /**
+     * Attaches an OVER clause in its ordinary or retained preparation role.
+     */
+    public function windowed(Aggregate|GroupConcat|JsonObjectAggregate $aggregate, \SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification|null $over): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate
+    {
+        $unsupported = $aggregate instanceof GroupConcat || ($aggregate instanceof Aggregate && (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($aggregate->function, $aggregate->distinct) !== null);
+        if ($over !== null && ($unsupported || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) !== null)) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate($aggregate, $over);
+        }
+        return match (true) {
+            $aggregate instanceof Aggregate => new Aggregate($aggregate->function, $aggregate->arguments, $aggregate->distinct, $aggregate->all, $over),
+            $aggregate instanceof GroupConcat => new GroupConcat($aggregate->arguments, $aggregate->distinct, $aggregate->order, $aggregate->separator, $over),
+            default => new JsonObjectAggregate($aggregate->key, $aggregate->value, $aggregate->keyAll, $aggregate->valueAll, $over),
         };
     }
 }

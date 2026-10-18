@@ -39,6 +39,9 @@ use SqlSemantics\Statement\Type\TypeFact;
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['BIGINT', \SqlSemantics\Statement\Type\Nullability::NotNull]
  * @example Refusing an offset that is not a stable integer
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Tile, [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()], new \SqlSemantics\Statement\Identifier\Name('w')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a fixed frame in an ordinary scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class WindowFunction implements Scalar
 {
@@ -72,6 +75,7 @@ final class WindowFunction implements Scalar
         Check::input($limit === null, 'An ordinary window call cannot use an unsupported option: ' . ($limit->value ?? '') . '.');
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $values), 'An ordinary window count or offset literal belongs to its signed integer domain.');
         $this->arguments = $values;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

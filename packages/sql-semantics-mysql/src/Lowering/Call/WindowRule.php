@@ -96,7 +96,7 @@ final class WindowRule
         $over = $this->window($form->node($window));
         $treatment = $nulls === null ? null : $this->nulls($form->node($nulls));
         $counting = $edge === null ? null : $this->edge($form->node($edge));
-        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar && !$argument instanceof RoutineVariable) !== [] || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->limitation($treatment, $counting) !== null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $arguments)) {
+        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar && !$argument instanceof RoutineVariable) !== [] || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->limitation($treatment, $counting) !== null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $arguments) || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) !== null) {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction($kind, $arguments, $over, $treatment, $counting);
         }
         $scalars = array_values(array_filter($arguments, static fn ($argument): bool => $argument instanceof Scalar || $argument instanceof RoutineVariable));

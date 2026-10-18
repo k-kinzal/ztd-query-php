@@ -35,6 +35,11 @@ final class Scope
     public ?\MySqlMemory\Plan\Window\Collected $windowing = null;
 
     /**
+     * @var list<\SqlSemantics\Statement\Identifier\Name> Window definitions of this block, also visible in clauses that prohibit window evaluation
+     */
+    public array $windowNames = [];
+
+    /**
      * @var array<int, int> The offset of each relation occurrence, by object id
      */
     public array $offsets = [];

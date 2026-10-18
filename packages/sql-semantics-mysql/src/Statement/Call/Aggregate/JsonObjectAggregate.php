@@ -39,6 +39,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Typing JSON_OBJECTAGG()
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_OBJECTAGG('a', 1)");
  *     $query->field(0)->type->descriptor->name() // => 'JSON'
+ * @example Refusing a fixed frame in an ordinary scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), over: $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class JsonObjectAggregate implements SetFunction
 {
@@ -58,6 +61,7 @@ final class JsonObjectAggregate implements SetFunction
         public readonly bool $valueAll = false,
         public readonly Name|WindowSpecification|null $over = null,
     ) {
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

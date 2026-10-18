@@ -19,6 +19,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class WindowReferencesTest extends TestCase
 {
+    public function testNamesRetainsADeferredAggregateWindowReference(): void
+    {
+        $name = new Name('w');
+        $aggregate = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]);
+        $call = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate($aggregate, $name);
+        self::assertSame([$name], (new WindowReferences())->names([$call]));
+    }
+
     public function testCheckReportsAWindowNameTheBlockDoesNotDefine(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ROW_NUMBER() OVER w, SUM(1) OVER (v ORDER BY 1.5) FROM DUAL WINDOW v AS (u)', []);

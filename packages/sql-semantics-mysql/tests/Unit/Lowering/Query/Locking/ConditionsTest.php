@@ -42,7 +42,7 @@ final class ConditionsTest extends TestCase
         yield 'priority' => ['SELECT HIGH_PRIORITY 1 FROM a UNION SELECT 1 FROM b FOR UPDATE', MisuseRule::RepeatedLockedTable];
         yield 'unused definition' => ['WITH c AS (SELECT 1 FROM absent FOR UPDATE FOR SHARE) SELECT 1', null];
         yield 'used definition' => ['WITH c AS (SELECT 1 FROM absent FOR UPDATE FOR SHARE) SELECT * FROM c', MisuseRule::RepeatedLockedTable];
-        yield 'deferred input' => ['SELECT 1 FROM (SELECT ROW(1,2)) AS d FOR UPDATE OF d', null];
+        yield 'deferred input' => ['SELECT 1 FROM (SELECT ROW(1,2)) AS d FOR UPDATE OF d', MisuseRule::RepeatedLockedTable];
         yield 'database qualification needs session' => ['SELECT 1 FROM a FOR UPDATE OF d.a', null];
     }
 

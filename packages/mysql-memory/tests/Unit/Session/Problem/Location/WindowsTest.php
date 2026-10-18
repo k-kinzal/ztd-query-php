@@ -18,12 +18,12 @@ final class WindowsTest extends TestCase
 {
     public function testLocatedFinishesTheNestedBlockBeforeResolvingALaterOuterWindow(): void
     {
-        $operation = (new Instance())->connect()->analyze('SELECT (SELECT GROUP_CONCAT(1) OVER ()), GROUP_CONCAT(2) OVER missing');
+        $operation = (new Instance())->connect()->analyze('SELECT (SELECT MIN(1) OVER inner_missing), MAX(2) OVER outer_missing');
         $locator = (new Locator())->statement($operation->statement);
         $located = (new Windows())->located($locator, $operation->facts->diagnostics, []);
         $first = Locations::first($located);
 
-        self::assertCount(3, $located);
+        self::assertCount(2, $located);
         self::assertNotNull($first);
         self::assertSame($operation->facts->diagnostics[0], $first[0]);
     }

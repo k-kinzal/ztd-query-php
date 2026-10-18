@@ -32,7 +32,7 @@ final class AggregateRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $list = $platform->parser($profile)->parse("SELECT COUNT(ALL *), COUNT(DISTINCT a, b), SUM(ALL a) OVER w, JSON_OBJECTAGG(ALL a, b), GROUP_CONCAT(DISTINCT a SEPARATOR '-')")->find('select_item_list')[0];
         $rule = new AggregateRule($lowering, new WindowRule($lowering, new FrameRule($lowering)));
-        $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar => $rule->aggregate($node), $list->find('sum_expr'));
+        $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate => $rule->aggregate($node), $list->find('sum_expr'));
 
         self::assertEquals(new Aggregate(AggregateFunction::Count, [], false, true), $calls[0]);
         self::assertInstanceOf(Aggregate::class, $calls[1]);
@@ -63,7 +63,9 @@ final class AggregateRuleTest extends TestCase
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('SELECT GROUP_CONCAT(a, b)')->find('sum_expr')[0];
-        self::assertCount(2, (new AggregateRule($lowering, new WindowRule($lowering, new FrameRule($lowering))))->concatenation($lowering->form($node), 7)->arguments);
+        $call = (new AggregateRule($lowering, new WindowRule($lowering, new FrameRule($lowering))))->concatenation($lowering->form($node), 7);
+        self::assertInstanceOf(GroupConcat::class, $call);
+        self::assertCount(2, $call->arguments);
     }
 
     public function testSingleLowersOneOperandAsAList(): void
@@ -109,5 +111,15 @@ final class AggregateRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('SELECT GROUP_CONCAT(a)')->find('opt_gconcat_separator')[0];
         self::assertNull((new AggregateRule($lowering, new WindowRule($lowering, new FrameRule($lowering))))->separator($node));
+    }
+    public function testWindowedRetainsTheCompleteAggregateWithItsWindowCondition(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT SUM(a) OVER (GROUPS CURRENT ROW) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->statement->body);
+        $item = $operation->statement->body->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection::class, $item);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate::class, $item->expression);
+        self::assertSame(AggregateFunction::Sum, $item->expression->function);
     }
 }

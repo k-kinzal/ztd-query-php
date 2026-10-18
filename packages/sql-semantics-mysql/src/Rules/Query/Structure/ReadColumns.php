@@ -74,6 +74,12 @@ final class ReadColumns
             if ($node instanceof M\With\DeferredBody) {
                 return $node->problem();
             }
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec) {
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($node);
+                if ($problem !== null) {
+                    return $problem;
+                }
+            }
         }
         return null;
     }

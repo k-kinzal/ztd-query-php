@@ -22,6 +22,25 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 final class Constraints
 {
     /**
+     * Finds a fixed window contradiction without resolving inherited names or offsets.
+     */
+    public function problem(\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification|null $window): ?\SqlSemantics\Statement\Fact\Diagnostic
+    {
+        if (!$window instanceof WindowSpec) {
+            return null;
+        }
+        if ($this->positional($window) || $this->reversed($window)) {
+            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint($window, $this->positional($window));
+        }
+        $limit = match (true) {
+            $window->frame?->unit === \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups => \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::GroupsUnit,
+            $window->frame?->exclusion !== null => \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::Exclusion,
+            default => null,
+        };
+        return $limit === null ? null : new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing($limit, $window);
+    }
+
+    /**
      * Identifies a positional item even when parentheses enclose the integer.
      */
     public function positional(WindowSpec $window): bool

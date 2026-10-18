@@ -13,8 +13,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Grouping\AggregateOwnership;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -41,6 +39,8 @@ use SqlSemantics\Statement\Type\TypeFact;
  * Its length is cut to group_concat_max_len, which also decides its type:
  * a VARCHAR up to 512 characters and a long blob beyond. The grammar of MySQL 8.0 and
  * later accepts OVER, which the server rejects (ER_NOT_SUPPORTED_YET).
+ * Such an invocation is retained as DeferredWindowAggregate; it is excluded
+ * from this ordinary scalar by a constructor invariant.
  * Terminates: the parts are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_group-concat.
  * Status: Implemented.
@@ -49,6 +49,9 @@ use SqlSemantics\Statement\Type\TypeFact;
  * @example Typing GROUP_CONCAT()
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT GROUP_CONCAT(DISTINCT 'a' SEPARATOR ';')");
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['TEXT', \SqlSemantics\Statement\Type\Nullability::Nullable]
+ * @example Refusing a fixed frame in an ordinary scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')], over: $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class GroupConcat implements SetFunction
 {
@@ -78,11 +81,13 @@ final class GroupConcat implements SetFunction
         public readonly ?Text $separator = null,
         public readonly Name|WindowSpecification|null $over = null,
     ) {
+        Check::input($over === null, 'GROUP_CONCAT has no ordinary window invocation.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'GROUP_CONCAT takes at least one expression.', 1);
         $this->order = Check::listOf($order, OrderItem::class, 'An ordering is a list of ordering items.');
         foreach ($this->order as $item) {
             Check::input(!$item->expression instanceof OutputOrdinal, 'This ordering reads expressions rather than SELECT output positions.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -109,9 +114,6 @@ final class GroupConcat implements SetFunction
         }
         (new Windows())->derive($this->over, $derivation, $environment);
         (new AggregateOwnership())->register($this, $derivation, $environment);
-        if ($this->over !== null) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupConcat, $this));
-        }
 
         $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
         $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->concatenated($arguments, $derivation);

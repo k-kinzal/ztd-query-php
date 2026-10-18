@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Scalar;
 final class Collected
 {
     /**
-     * @var list<array{WindowFunction|Aggregate|GroupConcat|JsonObjectAggregate|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction, list<Evaluable>}> Calls and their prepared arguments
+     * @var list<array{WindowFunction|Aggregate|GroupConcat|JsonObjectAggregate|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate, list<Evaluable>}> Calls and their prepared arguments
      */
     public array $calls = [];
 
@@ -86,7 +86,37 @@ final class Collected
             }
         }
         $windows = (new Resolution())->windows($this->windows, $references);
+        $this->options();
+        foreach ($windows as $window) {
+            $used = array_filter($references, static fn ($over): bool => $over instanceof Name ? strcasecmp($over->value, $window->name) === 0 : $over === $window->node) !== [];
+            (new Frames($this->planner))->check($window, $input, $used);
+        }
         foreach ($calls as $call) {
+            if ($call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction) {
+                throw \MySqlMemory\Error\Family\StatementError::WrongArguments->error(strtolower($call->kind->value));
+            }
+            if ($call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate) {
+                $problem = $call->problem();
+                throw $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing ? \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($problem->limit->value) : QueryError::WindowFrameIllegal->error(Specification::UNNAMED);
+            }
+            (new Functions($this->planner))->compile($call, $input);
+        }
+    }
+
+    /**
+     * Checks retained invocation modifiers after clause binding and before frames.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a reached invocation is unsupported
+     */
+    public function options(): void
+    {
+        foreach (array_column($this->calls, 0) as $call) {
+            if ($call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate) {
+                $limit = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($call->function, $call->distinct);
+                if ($limit !== null) {
+                    throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($limit->value);
+                }
+            }
             if (!$call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction) {
                 continue;
             }
@@ -94,15 +124,6 @@ final class Collected
             if ($limit !== null) {
                 throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($limit->value);
             }
-        }
-        foreach ($windows as $window) {
-            (new Frames($this->planner))->check($window, $input);
-        }
-        foreach ($calls as $call) {
-            if ($call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction) {
-                throw \MySqlMemory\Error\Family\StatementError::WrongArguments->error(strtolower($call->kind->value));
-            }
-            (new Functions($this->planner))->compile($call, $input);
         }
     }
 

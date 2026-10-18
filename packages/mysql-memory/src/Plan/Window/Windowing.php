@@ -83,7 +83,7 @@ final class Windowing
         }
         $frames = new Frames($this->planner);
         foreach ($windows as $window) {
-            $frames->check($window, $scope);
+            $frames->check($window, $scope, $window->calls !== []);
         }
         $analytics = [];
         $direct = $this->direct($select, $scope);

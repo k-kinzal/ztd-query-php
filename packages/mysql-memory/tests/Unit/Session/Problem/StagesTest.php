@@ -60,7 +60,7 @@ final class StagesTest extends TestCase
 
     public function testPlannedLeavesOwnedAggregateDiagnosticsToTheirBlockLocation(): void
     {
-        $call = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')], over: new Name('w'));
+        $call = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate(new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]), new Name('w'));
 
         self::assertFalse(Stages::planned(new UnsupportedWindowing(WindowingLimit::GroupConcat, $call)));
     }

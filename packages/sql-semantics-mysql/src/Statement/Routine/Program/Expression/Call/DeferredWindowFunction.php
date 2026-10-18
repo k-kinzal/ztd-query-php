@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * A stored window invocation retaining an argument, option or literal-count condition.
+ * A stored window invocation retaining an argument, option, count or frame condition.
  *
  * Function identity, window, options, counts and all argument roles survive
  * until the program reaches the instruction. This is not a Scalar.
@@ -41,7 +41,7 @@ final class DeferredWindowFunction implements DeferredOperand
     use Snapshot;
 
     /**
-     * @var non-empty-list<Scalar|RoutineVariable|RowOperand|DeferredOperand> The complete arguments
+     * @var list<Scalar|RoutineVariable|RowOperand|DeferredOperand> The complete arguments
      */
     public readonly array $arguments;
 
@@ -51,7 +51,7 @@ final class DeferredWindowFunction implements DeferredOperand
     public function __construct(public readonly WindowFunctionKind $kind, array $arguments, public readonly Name|WindowSpecification $over, public readonly ?NullTreatment $nulls = null, public readonly ?CountingEdge $edge = null)
     {
         $values = (new Arguments())->checked($kind, $arguments, $nulls, $edge);
-        Check::input($values !== [] && (array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || (new Arguments())->limitation($nulls, $edge) !== null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $values)), 'A deferred window call retains an argument, option or count preparation condition.');
+        Check::input((array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || (new Arguments())->limitation($nulls, $edge) !== null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $values) || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) !== null), 'A deferred window call retains an argument, option, count or frame preparation condition.');
         $this->arguments = $values;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -69,7 +69,7 @@ final class DeferredWindowFunction implements DeferredOperand
     }
 
     /**
-     * @return non-empty-list<Scalar|RoutineVariable|RowOperand|DeferredOperand> Arguments in preparation order
+     * @return list<Scalar|RoutineVariable|RowOperand|DeferredOperand> Arguments in preparation order
      */
     public function operands(): array
     {
@@ -82,10 +82,14 @@ final class DeferredWindowFunction implements DeferredOperand
     public function problem(): Diagnostic
     {
         if (array_filter($this->arguments, static fn ($argument): bool => $argument instanceof RowOperand || $argument instanceof DeferredOperand) !== []) {
+            Check::invariant($this->arguments !== [], 'A retained argument condition has dependencies.');
             return (new DeferredArguments())->problem($this->arguments);
         }
         $limit = (new Arguments())->limitation($this->nulls, $this->edge);
-        return $limit !== null ? new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing($limit, $this) : new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount($this->kind);
+        if ($limit !== null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing($limit, $this);
+        }
+        return (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($this->over) ?? new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount($this->kind);
     }
 
     /**

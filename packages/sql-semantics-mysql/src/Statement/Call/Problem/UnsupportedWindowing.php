@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
@@ -23,9 +24,8 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-restrictions.html.
  *
  * @visibility public
- * @example Reading the problem of an unsupported frame unit
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)');
- *     $query->facts->diagnostics[0]->message() // => "This version of MySQL doesn't yet support 'GROUPS'"
+ * @example Refusing an unsupported frame in an ordinary scalar role
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)') // throws \SqlSemantics\Construction\RejectedInput
  * @example Refusing an owner that does not use the unsupported feature
  *     $call = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]);
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing(\SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::GroupConcat, $call) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -39,13 +39,13 @@ final class UnsupportedWindowing implements Diagnostic
 
     /**
      * @param WindowingLimit $limit The unsupported part
-     * @param Aggregate|GroupConcat|WindowFunction|DeferredWindowFunction|WindowSpec|null $expression The call or specification refused after binding
+     * @param Aggregate|GroupConcat|WindowFunction|DeferredWindowFunction|DeferredWindowAggregate|WindowSpec|null $expression The call or specification refused after binding
      */
-    public function __construct(public readonly WindowingLimit $limit, public readonly Aggregate|GroupConcat|WindowFunction|DeferredWindowFunction|WindowSpec|null $expression = null)
+    public function __construct(public readonly WindowingLimit $limit, public readonly Aggregate|GroupConcat|WindowFunction|DeferredWindowFunction|DeferredWindowAggregate|WindowSpec|null $expression = null)
     {
         Check::input($expression === null || match ($limit) {
-            WindowingLimit::GroupConcat => $expression instanceof GroupConcat && $expression->over !== null,
-            WindowingLimit::DistinctAggregate => $expression instanceof Aggregate && $expression->over !== null && $expression->distinct && $expression->function !== \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect,
+            WindowingLimit::GroupConcat => ($expression instanceof GroupConcat && $expression->over !== null) || ($expression instanceof DeferredWindowAggregate && $expression->function === \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind::GroupConcat),
+            WindowingLimit::DistinctAggregate => ($expression instanceof Aggregate || $expression instanceof DeferredWindowAggregate) && $expression->over !== null && (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($expression->function, $expression->distinct) === WindowingLimit::DistinctAggregate,
             WindowingLimit::IgnoreNulls => ($expression instanceof WindowFunction || $expression instanceof DeferredWindowFunction) && $expression->nulls === \SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment::Ignore,
             WindowingLimit::FromLast => ($expression instanceof WindowFunction || $expression instanceof DeferredWindowFunction) && $expression->edge === \SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge::Last,
             WindowingLimit::GroupsUnit => $expression instanceof WindowSpec && $expression->frame?->unit === \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups,

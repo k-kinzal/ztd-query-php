@@ -61,11 +61,13 @@ final class Frames
     }
 
     /**
-     * Checks the frame of a window.
+     * Checks frame structure; offset values are checked only for a used window.
+     *
+     * @param bool $used Whether a reached invocation uses this frame
      *
      * @throws SqlError When the frame is refused
      */
-    public function check(Specification $window, Scope $scope): void
+    public function check(Specification $window, Scope $scope, bool $used = true): void
     {
         $frame = $window->frame();
         if ($frame === null) {
@@ -81,8 +83,10 @@ final class Frames
         if ($frame->unit === FrameUnit::Range && $bounds !== []) {
             $this->range($window, $bounds, $scope);
         }
-        foreach ($bounds as $bound) {
-            $this->offset($window, $frame->unit, $bound, $scope);
+        if ($used) {
+            foreach ($bounds as $bound) {
+                $this->offset($window, $frame->unit, $bound, $scope);
+            }
         }
         if (self::POSITIONS[$frame->start->kind->value] > self::POSITIONS[($frame->end->kind ?? FrameBoundKind::CurrentRow)->value]) {
             throw QueryError::WindowFrameIllegal->error($window->name);

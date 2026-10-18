@@ -12,8 +12,6 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -34,18 +32,16 @@ final class GroupConcatTest extends TestCase
         self::assertTrue((new GroupConcat([new NumberLiteral('1')]))->aggregates());
     }
 
-    public function testDeriveScalarReportsAWindow(): void
+    public function testDeriveScalarTypesTheOrdinaryAggregate(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
-        $call = new GroupConcat([new StringLiteral(['x'])], false, [], null, new Name('w'));
+        $call = new GroupConcat([new StringLiteral(['x'])]);
         $fact = $derivation->scalar($call, $derivation->environment());
 
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertSame(TypeClass::Character, TypeClass::of($fact->type->descriptor));
-        self::assertEquals([new UnsupportedWindowing(WindowingLimit::GroupConcat, $call)], $derivation->facts()->diagnostics);
-        self::assertInstanceOf(UnsupportedWindowing::class, $derivation->facts()->diagnostics[0]);
-        self::assertSame($call, $derivation->facts()->diagnostics[0]->expression);
+        self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testRenderWritesTheOrderingAndTheSeparator(): void
