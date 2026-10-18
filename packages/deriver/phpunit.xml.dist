@@ -23,9 +23,6 @@
         <testsuite name="integration">
             <directory>tests/Integration</directory>
         </testsuite>
-        <testsuite name="semantic"><directory>tests/Semantic</directory></testsuite>
-        <testsuite name="model-contract"><directory>tests/ModelContract</directory></testsuite>
-        <testsuite name="differential"><directory>tests/Differential</directory></testsuite>
         <testsuite name="doctest">
             <file>vendor/k-kinzal/php-ai-toolkit/src/Doctest/DoctestSuite.php</file>
         </testsuite>

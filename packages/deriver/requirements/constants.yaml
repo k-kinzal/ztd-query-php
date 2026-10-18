@@ -1,0 +1,124 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: constants
+  uri: 'https://www.php.net/manual/en/reserved.constants.php'
+  format: html
+  selector: '[id="reserved.constants.core"] dt code'
+  snapshot: .requirements-cache/reserved.constants.php
+  sha256: 743ed0195c448eaf1ff1f1e494b4eae504c745c762bbf7e03afacbc4499a498b
+items:
+  -
+    id: PHP-CONSTANT-TRUE
+    kind: requirement
+    statement: 'true'
+    evidence:
+      -
+        selector: '[id="constant.true"] code'
+        quote: 'true'
+    category: constant
+  -
+    id: PHP-CONSTANT-FALSE
+    kind: requirement
+    statement: 'false'
+    evidence:
+      -
+        selector: '[id="constant.false"] code'
+        quote: 'false'
+    category: constant
+  -
+    id: PHP-CONSTANT-NULL
+    kind: requirement
+    statement: 'null'
+    evidence:
+      -
+        selector: '[id="constant.null"] code'
+        quote: 'null'
+    category: constant
+  -
+    id: PHP-CONSTANT-PHP-INT-SIZE
+    kind: requirement
+    statement: PHP_INT_SIZE
+    evidence:
+      -
+        selector: '[id="constant.php-int-size"] code'
+        quote: PHP_INT_SIZE
+    category: constant
+  -
+    id: PHP-CONSTANT-PHP-INT-MAX
+    kind: requirement
+    statement: PHP_INT_MAX
+    evidence:
+      -
+        selector: '[id="constant.php-int-max"] code'
+        quote: PHP_INT_MAX
+    category: constant
+  -
+    id: PHP-CONSTANT-PHP-INT-MIN
+    kind: requirement
+    statement: PHP_INT_MIN
+    evidence:
+      -
+        selector: '[id="constant.php-int-min"] code'
+        quote: PHP_INT_MIN
+    category: constant
+  -
+    id: SPEC-CONSTANT-TRUE
+    statement: 'When true is demanded in the Constant/True.php namespace fixture, the deriver shall return the standard constant values [true,true,true,true].'
+    requirements:
+      - PHP-CONSTANT-TRUE
+    tests:
+      -
+        runner: behavior
+        target: 'spec/constants.feature:5'
+    category: constant
+  -
+    id: SPEC-CONSTANT-FALSE
+    statement: 'When false is demanded in the Constant/False.php namespace fixture, the deriver shall return the standard constant values [false,false,false,false].'
+    requirements:
+      - PHP-CONSTANT-FALSE
+    tests:
+      -
+        runner: behavior
+        target: 'spec/constants.feature:13'
+    category: constant
+  -
+    id: SPEC-CONSTANT-NULL
+    statement: 'When null is demanded in the Constant/Null.php namespace fixture, the deriver shall return the standard constant values [null,null,null,null].'
+    requirements:
+      - PHP-CONSTANT-NULL
+    tests:
+      -
+        runner: behavior
+        target: 'spec/constants.feature:21'
+    category: constant
+  -
+    id: SPEC-CONSTANT-PHP-INT-SIZE
+    statement: 'When PHP_INT_SIZE is demanded in the Constant/IntegerSize.php namespace fixture, the deriver shall return the standard constant values [8,8].'
+    requirements:
+      - PHP-CONSTANT-PHP-INT-SIZE
+    tests:
+      -
+        runner: behavior
+        target: 'spec/constants.feature:29'
+    category: constant
+  -
+    id: SPEC-CONSTANT-PHP-INT-MAX
+    statement: 'When PHP_INT_MAX is demanded in the Constant/IntegerMaximum.php namespace fixture, the deriver shall return the standard constant values [9223372036854775807,9223372036854775807].'
+    requirements:
+      - PHP-CONSTANT-PHP-INT-MAX
+    tests:
+      -
+        runner: behavior
+        target: 'spec/constants.feature:37'
+    category: constant
+  -
+    id: SPEC-CONSTANT-PHP-INT-MIN
+    statement: 'When PHP_INT_MIN is demanded in the Constant/IntegerMinimum.php namespace fixture, the deriver shall return the standard constant values [-9223372036854775808,-9223372036854775808].'
+    requirements:
+      - PHP-CONSTANT-PHP-INT-MIN
+    tests:
+      -
+        runner: behavior
+        target: 'spec/constants.feature:45'
+    category: constant

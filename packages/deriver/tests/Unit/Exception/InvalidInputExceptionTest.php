@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
+use Deriver\Deriver\Evaluator\Request\Budget;
 use Deriver\Exception\InvalidInputException;
-use Deriver\Query\Budget;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;

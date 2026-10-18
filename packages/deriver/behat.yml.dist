@@ -1,0 +1,7 @@
+default:
+  suites:
+    php:
+      paths:
+        - '%paths.base%/spec'
+      contexts:
+        - Spec\Context\PhpContext

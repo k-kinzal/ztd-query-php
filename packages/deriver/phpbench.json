@@ -1,0 +1,14 @@
+{
+    "runner.bootstrap": "vendor/autoload.php",
+    "runner.path": [
+        "bench/WebBench.php",
+        "bench/CliBench.php",
+        "bench/LaravelBench.php",
+        "bench/SymfonyBench.php"
+    ],
+    "runner.php_config": {
+        "memory_limit": "1G",
+        "xdebug.mode": "off"
+    },
+    "runner.retry_threshold": null
+}

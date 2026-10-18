@@ -1,0 +1,1515 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: syntax-keywords
+  uri: 'https://www.php.net/manual/en/reserved.keywords.php'
+  format: html
+  selector: '[id="reserved.keywords"] > table > tbody > tr > td a'
+  snapshot: .requirements-cache/reserved.keywords.php
+  sha256: 74edda643c4360ac6376a613aa70c6f6f777c78b4bd77385e7f83b5336ea1cce
+items:
+  -
+    id: PHP-SYNTAX-KEYWORDS-0001
+    kind: requirement
+    statement: __halt_compiler()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(1) a'
+        quote: __halt_compiler()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0002
+    kind: requirement
+    statement: abstract
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(2) a'
+        quote: abstract
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0003
+    kind: requirement
+    statement: and
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(3) a'
+        quote: and
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0004
+    kind: requirement
+    statement: array()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(4) a'
+        quote: array()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0005
+    kind: requirement
+    statement: as
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(5) a'
+        quote: as
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0006
+    kind: requirement
+    statement: break
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(2) > td:nth-child(1) a'
+        quote: break
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0007
+    kind: requirement
+    statement: callable
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(2) > td:nth-child(2) a'
+        quote: callable
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0008
+    kind: requirement
+    statement: case
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(2) > td:nth-child(3) a'
+        quote: case
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0009
+    kind: requirement
+    statement: catch
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(2) > td:nth-child(4) a'
+        quote: catch
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0010
+    kind: requirement
+    statement: class
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(2) > td:nth-child(5) a'
+        quote: class
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0011
+    kind: requirement
+    statement: clone
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(3) > td:nth-child(1) a'
+        quote: clone
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0012
+    kind: requirement
+    statement: const
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(3) > td:nth-child(2) a'
+        quote: const
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0013
+    kind: requirement
+    statement: continue
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(3) > td:nth-child(3) a'
+        quote: continue
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0014
+    kind: requirement
+    statement: declare
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(3) > td:nth-child(4) a'
+        quote: declare
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0015
+    kind: requirement
+    statement: default
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(3) > td:nth-child(5) a'
+        quote: default
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0016
+    kind: requirement
+    statement: die()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(4) > td:nth-child(1) a'
+        quote: die()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0017
+    kind: requirement
+    statement: do
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(4) > td:nth-child(2) a'
+        quote: do
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0018
+    kind: requirement
+    statement: echo
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(4) > td:nth-child(3) a'
+        quote: echo
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0019
+    kind: requirement
+    statement: else
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(4) > td:nth-child(4) a'
+        quote: else
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0020
+    kind: requirement
+    statement: elseif
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(4) > td:nth-child(5) a'
+        quote: elseif
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0021
+    kind: requirement
+    statement: empty()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(5) > td:nth-child(1) a'
+        quote: empty()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0022
+    kind: requirement
+    statement: enddeclare
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(5) > td:nth-child(2) a'
+        quote: enddeclare
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0023
+    kind: requirement
+    statement: endfor
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(5) > td:nth-child(3) a'
+        quote: endfor
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0024
+    kind: requirement
+    statement: endforeach
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(5) > td:nth-child(4) a'
+        quote: endforeach
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0025
+    kind: requirement
+    statement: endif
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(5) > td:nth-child(5) a'
+        quote: endif
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0026
+    kind: requirement
+    statement: endswitch
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(6) > td:nth-child(1) a'
+        quote: endswitch
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0027
+    kind: requirement
+    statement: endwhile
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(6) > td:nth-child(2) a'
+        quote: endwhile
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0028
+    kind: requirement
+    statement: eval()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(6) > td:nth-child(3) a'
+        quote: eval()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0029
+    kind: requirement
+    statement: exit()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(6) > td:nth-child(4) a'
+        quote: exit()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0030
+    kind: requirement
+    statement: extends
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(6) > td:nth-child(5) a'
+        quote: extends
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0031
+    kind: requirement
+    statement: final
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(7) > td:nth-child(1) a'
+        quote: final
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0032
+    kind: requirement
+    statement: finally
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(7) > td:nth-child(2) a'
+        quote: finally
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0033
+    kind: requirement
+    statement: fn
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(7) > td:nth-child(3) a'
+        quote: fn
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0034
+    kind: requirement
+    statement: for
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(7) > td:nth-child(4) a'
+        quote: for
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0035
+    kind: requirement
+    statement: foreach
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(7) > td:nth-child(5) a'
+        quote: foreach
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0036
+    kind: requirement
+    statement: function
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(8) > td:nth-child(1) a'
+        quote: function
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0037
+    kind: requirement
+    statement: global
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(8) > td:nth-child(2) a'
+        quote: global
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0038
+    kind: requirement
+    statement: goto
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(8) > td:nth-child(3) a'
+        quote: goto
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0039
+    kind: requirement
+    statement: if
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(8) > td:nth-child(4) a'
+        quote: if
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0040
+    kind: requirement
+    statement: implements
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(8) > td:nth-child(5) a'
+        quote: implements
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0041
+    kind: requirement
+    statement: include
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(9) > td:nth-child(1) a'
+        quote: include
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0042
+    kind: requirement
+    statement: include_once
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(9) > td:nth-child(2) a'
+        quote: include_once
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0043
+    kind: requirement
+    statement: instanceof
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(9) > td:nth-child(3) a'
+        quote: instanceof
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0044
+    kind: requirement
+    statement: insteadof
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(9) > td:nth-child(4) a'
+        quote: insteadof
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0045
+    kind: requirement
+    statement: interface
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(9) > td:nth-child(5) a'
+        quote: interface
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0046
+    kind: requirement
+    statement: isset()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(10) > td:nth-child(1) a'
+        quote: isset()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0047
+    kind: requirement
+    statement: list()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(10) > td:nth-child(2) a'
+        quote: list()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0048
+    kind: requirement
+    statement: match
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(10) > td:nth-child(3) a'
+        quote: match
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0049
+    kind: requirement
+    statement: namespace
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(10) > td:nth-child(4) a'
+        quote: namespace
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0050
+    kind: requirement
+    statement: new
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(10) > td:nth-child(5) a'
+        quote: new
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0051
+    kind: requirement
+    statement: or
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(11) > td:nth-child(1) a'
+        quote: or
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0052
+    kind: requirement
+    statement: print
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(11) > td:nth-child(2) a'
+        quote: print
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0053
+    kind: requirement
+    statement: private
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(11) > td:nth-child(3) a'
+        quote: private
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0054
+    kind: requirement
+    statement: protected
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(11) > td:nth-child(4) a'
+        quote: protected
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0055
+    kind: requirement
+    statement: public
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(11) > td:nth-child(5) a'
+        quote: public
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0056
+    kind: requirement
+    statement: readonly
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(12) > td:nth-child(1) a'
+        quote: readonly
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0057
+    kind: requirement
+    statement: require
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(12) > td:nth-child(2) a'
+        quote: require
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0058
+    kind: requirement
+    statement: require_once
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(12) > td:nth-child(3) a'
+        quote: require_once
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0059
+    kind: requirement
+    statement: return
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(12) > td:nth-child(4) a'
+        quote: return
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0060
+    kind: requirement
+    statement: static
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(12) > td:nth-child(5) a'
+        quote: static
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0061
+    kind: requirement
+    statement: switch
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(13) > td:nth-child(1) a'
+        quote: switch
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0062
+    kind: requirement
+    statement: throw
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(13) > td:nth-child(2) a'
+        quote: throw
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0063
+    kind: requirement
+    statement: trait
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(13) > td:nth-child(3) a'
+        quote: trait
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0064
+    kind: requirement
+    statement: try
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(13) > td:nth-child(4) a'
+        quote: try
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0065
+    kind: requirement
+    statement: unset()
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(13) > td:nth-child(5) a'
+        quote: unset()
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0066
+    kind: requirement
+    statement: use
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(14) > td:nth-child(1) a'
+        quote: use
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0067
+    kind: requirement
+    statement: var
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(14) > td:nth-child(2) a'
+        quote: var
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0068
+    kind: requirement
+    statement: while
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(14) > td:nth-child(3) a'
+        quote: while
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0069
+    kind: requirement
+    statement: xor
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(14) > td:nth-child(4) a'
+        quote: xor
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0070
+    kind: requirement
+    statement: yield
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(14) > td:nth-child(5) a'
+        quote: yield
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0071
+    kind: requirement
+    statement: 'yield from'
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(1) > tbody > tr:nth-child(15) > td:nth-child(1) a'
+        quote: 'yield from'
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0072
+    kind: requirement
+    statement: __CLASS__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(1) > td:nth-child(1) a'
+        quote: __CLASS__
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0073
+    kind: requirement
+    statement: __DIR__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(1) > td:nth-child(2) a'
+        quote: __DIR__
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0074
+    kind: requirement
+    statement: __FILE__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(1) > td:nth-child(3) a'
+        quote: __FILE__
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0075
+    kind: requirement
+    statement: __FUNCTION__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(1) > td:nth-child(4) a'
+        quote: __FUNCTION__
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0076
+    kind: requirement
+    statement: __LINE__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(1) > td:nth-child(5) a'
+        quote: __LINE__
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0077
+    kind: requirement
+    statement: __METHOD__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(2) > td:nth-child(1) a'
+        quote: __METHOD__
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0078
+    kind: requirement
+    statement: __PROPERTY__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(2) > td:nth-child(2) a'
+        quote: __PROPERTY__
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0079
+    kind: requirement
+    statement: __NAMESPACE__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(2) > td:nth-child(3) a'
+        quote: __NAMESPACE__
+    category: syntax
+  -
+    id: PHP-SYNTAX-KEYWORDS-0080
+    kind: requirement
+    statement: __TRAIT__
+    evidence:
+      -
+        selector: '[id="reserved.keywords"] > table:nth-of-type(2) > tbody > tr:nth-child(2) > td:nth-child(4) a'
+        quote: __TRAIT__
+    category: syntax
+  -
+    id: SPEC-SYNTAX-LONG-ARRAY
+    statement: 'When the `Syntax/LongArray.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[{"key":7}]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0004
+      - PHP-SYNTAX-FORMS-0011
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:5'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/LongArray.php
+  -
+    id: SPEC-SYNTAX-LIST-DESTRUCTURING
+    statement: 'When the `Syntax/ListDestructuring.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[3]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0047
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:13'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ListDestructuring.php
+  -
+    id: SPEC-SYNTAX-UNSET-REFERENCE
+    statement: 'When the `Syntax/UnsetReference.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0065
+      - PHP-SYNTAX-FORMS-0081
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:21'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/UnsetReference.php
+  -
+    id: SPEC-SYNTAX-UNSET-ARRAY-ELEMENT
+    statement: 'When the `Syntax/UnsetArrayElement.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[{"keep":7}]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0065
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:29'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/UnsetArrayElement.php
+  -
+    id: SPEC-SYNTAX-GLOBAL-VARIABLE
+    statement: 'When the `Syntax/GlobalVariable.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0037
+      - PHP-SYNTAX-FORMS-0023
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:37'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/GlobalVariable.php
+  -
+    id: SPEC-SYNTAX-STATIC-VARIABLE
+    statement: 'When the `Syntax/StaticVariable.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0060
+      - PHP-SYNTAX-FORMS-0023
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:46'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/StaticVariable.php
+  -
+    id: SPEC-SYNTAX-GLOBAL-CONSTANT
+    statement: 'When the `Syntax/GlobalConstant.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0012
+      - PHP-SYNTAX-FORMS-0026
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:54'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/GlobalConstant.php
+  -
+    id: SPEC-SYNTAX-FUNCTION-DEFINITION
+    statement: 'When the `Syntax/FunctionDefinition.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0036
+      - PHP-SYNTAX-KEYWORDS-0059
+      - PHP-SYNTAX-FORMS-0029
+      - PHP-SYNTAX-FORMS-0031
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:62'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/FunctionDefinition.php
+  -
+    id: SPEC-SYNTAX-CLOSURE-CAPTURE
+    statement: 'When the `Syntax/ClosureCapture.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0066
+      - PHP-SYNTAX-FORMS-0033
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:70'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ClosureCapture.php
+  -
+    id: SPEC-SYNTAX-CALLABLE-PARAMETER
+    statement: 'When the `Syntax/CallableParameter.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0007
+      - PHP-SYNTAX-FORMS-0013
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:78'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CallableParameter.php
+  -
+    id: SPEC-SYNTAX-STRICT-TYPES
+    statement: 'When the `Syntax/StrictTypes.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0014
+      - PHP-SYNTAX-FORMS-0020
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:86'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/StrictTypes.php
+  -
+    id: SPEC-SYNTAX-IF-ELSE
+    statement: 'When the `Syntax/IfElse.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7,9]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0039
+      - PHP-SYNTAX-KEYWORDS-0019
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:94'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/IfElse.php
+  -
+    id: SPEC-SYNTAX-ELSE-IF
+    statement: 'When the `Syntax/ElseIf.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [1,7,9] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0020
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:103'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ElseIf.php
+  -
+    id: SPEC-SYNTAX-ALTERNATIVE-IF
+    statement: 'When the `Syntax/AlternativeIf.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [1,7] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0025
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:113'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AlternativeIf.php
+  -
+    id: SPEC-SYNTAX-WHILE-LOOP
+    statement: 'When the `Syntax/WhileLoop.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"recurrence","reason":"LOOP_DEPENDENCY"}] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0068
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:122'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/WhileLoop.php
+  -
+    id: SPEC-SYNTAX-DO-WHILE-LOOP
+    statement: 'When the `Syntax/DoWhileLoop.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"recurrence","reason":"LOOP_DEPENDENCY"}] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0017
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:130'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/DoWhileLoop.php
+  -
+    id: SPEC-SYNTAX-FOR-LOOP
+    statement: 'When the `Syntax/ForLoop.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"recurrence","reason":"LOOP_DEPENDENCY"}] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0034
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:138'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ForLoop.php
+  -
+    id: SPEC-SYNTAX-FOREACH-LOOP
+    statement: 'When the `Syntax/ForeachLoop.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"recurrence","reason":"LOOP_DEPENDENCY"}] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0035
+      - PHP-SYNTAX-KEYWORDS-0005
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:146'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ForeachLoop.php
+  -
+    id: SPEC-SYNTAX-FOREACH-KEY
+    statement: 'When the `Syntax/ForeachKey.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values ["key",null] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0035
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:154'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ForeachKey.php
+  -
+    id: SPEC-SYNTAX-ALTERNATIVE-WHILE
+    statement: 'When the `Syntax/AlternativeWhile.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"recurrence","reason":"LOOP_DEPENDENCY"}] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0027
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:163'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AlternativeWhile.php
+  -
+    id: SPEC-SYNTAX-ALTERNATIVE-FOR
+    statement: 'When the `Syntax/AlternativeFor.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"recurrence","reason":"LOOP_DEPENDENCY"}] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0023
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:171'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AlternativeFor.php
+  -
+    id: SPEC-SYNTAX-ALTERNATIVE-FOREACH
+    statement: 'When the `Syntax/AlternativeForeach.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"recurrence","reason":"LOOP_DEPENDENCY"}] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0024
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:179'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AlternativeForeach.php
+  -
+    id: SPEC-SYNTAX-BREAK-LOOP
+    statement: 'When the `Syntax/BreakLoop.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [0,7] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0006
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:187'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BreakLoop.php
+  -
+    id: SPEC-SYNTAX-CONTINUE-LOOP
+    statement: 'When the `Syntax/ContinueLoop.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"recurrence","reason":"LOOP_DEPENDENCY"}] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0013
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:196'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ContinueLoop.php
+  -
+    id: SPEC-SYNTAX-SWITCH
+    statement: 'When the `Syntax/Switch.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [1,7,9] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0061
+      - PHP-SYNTAX-KEYWORDS-0008
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:204'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Switch.php
+  -
+    id: SPEC-SYNTAX-SWITCH-DEFAULT
+    statement: 'When the `Syntax/SwitchDefault.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [1,7] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0015
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:214'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/SwitchDefault.php
+  -
+    id: SPEC-SYNTAX-ALTERNATIVE-SWITCH
+    statement: 'When the `Syntax/AlternativeSwitch.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [1,7] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0026
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:223'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AlternativeSwitch.php
+  -
+    id: SPEC-SYNTAX-MATCH
+    statement: 'When the `Syntax/Match.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [3,7,9] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0048
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:232'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Match.php
+  -
+    id: SPEC-SYNTAX-GOTO
+    statement: 'When the `Syntax/Goto.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0038
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:242'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Goto.php
+  -
+    id: SPEC-SYNTAX-CATCH-EXCEPTION
+    statement: 'When the `Syntax/CatchException.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0064
+      - PHP-SYNTAX-KEYWORDS-0009
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:250'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CatchException.php
+  -
+    id: SPEC-SYNTAX-FINALLY-RETURN
+    statement: 'When the `Syntax/FinallyReturn.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0032
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:258'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/FinallyReturn.php
+  -
+    id: SPEC-SYNTAX-ECHO-ASSIGNMENT
+    statement: 'When the `Syntax/EchoAssignment.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0018
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:266'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EchoAssignment.php
+  -
+    id: SPEC-SYNTAX-ISSET-EXPRESSION
+    statement: 'When the `Syntax/IssetExpression.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [true,false] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0046
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:274'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/IssetExpression.php
+  -
+    id: SPEC-SYNTAX-EMPTY-EXPRESSION
+    statement: 'When the `Syntax/EmptyExpression.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0021
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:283'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EmptyExpression.php
+  -
+    id: SPEC-SYNTAX-END-DECLARE
+    statement: 'When the `Syntax/EndDeclare.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0022
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:291'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EndDeclare.php
+  -
+    id: SPEC-SYNTAX-HALT-COMPILER
+    statement: 'When the `Syntax/HaltCompiler.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0001
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:299'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/HaltCompiler.php
+  -
+    id: SPEC-SYNTAX-CLASS-PROPERTY
+    statement: 'When the `Syntax/ClassProperty.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0010
+      - PHP-SYNTAX-KEYWORDS-0050
+      - PHP-SYNTAX-KEYWORDS-0055
+      - PHP-SYNTAX-FORMS-0012
+      - PHP-SYNTAX-FORMS-0037
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:307'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ClassProperty.php
+  -
+    id: SPEC-SYNTAX-CONSTRUCTOR-PROMOTION
+    statement: 'When the `Syntax/ConstructorPromotion.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0056
+      - PHP-SYNTAX-FORMS-0040
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:315'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ConstructorPromotion.php
+  -
+    id: SPEC-SYNTAX-PRIVATE-METHOD
+    statement: 'When the `Syntax/PrivateMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0053
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:323'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/PrivateMethod.php
+  -
+    id: SPEC-SYNTAX-PROTECTED-METHOD
+    statement: 'When the `Syntax/ProtectedMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0054
+      - PHP-SYNTAX-KEYWORDS-0030
+      - PHP-SYNTAX-FORMS-0042
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:331'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ProtectedMethod.php
+  -
+    id: SPEC-SYNTAX-ABSTRACT-CLASS
+    statement: 'When the `Syntax/AbstractClass.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0002
+      - PHP-SYNTAX-FORMS-0045
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:339'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AbstractClass.php
+  -
+    id: SPEC-SYNTAX-FINAL-CLASS
+    statement: 'When the `Syntax/FinalClass.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0031
+      - PHP-SYNTAX-FORMS-0052
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:347'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/FinalClass.php
+  -
+    id: SPEC-SYNTAX-INTERFACE-METHOD
+    statement: 'When the `Syntax/InterfaceMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0045
+      - PHP-SYNTAX-KEYWORDS-0040
+      - PHP-SYNTAX-FORMS-0046
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:355'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/InterfaceMethod.php
+  -
+    id: SPEC-SYNTAX-TRAIT-METHOD
+    statement: 'When the `Syntax/TraitMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0063
+      - PHP-SYNTAX-FORMS-0047
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:363'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/TraitMethod.php
+  -
+    id: SPEC-SYNTAX-TRAIT-PRECEDENCE
+    statement: 'When the `Syntax/TraitPrecedence.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0044
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:371'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/TraitPrecedence.php
+  -
+    id: SPEC-SYNTAX-TRAIT-ALIAS
+    statement: 'When the `Syntax/TraitAlias.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0005
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:379'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/TraitAlias.php
+  -
+    id: SPEC-SYNTAX-LEGACY-PROPERTY
+    statement: 'When the `Syntax/LegacyProperty.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0067
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:387'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/LegacyProperty.php
+  -
+    id: SPEC-SYNTAX-NAMESPACE
+    statement: 'When the `Syntax/Namespace.php` source is queried for `Demo\subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["Demo"]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0049
+      - PHP-SYNTAX-KEYWORDS-0079
+      - PHP-SYNTAX-FORMS-0058
+      - PHP-SYNTAX-FORMS-0063
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:395'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Namespace.php
+  -
+    id: SPEC-SYNTAX-MAGIC-FUNCTION
+    statement: 'When the `Syntax/MagicFunction.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["subject"]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0075
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:403'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MagicFunction.php
+  -
+    id: SPEC-SYNTAX-MAGIC-CLASS
+    statement: 'When the `Syntax/MagicClass.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["Box"]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0072
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:411'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MagicClass.php
+  -
+    id: SPEC-SYNTAX-MAGIC-METHOD
+    statement: 'When the `Syntax/MagicMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["Box::read"]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0077
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:419'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MagicMethod.php
+  -
+    id: SPEC-SYNTAX-MAGIC-TRAIT
+    statement: 'When the `Syntax/MagicTrait.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["Value"]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0080
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:427'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MagicTrait.php
+  -
+    id: SPEC-SYNTAX-MAGIC-LINE
+    statement: 'When the `Syntax/MagicLine.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[3]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0076
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:435'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MagicLine.php
+  -
+    id: SPEC-SYNTAX-MAGIC-FILE
+    statement: 'When the `Syntax/MagicFile.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0074
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:443'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MagicFile.php
+  -
+    id: SPEC-SYNTAX-MAGIC-DIRECTORY
+    statement: 'When the `Syntax/MagicDirectory.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0073
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:451'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MagicDirectory.php
+  -
+    id: SPEC-SYNTAX-EXIT-STATEMENT
+    statement: 'When the `Syntax/ExitStatement.php` source is queried for `subject#return` under PHP 8.1, the deriver shall return an empty candidate collection.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0029
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:459'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ExitStatement.php
+  -
+    id: SPEC-SYNTAX-DIE-STATEMENT
+    statement: 'When the `Syntax/DieStatement.php` source is queried for `subject#return` under PHP 8.1, the deriver shall return an empty candidate collection.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0016
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:465'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/DieStatement.php
+  -
+    id: SPEC-SYNTAX-MAGIC-PROPERTY
+    statement: 'When the `Syntax/MagicProperty.php` source is queried for `subject#return` under PHP 8.4, the deriver shall derive exactly the native candidate values `["value"]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0078
+      - PHP-SYNTAX-FORMS-0038
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-keywords.feature:471'
+    category: syntax
+    metadata:
+      php: '8.4'
+      fixture: spec/Fixture/Syntax/MagicProperty.php

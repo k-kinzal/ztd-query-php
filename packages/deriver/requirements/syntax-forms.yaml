@@ -1,0 +1,1930 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: syntax-forms
+  uri: 'https://www.php.net/manual/en/langref.php'
+  format: html
+  selector: '#layout-content ul.chunklist a[href="language.basic-syntax.phptags.php"], #layout-content ul.chunklist a[href="language.basic-syntax.phpmode.php"], #layout-content ul.chunklist a[href="language.basic-syntax.instruction-separation.php"], #layout-content ul.chunklist a[href="language.basic-syntax.comments.php"], #layout-content ul.chunklist a[href="language.types.null.php"], #layout-content ul.chunklist a[href="language.types.boolean.php"], #layout-content ul.chunklist a[href="language.types.integer.php"], #layout-content ul.chunklist a[href="language.types.float.php"], #layout-content ul.chunklist a[href="language.types.string.php"], #layout-content ul.chunklist a[href="language.types.numeric-strings.php"], #layout-content ul.chunklist a[href="language.types.array.php"], #layout-content ul.chunklist a[href="language.types.object.php"], #layout-content ul.chunklist a[href="language.types.callable.php"], #layout-content ul.chunklist a[href="language.types.mixed.php"], #layout-content ul.chunklist a[href="language.types.void.php"], #layout-content ul.chunklist a[href="language.types.never.php"], #layout-content ul.chunklist a[href="language.types.relative-class-types.php"], #layout-content ul.chunklist a[href="language.types.singleton.php"], #layout-content ul.chunklist a[href="language.types.iterable.php"], #layout-content ul.chunklist a[href="language.types.declarations.php"], #layout-content ul.chunklist a[href="language.types.type-juggling.php"], #layout-content ul.chunklist a[href="language.variables.basics.php"], #layout-content ul.chunklist a[href="language.variables.scope.php"], #layout-content ul.chunklist a[href="language.variables.variable.php"], #layout-content ul.chunklist a[href="language.variables.external.php"], #layout-content ul.chunklist a[href="language.constants.syntax.php"], #layout-content ul.chunklist a[href="language.operators.execution.php"], #layout-content ul.chunklist a[href="language.operators.functional.php"], #layout-content ul.chunklist a[href="functions.user-defined.php"], #layout-content ul.chunklist a[href="functions.arguments.php"], #layout-content ul.chunklist a[href="functions.returning-values.php"], #layout-content ul.chunklist a[href="functions.variable-functions.php"], #layout-content ul.chunklist a[href="functions.anonymous.php"], #layout-content ul.chunklist a[href="functions.arrow.php"], #layout-content ul.chunklist a[href="functions.first_class_callable_syntax.php"], #layout-content ul.chunklist a[href="language.oop5.basic.php"], #layout-content ul.chunklist a[href="language.oop5.properties.php"], #layout-content ul.chunklist a[href="language.oop5.property-hooks.php"], #layout-content ul.chunklist a[href="language.oop5.constants.php"], #layout-content ul.chunklist a[href="language.oop5.decon.php"], #layout-content ul.chunklist a[href="language.oop5.visibility.php"], #layout-content ul.chunklist a[href="language.oop5.inheritance.php"], #layout-content ul.chunklist a[href="language.oop5.paamayim-nekudotayim.php"], #layout-content ul.chunklist a[href="language.oop5.static.php"], #layout-content ul.chunklist a[href="language.oop5.abstract.php"], #layout-content ul.chunklist a[href="language.oop5.interfaces.php"], #layout-content ul.chunklist a[href="language.oop5.traits.php"], #layout-content ul.chunklist a[href="language.oop5.anonymous.php"], #layout-content ul.chunklist a[href="language.oop5.overloading.php"], #layout-content ul.chunklist a[href="language.oop5.iterations.php"], #layout-content ul.chunklist a[href="language.oop5.magic.php"], #layout-content ul.chunklist a[href="language.oop5.final.php"], #layout-content ul.chunklist a[href="language.oop5.cloning.php"], #layout-content ul.chunklist a[href="language.oop5.object-comparison.php"], #layout-content ul.chunklist a[href="language.oop5.late-static-bindings.php"], #layout-content ul.chunklist a[href="language.oop5.references.php"], #layout-content ul.chunklist a[href="language.oop5.variance.php"], #layout-content ul.chunklist a[href="language.namespaces.definition.php"], #layout-content ul.chunklist a[href="language.namespaces.nested.php"], #layout-content ul.chunklist a[href="language.namespaces.definitionmultiple.php"], #layout-content ul.chunklist a[href="language.namespaces.basics.php"], #layout-content ul.chunklist a[href="language.namespaces.dynamic.php"], #layout-content ul.chunklist a[href="language.namespaces.nsconstants.php"], #layout-content ul.chunklist a[href="language.namespaces.importing.php"], #layout-content ul.chunklist a[href="language.namespaces.global.php"], #layout-content ul.chunklist a[href="language.namespaces.fallback.php"], #layout-content ul.chunklist a[href="language.namespaces.rules.php"], #layout-content ul.chunklist a[href="language.enumerations.basics.php"], #layout-content ul.chunklist a[href="language.enumerations.backed.php"], #layout-content ul.chunklist a[href="language.enumerations.methods.php"], #layout-content ul.chunklist a[href="language.enumerations.static-methods.php"], #layout-content ul.chunklist a[href="language.enumerations.constants.php"], #layout-content ul.chunklist a[href="language.enumerations.traits.php"], #layout-content ul.chunklist a[href="language.enumerations.expressions.php"], #layout-content ul.chunklist a[href="language.generators.syntax.php"], #layout-content ul.chunklist a[href="language.attributes.syntax.php"], #layout-content ul.chunklist a[href="language.attributes.classes.php"], #layout-content ul.chunklist a[href="language.references.whatdo.php"], #layout-content ul.chunklist a[href="language.references.pass.php"], #layout-content ul.chunklist a[href="language.references.return.php"], #layout-content ul.chunklist a[href="language.references.unset.php"]'
+  snapshot: .requirements-cache/langref.php
+  sha256: 66d688d58e6e0dfed70d3ed7ef9e0f6b76ff0bbad2ebcf8fbf59c0e1210f1c64
+items:
+  -
+    id: PHP-SYNTAX-FORMS-0001
+    kind: requirement
+    statement: 'PHP tags'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.basic-syntax.phptags.php"]'
+        quote: 'PHP tags'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0002
+    kind: requirement
+    statement: 'Escaping from HTML'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.basic-syntax.phpmode.php"]'
+        quote: 'Escaping from HTML'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0003
+    kind: requirement
+    statement: 'Instruction separation'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.basic-syntax.instruction-separation.php"]'
+        quote: 'Instruction separation'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0004
+    kind: requirement
+    statement: Comments
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.basic-syntax.comments.php"]'
+        quote: Comments
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0005
+    kind: requirement
+    statement: 'NULL'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.null.php"]'
+        quote: 'NULL'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0006
+    kind: requirement
+    statement: Booleans
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.boolean.php"]'
+        quote: Booleans
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0007
+    kind: requirement
+    statement: Integers
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.integer.php"]'
+        quote: Integers
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0008
+    kind: requirement
+    statement: 'Floating-point numbers'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.float.php"]'
+        quote: 'Floating-point numbers'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0009
+    kind: requirement
+    statement: Strings
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.string.php"]'
+        quote: Strings
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0010
+    kind: requirement
+    statement: 'Numeric strings'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.numeric-strings.php"]'
+        quote: 'Numeric strings'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0011
+    kind: requirement
+    statement: Arrays
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.array.php"]'
+        quote: Arrays
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0012
+    kind: requirement
+    statement: Objects
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.object.php"]'
+        quote: Objects
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0013
+    kind: requirement
+    statement: Callables
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.callable.php"]'
+        quote: Callables
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0014
+    kind: requirement
+    statement: Mixed
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.mixed.php"]'
+        quote: Mixed
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0015
+    kind: requirement
+    statement: Void
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.void.php"]'
+        quote: Void
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0016
+    kind: requirement
+    statement: Never
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.never.php"]'
+        quote: Never
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0017
+    kind: requirement
+    statement: 'Relative class types'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.relative-class-types.php"]'
+        quote: 'Relative class types'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0018
+    kind: requirement
+    statement: 'Singleton types'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.singleton.php"]'
+        quote: 'Singleton types'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0019
+    kind: requirement
+    statement: Iterables
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.iterable.php"]'
+        quote: Iterables
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0020
+    kind: requirement
+    statement: 'Type declarations'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.declarations.php"]'
+        quote: 'Type declarations'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0021
+    kind: requirement
+    statement: 'Type Juggling'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.types.type-juggling.php"]'
+        quote: 'Type Juggling'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0022
+    kind: requirement
+    statement: Basics
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.variables.basics.php"]'
+        quote: Basics
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0023
+    kind: requirement
+    statement: 'Variable scope'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.variables.scope.php"]'
+        quote: 'Variable scope'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0024
+    kind: requirement
+    statement: 'Variable variables'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.variables.variable.php"]'
+        quote: 'Variable variables'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0025
+    kind: requirement
+    statement: 'Variables From External Sources'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.variables.external.php"]'
+        quote: 'Variables From External Sources'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0026
+    kind: requirement
+    statement: Syntax
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.constants.syntax.php"]'
+        quote: Syntax
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0027
+    kind: requirement
+    statement: Execution
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.operators.execution.php"]'
+        quote: Execution
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0028
+    kind: requirement
+    statement: Functional
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.operators.functional.php"]'
+        quote: Functional
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0029
+    kind: requirement
+    statement: 'User-defined functions'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="functions.user-defined.php"]'
+        quote: 'User-defined functions'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0030
+    kind: requirement
+    statement: 'Function parameters and arguments'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="functions.arguments.php"]'
+        quote: 'Function parameters and arguments'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0031
+    kind: requirement
+    statement: 'Returning values'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="functions.returning-values.php"]'
+        quote: 'Returning values'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0032
+    kind: requirement
+    statement: 'Variable functions'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="functions.variable-functions.php"]'
+        quote: 'Variable functions'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0033
+    kind: requirement
+    statement: 'Anonymous functions'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="functions.anonymous.php"]'
+        quote: 'Anonymous functions'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0034
+    kind: requirement
+    statement: 'Arrow Functions'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="functions.arrow.php"]'
+        quote: 'Arrow Functions'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0035
+    kind: requirement
+    statement: 'First class callable syntax'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="functions.first_class_callable_syntax.php"]'
+        quote: 'First class callable syntax'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0036
+    kind: requirement
+    statement: 'The Basics'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.basic.php"]'
+        quote: 'The Basics'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0037
+    kind: requirement
+    statement: Properties
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.properties.php"]'
+        quote: Properties
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0038
+    kind: requirement
+    statement: 'Property Hooks'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.property-hooks.php"]'
+        quote: 'Property Hooks'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0039
+    kind: requirement
+    statement: 'Class Constants'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.constants.php"]'
+        quote: 'Class Constants'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0040
+    kind: requirement
+    statement: 'Constructors and Destructors'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.decon.php"]'
+        quote: 'Constructors and Destructors'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0041
+    kind: requirement
+    statement: Visibility
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.visibility.php"]'
+        quote: Visibility
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0042
+    kind: requirement
+    statement: 'Object Inheritance'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.inheritance.php"]'
+        quote: 'Object Inheritance'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0043
+    kind: requirement
+    statement: 'Scope Resolution Operator (::)'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.paamayim-nekudotayim.php"]'
+        quote: 'Scope Resolution Operator (::)'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0044
+    kind: requirement
+    statement: 'Static Keyword'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.static.php"]'
+        quote: 'Static Keyword'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0045
+    kind: requirement
+    statement: 'Class Abstraction'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.abstract.php"]'
+        quote: 'Class Abstraction'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0046
+    kind: requirement
+    statement: 'Object Interfaces'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.interfaces.php"]'
+        quote: 'Object Interfaces'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0047
+    kind: requirement
+    statement: Traits
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.traits.php"]'
+        quote: Traits
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0048
+    kind: requirement
+    statement: 'Anonymous classes'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.anonymous.php"]'
+        quote: 'Anonymous classes'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0049
+    kind: requirement
+    statement: Overloading
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.overloading.php"]'
+        quote: Overloading
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0050
+    kind: requirement
+    statement: 'Object Iteration'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.iterations.php"]'
+        quote: 'Object Iteration'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0051
+    kind: requirement
+    statement: 'Magic Methods'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.magic.php"]'
+        quote: 'Magic Methods'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0052
+    kind: requirement
+    statement: 'Final Keyword'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.final.php"]'
+        quote: 'Final Keyword'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0053
+    kind: requirement
+    statement: 'Object Cloning'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.cloning.php"]'
+        quote: 'Object Cloning'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0054
+    kind: requirement
+    statement: 'Comparing Objects'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.object-comparison.php"]'
+        quote: 'Comparing Objects'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0055
+    kind: requirement
+    statement: 'Late Static Bindings'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.late-static-bindings.php"]'
+        quote: 'Late Static Bindings'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0056
+    kind: requirement
+    statement: 'Objects and references'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.references.php"]'
+        quote: 'Objects and references'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0057
+    kind: requirement
+    statement: 'Covariance and Contravariance'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.oop5.variance.php"]'
+        quote: 'Covariance and Contravariance'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0058
+    kind: requirement
+    statement: Namespaces
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.definition.php"]'
+        quote: Namespaces
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0059
+    kind: requirement
+    statement: Sub-namespaces
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.nested.php"]'
+        quote: Sub-namespaces
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0060
+    kind: requirement
+    statement: 'Defining multiple namespaces in the same file'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.definitionmultiple.php"]'
+        quote: 'Defining multiple namespaces in the same file'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0061
+    kind: requirement
+    statement: Basics
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.basics.php"]'
+        quote: Basics
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0062
+    kind: requirement
+    statement: 'Namespaces and dynamic language features'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.dynamic.php"]'
+        quote: 'Namespaces and dynamic language features'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0063
+    kind: requirement
+    statement: 'namespace keyword and __NAMESPACE__'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.nsconstants.php"]'
+        quote: 'namespace keyword and __NAMESPACE__'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0064
+    kind: requirement
+    statement: 'Aliasing and Importing'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.importing.php"]'
+        quote: 'Aliasing and Importing'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0065
+    kind: requirement
+    statement: 'Global space'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.global.php"]'
+        quote: 'Global space'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0066
+    kind: requirement
+    statement: 'Fallback to global space'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.fallback.php"]'
+        quote: 'Fallback to global space'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0067
+    kind: requirement
+    statement: 'Name resolution rules'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.namespaces.rules.php"]'
+        quote: 'Name resolution rules'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0068
+    kind: requirement
+    statement: 'Basic enumerations'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.enumerations.basics.php"]'
+        quote: 'Basic enumerations'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0069
+    kind: requirement
+    statement: 'Backed enumerations'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.enumerations.backed.php"]'
+        quote: 'Backed enumerations'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0070
+    kind: requirement
+    statement: 'Enumeration methods'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.enumerations.methods.php"]'
+        quote: 'Enumeration methods'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0071
+    kind: requirement
+    statement: 'Enumeration static methods'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.enumerations.static-methods.php"]'
+        quote: 'Enumeration static methods'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0072
+    kind: requirement
+    statement: 'Enumeration constants'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.enumerations.constants.php"]'
+        quote: 'Enumeration constants'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0073
+    kind: requirement
+    statement: Traits
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.enumerations.traits.php"]'
+        quote: Traits
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0074
+    kind: requirement
+    statement: 'Enum values in constant expressions'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.enumerations.expressions.php"]'
+        quote: 'Enum values in constant expressions'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0075
+    kind: requirement
+    statement: 'Generator syntax'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.generators.syntax.php"]'
+        quote: 'Generator syntax'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0076
+    kind: requirement
+    statement: 'Attribute syntax'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.attributes.syntax.php"]'
+        quote: 'Attribute syntax'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0077
+    kind: requirement
+    statement: 'Declaring Attribute Classes'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.attributes.classes.php"]'
+        quote: 'Declaring Attribute Classes'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0078
+    kind: requirement
+    statement: 'What References Do'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.references.whatdo.php"]'
+        quote: 'What References Do'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0079
+    kind: requirement
+    statement: 'Passing by Reference'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.references.pass.php"]'
+        quote: 'Passing by Reference'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0080
+    kind: requirement
+    statement: 'Returning References'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.references.return.php"]'
+        quote: 'Returning References'
+    category: syntax
+  -
+    id: PHP-SYNTAX-FORMS-0081
+    kind: requirement
+    statement: 'Unsetting References'
+    evidence:
+      -
+        selector: '#layout-content ul.chunklist a[href="language.references.unset.php"]'
+        quote: 'Unsetting References'
+    category: syntax
+  -
+    id: SPEC-SYNTAX-NULL-LITERAL
+    statement: 'When the `Syntax/NullLiteral.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[null]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0005
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:5'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NullLiteral.php
+  -
+    id: SPEC-SYNTAX-BOOLEAN-LITERAL
+    statement: 'When the `Syntax/BooleanLiteral.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0006
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:13'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BooleanLiteral.php
+  -
+    id: SPEC-SYNTAX-FALSE-LITERAL
+    statement: 'When the `Syntax/FalseLiteral.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[false]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0006
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:21'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/FalseLiteral.php
+  -
+    id: SPEC-SYNTAX-DECIMAL-INTEGER
+    statement: 'When the `Syntax/DecimalInteger.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[42]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0007
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:29'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/DecimalInteger.php
+  -
+    id: SPEC-SYNTAX-HEXADECIMAL-INTEGER
+    statement: 'When the `Syntax/HexadecimalInteger.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[42]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0007
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:37'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/HexadecimalInteger.php
+  -
+    id: SPEC-SYNTAX-BINARY-INTEGER
+    statement: 'When the `Syntax/BinaryInteger.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[42]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0007
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:45'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BinaryInteger.php
+  -
+    id: SPEC-SYNTAX-OCTAL-INTEGER
+    statement: 'When the `Syntax/OctalInteger.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[42]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0007
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:53'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/OctalInteger.php
+  -
+    id: SPEC-SYNTAX-EXPLICIT-OCTAL-INTEGER
+    statement: 'When the `Syntax/ExplicitOctalInteger.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[42]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0007
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:61'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ExplicitOctalInteger.php
+  -
+    id: SPEC-SYNTAX-SEPARATED-INTEGER
+    statement: 'When the `Syntax/SeparatedInteger.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[42]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0007
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:69'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/SeparatedInteger.php
+  -
+    id: SPEC-SYNTAX-DECIMAL-FLOAT
+    statement: 'When the `Syntax/DecimalFloat.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[1.25]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0008
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:77'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/DecimalFloat.php
+  -
+    id: SPEC-SYNTAX-EXPONENT-FLOAT
+    statement: 'When the `Syntax/ExponentFloat.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[1.25]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0008
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:85'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ExponentFloat.php
+  -
+    id: SPEC-SYNTAX-SINGLE-QUOTED-STRING
+    statement: 'When the `Syntax/SingleQuotedString.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["hello"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0009
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:93'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/SingleQuotedString.php
+  -
+    id: SPEC-SYNTAX-DOUBLE-QUOTED-STRING
+    statement: 'When the `Syntax/DoubleQuotedString.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["hello\nworld"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0009
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:101'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/DoubleQuotedString.php
+  -
+    id: SPEC-SYNTAX-INTERPOLATED-STRING
+    statement: 'When the `Syntax/InterpolatedString.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["hello world"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0009
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:109'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/InterpolatedString.php
+  -
+    id: SPEC-SYNTAX-STRING-OFFSET
+    statement: 'When the `Syntax/StringOffset.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["b"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0009
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:117'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/StringOffset.php
+  -
+    id: SPEC-SYNTAX-HEREDOC
+    statement: 'When the `Syntax/Heredoc.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["hello world"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0009
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:125'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Heredoc.php
+  -
+    id: SPEC-SYNTAX-NOWDOC
+    statement: 'When the `Syntax/Nowdoc.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["hello $name"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0009
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:133'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Nowdoc.php
+  -
+    id: SPEC-SYNTAX-NUMERIC-STRING
+    statement: 'When the `Syntax/NumericString.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[15]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0010
+      - PHP-SYNTAX-FORMS-0021
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:141'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NumericString.php
+  -
+    id: SPEC-SYNTAX-SHORT-ARRAY
+    statement: 'When the `Syntax/ShortArray.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[[1,2]]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0011
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:149'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ShortArray.php
+  -
+    id: SPEC-SYNTAX-ARRAY-APPEND
+    statement: 'When the `Syntax/ArrayAppend.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[[1,2]]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0011
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:157'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ArrayAppend.php
+  -
+    id: SPEC-SYNTAX-ARRAY-DESTRUCTURING
+    statement: 'When the `Syntax/ArrayDestructuring.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[4]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0011
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:165'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ArrayDestructuring.php
+  -
+    id: SPEC-SYNTAX-ARRAY-UNPACKING
+    statement: 'When the `Syntax/ArrayUnpacking.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[[1,2,3]]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0011
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:173'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ArrayUnpacking.php
+  -
+    id: SPEC-SYNTAX-LOCAL-VARIABLE
+    statement: 'When the `Syntax/LocalVariable.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0022
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:181'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/LocalVariable.php
+  -
+    id: SPEC-SYNTAX-VARIABLE-VARIABLE
+    statement: 'When the `Syntax/VariableVariable.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0024
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:189'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/VariableVariable.php
+  -
+    id: SPEC-SYNTAX-VARIABLE-REFERENCE
+    statement: 'When the `Syntax/VariableReference.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0078
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:197'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/VariableReference.php
+  -
+    id: SPEC-SYNTAX-SUPERGLOBAL
+    statement: 'When the `Syntax/Superglobal.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0025
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:205'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Superglobal.php
+  -
+    id: SPEC-SYNTAX-NO-RETURN-VALUE
+    statement: 'When the `Syntax/NoReturnValue.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[null]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0015
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:214'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NoReturnValue.php
+  -
+    id: SPEC-SYNTAX-DEFAULT-ARGUMENT
+    statement: 'When the `Syntax/DefaultArgument.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0030
+      - PHP-SYNTAX-FORMS-0020
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:222'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/DefaultArgument.php
+  -
+    id: SPEC-SYNTAX-NAMED-ARGUMENT
+    statement: 'When the `Syntax/NamedArgument.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0030
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:230'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NamedArgument.php
+  -
+    id: SPEC-SYNTAX-VARIADIC-ARGUMENT
+    statement: 'When the `Syntax/VariadicArgument.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[[3,7]]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0030
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:238'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/VariadicArgument.php
+  -
+    id: SPEC-SYNTAX-ARGUMENT-UNPACKING
+    statement: 'When the `Syntax/ArgumentUnpacking.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0030
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:246'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ArgumentUnpacking.php
+  -
+    id: SPEC-SYNTAX-REFERENCE-ARGUMENT
+    statement: 'When the `Syntax/ReferenceArgument.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0079
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:254'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ReferenceArgument.php
+  -
+    id: SPEC-SYNTAX-REFERENCE-RETURN
+    statement: 'When the `Syntax/ReferenceReturn.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0080
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:262'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ReferenceReturn.php
+  -
+    id: SPEC-SYNTAX-VARIABLE-FUNCTION
+    statement: 'When the `Syntax/VariableFunction.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0032
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:270'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/VariableFunction.php
+  -
+    id: SPEC-SYNTAX-CLOSURE
+    statement: 'When the `Syntax/Closure.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0033
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:278'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Closure.php
+  -
+    id: SPEC-SYNTAX-CLOSURE-REFERENCE-CAPTURE
+    statement: 'When the `Syntax/ClosureReferenceCapture.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0033
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:286'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ClosureReferenceCapture.php
+  -
+    id: SPEC-SYNTAX-FIRST-CLASS-CALLABLE
+    statement: 'When the `Syntax/FirstClassCallable.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0035
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:294'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/FirstClassCallable.php
+  -
+    id: SPEC-SYNTAX-NULLABLE-TYPE
+    statement: 'When the `Syntax/NullableType.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[null]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0020
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:302'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NullableType.php
+  -
+    id: SPEC-SYNTAX-UNION-TYPE
+    statement: 'When the `Syntax/UnionType.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["seven"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0020
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:310'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/UnionType.php
+  -
+    id: SPEC-SYNTAX-INTERSECTION-TYPE
+    statement: 'When the `Syntax/IntersectionType.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0020
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:318'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/IntersectionType.php
+  -
+    id: SPEC-SYNTAX-DNF-TYPE
+    statement: 'When the `Syntax/DnfType.php` source is queried for `subject#return` under PHP 8.2, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0020
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:326'
+    category: syntax
+    metadata:
+      php: '8.2'
+      fixture: spec/Fixture/Syntax/DnfType.php
+  -
+    id: SPEC-SYNTAX-MIXED-TYPE
+    statement: 'When the `Syntax/MixedType.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0014
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:334'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MixedType.php
+  -
+    id: SPEC-SYNTAX-ITERABLE-TYPE
+    statement: 'When the `Syntax/IterableType.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [7,null] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0019
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:342'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/IterableType.php
+  -
+    id: SPEC-SYNTAX-NEVER-TYPE
+    statement: 'When the `Syntax/NeverType.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain a candidate with no ordinary return value.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0016
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:351'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NeverType.php
+  -
+    id: SPEC-SYNTAX-STATIC-METHOD
+    statement: 'When the `Syntax/StaticMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0044
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:357'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/StaticMethod.php
+  -
+    id: SPEC-SYNTAX-CLASS-CONSTANT
+    statement: 'When the `Syntax/ClassConstant.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0039
+      - PHP-SYNTAX-FORMS-0043
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:365'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ClassConstant.php
+  -
+    id: SPEC-SYNTAX-LATE-STATIC-BINDING
+    statement: 'When the `Syntax/LateStaticBinding.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0055
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:373'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/LateStaticBinding.php
+  -
+    id: SPEC-SYNTAX-SELF-TYPE
+    statement: 'When the `Syntax/SelfType.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0017
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:381'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/SelfType.php
+  -
+    id: SPEC-SYNTAX-MAGIC-STRING
+    statement: 'When the `Syntax/MagicString.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["seven"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0051
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:389'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MagicString.php
+  -
+    id: SPEC-SYNTAX-ENUM-BACKING
+    statement: 'When the `Syntax/EnumBacking.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["ready"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0069
+      - PHP-SYNTAX-FORMS-0074
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:397'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EnumBacking.php
+  -
+    id: SPEC-SYNTAX-ENUM-NAME
+    statement: 'When the `Syntax/EnumName.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["Ready"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0068
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:405'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EnumName.php
+  -
+    id: SPEC-SYNTAX-ENUM-METHOD
+    statement: 'When the `Syntax/EnumMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["ready"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0070
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:413'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EnumMethod.php
+  -
+    id: SPEC-SYNTAX-NAMESPACE-ALIAS
+    statement: 'When the `Syntax/NamespaceAlias.php` source is queried for `Demo\subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0064
+      - PHP-SYNTAX-FORMS-0060
+      - PHP-SYNTAX-FORMS-0065
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:421'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NamespaceAlias.php
+  -
+    id: SPEC-SYNTAX-GROUP-IMPORT
+    statement: 'When the `Syntax/GroupImport.php` source is queried for `Demo\subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0064
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:429'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/GroupImport.php
+  -
+    id: SPEC-SYNTAX-ATTRIBUTE-DECLARATION
+    statement: 'When the `Syntax/AttributeDeclaration.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0076
+      - PHP-SYNTAX-FORMS-0077
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:437'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AttributeDeclaration.php
+  -
+    id: SPEC-SYNTAX-ANONYMOUS-CLASS
+    statement: 'When the `Syntax/AnonymousClass.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0048
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:445'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AnonymousClass.php
+  -
+    id: SPEC-SYNTAX-READONLY-CLASS
+    statement: 'When the `Syntax/ReadonlyClass.php` source is queried for `subject#return` under PHP 8.2, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0036
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:453'
+    category: syntax
+    metadata:
+      php: '8.2'
+      fixture: spec/Fixture/Syntax/ReadonlyClass.php
+  -
+    id: SPEC-SYNTAX-PROPERTY-HOOK
+    statement: 'When the `Syntax/PropertyHook.php` source is queried for `subject#return` under PHP 8.4, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0038
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:461'
+    category: syntax
+    metadata:
+      php: '8.4'
+      fixture: spec/Fixture/Syntax/PropertyHook.php
+  -
+    id: SPEC-SYNTAX-ASYMMETRIC-VISIBILITY
+    statement: 'When the `Syntax/AsymmetricVisibility.php` source is queried for `subject#return` under PHP 8.4, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0041
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:469'
+    category: syntax
+    metadata:
+      php: '8.4'
+      fixture: spec/Fixture/Syntax/AsymmetricVisibility.php
+  -
+    id: SPEC-SYNTAX-UNPARENTHESIZED-NEW
+    statement: 'When the `Syntax/UnparenthesizedNew.php` source is queried for `subject#return` under PHP 8.4, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0036
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:477'
+    category: syntax
+    metadata:
+      php: '8.4'
+      fixture: spec/Fixture/Syntax/UnparenthesizedNew.php
+  -
+    id: SPEC-SYNTAX-PHP-TAGS
+    statement: 'When the `Syntax/PhpTags.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0001
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:485'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/PhpTags.php
+  -
+    id: SPEC-SYNTAX-INLINE-HTML
+    statement: 'When the `Syntax/InlineHtml.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0002
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:493'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/InlineHtml.php
+  -
+    id: SPEC-SYNTAX-COMMENTS
+    statement: 'When the `Syntax/Comments.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0004
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:501'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Comments.php
+  -
+    id: SPEC-SYNTAX-INSTRUCTION-SEPARATION
+    statement: 'When the `Syntax/InstructionSeparation.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0003
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:509'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/InstructionSeparation.php
+  -
+    id: SPEC-SYNTAX-ARRAY-UNION
+    statement: 'When the `Syntax/ArrayUnion.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[{"a":1,"b":3}]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0011
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:517'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ArrayUnion.php
+  -
+    id: SPEC-SYNTAX-NULLSAFE-PROPERTY
+    statement: 'When the `Syntax/NullsafeProperty.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"reference","reason":"UNRESOLVED_PROPERTY"},null] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0036
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:525'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NullsafeProperty.php
+  -
+    id: SPEC-SYNTAX-NULLSAFE-METHOD
+    statement: 'When the `Syntax/NullsafeMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain the candidate values and expression boundaries [{"kind":"no-value","reason":"NO_VALUE_DEFINITION"},null] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0036
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:534'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NullsafeMethod.php
+  -
+    id: SPEC-SYNTAX-PROPERTY-SET-HOOK
+    statement: 'When the `Syntax/PropertySetHook.php` source is queried for `subject#return` under PHP 8.4, the deriver shall derive exactly the native candidate values `[14]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0038
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:543'
+    category: syntax
+    metadata:
+      php: '8.4'
+      fixture: spec/Fixture/Syntax/PropertySetHook.php
+  -
+    id: SPEC-SYNTAX-BACKED-PROPERTY-GET-HOOK
+    statement: 'When the `Syntax/BackedPropertyGetHook.php` source is queried for `subject#return` under PHP 8.4, the deriver shall derive exactly the native candidate values `[14]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0038
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:551'
+    category: syntax
+    metadata:
+      php: '8.4'
+      fixture: spec/Fixture/Syntax/BackedPropertyGetHook.php
+  -
+    id: SPEC-SYNTAX-FIRST-CLASS-METHOD
+    statement: 'When the `Syntax/FirstClassMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0035
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:559'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/FirstClassMethod.php
+  -
+    id: SPEC-SYNTAX-FIRST-CLASS-STATIC-METHOD
+    statement: 'When the `Syntax/FirstClassStaticMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0035
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:567'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/FirstClassStaticMethod.php
+  -
+    id: SPEC-SYNTAX-ANONYMOUS-CLASS-METHOD
+    statement: 'When the `Syntax/AnonymousClassMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0048
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:575'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AnonymousClassMethod.php
+  -
+    id: SPEC-SYNTAX-REFERENCE-RETURN-READ
+    statement: 'When the `Syntax/ReferenceReturnRead.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0080
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:583'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ReferenceReturnRead.php
+  -
+    id: SPEC-SYNTAX-UNSET-ORIGINAL-REFERENCE
+    statement: 'When the `Syntax/UnsetOriginalReference.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0081
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:591'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/UnsetOriginalReference.php
+  -
+    id: SPEC-SYNTAX-CLOSURE-REFERENCE-READ
+    statement: 'When the `Syntax/ClosureReferenceRead.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0033
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:599'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ClosureReferenceRead.php
+  -
+    id: SPEC-SYNTAX-STATIC-VARIABLE-REPEATED
+    statement: 'When the `Syntax/StaticVariableRepeated.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[8]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0023
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:607'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/StaticVariableRepeated.php
+  -
+    id: SPEC-SYNTAX-FALSE-TYPE
+    statement: 'When the `Syntax/FalseType.php` source is queried for `subject#return` under PHP 8.2, the deriver shall derive exactly the native candidate values `[false]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0018
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:615'
+    category: syntax
+    metadata:
+      php: '8.2'
+      fixture: spec/Fixture/Syntax/FalseType.php
+  -
+    id: SPEC-SYNTAX-TRUE-TYPE
+    statement: 'When the `Syntax/TrueType.php` source is queried for `subject#return` under PHP 8.2, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0018
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:623'
+    category: syntax
+    metadata:
+      php: '8.2'
+      fixture: spec/Fixture/Syntax/TrueType.php
+  -
+    id: SPEC-SYNTAX-VOID-TYPE
+    statement: 'When the `Syntax/VoidType.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[null]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0015
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:631'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/VoidType.php
+  -
+    id: SPEC-SYNTAX-ENUM-STATIC-METHOD
+    statement: 'When the `Syntax/EnumStaticMethod.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["ready"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0071
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:639'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EnumStaticMethod.php
+  -
+    id: SPEC-SYNTAX-ENUM-CONSTANT
+    statement: 'When the `Syntax/EnumConstant.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["ready"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0072
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:647'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EnumConstant.php
+  -
+    id: SPEC-SYNTAX-OBJECT-REFERENCE
+    statement: 'When the `Syntax/ObjectReference.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0056
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:655'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ObjectReference.php
+  -
+    id: SPEC-SYNTAX-NAMESPACE-RELATIVE-NAME
+    statement: 'When the `Syntax/NamespaceRelativeName.php` source is queried for `Demo\subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0061
+      - PHP-SYNTAX-FORMS-0067
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:663'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NamespaceRelativeName.php
+  -
+    id: SPEC-SYNTAX-NAMESPACE-FALLBACK
+    statement: 'When the `Syntax/NamespaceFallback.php` source is queried for `Demo\subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0066
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:671'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NamespaceFallback.php
+  -
+    id: SPEC-SYNTAX-NESTED-NAMESPACE
+    statement: 'When the `Syntax/NestedNamespace.php` source is queried for `Outer\Inner\subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["Outer\\Inner"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0059
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:679'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NestedNamespace.php
+  -
+    id: SPEC-SYNTAX-DYNAMIC-NAMESPACED-FUNCTION
+    statement: 'When the `Syntax/DynamicNamespacedFunction.php` source is queried for `Demo\subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0062
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:687'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/DynamicNamespacedFunction.php
+  -
+    id: SPEC-SYNTAX-GLOBAL-NAMESPACE
+    statement: 'When the `Syntax/GlobalNamespace.php` source is queried for `Demo\subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0065
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:695'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/GlobalNamespace.php
+  -
+    id: SPEC-SYNTAX-ENUM-TRAIT
+    statement: 'When the `Syntax/EnumTrait.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["ready"]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0073
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:703'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/EnumTrait.php
+  -
+    id: SPEC-SYNTAX-OBJECT-IDENTITY
+    statement: 'When the `Syntax/ObjectIdentity.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0054
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:711'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ObjectIdentity.php
+  -
+    id: SPEC-SYNTAX-OBJECT-DISTINCT-IDENTITY
+    statement: 'When the `Syntax/ObjectDistinctIdentity.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[false]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0054
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:719'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ObjectDistinctIdentity.php
+  -
+    id: SPEC-SYNTAX-COVARIANT-RETURN
+    statement: 'When the `Syntax/CovariantReturn.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-FORMS-0057
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-forms.feature:727'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CovariantReturn.php

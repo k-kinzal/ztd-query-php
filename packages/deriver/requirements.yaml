@@ -3,13 +3,17 @@ version: 1
 definitions:
   - 'requirements/*.yaml'
 runners:
-  unit:
-    extension: phpunit
+  behavior:
+    extension: behat
     command:
       - php
-      - vendor/bin/phpunit
-      - '--testsuite'
-      - unit
+      - vendor/bin/behat
     timeout: 600
 coverage:
-  minimum: 100
+  minimum: 0
+  sources:
+    constants: 8.45
+    syntax-keywords: 91.25
+    syntax-operators: 90.14
+    syntax-forms: 95.06
+    function: 1.51

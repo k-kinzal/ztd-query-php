@@ -6,7 +6,10 @@ $finder = (new PhpCsFixer\Finder())
     ->in(__DIR__)
     ->exclude('build')
     ->exclude('resources')
-    ->exclude('vendor');
+    ->exclude('vendor')
+    ->exclude('spec/Fixture')
+    ->notPath('#^bench/target/[^/]+/(?:var|storage|bootstrap/cache)/#')
+    ->notPath('bench/target/symfony/config/reference.php');
 
 return (new PhpCsFixer\Config())
     ->setRiskyAllowed(true)

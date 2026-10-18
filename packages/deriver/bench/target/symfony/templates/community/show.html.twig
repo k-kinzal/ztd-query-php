@@ -1,0 +1,1 @@
+{% extends 'base.html.twig' %}{% block body %}<h1>{{ community.name }}</h1><p>{{ community.description }}</p>{% for board in boards %}<article><h2><a href="{{ path('board_show',{id:board.id}) }}">{{ board.name }}</a></h2><p>{{ board.description }}</p></article>{% endfor %}{% endblock %}

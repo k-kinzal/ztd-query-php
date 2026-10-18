@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+use Harbor\Audit\AuditLog;
+use Harbor\Database\{Connection, Migrator};
+use Harbor\Notification\Inbox;
+use Harbor\Privacy\Privacy;
+use Harbor\Security\Access;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+try {
+    $database = Connection::open(getenv('HARBOR_DATABASE') ?: dirname(__DIR__) . '/var/harbor.sqlite');
+    $access = new Access($database);
+    switch ($argv[1] ?? 'help') {
+        case 'migrate':
+            (new Migrator($database))->migrate(dirname(__DIR__) . '/database');
+            fwrite(STDOUT, "Schema is current.\n");
+            break;
+        case 'notifications:deliver':
+            fwrite(STDOUT, (new Inbox($database, $access))->deliver(500) . " events delivered.\n");
+            break;
+        case 'privacy:purge':
+            foreach ((new Privacy($database, $access, new AuditLog($database)))->purge(time()) as $table => $count) {
+                fwrite(STDOUT, $table . ': ' . $count . " removed\n");
+            }
+            break;
+        case 'database:check':
+            fwrite(STDOUT, implode("\n", array_column($database->rows('PRAGMA integrity_check'), 'integrity_check')) . "\n");
+            break;
+        default:
+            fwrite(STDOUT, "Usage: php bin/harbor migrate|notifications:deliver|privacy:purge|database:check\n");
+            exit(($argv[1] ?? 'help') === 'help' ? 0 : 2);
+    }
+} catch (Throwable $error) {
+    fwrite(STDERR, $error->getMessage() . "\n");
+    exit(1);
+}

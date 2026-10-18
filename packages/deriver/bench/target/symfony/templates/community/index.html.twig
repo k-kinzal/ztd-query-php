@@ -1,0 +1,1 @@
+{% extends 'base.html.twig' %}{% block body %}<h1>Communities</h1>{% for community in communities %}<article><h2><a href="{{ path('community_show',{id:community.id}) }}">{{ community.name }}</a></h2><p>{{ community.description }}</p></article>{% else %}<p>No communities have been created yet.</p>{% endfor %}{% endblock %}

@@ -13,5 +13,4 @@ phpstan.neon             export-ignore
 phpunit.xml.dist         export-ignore
 requirements.yaml        export-ignore
 tree.yaml                export-ignore
-/fuzz/                   export-ignore
 /bench/                  export-ignore

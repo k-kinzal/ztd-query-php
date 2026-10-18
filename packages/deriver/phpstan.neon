@@ -5,13 +5,12 @@ includes:
 
 parameters:
     toolkit:
-        # Trusted extension callbacks are the boundary: failures become ModelContractException.
         broadCatchAllowedPaths:
-            - src/Candidate/Invocation/Rules.php
-            - src/Candidate/Models.php
+            - src/Deriver/Evaluator/Micro/ConfiguredEvaluator.php
+            - src/Deriver/Evaluator/CallEvaluation.php
         visibilityExemptNamespacePrefixes:
             - 'Tests'
-        # The toolkit defaults plus Builder: a stage is named by what it analyses or produces, never by how it is assembled.
+            - 'Spec'
         forbiddenClassLikeNameSuffixes:
             - Helper
             - Helpers
@@ -72,3 +71,4 @@ parameters:
     paths:
         - src
         - tests
+        - spec/Context

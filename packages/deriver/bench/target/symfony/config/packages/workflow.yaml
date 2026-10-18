@@ -1,0 +1,16 @@
+framework:
+    workflows:
+        topic:
+            type: state_machine
+            audit_trail: { enabled: true }
+            marking_store: { type: method, property: state }
+            supports: [App\Entity\Topic]
+            initial_marking: pending
+            places: [pending, published, locked, hidden, archived]
+            transitions:
+                approve: { from: pending, to: published }
+                lock: { from: published, to: locked }
+                unlock: { from: locked, to: published }
+                hide: { from: [published, locked], to: hidden }
+                restore: { from: hidden, to: published }
+                archive: { from: locked, to: archived }

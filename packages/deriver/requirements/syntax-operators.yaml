@@ -1,0 +1,1520 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: syntax-operators
+  uri: 'https://www.php.net/manual/en/language.operators.precedence.php'
+  format: html
+  selector: '[id="language.operators.precedence"] > table.doctable > tbody > tr > td:nth-child(2) > code'
+  snapshot: .requirements-cache/language.operators.precedence.php
+  sha256: 4a26776b8e8f4c707544c3708a552829f0cb128a04b2722c55ba199df4a6442a
+items:
+  -
+    id: PHP-SYNTAX-OPERATORS-0001
+    kind: requirement
+    statement: clone
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(1) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: clone
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0002
+    kind: requirement
+    statement: new
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(1) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: new
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0003
+    kind: requirement
+    statement: '**'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(2) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '**'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0004
+    kind: requirement
+    statement: +
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: +
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0005
+    kind: requirement
+    statement: '-'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: '-'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0006
+    kind: requirement
+    statement: ++
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(3)'
+        quote: ++
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0007
+    kind: requirement
+    statement: '--'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(4)'
+        quote: '--'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0008
+    kind: requirement
+    statement: '~'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(5)'
+        quote: '~'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0009
+    kind: requirement
+    statement: (int)
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(6)'
+        quote: (int)
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0010
+    kind: requirement
+    statement: (float)
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(7)'
+        quote: (float)
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0011
+    kind: requirement
+    statement: (string)
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(8)'
+        quote: (string)
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0012
+    kind: requirement
+    statement: (array)
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(9)'
+        quote: (array)
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0013
+    kind: requirement
+    statement: (object)
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(10)'
+        quote: (object)
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0014
+    kind: requirement
+    statement: (bool)
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(11)'
+        quote: (bool)
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0015
+    kind: requirement
+    statement: '@'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(3) > td:nth-child(2) > code:nth-of-type(12)'
+        quote: '@'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0016
+    kind: requirement
+    statement: instanceof
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(4) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: instanceof
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0017
+    kind: requirement
+    statement: '!'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(5) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '!'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0018
+    kind: requirement
+    statement: '*'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(6) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '*'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0019
+    kind: requirement
+    statement: /
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(6) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: /
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0020
+    kind: requirement
+    statement: '%'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(6) > td:nth-child(2) > code:nth-of-type(3)'
+        quote: '%'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0021
+    kind: requirement
+    statement: +
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(7) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: +
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0022
+    kind: requirement
+    statement: '-'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(7) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: '-'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0023
+    kind: requirement
+    statement: .
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(7) > td:nth-child(2) > code:nth-of-type(3)'
+        quote: .
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0024
+    kind: requirement
+    statement: '<<'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(8) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '<<'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0025
+    kind: requirement
+    statement: '>>'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(8) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: '>>'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0026
+    kind: requirement
+    statement: .
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(9) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: .
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0027
+    kind: requirement
+    statement: '|>'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(10) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '|>'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0028
+    kind: requirement
+    statement: '<'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(11) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '<'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0029
+    kind: requirement
+    statement: '<='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(11) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: '<='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0030
+    kind: requirement
+    statement: '>'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(11) > td:nth-child(2) > code:nth-of-type(3)'
+        quote: '>'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0031
+    kind: requirement
+    statement: '>='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(11) > td:nth-child(2) > code:nth-of-type(4)'
+        quote: '>='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0032
+    kind: requirement
+    statement: '=='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(12) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '=='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0033
+    kind: requirement
+    statement: '!='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(12) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: '!='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0034
+    kind: requirement
+    statement: '==='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(12) > td:nth-child(2) > code:nth-of-type(3)'
+        quote: '==='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0035
+    kind: requirement
+    statement: '!=='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(12) > td:nth-child(2) > code:nth-of-type(4)'
+        quote: '!=='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0036
+    kind: requirement
+    statement: '<>'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(12) > td:nth-child(2) > code:nth-of-type(5)'
+        quote: '<>'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0037
+    kind: requirement
+    statement: '<=>'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(12) > td:nth-child(2) > code:nth-of-type(6)'
+        quote: '<=>'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0038
+    kind: requirement
+    statement: '&'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(13) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '&'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0039
+    kind: requirement
+    statement: ^
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(14) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: ^
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0040
+    kind: requirement
+    statement: '|'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(15) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '|'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0041
+    kind: requirement
+    statement: '&&'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(16) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '&&'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0042
+    kind: requirement
+    statement: '||'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(17) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '||'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0043
+    kind: requirement
+    statement: '??'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(18) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '??'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0044
+    kind: requirement
+    statement: '? :'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(19) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '? :'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0045
+    kind: requirement
+    statement: '='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0046
+    kind: requirement
+    statement: +=
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: +=
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0047
+    kind: requirement
+    statement: '-='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(3)'
+        quote: '-='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0048
+    kind: requirement
+    statement: '*='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(4)'
+        quote: '*='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0049
+    kind: requirement
+    statement: '**='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(5)'
+        quote: '**='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0050
+    kind: requirement
+    statement: /=
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(6)'
+        quote: /=
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0051
+    kind: requirement
+    statement: .=
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(7)'
+        quote: .=
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0052
+    kind: requirement
+    statement: '%='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(8)'
+        quote: '%='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0053
+    kind: requirement
+    statement: '&='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(9)'
+        quote: '&='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0054
+    kind: requirement
+    statement: '|='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(10)'
+        quote: '|='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0055
+    kind: requirement
+    statement: ^=
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(11)'
+        quote: ^=
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0056
+    kind: requirement
+    statement: '<<='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(12)'
+        quote: '<<='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0057
+    kind: requirement
+    statement: '>>='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(13)'
+        quote: '>>='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0058
+    kind: requirement
+    statement: '??='
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(20) > td:nth-child(2) > code:nth-of-type(14)'
+        quote: '??='
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0059
+    kind: requirement
+    statement: 'yield from'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(21) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: 'yield from'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0060
+    kind: requirement
+    statement: '=>'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(22) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: '=>'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0061
+    kind: requirement
+    statement: yield
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(23) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: yield
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0062
+    kind: requirement
+    statement: print
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(24) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: print
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0063
+    kind: requirement
+    statement: and
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(25) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: and
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0064
+    kind: requirement
+    statement: xor
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(26) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: xor
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0065
+    kind: requirement
+    statement: or
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(27) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: or
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0066
+    kind: requirement
+    statement: include
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(28) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: include
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0067
+    kind: requirement
+    statement: include_once
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(28) > td:nth-child(2) > code:nth-of-type(2)'
+        quote: include_once
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0068
+    kind: requirement
+    statement: require
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(28) > td:nth-child(2) > code:nth-of-type(3)'
+        quote: require
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0069
+    kind: requirement
+    statement: require_once
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(28) > td:nth-child(2) > code:nth-of-type(4)'
+        quote: require_once
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0070
+    kind: requirement
+    statement: 'fn (...) =>'
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(29) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: 'fn (...) =>'
+    category: syntax
+  -
+    id: PHP-SYNTAX-OPERATORS-0071
+    kind: requirement
+    statement: throw
+    evidence:
+      -
+        selector: '[id="language.operators.precedence"] > table.doctable tbody > tr:nth-child(30) > td:nth-child(2) > code:nth-of-type(1)'
+        quote: throw
+    category: syntax
+  -
+    id: SPEC-SYNTAX-ARROW-FUNCTION
+    statement: 'When the `Syntax/ArrowFunction.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0033
+      - PHP-SYNTAX-OPERATORS-0070
+      - PHP-SYNTAX-FORMS-0034
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:5'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ArrowFunction.php
+  -
+    id: SPEC-SYNTAX-THROW-EXCEPTION
+    statement: 'When the `Syntax/ThrowException.php` source is queried for `subject#return` under PHP 8.1, the deriver shall retain a candidate with no ordinary return value.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0062
+      - PHP-SYNTAX-OPERATORS-0071
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:13'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ThrowException.php
+  -
+    id: SPEC-SYNTAX-PRINT-EXPRESSION
+    statement: 'When the `Syntax/PrintExpression.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[1]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0052
+      - PHP-SYNTAX-OPERATORS-0062
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:19'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/PrintExpression.php
+  -
+    id: SPEC-SYNTAX-CLONE-OBJECT
+    statement: 'When the `Syntax/CloneObject.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[[7,9]]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0011
+      - PHP-SYNTAX-OPERATORS-0001
+      - PHP-SYNTAX-FORMS-0053
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:27'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CloneObject.php
+  -
+    id: SPEC-SYNTAX-NEW-OBJECT-IDENTITY
+    statement: 'When the `Syntax/NewObjectIdentity.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0043
+      - PHP-SYNTAX-OPERATORS-0002
+      - PHP-SYNTAX-OPERATORS-0016
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:35'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NewObjectIdentity.php
+  -
+    id: SPEC-SYNTAX-UNARY-PLUS
+    statement: 'When the `Syntax/UnaryPlus.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0004
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:43'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/UnaryPlus.php
+  -
+    id: SPEC-SYNTAX-UNARY-MINUS
+    statement: 'When the `Syntax/UnaryMinus.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[-7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0005
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:51'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/UnaryMinus.php
+  -
+    id: SPEC-SYNTAX-POWER
+    statement: 'When the `Syntax/Power.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[8]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0003
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:59'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Power.php
+  -
+    id: SPEC-SYNTAX-ADD
+    statement: 'When the `Syntax/Add.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0021
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:67'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Add.php
+  -
+    id: SPEC-SYNTAX-SUBTRACT
+    statement: 'When the `Syntax/Subtract.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0022
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:75'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Subtract.php
+  -
+    id: SPEC-SYNTAX-MULTIPLY
+    statement: 'When the `Syntax/Multiply.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[12]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0018
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:83'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Multiply.php
+  -
+    id: SPEC-SYNTAX-DIVIDE
+    statement: 'When the `Syntax/Divide.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[4]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0019
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:91'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Divide.php
+  -
+    id: SPEC-SYNTAX-MODULO
+    statement: 'When the `Syntax/Modulo.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[2]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0020
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:99'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Modulo.php
+  -
+    id: SPEC-SYNTAX-BITWISE-NOT
+    statement: 'When the `Syntax/BitwiseNot.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[-8]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0008
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:107'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BitwiseNot.php
+  -
+    id: SPEC-SYNTAX-BITWISE-AND
+    statement: 'When the `Syntax/BitwiseAnd.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[2]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0038
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:115'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BitwiseAnd.php
+  -
+    id: SPEC-SYNTAX-BITWISE-OR
+    statement: 'When the `Syntax/BitwiseOr.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0040
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:123'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BitwiseOr.php
+  -
+    id: SPEC-SYNTAX-BITWISE-XOR
+    statement: 'When the `Syntax/BitwiseXor.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[5]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0039
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:131'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BitwiseXor.php
+  -
+    id: SPEC-SYNTAX-SHIFT-LEFT
+    statement: 'When the `Syntax/ShiftLeft.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[6]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0024
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:139'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ShiftLeft.php
+  -
+    id: SPEC-SYNTAX-SHIFT-RIGHT
+    statement: 'When the `Syntax/ShiftRight.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[2]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0025
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:147'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ShiftRight.php
+  -
+    id: SPEC-SYNTAX-LESS
+    statement: 'When the `Syntax/Less.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0028
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:155'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Less.php
+  -
+    id: SPEC-SYNTAX-LESS-EQUAL
+    statement: 'When the `Syntax/LessEqual.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0029
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:163'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/LessEqual.php
+  -
+    id: SPEC-SYNTAX-GREATER
+    statement: 'When the `Syntax/Greater.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0030
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:171'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Greater.php
+  -
+    id: SPEC-SYNTAX-GREATER-EQUAL
+    statement: 'When the `Syntax/GreaterEqual.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0031
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:179'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/GreaterEqual.php
+  -
+    id: SPEC-SYNTAX-EQUAL
+    statement: 'When the `Syntax/Equal.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0032
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:187'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Equal.php
+  -
+    id: SPEC-SYNTAX-NOT-EQUAL
+    statement: 'When the `Syntax/NotEqual.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0033
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:195'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NotEqual.php
+  -
+    id: SPEC-SYNTAX-NOT-EQUAL-ALTERNATIVE
+    statement: 'When the `Syntax/NotEqualAlternative.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0036
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:203'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NotEqualAlternative.php
+  -
+    id: SPEC-SYNTAX-IDENTICAL
+    statement: 'When the `Syntax/Identical.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[false]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0034
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:211'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Identical.php
+  -
+    id: SPEC-SYNTAX-NOT-IDENTICAL
+    statement: 'When the `Syntax/NotIdentical.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0035
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:219'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/NotIdentical.php
+  -
+    id: SPEC-SYNTAX-SPACESHIP
+    statement: 'When the `Syntax/Spaceship.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[-1]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0037
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:227'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Spaceship.php
+  -
+    id: SPEC-SYNTAX-BOOLEAN-NOT
+    statement: 'When the `Syntax/BooleanNot.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[false]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0017
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:235'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BooleanNot.php
+  -
+    id: SPEC-SYNTAX-BOOLEAN-AND
+    statement: 'When the `Syntax/BooleanAnd.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[false]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0041
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:243'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BooleanAnd.php
+  -
+    id: SPEC-SYNTAX-BOOLEAN-OR
+    statement: 'When the `Syntax/BooleanOr.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0042
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:251'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/BooleanOr.php
+  -
+    id: SPEC-SYNTAX-LOGICAL-AND
+    statement: 'When the `Syntax/LogicalAnd.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[false]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0003
+      - PHP-SYNTAX-OPERATORS-0063
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:259'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/LogicalAnd.php
+  -
+    id: SPEC-SYNTAX-LOGICAL-OR
+    statement: 'When the `Syntax/LogicalOr.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0051
+      - PHP-SYNTAX-OPERATORS-0065
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:267'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/LogicalOr.php
+  -
+    id: SPEC-SYNTAX-LOGICAL-XOR
+    statement: 'When the `Syntax/LogicalXor.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[false]`.'
+    requirements:
+      - PHP-SYNTAX-KEYWORDS-0069
+      - PHP-SYNTAX-OPERATORS-0064
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:275'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/LogicalXor.php
+  -
+    id: SPEC-SYNTAX-CONCATENATION
+    statement: 'When the `Syntax/Concatenation.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["ab"]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0023
+      - PHP-SYNTAX-OPERATORS-0026
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:283'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Concatenation.php
+  -
+    id: SPEC-SYNTAX-COALESCE
+    statement: 'When the `Syntax/Coalesce.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [null,7] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0043
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:291'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Coalesce.php
+  -
+    id: SPEC-SYNTAX-TERNARY
+    statement: 'When the `Syntax/Ternary.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [7,9] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0044
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:300'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Ternary.php
+  -
+    id: SPEC-SYNTAX-SHORT-TERNARY
+    statement: 'When the `Syntax/ShortTernary.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [0,7] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0044
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:309'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ShortTernary.php
+  -
+    id: SPEC-SYNTAX-CAST-INT
+    statement: 'When the `Syntax/CastInt.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0009
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:318'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CastInt.php
+  -
+    id: SPEC-SYNTAX-CAST-FLOAT
+    statement: 'When the `Syntax/CastFloat.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7.5]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0010
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:326'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CastFloat.php
+  -
+    id: SPEC-SYNTAX-CAST-STRING
+    statement: 'When the `Syntax/CastString.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["7"]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0011
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:334'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CastString.php
+  -
+    id: SPEC-SYNTAX-CAST-ARRAY
+    statement: 'When the `Syntax/CastArray.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[[7]]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0012
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:342'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CastArray.php
+  -
+    id: SPEC-SYNTAX-CAST-BOOL
+    statement: 'When the `Syntax/CastBool.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[true]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0014
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:350'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CastBool.php
+  -
+    id: SPEC-SYNTAX-SUPPRESS-ERRORS
+    statement: 'When the `Syntax/SuppressErrors.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0015
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:358'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/SuppressErrors.php
+  -
+    id: SPEC-SYNTAX-CAST-OBJECT
+    statement: 'When the `Syntax/CastObject.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0013
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:366'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CastObject.php
+  -
+    id: SPEC-SYNTAX-ASSIGNMENT
+    statement: 'When the `Syntax/Assignment.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0045
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:374'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/Assignment.php
+  -
+    id: SPEC-SYNTAX-PRE-INCREMENT
+    statement: 'When the `Syntax/PreIncrement.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0006
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:382'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/PreIncrement.php
+  -
+    id: SPEC-SYNTAX-POST-INCREMENT
+    statement: 'When the `Syntax/PostIncrement.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[6]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0006
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:390'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/PostIncrement.php
+  -
+    id: SPEC-SYNTAX-PRE-DECREMENT
+    statement: 'When the `Syntax/PreDecrement.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0007
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:398'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/PreDecrement.php
+  -
+    id: SPEC-SYNTAX-POST-DECREMENT
+    statement: 'When the `Syntax/PostDecrement.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[8]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0007
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:406'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/PostDecrement.php
+  -
+    id: SPEC-SYNTAX-ADD-ASSIGN
+    statement: 'When the `Syntax/AddAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0046
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:414'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AddAssign.php
+  -
+    id: SPEC-SYNTAX-SUBTRACT-ASSIGN
+    statement: 'When the `Syntax/SubtractAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0047
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:422'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/SubtractAssign.php
+  -
+    id: SPEC-SYNTAX-MULTIPLY-ASSIGN
+    statement: 'When the `Syntax/MultiplyAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[12]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0048
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:430'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/MultiplyAssign.php
+  -
+    id: SPEC-SYNTAX-DIVIDE-ASSIGN
+    statement: 'When the `Syntax/DivideAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[4]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0050
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:438'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/DivideAssign.php
+  -
+    id: SPEC-SYNTAX-MODULO-ASSIGN
+    statement: 'When the `Syntax/ModuloAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[2]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0052
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:446'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ModuloAssign.php
+  -
+    id: SPEC-SYNTAX-POWER-ASSIGN
+    statement: 'When the `Syntax/PowerAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[8]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0049
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:454'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/PowerAssign.php
+  -
+    id: SPEC-SYNTAX-AND-ASSIGN
+    statement: 'When the `Syntax/AndAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[2]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0053
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:462'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/AndAssign.php
+  -
+    id: SPEC-SYNTAX-OR-ASSIGN
+    statement: 'When the `Syntax/OrAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0054
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:470'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/OrAssign.php
+  -
+    id: SPEC-SYNTAX-XOR-ASSIGN
+    statement: 'When the `Syntax/XorAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[5]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0055
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:478'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/XorAssign.php
+  -
+    id: SPEC-SYNTAX-SHIFT-LEFT-ASSIGN
+    statement: 'When the `Syntax/ShiftLeftAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[6]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0056
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:486'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ShiftLeftAssign.php
+  -
+    id: SPEC-SYNTAX-SHIFT-RIGHT-ASSIGN
+    statement: 'When the `Syntax/ShiftRightAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[2]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0057
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:494'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ShiftRightAssign.php
+  -
+    id: SPEC-SYNTAX-CONCAT-ASSIGN
+    statement: 'When the `Syntax/ConcatAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `["ab"]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0051
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:502'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/ConcatAssign.php
+  -
+    id: SPEC-SYNTAX-COALESCE-ASSIGN
+    statement: 'When the `Syntax/CoalesceAssign.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive the candidate values [null,7] without evaluating source predicates.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0058
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:510'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CoalesceAssign.php
+  -
+    id: SPEC-SYNTAX-PIPE-OPERATOR
+    statement: 'When the `Syntax/PipeOperator.php` source is queried for `subject#return` under PHP 8.5, the deriver shall derive exactly the native candidate values `[6]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0027
+      - PHP-SYNTAX-FORMS-0028
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:519'
+    category: syntax
+    metadata:
+      php: '8.5'
+      fixture: spec/Fixture/Syntax/PipeOperator.php
+  -
+    id: SPEC-SYNTAX-CAST-OBJECT-SCALAR
+    statement: 'When the `Syntax/CastObjectScalar.php` source is queried for `subject#return` under PHP 8.1, the deriver shall derive exactly the native candidate values `[7]`.'
+    requirements:
+      - PHP-SYNTAX-OPERATORS-0013
+    tests:
+      -
+        runner: behavior
+        target: 'spec/syntax-operators.feature:527'
+    category: syntax
+    metadata:
+      php: '8.1'
+      fixture: spec/Fixture/Syntax/CastObjectScalar.php

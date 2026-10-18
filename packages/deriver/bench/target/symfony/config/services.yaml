@@ -1,0 +1,17 @@
+parameters:
+    app.mail_from: '%env(MAIL_FROM)%'
+    app.url: '%env(APP_URL)%'
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+    App\:
+        resource: '../src/'
+        exclude: '../src/{Entity,Dto,Enum,Message,Kernel.php}'
+    App\Service\EmailVerification:
+        arguments:
+            $sender: '%app.mail_from%'
+            $baseUrl: '%app.url%'
+    App\MessageHandler\SendDigestHandler:
+        arguments:
+            $sender: '%app.mail_from%'

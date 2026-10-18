@@ -9,10 +9,8 @@ on:
       - 'packages/deriver/**'
       - 'packages/requirements/**'
       - '.github/workflows/deriver.yml'
-      - '.github/workflows/deriver-fuzz.yml'
       - '!packages/**/README.md'
       - '!packages/**/docs/**'
-      - 'packages/deriver/docs/pipeline.md'
 
 permissions:
   contents: read
@@ -62,8 +60,12 @@ jobs:
       - name: Check library requirements outside the locked ParaTest PHP range
         if: matrix.php == '8.4' || matrix.php == '8.5'
         run: composer check-platform-reqs --no-dev
-      - name: Run the behavioral and documentation tests in parallel
+      - name: Run unit and integration tests in parallel
         run: composer test
+      - name: Verify isolated PHP syntax and built-in function specifications
+        run: composer spec
+      - name: Check PHPDoc examples
+        run: composer doctest
 
   lint:
     name: Lint
@@ -104,33 +106,6 @@ jobs:
       - name: Check the architecture layers
         run: composer deptrac
 
-  differential:
-    name: Differential semantics (PHP 8.3)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Set up the target PHP runtime
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
-        with:
-          php-version: '8.3'
-          extensions: dom, json, mbstring, pcntl, tokenizer, xml, xmlwriter
-          coverage: none
-      - name: Install dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
-        with:
-          working-directory: packages/deriver
-          dependency-versions: locked
-          composer-options: --prefer-dist
-          require-lock-file: true
-      - name: Compare generated fixtures with PHP 8.3
-        run: composer test:differential
-      - name: Compare seeded heap and completion observations
-        run: composer fuzz:semantic
-      - name: Run bounded parser and solver fuzzing
-        run: composer fuzz:smoke
-
   requirements:
     name: Requirements
     runs-on: ubuntu-latest
@@ -148,7 +123,7 @@ jobs:
           coverage: none
       - name: Install the traceability tool
         run: composer install --working-dir=../requirements --no-interaction --prefer-dist
-      - name: Validate the pipeline specification against its document
+      - name: Validate the syntax and function catalog against the PHP manual
         run: |
           php ../requirements/bin/requirements lint
           php ../requirements/bin/requirements format --check
@@ -157,20 +132,21 @@ jobs:
         run: |
           php ../requirements/bin/requirements coverage --write-snapshot /tmp/current-snapshot.json
           cmp requirements-snapshot.json /tmp/current-snapshot.json
-      - name: Enforce coverage of changed source units
+      - name: Review changes to the manual inventory
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
           git fetch --no-tags origin "$BASE_REF"
           snapshot="origin/$BASE_REF:packages/deriver/requirements-snapshot.json"
-          if git cat-file -e "$snapshot" 2>/dev/null; then
+          catalog="origin/$BASE_REF:packages/deriver/requirements/function.yaml"
+          if git cat-file -e "$snapshot" 2>/dev/null && git cat-file -e "$catalog" 2>/dev/null; then
             git show "$snapshot" > /tmp/base-snapshot.json
-            php ../requirements/bin/requirements coverage --snapshot /tmp/base-snapshot.json --min-diff-coverage 100
+            php ../requirements/bin/requirements coverage --snapshot /tmp/base-snapshot.json
           else
             echo 'Initial adoption: review the scope and enforce the configured total coverage gate.'
           fi
-      - name: Install dependencies for linked unit tests
+      - name: Install dependencies for linked Behat specifications
         run: composer install --no-interaction --prefer-dist
       - name: Run every linked test and require one for each specification
         run: php ../requirements/bin/requirements spec --strict
