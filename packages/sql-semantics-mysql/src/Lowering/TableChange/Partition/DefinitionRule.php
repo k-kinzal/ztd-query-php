@@ -88,7 +88,7 @@ final class DefinitionRule
      */
     public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
-        if (!in_array($node->name, ['part_name', 'sub_name', 'part_definition', 'sub_part_definition'], true)) {
+        if (!in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) || !in_array($node->name, ['part_name', 'sub_name', 'part_definition', 'sub_part_definition'], true)) {
             return null;
         }
         $form = $this->lowering->form($node);
@@ -125,6 +125,7 @@ final class DefinitionRule
         $expected = $count;
         $start ??= (new \SqlSemantics\Construction\SourceRanges())->span($list)[0] ?? 0;
         foreach ((new Lists())->items($list) as $item) {
+            $this->opening($item, $start, $expected);
             $definition = $this->definition($item);
             if ($definitions === [] && $definition->subpartitions === []) {
                 $expected = 0;
@@ -139,6 +140,21 @@ final class DefinitionRule
         }
 
         return $definitions;
+    }
+
+    /**
+     * Checks the owning partition name and a forbidden subpartition list before its children.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the owner name or list opening is refused
+     */
+    public function opening(Node $definition, int $start, ?int $expected): void
+    {
+        $form = $this->lowering->form($definition);
+        if ($expected === 0 && $form->node(4)->tokens() !== []) {
+            $name = $form->node(1);
+            $this->name($name->name === 'part_name' ? $this->lowering->form($name)->node(0) : $name);
+            throw (new DefinitionFailure($this->lowering))->failure(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount, $definition, $start, $expected);
+        }
     }
 
     /**

@@ -84,7 +84,7 @@ final class Reading
      */
     public function parsed(Operation|QueryPreparation $operation, Session $session): void
     {
-        (new Identifiers())->check($operation->statement, $session->settings()->release());
+        (new Identifiers())->check($operation->statement, $session->settings()->release(), $session);
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof UnknownCollation && $diagnostic->name !== '' && !$session->settings()->legacy() || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);

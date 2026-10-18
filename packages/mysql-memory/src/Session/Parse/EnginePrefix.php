@@ -82,7 +82,8 @@ final class EnginePrefix
     /**
      * Resolves completed table and partition engine operands before a contextual definition refusal.
      *
-     * A complete parser input is required; modern syntax errors precede these lookups.
+     * A complete parser input is required on modern releases; legacy lookups
+     * occur during parsing and survive a later syntax error.
      * Only lowered names and their diagnostic boundaries leave the parser callback.
      *
      * @return array<int, SqlError> Unknown engines by completion boundary
@@ -113,8 +114,10 @@ final class EnginePrefix
                 }
             });
         } catch (SourceException) {
-            // Modern engine contextualization requires a complete syntactically valid input.
-            return [];
+            // Modern contextualization requires a complete input; legacy lookups precede later syntax errors.
+            if (!$session->settings()->legacy()) {
+                return [];
+            }
         }
         ksort($errors);
         return $errors;

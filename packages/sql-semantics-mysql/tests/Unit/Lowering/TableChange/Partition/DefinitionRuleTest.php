@@ -25,18 +25,35 @@ final class DefinitionRuleTest extends TestCase
         self::assertSame($name, (new DefinitionRule($lowering))->name($lowering->form($node)->node(1))->value);
     }
 
-    public function testCompletedKeepsAnOversizedNameBeforeListValidation(): void
+    public function testCompletedKeepsLegacyNameChecksAtTheirGrammarBoundary(): void
     {
         $platform = new \SqlSemantics\Platform\MySql\Platform();
-        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5744);
         $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering($platform->productions($profile), new \SqlSemantics\Lowering\Leaves(), $profile);
         $name = str_repeat('p', 65);
-        $node = $platform->parser($profile)->parse('ALTER TABLE t ADD PARTITION (PARTITION ' . $name . ')')->find('part_definition')[0];
+        $node = $platform->parser($profile)->parse('ALTER TABLE t ADD PARTITION (PARTITION ' . $name . ')')->find('part_name')[0];
         $notice = (new DefinitionRule($lowering))->completed($node);
         self::assertNotNull($notice);
         self::assertTrue($notice->aborts);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong::class, $notice->problem);
         self::assertSame($name, $notice->problem->name->value);
+    }
+
+    public function testCompletedLeavesModernNamesToTheirOwningDefinition(): void
+    {
+        $platform = new \SqlSemantics\Platform\MySql\Platform();
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering($platform->productions($profile), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('ALTER TABLE t ADD PARTITION (PARTITION ' . str_repeat('p', 65) . ')')->find('part_definition')[0];
+        self::assertNull((new DefinitionRule($lowering))->completed($node));
+    }
+
+    public function testOpeningChecksTheListRoleBeforeItsChildNames(): void
+    {
+        $sql = 'ALTER TABLE t REORGANIZE PARTITION p0 INTO (PARTITION p1 VALUES LESS THAN MAXVALUE, PARTITION p2 VALUES LESS THAN MAXVALUE (SUBPARTITION ' . str_repeat('s', 65) . '))';
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Wrong number of subpartitions defined');
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 
     public function testDefinitionsLowersTheList(): void

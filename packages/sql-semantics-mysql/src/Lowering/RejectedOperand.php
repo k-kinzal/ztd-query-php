@@ -60,7 +60,7 @@ final class RejectedOperand
      */
     public function completed(Node $node, Lowering $lowering): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
-        return ($node->name === 'NUM_literal' ? $lowering->numbers->completed($node) : null) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
+        return ($node->name === 'NUM_literal' ? $lowering->numbers->completed($node) : null) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node, false) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
     }
 
     /**

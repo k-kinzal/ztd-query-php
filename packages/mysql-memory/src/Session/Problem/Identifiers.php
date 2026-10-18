@@ -53,17 +53,46 @@ final class Identifiers
      *
      * @throws \MySqlMemory\Error\SqlError When a name is too long
      */
-    public function check(Node $statement, GrammarRelease $release): void
+    public function check(Node $statement, GrammarRelease $release, ?\MySqlMemory\Session\Session $session = null): void
     {
+        $engines = [];
         foreach ((new Walker())->find($statement, Node::class) as $node) {
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption) {
+                $engines[] = $node->engine;
+            }
             if ($node instanceof TableWildcard && $node->table->schema?->value === '' && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
                 throw SchemaError::WrongDatabaseName->error('');
             }
             foreach ($this->names($node, $release) as $name) {
                 if ($name !== null && mb_strlen($name->value) > self::LONGEST) {
+                    $this->engines($engines, $session);
                     throw SchemaError::TooLongIdentifier->error($name->value);
                 }
             }
+        }
+    }
+
+    /**
+     * Preserves completed engine conditions before a later invalid definition name.
+     * Successful definitions leave engine substitution to their command.
+     *
+     * @param list<Name> $engines Engine operands preceding the name
+     * @throws \MySqlMemory\Error\SqlError When substitution is disabled for an unknown engine
+     */
+    public function engines(array $engines, ?\MySqlMemory\Session\Session $session): void
+    {
+        if ($session === null) {
+            return;
+        }
+        foreach ($engines as $engine) {
+            if (\MySqlMemory\Command\Show\Server\ServerCatalog::shared()->engine($engine->value) !== null) {
+                continue;
+            }
+            $error = SchemaError::UnknownStorageEngine->error($engine->value);
+            if ($session->modes()->has('NO_ENGINE_SUBSTITUTION')) {
+                throw $error;
+            }
+            $session->diagnostics->warning($error->getCode(), $error->getMessage());
         }
     }
 

@@ -95,6 +95,14 @@ final class EnginePrefixTest extends TestCase
         self::assertSame([], (new EnginePrefix())->completed(substr($sql, 0, $end), $end, $session));
     }
 
+    public function testCompletedKeepsLegacyEnginesBeforeAMalformedLaterPartition(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $sql = 'CREATE TABLE t(a INT) PARTITION BY HASH(a) (PARTITION p0 ENGINE=missing, invalid)';
+        $errors = (new EnginePrefix())->completed($sql, strlen($sql), $session);
+        self::assertSame(["Unknown storage engine 'missing'"], array_map(static fn ($error): string => $error->getMessage(), array_values($errors)));
+    }
+
     public function testReachedKeepsEngineWarningsOrEndsAtTheFirstStrictFailure(): void
     {
         $note = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator;

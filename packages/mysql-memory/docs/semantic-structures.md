@@ -2842,3 +2842,28 @@ and EXPLAIN audits and classification of matching errors with relevant state
 witnesses. In particular, retained legacy UNION operands and their trailing
 clauses still require complete lowering ownership. Matching native errors do
 not close these structural obligations.
+
+
+### Partition ownership and ordered name diagnostics
+
+Complete partition definitions check their own names and subpartition-list
+opening before descending into child definitions. An oversized child name no
+longer precedes the owning list's zero-subpartition constraint. Modern incomplete
+input does not run those contextual name checks; legacy parsing retains names
+and engine lookups completed before the syntax error. Earlier engine names also
+precede later invalid ALTER column names using only the semantic statement's
+ordered members. The stored names themselves remain unchanged.
+
+The new corpus compares both engine-substitution modes, name/engine order,
+malformed tails and the original unseeded input: 220 observations on MySQL 5.6,
+5.7, 8.0, 8.4 and 9.1 through text and prepared requests. Together with the
+existing partition-name and engine-prefix regressions and PDO round trips,
+`query659` passes 24 integration tests / 37 assertions. Its semantic package
+passes 8,874 tests / 18,613 assertions, all static checks and 978 schema
+definitions; Memory passes 18,190 tests / 75,230 assertions and all static checks.
+
+This is still not completion. The next unseeded run stopped after 99 matches on
+an authorization diagnostic: native MySQL bounds each displayed account-name
+component, while Memory displayed the complete host. That diagnostic regression
+is being repaired; the structure and final-revision campaign obligations above
+remain open.

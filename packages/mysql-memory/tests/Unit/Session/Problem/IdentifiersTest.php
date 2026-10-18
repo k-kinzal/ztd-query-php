@@ -58,6 +58,23 @@ final class IdentifiersTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
+    public function testEnginesRetainsAWarningBeforeAnInvalidColumnWithoutExecutingTheAlteration(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; SET sql_mode=''");
+        $session->run('ALTER TABLE t ENGINE=missing, ADD COLUMN ' . str_repeat('p', 65) . ' INT');
+        self::assertSame([1286, 1059], array_column($session->diagnostics->conditions, 1));
+        self::assertNull($session->instance->dictionary->table('d', 't'));
+    }
+
+    public function testCheckKeepsAnEarlierColumnNameBeforeALaterEngine(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run('ALTER TABLE t ADD COLUMN ' . str_repeat('p', 65) . ' INT, ENGINE=missing');
+        self::assertSame([1059], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testNamesChecksTheDatabaseOfAColumnOnlyFromMySql80(): void
     {
         $session = (new Instance())->connect();

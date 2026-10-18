@@ -199,7 +199,7 @@ final class Reader
             }
         }
         $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session)];
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong) {
             [$notices, $error] = (new EnginePrefix())->reached($notices, (new EnginePrefix())->completed($statement, $failure->end, $session), $error, $session->modes()->has('NO_ENGINE_SUBSTITUTION'));
         }
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);

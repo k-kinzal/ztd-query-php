@@ -41,10 +41,12 @@ final class TableChangeRules
 
     /**
      * Returns an aborting notice for a completed option before publishing a statement.
+     *
+     * @param bool $partitionNames Whether a partial parse needs partition-name notices; complete definitions check their own names
      */
-    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    public function completed(Node $node, bool $partitionNames = true): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
-        $notice = (new Partition\DefinitionRule($this->lowering))->completed($node) ?? (new ModifierRule($this->lowering))->completed($node);
+        $notice = ($partitionNames ? (new Partition\DefinitionRule($this->lowering))->completed($node) : null) ?? (new ModifierRule($this->lowering))->completed($node);
         if ($notice !== null || $node->name !== 'alter_list_item' || !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
             return $notice;
         }

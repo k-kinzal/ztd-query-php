@@ -32,7 +32,7 @@ final class TableInput
     {
         $header = $failure->problem;
         \SqlSemantics\Diagnostic\Check::invariant($header instanceof RefusedCreateTail, 'Table input retains the completed CREATE header.');
-        if ($header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
+        if ($header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue || $header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong) {
             return (new \MySqlMemory\Session\Parse\Reader())->rejection(new RejectedInput($header->problem, $failure->end, $failure->aborts), $statement, $session);
         }
         $parser = $session->semantics()->parser();
