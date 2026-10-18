@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
+namespace SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Retaining an intrinsic tail condition
- *     $problem = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [], [], 0, false, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2));
+ *     $problem = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [], [], 0, false, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2));
  *     $problem->message() // => 'Operand should contain 1 column(s), not 2.'
  */
 final class RefusedCreateTail implements Diagnostic

@@ -2940,7 +2940,35 @@ keeps a separate repository and thread state for each channel, including creatio
 before GTID validation and removal by `RESET REPLICA ALL FOR CHANNEL`. An
 unqualified source change reports the native ambiguity condition while multiple
 channels remain; an unqualified thread/reset command selects the channel set.
-`ReplicationChannelTest` compares 65-request histories on MySQL 8.0.44, 8.4.7 and
+`ReplicationChannelTest` compares 145-request histories on MySQL 8.0.44, 8.4.7 and
 9.1.0, including failures followed by channel-specific starts, stops and resets.
+Numeric names retain their identities through PHP array keys. Multi-channel
+START/STOP selects configured hosts; an explicit channel can run a local
+applier without a receiver host. RESET visits channel names in string order,
+including partial resets before a later running-channel refusal.
 This repairs a history-dependent unseeded differential failure; it does not
 establish replication transport between servers.
+
+
+### Retained table creation with MERGE sources
+
+An ordinary `CreateTable` excludes a simultaneous UNION table option and
+creation query. Stored definitions retain this combination in
+`DeferredCreateTable`, with the complete header, options, partitioning and
+query. This instruction does not implement the ordinary statement role, and
+its consumer never reconstructs operands from SQL or parser objects.
+
+When the instruction is reached, engine checks precede the table-role condition,
+which precedes source-table lookup. Program condition handlers receive the
+condition through the same instruction path as other writes. PREPARE instead
+prepares the retained query and captures its parameters first. Once prepared,
+EXECUTE reports the table-role condition before opening or revalidating the
+source, even if that source has since been dropped.
+
+`MergeTableStructureTest` reuses eight directly constructed procedure definitions
+through skipped, reached, missing-source, empty-source and populated-source
+states on five MySQL releases. `MergeTableQueryTest` also compares text and
+prepared requests, handler invocation and prepared source-drop histories.
+The 240 direct observations and the complete request corpus compare results,
+metadata, conditions and warnings. They exercise this operand-role distinction;
+the acceptance contract still requires the whole-model and fuzz campaigns.

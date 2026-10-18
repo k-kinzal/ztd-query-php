@@ -289,7 +289,7 @@ final class InterpreterTest extends TestCase
         self::assertSame([['1']], $result->rows);
     }
 
-    public function testInsertKeepsTheDestinationConditionAndContinuesAfterItsHandler(): void
+    public function testWriteKeepsTheDestinationConditionAndContinuesAfterItsHandler(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1049 SET @handled=1; INSERT INTO absent_schema.t VALUES (WEIGHT_STRING(ROW(1,2))); SET @continued=2; END');

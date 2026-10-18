@@ -107,7 +107,7 @@ final class Interpreter
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection => $this->selection($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge => $this->administrative($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel => $this->deferredCondition($statement),
-            ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery) => $this->insert($statement),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable => $this->write($statement),
             $statement instanceof Block => $this->block($statement),
             $statement instanceof IfStatement => $this->branches($statement->branches, $statement->otherwise, null, false),
             $statement instanceof SearchedCase => $this->branches($statement->branches, $statement->otherwise, null, true),
@@ -150,9 +150,9 @@ final class Interpreter
     /**
      * Prepares a retained write through the enclosing program's handlers.
      */
-    public function insert(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $statement): ?Jump
+    public function write(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $statement): ?Jump
     {
-        $jump = $this->instruction(fn () => (new Expression\InsertUse())->raise($statement, $this->session));
+        $jump = $this->instruction(fn () => $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable ? (new Expression\TableUse())->raise($statement, $this->session) : (new Expression\InsertUse())->raise($statement, $this->session));
         return $jump?->flow === Flow::Resume ? null : $jump;
     }
 

@@ -13,7 +13,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
-use SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail;
 
 /**
  * Orders CREATE TABLE grammar conditions, retained header and refused tail.
@@ -30,6 +30,9 @@ final class TableInput
      */
     public function refused(RejectedInput $failure, string $statement, Session $session): SqlError
     {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
+            return $this->template($failure, $statement, $session);
+        }
         $header = $failure->problem;
         \SqlSemantics\Diagnostic\Check::invariant($header instanceof RefusedCreateTail, 'Table input retains the completed CREATE header.');
         if ($header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue || $header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong) {
@@ -89,4 +92,53 @@ final class TableInput
         $line = substr_count(ltrim(substr($statement, 0, $problem->offset)), "\n") + 1;
         throw new SqlError(StatementError::ParseError, \MySqlMemory\Error\Family\PartitionError::ConstantFunction->message() . " near '" . $tail . "' at line " . $line);
     }
+
+    /**
+     * Retains a complete table template across PREPARE or reports its reached input condition.
+     *
+     * @throws DeferredPreparation When the header and source have prepared successfully
+     */
+    public function template(RejectedInput $failure, string $statement, Session $session): SqlError
+    {
+        $problem = $failure->problem;
+        \SqlSemantics\Diagnostic\Check::invariant($problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate, 'The table refusal retains its complete template.');
+        $parser = $session->semantics()->parser();
+        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, strlen($statement), $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
+        foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, strlen($statement), $parser) as $offset => $notice) {
+            $notices[] = [$offset, $notice];
+        }
+        usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+        $syntax = (new ModernWarnings())->recorded(array_column($notices, 1), new SqlError(StatementError::UnknownError, $problem->message()), $session, false);
+        if (array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof ParseFailure) !== []) {
+            return $syntax;
+        }
+        try {
+            $use = new \MySqlMemory\Program\Expression\TableUse();
+            if ($session->preparation->inputPrepared) {
+                $query = $use->prepare($problem->definition, $session);
+                $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($query);
+                throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, $bindings));
+            }
+            $use->raise($problem->definition, $session, false);
+        } catch (SqlError $error) {
+            if (!$error->recorded) {
+                $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
+            }
+            foreach ($error->following as [$code, $message]) {
+                $session->diagnostics->error($code, $message);
+            }
+            return new SqlError($error->error, $error->getMessage(), $failure, [], $error->signalled, $error->getCode(), true);
+        }
+    }
+
+
+    /**
+     * Selects typed table-definition refusals whose header precedes later conditions.
+     */
+    public function accepts(\SqlSemantics\Statement\Fact\Diagnostic $problem): bool
+    {
+        return $problem instanceof RefusedCreateTail || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate;
+    }
+
 }

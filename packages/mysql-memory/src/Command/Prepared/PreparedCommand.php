@@ -77,7 +77,8 @@ final class PreparedCommand implements Command
         }
         $prepared = (new \MySqlMemory\Session\Access\Preparation())->read($text, $session);
         if ($prepared instanceof PendingTable) {
-            $session->preparation->named[$key] = [$text, 0, new ParameterBindings([]), PreparedCache::capture($prepared, $session)];
+            $bindings = $prepared->bindings ?? new ParameterBindings([]);
+            $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
             return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
         }
         if ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate) {

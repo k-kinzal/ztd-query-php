@@ -163,7 +163,7 @@ final class Reader
     public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
         $failure = (new Entry\ProgramInput())->stopped($failure, $session);
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail) {
+        if ((new Definition\TableInput())->accepts($failure->problem)) {
             return (new Definition\TableInput())->refused($failure, $statement, $session);
         }
         $parser = $session->semantics()->parser();

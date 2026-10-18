@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Program\Expression;
+
+use MySqlMemory\Command\Definition\StorageOptions;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Session\Session;
+use SqlSemantics\Contract\SearchPath;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
+use SqlSemantics\Statement\Operation;
+
+/**
+ * Prepares or invokes a retained MERGE/query table definition using only its semantic fields.
+ *
+ * @visibility MySqlMemory
+ */
+final class TableUse
+{
+    /**
+     * Resolves the header before the reached table-role condition.
+     *
+     * @throws SqlError When a header name or the incompatible table role is reached
+     */
+    public function raise(DeferredCreateTable $definition, Session $session, bool $invocation = true): never
+    {
+        if ($invocation) {
+            \MySqlMemory\Session\State\StatementCounters::query($session);
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
+            $session->diagnostics->clear();
+        }
+        $this->header($definition, $session);
+        throw SchemaError::WrongObject->error($definition->name->schema->value ?? $session->variables->database, $definition->name->name->value, 'BASE TABLE');
+    }
+
+    /**
+     * Resolves engine options without opening the destination or the creation query.
+     */
+    public function header(DeferredCreateTable $definition, Session $session): void
+    {
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $storage = new StorageOptions();
+        $storage->header($definition, $session, $context);
+        $storage->engine($definition, $session->variables, $context);
+    }
+
+    /**
+     * Prepares the retained source at PREPARE, before storing the later table-role condition.
+     *
+     * @throws SqlError When the header or the creation query cannot prepare
+     */
+    public function prepare(DeferredCreateTable $definition, Session $session): Operation
+    {
+        $this->header($definition, $session);
+        $query = $definition->query;
+        \SqlSemantics\Diagnostic\Check::invariant($query !== null, 'A deferred table creation retains its query.');
+        if ($query->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
+            (new SelectionUse())->raise($query->query->selection, $session, false);
+        }
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query->query) !== null) {
+            (new QueryUse())->raise(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery($query->query), $session, false);
+        }
+        $database = $session->variables->database;
+        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $operation = new Operation($context, new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query->query));
+        (new \MySqlMemory\Session\Problems())->raise($operation, $session);
+        return $operation;
+    }
+}

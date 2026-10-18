@@ -82,7 +82,7 @@ final class StorageOptions
      *
      * @throws SqlError When the database is unspecified or an engine is unknown
      */
-    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail $header, Session $session, Context $context): void
+    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $header, Session $session, Context $context): void
     {
         if ($header->name->schema === null && $session->variables->database === '') {
             throw QueryError::NoDatabase->error();
@@ -112,7 +112,7 @@ final class StorageOptions
     /**
      * Resolves the selected engine, optionally reporting the fallback after resolve() checked its name.
      */
-    public function engine(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail $create, Variables $variables, ?Context $context = null): string
+    public function engine(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Variables $variables, ?Context $context = null): string
     {
         if (isset($variables->preparedEngines[spl_object_id($create)])) {
             return $variables->preparedEngines[spl_object_id($create)];

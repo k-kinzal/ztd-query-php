@@ -9,12 +9,13 @@ use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail;
 
 /**
- * A prepared CREATE header whose partition definition is checked on execution.
+ * A prepared table template whose retained condition is checked on execution.
  * The typed refusal is retained without an ordinary semantic Statement or SQL.
  * Engine warnings belong to preparation; database lookup remains per execution.
+ * A retained MERGE/query role rejects before table opening or metadata revalidation.
  * Observed through COM_STMT_PREPARE on MySQL 8.4.7.
  *
  * @visibility MySqlMemory
@@ -22,10 +23,11 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail;
 final class PendingTable
 {
     /**
-     * @param RefusedCreateTail $header The completed header and retained partition condition
+     * @param RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $header The complete retained definition
+     * @param ParameterBindings|null $bindings Prepared query parameters
      * @param string $database The default database selected at preparation
      */
-    public function __construct(public readonly RefusedCreateTail $header, public readonly string $database)
+    public function __construct(public readonly RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $header, public readonly string $database, public readonly ?ParameterBindings $bindings = null)
     {
     }
 
@@ -43,6 +45,9 @@ final class PendingTable
         $session->diagnostics->clear();
         $session->text = $label;
         $database = $this->header->name->schema->value ?? $this->database;
+        if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) {
+            throw \MySqlMemory\Error\Family\SchemaError::WrongObject->error($database, $this->header->name->name->value, 'BASE TABLE');
+        }
         if ($session->instance->dictionary->schema($database) === null) {
             throw QueryError::BadDatabase->error($database);
         }

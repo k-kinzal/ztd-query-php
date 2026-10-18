@@ -129,9 +129,9 @@ final class ReplicaCommand implements Command
      */
     public function start(StartReplica $statement, Session $session): void
     {
-        $channels = $this->targets($statement->channel, $session->instance->registry, $session->settings()->legacy());
+        $channels = $this->threads($statement->channel, $session->instance->registry, $session->settings()->legacy());
         foreach ($channels as $name => $replication) {
-            $this->startChannel($statement, $session, $replication, $name);
+            $this->startChannel($statement, $session, $replication, (string) $name);
         }
     }
 
@@ -179,7 +179,7 @@ final class ReplicaCommand implements Command
         if ($target instanceof ResetReplica) {
             foreach ($this->targets($target->channel, $registry, $legacy) as $name => $state) {
                 if ($state->applying) {
-                    throw AdministrationError::ReplicaChannelRunning->error($name);
+                    throw AdministrationError::ReplicaChannelRunning->error((string) $name);
                 }
                 $state->reset($target->all);
                 if ($target->all && $name !== '') {
@@ -216,15 +216,28 @@ final class ReplicaCommand implements Command
     /**
      * Selects the requested channel or every channel for an unqualified thread/reset command.
      *
-     * @return array<string, \MySqlMemory\Registry\Replication> Channels in repository order
+     * @return array<array-key, \MySqlMemory\Registry\Replication> Channels in name order; PHP stores numeric names as integer keys
      */
     public function targets(?Text $channel, Registry $registry, bool $legacy = false): array
     {
         if ($channel === null) {
-            return ['' => $registry->replication, ...$registry->channels];
+            $channels = ['' => $registry->replication] + $registry->channels;
+            ksort($channels, SORT_STRING);
+            return $channels;
         }
         $name = $this->channel($channel, $legacy, $registry);
         return [$name => $name === '' ? $registry->replication : $registry->channels[$name]];
+    }
+
+    /**
+     * Selects configured hosts for a multi-channel thread command, while an explicit channel can run a local applier without a receiver host.
+     *
+     * @return array<array-key, \MySqlMemory\Registry\Replication> Selected channel identities without renumbering
+     */
+    public function threads(?Text $channel, Registry $registry, bool $legacy = false): array
+    {
+        $channels = $this->targets($channel, $registry, $legacy);
+        return $channel === null && count($channels) > 1 ? array_filter($channels, static fn ($state): bool => $state->host !== '') : $channels;
     }
 
     /**
@@ -232,12 +245,12 @@ final class ReplicaCommand implements Command
      */
     public function stop(StopReplica $statement, Session $session): void
     {
-        $channels = $this->targets($statement->channel, $session->instance->registry, $session->settings()->legacy());
+        $channels = $this->threads($statement->channel, $session->instance->registry, $session->settings()->legacy());
         foreach ($channels as $name => $state) {
             if ($state->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
                 $state->applying = false;
-            } elseif (count($channels) === 1) {
-                $session->diagnostics->note(AdministrationError::ReplicaThreadsStopped, AdministrationError::ReplicaThreadsStopped->message($name));
+            } elseif ($statement->channel !== null || $session->instance->registry->channels === []) {
+                $session->diagnostics->note(AdministrationError::ReplicaThreadsStopped, AdministrationError::ReplicaThreadsStopped->message((string) $name));
             }
         }
     }

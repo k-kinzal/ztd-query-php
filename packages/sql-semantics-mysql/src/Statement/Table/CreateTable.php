@@ -100,6 +100,7 @@ final class CreateTable implements Statement, Relation
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
+        Check::input($query === null || array_filter($this->options, static fn ($option): bool => $option instanceof Option\UnionOption) === [], 'MERGE sources with a query belong to a deferred table-creation instruction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

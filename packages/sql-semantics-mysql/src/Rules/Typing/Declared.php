@@ -63,7 +63,7 @@ final class Declared
      * A string column without a character set takes the collation the table options name, else
      * the default collation of the schema the table is created in.
      */
-    public static function table(CreateTable $definition, AnalysisContext $context): self
+    public static function table(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition, AnalysisContext $context): self
     {
         $release = $context->profile->grammar;
         $collation = Settings::of($context)->schema($definition->name->schema->value ?? $context->searchPath[0]->value);

@@ -70,7 +70,7 @@ final class Registry
     public readonly Replication $replication;
 
     /**
-     * @var array<string, Replication> Named replication channels, separate from the permanent default channel
+     * @var array<array-key, Replication> Named replication channels, separate from the permanent default channel; PHP stores numeric names as integer keys
      */
     public array $channels = [];
 

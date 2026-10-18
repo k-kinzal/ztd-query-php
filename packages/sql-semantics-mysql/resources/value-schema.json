@@ -2694,6 +2694,16 @@
         "names": "array",
         "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateTable": {
+        "elements": "array",
+        "enclosed": "bool",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "partitioning": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Partitioning",
+        "query": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery",
+        "temporaryWords": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery": {
         "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
         "onDuplicate": "array",
@@ -3445,6 +3455,17 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\UnionOption": {
         "tables": "array"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedCreateTail": {
+        "elements": "array",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic",
+        "temporaryWords": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedCreateTemplate": {
+        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateTable"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -3472,14 +3493,6 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\NoColumns": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\NullablePrimaryKey": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\RefusedCreateTail": {
-        "elements": "array",
-        "ifNotExists": "bool",
-        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
-        "options": "array",
-        "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic",
-        "temporaryWords": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\RefusedJsonAttribute": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",

@@ -53,4 +53,20 @@ final class TableInputTest extends TestCase
         $session->run('CREATE TABLE t(a INT) ENGINE=missing AS SELECT ROW(1,2) FROM absent');
         self::assertSame([['Warning', 1286, "Unknown storage engine 'missing'"], ['Warning', 1266, "Using storage engine InnoDB for table 't'"], ['Error', 1146, "Table 'd.absent' doesn't exist"]], $session->diagnostics->conditions);
     }
+
+    public function testTemplatePreservesThePreparationAndInvocationBoundary(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query("PREPARE st FROM 'CREATE TABLE t UNION=() SELECT ? AS v'");
+        $session->query('SET @v=5');
+        $session->run('EXECUTE st USING @v');
+        self::assertSame([['Error', 1347, "'d.t' is not BASE TABLE"]], $session->diagnostics->conditions);
+    }
+
+
+    public function testAcceptsLeavesUnrelatedOperandConditionsAtTheirOwnBoundary(): void
+    {
+        self::assertFalse((new TableInput())->accepts(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2)));
+    }
+
 }

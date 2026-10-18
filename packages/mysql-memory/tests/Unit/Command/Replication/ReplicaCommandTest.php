@@ -300,4 +300,31 @@ final class ReplicaCommandTest extends TestCase
         self::assertSame([['Note', 3084, "Replication thread(s) for channel 'alpha' are already stopped."]], $session->diagnostics->conditions);
     }
 
+    public function testTargetsPreservesNumericNamesThroughUnqualifiedReset(): void
+    {
+        $session = (new Instance())->connect();
+        array_map(static function (string $name) use ($session): void {
+            $session->query("CHANGE REPLICATION SOURCE TO GET_SOURCE_PUBLIC_KEY=0 FOR CHANNEL '" . $name . "'");
+            $session->query("START REPLICA SQL_THREAD FOR CHANNEL '" . $name . "'");
+        }, ['9', '01', '0']);
+        $registry = $session->instance->registry;
+        self::assertSame(['', 0, '01', 9], array_keys((new ReplicaCommand())->targets(null, $registry)));
+        self::assertTrue($registry->channels[9]->applying);
+        $session->query("STOP REPLICA FOR CHANNEL '9'; STOP REPLICA FOR CHANNEL '01'; STOP REPLICA FOR CHANNEL '0'");
+        $session->query('RESET REPLICA ALL');
+        self::assertSame([], $registry->channels);
+        self::assertFalse($registry->replication->applying);
+    }
+
+    public function testThreadsKeepsUnconfiguredHostsForExplicitApplierCommands(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO GET_SOURCE_PUBLIC_KEY=0 FOR CHANNEL 'a'");
+        $session->query("START REPLICA SQL_THREAD FOR CHANNEL 'a'");
+        $session->query('STOP REPLICA');
+        self::assertTrue($session->instance->registry->channels['a']->applying);
+        $session->query("STOP REPLICA FOR CHANNEL 'a'");
+        self::assertFalse($session->instance->registry->channels['a']->applying);
+    }
+
 }
