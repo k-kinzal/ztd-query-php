@@ -48,7 +48,8 @@
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;</span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Dialect</span>;</span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Expression\PrimaryRule</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Expression\PrimaryRule</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Modern\PrimaryRule</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Select</span>;</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a></span>
@@ -82,14 +83,19 @@
 <span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testExplicitLowersTheTable</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    {</span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;TABLE db.t&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-8.0.44&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;table db.t&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    }</span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWithLowersTheCommonTables</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    {</span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;WITH RECURSIVE a (x) AS (SELECT 1), b AS (SELECT 2) SELECT 3&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-8.4.7&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;with recursive a (x) as (select 1), b as (select 2) select 3&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDefinitionPreservesAllDefinitionsWithoutDanglingOrigins</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    {</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;WITH b AS (SELECT 1 AS x), c AS (SELECT ROW(x, 2) FROM b) SELECT 1&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;WITH b AS (SELECT 1 AS x), c AS (SELECT ROW(x,2) FROM b) SELECT 1&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    }</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>}</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a></span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWithLowersTheCommonTables</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    {</span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;WITH RECURSIVE a (x) AS (SELECT 1), b AS (SELECT 2) SELECT 3&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-8.4.7&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;with recursive a (x) as (select 1), b as (select 2) select 3&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    }</span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>}</span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
