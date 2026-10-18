@@ -126,7 +126,10 @@ final class InputPrefix
         } catch (RejectedInput $failure) {
             if (!$isolated && $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
                 $frame->statements[] = $failure->problem->prefix;
-                return new RejectedInput($this->diagnostic($frame->body(), $parameters) ?? $failure->problem->problem, $failure->end);
+                if ($failure->problem->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem) {
+                    $frame->statements[] = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal(null, [$failure->problem->problem]);
+                }
+                return new RejectedInput($this->diagnostic($frame->body(), $parameters) ?? $failure->problem->diagnostic(), $failure->end);
             }
             return $failure;
         }

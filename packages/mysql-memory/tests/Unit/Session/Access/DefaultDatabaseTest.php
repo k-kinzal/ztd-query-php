@@ -15,6 +15,21 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DefaultDatabaseTest extends TestCase
 {
+    public function testReferencedResolvesAnImplicitTableBeforeLockClauseConditions(): void
+    {
+        $table = new \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement($table, [new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Update), new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share)]);
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->text = 'unrelated invalid input';
+        $node = new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query);
+        $first = (new \Fuzz\Structure\Audit\Memory())->observe($session, $node);
+        self::assertSame(1046, $first['error'][0] ?? null);
+        $session->variables->database = 'd';
+        $second = (new \Fuzz\Structure\Audit\Memory())->observe($session, $node);
+        self::assertSame(3569, $second['error'][0] ?? null);
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testCheckRequiresAViewDatabaseBeforeItsQueryLimits(): void
     {
         $session = (new Instance())->connect();

@@ -81,7 +81,7 @@ final class DefaultDatabase
      *
      * @throws SqlError When a reached base-table reference requires a current database
      */
-    public function referenced(\SqlSemantics\Statement\Operation $operation, Session $session): void
+    public function referenced(\SqlSemantics\Statement\Operation|\MySqlMemory\Session\Resolution\QueryPreparation $operation, Session $session): void
     {
         if ($session->variables->database !== '' || \MySqlMemory\Command\Dispatcher::program($operation->statement)) {
             return;

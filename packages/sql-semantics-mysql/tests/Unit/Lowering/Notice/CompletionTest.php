@@ -40,4 +40,17 @@ final class CompletionTest extends TestCase
         self::assertTrue($state->aborted);
         self::assertSame(30, $state->failedAt);
     }
+
+    public function testRecordContinuesGrammarNoticesWithoutEnteringContextualization(): void
+    {
+        $state = new Completion();
+        $error = new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'));
+        $state->record(30, $error);
+        $state->record(40, Deprecated::AssignmentInExpression);
+        $state->record(50, new ParseFailure(new TooBigPrecision(7, 'CAST'), true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization));
+
+        self::assertSame([[30, $error], [40, Deprecated::AssignmentInExpression]], $state->warnings);
+        self::assertTrue($state->syntaxFailed);
+        self::assertFalse($state->aborted);
+    }
 }

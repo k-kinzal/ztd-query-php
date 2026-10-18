@@ -133,8 +133,6 @@ final class ConditionFactsTest extends TestCase
     public static function providerSignalReportsTheBrokenRule(): iterable
     {
         yield 'SIGNAL of an SQLSTATE condition' => ["CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MESSAGE_TEXT = 'm'; END", []];
-        yield 'an item set twice by SIGNAL' => ["CREATE PROCEDURE p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MYSQL_ERRNO = 1, MESSAGE_TEXT = 'b'", ["Duplicate condition information item 'MESSAGE_TEXT'"]];
-        yield 'an item set twice by RESIGNAL' => ["CREATE PROCEDURE p() RESIGNAL SET CLASS_ORIGIN = 'a', CLASS_ORIGIN = 'b'", ["Duplicate condition information item 'CLASS_ORIGIN'"]];
         yield 'RESIGNAL without a condition' => ['CREATE PROCEDURE p() RESIGNAL', []];
         yield 'an unknown name in an item' => ["CREATE PROCEDURE p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = z", ['Column z does not exist.']];
     }
@@ -255,5 +253,33 @@ final class ConditionFactsTest extends TestCase
         yield 'one SQLSTATE value' => [new SqlState(new Text('42S02')), new SqlState(new Text('42S02')), true];
         yield 'two SQLSTATE values' => [new SqlState(new Text('42S02')), new SqlState(new Text('42S01')), false];
         yield 'an error number and an SQLSTATE value' => [new ErrorCode(new Numeral('1051')), new SqlState(new Text('42S02')), false];
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerSignalRejectsRepeatedItemsBeforePublication(): iterable
+    {
+        yield 'an item set twice by SIGNAL' => ["CREATE PROCEDURE p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MYSQL_ERRNO = 1, MESSAGE_TEXT = 'b'", ["Duplicate condition information item 'MESSAGE_TEXT'"]];
+        yield 'an item set twice by RESIGNAL' => ["CREATE PROCEDURE p() RESIGNAL SET CLASS_ORIGIN = 'a', CLASS_ORIGIN = 'b'", ["Duplicate condition information item 'CLASS_ORIGIN'"]];
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerSignalRejectsRepeatedItemsBeforePublication')]
+    public function testSignalRejectsRepeatedItemsBeforePublication(string $sql, array $messages): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        (new Semantics(Dialect::MySql))->analyze($sql);
+    }
+
+    public function testRepeatedFindsTheFirstRepeatedAssignment(): void
+    {
+        $first = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem(\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MysqlErrno, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+        $second = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem($first->name, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'));
+        self::assertNull((new ConditionFacts())->repeated([$first]));
+        self::assertSame($second, (new ConditionFacts())->repeated([$first, $second]));
     }
 }

@@ -163,6 +163,9 @@ final class Reading
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
             if (Stages::closing($diagnostic)) {
+                if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && in_array($diagnostic->rule, [\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownLockedTable, \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RepeatedLockedTable], true)) {
+                    (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
+                }
                 throw (new Errors())->error($alias ?? $diagnostic, $session, 'field list', $operation->statement);
             }
             $insert = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;

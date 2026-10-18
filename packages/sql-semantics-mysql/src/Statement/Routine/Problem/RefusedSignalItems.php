@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Problem;
 
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
@@ -26,10 +27,19 @@ final class RefusedSignalItems implements Diagnostic
 
     /**
      * @param Resignal $prefix The optional condition and completed information items
-     * @param RefusedTemporalLiteral $problem The invalid value following that prefix
+     * @param RefusedTemporalLiteral|SignalItem $problem An invalid literal, or an item repeating a name already in the prefix
      */
-    public function __construct(public readonly Resignal $prefix, public readonly RefusedTemporalLiteral $problem)
+    public function __construct(public readonly Resignal $prefix, public readonly RefusedTemporalLiteral|SignalItem $problem)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$problem instanceof SignalItem || in_array($problem->name, array_column($prefix->items, 'name'), true), 'A repeated condition item has an earlier assignment in the prefix.');
+    }
+
+    /**
+     * Supplies the refusal separately from the preceding names and operand values.
+     */
+    public function diagnostic(): RefusedTemporalLiteral|ProgramProblem
+    {
+        return $this->problem instanceof SignalItem ? new ProgramProblem(ProgramRule::DuplicateSignalItem, $this->problem->name->value) : $this->problem;
     }
 
     /**
@@ -37,6 +47,6 @@ final class RefusedSignalItems implements Diagnostic
      */
     public function message(): string
     {
-        return $this->problem->message();
+        return $this->diagnostic()->message();
     }
 }

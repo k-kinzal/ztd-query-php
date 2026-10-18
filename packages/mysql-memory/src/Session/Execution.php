@@ -235,6 +235,9 @@ final class Execution
                 $dots = [];
             }
             if ($warning instanceof ParseFailure) {
+                if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && in_array($warning->problem->rule, [\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownLockedTable, \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RepeatedLockedTable], true)) {
+                    (new Access\DefaultDatabase())->referenced($operation, $session);
+                }
                 (new \MySqlMemory\Command\Definition\StorageOptions())->beforePartition($warning, $operation, $session);
                 (new Access\TableCreation())->database($operation->statement, $session, $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
                 $error = (new Problem\Precision())->legacy((new Parse\LocatedErrors())->error($warning->problem, $operation, $session) ?? (new CacheOptions())->placed($warning->problem, $operation->statement, $session) ?? (new Errors())->error($warning->problem, $session, 'field list', $operation->statement), $session->settings()->release());

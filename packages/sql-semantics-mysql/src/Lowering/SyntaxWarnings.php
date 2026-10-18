@@ -115,7 +115,8 @@ final class SyntaxWarnings
     {
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
 
-        return (new Routine\Program\InputPrefix($lowering))->before($tree, $end);
+        $failure = (new Routine\Program\InputPrefix($lowering))->before($tree, $end);
+        return $failure?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateSignalItem ? (new Routine\RefusedBodyHeader())->wrap($tree, $failure, $lowering) : $failure;
     }
 
     /**
@@ -154,7 +155,8 @@ final class SyntaxWarnings
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && in_array($failure->problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadStatement, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ArrayCast, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::RecursiveCreate, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::EventRecursion], true)) {
                     $failure = (new Routine\RefusedBodyHeader())->wrap($tree, $failure, $lowering);
                 }
-                return (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
+                $failure = (new Routine\Program\InputPrefix($lowering))->before($tree, $failure->end) ?? $failure;
+                return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateSignalItem ? (new Routine\RefusedBodyHeader())->wrap($tree, $failure, $lowering) : $failure;
             }
             foreach (array_reverse($condition->children) as $child) {
                 if ($child instanceof Node) {

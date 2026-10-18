@@ -42,6 +42,23 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 final class ConditionFacts
 {
     /**
+     * Finds an information item assigned twice, independently of runtime values.
+     *
+     * @param list<SignalItem> $items Written assignments
+     */
+    public function repeated(array $items): ?SignalItem
+    {
+        $seen = [];
+        foreach ($items as $item) {
+            if (in_array($item->name, $seen, true)) {
+                return $item;
+            }
+            $seen[] = $item->name;
+        }
+        return null;
+    }
+
+    /**
      * Checks the declaration of a condition name; literal condition domains hold at construction.
      */
     public function value(Condition $value, Derivation $derivation, ProgramScope $scope): void

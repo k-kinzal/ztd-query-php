@@ -85,8 +85,12 @@ final class SignalProblems
     {
         $operation = new Operation($session->semantics()->context(session: $session->resolution()), $refusal->prefix);
         $this->check($operation, $session);
+        if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem) {
+            $pending = new Operation($session->semantics()->context(session: $session->resolution()), new Resignal(null, [$refusal->problem]));
+            $this->check($pending, $session);
+        }
 
-        return (new Errors())->error($refusal->problem, $session);
+        return (new Errors())->error($refusal->diagnostic(), $session);
     }
 
     /**

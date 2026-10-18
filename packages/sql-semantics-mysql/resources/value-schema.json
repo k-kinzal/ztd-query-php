@@ -2325,7 +2325,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\RefusedSignalItems": {
         "prefix": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Resignal",
-        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedTemporalLiteral"
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedTemporalLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SignalItem"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ScopedLocalAssignment": {
         "offset": "?int"

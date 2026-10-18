@@ -3235,6 +3235,20 @@ an empty query from a comment-only no-op, and failed replacement removes the old
 prepared statement. Both input paths and directly constructed semantic values
 are checked without giving planning access to SQL or ASTs.
 
+SIGNAL and RESIGNAL constructors also require distinct condition-information
+items. Input refusals retain the valid preceding items and the repeated operand
+as separate values, preserving condition-name and operand-error priority without
+publishing a contradictory statement. The retained-field schema explicitly
+records this union; it introduces no source text or parser object. Direct native
+state tests reuse one SIGNAL value while changing its message variable, separating
+a NULL-operand refusal from the intentional SQL warning or exception it raises.
+
+A continuing grammar error does not enter contextualization. Later grammar
+warnings remain observable, but locking-clause conditions are omitted after a
+grammar failure. For an otherwise valid input, resolving an implicit table database
+precedes the lock-clause condition. The regression corpus retains the complete
+unseeded counterexample and reduced nested-query cases.
+
 Acceptance remains open. The whole-model `query874-recursion-purge` snapshot
 (`e79f7cd19a3`) compared all 244 public roots: 100 matching successes, 144 matching
 SQL errors, 171 matching database-transition observations, no generation

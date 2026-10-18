@@ -42,6 +42,8 @@ final class Resignal implements Statement, ProgramStatement
     public function __construct(public readonly ConditionName|SqlState|null $condition, array $items = [])
     {
         $this->items = Check::listOf($items, SignalItem::class, 'The SET clause holds condition information items.');
+        $repeated = (new ConditionFacts())->repeated($this->items);
+        Check::input($repeated === null, "Duplicate condition information item '" . ($repeated?->name->value ?? '') . "'");
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

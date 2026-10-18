@@ -139,13 +139,18 @@ final class SignalRule
         foreach (array_reverse($pending) as [$item, $offset]) {
             $name = $this->lowering->form($item->node($offset));
             try {
-                $items[] = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
+                $candidate = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {
                     throw $failure;
                 }
                 throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems(new Resignal($condition, $items), $failure->problem), $failure->end);
             }
+            if (in_array($candidate->name, array_column($items, 'name'), true)) {
+                $tokens = $item->node($offset + 2)->tokens();
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems(new Resignal($condition, $items), $candidate), $tokens[count($tokens) - 1]->end());
+            }
+            $items[] = $candidate;
         }
 
         return $items;
