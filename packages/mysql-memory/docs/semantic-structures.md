@@ -2764,15 +2764,81 @@ resolution precedes body preparation; ALTER opens its target before interpreting
 a qualified projection. Constructor examples, input fixtures and direct target
 state tests cover these distinctions.
 
-The source snapshot `query631` passes 8,823 semantic tests (18,512 assertions),
-18,169 Memory tests (75,186 assertions), the 972-definition value schema and both
-dependency boundaries. The subsequent snapshot only corrects a test import and
-adds the original view counterexample to its fixture. Its full native replay was
-interrupted by loss of the Docker host. The whole-root replay and nine-release
-seed campaign were also interrupted. The unseeded campaign last reported 820
-matches at 869.84 seconds; it is not a completed 900-second run. Earlier partial
-or completed campaigns do not replace final-revision acceptance evidence.
+### Retained query writes and preparation order
 
-The contract remains unmet. In particular, INSERT query sources still need the
-same complete ownership treatment as retained VALUES rows, and whole-model SQL
-errors still require structural classification and relevant state witnesses.
+INSERT and REPLACE query sources now retain the write destination, the complete
+source query and duplicate-key assignments in `DeferredInsertQuery`. Ordinary
+`InsertQuery` rejects fixed read-column contradictions; stored branches retain
+them in the instruction role. Target lookup precedes source preparation. Legacy
+simple and parenthesized sources preserve the same ownership, including
+PROCEDURE ANALYSE. Binding uses semantic structures, without recovering input SQL.
+
+The write/preparation corpus passes 672 exact observations on MySQL 5.6, 5.7,
+8.4 and 9.1, including SQL PREPARE histories and both request protocols. Direct
+construction passes 32 routine definitions and 256 invocation observations over
+inactive, missing-target, missing-source, missing-column, populated and removed
+states. Functional-index preparation passes 90 observations on 8.0, 8.4 and 9.1;
+the target is opened before subquery dependencies for existing-table commands.
+External-routine declaration notices pass 160 observations on 8.1 through 9.1.
+MySQL 5.6/5.7 loads CALL definition notices during PREPARE but defers existence
+and arity checks; modern releases check both during preparation.
+
+The semantic snapshot `query636` passes 8,834 tests / 18,545 assertions, the
+974-definition retained-field schema and static checks. Its whole-root campaign
+visits all 244 public statement/scalar roots: 98 matching successes, 146 matching
+SQL errors, no generation/profile/internal failures, and 171 matching additional
+database-selection observations. The consumer snapshot `query640` retains that
+semantic source and passes 18,180 Memory tests / 75,213 assertions and static
+checks. These changes are committed at `8da76ad354b`.
+
+### Numeric domains and retained temporal calls
+
+Floating-point literal construction excludes spellings that overflow DOUBLE.
+Input lowering preserves their numeric diagnostic and completion boundary;
+MySQL 5.6 stops at that literal, while later releases continue reading the
+statement. Exact integers and decimals, finite boundary values, subnormal values
+and underflow remain separate cases. Text and prepared comparisons pass on
+5.6, 5.7, 8.0, 8.4 and 9.1, including the original unseeded counterexample.
+
+AT TIME ZONE distinguishes fixed non-TIMESTAMP result families from unresolved
+column dependencies. EXTRACT, GET_FORMAT and numeric/JSON aggregates cannot
+inhabit its ordinary TIMESTAMP operand role. Nested temporal calls retain their
+complete operands in stored instruction values; DATE_ADD/DATE_SUB and ODBC
+escapes preserve row and deferred roles instead of publishing a substitute
+scalar or losing the enclosing statement. The KILL regression keeps its complete
+process operand, so preparation can distinguish a forbidden subquery from a
+missing table inside that subquery.
+
+The expanded write corpus passes 792 observations on 5.6, 5.7, 8.4 and 9.1.
+DELAYED notices retain distinct occurrences while merging duplicate observations
+of the same token; stored calls also preserve definition-load notices. The
+fixed temporal-family corpus passes 306 observations on 8.0, 8.4 and 9.1. Direct
+construction reuses 24 nested temporal definitions through inactive, missing-table,
+missing-column, populated and removed states: 168 invocation observations.
+The DATE_ADD/ODBC fixture passes 190 observations on five releases through text
+and prepared requests. The latter two suites pass 13 tests / 88 assertions on
+snapshot `query653`.
+
+The whole-root campaign on `query651` visits all 244 public Statement/Scalar
+roots with seed `row-roles-20261017`: 99 matching successes, 145 matching SQL
+errors, no generation/profile/internal failures or differences, and 171 matching
+additional database-selection observations across 57 structures. The runtime
+code is shared with `query653`; later changes fix test expectations, executable
+examples and a static-check extraction. The semantic package on `query655`
+passes 8,872 tests / 18,610 assertions, complete static checks and the
+978-definition schema check. Memory on `query654` passes 18,187 tests / 75,226
+assertions and complete static checks. Matching errors still require the
+classification and state witnesses specified by the acceptance contract.
+
+The contract remains unmet. Explicit authentication strings, overflowing floats,
+nested date operands and duplicate DELAYED notices found by preceding campaigns
+have regression fixes. Network-interrupted campaigns are not passing evidence.
+All nine supplied seed corpora are being replayed against the retained-temporal
+snapshot. Its unseeded campaign stopped after 167 matching inputs: an unknown
+partition engine should precede a later oversized subpartition name. That
+ordering defect is not a completed 900-second run. Final-revision success remains
+required, together with the query-consumer, conditional-definition, partition
+and EXPLAIN audits and classification of matching errors with relevant state
+witnesses. In particular, retained legacy UNION operands and their trailing
+clauses still require complete lowering ownership. Matching native errors do
+not close these structural obligations.

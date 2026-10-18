@@ -65,9 +65,7 @@ final class ProgramInput
             $end = $modifiers->stoppedAt ?? $end;
             $notices = array_values(array_filter($notices, static fn (array $notice): bool => $notice[0] <= $end));
         }
-        foreach ($operators as $position => $notice) {
-            $notices[] = [$position, $notice];
-        }
+        $notices = $warnings->merge($notices, $operators, $tokens);
         $notices = [...$notices, ...array_filter($this->notes($refusal, $session), static fn (array $note): bool => $note[0] <= $end)];
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         return $warnings->recorded(array_column($notices, 1), $syntax, $session);

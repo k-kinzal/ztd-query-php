@@ -192,9 +192,7 @@ final class Reader
             if ($conflict !== null && $target === null) {
                 return (new CacheOptions())->recorded($warnings, $conflict, $error, $session);
             }
-            foreach ($warnings as $offset => $notice) {
-                $notices[] = [$offset, $notice];
-            }
+            $notices = (new ModernWarnings())->merge($notices, $warnings, $tokens);
         } else {
             foreach ((new ModernWarnings())->before($tokens, $statement, $failure->end, $parser) as $offset => $notice) {
                 $notices[] = [$offset, $notice];

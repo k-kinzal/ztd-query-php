@@ -15,6 +15,17 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 #[Medium]
 final class GroupedRowTest extends TestCase
 {
+    public function testRenderRetainsAnOdbcEscapeKindAroundTheOperand(): void
+    {
+        $operand = new Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $value = new GroupedRow($operand, new \SqlSemantics\Statement\Identifier\Name('foo'));
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $out = new \SqlSemantics\Rendering\Output((new \SqlSemantics\Platform\MySql\Platform())->codec($semantics->profile()));
+        $value->render($out);
+        self::assertSame($operand, $value->operand);
+        self::assertStringStartsWith('{ foo ', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+    }
+
     public function testDeriveScalarKeepsTheRowWidth(): void
     {
         $platform = new \SqlSemantics\Platform\MySql\Platform();

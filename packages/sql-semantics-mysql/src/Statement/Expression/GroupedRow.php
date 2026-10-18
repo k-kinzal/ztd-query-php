@@ -11,7 +11,10 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * Parentheses around a row operand, retaining its row-valued role.
+ * Grouping around a row operand, retaining its row-valued role.
+ *
+ * Parentheses and ODBC braces both preserve the row. An optional escape kind
+ * distinguishes braces without converting the row into a scalar.
  *
  * Grouping never turns a row into a scalar. The enclosed row supplies the
  * comparison fields and their derived facts.
@@ -26,8 +29,9 @@ final class GroupedRow implements RowOperand
 
     /**
      * @param RowOperand $operand The grouped row
+     * @param \SqlSemantics\Statement\Identifier\Name|null $escape An ODBC escape kind, or null for ordinary parentheses
      */
-    public function __construct(public readonly RowOperand $operand)
+    public function __construct(public readonly RowOperand $operand, public readonly ?\SqlSemantics\Statement\Identifier\Name $escape = null)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -45,6 +49,10 @@ final class GroupedRow implements RowOperand
      */
     public function render(Output $out): void
     {
+        if ($this->escape !== null) {
+            $out->symbol('{')->name($this->escape, \SqlSemantics\Contract\NameUse::Label)->node($this->operand)->symbol('}');
+            return;
+        }
         $out->symbol('(')->node($this->operand)->symbol(')');
     }
 }

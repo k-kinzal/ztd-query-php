@@ -82,5 +82,20 @@
     "PREPARE plain_valid FROM 'CALL plain()'",
     "EXECUTE plain_valid",
     "DROP PROCEDURE plain",
-    "EXECUTE plain_valid"
+    "EXECUTE plain_valid",
+    "REPLACE DELAYED _sqlfaker_identifier SELECT *",
+    "INSERT DELAYED INTO delayed_t SELECT *",
+    "CREATE TABLE delayed_t(a INT)",
+    "REPLACE DELAYED delayed_t SELECT *",
+    "REPLACE /* between keyword and modifier */ DELAYED delayed_t SELECT *",
+    "REPLACE DELAYED delayed_t SELECT SQL_NO_CACHE *",
+    "REPLACE DELAYED delayed_t SELECT 1",
+    "CREATE PROCEDURE delayed_p() BEGIN REPLACE DELAYED delayed_t SELECT 1; REPLACE DELAYED delayed_t SELECT 2; END",
+    "CALL delayed_p()",
+    "CREATE PROCEDURE delayed_bad() BEGIN REPLACE DELAYED delayed_t SELECT *; REPLACE DELAYED delayed_t SELECT *; END",
+    "CALL delayed_bad()",
+    "DROP TABLE delayed_t",
+    "REPLACE DELAYED delayed_t SELECT *",
+    "DROP PROCEDURE IF EXISTS delayed_p",
+    "DROP PROCEDURE IF EXISTS delayed_bad"
 ]

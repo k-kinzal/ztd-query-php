@@ -27,6 +27,15 @@ final class TimeZoneOperandsTest extends TestCase
         self::assertTrue($rule->literal(new Grouped(new TemporalLiteral(TemporalForm::Timestamp, '2024-01-01 01:02:03'))));
     }
 
+    public function testInputKeepsNumericAggregateFamiliesOutsideTheTimestampRole(): void
+    {
+        $functions = \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::cases();
+        $column = new ColumnUse(new Name('t'));
+        $roles = array_map(static fn ($function): ?bool => (new TimeZoneOperands())->input(new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate($function, [$column])), $functions);
+        $expected = array_map(static fn ($function): ?bool => in_array($function, [\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Minimum, \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Maximum], true) ? null : false, $functions);
+        self::assertSame($expected, $roles);
+    }
+
     public function testInputDistinguishesFixedResultsFromUnresolvedNames(): void
     {
         $rule = new TimeZoneOperands();

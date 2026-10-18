@@ -39,6 +39,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Keeping the exact text of a number
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = 1.50');
  *     [$query->statement->query->where->right->text, $query->statement->query->where->right->form] // => ['1.50', \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Decimal]
+ * @example Rejecting a floating literal outside the finite DOUBLE domain
+ *     new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2e381') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class NumberLiteral implements LiteralExpression
 {
@@ -56,6 +58,7 @@ final class NumberLiteral implements LiteralExpression
     {
         $form = NumberForm::of($text);
         Check::input($form !== null, 'A number literal is an unsigned integer, decimal or floating-point number.');
+        Check::input($form !== NumberForm::Float || is_finite((float) $text), 'A floating literal represents a finite DOUBLE value.');
         $this->form = $form;
     }
 

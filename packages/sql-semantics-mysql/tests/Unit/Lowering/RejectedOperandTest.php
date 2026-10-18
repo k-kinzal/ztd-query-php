@@ -41,6 +41,17 @@ final class RejectedOperandTest extends TestCase
         self::assertTrue($failure->aborts);
     }
 
+    public function testCompletedKeepsOverflowAtTheNumericLiteralBoundary(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $sql = 'SELECT 2e381';
+        $failure = (new SyntaxWarnings())->rejected($semantics->parser()->parse($sql), $semantics->profile());
+        self::assertNotNull($failure);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral::class, $failure->problem);
+        self::assertSame(strlen($sql), $failure->end);
+        self::assertFalse($failure->aborts);
+    }
+
     public function testInitialPreservesACompletedColumnTargetBeforeOtherChecks(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');

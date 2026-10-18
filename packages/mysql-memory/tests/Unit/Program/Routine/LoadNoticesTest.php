@@ -48,6 +48,13 @@ final class LoadNoticesTest extends TestCase
         self::assertSame([], $session->diagnostics->conditions);
     }
 
+    public function testNoticePreservesEachDelayedWriteWhenTheDefinitionLoads(): void
+    {
+        $head = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto(true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Delayed, false, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
+        self::assertSame(3005, (new LoadNotices())->notice($head, \SqlSemantics\Contract\GrammarRelease::MySql5744)?->code());
+        self::assertNull((new LoadNotices())->notice($head, \SqlSemantics\Contract\GrammarRelease::MySql5651));
+    }
+
     public function testNoticeKeepsTheLegacyAnalysisWarningOnRoutineLoad(): void
     {
         $clause = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse();

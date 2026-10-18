@@ -36,7 +36,7 @@ final class RejectedOperand
         if ($setting !== null) {
             return $setting;
         }
-        $aborting = (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
+        $aborting = $this->completed($node, $lowering);
         if ($aborting !== null) {
             return new RejectedInput($aborting->problem, (new SourceRanges())->span($node)[1] ?? 0, $aborting->aborts);
         }
@@ -52,6 +52,15 @@ final class RejectedOperand
             return new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($node)[1] ?? 0, false);
         }
         return $this->lowered($node, $lowering);
+    }
+
+    /**
+     * Collects refusals that are owned by the completed production.
+     * Fractional declaration operands keep their enclosing declaration boundary.
+     */
+    public function completed(Node $node, Lowering $lowering): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        return ($node->name === 'NUM_literal' ? $lowering->numbers->completed($node) : null) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
     }
 
     /**

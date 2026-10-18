@@ -63,7 +63,7 @@ final class FormRule
             'simple_expr: row_subquery' => (new OperandRule())->subquery($queries->query($form->node(0))),
             'simple_expr: EXISTS ( subselect )' => (new OperandRule())->exists($queries->query($form->node(2))),
             'simple_expr: EXISTS table_subquery' => (new OperandRule())->exists($queries->query($form->node(1))),
-            'simple_expr: { ident expr }' => new OdbcEscape($names->identifier($form->node(1)), $expressions->expression($form->node(2))),
+            'simple_expr: { ident expr }' => $this->escape($form),
             'simple_expr: DEFAULT ( simple_ident )', 'simple_expr: DEFAULT_SYM ( simple_ident )' => new DefaultOfColumn($names->column($form->node(2))),
             'simple_expr: VALUES ( simple_ident_nospvar )' => new InsertedColumn($names->column($form->node(2))),
             'simple_expr: INTERVAL_SYM expr interval + expr' => (new IntervalRule($this->lowering))->arithmetic($expressions->operand($form->node(4)), $form->node(1), $form->node(2), leading: true),
@@ -72,6 +72,20 @@ final class FormRule
             default => (new ConstructRule($this->lowering))->lower($form),
         };
     }
+    /**
+     * Retains the escape kind without changing the operand's scalar, row or deferred role.
+     */
+    public function escape(Form $form): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+    {
+        $kind = $this->lowering->names->identifier($form->node(1));
+        $operand = $this->lowering->expressions->operand($form->node(2));
+        return match (true) {
+            $operand instanceof Scalar => new OdbcEscape($kind, $operand),
+            $operand instanceof RowOperand => new \SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow($operand, $kind),
+            default => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped($operand, $kind),
+        };
+    }
+
     /**
      * @param list<Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $elements Written row elements
      */

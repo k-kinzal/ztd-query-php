@@ -132,6 +132,38 @@ final class ModernWarnings
     }
 
     /**
+     * Merges token notices with completed reductions without repeating the same occurrence.
+     *
+     * A token scanner records the start of a token; a completed production records
+     * its end. Equal warning values at different occurrences remain distinct.
+     *
+     * @template T of object
+     * @param list<array{int, T}> $notices Completed semantic notices
+     * @param array<int, Deprecated> $operators Notices indexed by token start
+     * @param list<Token> $tokens The transient input tokens
+     * @return list<array{int, T|Deprecated}>
+     */
+    public function merge(array $notices, array $operators, array $tokens): array
+    {
+        $completed = [];
+        foreach ($notices as [$offset, $notice]) {
+            if ($notice instanceof Deprecated) {
+                $completed[$offset][$notice->name] = true;
+            }
+        }
+        $ends = [];
+        foreach ($tokens as $token) {
+            $ends[$token->offset] = $token->end();
+        }
+        foreach ($operators as $offset => $notice) {
+            if (!isset($completed[$ends[$offset] ?? -1][$notice->name])) {
+                $notices[] = [$offset, $notice];
+            }
+        }
+        return $notices;
+    }
+
+    /**
      * Finds accepted deprecated tokens in source order, before the refusal.
      *
      * Contiguous exclamation marks warn once per pair, with one further notice

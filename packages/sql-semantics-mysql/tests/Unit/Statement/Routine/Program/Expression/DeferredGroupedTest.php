@@ -19,6 +19,17 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGro
 #[Medium]
 final class DeferredGroupedTest extends TestCase
 {
+    public function testRenderRetainsAnOdbcEscapeKindAroundTheOperand(): void
+    {
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'));
+        $value = new DeferredGrouped($operand, new \SqlSemantics\Statement\Identifier\Name('foo'));
+        $semantics = new Semantics(Dialect::MySql);
+        $out = new \SqlSemantics\Rendering\Output((new \SqlSemantics\Platform\MySql\Platform())->codec($semantics->profile()));
+        $value->render($out);
+        self::assertSame($operand, $value->operand);
+        self::assertStringStartsWith('{ foo ', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+    }
+
     public function testDeriveScalarPreservesTheDeferredConstraint(): void
     {
         $value = new DeferredGrouped(new DeferredArithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new Row([new NumberLiteral('2'), new NumberLiteral('3')])));

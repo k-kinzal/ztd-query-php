@@ -26,6 +26,13 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 #[Medium]
 final class FormRuleTest extends TestCase
 {
+    public function testEscapeRetainsTheKindAndRowRoleInAComparison(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('SELECT {foo (1,2)} = (1,2)');
+        self::assertSame('SELECT {foo (1,2)} = (1,2)', $operation->toString());
+    }
+
     public function testLowerLowersTheBracketedAndColumnForms(): void
     {
         $platform = new Platform();

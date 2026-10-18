@@ -45,9 +45,7 @@ final class ContinuingRefusal
             $notices = array_values(array_filter($notices, static fn (array $notice): bool => $notice[0] <= ($modifiers->stoppedAt ?? $end)));
             $error = (new \MySqlMemory\Session\CacheOptions())->refusal($conflict);
         }
-        foreach ($operators as $offset => $notice) {
-            $notices[] = [$offset, $notice];
-        }
+        $notices = (new ModernWarnings())->merge($notices, $operators, $tokens);
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
         return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);
@@ -77,9 +75,7 @@ final class ContinuingRefusal
         } else {
             $operators = $warnings->before($tokens, $statement, $end, $parser);
         }
-        foreach ($operators as $offset => $notice) {
-            $notices[] = [$offset, $notice];
-        }
+        $notices = (new ModernWarnings())->merge($notices, $operators, $tokens);
         $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session)];
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $contextual = true;

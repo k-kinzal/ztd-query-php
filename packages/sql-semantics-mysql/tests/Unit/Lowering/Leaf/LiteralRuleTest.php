@@ -41,6 +41,12 @@ final class LiteralRuleTest extends TestCase
         self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString('utf32', "\0\x11\0"), true)], array_column($notices, 1));
     }
 
+    public function testNumberRefusesAnOverflowingFloatingOperand(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze('SELECT 2e381');
+    }
+
     public function testTemporalRefusesDateTextOutsideTheValueDomain(): void
     {
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);

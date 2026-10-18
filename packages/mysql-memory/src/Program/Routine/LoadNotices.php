@@ -95,6 +95,10 @@ final class LoadNotices
             $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ProcedureAnalyse;
             return $release === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice) : null;
         }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto && $node->priority === \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Delayed) {
+            $notice = $node->replace ? \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ReplaceDelayed : \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::InsertDelayed;
+            return $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice);
+        }
         if ($node instanceof CollationName) {
             return $node->deprecation($release);
         }

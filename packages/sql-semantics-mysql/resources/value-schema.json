@@ -1158,6 +1158,7 @@
         "operand": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\GroupedRow": {
+        "escape": "?SqlSemantics\\Statement\\Identifier\\Name",
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit": {
@@ -1280,6 +1281,9 @@
         "actual": "int",
         "expected": "int",
         "expression": "?SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedNumberLiteral": {
+        "text": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedScalar": {
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
@@ -2398,6 +2402,20 @@
         "arguments": "array",
         "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredDateArithmetic": {
+        "date": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "quantity": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "subtract": "bool",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredExtract": {
+        "source": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredGetFormat": {
+        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\TemporalFormat",
+        "standard": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredKeywordCall": {
         "arguments": "array",
         "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordFunction"
@@ -2476,6 +2494,7 @@
         "right": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredGrouped": {
+        "escape": "?SqlSemantics\\Statement\\Identifier\\Name",
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredLike": {

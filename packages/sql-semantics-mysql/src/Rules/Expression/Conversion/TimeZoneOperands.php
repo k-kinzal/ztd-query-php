@@ -16,7 +16,8 @@ use SqlSemantics\Statement\Scalar;
  *
  * A TIMESTAMP literal is accepted although its output field is DATETIME.
  * Other non-null literals cannot denote a TIMESTAMP input. Parentheses retain
- * that role. Names and compound expressions still require their resolved facts.
+ * that role. MIN/MAX and unresolved names still require their resolved facts.
+ * Numeric and JSON aggregates, EXTRACT and GET_FORMAT cannot produce TIMESTAMP.
  * Verified through standalone and stored SQL on MySQL 8.0, 8.4 and 9.1.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -38,8 +39,29 @@ final class TimeZoneOperands
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic
-            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall) {
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\Extract
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat) {
             return false;
+        }
+
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate) {
+            return match ($operand->function) {
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Minimum,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Maximum => null,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::BitAnd,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::BitOr,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::BitXor,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Average,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::StandardDeviation,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Variance,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::SampleStandardDeviation,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::SampleVariance,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::JsonArray,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect => false,
+            };
         }
 
         return $this->literal($operand);

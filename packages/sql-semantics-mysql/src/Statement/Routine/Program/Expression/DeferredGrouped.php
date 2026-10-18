@@ -13,6 +13,8 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * Grouping around a stored computation, preserving its deferred operand role.
  *
+ * Parentheses and ODBC braces retain the same operand and preparation condition.
+ *
  * @visibility public
  * @example Keeping stored arithmetic outside Scalar
  *     $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')]));
@@ -24,8 +26,9 @@ final class DeferredGrouped implements DeferredOperand
 
     /**
      * @param DeferredOperand $operand The grouped stored computation
+     * @param \SqlSemantics\Statement\Identifier\Name|null $escape An ODBC escape kind, or null for ordinary parentheses
      */
-    public function __construct(public readonly DeferredOperand $operand)
+    public function __construct(public readonly DeferredOperand $operand, public readonly ?\SqlSemantics\Statement\Identifier\Name $escape = null)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -61,6 +64,10 @@ final class DeferredGrouped implements DeferredOperand
      */
     public function render(Output $out): void
     {
+        if ($this->escape !== null) {
+            $out->symbol('{')->name($this->escape, \SqlSemantics\Contract\NameUse::Label)->node($this->operand)->symbol('}');
+            return;
+        }
         $out->symbol('(')->node($this->operand)->symbol(')');
     }
 }

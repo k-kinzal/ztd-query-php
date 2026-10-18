@@ -119,7 +119,7 @@ final class LiteralRule
             $form = $this->lowering->productions->form($form->node(0));
         }
         if (isset(self::NUMBERS[$form->signature])) {
-            return $this->lowering->leaves->record(new NumberLiteral($form->token(0)->text));
+            return $this->number($form->node);
         }
         if (isset(self::TEMPORAL[$form->signature])) {
             return $this->temporal($form);
@@ -208,6 +208,7 @@ final class LiteralRule
     /**
      * Lowers an unsigned number literal.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the floating literal exceeds its finite domain
      * @throws ImplementationGap When the production has no rule
      */
     public function number(Node $number): NumberLiteral
@@ -218,6 +219,11 @@ final class LiteralRule
         }
         if (!isset(self::NUMBERS[$form->signature])) {
             throw ImplementationGap::production($form);
+        }
+
+        $notice = $this->lowering->numbers->completed($form->node);
+        if ($notice !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($notice->problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $notice->aborts);
         }
 
         return $this->lowering->leaves->record(new NumberLiteral($form->token(0)->text));

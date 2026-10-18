@@ -113,6 +113,27 @@ final class NumberRuleTest extends TestCase
         $rule->integral(new Node('real_ulong_num', 4, [new Node('dec_num_error', 0, [new Node('dec_num', 0, [new Token(0, 'DECIMAL_NUM', '1.5', 20)])])]));
     }
 
+    public function testCompletedPreservesFloatingErrorsBeforeLaterMalformedInput(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
+        $sql = 'SELECT 2e381, 1e309, ?';
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser('mysql-8.4.7'), $sql, strlen($sql), $profile);
+
+        self::assertEquals([
+            new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral('2e381')),
+            new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral('1e309')),
+        ], array_column($notices, 1));
+    }
+
+    public function testCompletedStopsAtTheFirstFloatingErrorOnMySql56(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        $sql = 'SELECT 2e381, 1e309, ?';
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser('mysql-5.6.51'), $sql, strlen($sql), $profile);
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral('2e381'), true)], array_column($notices, 1));
+    }
+
     public function testCompletedRetainsTheAbortingIntegerTokenDiagnostic(): void
     {
         $platform = new Platform();

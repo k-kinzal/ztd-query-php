@@ -18,6 +18,15 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class ModernWarningsTest extends TestCase
 {
+    public function testMergeRetainsRepeatedOccurrencesButNotTheirSecondObservation(): void
+    {
+        $tokens = [new \SqlParser\Lexer\Token(0, 'DELAYED_SYM', 'DELAYED', 8), new \SqlParser\Lexer\Token(0, 'DELAYED_SYM', 'DELAYED', 40)];
+        $completed = [[15, Deprecated::ReplaceDelayed], [47, Deprecated::ReplaceDelayed]];
+        $operators = [8 => Deprecated::ReplaceDelayed, 40 => Deprecated::ReplaceDelayed, 56 => Deprecated::NoCache];
+
+        self::assertSame([...$completed, [56, Deprecated::NoCache]], (new ModernWarnings())->merge($completed, $operators, $tokens));
+    }
+
     public function testIntroducersStopsAfterTheRefusedLookaheadAndIgnoresQuotedNames(): void
     {
         $sql = "SELECT '_utf8mb3', _utf8mb3 X'00', _ucs2 X'00'";

@@ -79,10 +79,18 @@ final class NumberRule
     }
 
     /**
-     * Preserves the grammar's integer-token refusal before any later malformed input.
+     * Preserves numeric input refusals before any later malformed input.
+     *
+     * MySQL 5.6 stops at an overflowing DOUBLE literal; subsequent releases
+     * record it and continue reading the statement.
      */
     public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
+        if ($node->name === 'NUM_literal' && $this->lowering->form($node)->signature === 'NUM_literal: FLOAT_NUM') {
+            $text = $this->lowering->form($node)->token(0)->text;
+            return is_finite((float) $text) ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral($text), $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        }
+
         return $node->name === 'dec_num_error' ? new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new FractionalNumber($this->numeral($node)), true) : null;
     }
 

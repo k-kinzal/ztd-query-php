@@ -19,6 +19,16 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testErrorFormatsARefusedFloatingOperandWithoutSourceText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated input';
+        $error = (new InputErrors())->error(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral('2e381'), $session);
+
+        self::assertNotNull($error);
+        self::assertSame([1367, '22007', "Illegal double '2e381' value found during parsing"], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
+    }
+
     public function testCastSizeKeepsOnlyTheRequestedDiagnosticLabel(): void
     {
         $bound = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision, '', 66, 65);

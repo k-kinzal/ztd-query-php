@@ -37,6 +37,12 @@ use SqlSemantics\Statement\Type\Known;
  * @visibility public
  * @example Refusing a literal without a TIMESTAMP input role
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a fixed numeric result even when its value is NULL
+ *     $source = new \SqlSemantics\Platform\MySql\Statement\Call\Extract(\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Day, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral());
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone($source, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a numeric aggregate with unresolved input dependencies
+ *     $source = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Average, [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('t'))]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone($source, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the zone
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CAST(a AT TIME ZONE 'UTC' AS DATETIME(6))");
  *     [$query->statement->query->where->zone->value, $query->statement->query->where->precision] // => ['UTC', '6']

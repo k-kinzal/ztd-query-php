@@ -156,6 +156,15 @@ final class ReaderTest extends TestCase
         self::assertSame(1064, (new Reader())->refusal($tree, new AnalysisException('refused'), 'SELECT 1', '', $session)->getCode());
     }
 
+    public function testRejectionKeepsOneDelayedWarningForACompleteRefusedWrite(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run('REPLACE DELAYED t SELECT *');
+
+        self::assertSame([['Warning', 3005, 'REPLACE DELAYED is no longer supported. The statement was converted to REPLACE.'], ['Error', 1146, "Table 'd.t' doesn't exist"]], $session->diagnostics->conditions);
+    }
+
     public function testRejectionRetainsTheTypedProblemAndPrecedingNotices(): void
     {
         $session = (new Instance())->connect();

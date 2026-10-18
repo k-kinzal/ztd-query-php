@@ -81,6 +81,15 @@ final class NumberLiteralTest extends TestCase
         self::assertInstanceOf(Decimal::class, $huge);
     }
 
+    public function testTypePreservesFiniteBoundaryAndUnderflowSpellings(): void
+    {
+        $values = ['1.7976931348623158e308', '1e-309', '1e-400', '0e99999', '1e-99999'];
+        $literals = array_map(static fn (string $text): NumberLiteral => new NumberLiteral($text), $values);
+
+        self::assertSame($values, array_column($literals, 'text'));
+        self::assertSame(array_fill(0, count($values), NumberForm::Float), array_column($literals, 'form'));
+    }
+
     public function testTypeAnswersDoubleForAnExponent(): void
     {
         $type = (new NumberLiteral('1.5E-3'))->type();
