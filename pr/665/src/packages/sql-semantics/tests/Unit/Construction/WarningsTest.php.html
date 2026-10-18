@@ -123,8 +123,26 @@
 <span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a></span>
 <span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-var">$before</span>, <span class="tok-var">$notice</span>, <span class="tok-var">$after</span>, <span class="tok-var">$unlocated</span>], <span class="tok-var">$warnings</span>-&gt;<span class="tok-id">all</span>());</span>
 <span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    }</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>}</span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testFilteredKeepsInputNoticesAndRestoresTheOuterScope</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>    {</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>        <span class="tok-var">$kept</span> = <span class="tok-id">self</span>::<span class="tok-id">createStub</span>(<span class="tok-id">Warning</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        <span class="tok-var">$omitted</span> = <span class="tok-id">self</span>::<span class="tok-id">createStub</span>(<span class="tok-id">Warning</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>        <span class="tok-var">$syntax</span> = <span class="tok-id">self</span>::<span class="tok-id">createStub</span>(<span class="tok-id">Warning</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-var">$node</span> = <span class="tok-kw">new</span> <span class="tok-id">IntegerLiteral</span>(<span class="tok-str">&#039;1&#039;</span>);</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>        <span class="tok-var">$warnings</span> = <span class="tok-kw">new</span> <span class="tok-id">Warnings</span>(<span class="tok-kw">new</span> <span class="tok-id">SourceMap</span>([], [<span class="tok-kw">new</span> <span class="tok-id">SourceNotice</span>(<span class="tok-var">$node</span>, <span class="tok-var">$syntax</span>, <span class="tok-num">0</span>)]));</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        <span class="tok-var">$answer</span> = <span class="tok-var">$warnings</span>-&gt;<span class="tok-id">filtered</span>(<span class="tok-kw">static</span> <span class="tok-kw">function</span> () <span class="tok-kw">use</span> (<span class="tok-var">$warnings</span>, <span class="tok-var">$kept</span>, <span class="tok-var">$omitted</span>): <span class="tok-id">int</span> {</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>            <span class="tok-var">$warnings</span>-&gt;<span class="tok-id">append</span>(<span class="tok-var">$kept</span>, <span class="tok-id">null</span>);</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>            <span class="tok-var">$warnings</span>-&gt;<span class="tok-id">append</span>(<span class="tok-var">$omitted</span>, <span class="tok-id">null</span>);</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>            <span class="tok-kw">return</span> <span class="tok-num">42</span>;</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>        }, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">Warning</span> <span class="tok-var">$warning</span>): <span class="tok-id">bool</span> =&gt; <span class="tok-var">$warning</span> === <span class="tok-var">$kept</span>);</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>        <span class="tok-var">$warnings</span>-&gt;<span class="tok-id">append</span>(<span class="tok-var">$omitted</span>, <span class="tok-id">null</span>);</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a></span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">42</span>, <span class="tok-var">$answer</span>);</span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-var">$syntax</span>, <span class="tok-var">$kept</span>, <span class="tok-var">$omitted</span>], <span class="tok-var">$warnings</span>-&gt;<span class="tok-id">all</span>());</span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>    }</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a></span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>}</span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

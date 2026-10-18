@@ -269,7 +269,7 @@
 <span class="src-line" id="L228" data-diff="same"><a class="ln" href="#L228">228</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">OptionalWords</span>::<span class="tok-id">Omitted</span>, <span class="tok-var">$search</span>-&gt;<span class="tok-id">parentheses</span>);</span>
 <span class="src-line" id="L229" data-diff="same"><a class="ln" href="#L229">229</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">OptionalWords</span>::<span class="tok-id">Written</span>, <span class="tok-var">$search</span>-&gt;<span class="tok-id">stated</span>);</span>
 <span class="src-line" id="L230" data-diff="same"><a class="ln" href="#L230">230</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-id">FullTextMode</span>::<span class="tok-id">NaturalLanguage</span>, <span class="tok-var">$search</span>-&gt;<span class="tok-id">mode</span>);</span>
-<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a>    }</span>
+<span class="src-line" id="L231" data-diff="same"><a class="ln" href="#L231">231</a>    }</span>
 <span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a></span>
 <span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCharsetRetainsARowAsAStoredOperand</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>    {</span>
@@ -283,9 +283,17 @@
 <span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Dialect</span>::<span class="tok-id">MySql</span>);</span>
 <span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a>        <span class="tok-var">$operation</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1,2) END&#039;</span>);</span>
 <span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1, 2) END&#039;</span>, <span class="tok-var">$operation</span>-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L245" data-diff="same"><a class="ln" href="#L245">245</a>    }</span>
-<span class="src-line" id="L246" data-diff="same"><a class="ln" href="#L246">246</a>}</span>
-<span class="src-line" id="L247" data-diff="same"><a class="ln" href="#L247">247</a></span>
+<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>    }</span>
+<span class="src-line" id="L246" data-diff="added"><a class="ln" href="#L246">246</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testBinaryRetainsDeferredDependenciesOfAnUnusedCte</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a>    {</span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Dialect</span>::<span class="tok-id">MySql</span>);</span>
+<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a>        <span class="tok-var">$operation</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;WITH x AS (SELECT BINARY ROW(1,2)) SELECT 7&#039;</span>);</span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$operation</span>-&gt;<span class="tok-id">toString</span>(), <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$operation</span>-&gt;<span class="tok-id">toString</span>())-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
+<span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a>    }</span>
+<span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a></span>
+<span class="src-line" id="L254" data-diff="same"><a class="ln" href="#L254">254</a>}</span>
+<span class="src-line" id="L255" data-diff="same"><a class="ln" href="#L255">255</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

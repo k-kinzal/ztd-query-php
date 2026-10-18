@@ -389,101 +389,103 @@
 <span class="src-line" id="L337" data-diff="added"><a class="ln" href="#L337">337</a><span class="tok-com">     * @template T</span></span>
 <span class="src-line" id="L338" data-diff="added"><a class="ln" href="#L338">338</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L339" data-diff="added"><a class="ln" href="#L339">339</a><span class="tok-com">     * @param Closure(): T $derive Derives the parts of the definition</span></span>
-<span class="src-line" id="L340" data-diff="added"><a class="ln" href="#L340">340</a><span class="tok-com">     * @return T</span></span>
-<span class="src-line" id="L341" data-diff="added"><a class="ln" href="#L341">341</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L342" data-diff="added"><a class="ln" href="#L342">342</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deferred</span>(<span class="tok-id">Node</span> <span class="tok-var">$definition</span>, <span class="tok-id">Closure</span> <span class="tok-var">$derive</span>): <span class="tok-id">mixed</span></span>
-<span class="src-line" id="L343" data-diff="added"><a class="ln" href="#L343">343</a>    {</span>
-<span class="src-line" id="L344" data-diff="added"><a class="ln" href="#L344">344</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">deferred</span>(<span class="tok-var">$definition</span>, <span class="tok-var">$derive</span>);</span>
-<span class="src-line" id="L345" data-diff="added"><a class="ln" href="#L345">345</a>    }</span>
-<span class="src-line" id="L346" data-diff="added"><a class="ln" href="#L346">346</a></span>
-<span class="src-line" id="L347" data-diff="added"><a class="ln" href="#L347">347</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L348" data-diff="same"><a class="ln" href="#L348">348</a><span class="tok-com">     * Resolves a relation name: the nearest common table of the environment, then the context.</span></span>
-<span class="src-line" id="L349" data-diff="added"><a class="ln" href="#L349">349</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L350" data-diff="added"><a class="ln" href="#L350">350</a><span class="tok-com">     * Resolving a name to a common table reports the diagnostics its query</span></span>
-<span class="src-line" id="L351" data-diff="added"><a class="ln" href="#L351">351</a><span class="tok-com">     * withheld (deferred()), once.</span></span>
-<span class="src-line" id="L352" data-diff="same"><a class="ln" href="#L352">352</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L353" data-diff="same"><a class="ln" href="#L353">353</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">table</span>(<span class="tok-id">QualifiedName</span> <span class="tok-var">$name</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">TableResolution</span></span>
-<span class="src-line" id="L354" data-diff="same"><a class="ln" href="#L354">354</a>    {</span>
-<span class="src-line" id="L355" data-diff="same"><a class="ln" href="#L355">355</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span>-&gt;<span class="tok-id">schema</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L356" data-diff="same"><a class="ln" href="#L356">356</a>            <span class="tok-var">$common</span> = <span class="tok-var">$environment</span>-&gt;<span class="tok-id">commonTable</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">name</span>);</span>
-<span class="src-line" id="L357" data-diff="same"><a class="ln" href="#L357">357</a>            <span class="tok-kw">if</span> (<span class="tok-var">$common</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L358" data-diff="added"><a class="ln" href="#L358">358</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">release</span>(<span class="tok-var">$common</span>-&gt;<span class="tok-id">definition</span>);</span>
-<span class="src-line" id="L359" data-diff="added"><a class="ln" href="#L359">359</a></span>
-<span class="src-line" id="L360" data-diff="same"><a class="ln" href="#L360">360</a>                <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">CommonTable</span>(<span class="tok-var">$common</span>-&gt;<span class="tok-id">definition</span>);</span>
-<span class="src-line" id="L361" data-diff="same"><a class="ln" href="#L361">361</a>            }</span>
-<span class="src-line" id="L362" data-diff="same"><a class="ln" href="#L362">362</a>        }</span>
-<span class="src-line" id="L363" data-diff="same"><a class="ln" href="#L363">363</a></span>
-<span class="src-line" id="L364" data-diff="same"><a class="ln" href="#L364">364</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">TableLookup</span>())-&gt;<span class="tok-id">find</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">context</span>, <span class="tok-var">$name</span>);</span>
-<span class="src-line" id="L365" data-diff="same"><a class="ln" href="#L365">365</a>    }</span>
-<span class="src-line" id="L366" data-diff="same"><a class="ln" href="#L366">366</a></span>
-<span class="src-line" id="L367" data-diff="same"><a class="ln" href="#L367">367</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L368" data-diff="same"><a class="ln" href="#L368">368</a><span class="tok-com">     * Records a relation declaration the statement provides to a context.</span></span>
-<span class="src-line" id="L369" data-diff="same"><a class="ln" href="#L369">369</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L370" data-diff="same"><a class="ln" href="#L370">370</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-kw">declare</span>(<span class="tok-id">Table</span> <span class="tok-var">$table</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L371" data-diff="same"><a class="ln" href="#L371">371</a>    {</span>
-<span class="src-line" id="L372" data-diff="same"><a class="ln" href="#L372">372</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">declarations</span>[] = <span class="tok-var">$table</span>;</span>
-<span class="src-line" id="L373" data-diff="same"><a class="ln" href="#L373">373</a>    }</span>
-<span class="src-line" id="L374" data-diff="same"><a class="ln" href="#L374">374</a></span>
-<span class="src-line" id="L375" data-diff="same"><a class="ln" href="#L375">375</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L376" data-diff="same"><a class="ln" href="#L376">376</a><span class="tok-com">     * Records the rows the root statement returns.</span></span>
-<span class="src-line" id="L377" data-diff="same"><a class="ln" href="#L377">377</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L378" data-diff="same"><a class="ln" href="#L378">378</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">output</span>(<span class="tok-id">QueryFact</span> <span class="tok-var">$fact</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L379" data-diff="same"><a class="ln" href="#L379">379</a>    {</span>
-<span class="src-line" id="L380" data-diff="same"><a class="ln" href="#L380">380</a>        <span class="tok-id">Check</span>::<span class="tok-id">invariant</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">output</span> === <span class="tok-id">null</span>, <span class="tok-str">&#039;A statement has one output.&#039;</span>);</span>
-<span class="src-line" id="L381" data-diff="same"><a class="ln" href="#L381">381</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">output</span> = <span class="tok-var">$fact</span>;</span>
-<span class="src-line" id="L382" data-diff="same"><a class="ln" href="#L382">382</a>    }</span>
-<span class="src-line" id="L383" data-diff="same"><a class="ln" href="#L383">383</a></span>
-<span class="src-line" id="L384" data-diff="same"><a class="ln" href="#L384">384</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L385" data-diff="same"><a class="ln" href="#L385">385</a><span class="tok-com">     * Records a semantic problem that is not a resolution outcome.</span></span>
-<span class="src-line" id="L386" data-diff="same"><a class="ln" href="#L386">386</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L387" data-diff="same"><a class="ln" href="#L387">387</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">report</span>(<span class="tok-id">Diagnostic</span> <span class="tok-var">$diagnostic</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L388" data-diff="same"><a class="ln" href="#L388">388</a>    {</span>
+<span class="src-line" id="L340" data-diff="added"><a class="ln" href="#L340">340</a><span class="tok-com">     * @param Closure(Warning): bool|null $warnings Optional warning selection for an unused semantic role</span></span>
+<span class="src-line" id="L341" data-diff="added"><a class="ln" href="#L341">341</a><span class="tok-com">     * @return T</span></span>
+<span class="src-line" id="L342" data-diff="added"><a class="ln" href="#L342">342</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L343" data-diff="added"><a class="ln" href="#L343">343</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deferred</span>(<span class="tok-id">Node</span> <span class="tok-var">$definition</span>, <span class="tok-id">Closure</span> <span class="tok-var">$derive</span>, ?<span class="tok-id">Closure</span> <span class="tok-var">$warnings</span> = <span class="tok-id">null</span>): <span class="tok-id">mixed</span></span>
+<span class="src-line" id="L344" data-diff="added"><a class="ln" href="#L344">344</a>    {</span>
+<span class="src-line" id="L345" data-diff="added"><a class="ln" href="#L345">345</a>        <span class="tok-kw">return</span> <span class="tok-var">$warnings</span> === <span class="tok-id">null</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">deferred</span>(<span class="tok-var">$definition</span>, <span class="tok-var">$derive</span>)</span>
+<span class="src-line" id="L346" data-diff="added"><a class="ln" href="#L346">346</a>            : <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">filtered</span>(<span class="tok-kw">fn</span> () =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">deferred</span>(<span class="tok-var">$definition</span>, <span class="tok-var">$derive</span>), <span class="tok-var">$warnings</span>);</span>
+<span class="src-line" id="L347" data-diff="added"><a class="ln" href="#L347">347</a>    }</span>
+<span class="src-line" id="L348" data-diff="added"><a class="ln" href="#L348">348</a></span>
+<span class="src-line" id="L349" data-diff="added"><a class="ln" href="#L349">349</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L350" data-diff="same"><a class="ln" href="#L350">350</a><span class="tok-com">     * Resolves a relation name: the nearest common table of the environment, then the context.</span></span>
+<span class="src-line" id="L351" data-diff="added"><a class="ln" href="#L351">351</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L352" data-diff="added"><a class="ln" href="#L352">352</a><span class="tok-com">     * Resolving a name to a common table reports the diagnostics its query</span></span>
+<span class="src-line" id="L353" data-diff="added"><a class="ln" href="#L353">353</a><span class="tok-com">     * withheld (deferred()), once.</span></span>
+<span class="src-line" id="L354" data-diff="same"><a class="ln" href="#L354">354</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L355" data-diff="same"><a class="ln" href="#L355">355</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">table</span>(<span class="tok-id">QualifiedName</span> <span class="tok-var">$name</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">TableResolution</span></span>
+<span class="src-line" id="L356" data-diff="same"><a class="ln" href="#L356">356</a>    {</span>
+<span class="src-line" id="L357" data-diff="same"><a class="ln" href="#L357">357</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span>-&gt;<span class="tok-id">schema</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L358" data-diff="same"><a class="ln" href="#L358">358</a>            <span class="tok-var">$common</span> = <span class="tok-var">$environment</span>-&gt;<span class="tok-id">commonTable</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">name</span>);</span>
+<span class="src-line" id="L359" data-diff="same"><a class="ln" href="#L359">359</a>            <span class="tok-kw">if</span> (<span class="tok-var">$common</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L360" data-diff="added"><a class="ln" href="#L360">360</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">release</span>(<span class="tok-var">$common</span>-&gt;<span class="tok-id">definition</span>);</span>
+<span class="src-line" id="L361" data-diff="added"><a class="ln" href="#L361">361</a></span>
+<span class="src-line" id="L362" data-diff="same"><a class="ln" href="#L362">362</a>                <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">CommonTable</span>(<span class="tok-var">$common</span>-&gt;<span class="tok-id">definition</span>);</span>
+<span class="src-line" id="L363" data-diff="same"><a class="ln" href="#L363">363</a>            }</span>
+<span class="src-line" id="L364" data-diff="same"><a class="ln" href="#L364">364</a>        }</span>
+<span class="src-line" id="L365" data-diff="same"><a class="ln" href="#L365">365</a></span>
+<span class="src-line" id="L366" data-diff="same"><a class="ln" href="#L366">366</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">TableLookup</span>())-&gt;<span class="tok-id">find</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">context</span>, <span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L367" data-diff="same"><a class="ln" href="#L367">367</a>    }</span>
+<span class="src-line" id="L368" data-diff="same"><a class="ln" href="#L368">368</a></span>
+<span class="src-line" id="L369" data-diff="same"><a class="ln" href="#L369">369</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L370" data-diff="same"><a class="ln" href="#L370">370</a><span class="tok-com">     * Records a relation declaration the statement provides to a context.</span></span>
+<span class="src-line" id="L371" data-diff="same"><a class="ln" href="#L371">371</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L372" data-diff="same"><a class="ln" href="#L372">372</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-kw">declare</span>(<span class="tok-id">Table</span> <span class="tok-var">$table</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L373" data-diff="same"><a class="ln" href="#L373">373</a>    {</span>
+<span class="src-line" id="L374" data-diff="same"><a class="ln" href="#L374">374</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">declarations</span>[] = <span class="tok-var">$table</span>;</span>
+<span class="src-line" id="L375" data-diff="same"><a class="ln" href="#L375">375</a>    }</span>
+<span class="src-line" id="L376" data-diff="same"><a class="ln" href="#L376">376</a></span>
+<span class="src-line" id="L377" data-diff="same"><a class="ln" href="#L377">377</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L378" data-diff="same"><a class="ln" href="#L378">378</a><span class="tok-com">     * Records the rows the root statement returns.</span></span>
+<span class="src-line" id="L379" data-diff="same"><a class="ln" href="#L379">379</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L380" data-diff="same"><a class="ln" href="#L380">380</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">output</span>(<span class="tok-id">QueryFact</span> <span class="tok-var">$fact</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L381" data-diff="same"><a class="ln" href="#L381">381</a>    {</span>
+<span class="src-line" id="L382" data-diff="same"><a class="ln" href="#L382">382</a>        <span class="tok-id">Check</span>::<span class="tok-id">invariant</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">output</span> === <span class="tok-id">null</span>, <span class="tok-str">&#039;A statement has one output.&#039;</span>);</span>
+<span class="src-line" id="L383" data-diff="same"><a class="ln" href="#L383">383</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">output</span> = <span class="tok-var">$fact</span>;</span>
+<span class="src-line" id="L384" data-diff="same"><a class="ln" href="#L384">384</a>    }</span>
+<span class="src-line" id="L385" data-diff="same"><a class="ln" href="#L385">385</a></span>
+<span class="src-line" id="L386" data-diff="same"><a class="ln" href="#L386">386</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L387" data-diff="same"><a class="ln" href="#L387">387</a><span class="tok-com">     * Records a semantic problem that is not a resolution outcome.</span></span>
+<span class="src-line" id="L388" data-diff="same"><a class="ln" href="#L388">388</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L389" data-diff="same"><a class="ln" href="#L389">389</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">report</span>(<span class="tok-id">Diagnostic</span> <span class="tok-var">$diagnostic</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L390" data-diff="same"><a class="ln" href="#L390">390</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">248</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">diagnostics</span>[] = <span class="tok-var">$diagnostic</span>;</span>
-<span class="src-line" id="L389" data-diff="added"><a class="ln" href="#L389">389</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">report</span>(<span class="tok-var">$diagnostic</span>);</span>
-<span class="src-line" id="L390" data-diff="same"><a class="ln" href="#L390">390</a>    }</span>
-<span class="src-line" id="L391" data-diff="same"><a class="ln" href="#L391">391</a></span>
-<span class="src-line" id="L392" data-diff="same"><a class="ln" href="#L392">392</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L393" data-diff="added"><a class="ln" href="#L393">393</a><span class="tok-com">     * Records a condition the statement raises without failing.</span></span>
-<span class="src-line" id="L394" data-diff="added"><a class="ln" href="#L394">394</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L395" data-diff="added"><a class="ln" href="#L395">395</a><span class="tok-com">     * @param Node|null $at The occurrence whose input boundary orders this warning, or the occurrence currently being derived</span></span>
-<span class="src-line" id="L396" data-diff="added"><a class="ln" href="#L396">396</a><span class="tok-com">     * @param bool $after Whether the warning follows that occurrence&#039;s input, rather than preceding it</span></span>
-<span class="src-line" id="L397" data-diff="added"><a class="ln" href="#L397">397</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L398" data-diff="added"><a class="ln" href="#L398">398</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">warn</span>(<span class="tok-id">Warning</span> <span class="tok-var">$warning</span>, ?<span class="tok-id">Node</span> <span class="tok-var">$at</span> = <span class="tok-id">null</span>, <span class="tok-id">bool</span> <span class="tok-var">$after</span> = <span class="tok-id">true</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L399" data-diff="added"><a class="ln" href="#L399">399</a>    {</span>
-<span class="src-line" id="L400" data-diff="added"><a class="ln" href="#L400">400</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">append</span>(<span class="tok-var">$warning</span>, <span class="tok-var">$at</span> ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">reading</span>, <span class="tok-var">$after</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">instructions</span>-&gt;<span class="tok-id">current</span>());</span>
-<span class="src-line" id="L401" data-diff="added"><a class="ln" href="#L401">401</a>    }</span>
-<span class="src-line" id="L402" data-diff="added"><a class="ln" href="#L402">402</a></span>
-<span class="src-line" id="L403" data-diff="added"><a class="ln" href="#L403">403</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L404" data-diff="added"><a class="ln" href="#L404">404</a><span class="tok-com">     * Merges input spelling notices with warnings whose semantic derivation records a source boundary.</span></span>
-<span class="src-line" id="L405" data-diff="added"><a class="ln" href="#L405">405</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L406" data-diff="added"><a class="ln" href="#L406">406</a><span class="tok-com">     * Unlocated warnings retain their relative emission order after located warnings. Without</span></span>
-<span class="src-line" id="L407" data-diff="added"><a class="ln" href="#L407">407</a><span class="tok-com">     * spelling notices the established derivation order is retained unchanged.</span></span>
-<span class="src-line" id="L408" data-diff="added"><a class="ln" href="#L408">408</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L409" data-diff="added"><a class="ln" href="#L409">409</a><span class="tok-com">     * @return list&lt;Warning&gt;</span></span>
-<span class="src-line" id="L410" data-diff="added"><a class="ln" href="#L410">410</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L411" data-diff="added"><a class="ln" href="#L411">411</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">readingWarnings</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L412" data-diff="added"><a class="ln" href="#L412">412</a>    {</span>
-<span class="src-line" id="L413" data-diff="added"><a class="ln" href="#L413">413</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">all</span>();</span>
-<span class="src-line" id="L414" data-diff="added"><a class="ln" href="#L414">414</a>    }</span>
-<span class="src-line" id="L415" data-diff="added"><a class="ln" href="#L415">415</a></span>
-<span class="src-line" id="L416" data-diff="added"><a class="ln" href="#L416">416</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L417" data-diff="added"><a class="ln" href="#L417">417</a><span class="tok-com">     * Orders the located warnings of this statement by input position after its dependencies are derived.</span></span>
-<span class="src-line" id="L418" data-diff="added"><a class="ln" href="#L418">418</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L419" data-diff="added"><a class="ln" href="#L419">419</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">orderWarnings</span>(<span class="tok-id">Node</span> <span class="tok-var">$scope</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L420" data-diff="added"><a class="ln" href="#L420">420</a>    {</span>
-<span class="src-line" id="L421" data-diff="added"><a class="ln" href="#L421">421</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">order</span>(<span class="tok-var">$scope</span>);</span>
-<span class="src-line" id="L422" data-diff="added"><a class="ln" href="#L422">422</a>    }</span>
-<span class="src-line" id="L423" data-diff="added"><a class="ln" href="#L423">423</a></span>
-<span class="src-line" id="L424" data-diff="added"><a class="ln" href="#L424">424</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L425" data-diff="same"><a class="ln" href="#L425">425</a><span class="tok-com">     * Freezes the recorded facts.</span></span>
-<span class="src-line" id="L426" data-diff="same"><a class="ln" href="#L426">426</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L427" data-diff="same"><a class="ln" href="#L427">427</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">facts</span>(): <span class="tok-id">Facts</span></span>
-<span class="src-line" id="L428" data-diff="same"><a class="ln" href="#L428">428</a>    {</span>
+<span class="src-line" id="L391" data-diff="added"><a class="ln" href="#L391">391</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">report</span>(<span class="tok-var">$diagnostic</span>);</span>
+<span class="src-line" id="L392" data-diff="same"><a class="ln" href="#L392">392</a>    }</span>
+<span class="src-line" id="L393" data-diff="same"><a class="ln" href="#L393">393</a></span>
+<span class="src-line" id="L394" data-diff="same"><a class="ln" href="#L394">394</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L395" data-diff="added"><a class="ln" href="#L395">395</a><span class="tok-com">     * Records a condition the statement raises without failing.</span></span>
+<span class="src-line" id="L396" data-diff="added"><a class="ln" href="#L396">396</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L397" data-diff="added"><a class="ln" href="#L397">397</a><span class="tok-com">     * @param Node|null $at The occurrence whose input boundary orders this warning, or the occurrence currently being derived</span></span>
+<span class="src-line" id="L398" data-diff="added"><a class="ln" href="#L398">398</a><span class="tok-com">     * @param bool $after Whether the warning follows that occurrence&#039;s input, rather than preceding it</span></span>
+<span class="src-line" id="L399" data-diff="added"><a class="ln" href="#L399">399</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L400" data-diff="added"><a class="ln" href="#L400">400</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">warn</span>(<span class="tok-id">Warning</span> <span class="tok-var">$warning</span>, ?<span class="tok-id">Node</span> <span class="tok-var">$at</span> = <span class="tok-id">null</span>, <span class="tok-id">bool</span> <span class="tok-var">$after</span> = <span class="tok-id">true</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L401" data-diff="added"><a class="ln" href="#L401">401</a>    {</span>
+<span class="src-line" id="L402" data-diff="added"><a class="ln" href="#L402">402</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">append</span>(<span class="tok-var">$warning</span>, <span class="tok-var">$at</span> ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">reading</span>, <span class="tok-var">$after</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">instructions</span>-&gt;<span class="tok-id">current</span>());</span>
+<span class="src-line" id="L403" data-diff="added"><a class="ln" href="#L403">403</a>    }</span>
+<span class="src-line" id="L404" data-diff="added"><a class="ln" href="#L404">404</a></span>
+<span class="src-line" id="L405" data-diff="added"><a class="ln" href="#L405">405</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L406" data-diff="added"><a class="ln" href="#L406">406</a><span class="tok-com">     * Merges input spelling notices with warnings whose semantic derivation records a source boundary.</span></span>
+<span class="src-line" id="L407" data-diff="added"><a class="ln" href="#L407">407</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L408" data-diff="added"><a class="ln" href="#L408">408</a><span class="tok-com">     * Unlocated warnings retain their relative emission order after located warnings. Without</span></span>
+<span class="src-line" id="L409" data-diff="added"><a class="ln" href="#L409">409</a><span class="tok-com">     * spelling notices the established derivation order is retained unchanged.</span></span>
+<span class="src-line" id="L410" data-diff="added"><a class="ln" href="#L410">410</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L411" data-diff="added"><a class="ln" href="#L411">411</a><span class="tok-com">     * @return list&lt;Warning&gt;</span></span>
+<span class="src-line" id="L412" data-diff="added"><a class="ln" href="#L412">412</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L413" data-diff="added"><a class="ln" href="#L413">413</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">readingWarnings</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L414" data-diff="added"><a class="ln" href="#L414">414</a>    {</span>
+<span class="src-line" id="L415" data-diff="added"><a class="ln" href="#L415">415</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">all</span>();</span>
+<span class="src-line" id="L416" data-diff="added"><a class="ln" href="#L416">416</a>    }</span>
+<span class="src-line" id="L417" data-diff="added"><a class="ln" href="#L417">417</a></span>
+<span class="src-line" id="L418" data-diff="added"><a class="ln" href="#L418">418</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L419" data-diff="added"><a class="ln" href="#L419">419</a><span class="tok-com">     * Orders the located warnings of this statement by input position after its dependencies are derived.</span></span>
+<span class="src-line" id="L420" data-diff="added"><a class="ln" href="#L420">420</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L421" data-diff="added"><a class="ln" href="#L421">421</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">orderWarnings</span>(<span class="tok-id">Node</span> <span class="tok-var">$scope</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L422" data-diff="added"><a class="ln" href="#L422">422</a>    {</span>
+<span class="src-line" id="L423" data-diff="added"><a class="ln" href="#L423">423</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">order</span>(<span class="tok-var">$scope</span>);</span>
+<span class="src-line" id="L424" data-diff="added"><a class="ln" href="#L424">424</a>    }</span>
+<span class="src-line" id="L425" data-diff="added"><a class="ln" href="#L425">425</a></span>
+<span class="src-line" id="L426" data-diff="added"><a class="ln" href="#L426">426</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L427" data-diff="same"><a class="ln" href="#L427">427</a><span class="tok-com">     * Freezes the recorded facts.</span></span>
+<span class="src-line" id="L428" data-diff="same"><a class="ln" href="#L428">428</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L429" data-diff="same"><a class="ln" href="#L429">429</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">facts</span>(): <span class="tok-id">Facts</span></span>
+<span class="src-line" id="L430" data-diff="same"><a class="ln" href="#L430">430</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">256</span>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Facts</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">scalars</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">relations</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">queries</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">declarations</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">output</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
-<span class="src-line" id="L429" data-diff="added"><a class="ln" href="#L429">429</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Facts</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">scalars</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">relations</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">queries</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">declarations</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">output</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">all</span>(), <span class="tok-var">$this</span>-&gt;<span class="tok-id">readingWarnings</span>(), <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">instructions</span>(), <span class="tok-id">array_values</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">references</span>));</span>
-<span class="src-line" id="L430" data-diff="same"><a class="ln" href="#L430">430</a>    }</span>
-<span class="src-line" id="L431" data-diff="same"><a class="ln" href="#L431">431</a>}</span>
-<span class="src-line" id="L432" data-diff="same"><a class="ln" href="#L432">432</a></span>
+<span class="src-line" id="L431" data-diff="added"><a class="ln" href="#L431">431</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Facts</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">scalars</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">relations</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">queries</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">declarations</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">output</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">conditions</span>-&gt;<span class="tok-id">all</span>(), <span class="tok-var">$this</span>-&gt;<span class="tok-id">readingWarnings</span>(), <span class="tok-var">$this</span>-&gt;<span class="tok-id">warnings</span>-&gt;<span class="tok-id">instructions</span>(), <span class="tok-id">array_values</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">references</span>));</span>
+<span class="src-line" id="L432" data-diff="same"><a class="ln" href="#L432">432</a>    }</span>
+<span class="src-line" id="L433" data-diff="same"><a class="ln" href="#L433">433</a>}</span>
+<span class="src-line" id="L434" data-diff="same"><a class="ln" href="#L434">434</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
