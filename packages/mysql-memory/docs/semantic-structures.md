@@ -2867,3 +2867,36 @@ an authorization diagnostic: native MySQL bounds each displayed account-name
 component, while Memory displayed the complete host. That diagnostic regression
 is being repaired; the structure and final-revision campaign obligations above
 remain open.
+
+### Authorization identities and rollback histories
+
+The unseeded `query659-partition-order` campaign stopped at input 99 because
+a role lookup diagnostic retained more host bytes than MySQL. Errors 3523
+and 3530 display at most 64 bytes of each identity component, replacing
+partial UTF-8 bytes with `?`. This display bound does not truncate stored
+identities. Black-box probes used MySQL 8.0.44, 8.4.7 and 9.1.0.
+
+The expanded history exposed a separate state transition. Failed account
+mutations reload persisted grant identities; a host that the ASCII grant
+table cannot represent is then looked up under its stored spelling. Read-only
+SHOW errors, SET ROLE failures, early malformed names and SET PASSWORD of
+a missing account do not trigger that reload. Creation distinguishes a
+cached identity from a collision in the persisted spelling, preserving the
+credential checks and conversion warnings of each case. CREATE ROLE and
+DROP ROLE are refused by the prepared protocol before any account mutation.
+
+`RoleDiagnosticBoundsTest` retains all 254 requests, including the original
+fuzz input, byte boundaries and the mutation/readback histories, in both
+text and prepared protocols on those three releases: 1,524 request
+observations. Together with the existing role-identity and five-release
+rename histories, `query667-work-20261019` passed 14 native integration cases.
+The same source passed 18,194 unit/property/doctest cases with 75,238
+assertions. Static checks passed on `query667-lint-20261019`, which differs
+only by removing a blank line after the extracted batch-failure helper;
+26,633 dependency edges were allowed with no violations or uncovered edges.
+
+This closes the authorization counterexample, not the acceptance contract.
+The next unseeded campaigns found a CREATE TABLE UNION-option/query ordering
+condition and a further input under investigation. The legacy UNION tail
+ownership audit and the final whole-model, all-seed and 900-second campaigns
+remain required.

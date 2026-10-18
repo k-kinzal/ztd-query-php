@@ -77,6 +77,7 @@ final class AlterRecipients
         if ($first !== null) {
             if (!$legacy) {
                 $accounts->restore($saved);
+                $accounts->reload();
                 $this->session->passwordExpired = $this->session->passwordExpired || $this->currentChanged;
             }
             throw new SqlError($first->error, $first->getMessage(), $first, recorded: true);

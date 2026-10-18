@@ -42,6 +42,16 @@ final class PreparationTest extends TestCase
         (new Preparation())->definitions($operation, $session);
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE ROLE r'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['DROP ROLE r'])]
+    public function testDefinitionsRefusesRoleDefinitionPreparationBeforeAccountMutation(string $sql): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze($sql, true);
+        $this->expectExceptionCode(1295);
+        (new Preparation())->definitions($operation, $session);
+    }
+
     public function testDefinitionsKeepsEventPreparationSeparateFromScheduleEvaluation(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

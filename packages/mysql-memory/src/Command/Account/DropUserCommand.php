@@ -75,6 +75,9 @@ final class DropUserCommand implements Command
             $dropped[$key] = $identity;
         }
         if ($missing !== [] && !$statement->ifExists) {
+            if (!$session->settings()->legacy()) {
+                $accounts->reload();
+            }
             $operation = $statement instanceof DropUser ? 'DROP USER' : 'DROP ROLE';
             throw (new Names($session->settings()->release()))->failure($operation, implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
         }

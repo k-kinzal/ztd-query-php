@@ -66,12 +66,17 @@ final class RoleCommand implements Command
         $names->check([...$statement->roles->roles, ...$users]);
         $accounts = $session->instance->accounts;
         $chosen = [];
-        foreach ($users as $user) {
-            $identity = $names->identity($user, $session);
-            if ($statement->roles->set === RoleSet::All && $accounts->find($identity) === null) {
-                throw new SqlError(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($identity->authorization()), null, [[AccountError::FailedDefaultRoles->value, AccountError::FailedDefaultRoles->message()]]);
+        try {
+            foreach ($users as $user) {
+                $identity = $names->identity($user, $session);
+                if ($statement->roles->set === RoleSet::All && $accounts->find($identity) === null) {
+                    throw new SqlError(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($identity->authorization()), null, [[AccountError::FailedDefaultRoles->value, AccountError::FailedDefaultRoles->message()]]);
+                }
+                $chosen[] = [$identity, $this->selected($statement->roles, $identity, $session)];
             }
-            $chosen[] = [$identity, $this->selected($statement->roles, $identity, $session)];
+        } catch (SqlError $error) {
+            $accounts->reload();
+            throw $error;
         }
         foreach ($chosen as [$identity, $roles]) {
             unset($accounts->defaults[$identity->key()]);

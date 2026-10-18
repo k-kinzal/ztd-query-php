@@ -107,7 +107,12 @@ final class GrantCommand implements Command
             $found = $this->accounts($statement, $grantees, $session);
         }
         foreach ($found === [] ? $grantees : [] as $identity) {
-            $found[] = $accounts->find($identity) ?? throw AccountError::CantCreateUserWithGrant->error();
+            $account = $accounts->find($identity);
+            if ($account === null) {
+                $accounts->reload();
+                throw AccountError::CantCreateUserWithGrant->error();
+            }
+            $found[] = $account;
         }
         $levels->usage($operation);
         [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);
@@ -298,6 +303,7 @@ final class GrantCommand implements Command
             }
         } catch (SqlError $failure) {
             $accounts->restore($saved);
+            $accounts->reload();
             throw $failure;
         }
     }

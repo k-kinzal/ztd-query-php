@@ -82,12 +82,13 @@ final class Identity
 
     /**
      * Labels decoded identities in authorization lookup and role-membership diagnostics.
-     * Error numbers 3523 and 3530 retain embedded backticks once in each component.
+     * Error numbers 3523 and 3530 retain embedded backticks once and display at
+     * most 64 bytes of each component, replacing partial UTF-8 bytes with question marks.
      * Observed through MySQL 8.0.44, 8.4.7 and 9.1.0.
      */
     public function authorization(): string
     {
-        return '`' . $this->user . '`@`' . $this->host . '`';
+        return '`' . (new \MySqlMemory\Error\DiagnosticText())->bytes($this->user, 64) . '`@`' . (new \MySqlMemory\Error\DiagnosticText())->bytes($this->host, 64) . '`';
     }
 
     /**

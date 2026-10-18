@@ -51,6 +51,13 @@ final class IdentityTest extends TestCase
     {
         self::assertSame('a\\"\\\'\\\\\\Z\\0\\n\\r', Identity::escape("a\"'\\\x1A\0\n\r"));
     }
+    public function testAuthorizationBoundsDisplayedBytesWithoutChangingTheIdentity(): void
+    {
+        $identity = Identity::of(str_repeat('猫', 22), str_repeat('H', 65));
+        self::assertSame('`' . str_repeat('猫', 21) . '?`@`' . str_repeat('h', 64) . '`', $identity->authorization());
+        self::assertSame(str_repeat('猫', 22) . '@' . str_repeat('h', 65), $identity->text());
+    }
+
     public function testAuthorizationRetainsDecodedBackticksInBothComponents(): void
     {
         self::assertSame('`a`b`@`h`h`', Identity::of('a`b', 'H`H')->authorization());

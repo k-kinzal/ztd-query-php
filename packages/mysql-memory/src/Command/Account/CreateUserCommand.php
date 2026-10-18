@@ -83,6 +83,7 @@ final class CreateUserCommand implements Command
             $generated = $this->create($created, $defaults, $statement, $session, $context);
         } catch (SqlError $error) {
             $accounts->restore($saved);
+            $accounts->reload();
             throw $error;
         }
         if ($generated !== []) {
@@ -123,11 +124,14 @@ final class CreateUserCommand implements Command
                 $options->check($user->initial, $plugin);
                 if ($exists && $statement->ifNotExists) {
                     $options->check($user->identification?->credential !== Credential::None ? $user->identification : null, $plugin);
+                    $names->ascii($identity, 1, $context->diagnostics);
                     $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));
                     continue;
                 }
                 $options->check($user->initial === null ? $user->identification : null, $plugin);
                 (new Authentication\CreateFactors())->check($user, $exists, $session);
+                $names->ascii($identity, $user->identification !== null && $user->identification->credential !== Credential::None ? 1 : 0, $context->diagnostics);
+                $exists = $exists || $session->instance->accounts->stored($identity->stored()) !== null || array_filter($created, static fn (array $previous): bool => $previous[0]->stored()->key() === $identity->stored()->key()) !== [];
                 if (!$exists) {
                     $this->recipient($statement, $identity, $rolesRefused, $session);
                 }
@@ -141,19 +145,37 @@ final class CreateUserCommand implements Command
                 continue;
             }
             if ($exists) {
+                $names->ascii($identity, 1, $context->diagnostics);
+                if ($statement->ifNotExists) {
+                    $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));
+                    continue;
+                }
                 $failed[] = $identity;
                 continue;
             }
             $created[$identity->key()] = [$identity, $user];
         }
+        $this->failures($first, $failed, $session);
+        return array_values($created);
+    }
+
+    /**
+     * Reports the account batch's first refusal and reloads persisted identities after rollback.
+     *
+     * @param list<Identity> $failed Accounts that already exist
+     * @throws SqlError When credentials or an existing recipient refuse the batch
+     */
+    public function failures(?SqlError $first, array $failed, Session $session): void
+    {
         if ($first !== null) {
+            $session->instance->accounts->reload();
             throw new SqlError($first->error, $first->getMessage(), $first, recorded: true);
         }
         if ($failed !== []) {
+            $session->instance->accounts->reload();
             throw (new Names($session->settings()->release()))->failure('CREATE USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
 
-        return array_values($created);
     }
 
     /**
@@ -313,13 +335,14 @@ final class CreateUserCommand implements Command
                 throw (new Names($session->settings()->release()))->failure('CREATE ROLE', 'anonymous user');
             }
             (new Names())->ascii($role, 1, $context->diagnostics);
-            if ($accounts->find($role) !== null || isset($created[$role->key()])) {
+            if ($accounts->find($role) !== null || $accounts->stored($role->stored()) !== null || isset($created[$role->stored()->key()])) {
                 $failed[] = $role;
                 continue;
             }
-            $created[$role->key()] = $role;
+            $created[$role->stored()->key()] = $role;
         }
         if ($failed !== [] && !$ifNotExists) {
+            $accounts->reload();
             throw (new Names($session->settings()->release()))->failure('CREATE ROLE', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
         foreach ($failed as $identity) {

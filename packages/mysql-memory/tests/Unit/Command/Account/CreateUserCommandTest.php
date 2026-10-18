@@ -58,6 +58,18 @@ final class CreateUserCommandTest extends TestCase
         self::assertNull($session->instance->accounts->find(new Identity('a', '%')));
     }
 
+    public function testFailuresReloadsPersistedHostNamesAfterAnAccountBatchFails(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE USER 'u'@'猫'");
+        $reply = $session->run("CREATE USER 'u'@'猫'")[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1396, $reply->getCode());
+        self::assertNull($session->instance->accounts->find(Identity::of('u', '猫')));
+        self::assertNotNull($session->instance->accounts->find(Identity::of('u', '?')));
+    }
+
     public function testRecipientChecksAttributesForNewAccounts(): void
     {
         $session = (new Instance())->connect();

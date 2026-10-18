@@ -81,6 +81,7 @@ final class RevokeCommand implements Command
         } catch (SqlError $error) {
             if ((!$statement instanceof RevokePrivileges && !$statement instanceof RevokeProxy && !$statement instanceof RevokeAll) || !$session->settings()->legacy()) {
                 $accounts->restore($saved);
+                $accounts->reload();
             }
             throw $error;
         }
