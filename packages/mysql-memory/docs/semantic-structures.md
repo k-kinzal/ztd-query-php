@@ -3026,3 +3026,67 @@ ordering repair in `query717-work-20261019` addresses that input, with further
 validation in progress. Additional native probes retain unresolved function-arity
 and table-option ordering differences; passing the repaired cases is not a claim
 that all constructible structures satisfy the contract.
+
+
+Common-table deletion now follows the same distinction for both DELETE forms.
+`DeferredDelete` preserves the single-table ordering, limit, predicate and target;
+`DeferredMultipleDelete` retains the complete multiple-table namespace. Ordinary
+constructors exclude targets necessarily bound to their own CTE declarations.
+Case-distinct references remain binding-dependent: with case-sensitive table
+names, `WITH c AS (SELECT 2) DELETE C FROM C` can delete a physical `C`. A qualified
+reference also remains a physical-table candidate. Conversely, `DELETE d.c FROM c`
+cannot use a local CTE occurrence as a database-qualified target; resolution
+reports the unknown target before its read-only role.
+
+Snapshot `query723-work-20261019` passed eleven native CTE-deletion integration
+cases (86 assertions), including 216 direct observations of the same definitions
+across skipped calls, missing dependencies and populated dependencies. Its PDO
+round-trip tests also pass. The generated-column template now lives under
+`Statement\Table\Column\Generation` to keep the public column directory within
+its configured size bound.
+
+The `query717` unseeded campaign completed 905.474 seconds with 891 matches,
+zero differences and zero volatile outcomes. It predates the CTE refinement;
+`query723` is undergoing its own unseeded campaign. Whole-model replay on
+`query719` again constructed all 244 roots, matching 99 successes and 145 SQL
+errors with no generation/profile/internal failures and 171 matching database
+selection observations. In particular, the repaired multiple-delete root now
+constructs physical-table targets; missing-table state does not establish the
+behavior of populated inputs. Routine-wildcard REVOKE and other intrinsic domains
+remain open obligations, so these campaign results do not close acceptance.
+
+The generation-role audit now distinguishes MySQL 5.7 invocation-time column
+conditions from definition-time refusals. Complete `DeferredAlterTable` values
+retain the destination and every ordered action; ordinary `AlterTable` values
+exclude these declarations. `DeferredGeneratedColumn` also retains forbidden
+native calls, variables and row operands when the legacy language permits their
+stored definition. Opening the target and checking its existing column storage
+precedes the generation condition. The source boundary and prepared cache carry
+these typed templates, without source SQL or parser nodes.
+
+Generic calls whose names happen to be keywords retain their stored-function
+meaning. For example, `FunctionCall(Name('USER'))` is distinct from
+`KeywordCall(KeywordFunction::User)`. The former cannot inhabit a plain deferred
+generation declaration: MySQL rejects that stored-call role while reading the
+definition. Constructor regressions preserve this distinction. Compound
+scalar-position subqueries retain their separately observed legacy behavior.
+Modern row generation operands have their own diagnostic role, including the
+owning declaration identity required for database-resolution precedence.
+
+The phase corpus preserves complete CREATE, ALTER and stored-procedure histories
+for four releases, in text and prepared modes. Direct construction separately
+holds each ALTER object fixed across missing, populated ordinary-column and
+populated generated-column states. Reference SQL is rendered only for the native
+oracle; memory executes the structures while its unrelated input label remains
+unchanged. A 904-observation black-box phase comparison and an additional
+52-observation stored-function comparison matched after these fixes. These
+selected results do not replace the full acceptance gates.
+
+Snapshot `query723-common-deletion` completed an unseeded 900.46-second campaign:
+1,002 matched inputs, no differences and no volatile outcomes. This precedes the
+latest generation changes. The subsequent full seed campaign identified eleven
+5.7 ALTER regressions that motivated the retained-action model above. Its rerun
+and later-release campaigns hit infrastructure deadlines while containers and
+normal suites ran concurrently, so they are not recorded as passes. Fresh
+complete campaigns, all state witnesses and the unresolved native 5.7 disconnect
+history remain required before acceptance.

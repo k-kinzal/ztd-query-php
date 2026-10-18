@@ -21,6 +21,6 @@ final class RefusedDeleteTest extends TestCase
         $write = new M\Routine\Program\Write\DeferredMultipleDelete(null, [], new M\Dml\Target\DeletionInput([new M\Relation\DerivedTable($query, new Name('q'))]), M\Dml\MultipleDeleteForm::BeforeFrom);
         $problem = new RefusedDelete($write);
         self::assertSame($write, $problem->write);
-        self::assertSame('A derived or JSON relation cannot supply a DELETE target.', $problem->message());
+        self::assertSame('An intrinsically read-only relation cannot supply a DELETE target.', $problem->message());
     }
 }

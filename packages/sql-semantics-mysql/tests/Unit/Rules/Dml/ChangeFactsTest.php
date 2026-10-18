@@ -140,10 +140,11 @@ final class ChangeFactsTest extends TestCase
 
     public function testDeleteMultipleNamesATargetThatIsNotUpdatable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1 AS k) DELETE z FROM c AS z');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1 AS k) DELETE z FROM c AS z');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $operation->statement);
-        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'), $operation->statement)], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete::class, $operation->statement->body);
+        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'), $operation->statement->body)], $operation->facts->diagnostics);
     }
 
     public function testDeleteFindsTheInvisibleColumnsOfTheTable(): void
@@ -206,4 +207,10 @@ final class ChangeFactsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $statement);
         self::assertSame($statement, (new ChangeFacts())->block(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($statement)));
     }
+    public function testTargetsCannotDatabaseQualifyACommonTableOccurrence(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS(SELECT 1 AS a) DELETE d.c FROM c');
+        self::assertInstanceOf(UnknownDeleteTable::class, $operation->facts->diagnostics[0]);
+    }
+
 }

@@ -16,18 +16,19 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTa
  * The typed refusal is retained without an ordinary semantic Statement or SQL.
  * Engine warnings belong to preparation; database lookup remains per execution.
  * A retained MERGE/query role rejects before table opening or metadata revalidation.
- * Observed through COM_STMT_PREPARE on MySQL 8.4.7.
+ * Legacy ALTER instructions retain all actions and check destination columns only
+ * when invoked. Observed through COM_STMT_PREPARE on MySQL 5.7.44 and 8.4.7.
  *
  * @visibility MySqlMemory
  */
 final class PendingTable
 {
     /**
-     * @param RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $header The complete retained definition
+     * @param RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header The complete retained definition
      * @param ParameterBindings|null $bindings Prepared query parameters
      * @param string $database The default database selected at preparation
      */
-    public function __construct(public readonly RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $header, public readonly string $database, public readonly ?ParameterBindings $bindings = null)
+    public function __construct(public readonly RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header, public readonly string $database, public readonly ?ParameterBindings $bindings = null)
     {
     }
 
@@ -41,9 +42,12 @@ final class PendingTable
     {
         $session->activity->begin();
         \MySqlMemory\Session\State\StatementCounters::received($session);
-        \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
+        \MySqlMemory\Session\State\StatementCounters::command($session, $this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable ? 'Com_alter_table' : 'Com_create_table');
         $session->diagnostics->clear();
         $session->text = $label;
+        if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable) {
+            (new \MySqlMemory\Program\Expression\AlterUse())->raise($this->header, $session, false, $this->database);
+        }
         $database = $this->header->name->schema->value ?? $this->database;
         if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) {
             if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->header->elements)) {

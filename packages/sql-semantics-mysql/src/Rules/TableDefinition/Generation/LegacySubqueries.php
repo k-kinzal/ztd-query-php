@@ -25,7 +25,7 @@ final class LegacySubqueries
      */
     public function columns(array $elements): bool
     {
-        return array_filter($elements, static fn ($element): bool => $element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition && $element->specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn) !== [];
+        return array_filter($elements, static fn ($element): bool => $element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition && $element->specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn) !== [];
     }
 
     /**

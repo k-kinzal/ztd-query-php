@@ -34,8 +34,9 @@ use SqlSemantics\Statement\Snapshot;
  * A definition retains the complete header and query without opening tables.
  * When invoked, the MERGE/query role condition precedes query preparation.
  * Prepared input instead prepares the query before retaining this instruction.
- * MySQL 5.7 compound generation expressions with nested subqueries also retain
- * their complete column declarations. Destination existence precedes their
+ * MySQL 5.7 generation expressions with invocation-time conditions also retain
+ * their complete column declarations, including forbidden native calls, variables,
+ * row operands and compound expressions containing scalar-position subqueries. Destination existence precedes their
  * invocation condition; IF NOT EXISTS can complete against an existing table.
  * This is a program template, not an ordinary table-creation statement.
  *

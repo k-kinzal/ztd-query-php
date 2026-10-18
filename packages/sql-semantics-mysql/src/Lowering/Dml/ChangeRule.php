@@ -113,7 +113,7 @@ final class ChangeRule
             [$with, $options, $table, $alias, $partitions, $where, $order, $limit] = $single;
             $target = new WriteTarget($this->lowering->names->qualified($form->node($table)), $alias === null ? null : $queries->alias($form->node($alias)), $queries->partitions($form->node($partitions)), $alias === null ? AliasMark::As : $queries->mark($form->node($alias)));
 
-            return new Delete($with === null ? null : $queries->with($form->node($with)), $this->options($form->node($options)), $target, $queries->where($form->node($where)), $queries->ordering($form->node($order)), $queries->limit($form->node($limit)), $this->lowering->hints($form->token($with === null ? 0 : $with + 1)));
+            return $this->single($form->node, $with === null ? null : $queries->with($form->node($with)), $this->options($form->node($options)), $target, $queries->where($form->node($where)), $queries->ordering($form->node($order)), $queries->limit($form->node($limit)), $this->lowering->hints($form->token($with === null ? 0 : $with + 1)));
         }
         [$spelling, $with, $options, $targets, $tables, $where] = self::MULTIPLE[$form->signature] ?? throw ImplementationGap::production($form);
 
@@ -159,6 +159,23 @@ final class ChangeRule
     }
 
     /**
+     * Keeps a locally bound common-table target in a stored instruction role.
+     *
+     * @param list<DeleteOption> $options The written modifiers
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Query\OrderItem> $orderBy The complete ordering
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> $hints The optimizer hints
+     * @throws \SqlSemantics\Construction\RejectedInput When the target is intrinsically read-only
+     */
+    public function single(Node $source, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $options, WriteTarget $target, ?\SqlSemantics\Statement\Scalar $where, array $orderBy, ?Limit $limit, array $hints): Delete
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $target->name)) {
+            $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete($with, $options, $target, $where, $orderBy, $limit, $hints);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
+        }
+        return new Delete($with, $options, $target, $where, $orderBy, $limit, $hints);
+    }
+
+    /**
      * Constructs a deletion only after its targets can belong to its input namespace.
      *
      * @param list<DeleteOption> $options The written modifiers
@@ -174,7 +191,7 @@ final class ChangeRule
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744);
         }
         $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets);
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables) !== null) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables, $with) !== null) {
             $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete($with, $options, $input, $form, $where, $hints);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
         }

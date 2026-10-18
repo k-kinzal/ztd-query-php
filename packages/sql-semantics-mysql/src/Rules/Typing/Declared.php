@@ -85,13 +85,13 @@ final class Declared
     public function column(ColumnSpecification $specification): Domain
     {
         $collation = null;
-        $attributes = $specification instanceof OrdinaryColumn || ($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn) ? $specification->attributes : [];
+        $attributes = $specification instanceof OrdinaryColumn || ($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn) ? $specification->attributes : [];
         foreach ($attributes as $attribute) {
             if ($attribute instanceof CollateAttribute && $attribute->collation->name !== null) {
                 $collation = Collation::named($attribute->collation->name->value) ?? $collation;
             }
         }
-        if (($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn) && $specification->collation?->name !== null) {
+        if (($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn) && $specification->collation?->name !== null) {
             $collation = Collation::named($specification->collation->name->value) ?? $collation;
         }
         $domain = $this->domain($specification->dataType(), $collation);

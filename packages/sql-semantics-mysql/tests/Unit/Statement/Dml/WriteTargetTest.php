@@ -53,7 +53,7 @@ final class WriteTargetTest extends TestCase
 
     public function testDeriveRelationReportsACommonTable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1) DELETE FROM c');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1) DELETE FROM c');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertSame('The target table is a common table expression, which is not updatable', $operation->facts->diagnostics[0]->message());
@@ -75,8 +75,8 @@ final class WriteTargetTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('c'))], $semantics->analyze('WITH c AS (SELECT 1 AS k) DELETE FROM c')->facts->diagnostics);
-        self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('z'))], $semantics->analyze('WITH c AS (SELECT 1 AS k) DELETE FROM c AS z')->facts->diagnostics);
+        self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('c'))], $semantics->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1 AS k) DELETE FROM c')->facts->diagnostics);
+        self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('z'))], $semantics->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1 AS k) DELETE FROM c AS z')->facts->diagnostics);
     }
     public function testValueRejectsAnEqualsAliasMarker(): void
     {

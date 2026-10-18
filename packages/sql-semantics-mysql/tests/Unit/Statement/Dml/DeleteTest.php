@@ -49,4 +49,14 @@ final class DeleteTest extends TestCase
     {
         self::assertSame('DELETE /*+ BKA() */ FROM t', (new Semantics(Dialect::MySql))->analyze('DELETE /*+ BKA() */ FROM t')->toString());
     }
+    public function testCommonTableCannotSupplyAnOrdinaryDeletionTarget(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+        $name = new Name('c');
+        $with = new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [new \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression($name, [], $query)]);
+        $target = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName($name));
+        $this->expectExceptionMessage('An ordinary DELETE cannot target its own common-table declaration.');
+        new Delete($with, [], $target);
+    }
+
 }

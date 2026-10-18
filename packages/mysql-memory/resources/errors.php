@@ -586,6 +586,7 @@ return [
     3759 => ['HY000', 'Fulltext functional index is not supported.'],
     3760 => ['HY000', 'Spatial functional index is not supported.'],
     3762 => ['HY000', 'Functional index on a column is not supported. Consider using a regular index instead.'],
+    3764 => ['HY000', "Expression of generated column '%s' cannot refer to a row value."],
     3763 => ['HY000', "Expression of generated column '%s' contains a disallowed function: %s."],
     3767 => ['HY000', "Default value expression of column '%s' cannot refer to a column defined after it if that column is a generated column or has an expression as default value."],
     3768 => ['HY000', "Default value expression of column '%s' cannot refer to an auto-increment column."],

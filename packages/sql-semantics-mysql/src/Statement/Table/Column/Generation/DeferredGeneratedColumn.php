@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Statement\Table\Column;
+namespace SqlSemantics\Platform\MySql\Statement\Table\Column\Generation;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
@@ -17,15 +18,15 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A complete MySQL 5.7 generation declaration containing a scalar-position subquery.
+ * A complete MySQL 5.7 generation declaration with an invocation-time operand condition.
  *
  * Stored definitions retain this column template until their table instruction
- * is invoked. Ordinary CREATE TABLE values exclude this deferred column role.
+ * is invoked. Ordinary CREATE TABLE and ALTER TABLE values exclude this role.
  *
  * @visibility public
  * @example Retaining a scalar-position subquery for a stored definition
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
- *     $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($query)));
+ *     $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($query)));
  *     $column->expression instanceof \SqlSemantics\Statement\Scalar // => true
  */
 final class DeferredGeneratedColumn implements ColumnSpecification
@@ -56,7 +57,7 @@ final class DeferredGeneratedColumn implements ColumnSpecification
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->generated($type, $this->attributes) === null, 'A generated column cannot have a DEFAULT, ON UPDATE, AUTO_INCREMENT, SERIAL DEFAULT VALUE, COLUMN_FORMAT, STORAGE or SERIAL type.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $this->attributes) === [], 'Column attributes must fit the declared type and temporal precision.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->contains($expression), 'A deferred generation declaration retains a scalar-position subquery.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($expression), 'A deferred generation declaration retains an invocation-time operand condition.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

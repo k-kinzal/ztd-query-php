@@ -72,6 +72,7 @@ final class Delete implements Explainable
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'DELETE ordering uses expressions, not output-column positions.');
         }
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $table->name), 'An ordinary DELETE cannot target its own common-table declaration.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

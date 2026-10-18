@@ -81,7 +81,7 @@ final class TableDeclaration
         $specification = $definition->specification;
         $type = $declared === null ? $specification->dataType() : $declared->column($specification);
 
-        return new Column($definition->name->column, $type, (new ColumnFlags())->nullability($specification, $keyed, $explicitDefaultsForTimestamp), ($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn));
+        return new Column($definition->name->column, $type, (new ColumnFlags())->nullability($specification, $keyed, $explicitDefaultsForTimestamp), ($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn));
     }
 
     /**

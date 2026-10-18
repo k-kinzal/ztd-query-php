@@ -21,7 +21,7 @@ final class GenerationUseTest extends TestCase
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $subquery = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]));
-        $column = new M\Table\Column\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\NumberLiteral('2'), $subquery));
+        $column = new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\NumberLiteral('2'), $subquery));
         $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), $column)], ifNotExists: true);
         $session->query('CREATE TABLE t(a INT)');
         $session->text = 'unrelated input';

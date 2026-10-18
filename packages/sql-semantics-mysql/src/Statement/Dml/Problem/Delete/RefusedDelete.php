@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete;
 
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
@@ -20,9 +21,9 @@ final class RefusedDelete implements Diagnostic
     use Snapshot;
 
     /**
-     * @param DeferredMultipleDelete $write The complete retained deletion
+     * @param DeferredDelete|DeferredMultipleDelete $write The complete retained deletion
      */
-    public function __construct(public readonly DeferredMultipleDelete $write)
+    public function __construct(public readonly DeferredDelete|DeferredMultipleDelete $write)
     {
     }
 
@@ -31,6 +32,6 @@ final class RefusedDelete implements Diagnostic
      */
     public function message(): string
     {
-        return 'A derived or JSON relation cannot supply a DELETE target.';
+        return 'An intrinsically read-only relation cannot supply a DELETE target.';
     }
 }

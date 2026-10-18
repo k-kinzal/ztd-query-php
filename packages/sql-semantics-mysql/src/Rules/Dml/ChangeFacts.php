@@ -90,7 +90,7 @@ final class ChangeFacts
     /**
      * Derives a single-table DELETE.
      */
-    public function delete(Delete $delete, Derivation $derivation, Environment $outer): void
+    public function delete(Delete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete $delete, Derivation $derivation, Environment $outer): void
     {
         $base = $this->base($delete->with, $derivation, $outer);
         $fact = $derivation->relation($delete->table, $base);
@@ -121,6 +121,9 @@ final class ChangeFacts
         foreach ($targets as $target) {
             $found = null;
             foreach ($visible as $relation) {
+                if ($target->schema !== null && $derivation->facts()->relation($relation->relation)->table instanceof CommonTable) {
+                    continue;
+                }
                 $name = $relation->alias === null ? new QualifiedName($target->name, $target->schema ?? $derivation->context->searchPath[0]) : $target;
                 $found ??= $projection->admits($derivation, $relation, $name) ? $relation : null;
             }

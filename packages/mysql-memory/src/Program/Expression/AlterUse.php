@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Program\Expression;
+
+use LogicException;
+use MySqlMemory\Command\Definition\AlterTableCommand;
+use MySqlMemory\Command\Definition\TableChange;
+use MySqlMemory\Command\Definition\TableLayout;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Session\Session;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
+
+/**
+ * Opens a retained ALTER target and applies its ordered declaration changes.
+ * The local layout remains unpublished when the generation condition is reached.
+ *
+ * @visibility MySqlMemory
+ */
+final class AlterUse
+{
+    /**
+     * Resolves the target database without opening the table during preparation.
+     */
+    public function header(DeferredAlterTable $definition, Session $session, ?string $database = null): string
+    {
+        $database = $definition->table->schema->value ?? $database ?? $session->variables->database;
+        if ($database === '') {
+            throw QueryError::NoDatabase->error();
+        }
+        return $database;
+    }
+
+    /**
+     * Preserves table and column errors before the retained generation condition.
+     *
+     * @throws SqlError When target lookup or a declaration is refused
+     * @throws LogicException When a retained alteration loses its condition
+     */
+    public function raise(DeferredAlterTable $definition, Session $session, bool $invocation = true, ?string $database = null): never
+    {
+        if ($invocation) {
+            \MySqlMemory\Session\State\StatementCounters::query($session);
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_alter_table');
+            $session->diagnostics->clear();
+        }
+        $database = $this->header($definition, $session, $database);
+        $session->transaction->commit();
+        $name = $definition->table->name->value;
+        $table = (new AlterTableCommand())->table($session, $database, $name);
+        $layout = TableLayout::of($table->definition);
+        $change = new TableChange($layout, $name, $database, $session->settings()->release(), (string) $session->variables->read('collation_database'));
+        $change->apply($definition->commands);
+        foreach ($layout->columns as [$column]) {
+            if ($column->specification instanceof DeferredGeneratedColumn) {
+                throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->error($column, $database, $name);
+            }
+        }
+        throw new LogicException('A retained alteration has a deferred generation declaration.');
+    }
+}

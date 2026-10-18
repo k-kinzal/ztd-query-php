@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Statement\Table\Column;
+namespace Tests\Unit\Statement\Table\Column\Generation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement as M;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
 
 #[CoversClass(DeferredGeneratedColumn::class)]
 #[Medium]
@@ -46,7 +46,7 @@ final class DeferredGeneratedColumnTest extends TestCase
 
     public function testRejectsABareSubqueryThatCannotSurviveDefinition(): void
     {
-        $this->expectExceptionMessage('A deferred generation declaration retains a scalar-position subquery.');
+        $this->expectExceptionMessage('A deferred generation declaration retains an invocation-time operand condition.');
         new DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))])));
     }
 
@@ -63,5 +63,10 @@ final class DeferredGeneratedColumnTest extends TestCase
         self::assertInstanceOf(M\Type\Integral::class, $column->dataType());
         self::assertCount(2, $column->columnAttributes());
         self::assertStringContainsString('AS (1 + (SELECT * FROM `source`)) STORED NOT NULL', $operation->toString());
+    }
+    public function testRejectsAGenericStoredCallEvenWhenItsNameMatchesAKeyword(): void
+    {
+        $this->expectExceptionMessage('A deferred generation declaration retains an invocation-time operand condition.');
+        new DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('USER')));
     }
 }

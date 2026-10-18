@@ -17,11 +17,13 @@ final class WriteUse
     /**
      * Runs the template's preparation and preserves a conditional CREATE completion.
      */
-    public function prepare(W\DeferredMultipleDelete|W\DeferredInsertRows|W\DeferredInsertQuery|W\DeferredCreateTable $statement, Session $session): void
+    public function prepare(W\DeferredAlterTable|W\DeferredDelete|W\DeferredMultipleDelete|W\DeferredInsertRows|W\DeferredInsertQuery|W\DeferredCreateTable $statement, Session $session): void
     {
-        if ($statement instanceof W\DeferredCreateTable) {
+        if ($statement instanceof W\DeferredAlterTable) {
+            (new AlterUse())->raise($statement, $session);
+        } elseif ($statement instanceof W\DeferredCreateTable) {
             (new TableUse())->raise($statement, $session);
-        } elseif ($statement instanceof W\DeferredMultipleDelete) {
+        } elseif ($statement instanceof W\DeferredMultipleDelete || $statement instanceof W\DeferredDelete) {
             (new DeleteUse())->raise($statement, $session);
         } else {
             (new InsertUse())->raise($statement, $session);

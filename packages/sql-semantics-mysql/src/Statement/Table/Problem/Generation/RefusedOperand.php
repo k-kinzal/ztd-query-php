@@ -23,12 +23,13 @@ final class RefusedOperand implements Diagnostic
     /**
      * @param Name $column The owning column
      * @param OperandKind $kind The forbidden operand role
+     * @param \SqlSemantics\Statement\Identifier\QualifiedName|null $scope The declaration identity resolved before its expression
      * @param string|null $function The canonical function name, present exactly for a function refusal
      */
-    public function __construct(public readonly Name $column, public readonly OperandKind $kind, public readonly ?string $function = null)
+    public function __construct(public readonly Name $column, public readonly OperandKind $kind, public readonly ?string $function = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $scope = null)
     {
-        Check::input(($kind === OperandKind::FunctionCall) === ($function !== null && $function !== ''), 'Only a function refusal names a nonempty function.');
-        Check::input($kind === OperandKind::FunctionCall || $function === null, 'A non-function refusal has no function name.');
+        Check::input(in_array($kind, [OperandKind::FunctionCall, OperandKind::StoredFunction], true) === ($function !== null && $function !== ''), 'Only a function refusal names a nonempty function.');
+        Check::input(in_array($kind, [OperandKind::FunctionCall, OperandKind::StoredFunction], true) || $function === null, 'A non-function refusal has no function name.');
     }
 
     /**
@@ -37,9 +38,10 @@ final class RefusedOperand implements Diagnostic
     public function message(): string
     {
         return "Generated column '" . $this->column->value . "' excludes " . match ($this->kind) {
-            OperandKind::FunctionCall => 'function ' . $this->function,
+            OperandKind::FunctionCall, OperandKind::StoredFunction => 'function ' . $this->function,
             OperandKind::Subquery => 'a subquery',
             OperandKind::Variable => 'a session variable',
+            OperandKind::Row => 'a row value',
         } . '.';
     }
 }

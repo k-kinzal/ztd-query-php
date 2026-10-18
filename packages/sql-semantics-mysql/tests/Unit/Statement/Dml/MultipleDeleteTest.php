@@ -74,7 +74,7 @@ final class MultipleDeleteTest extends TestCase
     public function testReadOnlyTargetCannotDescribeAnOrdinaryDeletion(): void
     {
         $derived = new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]), new Name('q'));
-        $this->expectExceptionMessage('An ordinary DELETE target cannot be a derived or JSON relation.');
+        $this->expectExceptionMessage('An ordinary DELETE target cannot be a derived, JSON or common-table relation.');
         new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([$derived]), MultipleDeleteForm::BeforeFrom);
     }
 

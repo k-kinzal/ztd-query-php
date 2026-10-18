@@ -36,7 +36,7 @@ final class LegacySubqueriesTest extends TestCase
         $one = new M\Literal\NumberLiteral('1');
         $query = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression($one)]));
         $type = new M\Type\Integral(M\Type\Kind\IntegralKind::Int);
-        $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('g')), new M\Table\Column\DeferredGeneratedColumn($type, new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\NumberLiteral('2'), $query)));
+        $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('g')), new M\Table\Column\Generation\DeferredGeneratedColumn($type, new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\NumberLiteral('2'), $query)));
         self::assertTrue((new LegacySubqueries())->columns([$column]));
         self::assertFalse((new LegacySubqueries())->columns([]));
     }

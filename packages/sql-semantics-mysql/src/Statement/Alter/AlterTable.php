@@ -83,6 +83,7 @@ final class AlterTable implements Statement, Relation
             );
         }
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($table, $this->commands);
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->commands($this->commands), 'An ordinary ALTER statement excludes deferred generation declarations.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

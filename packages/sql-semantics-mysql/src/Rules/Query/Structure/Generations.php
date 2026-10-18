@@ -125,7 +125,7 @@ final class Generations
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $value->ignore => 1,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn,
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn,
             $value === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Json => 2,
             $value instanceof LanguageProfile => $value->grammar === GrammarRelease::MySql5651 ? 1 : 2,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName => (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($value->user, $value->host, GrammarRelease::MySql5651) === null ? 0 : 2,

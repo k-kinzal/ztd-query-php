@@ -98,8 +98,8 @@ final class ColumnRule
             $this->refuse($attributes, $type);
             $this->compatible($type, $attributes, $name, $definition);
             $value = $this->expression($form->node($expression), $name);
-            if ($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->contains($value)) {
-                return new \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references);
+            if ($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($value)) {
+                return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references);
             }
             \SqlSemantics\Diagnostic\Check::invariant($value instanceof Scalar, 'An ordinary generation expression has a scalar role.');
             return new GeneratedColumn(
@@ -229,12 +229,12 @@ final class ColumnRule
             $expression = $form->node(0);
         }
         $operand = $this->lowering->expressions->operand($expression);
-        if ($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->contains($operand)) {
+        if ($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($operand)) {
             return $operand;
         }
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($operand, $column ?? new \SqlSemantics\Statement\Identifier\Name(''));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($operand, $column ?? new \SqlSemantics\Statement\Identifier\Name(''), $this->lowering->profile->grammar);
         if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($expression)[1] ?? 0, false);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand($problem->column, $problem->kind, $problem->function, $this->lowering->programName ?? $this->lowering->columnTable), (new \SqlSemantics\Construction\SourceRanges())->span($expression)[1] ?? 0, false);
         }
         return (new \SqlSemantics\Platform\MySql\Lowering\Expression\OperandRule())->scalar($operand, $expression);
     }

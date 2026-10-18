@@ -12,6 +12,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
@@ -26,7 +27,7 @@ final class DeleteUse
     /**
      * Obtains the standalone request's first preparation condition.
      */
-    public function error(DeferredMultipleDelete $write, Session $session): SqlError
+    public function error(DeferredDelete|DeferredMultipleDelete $write, Session $session): SqlError
     {
         try {
             $this->raise($write, $session, false);
@@ -41,15 +42,16 @@ final class DeleteUse
      * @throws SqlError When a dependency or the retained target role is reached
      * @throws LogicException When the retained deletion loses its required condition
      */
-    public function raise(DeferredMultipleDelete $write, Session $session, bool $invocation = true): never
+    public function raise(DeferredDelete|DeferredMultipleDelete $write, Session $session, bool $invocation = true): never
     {
         if ($invocation) {
             \MySqlMemory\Session\State\StatementCounters::query($session);
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_delete_multi');
+            \MySqlMemory\Session\State\StatementCounters::command($session, $write instanceof DeferredDelete ? 'Com_delete' : 'Com_delete_multi');
             $session->diagnostics->clear();
         }
         $database = $session->variables->database;
-        if ($database === '' && array_filter($write->targets, static fn ($target): bool => $target->schema === null) !== []) {
+        $targets = $write instanceof DeferredDelete ? [$write->table->name] : $write->targets;
+        if ($database === '' && array_filter($targets, static fn ($target): bool => $target->schema === null) !== []) {
             throw QueryError::NoDatabase->error();
         }
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());

@@ -100,4 +100,10 @@ final class ChangeRuleTest extends TestCase
         (new Semantics(Dialect::MySql))->analyze('DELETE x FROM t AS y');
     }
 
+    public function testSingleRefusesAStandaloneCommonTableTarget(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze('WITH c AS(SELECT 1) DELETE FROM c');
+    }
+
 }

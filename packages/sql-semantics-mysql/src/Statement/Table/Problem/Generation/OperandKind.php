@@ -16,4 +16,6 @@ enum OperandKind
     case FunctionCall;
     case Subquery;
     case Variable;
+    case Row;
+    case StoredFunction;
 }

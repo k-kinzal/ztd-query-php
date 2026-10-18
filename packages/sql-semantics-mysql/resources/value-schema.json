@@ -505,6 +505,9 @@
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\PartitionEntryRefused": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\RefusedAlterTemplate": {
+        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredAlterTable"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\RepeatedTable": {
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
@@ -1007,7 +1010,7 @@
         "source": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Delete\\RefusedDelete": {
-        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete"
+        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
@@ -2698,6 +2701,11 @@
         "names": "array",
         "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredAlterTable": {
+        "commands": "array",
+        "ignore": "bool",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateTable": {
         "elements": "array",
         "enclosed": "bool",
@@ -2707,6 +2715,15 @@
         "partitioning": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Partitioning",
         "query": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery",
         "temporaryWords": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete": {
+        "hints": "array",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "options": "array",
+        "orderBy": "array",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery": {
         "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
@@ -3247,14 +3264,6 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultLiteral": {
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal|SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DeferredGeneratedColumn": {
-        "attributes": "array",
-        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
-        "expression": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
-        "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
-        "storage": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage",
-        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\EnforcementAttribute": {
         "enforced": "bool"
     },
@@ -3269,6 +3278,14 @@
         "attributes": "array",
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "expression": "SqlSemantics\\Statement\\Scalar",
+        "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
+        "storage": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage",
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Generation\\DeferredGeneratedColumn": {
+        "attributes": "array",
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "expression": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
         "storage": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage",
         "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
@@ -3504,7 +3521,8 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\RefusedOperand": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
         "function": "?string",
-        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\OperandKind"
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\OperandKind",
+        "scope": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\IncorrectColumnName": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"

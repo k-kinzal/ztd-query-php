@@ -36,7 +36,7 @@ final class GeneratedDeclarationStructureTest extends TestCase
             $number = new M\Literal\NumberLiteral((string) $choices->integer(1, 1000));
             $query = new M\Query\Select([], [new M\Query\SelectExpression($number)]);
             $expression = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\NumberLiteral('1'), new M\Expression\Subquery\ScalarSubquery($query));
-            $column = new M\Table\Column\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $expression);
+            $column = new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $expression);
             $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('result')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), $column)], ifNotExists: $trial % 2 === 0);
             $branch = new M\Routine\Program\Flow\ConditionalBranch(new M\Variable\UserVariable(new Name('run')), [$definition]);
             $structures[] = new M\Routine\CreateProcedure(new QualifiedName(new Name('p' . $trial)), new M\Routine\ParameterList([]), new M\Routine\Program\Flow\IfStatement([$branch]));

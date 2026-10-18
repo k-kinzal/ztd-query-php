@@ -144,6 +144,6 @@ final class ElementFacts
      */
     public function references(ColumnSpecification $specification): ?References
     {
-        return $specification instanceof OrdinaryColumn || ($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn) ? $specification->references : null;
+        return $specification instanceof OrdinaryColumn || ($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn) ? $specification->references : null;
     }
 }

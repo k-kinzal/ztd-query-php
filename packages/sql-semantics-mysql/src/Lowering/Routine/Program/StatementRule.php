@@ -148,7 +148,7 @@ final class StatementRule
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand) {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($failure->problem->moment);
         }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate) {
             return $failure->problem->definition;
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery) {

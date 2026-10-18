@@ -71,12 +71,12 @@ final class TargetReferences
      * @param list<QualifiedName> $targets The requested targets
      * @param list<TableSource> $tables The input namespace
      */
-    public function readOnly(array $targets, array $tables): ?QualifiedName
+    public function readOnly(array $targets, array $tables, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with = null): ?QualifiedName
     {
         $occurrences = $this->occurrences($tables);
         foreach ($targets as $target) {
             $matches = array_filter($occurrences, fn (TableReference|DerivedTable|JsonTable $table): bool => $this->admits($target, $table));
-            if ($matches !== [] && array_filter($matches, static fn ($table): bool => $table instanceof TableReference) === []) {
+            if ($matches !== [] && array_filter($matches, static fn ($table): bool => $table instanceof TableReference && !(new CommonTargets())->contains($with, $table->name)) === []) {
                 return $target;
             }
         }

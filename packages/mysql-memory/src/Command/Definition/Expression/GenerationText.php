@@ -126,7 +126,7 @@ final class GenerationText
             if ($piece->kind === PieceKind::Keyword) {
                 $text = strtolower($text);
             } elseif ($piece->kind === PieceKind::Name && !str_starts_with($text, '`')) {
-                $text = ($pieces[$index + 1]->text ?? '') === '(' ? strtolower($text) : '`' . str_replace('`', '``', $text) . '`';
+                $text = ($pieces[$index + 1]->text ?? '') === '(' && (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->exists(\SqlSemantics\Contract\GrammarRelease::MySql5744, $text) ? strtolower($text) : '`' . str_replace('`', '``', $text) . '`';
             } elseif ($text === '*' && ($pieces[$index - 1]->text ?? '') === 'SELECT') {
                 $text = '`*`';
             }

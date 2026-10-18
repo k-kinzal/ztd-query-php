@@ -58,6 +58,7 @@ enum ConstraintError: int implements ErrorCode
     case FunctionalSpatial = 3760;
     case FunctionalColumn = 3762;
     case GeneratedFunction = 3763;
+    case GeneratedRow = 3764;
     case DefaultNotPrior = 3767;
     case DefaultAutoIncrement = 3768;
     case DefaultSubquery = 3769;

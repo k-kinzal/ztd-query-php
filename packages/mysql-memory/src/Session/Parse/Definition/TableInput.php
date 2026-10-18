@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail;
 
 /**
- * Orders CREATE TABLE grammar conditions, retained header and refused tail.
+ * Orders table-definition grammar conditions, retained headers and refused operands.
  * The input text is used only at the reading boundary, never by execution.
  *
  * @visibility MySqlMemory
@@ -30,7 +30,7 @@ final class TableInput
      */
     public function refused(RejectedInput $failure, string $statement, Session $session): SqlError
     {
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate) {
             return $this->template($failure, $statement, $session);
         }
         $header = $failure->problem;
@@ -102,7 +102,7 @@ final class TableInput
     public function template(RejectedInput $failure, string $statement, Session $session): SqlError
     {
         $problem = $failure->problem;
-        \SqlSemantics\Diagnostic\Check::invariant($problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate, 'The table refusal retains its complete template.');
+        \SqlSemantics\Diagnostic\Check::invariant($problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate, 'The table refusal retains its complete template.');
         $parser = $session->semantics()->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
         $notices = (new SyntaxWarnings())->completed($parser, $statement, strlen($statement), $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
@@ -115,6 +115,14 @@ final class TableInput
             return $syntax;
         }
         try {
+            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate) {
+                $alter = new \MySqlMemory\Program\Expression\AlterUse();
+                $alter->header($problem->definition, $session);
+                if ($session->preparation->inputPrepared) {
+                    throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database));
+                }
+                $alter->raise($problem->definition, $session, false);
+            }
             $use = new \MySqlMemory\Program\Expression\TableUse();
             if ($session->preparation->inputPrepared) {
                 $query = $use->prepare($problem->definition, $session);
@@ -139,7 +147,7 @@ final class TableInput
      */
     public function accepts(\SqlSemantics\Statement\Fact\Diagnostic $problem): bool
     {
-        return $problem instanceof RefusedCreateTail || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate;
+        return $problem instanceof RefusedCreateTail || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate;
     }
 
 }

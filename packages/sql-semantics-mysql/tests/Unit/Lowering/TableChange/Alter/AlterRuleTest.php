@@ -34,4 +34,9 @@ final class AlterRuleTest extends TestCase
     {
         self::assertSame('ALTER TABLE t ENGINE InnoDB, ROW_FORMAT DYNAMIC', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC')->toString());
     }
+    public function testDefinitionRefusesAnOrdinaryRootForARetainedDeclaration(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql, '5.7.44'))->analyze('ALTER TABLE t MODIFY g INT AS(USER())');
+    }
 }

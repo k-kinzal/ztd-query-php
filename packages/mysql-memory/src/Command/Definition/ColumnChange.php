@@ -96,7 +96,7 @@ final class ColumnChange
      */
     public function stored(ColumnElement $old, ColumnElement $new): void
     {
-        $kind = static fn (ColumnElement $element): string => $element->specification instanceof GeneratedColumn ? ($element->specification->storage === GeneratedStorage::Stored ? 'stored' : 'virtual') : 'ordinary';
+        $kind = static fn (ColumnElement $element): string => ($element->specification instanceof GeneratedColumn || $element->specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn) ? ($element->specification->storage === GeneratedStorage::Stored ? 'stored' : 'virtual') : 'ordinary';
         if ($kind($old) !== $kind($new) && ($kind($old) === 'virtual' || $kind($new) === 'virtual')) {
             throw ConstraintError::GeneratedUnsupported->error('Changing the STORED status');
         }

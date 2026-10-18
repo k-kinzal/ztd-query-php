@@ -70,7 +70,7 @@ final class CommonTablesTest extends TestCase
     public function testBindDetectsExplicitTableRecursionOnlyWhenUsed(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $used = $semantics->analyze('WITH RECURSIVE c AS (TABLE c) DELETE FROM c', []);
+        $used = $semantics->analyze('CREATE PROCEDURE p() WITH RECURSIVE c AS (TABLE c) DELETE FROM c', []);
         $unused = $semantics->analyze('WITH RECURSIVE c AS (TABLE c) SELECT 1', []);
         $unusedSelect = $semantics->analyze('WITH RECURSIVE c AS (SELECT * FROM c) SELECT 1', []);
 

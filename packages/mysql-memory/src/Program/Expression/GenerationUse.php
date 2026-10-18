@@ -7,13 +7,12 @@ namespace MySqlMemory\Program\Expression;
 use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
 
 /**
  * Invokes a retained legacy generation declaration after destination lookup.
@@ -25,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn;
 final class GenerationUse
 {
     /**
-     * Checks the destination before reporting its nested-query expression condition.
+     * Checks the destination before reporting the declaration's invocation condition.
      *
      * @throws SqlError When a destination or generation declaration is rejected
      * @throws LogicException When the caller supplies a different retained table role
@@ -52,9 +51,7 @@ final class GenerationUse
         }
         foreach ($definition->elements as $element) {
             if ($element instanceof ColumnDefinition && $element->specification instanceof DeferredGeneratedColumn) {
-                $error = StatementError::ParseError;
-                $text = (new \MySqlMemory\Command\Definition\Expression\GenerationText())->tail($element->specification->expression);
-                throw new SqlError($error, $error->message($text, 1), following: [[1033, "Incorrect information in file: './" . $database . '/' . $name . ".frm'"]]);
+                throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->error($element, $database, $name);
             }
         }
         throw new LogicException('A retained generation declaration has a deferred column.');

@@ -87,19 +87,34 @@ final class AlterRule
     {
         $this->lowering->columnTable = $this->lowering->names->qualified($form->node(str_contains($form->signature, 'opt_ignore') ? 3 : 2));
         return match ($form->signature) {
-            'alter: ALTER opt_ignore TABLE_SYM table_ident alter_commands' => new AlterTable(
+            'alter: ALTER opt_ignore TABLE_SYM table_ident alter_commands' => $this->definition(
                 $this->lowering->columnTable,
                 $this->commands($form->node(4)),
                 $this->lowering->options->present($form->node(1)),
             ),
             'alter: ALTER TABLE_SYM table_ident alter_commands',
             'alter_table_stmt: ALTER TABLE_SYM table_ident opt_alter_table_actions',
-            'alter_table_stmt: ALTER TABLE_SYM table_ident standalone_alter_table_action' => new AlterTable(
+            'alter_table_stmt: ALTER TABLE_SYM table_ident standalone_alter_table_action' => $this->definition(
                 $this->lowering->columnTable,
                 $this->commands($form->node(3)),
             ),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Keeps every action when a legacy declaration must be checked at invocation.
+     *
+     * @param list<AlterCommand> $commands The ordered actions
+     * @throws \SqlSemantics\Construction\RejectedInput When an ordinary statement cannot retain the declaration
+     */
+    public function definition(\SqlSemantics\Statement\Identifier\QualifiedName $table, array $commands, bool $ignore = false): AlterTable
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->commands($commands)) {
+            $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable($table, $commands, $ignore);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate($definition), 0, false);
+        }
+        return new AlterTable($table, $commands, $ignore);
     }
 
     /**
