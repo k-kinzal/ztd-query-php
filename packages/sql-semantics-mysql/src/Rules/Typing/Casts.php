@@ -114,7 +114,6 @@ final class Casts
         if ($target === null) {
             return Domain::string(512, $text, Field::VarString, Coercibility::Coercible);
         }
-        $length = $target->length === null ? null : (int) $target->length;
         $collation = match ($target->kind) {
             CastKind::Char => $target->charset === null ? $text : $this->collation($target),
             CastKind::NationalChar => $this->collation($target),
@@ -123,7 +122,7 @@ final class Casts
             CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString, CastKind::MultiPolygon, CastKind::GeometryCollection => null,
         };
         if ($collation !== null) {
-            return Domain::string($length ?? 4294967295, $collation, $length === null ? Field::LongBlob : Field::VarString, Coercibility::Coercible);
+            return $this->returningText($target->length, $collation);
         }
         if ($target->kind === CastKind::Decimal && $target->length !== null && (int) $target->length === 0) {
             return Domain::decimal(10, (int) $target->scale);
@@ -137,6 +136,22 @@ final class Casts
         }
 
         return new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, false, Collation::known('latin1_swedish_ci'));
+    }
+
+    /**
+     * Separates JSON return value bounds from character-converted result metadata.
+     */
+    public function returningText(?string $width, Collation $collation): Domain
+    {
+        $length = $width === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\JsonWidths())->of($width);
+        \SqlSemantics\Diagnostic\Check::invariant($length !== null || $width === null, 'A JSON return width has a character domain.');
+        if ($length === null) {
+            return Domain::string(4294967295, $collation, Field::LongBlob, Coercibility::Coercible);
+        }
+        $bytes = ($length * $collation->charset->maxLength) % 4294967296;
+        $characters = intdiv($bytes, $collation->charset->maxLength);
+        $field = $bytes <= 65535 ? Field::VarString : ($bytes > 16777215 ? Field::LongBlob : Field::MediumBlob);
+        return new Domain(Kind::String, $field, $characters, Domain::NOT_FIXED, false, $collation, [], Coercibility::Coercible, $field !== Field::VarString || $characters * $collation->charset->maxLength !== $bytes ? $bytes : null);
     }
 
     /**

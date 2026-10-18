@@ -26,6 +26,31 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CastsTest extends TestCase
 {
+    public function testReturningTextSeparatesTheValueWidthFromBlobMetadata(): void
+    {
+        $casts = new Casts(new Settings(Collation::binary()), GrammarRelease::MySql847);
+        $domain = $casts->returningText('16384', Collation::known('utf8mb4_0900_bin'));
+        $maximum = $casts->returningText('18446744073709551615', Collation::known('utf8mb4_0900_bin'));
+        $partial = $casts->returningText('1431655766', Collation::known('utf8mb3_general_ci'));
+
+        self::assertSame([0, 2, Field::VarString], [$partial->length, $partial->display, $partial->field]);
+        self::assertSame([16384, 65536, Field::MediumBlob], [$domain->length, $domain->display, $domain->field]);
+        self::assertSame([1073741823, 4294967292, Field::LongBlob], [$maximum->length, $maximum->display, $maximum->field]);
+    }
+
+    public function testReturningUsesTheAcceptedLowWordAsTheCharacterBound(): void
+    {
+        $casts = new Casts(new Settings(Collation::binary()), GrammarRelease::MySql847);
+        $zero = $casts->returning(new CastTarget(CastKind::Binary, '9223372036854775808'));
+        $one = $casts->returning(new CastTarget(CastKind::Char, '9223372036854775809'));
+        $maximum = $casts->returning(new CastTarget(CastKind::Binary, '18446744073709551615'));
+
+        self::assertSame(Field::LongBlob, $maximum->field);
+        self::assertSame(4294967295, $maximum->display);
+        self::assertSame([0, 1, 4294967295], [$zero->length, $one->length, $maximum->length]);
+        self::assertSame(['binary', 'utf8mb4_0900_bin', 'binary'], [$zero->collation->name, $one->collation->name, $maximum->collation->name]);
+    }
+
     public function testArrayResolvesEntryTypesWithoutTheDocumentWidthOrConnectionCollation(): void
     {
         $casts = new Casts(new Settings(Collation::known('latin1_swedish_ci')), GrammarRelease::MySql847);

@@ -41,6 +41,15 @@ final class ReturningTest extends TestCase
         self::assertSame([[true, 2], [true, 2], [false, null], [false, null], [true, 12]], [(new Returning(Domain::integer()))->integer(JsonNode::parse('2.5')), (new Returning(Domain::integer()))->integer(JsonNode::parse('1.5')), (new Returning(Domain::integer(Field::Tiny, 4)))->integer(JsonNode::parse('300')), (new Returning(Domain::integer()))->integer(JsonNode::parse('"1.5"')), (new Returning(Domain::integer()))->integer(JsonNode::parse('" 12"'))]);
     }
 
+    public function testTextRetainsAnExplicitJsonValueLimitWithBlobResultMetadata(): void
+    {
+        $domain = new Domain(Kind::String, Field::MediumBlob, 16384, 31, false, Collation::known('utf8mb4_0900_bin'), display: 65536);
+        $returning = new Returning($domain);
+
+        self::assertSame([true, str_repeat('a', 16384)], $returning->text(str_repeat('a', 16384)));
+        self::assertSame([false, null], $returning->text(str_repeat('a', 16385)));
+    }
+
     public function testDecimalRoundsWithinThePrecision(): void
     {
         self::assertSame([[true, '123.5'], [false, null], [true, '-1.0']], [(new Returning(Domain::decimal(4, 1)))->decimal(JsonNode::parse('123.456')), (new Returning(Domain::decimal(4, 1)))->decimal(JsonNode::parse('1234.5')), (new Returning(Domain::decimal(4, 1)))->decimal(JsonNode::parse('18446744073709551615'))]);

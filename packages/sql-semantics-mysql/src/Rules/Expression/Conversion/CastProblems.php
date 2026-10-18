@@ -34,7 +34,7 @@ final class CastProblems
             }
             return (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal($target->length, $target->scale), '');
         }
-        if (in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) && (int) $target->length > 4294967295) {
+        if (in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) && $target->length !== null && (new JsonWidths())->of($target->length) === null) {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Width, 'cast as char', (int) $target->length, 4294967295);
         }
         return in_array($target->kind, [CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString, CastKind::MultiPolygon, CastKind::GeometryCollection], true)

@@ -2675,3 +2675,37 @@ agrees through the database-selection transition. Exhaustion still fails; no
 accepted structure is discarded. The construction property suite passes 292
 tests after the budget increase. This sampled comparison does not close the
 remaining whole-model invariant audit.
+
+
+### JSON_VALUE character return domains
+
+Character return widths retain their written numeric operand, while Semantics
+derives the effective character bound, result field kind and byte display width
+separately. Native observations distinguish the unsigned 64-bit upper half from
+a positive signed overflow and a value beyond the unsigned range. Width and
+character-set multiplication use the observed 32-bit result bounds. Memory uses
+those domains and enforces the value bound even when result metadata names a
+BLOB type. It does not recover the original SQL to decide these properties.
+
+Lowering checks the same CastTarget instance that it publishes. In particular,
+a character-set operand is not lowered a second time and left outside the
+retained structure. The leaf-retention guard remains enabled.
+
+The regression corpus passes 1,458 observations on MySQL 8.0, 8.4 and 9.1
+(243 inputs through both text and prepared requests), including the original
+unseeded counterexample, adjacent integer boundaries, character encodings,
+stored branches and value-length limits. Direct construction reuses 36 query
+objects across four table/document states on each release: 432 observations
+with unrelated session text. Static checks, 8,783 semantic tests and 18,160
+Memory unit/property/documentation tests pass. These bounded results do not
+replace the final whole-model and differential acceptance gates.
+
+A later unseeded run stopped after 537 matching inputs: a deferred INSERT value
+lost its write destination before preparation. Native MySQL checks an absent
+destination database or table before its row operand dependencies. Stored
+branches can retain and skip this write. This requires a complete write template
+or refusal with its destination and row operands, rather than a standalone
+scalar refusal. Call-name ownership also remains open: native MySQL permits an
+invalid stored-function name or native arity in an unused CTE, while a reached
+definition rejects it before table resolution. Those observations remain repair
+obligations, not exceptions to comparison or constructor validation.

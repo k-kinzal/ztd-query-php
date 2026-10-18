@@ -22,6 +22,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 #[Small]
 final class JsonRuleTest extends TestCase
 {
+    public function testValueRetainsTheSingleCharsetOccurrenceCreatedByLowering(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $leaves = new Leaves();
+        $lowering = new Lowering($platform->productions($profile), $leaves, $profile);
+        $node = $platform->parser($profile)->parse("SELECT JSON_VALUE('{}', '$' RETURNING CHAR(3) CHARACTER SET utf8mb3)")->find('function_call_keyword')[0];
+        $call = (new JsonRule($lowering))->value($lowering->form($node));
+        $names = array_values(array_filter($leaves->all(), static fn ($leaf): bool => $leaf instanceof \SqlSemantics\Statement\Identifier\Name));
+
+        self::assertSame([$call->returning?->charset?->charset], $names);
+    }
+
     public function testProblemRetainsOnlyDecimalDiagnosticBoundaries(): void
     {
         $platform = new Platform();

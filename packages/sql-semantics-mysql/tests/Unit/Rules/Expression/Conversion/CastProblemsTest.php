@@ -39,6 +39,15 @@ final class CastProblemsTest extends TestCase
         self::assertEquals($reported === null ? null : new TooBigPrecision($reported, 'CAST', $maximum), (new CastProblems())->precision(new CastTarget($kind, $length)));
     }
 
+    public function testReturningAcceptsUnsignedUpperHalfWidthsButRefusesAdjacentOverflow(): void
+    {
+        $rules = new CastProblems();
+        self::assertNull($rules->returning(new CastTarget(CastKind::Binary, '18446744073709551615')));
+        self::assertNull($rules->returning(new CastTarget(CastKind::Char, '9223372036854775808')));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize::class, $rules->returning(new CastTarget(CastKind::Binary, '9223372036854775807')));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize::class, $rules->returning(new CastTarget(CastKind::Binary, '18446744073709551616')));
+    }
+
     public function testReturningKeepsJsonTargetsDistinctFromOrdinaryCasts(): void
     {
         $rules = new CastProblems();

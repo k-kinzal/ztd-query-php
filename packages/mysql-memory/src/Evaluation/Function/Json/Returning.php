@@ -97,7 +97,7 @@ final class Returning
             return [false, null];
         }
         $converted = $charset === Charset::binary() ? $text : Encoding::convert($text, $utf8, $charset);
-        $limited = in_array($this->domain->field, [Field::LongBlob, Field::MediumBlob, Field::Blob, Field::TinyBlob], true);
+        $limited = $this->storing && in_array($this->domain->field, [Field::LongBlob, Field::MediumBlob, Field::Blob, Field::TinyBlob], true);
         $length = $charset === Charset::binary() ? strlen($converted) : mb_strlen($text, 'UTF-8');
 
         if ($this->storing && $charset === Charset::binary() && $this->domain->field === Field::String && $length < $this->domain->length) {

@@ -55,7 +55,7 @@ final class JsonRule
     {
         $this->lowering->names->claimed($form, ['function_call_keyword: JSON_VALUE_SYM ( simple_expr , text_literal opt_returning_type opt_on_empty_or_error )']);
         $target = $this->returning($form->node(5));
-        $problem = $this->problem($form);
+        $problem = $this->problem($form, $target);
         if ($problem !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
         }
@@ -74,9 +74,9 @@ final class JsonRule
      * Diagnoses an intrinsic return target before binding document dependencies.
      * Decimal diagnostic labels remain input-adapter context, represented only by offsets.
      */
-    public function problem(Form $form): \SqlSemantics\Statement\Fact\Diagnostic|null
+    public function problem(Form $form, ?CastTarget $target = null): \SqlSemantics\Statement\Fact\Diagnostic|null
     {
-        $target = $this->returning($form->node(5));
+        $target ??= $this->returning($form->node(5));
         $rules = new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems();
         $problem = $rules->returning($target);
         if ($problem === null || $target?->kind !== \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal) {

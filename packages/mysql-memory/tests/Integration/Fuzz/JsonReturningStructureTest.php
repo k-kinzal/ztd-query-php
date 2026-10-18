@@ -36,6 +36,11 @@ final class JsonReturningStructureTest extends TestCase
         for ($trial = 0; $trial < 12; $trial++) {
             $targets[] = new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal, $choices->one(['30', '65']), $choices->one(['0', '30']));
         }
+        foreach ([\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Binary, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char] as $kind) {
+            foreach (['9223372036854775808', '9223372036854775809', '9223372036854775811', '18446744073709551614', '18446744073709551615'] as $length) {
+                $targets[] = new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget($kind, $length);
+            }
+        }
         $statements = array_map(static function ($target): \SqlSemantics\Platform\MySql\Statement\QueryRoot {
             $call = new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall(new ColumnUse(new Name('value')), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), $target);
             $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($call, new Name('v'))], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t'))));
