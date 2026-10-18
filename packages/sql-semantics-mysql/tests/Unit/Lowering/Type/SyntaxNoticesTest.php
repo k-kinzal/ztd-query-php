@@ -45,6 +45,8 @@ final class SyntaxNoticesTest extends TestCase
         yield 'year attributes' => ['YEAR(4) ZEROFILL SIGNED ZEROFILL', [Deprecated::Zerofill, Deprecated::Zerofill, Deprecated::YearWidth]];
         yield 'repeated numeric attribute' => ['INT ZEROFILL SIGNED ZEROFILL', [Deprecated::Zerofill, Deprecated::Zerofill]];
         yield 'numeric digits' => ['FLOAT(3,1)', [Deprecated::FloatingDigits]];
+        yield 'width after repeated zerofill' => ['INT(0) ZEROFILL SIGNED ZEROFILL', [Deprecated::Zerofill, Deprecated::Zerofill, Deprecated::DisplayWidth]];
+        yield 'explicit tinyint width' => ['TINYINT(1)', [Deprecated::DisplayWidth]];
         yield 'integer display width' => ['INT(3)', [Deprecated::DisplayWidth]];
         yield 'numeric attributes' => ['DOUBLE(3,1) UNSIGNED ZEROFILL', [Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction]];
         yield 'binary attribute' => ['TEXT BINARY', [Deprecated::BinaryAttribute]];

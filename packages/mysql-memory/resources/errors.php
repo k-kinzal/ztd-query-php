@@ -551,6 +551,7 @@ return [
     1562 => ['HY000', 'Cannot create temporary table with partitions'],
     1563 => ['HY000', 'Partition constant is out of partition function domain'],
     1564 => ['HY000', 'This partition function is not allowed'],
+    1567 => ['HY000', 'Incorrect partition name'],
     1566 => ['HY000', 'Not allowed to use NULL value in VALUES LESS THAN'],
     1659 => ['HY000', "Field '%s' is of a not allowed type for this type of partitioning"],
     1697 => ['HY000', "VALUES value for partition '%s' must have type INT"],

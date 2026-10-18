@@ -1502,6 +1502,9 @@
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
         "target": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Problem\\NameTooLong": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\TableWildcard": {
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
@@ -2602,9 +2605,20 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredWindowSpec": {
         "base": "?SqlSemantics\\Statement\\Identifier\\Name",
-        "frame": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\Frame",
+        "frame": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\Frame|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\Frame\\DeferredFrame|null",
         "order": "array",
         "partition": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\Frame\\DeferredFrame": {
+        "end": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameBound|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\Frame\\DeferredFrameBound|null",
+        "exclusion": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameExclusion",
+        "start": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameBound|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\Frame\\DeferredFrameBound",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\Frame\\DeferredFrameBound": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\FrameBoundKind",
+        "offset": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredExplain": {
         "analyze": "bool",

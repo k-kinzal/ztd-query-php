@@ -70,6 +70,41 @@ final class DefinitionRule
     }
 
     /**
+     * Checks a partition identifier before lowering options or checking list counts.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the identifier exceeds 64 characters
+     */
+    public function name(Node $node): \SqlSemantics\Statement\Identifier\Name
+    {
+        $name = $this->lowering->names->identifier($node);
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnNameRule())->length($name->value) > 64) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong($name), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
+        }
+        return $name;
+    }
+
+    /**
+     * Preserves a completed partition name refusal before a later syntax error.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if (!in_array($node->name, ['part_name', 'sub_name', 'part_definition', 'sub_part_definition'], true)) {
+            return null;
+        }
+        $form = $this->lowering->form($node);
+        $name = $form->node(in_array($node->name, ['part_name', 'sub_name'], true) ? 0 : 1);
+        if (in_array($name->name, ['part_name', 'sub_name'], true)) {
+            return null;
+        }
+        try {
+            $this->name($name);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
+        }
+        return null;
+    }
+
+    /**
      * Lowers the definitions of a partitioning or of a partition change; an absent list is empty.
      *
      * @return list<PartitionDefinition>
@@ -122,6 +157,8 @@ final class DefinitionRule
     /**
      * Lowers one partition definition: a node of `part_definition`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the name exceeds the identifier domain
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function definition(Node $definition): PartitionDefinition
@@ -137,7 +174,7 @@ final class DefinitionRule
         }
 
         return new PartitionDefinition(
-            $this->lowering->names->identifier($name === null ? $form->node(1) : $name->node(0)),
+            $this->name($name === null ? $form->node(1) : $name->node(0)),
             $this->bound($form->node(2)),
             (new OptionRule($this->lowering))->options($form->node(3)),
             $this->subpartitions($form->node(4)),
@@ -263,6 +300,8 @@ final class DefinitionRule
     /**
      * Lowers one subpartition: a node of `sub_part_definition`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the name exceeds the identifier domain
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function subpartition(Node $definition): SubpartitionDefinition
@@ -278,7 +317,7 @@ final class DefinitionRule
         }
 
         return new SubpartitionDefinition(
-            $this->lowering->names->identifier($name === null ? $form->node(1) : $name->node(0)),
+            $this->name($name === null ? $form->node(1) : $name->node(0)),
             (new OptionRule($this->lowering))->options($form->node(2)),
         );
     }

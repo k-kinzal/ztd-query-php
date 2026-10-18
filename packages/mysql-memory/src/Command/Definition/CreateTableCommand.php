@@ -118,6 +118,7 @@ final class CreateTableCommand implements Command
         if (in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830, \SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
             $this->columns($operation, $session, $connection);
         }
+        (new Partition\PartitionNames())->check($create->partitioning);
         return $schema;
     }
 

@@ -7,6 +7,8 @@ namespace MySqlMemory\Plan\Window;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\Frame;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -32,18 +34,18 @@ final class Specification
 
     /**
      * @param string $name The name of the window, or UNNAMED
-     * @param WindowSpec $node The window as written
+     * @param WindowSpec|DeferredWindowSpec $node The window as written
      * @param list<OrderItem> $partition The PARTITION BY items, its own or inherited
      * @param list<OrderItem> $order The ORDER BY items, its own or inherited
      */
-    public function __construct(public readonly string $name, public readonly WindowSpec $node, public readonly array $partition, public readonly array $order)
+    public function __construct(public readonly string $name, public readonly WindowSpec|DeferredWindowSpec $node, public readonly array $partition, public readonly array $order)
     {
     }
 
     /**
      * Answers the frame clause of the window, if it has one.
      */
-    public function frame(): ?Frame
+    public function frame(): Frame|DeferredFrame|null
     {
         return $this->node->frame;
     }

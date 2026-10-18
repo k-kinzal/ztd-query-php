@@ -171,4 +171,10 @@ final class ResolutionTest extends TestCase
         (new Resolution())->item('w', new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
     }
 
+    public function testPreparedKeepsTheOriginalScalarItemsAfterDependencyChecks(): void
+    {
+        $items = [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))];
+        self::assertSame($items, (new Resolution())->prepared($items));
+    }
+
 }

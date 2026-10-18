@@ -2515,3 +2515,50 @@ gates. The subsequent unseeded run stopped after 166 matches on an oversized
 subpartition name whose error was incorrectly preceded by a count mismatch.
 The goal remains unmet, including the outstanding partition, frame/inheritance
 and EXPLAIN obligations.
+
+
+## Deferred interval boundaries and identifier limits
+
+`FrameBound` continues to require a scalar offset. A row or a deferred subquery
+used as an interval distance has the separate `DeferredFrameBound` role, inside
+`DeferredFrame` and `DeferredWindowSpec`. These values retain the frame unit,
+both boundaries, interval units, exclusion, base window and all ordering items.
+They can be held by an unused common table or a stored instruction without
+turning the non-scalar operand into a `Scalar`.
+
+When a window is reached, Memory opens its referenced tables, prepares ordinary
+clauses and window ordering, checks inheritance in definition order, then checks
+the frame shape, ordering type and offset operands. Semantic binding facts stay
+available throughout. Offset conditions are left to this phase rather than
+being raised before the owning frame. Parent windows written before and after
+their references are both covered. The consumer does not reconstruct these
+structures from SQL or parser nodes.
+
+The regression corpus compares 161 SQL inputs on MySQL 8.0.44, 8.4.7 and 9.1.0
+(483 observations). Direct construction creates 16 stored programs with row or
+tableless-subquery offsets, using both named and inline windows. The same
+objects are invoked with skipped branches, absent tables, missing columns,
+populated integer columns, then a temporal ordering column, and skipped again:
+432 observations across the three releases. A reached RANGE frame therefore
+changes its condition when the ordering column changes type; an inactive branch
+continues to succeed. These domain tests supplement the whole-model campaign.
+
+Partition and subpartition definition names now enforce the 64-character upper
+bound at construction. Lowering diagnoses an oversized name before a subsequent
+partition-count mismatch. Diagnostic display truncation does not change the
+retained identifier. Empty names and trailing spaces have a later DDL check:
+stored instructions may hold them, CREATE checks them before its existing-table
+shortcut, and ALTER first opens its target. The corpus includes 76 inputs across
+MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 (380 observations). The remaining
+partition-role audit includes these conditional definition failures and constant
+partition methods; a passing SQL comparison does not close that structure audit.
+
+Every explicitly written integer display width, including `TINYINT(1)`, retains
+its deprecation notice after any repeated ZEROFILL notices. The declaration and
+partial-input paths share this ordering. A further 96 inputs on each of the
+three modern releases compare successful declarations, following input failures
+and the original unseeded-fuzz counterexample (288 observations).
+
+The acceptance contract remains unmet until the outstanding structure audit,
+state witnesses, EXPLAIN comparison obligations, every supplied seed and the
+900-second unseeded campaign pass on the final revision.

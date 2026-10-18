@@ -175,6 +175,7 @@ final class InputErrors
     public function source(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong => SchemaError::TooLongIdentifier->error((new \MySqlMemory\Error\DiagnosticText())->bytes($diagnostic->name->value, 100, $session->settings()->legacy())),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput => $this->castSize($diagnostic, $session->text),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName => (new Definition\DefinitionNameInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand => (new Event\Alteration())->operand($diagnostic, $session),

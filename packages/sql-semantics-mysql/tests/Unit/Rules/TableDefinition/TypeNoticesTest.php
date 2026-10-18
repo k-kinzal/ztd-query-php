@@ -50,7 +50,7 @@ final class TypeNoticesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $warnings = $semantics->analyze('CREATE TABLE w (a INT(11), b INT ZEROFILL, c FLOAT(5,2), d DECIMAL(5,2) UNSIGNED, f TINYINT(1), g YEAR(4), h CHAR(1) CHARACTER SET utf8)')->facts->warnings;
 
-        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::DisplayWidth, Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction, Deprecated::YearWidth, Deprecated::Utf8Alias]), $warnings);
+        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::DisplayWidth, Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction, Deprecated::DisplayWidth, Deprecated::YearWidth, Deprecated::Utf8Alias]), $warnings);
     }
 
     public function testRoutineTypesWarnInParameterThenReturnOrder(): void
@@ -74,13 +74,13 @@ final class TypeNoticesTest extends TestCase
         self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::AsciiCharset, Deprecated::UnicodeCharset, Deprecated::Utf8mb3, Deprecated::Ucs2]), $operation->facts->warnings);
     }
 
-    public function testTypeAcceptsTinyintOfWidthOne(): void
+    public function testTypeWarnsForAnExplicitTinyintWidthOfOne(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
 
         (new TypeNotices())->type(new Integral(IntegralKind::TinyInt, '1'), $derivation);
 
-        self::assertSame([], $derivation->facts()->warnings);
+        self::assertEquals([new Deprecation(Deprecated::DisplayWidth)], $derivation->facts()->warnings);
     }
 
     public function testNumericWarnsAboutTheDigitsAndTheUnsignedAttributeOfAFloatingType(): void

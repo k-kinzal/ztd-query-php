@@ -151,7 +151,8 @@ final class Problems
      */
     public function calls(Operation|QueryPreparation $operation): array
     {
-        $calls = array_values(array_filter((new Walker())->find($operation->statement, FunctionCall::class), static fn (FunctionCall $call): bool => Locations::undeclared($call, $operation)));
+        $offsets = (new Problem\Location\FrameOffsets())->nodes($operation->statement);
+        $calls = array_values(array_filter((new Walker())->find($operation->statement, FunctionCall::class), static fn (FunctionCall $call): bool => !isset($offsets[spl_object_id($call)]) && Locations::undeclared($call, $operation)));
         if ($calls !== []) {
             $reached = array_fill_keys(array_map(spl_object_id(...), $this->reached($operation->statement)), true);
             $calls = array_values(array_filter($calls, static fn (FunctionCall $call): bool => isset($reached[spl_object_id($call)])));
@@ -172,12 +173,14 @@ final class Problems
         $grouping = $session->modes()->has('ONLY_FULL_GROUP_BY');
         $database = $session->variables->database;
         $tested = $this->tested($operation);
+        $offsets = (new Problem\Location\FrameOffsets())->conditions($operation->statement, $operation->facts);
 
         return array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => ($grouping || (!$diagnostic instanceof NonGroupedColumn && !($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering && $diagnostic->distinct)))
             && !($tested && $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables)
             && !($operation instanceof QueryPreparation && $operation->deferSetWidth && $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch && $diagnostic->list === \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList::SetOperands)
             && !Stages::answered($operation->statement, $diagnostic)
             && !Stages::planned($diagnostic)
+            && !isset($offsets[spl_object_id($diagnostic)])
             && !($operation->statement instanceof DropTable && $diagnostic instanceof MissingTable && ($diagnostic->name->schema !== null || $database !== ''))));
     }
 

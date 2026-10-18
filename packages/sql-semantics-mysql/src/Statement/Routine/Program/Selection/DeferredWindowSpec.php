@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection;
 
+use LogicException;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -18,7 +19,7 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A complete window whose partitioning or ordering retains a non-scalar operand.
+ * A complete window whose partitioning, ordering or frame retains a non-scalar operand.
  *
  * Named definitions and inactive common tables retain this specification without
  * preparing its expressions. A reached window checks every item in written order.
@@ -49,7 +50,7 @@ final class DeferredWindowSpec implements WindowSpecification
      * @param list<OrderItem|DeferredOrderItem> $partition The complete partitioning
      * @param list<OrderItem|DeferredOrderItem> $order The complete ordering
      */
-    public function __construct(public readonly ?Name $base = null, array $partition = [], array $order = [], public readonly ?Frame $frame = null)
+    public function __construct(public readonly ?Name $base = null, array $partition = [], array $order = [], public readonly Frame|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame|null $frame = null)
     {
         $clauses = [];
         foreach ([$partition, $order] as $items) {
@@ -62,7 +63,7 @@ final class DeferredWindowSpec implements WindowSpecification
         }
         $this->partition = $clauses[0];
         $this->order = $clauses[1];
-        Check::input(array_filter([...$this->partition, ...$this->order], static fn ($item): bool => $item instanceof DeferredOrderItem) !== [], 'A deferred window has at least one non-scalar item.');
+        Check::input($frame instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame || array_filter([...$this->partition, ...$this->order], static fn ($item): bool => $item instanceof DeferredOrderItem) !== [], 'A deferred window has at least one non-scalar item or boundary.');
         foreach ($this->partition as $item) {
             Check::input($item->direction === null, 'A window partition item has no sort direction.');
         }
@@ -86,13 +87,22 @@ final class DeferredWindowSpec implements WindowSpecification
     }
 
     /**
-     * Answers the first deferred item; preceding ordinary items remain retained.
+     * Answers the first deferred item or boundary, retaining preceding ordinary items.
+     *
+     * @throws LogicException When construction invariants have been bypassed
      */
     public function operand(): RowOperand|DeferredOperand
     {
         $items = array_values(array_filter([...$this->partition, ...$this->order], static fn ($item): bool => $item instanceof DeferredOrderItem));
-        Check::invariant($items !== [], 'A deferred window retains a non-scalar item.');
-        return $items[0]->expression;
+        if ($items !== []) {
+            return $items[0]->expression;
+        }
+        foreach ($this->frame?->offsets() ?? [] as $offset) {
+            if ($offset instanceof RowOperand || $offset instanceof DeferredOperand) {
+                return $offset;
+            }
+        }
+        throw new LogicException('A deferred window retains a non-scalar item or boundary.');
     }
 
     /**

@@ -50,6 +50,7 @@ enum PartitionError: int implements ErrorCode
     case ConstantOutOfDomain = 1563;
     case FunctionNotAllowed = 1564;
     case NullInLessThan = 1566;
+    case IncorrectName = 1567;
     case FieldTypeNotAllowed = 1659;
     case ValuesNotInteger = 1697;
     case RowNotInPartitions = 1748;

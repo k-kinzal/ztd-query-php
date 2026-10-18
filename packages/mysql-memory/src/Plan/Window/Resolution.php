@@ -19,6 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -104,6 +106,9 @@ final class Resolution
         }
         foreach ($written as [$name, $node]) {
             $this->inheritance($name, $node);
+            if ($node->frame !== null && array_filter($written, static fn (array $window): bool => $window[1]->base !== null && strcasecmp($window[1]->base->value, $name) === 0) !== []) {
+                throw QueryError::WindowInheritedFrame->error($name);
+            }
         }
         $specifications = [];
         foreach ($written as [$name, $node]) {
@@ -118,9 +123,9 @@ final class Resolution
      *
      * @throws \MySqlMemory\Error\SqlError When the window is of another form
      */
-    public function specification(WindowSpecification $specification): WindowSpec
+    public function specification(WindowSpecification $specification): WindowSpec|DeferredWindowSpec
     {
-        return $specification instanceof WindowSpec ? $specification : throw StatementError::NotSupportedYet->error('this window specification');
+        return $specification instanceof WindowSpec || $specification instanceof DeferredWindowSpec ? $specification : throw StatementError::NotSupportedYet->error('this window specification');
     }
 
     /**
@@ -157,7 +162,7 @@ final class Resolution
      *
      * @throws \MySqlMemory\Error\SqlError When an item is refused
      */
-    public function items(string $name, WindowSpec $node): void
+    public function items(string $name, WindowSpec|DeferredWindowSpec $node): void
     {
         foreach ([...$node->partition, ...$node->order] as $item) {
             $this->item($name, $item);
@@ -169,7 +174,7 @@ final class Resolution
      *
      * @throws \MySqlMemory\Error\SqlError When an ordinal or nested window is used
      */
-    public function item(string $name, OrderItem $item): void
+    public function item(string $name, OrderItem|DeferredOrderItem $item): void
     {
         $expression = $item->expression;
         while ($expression instanceof Grouped) {
@@ -192,7 +197,7 @@ final class Resolution
      *
      * @throws \MySqlMemory\Error\SqlError When the window cannot refine that window
      */
-    public function inheritance(string $name, WindowSpec $node): void
+    public function inheritance(string $name, WindowSpec|DeferredWindowSpec $node): void
     {
         if ($node->base === null) {
             return;
@@ -205,9 +210,6 @@ final class Resolution
         if ($node->order !== [] && $this->order($base) !== []) {
             throw QueryError::WindowInheritedOrdering->error($name, $definition->name->value);
         }
-        if ($base->frame !== null) {
-            throw QueryError::WindowInheritedFrame->error($definition->name->value);
-        }
     }
 
     /**
@@ -216,9 +218,9 @@ final class Resolution
      * @return list<OrderItem>
      * @throws \MySqlMemory\Error\SqlError When a window it refines is not defined
      */
-    public function partition(WindowSpec $node): array
+    public function partition(WindowSpec|DeferredWindowSpec $node): array
     {
-        return $node->base === null ? $node->partition : $this->partition($this->specification($this->definition($node->base)->specification));
+        return $node->base === null ? $this->prepared($node->partition) : $this->partition($this->specification($this->definition($node->base)->specification));
     }
 
     /**
@@ -227,13 +229,29 @@ final class Resolution
      * @return list<OrderItem>
      * @throws \MySqlMemory\Error\SqlError When a window it refines is not defined
      */
-    public function order(WindowSpec $node): array
+    public function order(WindowSpec|DeferredWindowSpec $node): array
     {
         if ($node->order !== [] || $node->base === null) {
-            return $node->order;
+            return $this->prepared($node->order);
         }
 
         return $this->order($this->specification($this->definition($node->base)->specification));
+    }
+
+    /**
+     * Narrows ordering items after deferred preparation has checked their operands.
+     *
+     * @param list<OrderItem|DeferredOrderItem> $items Complete semantic items
+     * @return list<OrderItem> Prepared scalar items
+     */
+    public function prepared(array $items): array
+    {
+        $prepared = [];
+        foreach ($items as $item) {
+            \SqlSemantics\Diagnostic\Check::invariant($item instanceof OrderItem, 'A non-scalar ordering item fails before window inheritance.');
+            $prepared[] = $item;
+        }
+        return $prepared;
     }
 
     /**

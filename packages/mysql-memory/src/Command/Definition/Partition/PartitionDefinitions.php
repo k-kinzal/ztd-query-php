@@ -71,6 +71,7 @@ final class PartitionDefinitions
         if ($definition->foreignKeys !== []) {
             throw PartitionError::ForeignKeys->error();
         }
+        (new PartitionNames())->check($clause);
         $method = $this->method($clause);
         $names = $this->names($clause, $method);
         [$expression, $columns, $read] = $this->source($clause, $definition);

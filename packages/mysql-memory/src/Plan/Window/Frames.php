@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Window;
 
+use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
@@ -25,6 +26,8 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrameBound;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
@@ -76,15 +79,17 @@ final class Frames
         if ($frame->unit === FrameUnit::Groups || $frame->exclusion !== null) {
             throw StatementError::NotSupportedYet->error($frame->unit === FrameUnit::Groups ? 'GROUPS' : 'EXCLUDE');
         }
-        $bounds = array_values(array_filter([$frame->start, $frame->end], static fn (?FrameBound $bound): bool => $bound !== null && $bound->offset !== null));
-        if ($frame->unit === FrameUnit::Rows && array_filter($bounds, static fn (FrameBound $bound): bool => $bound->unit !== null) !== []) {
+        $bounds = array_values(array_filter([$frame->start, $frame->end], static fn (FrameBound|DeferredFrameBound|null $bound): bool => $bound !== null && $bound->offset !== null));
+        if ($frame->unit === FrameUnit::Rows && array_filter($bounds, static fn (FrameBound|DeferredFrameBound $bound): bool => $bound->unit !== null) !== []) {
             throw QueryError::WindowRowsInterval->error($window->name);
         }
         if ($frame->unit === FrameUnit::Range && $bounds !== []) {
             $this->range($window, $bounds, $scope);
         }
+        \SqlSemantics\Diagnostic\Check::invariant(!$frame instanceof DeferredFrame, 'A non-scalar interval boundary fails during range preparation.');
         if ($used) {
             foreach ($bounds as $bound) {
+                \SqlSemantics\Diagnostic\Check::invariant($bound instanceof FrameBound, 'A prepared offset is scalar.');
                 $this->offset($window, $frame->unit, $bound, $scope);
             }
         }
@@ -96,7 +101,8 @@ final class Frames
     /**
      * Checks the ORDER BY of a window with a RANGE frame with offsets, and that the offsets suit it and are constant.
      *
-     * @param list<FrameBound> $bounds The boundaries with an offset
+     * @param list<FrameBound|DeferredFrameBound> $bounds The boundaries with an offset
+     * @throws LogicException When a deferred operand does not retain its condition
      * @throws SqlError When the ordering or an offset is refused
      */
     public function range(Specification $window, array $bounds, Scope $scope): void
@@ -116,6 +122,10 @@ final class Frames
             }
         }
         foreach ($bounds as $bound) {
+            if ($bound instanceof DeferredFrameBound) {
+                (new \MySqlMemory\Evaluation\Compile\Selections())->operand($bound->offset, $compiler, $scope->inClause('field list'));
+                throw new LogicException('A deferred frame boundary must retain a preparation condition.');
+            }
             if ($bound->offset !== null && !$compiler->constancy($bound->offset)->constant()) {
                 throw QueryError::WindowFrameBoundNotConstant->error($window->name);
             }
@@ -188,6 +198,7 @@ final class Frames
         if ($frame === null) {
             return WindowFrame::default($order !== []);
         }
+        \SqlSemantics\Diagnostic\Check::invariant(!$frame instanceof DeferredFrame, 'Only a scalar frame reaches iterator construction.');
         $end = $frame->end === null ? new Bound(FrameBoundKind::CurrentRow) : $this->bound($frame->unit, $frame->end, $order, $scope);
 
         return new WindowFrame($frame->unit, $this->bound($frame->unit, $frame->start, $order, $scope), $end);

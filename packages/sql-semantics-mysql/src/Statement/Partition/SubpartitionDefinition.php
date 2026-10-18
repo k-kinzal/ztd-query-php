@@ -19,6 +19,8 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-subpartitions.html.
  *
  * @visibility public
+ * @example Refusing an oversized partition identifier
+ *     new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name(str_repeat('p', 65)), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding a subpartition
  *     (new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('s0'), []))->name->value // => 's0'
  */
@@ -37,6 +39,7 @@ final class SubpartitionDefinition implements Node
      */
     public function __construct(public readonly Name $name, array $options)
     {
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnNameRule())->length($name->value) <= 64, 'A partition definition name has at most 64 characters.');
         $this->options = Check::listOf($options, PartitionOption::class, 'Subpartition options are a list of partition options.');
     }
 

@@ -44,7 +44,7 @@ final class TableChangeRules
      */
     public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
-        $notice = (new ModifierRule($this->lowering))->completed($node);
+        $notice = (new Partition\DefinitionRule($this->lowering))->completed($node) ?? (new ModifierRule($this->lowering))->completed($node);
         if ($notice !== null || $node->name !== 'alter_list_item' || !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
             return $notice;
         }
