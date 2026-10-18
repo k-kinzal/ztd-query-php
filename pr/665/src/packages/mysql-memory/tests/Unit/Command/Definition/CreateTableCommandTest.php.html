@@ -108,7 +108,7 @@
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$table</span>-&gt;<span class="tok-id">data</span>-&gt;<span class="tok-id">rows</span>);</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    }</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a></span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testExecuteCreatesATableInTheDatabaseItNames</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCreateUsesTheDatabaseNamedByTheDefinition</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    {</span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE DATABASE d; CREATE DATABASE e; USE d&#039;</span>);</span>
