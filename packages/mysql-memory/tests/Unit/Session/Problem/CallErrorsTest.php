@@ -17,6 +17,15 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 #[Small]
 final class CallErrorsTest extends TestCase
 {
+    public function testErrorRetainsTheImpossibleJsonTarget(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Point);
+        $error = (new CallErrors())->error($problem);
+        self::assertNotNull($error);
+        self::assertSame(4032, $error->getCode());
+        self::assertSame('Invalid cast from JSON to POINT.', $error->getMessage());
+    }
+
     public function testErrorReportsTheWindowConstraintWhenNoEnclosingLabelIsAvailable(): void
     {
         $problem = new WindowConstraint(new WindowSpec(order: [new OrderItem(new NumberLiteral('1'))]), true);

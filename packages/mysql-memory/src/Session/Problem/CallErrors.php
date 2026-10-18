@@ -26,6 +26,7 @@ final class CallErrors
     public function error(Diagnostic $diagnostic, bool $originalCase = false): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast => \MySqlMemory\Error\Family\DataError::InvalidSpatialCast->error('JSON', $diagnostic->target->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint => $this->frame($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint => (new \MySqlMemory\Program\Expression\RowUse())->error($diagnostic->window->operand()),
             $diagnostic instanceof WrongArgumentCount => QueryError::WrongParameterCountToNativeFunction->error($diagnostic->function->value),

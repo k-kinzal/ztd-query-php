@@ -47,20 +47,46 @@ final class JsonRule
     /**
      * Lowers JSON_VALUE.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When its return target has no value domain
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function value(Form $form): JsonValueCall
     {
         $this->lowering->names->claimed($form, ['function_call_keyword: JSON_VALUE_SYM ( simple_expr , text_literal opt_returning_type opt_on_empty_or_error )']);
+        $target = $this->returning($form->node(5));
+        $problem = $this->problem($form);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
         [$onEmpty, $onError] = $this->responses($form->node(6));
 
         return new JsonValueCall(
             $this->lowering->expressions->simpleExpression($form->node(2)),
             $this->lowering->literals->string($form->node(4)),
-            $this->returning($form->node(5)),
+            $target,
             $onEmpty,
             $onError,
         );
+    }
+
+    /**
+     * Diagnoses an intrinsic return target before binding document dependencies.
+     * Decimal diagnostic labels remain input-adapter context, represented only by offsets.
+     */
+    public function problem(Form $form): \SqlSemantics\Statement\Fact\Diagnostic|null
+    {
+        $target = $this->returning($form->node(5));
+        $rules = new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems();
+        $problem = $rules->returning($target);
+        if ($problem === null || $target?->kind !== \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal) {
+            return $problem;
+        }
+        if (!$problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $problem->rule === \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision) {
+            return $problem;
+        }
+        [$start, $end] = (new \SqlSemantics\Construction\SourceRanges())->span($form->node(2)) ?? [0, 0];
+        return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput($problem, $start, $end);
     }
 
     /**

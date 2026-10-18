@@ -153,7 +153,7 @@ final class CastsTest extends TestCase
         self::assertEquals(Domain::string(512, Collation::known('utf8mb4_0900_bin'), Field::VarString, Coercibility::Coercible), $casts->returning(null));
         self::assertEquals(Domain::string(3, Collation::known('utf8mb4_0900_bin'), Field::VarString, Coercibility::Coercible), $casts->returning(new CastTarget(CastKind::Char, '3')));
         self::assertEquals(Domain::string(4294967295, Collation::binary(), Field::LongBlob, Coercibility::Coercible), $casts->returning(new CastTarget(CastKind::Binary)));
-        self::assertEquals(new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::known('utf8mb4_0900_bin')), $casts->returning(new CastTarget(CastKind::Date)));
+        self::assertEquals(new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::known('latin1_swedish_ci')), $casts->returning(new CastTarget(CastKind::Date)));
         self::assertEquals(Domain::integer(Field::LongLong, 21), $casts->returning(new CastTarget(CastKind::Signed)));
     }
 

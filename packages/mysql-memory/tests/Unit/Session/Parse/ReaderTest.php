@@ -21,6 +21,25 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ReaderTest extends TestCase
 {
+    public function testMarkerEndKeepsTheCompletedGrammarBoundary(): void
+    {
+        $reader = new Reader();
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral('bad', \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time);
+        $rejection = new \SqlSemantics\Construction\RejectedInput($problem, 17, true);
+        self::assertSame(17, $reader->markerEnd($rejection, \SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertSame(PHP_INT_MAX, $reader->markerEnd($rejection, \SqlSemantics\Contract\GrammarRelease::MySql5744));
+        self::assertSame(PHP_INT_MAX, $reader->markerEnd(null, \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
+    public function testReadKeepsAnUnpreparedMarkerBeforeTemporalInterpretation(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("near '?' at line 1");
+        (new Reader())->read("SELECT TIME 'bad', ?", false, $session);
+    }
+
     public function testTargetNoticesKeepsGrammarFailuresBeforeModernTargetResolution(): void
     {
         $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2);

@@ -27,6 +27,9 @@ final class SyntaxCastsTest extends TestCase
      */
     public static function providerCasts(): iterable
     {
+        yield 'json spatial target' => ["SELECT JSON_VALUE('{}', '$' RETURNING POINT),?", [new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Point))]];
+        yield 'json temporal precision continues' => ["SELECT JSON_VALUE('{}', '$' RETURNING TIME(7)),?", [new ParseFailure(new TooBigPrecision(7, 'CAST'))]];
+        yield 'incomplete json call' => ["SELECT JSON_VALUE('{}', '$' RETURNING POINT DEFAULT ? ON ERROR)", []];
         yield 'datetime precision' => ['SELECT CAST(1 AS DATETIME(7)),?', [new ParseFailure(new TooBigPrecision(7, 'CAST'), true)]];
         yield 'float precision' => ['SELECT CAST(1 AS FLOAT(54)),?', [new ParseFailure(new TooBigPrecision(54, 'CAST', 53), true)]];
         yield 'convert precision' => ['SELECT CONVERT(1,DATETIME(7)),?', [new ParseFailure(new TooBigPrecision(7, 'CAST'), true)]];
@@ -55,6 +58,15 @@ final class SyntaxCastsTest extends TestCase
         $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, (int) strpos($sql, '?'), $profile);
 
         self::assertEquals($expected, array_column($notices, 1));
+    }
+
+    public function testJsonKeepsTheCompletedCallBeforeALaterMarker(): void
+    {
+        $platform = new \SqlSemantics\Platform\MySql\Platform();
+        $profile = new LanguageProfile(GrammarRelease::MySql847);
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering($platform->productions($profile), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $node = (new MySqlParser('mysql-8.4.7'))->parse("SELECT JSON_VALUE(missing, '$' RETURNING POINT)")->find('function_call_keyword')[0];
+        self::assertEquals(new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Point)), (new SyntaxCasts())->json($node, $lowering));
     }
 
     /**

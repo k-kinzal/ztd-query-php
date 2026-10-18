@@ -20,6 +20,28 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 final class CastProblems
 {
     /**
+     * Excludes spatial results and invalid fractional precision from JSON_VALUE.
+     * These are completed-call conditions even in unselected routine branches.
+     */
+    public function returning(?CastTarget $target): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast|TooBigPrecision|\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize|null
+    {
+        if ($target === null) {
+            return null;
+        }
+        if ($target->kind === CastKind::Decimal) {
+            if (($target->length === null ? 10 : (int) $target->length) < (int) $target->scale) {
+                return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision, '');
+            }
+            return (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal($target->length, $target->scale), '');
+        }
+        if (in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) && (int) $target->length > 4294967295) {
+            return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Width, 'cast as char', (int) $target->length, 4294967295);
+        }
+        return in_array($target->kind, [CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString, CastKind::MultiPolygon, CastKind::GeometryCollection], true)
+            ? new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast($target->kind) : $this->precision($target);
+    }
+
+    /**
      * Checks an array's element kind before its precision, as the completed cast does.
      */
     public function target(CastTarget $target, bool $array): NotSupportedYet|TooBigPrecision|null

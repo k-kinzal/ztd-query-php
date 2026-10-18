@@ -39,6 +39,16 @@ final class CastProblemsTest extends TestCase
         self::assertEquals($reported === null ? null : new TooBigPrecision($reported, 'CAST', $maximum), (new CastProblems())->precision(new CastTarget($kind, $length)));
     }
 
+    public function testReturningKeepsJsonTargetsDistinctFromOrdinaryCasts(): void
+    {
+        $rules = new CastProblems();
+        self::assertNull($rules->returning(null));
+        self::assertNull($rules->returning(new CastTarget(CastKind::Signed)));
+        self::assertNull($rules->target(new CastTarget(CastKind::Point), false));
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast(CastKind::Point), $rules->returning(new CastTarget(CastKind::Point)));
+        self::assertEquals(new TooBigPrecision(7, 'CAST'), $rules->returning(new CastTarget(CastKind::Time, '7')));
+    }
+
     public function testPrecisionRetainsTemporalLimitsAndFloatingOverflow(): void
     {
         $rules = new CastProblems();

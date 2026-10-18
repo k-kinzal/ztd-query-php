@@ -30,6 +30,9 @@ final class SyntaxCasts
      */
     public function completed(Node $node, Lowering $lowering): Deprecated|ParseFailure|null
     {
+        if ($node->name === 'function_call_keyword') {
+            return $this->json($node, $lowering);
+        }
         if ($node->name === 'cast_type') {
             return $lowering->types->castTarget($node)->kind === CastKind::NationalChar && Deprecated::National->warnedIn($lowering->profile->grammar) ? Deprecated::National : null;
         }
@@ -55,4 +58,19 @@ final class SyntaxCasts
 
         return $problem === null ? null : new ParseFailure($problem, $aborts);
     }
+
+    /**
+     * Retains a JSON_VALUE target's condition only after its entire call completes.
+     * Unlike CAST precision refusals, this condition continues in every release.
+     */
+    public function json(Node $node, Lowering $lowering): ?ParseFailure
+    {
+        $form = $lowering->productions->form($node);
+        if ($form->signature !== 'function_call_keyword: JSON_VALUE_SYM ( simple_expr , text_literal opt_returning_type opt_on_empty_or_error )') {
+            return null;
+        }
+        $problem = (new \SqlSemantics\Platform\MySql\Lowering\Call\JsonRule($lowering))->problem($form);
+        return $problem === null ? null : new ParseFailure($problem);
+    }
+
 }

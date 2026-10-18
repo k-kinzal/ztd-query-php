@@ -125,12 +125,18 @@ final class Casts
         if ($collation !== null) {
             return Domain::string($length ?? 4294967295, $collation, $length === null ? Field::LongBlob : Field::VarString, Coercibility::Coercible);
         }
+        if ($target->kind === CastKind::Decimal && $target->length !== null && (int) $target->length === 0) {
+            return Domain::decimal(10, (int) $target->scale);
+        }
         $domain = $this->cast(Domain::null(), $target);
+        if ($target->kind === CastKind::Year && $this->release === GrammarRelease::MySql8044) {
+            return new Domain(Kind::Year, Field::Year, 5);
+        }
         if (!$domain->kind->temporal()) {
             return $domain;
         }
 
-        return new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, false, $text);
+        return new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, false, Collation::known('latin1_swedish_ci'));
     }
 
     /**

@@ -1264,6 +1264,9 @@
         "bytes": "string",
         "charset": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\InvalidJsonCast": {
+        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\NotSupportedYet": {
         "feature": "string"
     },
@@ -3519,6 +3522,11 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\TemporalKind": {
         "name": "string",
         "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Problem\\CastSizeInput": {
+        "end": "int",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Problem\\InvalidTypeSize",
+        "start": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Problem\\InvalidTypeSize": {
         "actual": "int",

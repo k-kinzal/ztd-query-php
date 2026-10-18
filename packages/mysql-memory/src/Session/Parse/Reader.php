@@ -52,7 +52,7 @@ final class Reader
                 throw (new CacheOptions())->clashed($listed[0], $listed[1], $statement, $session);
             }
             try {
-                (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy(), $rejection?->aborts === true ? $rejection->end : PHP_INT_MAX);
+                (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->markers($tree, $statement, $session->following, $session->settings()->legacy(), $this->markerEnd($rejection, $session->settings()->release()));
             } catch (SqlError $error) {
                 throw (new Entry\ProgramInput())->marker($error, $tree, $session);
             }
@@ -73,6 +73,17 @@ final class Reader
         $session->hinted = (new \MySqlMemory\Hint\Hints())->syntax($tree, $statement, $session);
 
         return $tree;
+    }
+
+    /**
+     * Keeps text markers ahead of temporal contextualization from MySQL 5.7 onward.
+     */
+    public function markerEnd(?\SqlSemantics\Construction\RejectedInput $rejection, GrammarRelease $release): int
+    {
+        if ($rejection === null || !$rejection->aborts) {
+            return PHP_INT_MAX;
+        }
+        return $rejection->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral && $release !== GrammarRelease::MySql5651 ? PHP_INT_MAX : $rejection->end;
     }
 
     /**

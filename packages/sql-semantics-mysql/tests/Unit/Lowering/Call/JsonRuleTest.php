@@ -22,6 +22,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 #[Small]
 final class JsonRuleTest extends TestCase
 {
+    public function testProblemRetainsOnlyDecimalDiagnosticBoundaries(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT JSON_VALUE('{}', '$' RETURNING DECIMAL(66,0))")->find('function_call_keyword')[0];
+        $problem = (new JsonRule($lowering))->problem($lowering->form($node));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput::class, $problem);
+        self::assertSame(18, $problem->start);
+        self::assertSame(22, $problem->end);
+        self::assertSame('', $problem->problem->name);
+        self::assertSame(66, $problem->problem->actual);
+    }
+
     public function testValueLowersJsonValue(): void
     {
         $platform = new Platform();

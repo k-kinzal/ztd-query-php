@@ -2466,3 +2466,52 @@ These repaired domains do not close the partition, additional frame/inheritance
 or measured EXPLAIN output obligations. Whole-model native comparisons and
 900-second unseeded campaigns remain required on the final revision; matching
 SQL errors alone do not certify the construction contract.
+
+
+### JSON return domains and input diagnostics
+
+`JsonValueCall` now excludes spatial RETURNING kinds, invalid floating and
+fractional-second precision, excessive character width, and contradictory
+DECIMAL precision/scale before Operation construction. These combinations are
+rejected by native MySQL even inside an unselected stored-program branch.
+The completed-call input rule produces the corresponding typed condition while
+retaining later grammar warnings and errors. Ordinary CAST keeps its separate
+target rules; a valid spatial CAST does not become invalid merely because
+JSON_VALUE cannot return that type.
+
+A refused DECIMAL target can name its document's exact spelling in the native
+error. `CastSizeInput` retains the typed size condition and integer byte
+boundaries only. SQL and parser nodes do not escape into that diagnostic. The
+memory input adapter formats the label from its request context. No accepted
+statement or scalar needs those offsets or request text for execution. The
+reviewed schema adds this bounded input diagnostic and `InvalidJsonCast`.
+
+Direct construction also exposed missing NCHAR notices and return-domain
+metadata. Temporal JSON results use latin1_swedish_ci internally, independently
+of connection collation, while result conversion follows the session. YEAR
+RETURNING on MySQL 8.0 retains its signed metadata; DECIMAL(0,0) denotes the
+default ten-digit result. Twenty-six directly constructed queries reuse their
+objects across missing tables, integer columns, populated text columns and
+table deletion on MySQL 8.0.44, 8.4.7 and 9.1.0 (312 observations). Execution is
+given unrelated invalid request text throughout.
+
+The `query549` regression corpus contains 107 SQL submissions, including the
+original unseeded failure, all seven spatial kinds, size bounds, unselected
+routine branches, competing grammar errors, invalid temporal and row document
+operands, exact diagnostic spelling, character-set changes and disabled result
+conversion. Text and prepared protocols account for 642 native comparisons.
+The separate temporal-marker corpus records the MySQL 5.6 versus 5.7-and-later
+boundary: modern text markers precede temporal contextualization, while an
+already completed stored instruction retains its own earlier refusal.
+
+The `query530` whole-model campaign completed all 244 roots without a native
+difference: 96 successful outcomes, 148 matching SQL errors, and 57 same-object
+database histories with 171 observations. Matching SQL errors still require
+classification and, when claimed to depend on state, a transition witness.
+The `query519` supplied corpora completed all nine releases; eight passed and
+8.1.0 encountered the independently observed loader errno variation documented
+above. These snapshots are historical evidence, not the required final-revision
+gates. The subsequent unseeded run stopped after 166 matches on an oversized
+subpartition name whose error was incorrectly preceded by a count mismatch.
+The goal remains unmet, including the outstanding partition, frame/inheritance
+and EXPLAIN obligations.

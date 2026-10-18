@@ -175,6 +175,7 @@ final class InputErrors
     public function source(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput => $this->castSize($diagnostic, $session->text),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName => (new Definition\DefinitionNameInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand => (new Event\Alteration())->operand($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration => (new Event\Alteration())->error($diagnostic, $session),
@@ -184,7 +185,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder => $this->indexOrder($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ZeroKeyPrefix => SchemaError::KeyPartZeroLength->error($diagnostic->column->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute => (new Json\AttributeInput())->error($diagnostic),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns => ($diagnostic->program ?? $diagnostic->view)->schema === null && $session->variables->database === '' ? \MySqlMemory\Error\Family\QueryError::NoDatabase->error() : SchemaError::WrongColumnName->error($diagnostic->column->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns => $this->viewColumns($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting => (new Replication\Settings())->error($diagnostic, $session),
             $diagnostic instanceof RefusedSourceNumber => (new SourceNumberInput())->error($diagnostic, $session->text),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount => (new SourceNumberInput())->fileCount($diagnostic, $session),
@@ -192,6 +193,24 @@ final class InputErrors
             $diagnostic instanceof RoleOrPrivilegeMismatch => (new RoleInput())->error($diagnostic, $session->text),
             default => null,
         };
+    }
+
+    /**
+     * Resolves the view's declaration database before reporting its column name.
+     */
+    public function viewColumns(\SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns $diagnostic, Session $session): SqlError
+    {
+        return ($diagnostic->program ?? $diagnostic->view)->schema === null && $session->variables->database === '' ? \MySqlMemory\Error\Family\QueryError::NoDatabase->error() : SchemaError::WrongColumnName->error($diagnostic->column->value);
+    }
+
+    /**
+     * Formats a refused return type's operand label entirely at the input boundary.
+     */
+    public function castSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput $diagnostic, string $statement): SqlError
+    {
+        $bound = $diagnostic->problem;
+        $label = substr($statement, $diagnostic->start, $diagnostic->end - $diagnostic->start);
+        return (new \MySqlMemory\Error\TypeErrors())->size(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($bound->rule, $label, $bound->actual, $bound->maximum));
     }
 
     /**
