@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Node;
  * Constrains dormant operands to the clauses a VALUES write never contextualizes.
  *
  * The check is structural and independent of catalogs, sessions and execution.
- * Every statement constructor checks this through the shared graph invariants.
+ * Statement and scalar constructors check this through the shared graph invariants.
  *
  * @visibility SqlSemantics\Platform\MySql
  * @example Refusing a dormant call even in an unused ordinary CTE
@@ -28,6 +28,16 @@ use SqlSemantics\Statement\Node;
  *     $call = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall(new \SqlSemantics\Statement\Identifier\Name('ABS'));
  *     $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($call)]);
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), $body) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a VALUES-write wrapper inside an ordinary scalar predicate
+ *     $rows = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]);
+ *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesClauses(null, $rows, [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem($row)]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a VALUES-write wrapper inside a quantified scalar comparison
+ *     $rows = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]);
+ *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesClauses(null, $rows, [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem($row)]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal, \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any, $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ValueRoles
 {

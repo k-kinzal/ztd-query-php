@@ -2658,3 +2658,15 @@ would lose these distinctions. Retained templates need ownership by the
 conditional or stored role; ordinary INSERT/read consumers need their own
 structural constraints. These observations are an open audit result, not a
 completed constructor repair.
+
+
+### Scalar ownership of VALUES-write clauses
+
+The shared constructor graph check now applies VALUES-write ownership to Scalar
+roots as well as Statement roots. A write-only `ValuesClauses` wrapper cannot
+escape through EXISTS or a quantified comparison and fail only when a later
+consumer selects a language profile. Constructor examples cover both predicates.
+The full semantic and Memory test suites pass after the change. The original
+EXISTS generation now reaches native comparison without a profile failure. The
+quantified-comparison trial instead exhausts its construction budget; this is a
+remaining generator failure, not a passing comparison or an accepted SQL error.

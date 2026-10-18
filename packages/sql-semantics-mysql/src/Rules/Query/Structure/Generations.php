@@ -53,7 +53,7 @@ final class Generations
      */
     public function check(Node $root): void
     {
-        if ($root instanceof \SqlSemantics\Statement\Statement) {
+        if ($root instanceof \SqlSemantics\Statement\Statement || $root instanceof \SqlSemantics\Statement\Scalar) {
             (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles())->check($root);
         }
         $pending = [$root];
