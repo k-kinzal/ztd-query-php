@@ -31,8 +31,10 @@ final class PreparedStatement
 {
     /**
      * Captures a prepared structure and the inputs needed to interpret its literals.
+     *
+     * @param string|null $engine The selected table engine, resolved during preparation
      */
-    public function __construct(public readonly Statement $statement, public readonly LanguageProfile $profile, public readonly Settings $literals, public readonly string $database)
+    public function __construct(public readonly Statement $statement, public readonly LanguageProfile $profile, public readonly Settings $literals, public readonly string $database, public readonly ?string $engine = null)
     {
     }
 
@@ -41,7 +43,8 @@ final class PreparedStatement
      */
     public static function capture(Operation $operation, Session $session): self
     {
-        return new self($operation->statement, $operation->profile(), Settings::of($operation->context), $session->variables->database);
+        $engine = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && array_filter($operation->statement->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption) !== [] ? (new \MySqlMemory\Command\Definition\StorageOptions())->engine($operation->statement, $session->variables) : null;
+        return new self($operation->statement, $operation->profile(), Settings::of($operation->context), $session->variables->database, $engine);
     }
 
     /**
@@ -58,6 +61,8 @@ final class PreparedStatement
         }
         $database = $session->variables->database;
         $replayed = $session->replayed;
+        $engines = $session->variables->preparedEngines;
+        $session->variables->preparedEngines = $this->engine === null ? [] : [spl_object_id($this->statement) => $this->engine];
         $session->variables->database = $this->database;
         $session->replayed = true;
         $session->text = $label;
@@ -67,6 +72,7 @@ final class PreparedStatement
             $operation = (new Binding())->operation($session, $this->statement, $parameters, $this->profile, $this->literals);
             return (new Execution($session))->perform($operation, (new Dispatcher())->command($this->statement), $parameters);
         } finally {
+            $session->variables->preparedEngines = $engines;
             $session->variables->database = $database;
             $session->replayed = $replayed;
         }

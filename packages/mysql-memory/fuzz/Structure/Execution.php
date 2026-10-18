@@ -50,20 +50,22 @@ final class Execution
      * Executes directly constructed structures against shared session state.
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to parameter occurrences
+     * @param bool $prepared Whether to prepare the structure even with no outer parameters
      * @throws \MySqlMemory\Error\SqlError When execution rejects the structure
      */
-    public function runIn(Session $session, Statement|Scalar|\SqlSemantics\Statement\Query $node, array $parameters = []): Reply
+    public function runIn(Session $session, Statement|Scalar|\SqlSemantics\Statement\Query $node, array $parameters = [], bool $prepared = false): Reply
     {
+        $prepared = $prepared || $parameters !== [];
         if ($session->running->using === []) {
             $session->activity->begin();
-            \MySqlMemory\Session\State\StatementCounters::received($session, $parameters === []);
+            \MySqlMemory\Session\State\StatementCounters::received($session, !$prepared);
         }
         $session->hinted = [];
         $session->dots = [];
         $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot($node instanceof \SqlSemantics\Statement\Query ? $node : new Select([], [new SelectExpression($node)]));
         $operation = $this->operation($session, $statement, $parameters);
 
-        return $this->execute($session, $operation, $parameters);
+        return $this->execute($session, $operation, $parameters, $prepared);
     }
 
     /**
@@ -84,11 +86,11 @@ final class Execution
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and domains
      * @throws \MySqlMemory\Error\SqlError When preparation or execution rejects the operation
      */
-    public function execute(Session $session, Operation $operation, array $parameters): Reply
+    public function execute(Session $session, Operation $operation, array $parameters, bool $prepared = false): Reply
     {
         $execution = new StatementExecution($session);
         $command = (new Dispatcher())->command($operation->statement);
-        if ($parameters === []) {
+        if ($parameters === [] && !$prepared) {
             return $execution->perform($operation, $command);
         }
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');

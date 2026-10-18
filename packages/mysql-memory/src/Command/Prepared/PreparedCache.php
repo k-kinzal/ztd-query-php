@@ -28,15 +28,18 @@ final class PreparedCache
     /**
      * @param list<array{string, string, Table}> $tables Resolved schema, name and declaration identities
      */
-    public function __construct(public PreparedStatement $definition, public array $tables)
+    public function __construct(public PreparedStatement|PendingTable $definition, public array $tables)
     {
     }
 
     /**
      * Retains a definition and the declarations its named relations resolved to.
      */
-    public static function capture(Operation $operation, Session $session): self
+    public static function capture(Operation|PendingTable $operation, Session $session): self
     {
+        if ($operation instanceof PendingTable) {
+            return new self($operation, []);
+        }
         $tables = [];
         foreach ((new Walker())->find($operation->statement, NamedRelation::class) as $relation) {
             if (!$operation->facts->covers($relation)) {

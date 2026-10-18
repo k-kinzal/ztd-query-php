@@ -32,6 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
@@ -80,7 +81,7 @@ final class ExplainCommand implements Command
      */
     public function format(Node $statement): void
     {
-        if (($statement instanceof Explain || $statement instanceof ExplainConnection) && $statement->format !== null && !in_array(strtoupper($statement->format->value), self::FORMATS, true)) {
+        if (($statement instanceof Explain || $statement instanceof DeferredExplain || $statement instanceof ExplainConnection) && $statement->format !== null && !in_array(strtoupper($statement->format->value), self::FORMATS, true)) {
             throw StatementError::UnknownExplainFormat->error($statement->format->value);
         }
     }
@@ -94,24 +95,37 @@ final class ExplainCommand implements Command
      */
     public function check(Node $statement, Session $session): void
     {
-        if (!$statement instanceof Explain && !$statement instanceof ExplainConnection) {
+        if (!$statement instanceof Explain && !$statement instanceof DeferredExplain && !$statement instanceof ExplainConnection) {
             return;
         }
         $format = $statement->format === null ? null : strtoupper($statement->format->value);
         if ($statement->format !== null && !in_array($format, self::FORMATS, true)) {
             throw StatementError::UnknownExplainFormat->error($statement->format->value);
         }
-        if ($statement instanceof Explain && $statement->analyze && $format !== null && $format !== 'TREE') {
-            throw StatementError::NotSupportedYet->error('EXPLAIN ANALYZE with ' . $format . ' format');
-        }
-        if ($statement instanceof Explain && $statement->into !== null && $format !== 'JSON') {
-            throw $format === null ? StatementError::ExplainIntoImplicitFormat->error() : StatementError::ExplainIntoFormat->error($format);
-        }
         if ($statement instanceof ExplainConnection) {
             return;
         }
+        if ($statement->into !== null && $format !== 'JSON') {
+            throw $format === null ? StatementError::ExplainIntoImplicitFormat->error() : StatementError::ExplainIntoFormat->error($format);
+        }
         if ($statement->database !== null && $session->instance->dictionary->schema($statement->database->value) === null) {
             throw QueryError::BadDatabase->error($statement->database->value);
+        }
+    }
+
+    /**
+     * Checks an analysis format after the explained statement's dependencies prepare.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the selected analysis report is unavailable
+     */
+    public function analysis(Explain|DeferredExplain $statement, Session $session): void
+    {
+        $format = strtoupper($statement->format->value ?? '');
+        if ($statement->analyze && $format === 'JSON' && version_compare($session->instance->version, '9.0.0', '>=') && $session->variables->count('explain_json_format_version', 1) === 1) {
+            throw StatementError::ExplainAnalyzeJsonVersion->error();
+        }
+        if ($statement->analyze && $format !== '' && $format !== 'TREE') {
+            throw StatementError::NotSupportedYet->error('EXPLAIN ANALYZE with ' . $format . ' format');
         }
     }
 
@@ -126,6 +140,7 @@ final class ExplainCommand implements Command
         if ($statement instanceof ExplainConnection) {
             return $this->connection($statement, $session, $context);
         }
+        $this->analysis($statement, $session);
         $format = $statement->analyze ? 'TREE' : strtoupper($statement->format->value ?? (string) ($session->variables->read('explain_format') ?? 'TRADITIONAL'));
         $database = $statement->database->value ?? $session->variables->database;
         $tables = $this->tables($statement->statement, $database);
@@ -134,6 +149,12 @@ final class ExplainCommand implements Command
             $session->variables->assign($statement->into->name->value, $this->document($tables), Domain::string(50331645, Collation::known('utf8mb3_general_ci'), Field::MediumBlob));
 
             return new Completion(0, 0, $context->diagnostics->raised());
+        }
+        if (!$session->settings()->legacy() && $format !== 'TREE') {
+            $note = (new QueryNote())->projection($operation, $session, $connection);
+            if ($note !== null) {
+                $context->diagnostics->note(QueryError::RewrittenQuery, $note);
+            }
         }
         if ($format === 'TRADITIONAL') {
             $impossible = $this->impossible($operation, $session, $context, $connection);

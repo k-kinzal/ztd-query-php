@@ -30,7 +30,7 @@ final class Preparation
     public function check(Operation $operation, Session $session): void
     {
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase) {
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
         $this->program($operation, $session);
@@ -95,11 +95,21 @@ final class Preparation
     public function definitions(Operation $operation, Session $session): void
     {
         $statement = $operation->statement;
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable) {
+            $storage = new \MySqlMemory\Command\Definition\StorageOptions();
+            $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+            $storage->header($statement, $session, $context);
+            $storage->engine($statement, $session->variables, $context);
+        }
         $dropEvent = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && $statement->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event;
         $event = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent || $dropEvent;
         $modern = in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true);
         if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && !$dropEvent) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference || ($event && !$modern)) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
+        }
+        if ($event && \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation) !== []) {
+            $error = \MySqlMemory\Error\Family\StatementError::DynamicParametersRequireDml;
+            throw new SqlError($error, $error->message(), recorded: true);
         }
     }
 
@@ -108,7 +118,7 @@ final class Preparation
      *
      * @throws SqlError When splitting or semantic interpretation refuses the input
      */
-    public function read(string $sql, Session $session): Operation
+    public function read(string $sql, Session $session): Operation|\MySqlMemory\Command\Prepared\PendingTable
     {
         try {
             $statements = $session->split($sql);
@@ -125,6 +135,10 @@ final class Preparation
             $offset = (int) strpos($sql, ltrim($statements[1]), strlen($statements[0]));
             throw \MySqlMemory\Error\Family\StatementError::ParseError->error(mb_strcut(substr($sql, $offset), 0, 80, 'UTF-8'), substr_count(substr($sql, 0, $offset), "\n") + 1);
         }
-        return $session->analyze($sql, true);
+        try {
+            return $session->analyze($sql, true);
+        } catch (\MySqlMemory\Session\Parse\Definition\DeferredPreparation $pending) {
+            return $pending->definition;
+        }
     }
 }

@@ -23,13 +23,14 @@ final class SyntaxKeywords
      */
     public function completed(Node $node, Lowering $lowering): ?Deprecated
     {
-        if (!in_array($node->name, ['alter', 'lock_option', 'flush_option'], true)) {
+        if (!in_array($node->name, ['alter', 'lock_option', 'flush_option', 'opt_ev_status'], true)) {
             return null;
         }
         $notice = match ($lowering->form($node)->signature) {
             'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' => Deprecated::UpgradeDatabaseName,
             'lock_option: LOW_PRIORITY WRITE_SYM' => Deprecated::LowPriorityWrite,
             'flush_option: QUERY_SYM CACHE_SYM' => Deprecated::FlushQueryCache,
+            'opt_ev_status: DISABLE_SYM ON SLAVE', 'opt_ev_status: DISABLE_SYM ON_SYM SLAVE' => Deprecated::DisableOnSlave,
             default => null,
         };
         return $notice?->warnedIn($lowering->profile->grammar) === true ? $notice : null;

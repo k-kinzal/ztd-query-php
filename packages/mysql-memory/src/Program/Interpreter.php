@@ -116,8 +116,8 @@ final class Interpreter
             $statement instanceof Iterate => new Jump(Flow::Iterate, $statement->label->value),
             $statement instanceof ReturnStatement => $this->returned($statement->value),
             $statement instanceof OpenCursor, $statement instanceof FetchCursor, $statement instanceof CloseCursor => $this->cursor($statement),
-            $statement instanceof Signal && $statement->condition instanceof ConditionName => $this->sql($this->named($statement)),
-            $statement instanceof Resignal && $statement->condition instanceof ConditionName => $this->sql($this->named($statement)),
+            $statement instanceof Signal, $statement instanceof Resignal => $this->signalled($statement),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain => $this->explanation($statement),
             $statement instanceof Statement => $this->sql($statement),
             default => throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('the stored program statement ' . $statement::class),
         };
@@ -177,6 +177,14 @@ final class Interpreter
     }
 
     /**
+     * Resolves a named condition before running the signal through ordinary SQL handlers.
+     */
+    public function signalled(Signal|Resignal $statement): ?Jump
+    {
+        return $this->sql($statement->condition instanceof ConditionName ? $this->named($statement) : $statement);
+    }
+
+    /**
      * Answers a SIGNAL or RESIGNAL of a declared condition as one of the SQLSTATE the condition stands for.
      *
      * @throws SqlError When no condition of the name is in scope, or it stands for an error number (ER_SIGNAL_BAD_CONDITION_TYPE)
@@ -207,6 +215,15 @@ final class Interpreter
     {
         $jump = $this->instruction(fn () => (new Cursors($this->statements))->run($statement));
 
+        return $jump?->flow === Flow::Resume ? null : $jump;
+    }
+
+    /**
+     * Prepares a stored explanation and handles its target condition at the reached instruction.
+     */
+    public function explanation(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain $statement): ?Jump
+    {
+        $jump = $this->instruction(fn () => (new Expression\ExplainUse())->raise($statement, $this->session));
         return $jump?->flow === Flow::Resume ? null : $jump;
     }
 

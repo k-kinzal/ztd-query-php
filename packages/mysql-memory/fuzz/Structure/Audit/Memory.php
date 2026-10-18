@@ -29,11 +29,12 @@ final class Memory
     /**
      * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<array{string, string, string}>|null, disconnected: bool, warningsError?: array{int, string, string}} All result sets, the terminal error and the separate condition-reading outcome
      * @param list<array{int|float|string|null, Domain}>|null $parameters Bindings selected before execution, or the local NULL fixture
+     * @param bool $prepared Whether the selected transport prepares even without outer parameters
      */
-    public function observe(Session $session, Statement|Scalar $node, ?array $parameters = null): array
+    public function observe(Session $session, Statement|Scalar $node, ?array $parameters = null, bool $prepared = false): array
     {
         try {
-            $replies = [(new Execution())->runIn($session, $node, $parameters ?? (new Bindings())->nulls($node))];
+            $replies = [(new Execution())->runIn($session, $node, $parameters ?? (new Bindings())->nulls($node), $prepared)];
         } catch (SqlError $error) {
             $replies = (new \MySqlMemory\Session\Execution($session))->failed($error);
         }

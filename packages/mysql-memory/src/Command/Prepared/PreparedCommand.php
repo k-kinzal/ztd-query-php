@@ -76,13 +76,17 @@ final class PreparedCommand implements Command
             $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
         }
         $prepared = (new \MySqlMemory\Session\Access\Preparation())->read($text, $session);
+        if ($prepared instanceof PendingTable) {
+            $session->preparation->named[$key] = [$text, 0, new ParameterBindings([]), PreparedCache::capture($prepared, $session)];
+            return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
+        }
         if ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate) {
             throw StatementError::UnsupportedPreparedStatement->error();
         }
         (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($prepared->statement));
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
-        $parameters = count(array_filter($session->semantics()->parser()->tokenize($text), static fn ($token): bool => $token->name === 'PARAM_MARKER'));
-        $session->preparation->named[$key] = [$text, $parameters, ParameterBindings::capture($prepared), PreparedCache::capture($prepared, $session)];
+        $bindings = ParameterBindings::capture($prepared);
+        $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
 
         return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
     }

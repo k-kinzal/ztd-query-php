@@ -110,6 +110,26 @@ final class QueryRules
     }
 
     /**
+     * Retains complete deferred operands in a query owned by another statement.
+     * No temporary QueryRoot is registered in the source map.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the query requires deferred preparation
+     */
+    public function embedded(Node $query): Query
+    {
+        $selection = (new Shared\StoredSelections($this->lowering))->body($query) ?? $this->query($query);
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($query)[1] ?? 0;
+        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection), $end, false);
+        }
+        $meaning = (new Shared\QueryMeaning())->of($selection);
+        if ($meaning instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery($meaning), $end, false);
+        }
+        return $selection;
+    }
+
+    /**
      * Lowers the query of CREATE TABLE ... SELECT and INSERT ... SELECT of MySQL 5.6 and 5.7: a node of
      * `create_select` and the node of `union_clause`, `opt_union_clause` or `union_opt` that follows it.
      *

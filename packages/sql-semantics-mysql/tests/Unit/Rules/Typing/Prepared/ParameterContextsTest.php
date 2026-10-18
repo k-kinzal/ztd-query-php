@@ -28,4 +28,13 @@ final class ParameterContextsTest extends TestCase
 
         self::assertSame([$sum, $null, $marker], (new ParameterContexts())->expressions($query));
     }
+
+    public function testExpressionsDoesNotTreatStoredEventBodyMarkersAsCommandParameters(): void
+    {
+        $schedule = new Parameter();
+        $body = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new Parameter())]));
+        $event = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('e')), new \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule($schedule), $body);
+
+        self::assertSame([$schedule], (new ParameterContexts())->expressions($event));
+    }
 }

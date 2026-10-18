@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose;
 #[Small]
 final class HandlerCommandTest extends TestCase
 {
-    public function testReadKeepsParameterSlotsAcrossTheKeyPredicateAndLimit(): void
+    public function testReadRefusesNativePreparationBeforeBindingHandlerParameterSlots(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT PRIMARY KEY); INSERT INTO t VALUES(1),(2),(3),(4),(5); HANDLER t OPEN AS h');
@@ -28,11 +28,9 @@ final class HandlerCommandTest extends TestCase
         $domain = \MySqlMemory\Typing\Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong);
         $session->text = 'unrelated invalid input';
 
-        $result = (new \Fuzz\Structure\Execution())->runIn($session, $node, [[2, $domain], [5, $domain], [1, $domain], [1, $domain]]);
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['3']], $result->rows);
-        self::assertSame('unrelated invalid input', $session->text);
+        $this->expectExceptionCode(1295);
+        $this->expectExceptionMessage('This command is not supported in the prepared statement protocol yet');
+        (new \Fuzz\Structure\Execution())->runIn($session, $node, [[2, $domain], [5, $domain], [1, $domain], [1, $domain]]);
     }
 
     public function testDefaultWarnsAndReadsTheImplicitDefaultInMySql56(): void

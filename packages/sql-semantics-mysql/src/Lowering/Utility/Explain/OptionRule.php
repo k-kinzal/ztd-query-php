@@ -75,6 +75,13 @@ final class OptionRule
     {
         $form = $this->lowering->form($into);
 
+        /**
+         * In 8.2 and 8.3 an empty spelling denotes absence, not a variable operand.
+         * Decode before assigning the semantic role so no recorded operand is lost.
+         */
+        if ($form->signature === 'opt_explain_into: INTO @ ident_or_text' && in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true) && $this->lowering->names->decoded($form->node(2))->value === '') {
+            return null;
+        }
         return match ($form->signature) {
             'opt_explain_into:' => null,
             'opt_explain_into: INTO @ ident_or_text' => $this->lowering->variables->user($form->node(2)),
@@ -97,4 +104,20 @@ final class OptionRule
             default => throw ImplementationGap::production($form),
         };
     }
+    /**
+     * Retains the ignored empty-destination spelling separately from variable assignment.
+     */
+    public function emptyInto(Node $options): bool
+    {
+        if (!in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true)) {
+            return false;
+        }
+        foreach ($options->children as $child) {
+            if ($child instanceof Node && $child->name === 'opt_explain_into' && count($child->children) === 3) {
+                return $this->lowering->names->decoded($this->lowering->form($child)->node(2))->value === '';
+            }
+        }
+        return false;
+    }
+
 }

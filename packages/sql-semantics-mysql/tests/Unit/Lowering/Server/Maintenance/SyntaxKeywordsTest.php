@@ -49,4 +49,10 @@ final class SyntaxKeywordsTest extends TestCase
 
         self::assertSame($expected, $notices);
     }
+    public function testCompletedKeepsTheEventStatusNoticeBeforeAnIncompleteBody(): void
+    {
+        $sql = 'ALTER EVENT e DISABLE ON SLAVE DO SELECT !1, ?';
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql) - 1, new LanguageProfile(GrammarRelease::MySql847));
+        self::assertSame([Deprecated::DisableOnSlave], array_column($notices, 1));
+    }
 }

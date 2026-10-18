@@ -67,4 +67,13 @@ final class SyntaxFormatsTest extends TestCase
         self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ExplainPartitions], array_column($notices, 1));
     }
 
+    public function testTargetSeparatesInputValidationFromInvocationPreparation(): void
+    {
+        $target = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name(''));
+        self::assertNull((new SyntaxFormats())->target($target, GrammarRelease::MySql810));
+        self::assertNull((new SyntaxFormats())->target($target, GrammarRelease::MySql830));
+        self::assertSame($target, (new SyntaxFormats())->target($target, GrammarRelease::MySql847)?->target);
+        self::assertNull((new SyntaxFormats())->target(null, GrammarRelease::MySql910));
+    }
+
 }

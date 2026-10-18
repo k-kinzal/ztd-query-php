@@ -21,6 +21,19 @@ use SqlSemantics\Statement\Scalar;
 #[Small]
 final class PartitionExpressionsTest extends TestCase
 {
+    public function testConditionDistinguishesTheRetainedPartitionRoles(): void
+    {
+        $one = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([$one, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+        $session = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('v')), $row);
+        $subquery = new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($one)]));
+        $rules = new PartitionExpressions();
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Function, $rules->condition($row, GrammarRelease::MySql847));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::SessionState, $rules->condition($session, GrammarRelease::MySql847));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, $rules->condition($subquery, GrammarRelease::MySql847));
+    }
+
     /**
      * @return iterable<string, array{string, bool}>
      */

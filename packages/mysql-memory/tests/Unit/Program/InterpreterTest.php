@@ -269,4 +269,24 @@ final class InterpreterTest extends TestCase
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
         self::assertSame([['10','2']], $result->rows);
     }
+    public function testExplanationPassesTheReachedTargetConditionToTheProgramHandler(): void
+    {
+        $session = (new Instance('8.1.0', [], ['d']))->connect(database: 'd');
+        $session->query("CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 3061 SET @handled=1; EXPLAIN FORMAT=JSON INTO @'' SELECT 1; END");
+        $session->query('CALL p()');
+        $result = $session->query('SELECT @handled')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testSignalledResolvesDeclaredConditionsThroughTheSameHandlerPath(): void
+    {
+        $session = (new Instance('8.1.0', [], ['d']))->connect(database: 'd');
+        $session->query("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; DECLARE CONTINUE HANDLER FOR SQLSTATE '45000' SET @handled=1; SIGNAL c; END");
+        $session->query('CALL p()');
+        $result = $session->query('SELECT @handled')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
 }

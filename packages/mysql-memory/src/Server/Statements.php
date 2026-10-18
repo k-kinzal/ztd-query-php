@@ -85,11 +85,15 @@ final class Statements
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         try {
             $operation = (new \MySqlMemory\Session\Access\Preparation())->read($sql, $session);
-            (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($operation->statement));
-            (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
-            $tokens = $session->semantics()->parser()->tokenize($sql);
-            $parameters = count(array_filter($tokens, static fn ($token): bool => $token->text === '?'));
-            $columns = $this->columns($operation, $session, $parameters);
+            $bindings = new \MySqlMemory\Command\Prepared\ParameterBindings([]);
+            $columns = [];
+            if ($operation instanceof \SqlSemantics\Statement\Operation) {
+                (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($operation->statement));
+                (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
+                $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation);
+                $columns = $this->columns($operation, $session, count($bindings->types));
+            }
+            $parameters = count($bindings->types);
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
@@ -100,7 +104,7 @@ final class Statements
             return $this->client->send($this->client->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) $session->variables->read('character_set_results')));
         }
         $id = $this->next++;
-        $this->prepared[$id] = [$sql, $parameters, [], [], \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation), \MySqlMemory\Command\Prepared\PreparedCache::capture($operation, $session)];
+        $this->prepared[$id] = [$sql, $parameters, [], [], $bindings, \MySqlMemory\Command\Prepared\PreparedCache::capture($operation, $session)];
         $this->client->packet((new PayloadWriter())->integer(0, 1)->integer($id, 4)->integer(count($columns), 2)->integer($parameters, 2)->integer(0, 1)->integer(min(65535, $session->diagnostics->raised()), 2)->payload());
         if ($parameters > 0) {
             for ($i = 0; $i < $parameters; $i++) {

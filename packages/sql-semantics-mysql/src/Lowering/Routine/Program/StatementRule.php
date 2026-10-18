@@ -124,6 +124,9 @@ final class StatementRule
         try {
             $statement = $this->lowering->statement($node);
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain) {
+                return $failure->problem->explanation;
+            }
             if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand) {
                 return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($failure->problem->moment);
             }

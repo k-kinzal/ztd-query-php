@@ -267,4 +267,12 @@ final class ExplainCommandTest extends TestCase
         self::assertSame([[1, 'DELETE', 't', null, 'ALL', null, null, null, null, 1, '100.00', 'Using where']], $command->rows($explain, $session, 'd'));
     }
 
+    public function testAnalysisPreparesTheExplainedColumnsBeforeCheckingTheReportFormat(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1054);
+        $session->query('EXPLAIN ANALYZE FORMAT=JSON SELECT missing');
+    }
+
 }

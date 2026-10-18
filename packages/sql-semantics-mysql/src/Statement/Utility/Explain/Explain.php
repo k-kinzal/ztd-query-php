@@ -54,6 +54,7 @@ final class Explain implements Statement
      * @param ExplainModifier|null $modifier The EXTENDED or PARTITIONS keyword of MySQL 5.x
      * @param UserVariable|null $into The variable after INTO
      * @param Name|null $database The database after FOR DATABASE
+     * @param bool $emptyInto Whether the ignored empty INTO spelling of MySQL 8.2–8.3 is present
      */
     public function __construct(
         public readonly Explainable $statement,
@@ -62,7 +63,11 @@ final class Explain implements Statement
         public readonly ?ExplainModifier $modifier = null,
         public readonly ?UserVariable $into = null,
         public readonly ?Name $database = null,
+        public readonly bool $emptyInto = false,
     ) {
+        Check::input(!$emptyInto || ($into === null && !$analyze && $modifier === null), 'An empty EXPLAIN destination has no assignment, ANALYZE or legacy modifier.');
+        Check::input((new ExplainFacts())->target($into), 'An EXPLAIN INTO target has between 1 and 64 characters.');
+        Check::input(!$analyze || strcasecmp($format->value ?? '', 'TRADITIONAL') !== 0, 'EXPLAIN ANALYZE cannot use the TRADITIONAL format.');
         Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
         Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null), 'EXTENDED and PARTITIONS are written alone.');
@@ -96,6 +101,9 @@ final class Explain implements Statement
         }
         if ($this->into !== null) {
             $out->keyword('INTO')->node($this->into);
+        }
+        if ($this->emptyInto) {
+            $out->keyword('INTO')->symbol('@')->glue()->spelled("''");
         }
         if ($this->database !== null) {
             $out->keyword('FOR', 'DATABASE')->name($this->database, NameUse::Qualifier);

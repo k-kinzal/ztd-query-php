@@ -59,6 +59,8 @@ enum StatementError: int implements ErrorCode
     case ExplainIntoImplicitFormat = 6006;
     case ExplainIntoFormat = 6007;
     case ExplainIntoForConnection = 6009;
+    case ExplainAnalyzeJsonVersion = 6412;
+    case DynamicParametersRequireDml = 6413;
     case FeatureNotSupported = 6033;
     case HypergraphRequired = 6037;
     case SamplePercentageOutOfRange = 6107;

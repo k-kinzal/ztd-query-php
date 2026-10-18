@@ -2176,3 +2176,60 @@ Semantics and 18,073 Memory unit/property/doctest tests. Live comparisons pass
 260 observations on five releases through both protocols, including the complete
 `query409` generated failure. The next unseeded run found an EXPLAIN INTO target
 name/format precedence difference at input 41; this remains an acceptance failure.
+
+
+### Explanation constraints and release compatibility
+
+Ordinary `Explain` values exclude invalid output targets and ANALYZE with the
+TRADITIONAL format. Stored definitions instead retain `DeferredExplain` with the
+complete query, target and options. Reaching the instruction resolves the query
+before reporting its pending option constraint; skipping it does not report that
+condition. FOR DATABASE changes the explained query's lookup context while
+retaining routine locals. The ignored empty INTO spelling of MySQL 8.2–8.3 is
+represented explicitly rather than being confused with an assignment.
+
+Constructor checks intersect the supported release sets of retained operands.
+This rejects combinations such as an 8.2–8.3-only option around a TABLESAMPLE
+operand from a later release. It does not ask Semantics to determine whether a
+statement will execute against a particular database state.
+
+### Prepared parameters and definition phases
+
+Prepared parameter inference follows the semantic scope. Event-body markers are
+retained inside the stored body and do not add arguments to the outer definition.
+The wire protocol and SQL PREPARE consume this inference rather than counting
+question marks by tokenizing the SQL again. Direct-construction comparison keeps
+the selected preparation mode separate from its outer argument count.
+
+A rejected CREATE TABLE tail retains its table identity, column declarations and
+options as `RefusedCreateTail`. Its partition operand retains its complete
+structure and partition role; a refused population query retains its read
+dependencies. Grammar conditions precede engine selection, contextual partition
+restrictions precede engine substitution, and later partition checks follow
+destination-database lookup. None of these input diagnostics publishes an invalid
+ordinary `CreateTable` or retains parser nodes or original SQL.
+
+Prepared CREATE can retain a pending partition condition until EXECUTE. Memory
+keeps that typed refusal separately from an ordinary prepared Statement. Its
+header warnings belong to preparation, while each execution checks the current
+catalog. The same retained definition can therefore report a missing database,
+then its partition condition after that database is created. Explicit ENGINE
+selection is retained at preparation; an omitted ENGINE uses the current default
+at execution. Request text is only an observable label on this path.
+
+Matching these diagnostics does not close the constructor-adequacy gate. Ordinary
+window values still admit unsupported options, and partition values still need
+additional intrinsic-domain constraints. EXPLAIN table-plan documents and measured
+output also remain unresolved. The complete construction campaign, all nine Faker
+corpora and the uninterrupted 900-second differential run must pass together on
+the final revision before acceptance.
+
+Snapshots `query451`/`query452` pass the MySQL Semantics and Memory static
+checks, including the 941-entry value schema, and 8,601 Semantics plus 18,100
+Memory unit/property/doctest tests. The CREATE TABLE phase regressions pass
+702 native observations on 8.0, 8.4 and 9.1 through text and prepared protocols;
+EVENT parameter regressions pass 216 observations on four releases. PDO
+round trips pass three tests. These are repair evidence, not final acceptance:
+the `query451` unseeded run stopped at input 201 after 201 matches, because an
+unknown routine return collation was incorrectly reported as an unsupported
+COLLATE-without-CHARACTER-SET declaration.

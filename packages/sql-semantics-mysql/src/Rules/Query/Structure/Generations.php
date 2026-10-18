@@ -56,6 +56,8 @@ final class Generations
         $pending = [$root];
         $seen = new SplObjectStorage();
         $requirements = 0;
+        $releases = ReleaseDomain::ALL;
+        $languages = new ReleaseDomain();
         $calls = [];
         $transition = 0;
         $modes = 0;
@@ -86,12 +88,14 @@ final class Generations
                 $modes |= $lexical->requirement($value);
                 $lexical->check($modes);
                 Check::input($requirements !== 3, 'A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+                $releases &= $languages->of($value) & ($requirements === 1 ? 3 : ($requirements === 2 ? 508 : ReleaseDomain::ALL)) & ($transition === 1 ? 1 : ($transition === 2 ? 510 : ReleaseDomain::ALL));
+                Check::input($releases !== 0, 'The retained operands must share a supported MySQL release.');
                 if ($value instanceof Node) {
                     array_push($pending, ...array_values(get_object_vars($value)));
                 }
             }
         }
-        Check::input((new Signatures())->compatible($calls, $requirements, $transition, $spelling), 'Native signatures and grammar operands must share a supported language interpretation.');
+        Check::input((new Signatures())->compatible($calls, $requirements, $transition, $spelling, $releases), 'Native signatures and grammar operands must share a supported language interpretation.');
         Check::input(!$namedParameters || $spelling === null || $spelling->parameters === ParameterStyle::Named, 'A named parameter cannot accompany a spelling that requires native parameters.');
     }
 

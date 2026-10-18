@@ -313,6 +313,7 @@ final class Session
      * Parses and resolves one statement against the tables of the server.
      *
      * @throws SqlError When the statement does not parse or does not resolve
+     * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
      */
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): Operation

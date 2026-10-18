@@ -74,4 +74,14 @@ final class ExplainFactsTest extends TestCase
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ExplainExtended, $operation->facts->warnings[0]->construct);
     }
 
+
+    public function testTargetCountsCharactersAndKeepsReadNamesOutsideTheAssignmentRule(): void
+    {
+        $rules = new ExplainFacts();
+        $target = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name(str_repeat('é', 64)));
+        $long = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name(str_repeat('é', 65)));
+        self::assertTrue($rules->target($target));
+        self::assertFalse($rules->target($long));
+        self::assertTrue($rules->target(null));
+    }
 }

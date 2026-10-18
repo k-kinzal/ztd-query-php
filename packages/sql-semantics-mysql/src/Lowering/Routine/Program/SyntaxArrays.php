@@ -35,11 +35,32 @@ final class SyntaxArrays
         $this->body = $this->body || in_array($node->name, ['sp_c_chistics', 'trigger_follows_precedes_clause'], true)
             || ($node->name === 'opt_ev_comment' && $lookahead->name === 'DO_SYM');
         $problem = $this->body ? $this->rejected($node, $lowering) : null;
-        if ($failedAt !== null && ((new SourceRanges())->span($node)[0] ?? PHP_INT_MAX) < $failedAt) {
+        if ($problem !== null && $failedAt !== null && $this->unavailable($lowering->form($node)->node(2), $lowering)) {
             return null;
         }
 
         return $problem === null ? null : new ParseFailure($problem->problem, $problem->aborts);
+    }
+
+    /**
+     * Tests whether the immediate operand is a refused cast, through grouping only.
+     *
+     * A collation refusal or a compound expression still permits the outer ARRAY
+     * restriction. A directly nested refused cast does not. Observed on 8.0–9.1.
+     */
+    public function unavailable(Node $node, Lowering $lowering): bool
+    {
+        while (true) {
+            $form = $lowering->form($node);
+            if ($form->signature === 'simple_expr: ( expr )') {
+                $node = $form->node(1);
+            } elseif (count($node->children) === 1 && $node->children[0] instanceof Node) {
+                $node = $node->children[0];
+            } else {
+                break;
+            }
+        }
+        return $this->rejected($node, $lowering) !== null || (new \SqlSemantics\Platform\MySql\Lowering\Expression\SyntaxCasts())->completed($node, $lowering) instanceof ParseFailure;
     }
 
     /**

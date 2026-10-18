@@ -25,6 +25,7 @@ enum PartitionError: int implements ErrorCode
     case WrongValuesKind = 1480;
     case MaxValueNotLast = 1481;
     case SubpartitionCount = 1485;
+    case ConstantFunction = 1486;
     case PartitionsNotDefined = 1492;
     case RangeNotIncreasing = 1493;
     case ListConstantTwice = 1495;

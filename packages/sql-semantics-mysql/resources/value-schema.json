@@ -1586,6 +1586,14 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\MissingPartitions": {
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Method\\PartitionKind"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\OperandCondition": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\RefusedScalar": {
+        "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\OperandCondition",
+        "offset": "int",
+        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\SubpartitionDefinition": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "options": "array"
@@ -2514,6 +2522,15 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery": {
         "query": "SqlSemantics\\Statement\\Query"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredExplain": {
+        "analyze": "bool",
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "emptyInto": "bool",
+        "format": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
+        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredKill": {
         "process": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\KillScope"
@@ -3284,6 +3301,14 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\NullablePrimaryKey": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\RefusedCreateTail": {
+        "elements": "array",
+        "ifNotExists": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "options": "array",
+        "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic",
+        "temporaryWords": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\RefusedJsonAttribute": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "deep": "bool",
@@ -3511,6 +3536,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\Explain": {
         "analyze": "bool",
         "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "emptyInto": "bool",
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
@@ -3535,11 +3561,17 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\GeneratedColumnEntry": {
         "offset": "int"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\InvalidExplainTarget": {
+        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\ProgramVariable": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedConnectionExplain": {
         "analyze": "bool"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedExplain": {
+        "explanation": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredExplain"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedExplainInto": {
         "analyze": "bool",

@@ -52,6 +52,17 @@ final class PreparationTest extends TestCase
         (new Preparation())->definitions($operation, $session);
     }
 
+    public function testDefinitionsRefusesEventScheduleParametersInModernPreparation(): void
+    {
+        $session = (new Instance('9.1.0', [], ['d']))->connect();
+        $session->query('USE d');
+        $operation = $session->analyze('CREATE EVENT e ON SCHEDULE AT ? DO SELECT ?', true);
+        $this->expectExceptionCode(6413);
+        $this->expectExceptionMessage('Dynamic parameters can only be used in DML statements.');
+
+        (new Preparation())->definitions($operation, $session);
+    }
+
     public function testCheckRequiresADatabaseBeforeRefusingPreparedRoutineDeletion(): void
     {
         $session = (new Instance())->connect();
@@ -88,5 +99,15 @@ final class PreparationTest extends TestCase
 
         self::assertSame(4, $session->variables->read('div_precision_increment'));
         self::assertSame([], $session->diagnostics->conditions);
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith(['HANDLER missing OPEN'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['HANDLER missing READ FIRST'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['HANDLER missing CLOSE'])]
+    public function testCheckRefusesHandlerPreparationBeforeOpeningItsTarget(string $sql): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze($sql, true);
+        $this->expectExceptionCode(1295);
+        (new Preparation())->check($operation, $session);
     }
 }

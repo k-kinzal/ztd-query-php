@@ -34,4 +34,10 @@ final class OptionRuleTest extends TestCase
     {
         self::assertSame('EXPLAIN FOR DATABASE `d b` DELETE FROM t', (new Semantics(Dialect::MySql))->analyze('explain for database `d b` delete from t')->toString());
     }
+    public function testEmptyIntoRetainsTheIgnoredDestinationInTheIntermediateReleases(): void
+    {
+        self::assertSame("EXPLAIN INTO @'' SELECT 1", (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("EXPLAIN INTO @'' SELECT 1")->toString());
+        self::assertSame("EXPLAIN FORMAT = `JSON` INTO @'' SELECT 1", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("EXPLAIN FORMAT=JSON INTO @'' SELECT 1")->toString());
+    }
+
 }

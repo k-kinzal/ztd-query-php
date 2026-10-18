@@ -26,4 +26,12 @@ final class ExplainInputTest extends TestCase
         self::assertSame(6006, $input->error(new RefusedExplainInto())->getCode());
         self::assertSame(6007, $input->error(new RefusedExplainInto(new Name('traditional')))->getCode());
     }
+
+    public function testErrorUsesTheNativeMessageByteLimitForTheRetainedTarget(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name(str_repeat('a', 101))));
+        $error = (new ExplainInput())->error($problem);
+        self::assertSame(3061, $error->getCode());
+        self::assertSame("User variable name '" . str_repeat('a', 100) . "' is illegal", $error->getMessage());
+    }
 }

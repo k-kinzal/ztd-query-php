@@ -64,7 +64,7 @@ final class PartitionExpressions
     /**
      * Tells whether any part requires the early partition-expression refusal.
      */
-    public function forbidden(Scalar $expression, GrammarRelease $release): bool
+    public function forbidden(\SqlSemantics\Statement\Operand $expression, GrammarRelease $release): bool
     {
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']);
         foreach ($graph->objects($expression) as $part) {
@@ -81,5 +81,19 @@ final class PartitionExpressions
         }
 
         return false;
+    }
+
+    /**
+     * Classifies a refused partition operand without assigning it a scalar type.
+     */
+    public function condition(\SqlSemantics\Statement\Operand $expression, GrammarRelease $release): \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition
+    {
+        $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']);
+        foreach ($graph->objects($expression) as $part) {
+            if ($part instanceof \SqlSemantics\Statement\Query) {
+                return \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery;
+            }
+        }
+        return $this->forbidden($expression, $release) ? \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::SessionState : \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Function;
     }
 }

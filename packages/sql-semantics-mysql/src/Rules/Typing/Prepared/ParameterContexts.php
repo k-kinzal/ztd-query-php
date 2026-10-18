@@ -18,7 +18,11 @@ use SqlSemantics\Statement\Scalar;
 final class ParameterContexts
 {
     /**
-     * @return list<Scalar> Expressions in the statement, including nested queries
+     * Event bodies belong to the stored program, not the defining command's
+     * parameter list. The schedule remains in the defining command's scope.
+     * Observed through COM_STMT_PREPARE on MySQL 9.1.0.
+     *
+     * @return list<Scalar> Expressions in the statement's parameter scope, including nested queries
      */
     public function expressions(Node $root): array
     {
@@ -28,6 +32,8 @@ final class ParameterContexts
             $node = array_pop($pending);
             if (is_array($node)) {
                 array_push($pending, ...array_values($node));
+            } elseif ($node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent) {
+                $pending[] = $node->schedule;
             } elseif ($node instanceof Node) {
                 if ($node instanceof Scalar) {
                     $expressions[] = $node;

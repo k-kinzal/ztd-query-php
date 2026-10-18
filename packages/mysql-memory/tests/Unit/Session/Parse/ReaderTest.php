@@ -21,6 +21,18 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ReaderTest extends TestCase
 {
+    public function testTargetNoticesKeepsGrammarFailuresBeforeModernTargetResolution(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2);
+        $grammar = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem);
+        $contextual = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+        $notices = [[1, $grammar], [2, $contextual]];
+
+        self::assertSame([[1, $grammar]], (new Reader())->targetNotices($notices, true, false));
+        self::assertSame([], (new Reader())->targetNotices($notices, true, true));
+        self::assertSame($notices, (new Reader())->targetNotices($notices, false, true));
+    }
+
     public function testRejectionFormatsAHashRefusalBeforeTheIncompleteSuffix(): void
     {
         $session = (new Instance('5.7.44'))->connect();
@@ -170,4 +182,15 @@ final class ReaderTest extends TestCase
         $session->query('PURGE MASTER LOGS BEFORE (1 = ALL ( SELECT 1) )');
     }
 
+
+    public function testRejectionKeepsSyntaxConditionsBeforeDeleteTargetResolution(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1066);
+        $this->expectExceptionMessage("Not unique table/alias: 'c'");
+        $session->query('WITH unused AS (WITH c AS (SELECT 1), c AS (SELECT 2) SELECT 1) DELETE FROM x USING t');
+    }
 }

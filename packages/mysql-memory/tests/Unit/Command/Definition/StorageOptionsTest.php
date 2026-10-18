@@ -15,6 +15,23 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class StorageOptionsTest extends TestCase
 {
+    public function testHeaderRequiresASelectedDatabaseBeforeResolvingEngines(): void
+    {
+        $session = (new Instance())->connect();
+        $header = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [], [], 0, false, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2));
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $this->expectExceptionCode(1046);
+        (new StorageOptions())->header($header, $session, $context);
+    }
+
+    public function testNamedRejectsAnUnknownEngineWhenSubstitutionIsDisabled(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $this->expectExceptionCode(1286);
+        (new StorageOptions())->named('missing', $context);
+    }
+
     public function testResolveChecksPartitionEnginesBeforeOpeningTheTable(): void
     {
         $session = (new Instance())->connect();

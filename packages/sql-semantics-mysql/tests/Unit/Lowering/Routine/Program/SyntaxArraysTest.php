@@ -82,4 +82,23 @@ final class SyntaxArraysTest extends TestCase
         self::assertSame(strlen($sql), $refusal->end);
         self::assertNull((new SyntaxArrays())->rejected($tree, $lowering));
     }
+    public function testUnavailableDistinguishesADirectCastFromAnExpressionContainingIt(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.0.44');
+        $lowering = new Lowering(Productions::load(__DIR__ . '/../../../../../resources/productions/mysql-8.0.44.php'), new Leaves(), $semantics->profile());
+        $direct = $semantics->parser()->parse('SELECT CAST(1 AS TIME(7))')->find('expr')[0];
+        $compound = $semantics->parser()->parse('SELECT CAST(1 AS TIME(7)) + 1')->find('expr')[0];
+        self::assertTrue((new SyntaxArrays())->unavailable($direct, $lowering));
+        self::assertFalse((new SyntaxArrays())->unavailable($compound, $lowering));
+    }
+
+    public function testCompletedKeepsTheOuterRestrictionAfterACollationFailure(): void
+    {
+        $sql = 'CREATE PROCEDURE p() SELECT CAST(1 COLLATE missing AS SIGNED ARRAY)';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.0.44'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql8044));
+        self::assertInstanceOf(ParseFailure::class, $notices[0][1]);
+        self::assertInstanceOf(ParseFailure::class, $notices[1][1]);
+        self::assertSame("Unknown collation: 'missing'", $notices[0][1]->message());
+        self::assertSame('Incorrect usage of CAST( .. AS .. ARRAY) and stored routines', $notices[1][1]->message());
+    }
 }

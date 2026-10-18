@@ -69,6 +69,7 @@ final class ExpressionRules
      * Lowers an arithmetic or bit expression: a node of `bit_expr`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the operand has no scalar interpretation
      */
     public function bitExpression(Node $expression): Scalar
     {

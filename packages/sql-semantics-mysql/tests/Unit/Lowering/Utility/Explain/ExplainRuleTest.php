@@ -62,4 +62,12 @@ final class ExplainRuleTest extends TestCase
     {
         self::assertSame('EXPLAIN UPDATE t SET a = 1', (new Semantics(Dialect::MySql))->analyze('explain update t set a = 1')->toString());
     }
+    public function testDeferredRetainsTheCompleteExplainedRead(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze("CREATE PROCEDURE p() EXPLAIN FORMAT=JSON INTO @'' SELECT ROW(1,2)");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain::class, $operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->statement->body->statement);
+    }
+
 }

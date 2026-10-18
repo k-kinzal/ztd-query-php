@@ -66,4 +66,12 @@ final class InsertedColumnTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $type);
         self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ValuesElsewhere->value], [$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? $type->descriptor->kind : null, $query->facts->warnings[0]->message()]);
     }
+    public function testDeriveScalarKeepsAnUnboundHandlerColumnFromEmittingAPreparationNotice(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        self::assertSame([], $semantics->analyze('HANDLER absent READ FIRST WHERE VALUES(id)')->facts->warnings);
+        self::assertCount(1, $semantics->analyze('HANDLER absent READ FIRST WHERE BINARY id')->facts->warnings);
+        self::assertSame([], $semantics->analyze('SELECT VALUES(id) FROM unknown_table')->facts->warnings);
+    }
+
 }

@@ -35,6 +35,7 @@ final class Reader
      * @param bool $prepared Whether the statement is prepared, where parameter markers are allowed
      *
      * @throws SqlError When the statement does not parse or the parser refuses it
+     * @throws Definition\DeferredPreparation When prepared input retains an execution-time definition condition
      */
     public function read(string $statement, bool $prepared, Session $session): Node
     {
@@ -129,6 +130,7 @@ final class Reader
      * Preserves input context before formatting an unconstructible operand.
      *
      * @throws SqlError When a debug-only client entry precedes value interpretation
+     * @throws Definition\DeferredPreparation When prepared input retains an execution-time definition condition
      */
     public function operand(\SqlSemantics\Construction\RejectedInput $failure, Node $tree, string $statement, Session $session): SqlError
     {
@@ -144,10 +146,15 @@ final class Reader
 
     /**
      * Converts a typed operand refusal, preserving notices completed before its boundary.
+     *
+     * @throws Definition\DeferredPreparation When a CREATE definition is retained for prepared execution
      */
     public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
         $failure = (new Entry\ProgramInput())->stopped($failure, $session);
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail) {
+            return (new Definition\TableInput())->refused($failure, $statement, $session);
+        }
         $parser = $session->semantics()->parser();
         $partition = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
         if ($partition && (new \SqlSemantics\Platform\MySql\Lowering\ClientEntry())->unparsed($parser, $statement, $session->semantics()->profile()) !== null) {
@@ -172,9 +179,7 @@ final class Reader
             $tokens = $parser->tokenize($statement);
         }
         $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, (new Entry\InputErrors())->noticeEnd($failure), $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
-        if ($target !== null) {
-            $notices = array_values(array_filter($notices, static fn (array $notice): bool => !$notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        }
+        $notices = $this->targetNotices($notices, $target !== null, $session->settings()->legacy());
         if ($session->settings()->legacy()) {
             [$warnings, $conflict] = (new Modifiers($tokens, $session->settings()->release()))->scan($failure->end, $failure->end);
             if ($conflict !== null && $target === null) {
@@ -192,6 +197,18 @@ final class Reader
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
         return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);
+    }
+
+    /**
+     * Keeps grammar conditions reached before a refused write target.
+     *
+     * @template T of object
+     * @param list<array{int, T}> $notices Completed input conditions
+     * @return list<array{int, T}>
+     */
+    public function targetNotices(array $notices, bool $target, bool $legacy): array
+    {
+        return !$target ? $notices : array_values(array_filter($notices, static fn (array $notice): bool => !$notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure || (!$legacy && $notice[1]->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax)));
     }
 
     /**

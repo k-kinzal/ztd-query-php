@@ -27,16 +27,17 @@ final class Signatures
      *
      * @param list<FunctionCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall> $calls The calls retained in one structure
      * @param int $generation Legacy (1), modern (2), or unrestricted (0) forms
+     * @param int $releases The intersected domains of release-specific meanings
      * @param int $transition MySQL 5.6-only (1), 5.7-or-later (2), or unrestricted (0) forms
      */
-    public function compatible(array $calls, int $generation, int $transition, ?LanguageProfile $spelling): bool
+    public function compatible(array $calls, int $generation, int $transition, ?LanguageProfile $spelling, int $releases = ReleaseDomain::ALL): bool
     {
         if ($calls === []) {
             return true;
         }
         $natives = new NativeFunctions();
         foreach (GrammarRelease::cases() as $release) {
-            if ($release->database() !== 'mysql' || ($spelling !== null && $spelling->grammar !== $release)) {
+            if (((new ReleaseDomain())->bit($release) & $releases) === 0 || ($spelling !== null && $spelling->grammar !== $release)) {
                 continue;
             }
             $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);

@@ -16,6 +16,22 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparedStatementTest extends TestCase
 {
+    public function testExecuteRetainsAnExplicitEngineButUsesTheCurrentImplicitDefault(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; SET sql_mode=''; PREPARE a FROM 'CREATE TABLE explicit_engine(a INT) ENGINE=missing'; PREPARE b FROM 'CREATE TABLE implicit_engine(a INT)'; SET default_storage_engine=MEMORY; SET sql_mode='NO_ENGINE_SUBSTITUTION'");
+        $session->query('EXECUTE a; EXECUTE b');
+        $explicit = $session->instance->dictionary->table('d', 'explicit_engine');
+        $implicit = $session->instance->dictionary->table('d', 'implicit_engine');
+
+        self::assertNotNull($explicit);
+        self::assertNotNull($implicit);
+        self::assertSame('InnoDB', $explicit->definition->engine);
+        self::assertSame('MEMORY', $implicit->definition->engine);
+        self::assertSame([], $session->variables->preparedEngines);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testCaptureKeepsTheSameStructureAndDefinitionContext(): void
     {
         $session = (new Instance())->connect();

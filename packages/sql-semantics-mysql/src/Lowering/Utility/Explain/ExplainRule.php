@@ -140,6 +140,7 @@ final class ExplainRule
      * Lowers EXPLAIN of MySQL 5.x from its `opt_extended_describe` and its explained command.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the explained operand needs invocation-time preparation
      */
     public function legacy(Form $options, Form $command): Statement
     {
@@ -153,7 +154,12 @@ final class ExplainRule
         if ($command->signature === 'explainable_command: FOR_SYM CONNECTION_SYM real_ulong_num') {
             return new ExplainConnection($this->lowering->numbers->integral($command->node(2)), $format, $modifier);
         }
-        return new Explain($this->explained($command), $format, false, $modifier);
+        $statement = $this->deferred($command);
+        if (!$statement instanceof Explainable) {
+            $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($statement, $format, modifier: $modifier);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain($instruction), (new \SqlSemantics\Construction\SourceRanges())->span($command->node)[1] ?? 0);
+        }
+        return new Explain($statement, $format, false, $modifier);
     }
 
     /**
@@ -175,13 +181,25 @@ final class ExplainRule
         }
         $database = (self::EXPLAINED[$explainable->signature] ?? 0) === 1 ? (new OptionRule($this->lowering))->database($explainable->node(0)) : null;
 
-        return new Explain($this->explained($explainable), $format, $analyze, null, $variable, $database);
+        if ($variable !== null && !(new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->target($variable)) {
+            if (!in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true)) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget($variable), (new \SqlSemantics\Construction\SourceRanges())->span($into ?? $options)[1] ?? 0);
+            }
+        }
+        $statement = $this->deferred($explainable);
+        $empty = (new OptionRule($this->lowering))->emptyInto($options);
+        if (!$statement instanceof Explainable || !(new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->target($variable) || ($analyze && strcasecmp($format->value ?? '', 'TRADITIONAL') === 0)) {
+            $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($statement, $format, $variable, $database, $analyze, emptyInto: $empty);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain($instruction), (new \SqlSemantics\Construction\SourceRanges())->span($explainable->node)[1] ?? 0);
+        }
+        return new Explain($statement, $format, $analyze, null, $variable, $database, $empty);
     }
 
     /**
      * Lowers the statement of an explained-statement production through the family that owns it.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an explained operand requires deferred preparation
      */
     public function explained(Form $form): Explainable
     {
@@ -194,4 +212,24 @@ final class ExplainRule
 
         return $explained;
     }
+    /**
+     * Retains a query whose intrinsic read condition is checked before the output target.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When another input operand is refused
+     */
+    public function deferred(Form $form): Explainable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery
+    {
+        try {
+            return $this->explained($form);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection) {
+                return $failure->problem->selection;
+            }
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery) {
+                return $failure->problem->query;
+            }
+            throw $failure;
+        }
+    }
+
 }

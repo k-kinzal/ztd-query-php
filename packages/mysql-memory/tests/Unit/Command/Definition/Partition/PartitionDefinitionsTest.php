@@ -16,6 +16,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PartitionDefinitionsTest extends TestCase
 {
+    public function testSourceRefusesAConstantPartitionFunctionWithoutCreatingTheTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run('CREATE TABLE t(a INT) PARTITION BY HASH(1)');
+
+        self::assertSame([['Error', 1486, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed']], $session->diagnostics->conditions);
+        self::assertNull($session->instance->dictionary->table('d', 't'));
+    }
+
     public function testPartitioningAnswersHowTheTableSplitsItsRows(): void
     {
         $session = (new Instance())->connect();

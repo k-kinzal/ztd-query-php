@@ -59,10 +59,13 @@ final class SyntaxFormats
      * MySQL 8.1 reads later operand notices before rejecting INTO; 8.2 onward rejects
      * completed options before reading the explained operand.
      */
-    public function into(Node $node, Lowering $lowering): ?\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto
+    public function into(Node $node, Lowering $lowering): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto|\SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget|null
     {
         $legacy = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql810;
-        if (($legacy && $node->name !== 'explain_stmt') || (!$legacy && $node->name !== 'opt_explain_options')) {
+        if ($node->name === 'opt_explain_into') {
+            return $this->target((new OptionRule($lowering))->into($node), $lowering->profile->grammar);
+        }
+        if ($node->name !== ($legacy ? 'explain_stmt' : 'opt_explain_options')) {
             return null;
         }
         $form = $lowering->form($node);
@@ -73,9 +76,22 @@ final class SyntaxFormats
         if ((!$legacy && $target === null) || !(new ExplainFacts())->known($format)) {
             return null;
         }
-        $analyze = $legacy && $analyze;
-
-        return !$analyze && strcasecmp($format->value ?? '', 'JSON') === 0 ? null : new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto($format, $analyze);
+        $target = $legacy ? $lowering->variables->user($form->node(4)) : $target;
+        $invalid = $this->target($target, $lowering->profile->grammar);
+        if ($invalid !== null) {
+            return $invalid;
+        }
+        return ($legacy && $analyze) || strcasecmp($format->value ?? '', 'JSON') !== 0 ? new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto($format, $legacy && $analyze) : null;
     }
 
+    /**
+     * Checks names during input interpretation only in releases that validate them there.
+     */
+    public function target(?\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable $target, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget
+    {
+        if ($target === null || in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true) || (new ExplainFacts())->target($target)) {
+            return null;
+        }
+        return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget($target);
+    }
 }

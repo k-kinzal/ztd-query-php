@@ -56,6 +56,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel => (new PrivilegeInput())->target($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel => (new PrivilegeInput())->placement($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto => (new ExplainInput())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard => (new EvaluationInput())->error($diagnostic, $session),
@@ -76,6 +77,8 @@ final class InputErrors
     public function query(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar => \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error(),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain => (new \MySqlMemory\Program\Expression\ExplainUse())->error($diagnostic->explanation, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter => (new \MySqlMemory\Session\Parse\Definition\ShowInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand => \MySqlMemory\Error\Family\StatementError::MisplacedInto->error(),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedBody => (new \MySqlMemory\Session\Parse\Definition\ViewInput())->error($diagnostic, $session),

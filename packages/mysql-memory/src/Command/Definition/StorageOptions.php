@@ -48,6 +48,9 @@ final class StorageOptions
      */
     public function resolve(Statement $statement, Session $session, Context $context): void
     {
+        if ($statement instanceof CreateTable && isset($session->variables->preparedEngines[spl_object_id($statement)])) {
+            return;
+        }
         $name = match (true) {
             $statement instanceof CreateTable => $statement->name,
             $statement instanceof AlterTable => $statement->table,
@@ -62,11 +65,8 @@ final class StorageOptions
                 $node instanceof PartitionOption && $node->kind === PartitionOptionKind::Engine => $node->name?->value,
                 default => null,
             };
-            if ($engine !== null && ServerCatalog::shared()->engine($engine) === null) {
-                if ($context->modes->has('NO_ENGINE_SUBSTITUTION')) {
-                    throw SchemaError::UnknownStorageEngine->error($engine);
-                }
-                $context->warning(SchemaError::UnknownStorageEngine, $engine);
+            if ($engine !== null) {
+                $this->named($engine, $context);
             }
         }
         foreach ((new Walker())->find($statement, CreateTable::class) as $create) {
@@ -78,10 +78,45 @@ final class StorageOptions
     }
 
     /**
+     * Resolves a completed CREATE header before a refused tail, without fabricating a statement.
+     *
+     * @throws SqlError When the database is unspecified or an engine is unknown
+     */
+    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail $header, Session $session, Context $context): void
+    {
+        if ($header->name->schema === null && $session->variables->database === '') {
+            throw QueryError::NoDatabase->error();
+        }
+        foreach ($header->options as $option) {
+            if ($option instanceof EngineOption) {
+                $this->named($option->engine->value, $context);
+            }
+        }
+    }
+
+    /**
+     * Resolves one engine name, preserving option order and substitution mode.
+     *
+     * @throws SqlError When engine substitution is disabled
+     */
+    public function named(string $engine, Context $context): void
+    {
+        if (ServerCatalog::shared()->engine($engine) === null) {
+            if ($context->modes->has('NO_ENGINE_SUBSTITUTION')) {
+                throw SchemaError::UnknownStorageEngine->error($engine);
+            }
+            $context->warning(SchemaError::UnknownStorageEngine, $engine);
+        }
+    }
+
+    /**
      * Resolves the selected engine, optionally reporting the fallback after resolve() checked its name.
      */
-    public function engine(CreateTable $create, Variables $variables, ?Context $context = null): string
+    public function engine(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail $create, Variables $variables, ?Context $context = null): string
     {
+        if (isset($variables->preparedEngines[spl_object_id($create)])) {
+            return $variables->preparedEngines[spl_object_id($create)];
+        }
         $default = (string) $variables->read($create->temporaryWords > 0 ? 'default_tmp_storage_engine' : 'default_storage_engine');
         $name = $default;
         foreach ($create->options as $option) {

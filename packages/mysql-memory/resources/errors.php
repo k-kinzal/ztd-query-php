@@ -637,4 +637,7 @@ return [
     4067 => ['HY000', "SOURCE_AUTO_POSITION cannot be disabled for replication channel '%s' when GTID_ONLY=1."],
     4160 => ['HY000', 'The value supplied for %s in the SET list cannot be null'],
     3954 => ['HY000', 'Misplaced INTO clause, INTO is not allowed inside subqueries, and must be placed at end of UNION clauses.'],
+    6412 => ['0A000', 'EXPLAIN ANALYZE does not support FORMAT=JSON with explain_json_format_version=1.'],
+    6413 => ['HY000', 'Dynamic parameters can only be used in DML statements.'],
+    1486 => ['HY000', 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed'],
 ];

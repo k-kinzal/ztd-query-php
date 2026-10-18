@@ -27,6 +27,21 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 final class MemoryTest extends TestCase
 {
     /**
+     * Stored markers select preparation without creating outer bound arguments.
+     */
+    public function testObservePreparesAnEventWithoutTreatingItsStoredMarkersAsOuterBindings(): void
+    {
+        $session = (new Instance('9.1.0', [], ['d']))->connect();
+        $body = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())]));
+        $event = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('e'), new \SqlSemantics\Statement\Identifier\Name('d')), new \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['2099-01-01'])), $body);
+        $parameters = (new \Fuzz\Structure\Audit\Comparison())->parameters($event, $session);
+        self::assertSame([], $parameters);
+        $result = (new Memory())->observe($session, $event, $parameters, true);
+
+        self::assertSame(['results' => [['affected' => 0, 'lastInsertId' => '0']], 'warnings' => [], 'disconnected' => false], $result);
+    }
+
+    /**
      * A deliberately raised SQL condition retains its error and stored diagnostics.
      */
     public function testObserveRetainsTheErrorAndDiagnosticsWithoutReadingSessionText(): void

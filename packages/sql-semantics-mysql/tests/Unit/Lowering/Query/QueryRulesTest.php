@@ -28,6 +28,15 @@ use SqlSemantics\Platform\MySql\Statement\Query\Star;
 #[Medium]
 final class QueryRulesTest extends TestCase
 {
+    public function testEmbeddedKeepsOnlyThePublishedQueryInTheSourceMap(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) AS SELECT 1 AS b');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $operation->statement);
+        self::assertNotNull($operation->statement->query);
+        self::assertInstanceOf(Select::class, $operation->statement->query->query);
+        self::assertSame('CREATE TABLE t (a INT) AS SELECT 1 AS b', $operation->toString());
+    }
+
     public function testStatementLowersASelectOfEveryGrammarGeneration(): void
     {
         self::assertSame('SELECT a x FROM db.t u WHERE a = 1', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('select a x from db.t u where a=1')->toString());

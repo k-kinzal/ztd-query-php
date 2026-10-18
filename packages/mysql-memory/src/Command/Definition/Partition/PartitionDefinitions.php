@@ -155,6 +155,9 @@ final class PartitionDefinitions
                     throw PartitionError::FieldTypeNotAllowed->error($definition->columns[$position]->name);
                 }
             }
+            if ($read === []) {
+                throw PartitionError::ConstantFunction->error();
+            }
             if ($this->planner->compiler->compile($expression, $this->scope)->domain()->kind !== Kind::Integer) {
                 throw PartitionError::FunctionNotAllowed->error();
             }

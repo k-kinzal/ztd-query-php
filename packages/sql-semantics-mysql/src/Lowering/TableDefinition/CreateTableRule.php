@@ -181,6 +181,7 @@ final class CreateTableRule
      *
      * @param list<TableElement> $elements The elements already lowered
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When partitioning or query operands are refused
      */
     public function rest(QualifiedName $name, array $elements, Node $rest, int $temporary, bool $exists): CreateTable
     {
@@ -190,20 +191,25 @@ final class CreateTableRule
             'opt_create_table_options_etc: opt_create_partitioning_etc' => [[], $form->node(0)],
             default => throw ImplementationGap::production($form),
         };
-        $part = $this->lowering->productions->form($partitioning);
-        [$clause, $query] = match ($part->signature) {
-            'opt_create_partitioning_etc: partition_clause opt_duplicate_as_qe' => [$this->lowering->tableChanges->partitioning($part->node(0)), $part->node(1)],
-            'opt_create_partitioning_etc: opt_duplicate_as_qe' => [null, $part->node(0)],
-            default => throw ImplementationGap::production($part),
-        };
+        try {
+            $part = $this->lowering->productions->form($partitioning);
+            [$clause, $query] = match ($part->signature) {
+                'opt_create_partitioning_etc: partition_clause opt_duplicate_as_qe' => [$this->lowering->tableChanges->partitioning($part->node(0)), $part->node(1)],
+                'opt_create_partitioning_etc: opt_duplicate_as_qe' => [null, $part->node(0)],
+                default => throw ImplementationGap::production($part),
+            };
 
-        return new CreateTable($name, $elements, $options, $clause, $this->query($query), $temporary, $exists);
+            return new CreateTable($name, $elements, $options, $clause, $this->query($query), $temporary, $exists);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedCreateTail($name, $elements, $options, $temporary, $exists, $failure->problem), $failure->end, $failure->aborts);
+        }
     }
 
     /**
      * Lowers the 8.0 query part: a node of `opt_duplicate_as_qe`; none is null.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When query operands require deferred preparation
      */
     public function query(Node $part): ?TableQuery
     {
@@ -219,7 +225,7 @@ final class CreateTableRule
         }
         $as = $this->lowering->productions->form($query);
 
-        return new TableQuery($this->lowering->queries->query(match ($as->signature) {
+        return new TableQuery($this->lowering->queries->embedded(match ($as->signature) {
             'as_create_query_expression: AS query_expression_with_opt_locking_clauses' => $as->node(1),
             'as_create_query_expression: query_expression_with_opt_locking_clauses' => $as->node(0),
             default => throw ImplementationGap::production($as),

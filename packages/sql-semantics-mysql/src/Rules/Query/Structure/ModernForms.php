@@ -47,7 +47,7 @@ final class ModernForms
             || match (true) {
                 $value instanceof Select => $this->query($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete => $value->table->alias !== null,
-                $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain, $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection => $this->explain($value),
+                $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain, $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain, $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection => $this->explain($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint => !$value->name()->available(\SqlSemantics\Contract\GrammarRelease::MySql5744),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification => $this->authentication($value),
                 $value instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot => (new StatementQuery())->requiresModern($value->query),
@@ -84,9 +84,9 @@ final class ModernForms
     /**
      * Identifies EXPLAIN features that cannot accompany removed query or DML forms.
      */
-    public function explain(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain|\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection $value): bool
+    public function explain(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain|\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain $value): bool
     {
-        return strtoupper($value->format->value ?? '') === 'TREE' || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain && ($value->analyze || $value->into !== null || $value->database !== null));
+        return strtoupper($value->format->value ?? '') === 'TREE' || (!$value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection && ($value->analyze || $value->into !== null || $value->database !== null || $value->emptyInto));
     }
     /**
      * Identifies clauses that require modern grammar in every query position.

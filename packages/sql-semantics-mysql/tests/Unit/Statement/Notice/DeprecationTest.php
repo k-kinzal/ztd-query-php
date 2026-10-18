@@ -91,7 +91,8 @@ final class DeprecationTest extends TestCase
     public function testStatementsRaiseTheirWarningsInWrittenOrder(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $codes = static fn (string $sql): array => array_map(static fn ($warning): string => $warning->message(), $semantics->analyze($sql)->facts->warnings);
+        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT, c INT)');
+        $codes = static fn (string $sql): array => array_map(static fn ($warning): string => $warning->message(), $semantics->analyze($sql, [$table])->facts->warnings);
 
         self::assertSame([Deprecated::BangNot->value, Deprecated::BinaryOperator->value, Deprecated::PipesOr->value], $codes('SELECT !a, BINARY b || c FROM t'));
         self::assertSame([Deprecated::CalcFoundRows->value, Deprecated::FoundRows->value], $codes('SELECT SQL_CALC_FOUND_ROWS FOUND_ROWS()'));

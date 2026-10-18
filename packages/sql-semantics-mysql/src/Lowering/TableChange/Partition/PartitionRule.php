@@ -259,11 +259,18 @@ final class PartitionRule
      * Lowers a partitioning function: a node of `part_func`, `sub_part_func`, `part_func_expr` or `bit_expr`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the function has no scalar interpretation
      */
     public function expression(Node $function): Scalar
     {
         if ($function->name === 'bit_expr') {
-            return $this->lowering->origins->record($this->lowering->expressions->bitExpression($function), $function);
+            try {
+                return $this->lowering->origins->record($this->lowering->expressions->bitExpression($function), $function);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                throw $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar
+                    ? new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar($failure->problem->operand, (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($failure->problem->operand, $this->lowering->profile->grammar), (new \SqlSemantics\Construction\SourceRanges())->span($function)[0] ?? 0), $failure->end, $failure->aborts)
+                    : $failure;
+            }
         }
         $form = $this->lowering->form($function);
 

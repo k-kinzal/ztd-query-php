@@ -37,4 +37,14 @@ final class ParameterInferenceTest extends TestCase
         self::assertSame(Kind::Double, ParameterInference::operand(Domain::null(), true)->kind);
         self::assertSame(Kind::Null, ParameterInference::operand(Domain::null(), false)->kind);
     }
+
+    public function testInferSeparatesTheEventScheduleFromTheStoredBody(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-9.1.0');
+        $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE AT ? DO SELECT ?, ?');
+        $alter = $semantics->analyze('ALTER EVENT e DO SELECT ?, ?');
+
+        self::assertSame([0], array_keys(ParameterInference::infer($create)));
+        self::assertSame([], ParameterInference::infer($alter));
+    }
 }

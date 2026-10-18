@@ -46,6 +46,14 @@ final class ExplainFacts
     }
 
     /**
+     * An INTO target is an assignable user-variable name on every release supporting EXPLAIN INTO.
+     */
+    public function target(?UserVariable $variable): bool
+    {
+        return $variable === null || ($variable->name->value !== '' && mb_strlen($variable->name->value, 'UTF-8') <= 64);
+    }
+
+    /**
      * Records the rows of an EXPLAIN, or reports why the server refuses it.
      */
     public function derive(Derivation $derivation, ?Name $format, bool $analyze, ?ExplainModifier $modifier, ?UserVariable $into): void

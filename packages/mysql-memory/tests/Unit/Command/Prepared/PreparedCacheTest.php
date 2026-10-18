@@ -24,6 +24,7 @@ final class PreparedCacheTest extends TestCase
 
         $cache = PreparedCache::capture($operation, $session);
 
+        self::assertInstanceOf(\MySqlMemory\Command\Prepared\PreparedStatement::class, $cache->definition);
         self::assertSame($operation->statement, $cache->definition->statement);
         self::assertCount(1, $cache->tables);
         self::assertSame(['d', 't'], array_slice($cache->tables[0], 0, 2));
@@ -64,12 +65,14 @@ final class PreparedCacheTest extends TestCase
         $types = ParameterBindings::capture($operation);
         $cache->refresh($session, 'unrelated invalid source', $types, []);
 
+        self::assertInstanceOf(\MySqlMemory\Command\Prepared\PreparedStatement::class, $cache->definition);
         self::assertSame($operation->statement, $cache->definition->statement);
 
         $session->query("ALTER TABLE t ADD b INT DEFAULT 9; USE b; SET sql_mode='ANSI_QUOTES,PIPES_AS_CONCAT'");
         $cache->refresh($session, $sql, $types, []);
         $result = $cache->definition->execute($session, 'unrelated invalid source', []);
 
+        self::assertInstanceOf(\MySqlMemory\Command\Prepared\PreparedStatement::class, $cache->definition);
         self::assertNotSame($operation->statement, $cache->definition->statement);
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['7', '9', '7', '12']], $result->rows);

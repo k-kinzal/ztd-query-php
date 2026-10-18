@@ -19,8 +19,11 @@ final class ExplainInput
     /**
      * Preserves the option refusal selected by input lowering.
      */
-    public function error(RefusedConnectionExplain|RefusedExplainInto $problem): SqlError
+    public function error(RefusedConnectionExplain|RefusedExplainInto|\SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget $problem): SqlError
     {
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget) {
+            return StatementError::IllegalUserVariable->error((new \MySqlMemory\Error\DiagnosticText())->bytes($problem->target->name->value, 100));
+        }
         if ($problem instanceof RefusedConnectionExplain) {
             return $problem->analyze ? StatementError::NotSupportedYet->error('EXPLAIN ANALYZE FOR CONNECTION') : StatementError::ExplainIntoForConnection->error();
         }

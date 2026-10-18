@@ -60,7 +60,7 @@ final class InsertedColumn implements Scalar
     {
         $written = array_values(array_filter($environment->relations, static fn (VisibleRelation $relation): bool => $relation->relation instanceof WriteTarget));
         $fact = $derivation->scalar($this->column, $written === [] ? $environment : new Environment($environment->context, $environment->outer, [$written[0]], $environment->commonTables));
-        if (!$fact->type instanceof Invalid) {
+        if ($fact->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn && !$fact->type instanceof Invalid) {
             Deprecation::raise($written === [] ? Deprecated::ValuesElsewhere : Deprecated::ValuesFunction, $derivation);
         }
 

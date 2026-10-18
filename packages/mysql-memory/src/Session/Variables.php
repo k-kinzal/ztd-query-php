@@ -50,6 +50,11 @@ final class Variables
     public array $connected = [];
 
     /**
+     * @var array<int, string> Resolved prepared table engines, scoped to their original statement identities
+     */
+    public array $preparedEngines = [];
+
+    /**
      * The result collation selected by SET NAMES; a direct character_set_results assignment resets it.
      */
     public ?Collation $resultsCollation = null;
