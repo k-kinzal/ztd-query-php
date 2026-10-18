@@ -49,6 +49,7 @@ final class FromRule
      * Lowers an optional FROM clause; an absent clause is null.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function from(Node $clause): Relation|Dual|null
     {
@@ -67,6 +68,7 @@ final class FromRule
      * Lowers the table references of SELECT, UPDATE or DELETE: one reference or a comma list.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function tables(Node $tables): Relation
     {
@@ -80,6 +82,7 @@ final class FromRule
      *
      * @return list<Relation>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function members(Node $tables): array
     {

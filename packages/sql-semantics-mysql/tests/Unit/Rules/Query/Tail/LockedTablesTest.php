@@ -30,6 +30,15 @@ use SqlSemantics\Statement\Shape\RowShape;
 #[Medium]
 final class LockedTablesTest extends TestCase
 {
+    public function testInputsRetainsCommonTableAndPriorityLockingRoles(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $table = new TableReference(new QualifiedName(new Name('c')));
+        $entries = (new LockedTables())->inputs($derivation, $derivation->environment(), [$table], [new Name('c')], [SelectOption::HighPriority]);
+        self::assertSame($table, $entries[0][0]->relation);
+        self::assertSame([false, true], array_slice($entries[0], 1));
+    }
+
     public function testCheckReportsATableLockedTwice(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t2 LOCK IN SHARE MODE LOCK IN SHARE MODE');

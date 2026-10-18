@@ -71,6 +71,7 @@ final class ReferenceRule
      * Lowers a table reference.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function reference(Node $reference): Relation
     {
@@ -88,6 +89,7 @@ final class ReferenceRule
      * Lowers a join, walking the joins on its left in a loop.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function joined(Node $joined): JoinedTable
     {
@@ -115,6 +117,7 @@ final class ReferenceRule
      * Lowers one join over an already lowered left operand.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function step(Relation $left, Form $form): JoinedTable
     {

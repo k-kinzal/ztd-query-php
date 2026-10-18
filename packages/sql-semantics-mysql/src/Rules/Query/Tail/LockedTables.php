@@ -185,12 +185,25 @@ final class LockedTables
      */
     public function entries(Derivation $derivation, Environment $outer, ?Query $block, array $common, array $options): array
     {
-        $priority = in_array(SelectOption::HighPriority, $options, true);
         $terms = match (true) {
             $block instanceof Select && $block->from !== null => $this->terms($block->from),
             $block instanceof ExplicitTable => [$block],
             default => [],
         };
+        return $this->inputs($derivation, $outer, $terms, $common, $options);
+    }
+
+    /**
+     * Resolves locking roles from relation occurrences independently of projection operands.
+     *
+     * @param list<TableReference|DerivedTable|JsonTable|ExplicitTable> $terms The input occurrences
+     * @param list<Name> $common The visible common table names
+     * @param list<SelectOption> $options The leading block's modifiers
+     * @return list<array{VisibleRelation, bool, bool}>
+     */
+    public function inputs(Derivation $derivation, Environment $outer, array $terms, array $common, array $options): array
+    {
+        $priority = in_array(SelectOption::HighPriority, $options, true);
         $entries = [];
         foreach ($terms as $term) {
             if ($term instanceof DerivedTable || $term instanceof JsonTable) {
