@@ -96,6 +96,11 @@ final class TableChange
     public bool $copies = false;
 
     /**
+     * The partition replacement whose evaluated interval and legacy row count are checked on rebuild.
+     */
+    public ?\SqlSemantics\Platform\MySql\Statement\Alter\Partition\ReorganizePartition $reorganization = null;
+
+    /**
      * Whether a table option explicitly requests a new storage layout, even when its value is unchanged.
      */
     public bool $storageLayout = false;

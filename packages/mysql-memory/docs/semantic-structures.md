@@ -2000,3 +2000,22 @@ Another 1,489 saved native observations replayed without a difference. CTE
 materialization now preserves base-column identity; view metadata distinguishes
 merged and explicit TEMPTABLE algorithms. These observations close the tested
 view cases, not the remaining acceptance gates.
+
+### Partition definition shapes and reorganization histories
+
+Partition constructors enforce compatible bound roles and consistent explicit
+subpartition counts. SQL lowering reports typed definition issues at the source
+boundary before it could construct a contradictory clause. REORGANIZE preserves
+its replacement definitions, validates them against the stored partition method,
+and checks the resolved range before publishing a replacement layout.
+
+The `query368` unit/property/doctest suites pass: 637 core, 8,516 MySQL Semantics
+and 18,040 Memory tests. Core and MySQL static checks pass; a Memory size check
+identified a two-line excess in AlterTableCommand's documentation, which was
+shortened without changing behavior. The subsequent `query369` snapshot passes
+all Memory static checks. The `query366` native tests cover 660 definition-input
+observations and 400 same-object reorganization observations on five releases.
+The latter reuse directly constructed changes and reads across absent, ordinary,
+partitioned, already-reorganized and recreated tables with rows. Another 860
+saved native observations replay with no differences. These tests do not close
+the remaining partition-method combinations or the whole-model acceptance gates.

@@ -53,6 +53,7 @@ final class PartitionClause implements Partitioning
         array $definitions,
     ) {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'Partition definitions are a list of partition definitions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions, $method, $subpartitioning?->count === null ? null : (int) $subpartitioning->count->text);
     }
 
     /**

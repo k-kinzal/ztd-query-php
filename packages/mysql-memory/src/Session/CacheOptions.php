@@ -120,7 +120,7 @@ final class CacheOptions
                 $boundary = min($boundary, $offset);
             }
         }
-        $database = (new Parse\RoutinePrefix())->database($statement, $boundary, $session) ?? (new Parse\Definition\ViewPrefix())->database($statement, $boundary, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $boundary, $session);
+        $database = (new Parse\RoutinePrefix())->database($statement, $boundary, $session) ?? (new Parse\Definition\DefinitionPrefix())->database($statement, $boundary, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $boundary, $session);
         if ($database !== null) {
             return $database;
         }

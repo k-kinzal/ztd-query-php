@@ -34,6 +34,9 @@ final class InputErrors
      */
     public function refused(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
+            return (new PartitionInput())->definition($failure, $statement, $session);
+        }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash) {
             return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($failure->end, $statement, $session->following, $failure, true, $session->semantics()->parser());
         }

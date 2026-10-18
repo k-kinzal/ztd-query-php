@@ -155,11 +155,14 @@ final class PartitionRule
         $form = $this->lowering->form($clause);
         $positions = self::CLAUSES[$form->signature] ?? throw ImplementationGap::production($form);
 
+        $method = $this->method($this->lowering->form($form->node($positions[0])));
+        $count = $this->count($form->node($positions[1]));
+        $subpartitioning = $this->subpartitioning($form->node($positions[2]));
         return new PartitionClause(
-            $this->method($this->lowering->form($form->node($positions[0]))),
-            $this->count($form->node($positions[1])),
-            $this->subpartitioning($form->node($positions[2])),
-            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3])),
+            $method,
+            $count,
+            $subpartitioning,
+            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3]), $method, $subpartitioning?->count === null ? null : (int) $subpartitioning->count->text),
         );
     }
 
@@ -183,6 +186,8 @@ final class PartitionRule
     }
 
     /**
+     * @throws \SqlSemantics\Construction\RejectedInput When the explicit count is zero
+     *
      * Lowers the subpartitioning: a node of `opt_sub_part`; an absent clause is null.
      *
      * @throws ImplementationGap When a production has no rule
@@ -194,7 +199,12 @@ final class PartitionRule
             return null;
         }
 
-        return new Subpartitioning($this->method($form), $this->count($form->node(count($form->node->children) - 1)));
+        $countNode = $form->node(count($form->node->children) - 1);
+        $count = $this->count($countNode);
+        if ($count !== null && (int) $count->text === 0) {
+            throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions, (new \SqlSemantics\Construction\SourceRanges())->span($countNode)[1] ?? 0);
+        }
+        return new Subpartitioning($this->method($form), $count);
     }
 
     /**

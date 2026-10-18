@@ -1577,6 +1577,9 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\DefinitionIssue": {
+        "name": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\InvalidPartitionExpression": {
         "expression": "SqlSemantics\\Statement\\Scalar"
     },

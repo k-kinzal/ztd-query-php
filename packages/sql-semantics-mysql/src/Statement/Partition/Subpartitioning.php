@@ -37,6 +37,7 @@ final class Subpartitioning implements Node
      */
     public function __construct(public readonly PartitionMethod $method, public readonly ?Numeral $count)
     {
+        Check::input($count === null || (int) $count->text !== 0, 'The explicit subpartition count is positive.');
         Check::input($method instanceof HashMethod || $method instanceof KeyMethod, 'Only HASH and KEY subpartition a partition.');
         Check::input(!$method instanceof KeyMethod || $method->columns !== [], 'KEY subpartitioning names at least one column.');
     }

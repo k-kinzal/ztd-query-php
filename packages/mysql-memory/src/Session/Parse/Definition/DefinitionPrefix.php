@@ -13,20 +13,20 @@ use SqlParser\Parser\ReductionParser;
 use SqlSemantics\Diagnostic\Check;
 
 /**
- * Checks the connection database at a completed view name before a refused body.
+ * Checks the connection database at a completed definition name before a refused body.
  *
- * The parser identifies the view-name operand and its qualification. This
+ * The parser identifies the definition-name operand and its qualification. This
  * state-dependent refusal precedes body operands on MySQL 5.6 through 9.1.
  * No tree or input text is passed to statement execution.
  *
  * @visibility MySqlMemory
  */
-final class ViewPrefix
+final class DefinitionPrefix
 {
     /**
-     * Answers a missing default database before a rejected operand of a view definition.
+     * Answers a missing default database before a rejected operand of a table or view definition.
      */
-    public function database(string $statement, int $end, Session $session): ?SqlError
+    public function database(string $statement, int $end, Session $session, string $keyword = 'VIEW_SYM'): ?SqlError
     {
         if ($session->variables->database !== '') {
             return null;
@@ -40,7 +40,7 @@ final class ViewPrefix
         }
         $start = null;
         foreach ($tokens as $index => $token) {
-            if ($token->name === 'VIEW_SYM') {
+            if ($token->name === $keyword) {
                 $start = $tokens[$index + 1]->offset ?? null;
                 break;
             }
@@ -64,7 +64,7 @@ final class ViewPrefix
                 $missing = $missing || ($last !== null && $last->end() < $end && count($tokens) < 3);
             });
         } catch (SourceException) {
-            // Only view names completed before the original refusal are relevant.
+            // Only definition names completed before the original refusal are relevant.
         }
 
         return $missing ? QueryError::NoDatabase->error() : null;

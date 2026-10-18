@@ -186,6 +186,9 @@ final class AlterTableCommand implements Command
     {
         $context = $rebuild->context;
         $definition = $rebuild->definition($layout, $this->others($rebuild->session, $table));
+        if ($change->reorganization !== null) {
+            (new Partition\Reorganization())->validate($table->definition, $definition, $change->reorganization, $context);
+        }
         $schema = $rebuild->session->instance->dictionary->schema($definition->schema);
         if ($schema !== null && !$definition->temporary) {
             Constraints::unique($definition, $schema, $table);
@@ -202,7 +205,7 @@ final class AlterTableCommand implements Command
         if ($change->ordered && $definition->primaryKey() !== null) {
             $context->warning(StatementError::UnknownError, 'ORDER BY ignored as there is a user-defined clustered index in the table \'' . $definition->name . '\'');
         }
-        $records = $copies ? count($data->rows) : 0;
+        $records = $change->reorganization === null ? ($copies ? count($data->rows) : 0) : (new Partition\Reorganization())->affected($table, $change->reorganization, $context);
         $updated = $copies || count($origins) !== count($table->definition->columns) || in_array(null, $origins, true) || $change->storageLayout ? null : $table->updated;
         if ($records > 0 && $context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
             $updated = (int) floor($context->variables->clock());
@@ -354,11 +357,9 @@ final class AlterTableCommand implements Command
     }
 
     /**
-     * Tells whether the server copies the rows of the table to change it, and refuses ALGORITHM=INPLACE, ALGORITHM=INSTANT and LOCK=NONE where it must.
-     *
-     * A change of a column type copies the table, and so do CONVERT TO CHARACTER SET, ORDER BY,
-     * ALGORITHM=COPY, dropping the primary key, a column becoming AUTO_INCREMENT, and a column
-     * becoming NOT NULL outside a strict mode. ALGORITHM=INSTANT is refused for a change of the indexes or one that copies.
+     * Determines whether the change copies rows and checks its ALGORITHM and LOCK restrictions.
+     * Column type or charset changes, ORDER BY, ALGORITHM=COPY, primary-key removal,
+     * AUTO_INCREMENT addition and non-strict NOT NULL conversion can require copying.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
      *
      * @param list<int|null> $origins

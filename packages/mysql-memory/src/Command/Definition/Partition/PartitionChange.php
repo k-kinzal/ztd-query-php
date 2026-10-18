@@ -64,6 +64,11 @@ final class PartitionChange
         if (!$clause instanceof PartitionClause) {
             throw SchemaError::PartitionManagementOnNonpartitioned->error();
         }
+        if ($command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\ReorganizePartition) {
+            $layout->partitioning = (new Reorganization())->rewrite($clause, $command);
+            $this->change->reorganization = $command;
+            return;
+        }
         $ranged = $clause->method instanceof ExpressionMethod || $clause->method instanceof ColumnsMethod;
         match (true) {
             $command instanceof RemovePartitioning => $this->removed(),

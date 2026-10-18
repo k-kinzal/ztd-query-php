@@ -73,21 +73,34 @@ final class DefinitionRule
      * Lowers the definitions of a partitioning or of a partition change; an absent list is empty.
      *
      * @return list<PartitionDefinition>
+     * @throws \SqlSemantics\Construction\RejectedInput When definitions contradict their method or count
      * @throws ImplementationGap When a production has no rule
      */
-    public function definitions(Node $list): array
+    public function definitions(Node $list, ?\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod $method = null, ?int $count = null, ?int $start = null): array
     {
         $form = $this->lowering->form($list);
         if ($form->signature === 'part_defs:' || $form->signature === 'opt_part_defs:') {
             return [];
         }
         if ($form->signature === 'part_defs: ( part_def_list )' || $form->signature === 'opt_part_defs: ( part_def_list )') {
-            return $this->definitions($form->node(1));
+            return $this->definitions($form->node(1), $method, $count, $form->token(0)->offset);
         }
         $this->spine($list);
         $definitions = [];
+        $expected = $count;
+        $start ??= (new \SqlSemantics\Construction\SourceRanges())->span($list)[0] ?? 0;
         foreach ((new Lists())->items($list) as $item) {
-            $definitions[] = $this->definition($item);
+            $definition = $this->definition($item);
+            if ($definitions === [] && $definition->subpartitions === []) {
+                $expected = 0;
+            }
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->problem($definition, $method, $expected);
+            if ($problem !== null) {
+                throw (new DefinitionFailure($this->lowering))->failure($problem, $item, $start, $expected);
+            }
+            $expected ??= count($definition->subpartitions);
+            $definitions[] = $definition;
+            $start = (new \SqlSemantics\Construction\SourceRanges())->span($item)[1] ?? $start;
         }
 
         return $definitions;

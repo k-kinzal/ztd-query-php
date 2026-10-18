@@ -41,4 +41,12 @@ final class PartitionInputTest extends TestCase
         self::assertSame('42000', $error->sqlState());
         self::assertSame("Partitioning can not be used stand-alone in query near 'PARTITION BY HASH(a);\nSELECT 2' at line 3", $error->getMessage());
     }
+    public function testDefinitionPreservesTheNoDatabaseConditionBeforeItsBody(): void
+    {
+        $session = (new Instance())->connect();
+        $sql = 'ALTER TABLE t ADD PARTITION (PARTITION p0, PARTITION p1 (SUBPARTITION s1))';
+        $failure = new RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount, (int) strpos($sql, 'SUBPARTITION s1'));
+        self::assertSame(1046, (new PartitionInput())->definition($failure, $sql, $session)->getCode());
+    }
+
 }

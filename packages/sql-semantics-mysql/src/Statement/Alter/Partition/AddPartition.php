@@ -43,6 +43,7 @@ final class AddPartition implements StandaloneCommand
     public function __construct(public readonly bool $local, array $definitions, public readonly ?Numeral $count = null)
     {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'ADD PARTITION holds a list of partition definitions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions);
         Check::input($definitions === [] || $count === null, 'ADD PARTITION gives definitions or a count, not both.');
     }
 

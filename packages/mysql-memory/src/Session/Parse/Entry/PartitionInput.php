@@ -45,4 +45,36 @@ final class PartitionInput
 
         return new SqlError(StatementError::ParseError, "Partitioning can not be used stand-alone in query near '" . $near . "' at line " . $line, $failure);
     }
+    /**
+     * Formats an intrinsic definition refusal after its completed table-name prefix.
+     */
+    public function definition(RejectedInput $failure, string $statement, Session $session): SqlError
+    {
+        $database = (new \MySqlMemory\Session\Parse\Definition\DefinitionPrefix())->database($statement, $failure->end, $session, 'TABLE_SYM');
+        if ($database !== null) {
+            return $database;
+        }
+        $problem = $failure->problem;
+        \SqlSemantics\Diagnostic\Check::invariant($problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue, 'A partition-definition refusal has a typed reason.');
+        if ($problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions) {
+            return new SqlError(\MySqlMemory\Error\Family\PartitionError::NoPartitions, $problem->message(), $failure);
+        }
+        if ($problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::RangeValues || $problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ListValues) {
+            return new SqlError(\MySqlMemory\Error\Family\PartitionError::WrongValuesKind, $problem->message(), $failure);
+        }
+        if ($problem !== \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount && $session->settings()->legacy()) {
+            return new SqlError(\MySqlMemory\Error\Family\PartitionError::MissingValues, $problem->message(), $failure);
+        }
+        $offset = $failure->end;
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($session->semantics()->parser(), $statement) as $token) {
+            if ($token->offset >= $offset) {
+                $offset = $token->offset;
+                break;
+            }
+        }
+        $line = (new DiagnosticLine())->at($statement, $offset, true, $session->semantics()->parser());
+        $near = Encoding::prefix(rtrim(substr($statement, $offset) . $session->following, " \t\n\r\f\v"), Charset::named((string) $session->variables->read('character_set_client')) ?? Charset::known('utf8mb4'), true);
+        return new SqlError(StatementError::ParseError, $problem->message() . " near '" . $near . "' at line " . $line, $failure);
+    }
+
 }

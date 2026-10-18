@@ -43,6 +43,7 @@ final class ReorganizePartition implements StandaloneCommand
     public function __construct(public readonly bool $local, public readonly ?NamedPartitions $partitions = null, array $definitions = [])
     {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'REORGANIZE PARTITION holds a list of partition definitions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions);
         Check::input(($partitions === null) === ($definitions === []), 'Named partitions are reorganized INTO new definitions.');
     }
 

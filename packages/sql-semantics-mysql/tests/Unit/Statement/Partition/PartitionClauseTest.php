@@ -40,4 +40,11 @@ final class PartitionClauseTest extends TestCase
     {
         self::assertSame('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)')->toString());
     }
+    public function testDefinitionsRequireOneSubpartitionCount(): void
+    {
+        $definitions = [new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p0'), null, [], []), new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p1'), null, [], [new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('s'), [])])];
+        $this->expectExceptionMessage('Wrong number of subpartitions defined, mismatch with previous setting');
+        new PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, []), null, null, $definitions);
+    }
+
 }

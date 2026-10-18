@@ -21,8 +21,10 @@ enum PartitionError: int implements ErrorCode
 {
     use CatalogedError;
 
+    case MissingValues = 1479;
     case WrongValuesKind = 1480;
     case MaxValueNotLast = 1481;
+    case SubpartitionCount = 1485;
     case PartitionsNotDefined = 1492;
     case RangeNotIncreasing = 1493;
     case ListConstantTwice = 1495;
@@ -33,8 +35,12 @@ enum PartitionError: int implements ErrorCode
     case PartitionListError = 1507;
     case DropAllPartitions = 1508;
     case CoalesceOnlyHashKey = 1509;
+    case ReorganizeHashCount = 1510;
+    case ReorganizeWithoutNames = 1511;
     case OnlyRangeList = 1512;
     case DuplicatePartition = 1517;
+    case ReorganizeConsecutive = 1519;
+    case ReorganizeRange = 1520;
     case NoPartitionForValue = 1526;
     case TemporaryPartitioned = 1562;
     case ConstantOutOfDomain = 1563;
