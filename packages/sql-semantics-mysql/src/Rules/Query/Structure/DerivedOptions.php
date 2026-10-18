@@ -49,7 +49,7 @@ final class DerivedOptions
     /**
      * Answers the query-expression spine in written order, stopping at each block.
      *
-     * @return list<Select> The blocks that belong to this derived query
+     * @return list<Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection> The blocks that belong to this derived query
      */
     public function blocks(Query $query): array
     {
@@ -57,7 +57,9 @@ final class DerivedOptions
         $pending = [$query];
         while ($pending !== []) {
             $node = array_pop($pending);
-            if ($node instanceof Select) {
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
+                $blocks[] = $node->selection;
+            } elseif ($node instanceof Select) {
                 $blocks[] = $node;
             } elseif (is_array($node)) {
                 array_push($pending, ...array_reverse(array_values($node)));

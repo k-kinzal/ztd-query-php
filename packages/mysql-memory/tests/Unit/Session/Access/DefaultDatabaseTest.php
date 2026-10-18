@@ -15,6 +15,21 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DefaultDatabaseTest extends TestCase
 {
+    public function testCallsResolvesTheRoutineDatabaseBeforeColumnsAndTables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('SELECT missing, f() FROM d.absent');
+        self::assertSame([['Error', 1046, 'No database selected'], ['Error', 1046, 'No database selected']], $session->diagnostics->conditions);
+    }
+
+    public function testCallsKeepsUnusedCommonTableDefinitionsDeferred(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('WITH c AS (SELECT f()) SELECT 1 AS n')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
     public function testReferencedIgnoresAnUnusedCommonTableBody(): void
     {
         $session = (new Instance())->connect();

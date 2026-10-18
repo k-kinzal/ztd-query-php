@@ -21,6 +21,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ProblemsTest extends TestCase
 {
+    public function testResolutionPreparesAReachedTemplateBeforeOuterColumns(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1241);
+        $session->query('WITH c AS (SELECT ROW(1,2)) SELECT missing FROM c');
+    }
+
     public function testSignalsChecksTheNamedResignalConditionBeforeHandlerState(): void
     {
         $session = (new Instance())->connect();

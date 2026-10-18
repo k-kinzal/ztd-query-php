@@ -114,6 +114,7 @@ final class Planner
     public function query(Query $query, ?Scope $outer): QueryPlan
     {
         return match (true) {
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody => (new \MySqlMemory\Evaluation\Compile\Selections())->bound($query->selection, $this, $outer),
             $query instanceof Select => $this->blocks->select($query, $outer),
             $query instanceof QueryExpression => $this->expression($query, $outer),
             $query instanceof ParenthesizedQuery => $this->query($query->query, $outer),

@@ -14,6 +14,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery;
+use WeakReference;
 
 /**
  * Prepares an entire retained read query using the shared diagnostic ordering.
@@ -52,4 +53,29 @@ final class QueryUse
         (new Problems())->raise(new QueryPreparation($query->query, $derivation->facts(), $context->profile), $session);
         throw (new Errors())->error($query->problem(), $session);
     }
+    /**
+     * Prepares reached CTE templates through the same bound query and lexical scopes.
+     *
+     * Relation opening has already run. Scalar dependencies are prepared in query
+     * order, so an inner row condition precedes an enclosing unknown projection.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the reached template cannot prepare
+     */
+    public function templates(QueryPreparation $query, Session $session): void
+    {
+        $reached = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($query->statement);
+        if (array_filter($reached, static fn ($node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) === []) {
+            return;
+        }
+        foreach ($query->facts->diagnostics as $problem) {
+            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && in_array($problem->rule, [\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RecursiveWithoutUnion, \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RecursiveWithoutAnchor], true)) {
+                throw (new Errors())->error($problem, $session);
+            }
+        }
+        $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
+        $planner = new \MySqlMemory\Plan\Planner($query->statement, $query->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner->query($query->statement, null);
+    }
+
 }

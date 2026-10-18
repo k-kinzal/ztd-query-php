@@ -1824,6 +1824,9 @@
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "query": "SqlSemantics\\Statement\\Query"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\DeferredBody": {
+        "selection": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\With": {
         "recursive": "bool",
         "tables": "array"

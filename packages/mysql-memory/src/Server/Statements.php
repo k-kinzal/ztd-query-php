@@ -13,6 +13,7 @@ use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use WeakReference;
 
 /**
  * The prepared statements of a connection: COM_STMT_PREPARE, COM_STMT_EXECUTE and the commands around them.
@@ -128,7 +129,7 @@ final class Statements
             return [];
         }
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), new \MySqlMemory\Session\Diagnostics(), $session->variables, $session->variables->instant());
-        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, []);
+        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, [], $session->program, WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($operation->statement->query, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
 
         return (new \MySqlMemory\Command\Output())->columns($planner->query($operation->statement->query, null));

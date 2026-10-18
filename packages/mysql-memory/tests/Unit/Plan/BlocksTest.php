@@ -31,6 +31,15 @@ use SqlSemantics\Statement\Shape\Field;
 #[Small]
 final class BlocksTest extends TestCase
 {
+    public function testTableReadsACommonTableThroughItsBoundDefinition(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('WITH b AS (SELECT 7 AS a), c AS (TABLE b) TABLE c')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['7']], $result->rows);
+        self::assertSame(['c', 'b'], [$result->columns[0]->table, $result->columns[0]->originalTable]);
+    }
+
     public function testLimitCountsOffsetRowsEvenWhenEveryInputRowIsDiscarded(): void
     {
         $session = (new Instance())->connect();

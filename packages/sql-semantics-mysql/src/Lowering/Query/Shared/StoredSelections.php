@@ -37,6 +37,15 @@ final class StoredSelections
      */
     public function read(Node $node): DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery|\SqlSemantics\Platform\MySql\Statement\QueryRoot|null
     {
+        $selection = $this->body($node);
+        return $selection instanceof \SqlSemantics\Statement\Query ? $this->lowering->origins->record((new QueryMeaning())->of($selection), $node) : $selection;
+    }
+
+    /**
+     * Reads the complete block without assigning a top-level statement role.
+     */
+    public function body(Node $node): DeferredSelection|\SqlSemantics\Statement\Query|null
+    {
         $parts = $this->frontier($node);
         if ($parts === null) {
             return null;
@@ -64,7 +73,7 @@ final class StoredSelections
         \SqlSemantics\Diagnostic\Check::invariant($grouping === null || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping, 'An ordinary grouping has scalar or ordinal items.');
         $order = array_values(array_filter($ordering, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\OrderItem));
         $select = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Query\Select($options, $ordinary, $input, $predicate, $grouping, $having, orderBy: $order, limit: $limit), $node);
-        return $this->lowering->origins->record((new QueryMeaning())->of($select), $node);
+        return $select;
     }
 
     /**

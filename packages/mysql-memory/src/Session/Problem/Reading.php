@@ -69,6 +69,7 @@ final class Reading
         $this->variables($operation, $session);
         $this->legacyWrites($operation, $session);
         $this->diagnosed($operation, $session);
+        (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($operation->statement, $session);
         if ($operation instanceof Operation && ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus)) {
             (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
         }

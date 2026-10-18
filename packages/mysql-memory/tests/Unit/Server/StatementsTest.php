@@ -125,6 +125,20 @@ final class StatementsTest extends TestCase
         self::assertEquals([new ResultColumn('one', Field::LongLong, 2, 0, 32897, 63)], $client->statements->columns($session->analyze('SELECT 1 AS one', true), $session, 0));
     }
 
+    public function testColumnsResolvesStoredFunctionsWithoutInvokingTheirBody(): void
+    {
+        $client = new Client(new Instance(), 1, static function (string $bytes): void {
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $session = $client->session();
+        $session->query('CREATE DATABASE d; USE d; CREATE FUNCTION f() RETURNS INT DETERMINISTIC BEGIN SET @invoked = 1; RETURN 7; END');
+        $columns = $client->statements->columns($session->analyze('SELECT f() AS n', true), $session, 0);
+        self::assertSame([['n', Field::Long]], array_map(static fn (ResultColumn $column): array => [$column->name, $column->type], $columns));
+        $result = $session->query('SELECT @invoked')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null]], $result->rows);
+    }
+
     public function testColumnsAnswersNoColumnsForAStatementWithoutRows(): void
     {
         $client = new Client(new Instance(), 1, static function (string $bytes): void {

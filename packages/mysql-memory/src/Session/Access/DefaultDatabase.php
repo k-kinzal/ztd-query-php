@@ -80,6 +80,7 @@ final class DefaultDatabase
         if ($session->variables->database !== '' || \MySqlMemory\Command\Dispatcher::program($operation->statement)) {
             return;
         }
+        $this->calls($operation->statement, $session);
         $names = [];
         foreach ((new \MySqlMemory\Session\Problems())->reached($operation->statement) as $node) {
             if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable || $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget) {
@@ -89,6 +90,25 @@ final class DefaultDatabase
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name->schema === null && isset($names[spl_object_id($diagnostic->name)])) {
                 throw QueryError::NoDatabase->error();
+            }
+        }
+    }
+
+    /**
+     * Resolves implicit stored-function databases before tables and scalar operands.
+     * Unused CTE definitions do not register calls. A selected database leaves
+     * missing routine lookup at the call's ordinary expression position.
+     *
+     * @throws SqlError When a reached stored function has no database
+     */
+    public function calls(\SqlSemantics\Statement\Node $statement, Session $session): void
+    {
+        if ($session->variables->database !== '' || ($statement instanceof Statement && \MySqlMemory\Command\Dispatcher::program($statement))) {
+            return;
+        }
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($statement) as $node) {
+            if (($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall) && $node->schema === null && !$node->native($session->settings()->release())) {
+                throw (new \MySqlMemory\Session\Problem\Errors())->routine($node, $session);
             }
         }
     }

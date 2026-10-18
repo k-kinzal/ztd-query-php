@@ -52,6 +52,7 @@ final class RowUse
                 throw (new Errors())->error($problem, $session);
             }
         }
+        (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($operand, $session);
         foreach ($problems as $problem) {
             if ($problem instanceof MissingTable) {
                 throw (new Errors())->error($problem, $session);

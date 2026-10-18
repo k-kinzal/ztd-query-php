@@ -58,6 +58,7 @@ final class QueryExpression implements Query
      */
     public function __construct(public readonly ?WithClause $with, public readonly Query $body, array $orderBy = [], public readonly ?Limit $limit = null)
     {
+        Check::input(!$body instanceof With\DeferredBody || ($orderBy === [] && $limit === null), 'A deferred block retains its own ordering and limit.');
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
         (new SortScopes())->check($this->orderBy);
         Check::input($with !== null || $orderBy !== [] || $limit !== null, 'A query expression holds a WITH clause, an ordering or a limit.');

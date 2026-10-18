@@ -2082,3 +2082,36 @@ releases. Both include the original generated SQL. The unseeded `query394` run
 stopped after 467.694 seconds with 582 matching inputs, the now-repaired account
 warning difference, and a spatial-catalog state restoration difference. That run
 is not a passing 900-second campaign; spatial restoration remains under repair.
+
+
+### Deferred common-table bodies and routine database dependencies
+
+An unused CTE can retain a complete `DeferredBody`, including row-valued
+projections and predicates. It is a query template, not a scalar expression or
+standalone statement. Reached dependencies determine whether the read requires
+that body. Output slots preserve every position and alias, with invalid types
+for deferred projections. The consumer uses the already derived CTE facts and
+lexical scope; it does not reconstruct SQL, replace operands or bind the CTE
+again in a global scope. Explicit `TABLE c` reads the same resolved CTE relation
+and preserves its materialized column identity.
+
+Implicit stored-function databases are resolved before tables and scalar
+operands. With a selected database, a missing function instead fails at its
+expression position. Prepared result-column planning carries the session needed
+to resolve existing routines without invoking their bodies. The retained
+selection compiler is shared by planning and stored instruction invocation;
+planning does not depend on the Program layer.
+
+Snapshot `query409` passes all three static suites, including dependency checks
+and the 935-entry retained value schema, plus 637 core, 8,555 MySQL Semantics and
+18,069 Memory unit/property/doctest tests. Native comparisons pass 342 CTE input
+observations, 180 same-object CTE/table-lifetime observations, and 196 routine
+preparation observations through text and prepared protocols. The preceding
+`query405` same-object routine test passes 20 observations across five releases:
+the same call sees no selected database, a missing routine, a defined routine,
+and a dropped routine. All 309 saved observations replay without a difference.
+The earlier `query398` whole-model run completed all 244 roots but retained one
+routine-database ordering difference; its exact root now replays with native
+agreement. The fresh whole-model and unseeded campaigns are still in progress.
+These results do not close the remaining window and partition constructor
+constraints or the final nine-corpus and 900-second acceptance gates.

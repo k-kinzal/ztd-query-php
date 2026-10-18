@@ -23,7 +23,8 @@ use SqlSemantics\Statement\Shape\RowShape;
  * Binds a stored selection's complete clauses while retaining preparation conditions.
  *
  * The ordinary projections establish aliases before grouping, HAVING and ordering.
- * A deferred projection has no scalar output field; its operand is still derived.
+ * A deferred projection retains an invalid output slot and derives its operand
+ * without manufacturing a scalar expression.
  * The program instruction retains its original operand and clause roles.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -32,8 +33,10 @@ final class SelectionFacts
 {
     /**
      * Derives every retained clause in its input or output-name scope.
+     *
+     * @return list<Field|OpenStar> Output positions, retaining invalid types for deferred projections
      */
-    public function derive(DeferredSelection $selection, Derivation $derivation, ProgramScope $scope): void
+    public function derive(DeferredSelection $selection, Derivation $derivation, ProgramScope $scope): array
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\SelectOptions())->raise($selection, $derivation);
         $from = $selection->from === null ? new JoinedInput(new RelationFact(new RowShape([])), [], []) : (new FromScope())->open($selection->from, $derivation, $scope->environment, []);
@@ -53,6 +56,7 @@ final class SelectionFacts
         }
         $this->ordering($selection->orderBy, $derivation, $results, $fields, true);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts())->limit($selection->limit, $derivation, $scope->environment);
+        return $fields;
     }
 
     /**
@@ -67,7 +71,9 @@ final class SelectionFacts
         $items = [];
         foreach ($selection->items as $item) {
             if ($item instanceof DeferredProjection) {
-                $derivation->scalar($item->expression, $environment);
+                $fact = $derivation->scalar($item->expression, $environment);
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$item->expression]);
+                $fields[] = new Field(count($fields), new \SqlSemantics\Statement\Shape\OutputSlot($item->alias, new \SqlSemantics\Statement\Type\Invalid($problem), $fact->nullability));
             } elseif ($ordinary) {
                 $items[] = $item;
             } else {

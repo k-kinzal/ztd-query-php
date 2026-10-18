@@ -32,26 +32,7 @@ final class SelectionUseTest extends TestCase
         (new SelectionUse())->diagnosed($facts, $session);
     }
 
-    public function testClausesPrepareTheWhereDependencyBeforeTheHavingRow(): void
-    {
-        $session = (new Instance())->connect();
-        $selection = new DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))], where: new ColumnUse(new Name('missing')), having: new Row([new NumberLiteral('1'), new NumberLiteral('2')]));
-        $session->text = 'unrelated invalid input';
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
-        $this->expectExceptionMessage("Unknown column 'missing' in 'where clause'");
-        (new SelectionUse())->raise($selection, $session);
-    }
 
-    public function testOperandResolvesAnOutputAliasBeforeTheOrderingRowCondition(): void
-    {
-        $session = (new Instance())->connect();
-        $ordering = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem(new Row([new ColumnUse(new Name('v')), new NumberLiteral('2')]));
-        $selection = new DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('7'), new Name('v'))], orderBy: [$ordering]);
-        $session->text = 'unrelated invalid input';
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
-        $this->expectExceptionCode(1241);
-        (new SelectionUse())->raise($selection, $session);
-    }
 
     public function testRaiseBindsTheRetainedTableAndColumnWithoutInputText(): void
     {

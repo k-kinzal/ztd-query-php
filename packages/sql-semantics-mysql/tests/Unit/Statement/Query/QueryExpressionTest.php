@@ -32,6 +32,15 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class QueryExpressionTest extends TestCase
 {
+    public function testRejectsATailOutsideAnUnparenthesizedDeferredBlock(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($row)]);
+        $body = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+        $this->expectExceptionMessage('A deferred block retains its own ordering and limit.');
+        new QueryExpression(null, $body, [new OrderItem(new NumberLiteral('1.5'))]);
+    }
+
     public function testRejectsASecondOrderingAfterAnOrderedDualBlock(): void
     {
         $body = new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), orderBy: [new OrderItem(new NumberLiteral('1.5'))]);

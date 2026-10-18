@@ -90,10 +90,7 @@ final class Problems
         (new \MySqlMemory\Hint\Hints())->resolve($operation->statement, $session);
         (new Problem\IndexHints())->check($operation->statement, $this->reached($operation->statement), $session);
         (new Problem\Delayed())->check($operation->statement, $session);
-        $starred = array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables) !== [];
-        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 || ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && !$starred)) {
-            $this->analysed($operation->statement);
-        }
+        $this->resolution($operation, $session, $diagnostics);
         [$located, $matched] = (new Locations())->located($operation, $calls, $diagnostics, $session);
         $this->unlocated($diagnostics, $located, $session, $operation->statement);
         $first = Locations::first($located);
@@ -108,6 +105,23 @@ final class Problems
         }
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $this->analysed($operation->statement);
+        }
+    }
+
+    /**
+     * Prepares retained query bodies after relations open and before column conditions.
+     *
+     * @param list<Diagnostic> $diagnostics The pending semantic conditions
+     * @throws SqlError When an analysis clause or reached template is refused
+     */
+    public function resolution(Operation|QueryPreparation $operation, Session $session, array $diagnostics): void
+    {
+        $starred = array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables) !== [];
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 || ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && !$starred)) {
+            $this->analysed($operation->statement);
+        }
+        if ($operation instanceof QueryPreparation) {
+            (new \MySqlMemory\Program\Expression\QueryUse())->templates($operation, $session);
         }
     }
 

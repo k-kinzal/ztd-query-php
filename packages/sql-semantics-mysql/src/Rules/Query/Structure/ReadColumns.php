@@ -30,6 +30,10 @@ final class ReadColumns
      */
     public function problem(Query|M\Set\LeadingUnion $query, bool $exists = false): ?Diagnostic
     {
+        $template = $this->templates($query);
+        if ($template !== null) {
+            return $template;
+        }
         if ($query instanceof M\ParenthesizedQuery || $query instanceof M\QueryStatement) {
             return $this->problem($query->query, $exists);
         }
@@ -42,14 +46,33 @@ final class ReadColumns
         if ($query instanceof M\ValuesQuery) {
             return $this->rows($query);
         }
-        if (!$exists && $query instanceof M\Select && ($query->from === null || $query->from instanceof Dual) && $query->items[0] instanceof M\Star) {
+        return !$exists && $query instanceof M\Select ? $this->projection($query) : null;
+    }
+
+    /**
+     * Checks stars whose written qualifier or missing input is intrinsically contradictory.
+     */
+    public function projection(M\Select $query): ?Diagnostic
+    {
+        if (($query->from === null || $query->from instanceof Dual) && $query->items[0] instanceof M\Star) {
             return new M\Problem\Misuse(M\Problem\MisuseRule::StarWithoutTables);
         }
-        if (!$exists && $query instanceof M\Select) {
-            foreach ($query->items as $item) {
-                if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard && $item->table->name->value === '') {
-                    return new M\Problem\Misuse(M\Problem\MisuseRule::StarWithoutTables);
-                }
+        foreach ($query->items as $item) {
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard && $item->table->name->value === '') {
+                return new M\Problem\Misuse(M\Problem\MisuseRule::StarWithoutTables);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds deferred bodies only along the read's lexical dependency graph.
+     */
+    public function templates(Query|M\Set\LeadingUnion $query): ?Diagnostic
+    {
+        foreach ((new ReadDependencies())->nodes($query) as $node) {
+            if ($node instanceof M\With\DeferredBody) {
+                return $node->problem();
             }
         }
         return null;

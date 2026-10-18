@@ -14,6 +14,19 @@ use SqlSemantics\Platform\MySql\Statement as M;
 #[Small]
 final class ReadColumnsTest extends TestCase
 {
+    public function testTemplatesExcludesAnUnusedDefinitionFromReadConstraints(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('WITH c AS (SELECT ROW(1,2)), d AS (SELECT * FROM c) SELECT 1');
+        self::assertInstanceOf(M\QueryRoot::class, $operation->statement);
+        self::assertNull((new ReadColumns())->templates($operation->statement->query));
+    }
+
+    public function testProjectionChecksStarsBeforeCatalogResolution(): void
+    {
+        self::assertInstanceOf(M\Query\Problem\Misuse::class, (new ReadColumns())->projection(new M\Query\Select([], [new M\Query\Star()])));
+        self::assertNull((new ReadColumns())->projection(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))])));
+    }
+
     public function testProblemDistinguishesExistenceFromReadingColumns(): void
     {
         $query = new M\Query\Select([], [new M\Query\Star()]);

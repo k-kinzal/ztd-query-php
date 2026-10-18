@@ -35,6 +35,15 @@ final class StoredSelectionsTest extends TestCase
         self::assertSame('CREATE PROCEDURE p() SELECT 1 ORDER BY 1', $semantics->analyze('CREATE PROCEDURE p() SELECT 1 ORDER BY 1')->toString());
     }
 
+    public function testBodyRetainsTheCompleteCteDefinitionInItsTemplateRole(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT ROW(1,2) LIKE 1) SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\QueryExpression::class, $operation->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $operation->statement->query->with);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->statement->query->with->tables[0]->query);
+    }
+
     public function testDeferredKeepsAGroupPredicateOutsideTheScalarQueryDomain(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t HAVING (a,2)')->statement;

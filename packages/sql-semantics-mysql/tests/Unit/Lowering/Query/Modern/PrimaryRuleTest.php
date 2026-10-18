@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Lowering\Expression\PrimaryRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Modern\PrimaryRule;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
@@ -41,6 +41,11 @@ final class PrimaryRuleTest extends TestCase
     public function testExplicitLowersTheTable(): void
     {
         self::assertSame('TABLE db.t', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('table db.t')->toString());
+    }
+
+    public function testDefinitionPreservesAllDefinitionsWithoutDanglingOrigins(): void
+    {
+        self::assertSame('WITH b AS (SELECT 1 AS x), c AS (SELECT ROW(x, 2) FROM b) SELECT 1', (new Semantics(Dialect::MySql))->analyze('WITH b AS (SELECT 1 AS x), c AS (SELECT ROW(x,2) FROM b) SELECT 1')->toString());
     }
 
     public function testWithLowersTheCommonTables(): void

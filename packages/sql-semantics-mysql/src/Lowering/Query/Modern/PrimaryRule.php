@@ -146,6 +146,28 @@ final class PrimaryRule
     }
 
     /**
+     * Retains complete deferred SELECT operands in the CTE definition role.
+     */
+    public function definition(Node $subquery): Query
+    {
+        $node = $subquery;
+        while (in_array($node->name, ['table_subquery', 'subquery'], true)) {
+            $node = $this->lowering->form($node)->node(0);
+        }
+        $form = $this->lowering->form($node);
+        if ($form->signature === 'query_expression_parens: ( query_expression_with_opt_locking_clauses )') {
+            $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->body($form->node(1));
+            if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+                return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+            }
+            if ($selection instanceof Query) {
+                return $selection;
+            }
+        }
+        return (new ExpressionRule($this->lowering))->subquery($subquery);
+    }
+
+    /**
      * Lowers a WITH clause; an absent clause is null.
      *
      * @throws ImplementationGap When a production has no rule
@@ -174,7 +196,7 @@ final class PrimaryRule
             if ($table->signature !== 'common_table_expr: ident opt_derived_column_list AS table_subquery') {
                 throw ImplementationGap::production($table);
             }
-            $tables[] = $this->lowering->origins->record(new CommonTableExpression($this->lowering->names->identifier($table->node(0)), (new TableRule($this->lowering))->columns($table->node(1)), (new ExpressionRule($this->lowering))->subquery($table->node(3))), $item);
+            $tables[] = $this->lowering->origins->record(new CommonTableExpression($this->lowering->names->identifier($table->node(0)), (new TableRule($this->lowering))->columns($table->node(1)), $this->definition($table->node(3))), $item);
         }
 
         return new With($recursive, $tables);

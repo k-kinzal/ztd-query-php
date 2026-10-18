@@ -324,6 +324,15 @@ final class Blocks
      */
     public function table(ExplicitTable $table, ?Scope $outer): QueryPlan
     {
+        $resolution = $this->planner->compiler->facts->relation($table)->table;
+        if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable) {
+            $scope = new Scope($outer);
+            $path = $this->planner->relations->commonTable($table, $resolution, $scope);
+            $fields = $this->planner->compiler->facts->query($table)->fields();
+            \SqlSemantics\Diagnostic\Check::invariant($fields !== null, 'A prepared CTE exposes every output column.');
+            $origins = array_map(fn (Field $field): ?ColumnOrigin => (new Origins($this->planner))->origin($field, $scope), $fields->items);
+            return new QueryPlan($path, $scope->columns[spl_object_id($table)], $scope->names[spl_object_id($table)], $origins);
+        }
         $schema = $table->table->schema->value ?? $this->planner->settings->database;
         $stored = $this->planner->dictionary->table($schema, $table->table->name->value);
         $view = $this->planner->dictionary->schema($schema)->views[$table->table->name->value] ?? null;
