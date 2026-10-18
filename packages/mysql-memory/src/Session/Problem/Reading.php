@@ -48,7 +48,7 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function read(Operation|QueryPreparation $operation, Session $session): void
+    public function read(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
         if ($operation instanceof Operation && in_array($operation->statement::class, \MySqlMemory\Command\InternalCommand::STATEMENTS, true)) {
             throw (new \MySqlMemory\Command\InternalCommand())->error($operation);
@@ -69,7 +69,10 @@ final class Reading
         $this->variables($operation, $session);
         $this->legacyWrites($operation, $session);
         $this->diagnosed($operation, $session);
-        (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session);
+        if ($operation instanceof Operation && ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus)) {
+            (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
+        }
+        (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session, $prepared);
         (new \MySqlMemory\Command\Explain\ExplainCommand())->check($operation->statement, $session);
     }
 

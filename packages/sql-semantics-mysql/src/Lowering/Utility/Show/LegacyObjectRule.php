@@ -122,10 +122,10 @@ final class LegacyObjectRule
 
         return match ($kind) {
             'databases' => new ShowDatabases($clauses->filter($form->node(1))),
-            'tables' => new ShowTables($clauses->listing($form->node(0)), $clauses->database($form->node(2)), $clauses->filter($form->node(3))),
-            'triggers' => new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2)), $clauses->filter($form->node(3))),
+            'tables' => $clauses->inspection(new ShowTables($clauses->listing($form->node(0)), $clauses->database($form->node(2))), $form->node(3)),
+            'triggers' => $clauses->inspection(new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2))), $form->node(3)),
             'events' => new ShowEvents($clauses->database($form->node(1)), $clauses->filter($form->node(2))),
-            'tableStatus' => new ShowTableStatus($clauses->database($form->node(2)), $clauses->filter($form->node(3))),
+            'tableStatus' => $clauses->inspection(new ShowTableStatus($clauses->database($form->node(2))), $form->node(3)),
             'openTables' => new ShowOpenTables($clauses->database($form->node(2), true), $clauses->filter($form->node(3))),
             'columns' => $this->columns($form),
             'keys' => $this->keys($form),

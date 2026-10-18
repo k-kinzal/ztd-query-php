@@ -22,6 +22,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class CountResultsTest extends TestCase
 {
+    public function testFixedRetainsCountsWithoutRequiringArgumentPrecision(): void
+    {
+        $rules = new CountResults();
+        self::assertEquals(Domain::integer(Field::LongLong, 10), $rules->fixed('length', \SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertEquals(Domain::integer(Field::LongLong, 2), $rules->fixed('BIT_COUNT', \SqlSemantics\Contract\GrammarRelease::MySql5744));
+        self::assertNull($rules->fixed('LAST_INSERT_ID', \SqlSemantics\Contract\GrammarRelease::MySql5744));
+    }
+
     public function testRulesPreserveTheArgumentWidthOfALegacyInsertId(): void
     {
         $call = new Invocation([Domain::integer(Field::LongLong, 2)], [], new Settings(Collation::known('latin1_swedish_ci')), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([])));

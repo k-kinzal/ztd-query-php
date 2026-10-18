@@ -318,6 +318,8 @@ final class Session
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): Operation
     {
         $previousText = $this->text;
+        $previousPrepared = $this->preparation->inputPrepared;
+        $this->preparation->inputPrepared = $prepared;
         $this->text = $statement;
         try {
             $semantics = $this->semantics();
@@ -351,6 +353,7 @@ final class Session
             return $operation;
         } finally {
             $this->text = $previousText;
+            $this->preparation->inputPrepared = $previousPrepared;
         }
     }
 

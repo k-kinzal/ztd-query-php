@@ -53,6 +53,13 @@ final class ShowDatabasesCommand implements Command
         $legacy = $session->settings()->legacy();
         $headings = [Heading::text($heading, Field::VarString, 64, $legacy ? 1 : 4225, 0, $legacy ? 'SCHEMA_NAME' : $heading, 'SCHEMATA', $legacy ? 'SCHEMATA' : 'schemata', $legacy ? 'information_schema' : '')];
 
-        return (new Listing($headings))->result(array_map(static fn (string $name): array => [$name], $names), $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
+        $listing = new Listing($headings);
+        $result = $listing->result(array_map(static fn (string $name): array => [$name], $names), $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
+        $fixed = FixedColumns::of($statement->filter, $operation->facts);
+        if (!$legacy && ($listing->constantEmpty || isset($fixed['database']))) {
+            $headings = [Heading::text($heading, Field::VarString, 64, 20609, 0, $heading, 'SCHEMATA', 'sch', 'information_schema')];
+            return new \MySqlMemory\Result\ResultSet((new Listing($headings))->sent([], $context)->columns, $result->rows, $result->warnings);
+        }
+        return $result;
     }
 }

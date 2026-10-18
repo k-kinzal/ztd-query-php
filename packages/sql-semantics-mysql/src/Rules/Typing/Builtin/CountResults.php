@@ -31,6 +31,21 @@ final class CountResults
     ];
 
     /**
+     * Resolves counts whose result metadata does not depend on argument domains.
+     * Coarse input types still preserve their nullability in Results::refine().
+     */
+    public function fixed(string $name, GrammarRelease $release): ?Domain
+    {
+        $name = strtoupper($name);
+        $length = self::LENGTHS[$name] ?? match ($name) {
+            'BIT_COUNT' => in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 2 : 21,
+            'CRC32' => 10,
+            default => null,
+        };
+        return $length === null ? null : Domain::integer(Field::LongLong, $length, $name === 'CRC32');
+    }
+
+    /**
      * Answers the rule of each function, by name.
      *
      * @return array<string, Closure(Invocation): ?Domain>

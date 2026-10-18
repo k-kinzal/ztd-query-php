@@ -60,7 +60,7 @@ final class Problems
      *
      * @throws SqlError When the operation has a problem
      */
-    public function raise(Operation|QueryPreparation $operation, Session $session): void
+    public function raise(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
         if ($operation instanceof Operation) {
             $this->signals($operation, $session);
@@ -70,13 +70,13 @@ final class Problems
 
             return;
         }
-        if ($operation instanceof Operation && (Stages::selfChecked($operation->statement) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this) || Stages::opensTableFirst($operation->statement))) {
+        if ($operation instanceof Operation && (Stages::selfChecked($operation->statement) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this, $prepared) || Stages::opensTableFirst($operation->statement))) {
             return;
         }
         $calls = $this->calls($operation);
         $diagnostics = $this->pending($operation, $session);
         $reading = new Problem\Reading();
-        $reading->read($operation, $session);
+        $reading->read($operation, $session, $prepared);
         $reading->into($operation->statement, $session);
         $this->prepared($operation, $session);
         foreach ($calls as $call) {

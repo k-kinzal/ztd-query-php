@@ -37,6 +37,20 @@ final class ShowDatabasesCommandTest extends TestCase
         self::assertSame([], $cased->rows);
     }
 
+    public function testExecuteDescribesConstantDictionaryLookupsAndEmptyPredicates(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $empty = $session->query('SHOW DATABASES WHERE 0')[0];
+        $key = $session->query("SHOW DATABASES WHERE `Database`='d'")[0];
+        self::assertInstanceOf(ResultSet::class, $empty);
+        self::assertInstanceOf(ResultSet::class, $key);
+        self::assertSame([], $empty->rows);
+        self::assertSame([['d']], $key->rows);
+        self::assertSame('information_schema', $empty->columns[0]->schema);
+        self::assertEquals($empty->columns, $key->columns);
+    }
+
     public function testExecuteListsInformationSchemaFirstInMySql57(): void
     {
         $s = (new Instance('5.7.44'))->connect();

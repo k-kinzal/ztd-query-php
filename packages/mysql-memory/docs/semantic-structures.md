@@ -2019,3 +2019,30 @@ The latter reuse directly constructed changes and reads across absent, ordinary,
 partitioned, already-reorganized and recreated tables with rows. Another 860
 saved native observations replay with no differences. These tests do not close
 the remaining partition-method combinations or the whole-model acceptance gates.
+
+### SHOW filter roles and protocol preparation
+
+`RefusedFilter` retains the SHOW header and its non-scalar condition, without SQL
+or AST objects. Its consumer derives relation and column dependencies from that
+structure. Text execution and protocol preparation preserve their observed
+ordering of database inspection and filter preparation. Undefined window names
+remain distinct from the rejection of a window function in a WHERE clause.
+Legacy unqualified function lookups retain their completed names before a later
+syntax refusal. Fixed-result count functions resolve their metadata even when an
+input column's width is unknown; input nullability is preserved independently.
+
+Snapshot `query387` passes all three static suites and 637 core, 8,523 MySQL
+Semantics and 18,051 Memory unit/property/doctest tests. Its 1,310 live SHOW
+observations cover both text and prepared protocols on five releases, including
+empty results, name-key lookups and column metadata. All 1,370 saved native
+observations replay without a difference. The retained value schema has 934
+entries.
+
+The earlier `query373` whole-model campaign generated all 244 roots with 97
+matching successes and 147 matching SQL errors, no exhaustion, internal or
+profile failures, and 171 matching observations across 57 same-object database
+histories. These results do not establish the validity of every intrinsic
+constructor constraint. The `query372` unseeded campaign stopped after 353.086
+seconds with 434 matching inputs and one locking-clause diagnostic difference.
+That failure and the remaining constructor domains are unresolved acceptance
+work; the final seed and 900-second gates have not passed on this revision.

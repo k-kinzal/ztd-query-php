@@ -19,6 +19,16 @@ use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
 #[Small]
 final class SyntaxCallsTest extends TestCase
 {
+    public function testDependenciesRetainCompletedStoredNamesInReductionOrder(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5744);
+        $sql = 'SELECT outer_fn(ABS(1),d.qualified_fn(),inner_fn()) OVER w';
+        $dependencies = (new SyntaxCalls())->dependencies($parser, $sql, strlen($sql), $profile);
+        self::assertSame(['inner_fn', 'outer_fn'], array_map(static fn (array $dependency): string => $dependency[1]->value, $dependencies));
+        self::assertSame([], (new SyntaxCalls())->dependencies($parser, $sql, 10, $profile));
+    }
+
     #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', 'SELECT OLD_PASSWORD((1,2))', 'function_call_conflict', 'PASSWORD'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', "SET PASSWORD = OLD_PASSWORD('text')", 'text_or_password', 'PASSWORD'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['5.7.44', 'SELECT CONTAINS((1,2),NULL)', 'geometry_function', 'MBRCONTAINS'])]

@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Session\Parse\Definition;
+
+use MySqlMemory\Instance;
+use MySqlMemory\Session\Parse\Definition\FunctionInput;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\TestWith;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(FunctionInput::class)]
+#[Small]
+final class FunctionInputTest extends TestCase
+{
+    #[TestWith(['5.6.51', 1305])]
+    #[TestWith(['5.7.44', 1046])]
+    public function testBeforeKeepsTheImplicitFunctionDatabaseAheadOfLaterSyntax(string $release, int $code): void
+    {
+        $session = (new Instance($release))->connect();
+        $this->expectExceptionCode($code);
+        $session->query('SHOW TABLE STATUS WHERE missing_fn() OVER w');
+    }
+
+    public function testBeforeLeavesQualifiedCallsAndSelectedDatabasesToTheirOwnStages(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $input = new FunctionInput();
+        self::assertNull($input->before('SELECT d.missing_fn() OVER w', 99, $session));
+        $session->query('CREATE DATABASE d; USE d');
+        self::assertNull($input->before('SELECT missing_fn() OVER w', 99, $session));
+    }
+}

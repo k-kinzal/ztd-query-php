@@ -54,6 +54,9 @@ final class ShowFacts
         $fact = $derivation->relation($show, $derivation->environment());
         if ($filter instanceof ShowWhere) {
             $derivation->scalar($filter->condition, new Environment($derivation->context, null, [new VisibleRelation($show, $fact->shape)]));
+            foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->names([$filter->condition]) as $name) {
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $name));
+            }
         }
         $derivation->output($this->query($fact->shape, $derivation->context->columnNames));
     }

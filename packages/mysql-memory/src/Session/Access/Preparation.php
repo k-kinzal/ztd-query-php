@@ -34,14 +34,14 @@ final class Preparation
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
         $this->program($operation, $session);
-        (new Reading())->read($operation, $session);
+        (new Reading())->read($operation, $session, true);
         (new DefaultDatabase())->check($operation->statement, $session);
         $this->definitions($operation, $session);
         (new DefaultDatabase())->referenced($operation, $session);
         $application = (new Hints())->apply($operation->statement, $session, true);
         try {
             $application->report($session);
-            (new Problems())->raise($operation, $session);
+            (new Problems())->raise($operation, $session, true);
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
@@ -78,7 +78,7 @@ final class Preparation
         if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger) {
             (new \MySqlMemory\Command\Program\RoutineCommand())->types($statement, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, microtime(true)));
         }
-        (new Reading())->read($operation, $session);
+        (new Reading())->read($operation, $session, true);
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($programs->parsed($diagnostic, false)) {
                 throw (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session, 'field list', $statement);

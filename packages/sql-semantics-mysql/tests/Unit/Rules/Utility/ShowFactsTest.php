@@ -36,6 +36,16 @@ final class ShowFactsTest extends TestCase
         self::assertSame('Column nope does not exist.', $show->facts->diagnostics[0]->message());
     }
 
+    public function testDeriveKeepsWindowNamesInTheInspectionScope(): void
+    {
+        $show = (new Semantics(Dialect::MySql))->analyze('SHOW EVENTS FROM d WHERE DENSE_RANK() OVER missing');
+        $diagnostic = $show->facts->diagnostics[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $diagnostic);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $diagnostic->rule);
+        self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $diagnostic->name);
+        self::assertSame('missing', $diagnostic->name->value);
+    }
+
     public function testRowsRecordsTheLayout(): void
     {
         self::assertSame('Privilege', (new Semantics(Dialect::MySql))->analyze('SHOW PRIVILEGES')->field(0)->name?->value);

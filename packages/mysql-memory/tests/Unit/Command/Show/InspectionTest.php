@@ -44,6 +44,21 @@ final class InspectionTest extends TestCase
         $session->query('SHOW TABLE STATUS FROM nodb WHERE nocol = 1');
     }
 
+    public function testCheckPreparesLegacyFiltersBeforeOpeningTheInspectedDatabase(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $this->expectExceptionCode(1054);
+        $this->expectExceptionMessage("Unknown column 'missingcolumn' in 'where clause'");
+        $session->query('SHOW TABLE STATUS FROM missing WHERE missingcolumn=1');
+    }
+
+    public function testCheckRequiresTheDefaultDatabaseOfAnUnqualifiedSubquery(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1046);
+        $session->query('SHOW TABLE STATUS FROM missing WHERE (SELECT x FROM absent)');
+    }
+
     public function testInspectsAnswersWhetherAStatementReportsOnATable(): void
     {
         $session = (new Instance())->connect();

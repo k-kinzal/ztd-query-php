@@ -100,4 +100,15 @@ final class ClauseRuleTest extends TestCase
     {
         self::assertSame('SHOW PROFILE FOR QUERY 3', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('show profile for query 3')->toString());
     }
+    public function testInspectionRetainsTheOwnerWhenItsScalarFilterIsRefused(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('SHOW TABLE STATUS FROM d WHERE ROW(1,2) LIKE 1');
+            self::fail('A non-scalar SHOW condition must retain its refused role.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter::class, $failure->problem);
+            self::assertSame('d', $failure->problem->header->database?->value);
+        }
+    }
+
 }

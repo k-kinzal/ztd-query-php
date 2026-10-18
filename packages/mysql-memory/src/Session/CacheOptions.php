@@ -124,7 +124,7 @@ final class CacheOptions
         if ($database !== null) {
             return $database;
         }
-        $plugin = (new Parse\Entry\ParserInput())->before($statement, $end, $session);
+        $plugin = (new Parse\Definition\FunctionInput())->before($statement, $boundary, $session) ?? (new Parse\Entry\ParserInput())->before($statement, $end, $session);
         if ($plugin !== null) {
             return $plugin;
         }

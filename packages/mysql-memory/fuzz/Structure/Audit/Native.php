@@ -17,15 +17,16 @@ use RuntimeException;
 final class Native
 {
     /**
+     * @param bool $prepared Whether to use COM_STMT_PREPARE even with no parameter markers
      * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<list<mixed>>|null, disconnected: bool, warningsError?: array{int, string, string}} All result sets, the terminal error and the separate condition-reading outcome
      * @throws RuntimeException When the driver does not produce an observation
      */
-    public function observe(mysqli $connection, string $sql, int $parameters = 0): array
+    public function observe(mysqli $connection, string $sql, int $parameters = 0, bool $prepared = false): array
     {
         $observation = ['results' => []];
         $statement = null;
         try {
-            if ($parameters > 0) {
+            if ($prepared || $parameters > 0) {
                 $statement = $connection->prepare($sql);
                 if ($statement === false || !$statement->execute(array_fill(0, $parameters, null))) {
                     throw new RuntimeException('Native preparation did not produce an execution.');

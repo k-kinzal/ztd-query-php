@@ -44,7 +44,7 @@ final class Inspection
      *
      * @throws SqlError When the database or the table does not exist
      */
-    public function check(Node $statement, Session $session): void
+    public function check(Node $statement, Session $session, bool $prepared = false): void
     {
         try {
             if ($statement instanceof ShowTables) {
@@ -57,7 +57,9 @@ final class Inspection
                 $this->table($statement->table, null, $session);
             }
             if ($statement instanceof ShowTableStatus || $statement instanceof ShowTables) {
-                $this->database($statement->database, $session);
+                if ((!$prepared && !$session->settings()->legacy()) || !$statement->filter instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere || ($statement->database->value ?? $session->variables->database) === '') {
+                    $this->database($statement->database, $session);
+                }
             }
         } catch (SqlError $error) {
             $this->warn($statement, $session);
@@ -102,7 +104,7 @@ final class Inspection
      */
     public function inspects(Node $statement): bool
     {
-        return $statement instanceof ShowColumns || $statement instanceof ShowKeys || $statement instanceof DescribeTable || $statement instanceof ShowCreateTable || $statement instanceof ShowTableStatus;
+        return $statement instanceof ShowColumns || $statement instanceof ShowKeys || $statement instanceof DescribeTable || $statement instanceof ShowCreateTable;
     }
 
     /**

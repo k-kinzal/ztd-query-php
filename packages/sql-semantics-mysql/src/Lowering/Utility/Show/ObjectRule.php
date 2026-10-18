@@ -64,13 +64,13 @@ final class ObjectRule
             case 'show_databases_stmt: SHOW DATABASES opt_wild_or_where':
                 return new ShowDatabases($clauses->filter($form->node(2)));
             case 'show_tables_stmt: SHOW opt_show_cmd_type TABLES opt_db opt_wild_or_where':
-                return new ShowTables($clauses->listing($form->node(1)), $clauses->database($form->node(3)), $clauses->filter($form->node(4)));
+                return $clauses->inspection(new ShowTables($clauses->listing($form->node(1)), $clauses->database($form->node(3))), $form->node(4));
             case 'show_triggers_stmt: SHOW opt_full TRIGGERS_SYM opt_db opt_wild_or_where':
-                return new ShowTriggers($clauses->listing($form->node(1)) !== null, $clauses->database($form->node(3)), $clauses->filter($form->node(4)));
+                return $clauses->inspection(new ShowTriggers($clauses->listing($form->node(1)) !== null, $clauses->database($form->node(3))), $form->node(4));
             case 'show_events_stmt: SHOW EVENTS_SYM opt_db opt_wild_or_where':
                 return new ShowEvents($clauses->database($form->node(2)), $clauses->filter($form->node(3)));
             case 'show_table_status_stmt: SHOW TABLE_SYM STATUS_SYM opt_db opt_wild_or_where':
-                return new ShowTableStatus($clauses->database($form->node(3)), $clauses->filter($form->node(4)));
+                return $clauses->inspection(new ShowTableStatus($clauses->database($form->node(3))), $form->node(4));
             case 'show_open_tables_stmt: SHOW OPEN_SYM TABLES opt_db opt_wild_or_where':
                 return new ShowOpenTables($clauses->database($form->node(3), true), $clauses->filter($form->node(4)));
             case 'show_columns_stmt: SHOW opt_show_cmd_type COLUMNS from_or_in table_ident opt_db opt_wild_or_where':

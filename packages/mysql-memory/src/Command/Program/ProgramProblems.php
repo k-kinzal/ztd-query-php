@@ -66,14 +66,14 @@ final class ProgramProblems
      *
      * @throws SqlError When the body has a problem the server finds while parsing it
      */
-    public function raise(Operation $operation, Session $session, Problems $problems): bool
+    public function raise(Operation $operation, Session $session, Problems $problems, bool $prepared = false): bool
     {
         $statement = $operation->statement;
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\View\DropView || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView) {
             return true;
         }
         if ($statement instanceof ShowTriggers) {
-            $this->triggers($statement, $session);
+            $this->triggers($statement, $session, $prepared);
 
             return false;
         }
@@ -97,10 +97,10 @@ final class ProgramProblems
      *
      * @throws SqlError When the database does not exist (ER_BAD_DB_ERROR)
      */
-    public function triggers(ShowTriggers $statement, Session $session): void
+    public function triggers(ShowTriggers $statement, Session $session, bool $prepared = false): void
     {
         $database = ProgramSource::database($statement->database, $session);
-        if (!$session->settings()->legacy() && $session->instance->dictionary->schema($database) === null) {
+        if (!$prepared && !$session->settings()->legacy() && $session->instance->dictionary->schema($database) === null) {
             throw QueryError::BadDatabase->error($database);
         }
     }

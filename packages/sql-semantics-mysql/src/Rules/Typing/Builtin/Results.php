@@ -131,13 +131,17 @@ final class Results
     }
 
     /**
-     * Resolves the type of a call, or answers null when the function has no rule or an argument has no resolved type.
+     * Resolves fixed metadata independently of input domains, then argument-dependent results.
      *
      * @param list<Scalar> $arguments
      * @param list<TypeFact> $types
      */
     public function type(string $name, array $arguments, array $types, Derivation $derivation): ?Domain
     {
+        $fixed = (new CountResults())->fixed($name, $derivation->context->profile->grammar);
+        if ($fixed !== null) {
+            return $fixed;
+        }
         $rule = self::rules()[strtoupper($name)] ?? null;
         $domains = (new Precision())->all($types);
         if ($rule === null || $domains === null) {

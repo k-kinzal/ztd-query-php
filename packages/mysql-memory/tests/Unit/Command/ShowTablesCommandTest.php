@@ -32,6 +32,17 @@ final class ShowTablesCommandTest extends TestCase
         self::assertSame([], $empty->rows);
     }
 
+    public function testHeadingsRetainTheSelectedDatabaseAndReleaseLayout(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables(database: new \SqlSemantics\Statement\Identifier\Name('other'));
+        $headings = (new ShowTablesCommand())->headings($statement, $session);
+
+        self::assertCount(1, $headings);
+        self::assertSame('Tables_in_other', $headings[0]->name);
+        self::assertSame('tables', $headings[0]->originalTable);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ShowTablesCommand())->clearsDiagnostics());

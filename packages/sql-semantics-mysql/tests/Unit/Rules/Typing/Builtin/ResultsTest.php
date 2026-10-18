@@ -87,6 +87,13 @@ final class ResultsTest extends TestCase
         self::assertSame(Nullability::Nullable, (new Results())->refine('REGEXP_REPLACE', [], [new ScalarFact(new Known($text), Nullability::NotNull), new ScalarFact(new Known($text), Nullability::NotNull), new ScalarFact(new Known($text), Nullability::NotNull)], $fact, new Derivation((new Semantics(Dialect::MySql))->context([])))->nullability);
     }
 
+    public function testTypeResolvesCountsOfInputsWhoseWidthsAreUnknown(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $type = (new Results())->type('LENGTH', [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('Database'))], [new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily())], $derivation);
+        self::assertEquals(Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong, 10), $type);
+    }
+
     public function testTypeNeedsARuleAndResolvedArguments(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));

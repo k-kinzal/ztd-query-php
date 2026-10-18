@@ -19,6 +19,12 @@ use MySqlMemory\Typing\Domain;
 final class Preparation
 {
     /**
+     * Whether the input currently being interpreted belongs to prepared execution.
+     * Scoped by Session::analyze and restored on both success and failure.
+     */
+    public bool $inputPrepared = false;
+
+    /**
      * @var array<string, array{string, int, ParameterBindings, \MySqlMemory\Command\Prepared\PreparedCache}> SQL preparations by lower-case name
      */
     public array $named = [];

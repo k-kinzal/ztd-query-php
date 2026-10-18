@@ -22,6 +22,38 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 final class SyntaxCalls
 {
     /**
+     * Retains unqualified stored-function dependencies completed before a later refusal.
+     *
+     * @return list<array{int, \SqlSemantics\Statement\Identifier\Name}> Completion offsets and routine names
+     */
+    public function dependencies(\SqlParser\Parser\ReductionParser $parser, string $statement, int $end, \SqlSemantics\Contract\LanguageProfile $profile): array
+    {
+        $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
+        $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
+        $lowering = new Lowering(\SqlSemantics\Lowering\Productions::load(dirname(__DIR__, 3) . '/resources/productions/' . $profile->grammar->value . '.php'), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $dependencies = [];
+        try {
+            $parser->parse($statement, static function (Node $node) use ($lowering, $end, &$dependencies): void {
+                if ($node->name !== 'function_call_generic') {
+                    return;
+                }
+                $range = (new \SqlSemantics\Construction\SourceRanges())->span($node);
+                $form = $lowering->form($node);
+                if ($range === null || $range[1] > $end || $form->signature !== 'function_call_generic: IDENT_sys ( opt_udf_expr_list )') {
+                    return;
+                }
+                $name = $lowering->names->identifier($form->node(0));
+                if (!(new NativeFunctions())->exists($lowering->profile->grammar, $name->value)) {
+                    $dependencies[] = [$range[1], $name];
+                }
+            });
+        } catch (\SqlParser\Lexer\SourceException) {
+            // Completed dependencies precede the caller's original input refusal.
+        }
+        return $dependencies;
+    }
+
+    /**
      * Keeps a completed keyword's notice even when an argument is later refused.
      */
     public function deprecation(Node $node, \SqlSemantics\Contract\GrammarRelease $release): \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|null

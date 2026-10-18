@@ -3637,6 +3637,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Program\\ShowProcedureStatus": {
         "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\RefusedFilter": {
+        "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedScalar",
+        "header": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTables|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTableStatus|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTriggers"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Replication\\ShowBinaryLogStatus": {
         "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
     },

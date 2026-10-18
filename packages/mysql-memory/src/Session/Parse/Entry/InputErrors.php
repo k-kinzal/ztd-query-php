@@ -76,6 +76,7 @@ final class InputErrors
     public function query(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter => (new \MySqlMemory\Session\Parse\Definition\ShowInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand => \MySqlMemory\Error\Family\StatementError::MisplacedInto->error(),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedBody => (new \MySqlMemory\Session\Parse\Definition\ViewInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery => $this->view($diagnostic, $session),
