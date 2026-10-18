@@ -72,21 +72,22 @@
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param QualifiedName $view The target view</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param bool $alter Whether this is ALTER VIEW</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param QueryInput|RefusedSelection $query The complete retained read dependencies</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">QualifiedName</span> <span class="tok-var">$view</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$alter</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">QueryInput</span>|<span class="tok-id">RefusedSelection</span> <span class="tok-var">$query</span>)</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    {</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$view</span>);</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * Describes the body condition; target and dependency conditions may precede it.</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    {</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">query</span>-&gt;<span class="tok-id">message</span>();</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>}</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param \SqlSemantics\Platform\MySql\Statement\Name\Account|null $definer The account checked before preparing the view body</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">QualifiedName</span> <span class="tok-var">$view</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$alter</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">QueryInput</span>|<span class="tok-id">RefusedSelection</span> <span class="tok-var">$query</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Name\Account</span> <span class="tok-var">$definer</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$view</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     * Describes the body condition; target and dependency conditions may precede it.</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    {</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">query</span>-&gt;<span class="tok-id">message</span>();</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>}</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
