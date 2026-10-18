@@ -92,8 +92,9 @@ final class RowUse
             $this->membership($operand, $compiler, $scope);
             return;
         }
-        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction && $operand->over instanceof \SqlSemantics\Statement\Identifier\Name) {
-            $scope->windowing?->named($operand->over);
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction) {
+            $this->window($operand, $compiler, $scope);
+            return;
         }
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
             foreach ($operand->operands() as $part) {
@@ -101,7 +102,9 @@ final class RowUse
                     $compiler->compile($part, $scope);
                 } else {
                     $this->prepare($part, $compiler, $scope);
-                    throw $this->error($part);
+                    if (!$this->pending($part, $scope)) {
+                        throw $this->error($part);
+                    }
                 }
             }
             return;
@@ -122,26 +125,69 @@ final class RowUse
     }
 
     /**
+     * Prepares a complete window call, retaining its option condition until window resolution.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a call is misplaced or an argument cannot prepare
+     */
+    public function window(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction $call, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
+    {
+        $windows = $scope->windowing;
+        if (!$windows instanceof \MySqlMemory\Plan\Window\Collected) {
+            throw QueryError::WindowFunctionMisplaced->error(strtolower($call->kind->value));
+        }
+        if ($call->over instanceof \SqlSemantics\Statement\Identifier\Name) {
+            $windows->named($call->over);
+        }
+        $input = clone $scope;
+        $input->windowing = null;
+        foreach ($call->arguments as $argument) {
+            if ($argument instanceof RowOperand || $argument instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+                $this->prepare($argument, $compiler, $input);
+                throw $this->error($argument);
+            }
+            $compiler->compile($argument, $input);
+        }
+        $windows->calls[] = [$call, []];
+    }
+
+    /**
+     * Answers whether the reached condition belongs to the query's later window phase.
+     */
+    public function pending(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Scope $scope): bool
+    {
+        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
+    }
+
+    /**
      * Prepares membership in written order, testing each shape after its names bind.
      *
      * @throws \MySqlMemory\Error\SqlError When a dependency or row shape is refused
      */
     public function membership(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMembership $operand, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
     {
+        $shapes = new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes();
+        $first = null;
         foreach ($operand->operands() as $index => $part) {
             if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
                 $this->prepare($part, $compiler, $scope);
-                throw $this->error($part);
-            }
-            if ($part instanceof RowOperand) {
-                $this->prepare($part, $compiler, $scope);
+                if (!$this->pending($part, $scope)) {
+                    throw $this->error($part);
+                }
+                $shape = [];
             } else {
-                $compiler->compile($part, $scope);
+                if ($part instanceof RowOperand) {
+                    $this->prepare($part, $compiler, $scope);
+                } else {
+                    $compiler->compile($part, $scope);
+                }
+                $shape = $shapes->parts($part);
             }
-            \SqlSemantics\Diagnostic\Check::invariant(!$operand->operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand, 'The deferred first operand would already have raised its condition.');
-            $problem = $index === 0 ? null : (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->problem($operand->operand, $part);
+            $problem = $index === 0 ? null : $shapes->pairs($first, $shape);
             if ($problem !== null) {
                 throw QueryError::OperandColumns->error($problem->expected);
+            }
+            if ($index === 0) {
+                $first = $shape;
             }
         }
     }
@@ -158,6 +204,7 @@ final class RowUse
         }
         $problem = $operand->problem();
         return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing => \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($problem->limit->value),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow => QueryError::ValuesEmptyRow->error(),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse => (new Errors())->misuse($problem),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch => (new Errors())->counted($problem),

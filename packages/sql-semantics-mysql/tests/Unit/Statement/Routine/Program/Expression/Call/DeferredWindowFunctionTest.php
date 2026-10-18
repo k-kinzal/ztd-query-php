@@ -63,4 +63,13 @@ final class DeferredWindowFunctionTest extends TestCase
         self::assertSame($sql, $operation->toString());
         self::assertSame($sql, $semantics->analyze($operation->toString())->toString());
     }
+    public function testProblemRetainsAnOptionOwnerWithoutInventingARowCondition(): void
+    {
+        $value = new DeferredWindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new \SqlSemantics\Statement\Identifier\Name('w'), \SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment::Ignore);
+        $problem = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing::class, $problem);
+        self::assertSame($value, $problem->expression);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::IgnoreNulls, $problem->limit);
+    }
+
 }

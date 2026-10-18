@@ -142,6 +142,9 @@ final class ParameterRule
         $collate = $this->lowering->charsets->collation($collation);
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->problem($declared, $collate, $this->lowering->profile->grammar);
         if ($problem !== null) {
+            if ($collate?->name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::forName($collate->name->value, $this->lowering->profile->grammar) === null) {
+                throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($collate->name->value), (new SourceRanges())->span($collation)[1] ?? 0);
+            }
             throw new RejectedInput($problem, (new SourceRanges())->span($collation)[1] ?? 0);
         }
 

@@ -161,6 +161,14 @@ final class ParameterRuleTest extends TestCase
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE v CHAR(3) CHARACTER SET latin1 COLLATE latin1_bin DEFAULT 'a'; END", $procedure->toString());
     }
 
+    public function testDeclaredResolvesACollationBeforeCheckingItsTypeConstraint(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Unknown collation: 'text'");
+
+        (new Semantics(Dialect::MySql))->analyze("CREATE FUNCTION f() RETURNS DOUBLE COLLATE 'text' RETURN 1");
+    }
+
     public function testDeclaredRefusesAnotherProductionWithoutACollationNode(): void
     {
         $platform = new Platform();

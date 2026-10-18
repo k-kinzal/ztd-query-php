@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * A stored window invocation retaining an argument outside the scalar domain.
+ * A stored window invocation retaining an argument or unsupported option condition.
  *
  * Function identity, window, options, counts and all argument roles survive
  * until the program reaches the instruction. This is not a Scalar.
@@ -51,7 +51,7 @@ final class DeferredWindowFunction implements DeferredOperand
     public function __construct(public readonly WindowFunctionKind $kind, array $arguments, public readonly Name|WindowSpecification $over, public readonly ?NullTreatment $nulls = null, public readonly ?CountingEdge $edge = null)
     {
         $values = (new Arguments())->checked($kind, $arguments, $nulls, $edge);
-        Check::input($values !== [] && array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [], 'A deferred window call retains an argument preparation condition.');
+        Check::input($values !== [] && (array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || (new Arguments())->limitation($nulls, $edge) !== null), 'A deferred window call retains an argument or option preparation condition.');
         $this->arguments = $values;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -81,7 +81,12 @@ final class DeferredWindowFunction implements DeferredOperand
      */
     public function problem(): Diagnostic
     {
-        return (new DeferredArguments())->problem($this->arguments);
+        if (array_filter($this->arguments, static fn ($argument): bool => $argument instanceof RowOperand || $argument instanceof DeferredOperand) !== []) {
+            return (new DeferredArguments())->problem($this->arguments);
+        }
+        $limit = (new Arguments())->limitation($this->nulls, $this->edge);
+        Check::invariant($limit !== null, 'A scalar-only deferred window call retains an unsupported option.');
+        return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing($limit, $this);
     }
 
     /**

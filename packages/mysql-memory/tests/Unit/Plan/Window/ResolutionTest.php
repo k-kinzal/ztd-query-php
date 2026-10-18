@@ -154,4 +154,21 @@ final class ResolutionTest extends TestCase
     {
         self::assertSame(['ntile', 'std'], [Resolution::named(new WindowFunction(WindowFunctionKind::Tile, [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')], new Name('w'))), Resolution::named(new Aggregate(AggregateFunction::StandardDeviation, [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')], false, false, new Name('w')))]);
     }
+    public function testWindowsResolvesDefinitionsWithoutASelectOrFunctionPlaceholder(): void
+    {
+        $node = new WindowSpec();
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new Name('w'), $node);
+        $windows = (new Resolution())->windows([$definition], [new Name('w')]);
+        self::assertCount(1, $windows);
+        self::assertSame($node, $windows[0]->node);
+        self::assertSame([], $windows[0]->calls);
+    }
+
+    public function testItemRefusesAnOrdinalAtItsOwnPreparationPosition(): void
+    {
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3592);
+        (new Resolution())->item('w', new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+    }
+
 }

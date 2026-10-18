@@ -68,6 +68,8 @@ final class WindowFunction implements Scalar
             Check::input($argument instanceof Scalar || $argument instanceof RoutineVariable, 'An ordinary window call requires scalar arguments.');
             $values[] = $argument;
         }
+        $limit = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->limitation($nulls, $edge);
+        Check::input($limit === null, 'An ordinary window call cannot use an unsupported option: ' . ($limit->value ?? '') . '.');
         $this->arguments = $values;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

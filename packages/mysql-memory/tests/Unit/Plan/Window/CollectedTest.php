@@ -45,4 +45,12 @@ final class CollectedTest extends TestCase
         $this->expectExceptionCode(3579);
         $session->query('WITH c AS (SELECT FIRST_VALUE(ROW(1,2)) OVER w) SELECT 1 FROM c');
     }
+    public function testFinishResolvesWindowOrderingBeforeAnUnsupportedOption(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionMessage("Unknown column 'missing' in 'window order by'");
+        $session->query('SELECT FIRST_VALUE(1) IGNORE NULLS OVER (ORDER BY missing)');
+    }
+
 }

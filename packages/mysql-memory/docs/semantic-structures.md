@@ -2233,3 +2233,38 @@ round trips pass three tests. These are repair evidence, not final acceptance:
 the `query451` unseeded run stopped at input 201 after 201 matches, because an
 unknown routine return collation was incorrectly reported as an unsupported
 COLLATE-without-CHARACTER-SET declaration.
+
+### Unsupported window options belong to retained instructions
+
+`WindowFunction` now excludes IGNORE NULLS and FROM LAST from the ordinary
+scalar domain. `DeferredWindowFunction` retains these options together with all
+arguments and its OVER reference. The deferred form is not a Scalar. Ordinary
+query roots cannot publish a reached contradictory template; an unused CTE or
+stored instruction can retain it without invoking its condition.
+
+Memory prepares the complete retained selection before window options. Named
+windows bind before arguments; row constraints remain early, while option
+conditions wait for later projection, filter and window dependencies. The same
+order applies inside arithmetic and membership expressions. Window item checks
+and name resolution proceed in written order. Planning uses the retained named
+windows and specifications directly, without fabricating a replacement SELECT.
+
+Snapshot `query456` passes both changed package static suites and the 941-entry
+value schema, 8,606 MySQL Semantics tests and 18,105 Memory tests. All 450 window
+preparation observations pass through text and prepared protocols on 8.0, 8.4 and
+9.1. Direct construction reuses eight stored definitions through seven state
+transitions on those releases: all 192 observations agree, including successful
+skipped branches, missing tables, missing arguments, missing ordering columns
+and reached option conditions. The prior `query451` whole-root campaign also
+finished: 244 roots, 97 matching successes, 147 matching SQL errors, no generation,
+profile or internal failures, and 171 matching state observations for 57 objects.
+It predates the window change and is not final-revision acceptance.
+
+Routine collation lookup now precedes an intrinsic declaration/type conflict;
+otherwise an unresolved collation name remains in the ordinary declaration for
+catalog resolution. The complete generated `query451` failure and 30 related
+inputs pass on five releases through both protocols (310 observations).
+The `query454` unseeded campaign found another difference at input 15: an unknown
+partition engine must precede a later incompatible subpartition count. That
+failure and the remaining window count/frame and partition constructor domains
+remain open. No final acceptance gate is claimed from these focused repairs.

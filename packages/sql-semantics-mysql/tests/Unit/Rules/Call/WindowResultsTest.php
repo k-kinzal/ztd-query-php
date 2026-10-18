@@ -12,8 +12,6 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Call\WindowResults;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
@@ -78,20 +76,16 @@ final class WindowResultsTest extends TestCase
         self::assertSame($int->type, $first->type);
     }
 
-    public function testResultReportsIgnoreNullsAndFromLast(): void
+    public function testResultAcceptsRespectNullsAndFromFirstWithoutDiagnostics(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $int = new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull);
-        $call = new WindowFunction(WindowFunctionKind::NthValue, [new NumberLiteral('1'), new NumberLiteral('2')], new Name('w'), NullTreatment::Ignore, CountingEdge::Last);
-        (new WindowResults())->result($call, [$int, $int], $derivation);
-        $diagnostics = $derivation->facts()->diagnostics;
+        $call = new WindowFunction(WindowFunctionKind::NthValue, [new NumberLiteral('1'), new NumberLiteral('2')], new Name('w'), NullTreatment::Respect, CountingEdge::First);
+        $result = (new WindowResults())->result($call, [$int, $int], $derivation);
 
-        self::assertInstanceOf(UnsupportedWindowing::class, $diagnostics[0]);
-        self::assertInstanceOf(UnsupportedWindowing::class, $diagnostics[1]);
-        self::assertSame($call, $diagnostics[0]->expression);
-        self::assertSame($call, $diagnostics[1]->expression);
-        self::assertSame([WindowingLimit::IgnoreNulls, WindowingLimit::FromLast], [$diagnostics[0]->limit, $diagnostics[1]->limit]);
+        self::assertSame([], $derivation->facts()->diagnostics);
+        self::assertSame($int->type, $result->type);
     }
 
     public function testResolvedTypesRankingAsUnsignedBigintAndValuesAsTheTemporaryTableHoldsThem(): void

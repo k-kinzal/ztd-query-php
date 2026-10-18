@@ -10,10 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
 use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
 use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
-use SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge;
-use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -55,13 +51,6 @@ final class WindowResults
      */
     public function result(WindowFunction $call, array $arguments, Derivation $derivation): ScalarFact
     {
-        if ($call->nulls === NullTreatment::Ignore) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::IgnoreNulls, $call));
-        }
-        if ($call->edge === CountingEdge::Last) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::FromLast, $call));
-        }
-
         return match ($call->kind) {
             WindowFunctionKind::RowNumber, WindowFunctionKind::Rank, WindowFunctionKind::DenseRank,
             WindowFunctionKind::Tile => new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull),

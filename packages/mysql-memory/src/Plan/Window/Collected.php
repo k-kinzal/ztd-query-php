@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Window;
 
+use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
@@ -30,7 +31,7 @@ use SqlSemantics\Statement\Scalar;
 final class Collected
 {
     /**
-     * @var list<array{WindowFunction|Aggregate|GroupConcat|JsonObjectAggregate, list<Evaluable>}> Calls and their prepared arguments
+     * @var list<array{WindowFunction|Aggregate|GroupConcat|JsonObjectAggregate|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction, list<Evaluable>}> Calls and their prepared arguments
      */
     public array $calls = [];
 
@@ -61,6 +62,39 @@ final class Collected
         $this->calls[] = [$call, $prepared];
         $scope->bind($call, $read);
         return $read;
+    }
+
+    /**
+     * Checks all retained window dependencies before reporting the first pending option.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a window dependency or option is refused
+     */
+    public function finish(Scope $scope): void
+    {
+        $calls = array_column($this->calls, 0);
+        $references = array_map(static fn ($call): Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification => $call->over ?? throw new LogicException('A collected window call retains its OVER clause.'), $calls);
+        $input = clone $scope;
+        $input->windowing = null;
+        $specifications = [...array_map(static fn ($window): array => [$window->name->value, $window->specification], $this->windows), ...array_map(static fn ($over): array => [Specification::UNNAMED, $over], array_values(array_filter($references, static fn ($over): bool => !$over instanceof Name)))];
+        foreach ($specifications as [$name, $specification]) {
+            \SqlSemantics\Diagnostic\Check::invariant($specification instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec, 'A MySQL window retains its complete specification.');
+            foreach (['window partition by' => $specification->partition, 'window order by' => $specification->order] as $clause => $items) {
+                foreach ($items as $item) {
+                    (new Resolution())->item($name, $item);
+                    $this->planner->compiler->compile($item->expression, $input->inClause($clause));
+                }
+            }
+        }
+        (new Resolution())->windows($this->windows, $references);
+        foreach ($calls as $call) {
+            if (!$call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction) {
+                continue;
+            }
+            $limit = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->limitation($call->nulls, $call->edge);
+            if ($limit !== null) {
+                throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($limit->value);
+            }
+        }
     }
 
     /**

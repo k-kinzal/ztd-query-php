@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Window;
 
+use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -58,15 +59,41 @@ final class Resolution
      */
     public function resolve(Select $select, array $calls): array
     {
+        $specifications = $this->windows($select->windows, array_map(static fn ($call): Name|WindowSpecification => $call->over ?? throw new LogicException('A collected window call retains its OVER clause.'), $calls));
+        $nodes = [];
+        foreach ($specifications as $specification) {
+            $nodes[spl_object_id($specification->node)] = $specification;
+        }
+        foreach ($calls as $call) {
+            $over = $call->over;
+            $node = $over instanceof Name ? $this->specification($this->definition($over)->specification) : $over;
+            if ($node !== null && isset($nodes[spl_object_id($node)])) {
+                $nodes[spl_object_id($node)]->calls[] = $call;
+            }
+        }
+
+        return $specifications;
+    }
+
+    /**
+     * Resolves retained named definitions and written OVER references without inventing a SELECT.
+     *
+     * @param list<WindowDefinition> $definitions Complete named windows
+     * @param list<Name|WindowSpecification> $references Reached calls in written order
+     * @return list<Specification>
+     * @throws \MySqlMemory\Error\SqlError When a window is refused
+     */
+    public function windows(array $definitions, array $references): array
+    {
         $this->named = [];
         $written = [];
-        foreach ($select->windows as $definition) {
+        foreach ($definitions as $definition) {
             $this->named[strtolower($definition->name->value)] ??= $definition;
             $written[] = [$definition->name->value, $this->specification($definition->specification)];
         }
-        foreach ($calls as $call) {
-            if ($call->over instanceof WindowSpecification) {
-                $written[] = [Specification::UNNAMED, $this->specification($call->over)];
+        foreach ($references as $over) {
+            if ($over instanceof WindowSpecification) {
+                $written[] = [Specification::UNNAMED, $this->specification($over)];
             }
         }
         foreach ($this->named as $definition) {
@@ -79,20 +106,10 @@ final class Resolution
             $this->inheritance($name, $node);
         }
         $specifications = [];
-        $nodes = [];
         foreach ($written as [$name, $node]) {
             $specification = new Specification($name, $node, $this->partition($node), $this->order($node));
             $specifications[] = $specification;
-            $nodes[spl_object_id($node)] = $specification;
         }
-        foreach ($calls as $call) {
-            $over = $call->over;
-            $node = $over instanceof Name ? $this->specification($this->definition($over)->specification) : $over;
-            if ($node !== null && isset($nodes[spl_object_id($node)])) {
-                $nodes[spl_object_id($node)]->calls[] = $call;
-            }
-        }
-
         return $specifications;
     }
 
@@ -142,20 +159,29 @@ final class Resolution
      */
     public function items(string $name, WindowSpec $node): void
     {
-        $walker = new Walker();
         foreach ([...$node->partition, ...$node->order] as $item) {
-            $expression = $item->expression;
-            while ($expression instanceof Grouped) {
-                $expression = $expression->operand;
-            }
-            if ($expression instanceof NumberLiteral && ctype_digit($expression->text)) {
-                throw QueryError::WindowPositionalOrdering->error($name);
-            }
-            foreach (self::CALLS as $class) {
-                foreach ($walker->find($item->expression, $class, false) as $call) {
-                    if ($call->over !== null) {
-                        throw QueryError::WindowFunctionInSpecification->error($name);
-                    }
+            $this->item($name, $item);
+        }
+    }
+
+    /**
+     * Checks one partition or ordering item before resolving the following item.
+     *
+     * @throws \MySqlMemory\Error\SqlError When an ordinal or nested window is used
+     */
+    public function item(string $name, OrderItem $item): void
+    {
+        $expression = $item->expression;
+        while ($expression instanceof Grouped) {
+            $expression = $expression->operand;
+        }
+        if ($expression instanceof NumberLiteral && ctype_digit($expression->text)) {
+            throw QueryError::WindowPositionalOrdering->error($name);
+        }
+        foreach (self::CALLS as $class) {
+            foreach ((new Walker())->find($item->expression, $class, false) as $call) {
+                if ($call->over !== null) {
+                    throw QueryError::WindowFunctionInSpecification->error($name);
                 }
             }
         }

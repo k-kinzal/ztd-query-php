@@ -50,4 +50,16 @@ final class Arguments
         Check::input($kind !== WindowFunctionKind::NthValue || (!$arguments[1] instanceof RoutineVariable && (new Precedence())->admits($arguments[1], Precedence::SIMPLE_EXPR)), 'The row number of NTH_VALUE needs a grouping.');
         return $arguments;
     }
+    /**
+     * Answers a written option that no supported release implements.
+     */
+    public function limitation(?NullTreatment $nulls, ?CountingEdge $edge): ?\SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit
+    {
+        return match (true) {
+            $nulls === NullTreatment::Ignore => \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::IgnoreNulls,
+            $edge === CountingEdge::Last => \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::FromLast,
+            default => null,
+        };
+    }
+
 }

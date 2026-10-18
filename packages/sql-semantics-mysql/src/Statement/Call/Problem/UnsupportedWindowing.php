@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
@@ -38,15 +39,15 @@ final class UnsupportedWindowing implements Diagnostic
 
     /**
      * @param WindowingLimit $limit The unsupported part
-     * @param Aggregate|GroupConcat|WindowFunction|WindowSpec|null $expression The call or specification refused after binding
+     * @param Aggregate|GroupConcat|WindowFunction|DeferredWindowFunction|WindowSpec|null $expression The call or specification refused after binding
      */
-    public function __construct(public readonly WindowingLimit $limit, public readonly Aggregate|GroupConcat|WindowFunction|WindowSpec|null $expression = null)
+    public function __construct(public readonly WindowingLimit $limit, public readonly Aggregate|GroupConcat|WindowFunction|DeferredWindowFunction|WindowSpec|null $expression = null)
     {
         Check::input($expression === null || match ($limit) {
             WindowingLimit::GroupConcat => $expression instanceof GroupConcat && $expression->over !== null,
             WindowingLimit::DistinctAggregate => $expression instanceof Aggregate && $expression->over !== null && $expression->distinct && $expression->function !== \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect,
-            WindowingLimit::IgnoreNulls => $expression instanceof WindowFunction && $expression->nulls === \SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment::Ignore,
-            WindowingLimit::FromLast => $expression instanceof WindowFunction && $expression->edge === \SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge::Last,
+            WindowingLimit::IgnoreNulls => ($expression instanceof WindowFunction || $expression instanceof DeferredWindowFunction) && $expression->nulls === \SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment::Ignore,
+            WindowingLimit::FromLast => ($expression instanceof WindowFunction || $expression instanceof DeferredWindowFunction) && $expression->edge === \SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge::Last,
             WindowingLimit::GroupsUnit => $expression instanceof WindowSpec && $expression->frame?->unit === \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups,
             WindowingLimit::Exclusion => $expression instanceof WindowSpec && $expression->frame?->exclusion !== null,
         }, 'An unsupported window diagnostic identifies a semantic owner with the stated limitation.');

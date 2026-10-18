@@ -43,7 +43,9 @@ final class Selections
         foreach ($selection->items as $item) {
             if ($item instanceof DeferredProjection) {
                 (new RowUse())->prepare($item->expression, $planner->compiler, $scope);
-                throw (new RowUse())->error($item->expression);
+                if (!(new RowUse())->pending($item->expression, $scope)) {
+                    throw (new RowUse())->error($item->expression);
+                }
             }
             if ($item instanceof SelectExpression) {
                 $planner->compiler->compile($item->expression, $scope);
@@ -77,6 +79,7 @@ final class Selections
         foreach ($selection->orderBy as $item) {
             $this->operand($item->expression, $planner->compiler, $scope->inClause('order clause'));
         }
+        $scope->windowing?->finish($scope);
         throw new LogicException('A deferred selection must retain a preparation condition.');
     }
 
@@ -92,6 +95,8 @@ final class Selections
             return;
         }
         (new RowUse())->prepare($operand, $compiler, $scope);
-        throw (new RowUse())->error($operand);
+        if (!(new RowUse())->pending($operand, $scope)) {
+            throw (new RowUse())->error($operand);
+        }
     }
 }

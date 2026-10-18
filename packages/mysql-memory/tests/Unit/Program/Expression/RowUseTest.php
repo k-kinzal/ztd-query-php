@@ -85,4 +85,20 @@ final class RowUseTest extends TestCase
         $this->expectException(\MySqlMemory\Error\SqlError::class);
         (new RowUse())->membership($value, $planner->compiler, new \MySqlMemory\Evaluation\Scope());
     }
+    public function testWindowRejectsAWindowOutsideAQueryWindowScope(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3593);
+        $session->query('SELECT 1 WHERE FIRST_VALUE(1) IGNORE NULLS OVER ()');
+    }
+
+    public function testPendingRetainsAnOptionUntilAfterLaterProjectionDependencies(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionMessage("Unknown column 'missing' in 'field list'");
+        $session->query('SELECT 2+FIRST_VALUE(1) IGNORE NULLS OVER (), missing');
+    }
+
 }

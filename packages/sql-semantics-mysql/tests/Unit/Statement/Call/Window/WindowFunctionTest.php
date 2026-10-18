@@ -100,4 +100,16 @@ final class WindowFunctionTest extends TestCase
         self::assertSame($text, $call->arguments[1]->text);
     }
 
+    public function testValueRejectsUnsupportedNullTreatment(): void
+    {
+        $this->expectExceptionMessage('An ordinary window call cannot use an unsupported option: IGNORE NULLS.');
+        new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new WindowSpec(), NullTreatment::Ignore);
+    }
+
+    public function testValueRejectsAnUnsupportedCountingEdge(): void
+    {
+        $this->expectExceptionMessage('An ordinary window call cannot use an unsupported option: FROM LAST.');
+        new WindowFunction(WindowFunctionKind::NthValue, [new NumberLiteral('1'), new NumberLiteral('2')], new WindowSpec(), edge: CountingEdge::Last);
+    }
+
 }
