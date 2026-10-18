@@ -82,8 +82,7 @@ final class StoredSelections
         \SqlSemantics\Diagnostic\Check::invariant($predicate === null || $predicate instanceof Scalar, 'An ordinary predicate is scalar.');
         \SqlSemantics\Diagnostic\Check::invariant($having === null || $having instanceof Scalar, 'An ordinary group predicate is scalar.');
         \SqlSemantics\Diagnostic\Check::invariant($grouping === null || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping, 'An ordinary grouping has scalar or ordinal items.');
-        $order = array_values(array_filter($ordering, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\OrderItem));
-        return new Block($options, $ordinary, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, trailer: new Trailer($order, $limit, $procedure), source: $node, origins: $this->lowering->origins);
+        return new Block($options, $ordinary, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, trailer: new Trailer($ordering, $limit, $procedure), source: $node, origins: $this->lowering->origins);
     }
 
     /**
@@ -94,7 +93,7 @@ final class StoredSelections
      */
     public function deferred(array $items, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $predicate, \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping|null $grouping, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $having, array $ordering): bool
     {
-        return ($having !== null && !$having instanceof Scalar) || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping || array_filter($ordering, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem) !== [] || array_filter($items, static fn ($item): bool => $item instanceof DeferredProjection) !== [] || ($predicate !== null && !$predicate instanceof Scalar);
+        return ($having !== null && !$having instanceof Scalar) || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping || array_filter($items, static fn ($item): bool => $item instanceof DeferredProjection) !== [] || ($predicate !== null && !$predicate instanceof Scalar);
     }
 
     /**
@@ -104,7 +103,7 @@ final class StoredSelections
      */
     public function frontier(Node $node): ?array
     {
-        $wrappers = ['statement', 'simple_statement', 'select', 'select_init', 'select_init2', 'select_stmt', 'select_part2', 'select_options_and_item_list', 'select_into', 'select_from', 'create_select', 'opt_select_from', 'table_expression', 'view_select_aux', 'create_view_select', 'query_expression_with_opt_locking_clauses', 'query_expression', 'query_expression_body', 'query_primary', 'query_specification'];
+        $wrappers = ['statement', 'simple_statement', 'select', 'select_init', 'select_init2', 'select_stmt', 'select_part2', 'select_options_and_item_list', 'select_into', 'select_from', 'create_select', 'opt_select_from', 'table_expression', 'view_select_aux', 'create_view_select', 'query_expression_with_opt_locking_clauses', 'query_expression', 'query_expression_body', 'query_primary', 'query_specification', 'select_init2_derived', 'select_part2_derived', 'select_paren_derived'];
         $list = null;
         $from = null;
         $where = null;
@@ -152,7 +151,7 @@ final class StoredSelections
     public function clause(Node $node): ?string
     {
         return match ($node->name) {
-            'select_options' => 'options',
+            'select_options', 'opt_query_expression_options', 'opt_query_spec_options' => 'options',
             'group_clause', 'opt_group_clause' => 'group',
             'having_clause', 'opt_having_clause' => 'having',
             'order_clause', 'opt_order_clause' => 'order',

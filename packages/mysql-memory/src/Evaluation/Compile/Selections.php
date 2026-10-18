@@ -134,11 +134,11 @@ final class Selections
      *
      * @throws \MySqlMemory\Error\SqlError When a retained query operand cannot prepare
      */
-    public function set(\SqlSemantics\Statement\Query $query, \MySqlMemory\Plan\Planner $planner, ?\MySqlMemory\Evaluation\Scope $outer): void
+    public function set(\SqlSemantics\Statement\Query|\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion $query, \MySqlMemory\Plan\Planner $planner, ?\MySqlMemory\Evaluation\Scope $outer): void
     {
         if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery) {
             $this->set($query->query, $planner, $outer);
-        } elseif ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation && $query->left instanceof \SqlSemantics\Statement\Query) {
+        } elseif ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
             $this->set($query->left, $planner, $outer);
             $this->set($query->right, $planner, $outer);
         } else {

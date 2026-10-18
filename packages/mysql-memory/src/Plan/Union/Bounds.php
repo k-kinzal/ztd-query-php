@@ -36,7 +36,7 @@ final class Bounds
     /**
      * Applies legacy bounds, or returns null when the ordinary query path applies.
      */
-    public function plan(AccessPath $path, QueryExpression $query, ?Scope $outer): ?AccessPath
+    public function plan(AccessPath $path, QueryExpression|\SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation $query, ?Scope $outer): ?AccessPath
     {
         if (!$this->planner->settings->legacy() || !$this->combined($path)) {
             return null;

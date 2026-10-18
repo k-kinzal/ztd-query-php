@@ -2900,3 +2900,35 @@ The next unseeded campaigns found a CREATE TABLE UNION-option/query ordering
 condition and a further input under investigation. The legacy UNION tail
 ownership audit and the final whole-model, all-seed and 900-second campaigns
 remain required.
+
+### Legacy UNION operand and ordering roles
+
+A retained MySQL 5.x UNION keeps the complete operands and the owner of every
+ORDER BY and LIMIT. The final unparenthesized SELECT contributes the union's
+trailing clauses. MySQL 5.6 can also retain a middle operand's own LIMIT and a
+subquery's separate operand and result limits. `LeadingUnion` and
+`OrderedSetOperation` preserve those positions, including a `DeferredBody` whose
+row-valued projection requires preparation when reached. The planner consumes
+these structures directly and keeps their distinct bounds.
+
+A deferred ordering remains an ordering item of its SELECT or query result.
+The SELECT is a query template; a read root excludes its fixed scalar-use
+contradiction. Blocks with deferred projections, filters or grouping retain
+those different operand roles in `DeferredSelection`. A single such block uses
+that program-instruction role directly; `DeferredQuery` excludes a redundant
+`DeferredBody` wrapper. Cursor declarations retain the same instruction roles
+and defer their preparation until OPEN. Ordinary read roots continue to exclude fixed row/scalar
+contradictions. These are representation and operand constraints, independent
+of catalog state or an execution-eligibility decision.
+
+`RetainedUnionStructureTest` constructs 24 routine definitions directly across
+MySQL 5.6 and 5.7 and compares their definitions and five invocation states.
+Skipped branches succeed; reached branches distinguish missing tables from the
+retained row-width condition, including populated tables. The memory input
+label is unrelated non-SQL text throughout direct execution.
+`RetainedUnionQueryTest` compares 97 SQL requests per release, including successful
+legacy UNION results, missing dependencies, rejected clause positions, and
+scalar-subquery NULL metadata when LIMIT removes all rows. Both tests compare
+rows, metadata, errors and warnings without dropping error outcomes. These
+338 native observations cover this repaired domain; they do not replace the
+whole-model and final-revision fuzzing gates in the acceptance contract.

@@ -55,7 +55,7 @@ final class ReleaseDomain
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex, $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($value->kind, $value->parts, $value->algorithm, $value->options) ? 3 : self::ALL,
             $value instanceof LanguageProfile => $this->bit($value->grammar),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation && (($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->left->limit !== null) || ($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody && $value->left->selection->limit !== null)) => 1,
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion && $value->right->limit !== null => 1,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion && ($value->right instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody || $value->right->limit !== null) => 1,
             $value instanceof Explain, $value instanceof DeferredExplain => $this->explanation($value),
             $value === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Vector => 384,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->qualify !== null => 480,

@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
 use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Dialect;
@@ -59,7 +58,7 @@ final class UnionRuleTest extends TestCase
 
     public function testChainRejectsAnOrderingBeforeTheLastSelect(): void
     {
-        $this->expectException(AnalysisException::class);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
 
         (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 ORDER BY 1 UNION SELECT 2');
     }

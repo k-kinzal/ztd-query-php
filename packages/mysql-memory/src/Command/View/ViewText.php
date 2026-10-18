@@ -160,7 +160,7 @@ final class ViewText
     /**
      * Writes an ORDER BY and a LIMIT clause, each when there is one.
      *
-     * @param list<OrderItem> $order
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $order
      */
     public function tail(array $order, ?object $limit): ?string
     {

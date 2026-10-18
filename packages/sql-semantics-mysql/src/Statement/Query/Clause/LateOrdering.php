@@ -38,17 +38,17 @@ final class LateOrdering implements Node
     use Snapshot;
 
     /**
-     * @var list<OrderItem> The ORDER BY items in written order
+     * @var list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> The ORDER BY items in written order
      */
     public readonly array $orderBy;
 
     /**
-     * @param list<OrderItem> $orderBy The ORDER BY items
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy The ORDER BY items
      * @param Limit|null $limit The LIMIT clause
      */
     public function __construct(array $orderBy, public readonly ?Limit $limit = null)
     {
-        $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
+        $this->orderBy = (new SortScopes())->items($orderBy);
         (new SortScopes())->check($this->orderBy);
         Check::input($this->orderBy !== [] || $limit !== null, 'A late ordering holds an ORDER BY or a LIMIT.');
     }

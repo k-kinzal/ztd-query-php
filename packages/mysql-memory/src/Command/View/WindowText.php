@@ -97,7 +97,7 @@ final class WindowText
             if ($items === []) {
                 continue;
             }
-            $keys = $this->expressions->scalars(array_map(static fn (OrderItem $item) => $item->expression, $items));
+            $keys = $this->expressions->scalars(array_map(static fn (OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem $item) => $item->expression, $items));
             if ($keys === null) {
                 return null;
             }
@@ -184,7 +184,7 @@ final class WindowText
     {
         $names = [];
         $walker = new Walker();
-        $roots = [...array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items), ...array_map(static fn (OrderItem $item): \SqlSemantics\Statement\Operand => $item->expression, $select->orderBy)];
+        $roots = [...array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items), ...array_map(static fn (OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem $item): \SqlSemantics\Statement\Operand => $item->expression, $select->orderBy)];
         foreach ($roots as $root) {
             foreach ($walker->find($root, Scalar::class, false) as $node) {
                 $over = $node instanceof WindowFunction || $node instanceof Aggregate ? $node->over : null;

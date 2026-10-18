@@ -50,7 +50,7 @@ final class ExpressionFacts
     /**
      * Derives an ORDER BY and a LIMIT that apply to the rows of a query in an environment.
      *
-     * @param list<OrderItem> $orderBy
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy
      */
     public function ordering(QueryFact $fact, array $orderBy, ?Limit $limit, Derivation $derivation, Environment $environment): void
     {

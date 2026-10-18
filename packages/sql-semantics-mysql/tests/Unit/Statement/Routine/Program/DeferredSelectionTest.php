@@ -28,6 +28,17 @@ final class DeferredSelectionTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
+    public function testRenderUsesSelectForAnOrderingOnlyTemplate(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 ORDER BY ROW(2,3)')->statement;
+        self::assertInstanceOf(CreateProcedure::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $create->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $create->body->query);
+        $query = $create->body->query;
+        $this->expectExceptionMessage('A deferred selection retains a projection or predicate requiring invocation-time preparation.');
+        new DeferredSelection($query->items, orderBy: $query->orderBy);
+    }
+
     public function testDeferredKeepsPreparationOrderAcrossTheClauses(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t WHERE (1,2) GROUP BY (3,4) HAVING (5,6) ORDER BY (7,8)')->statement;

@@ -44,6 +44,8 @@ final class QueryUseTest extends TestCase
         yield 'empty read' => [new M\Routine\Program\Selection\DeferredQuery($empty), 3942];
         yield 'earlier name' => [new M\Routine\Program\Selection\DeferredQuery(new M\Query\Set\SetOperation($unknown, M\Query\Set\SetOperator::Union, null, $empty)), 1054];
         yield 'later name' => [new M\Routine\Program\Selection\DeferredQuery(new M\Query\Set\SetOperation($empty, M\Query\Set\SetOperator::Union, null, $unknown)), 3942];
+        $ordering = new M\Routine\Program\Selection\DeferredOrderItem(new M\Expression\Row([new M\Name\ColumnUse(new Name('v')), new M\Literal\NumberLiteral('2')]));
+        yield 'ordering alias' => [new M\Routine\Program\Selection\DeferredQuery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('7'), new Name('v'))], orderBy: [$ordering])), 1241];
         yield 'tableless star' => [new M\Routine\Program\Selection\DeferredQuery(new M\Query\Select([], [new M\Query\Star()])), 1096];
     }
 

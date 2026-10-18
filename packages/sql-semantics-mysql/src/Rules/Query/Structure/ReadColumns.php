@@ -80,6 +80,9 @@ final class ReadColumns
                     return $problem;
                 }
             }
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem) {
+                return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->expression]);
+            }
             if ($node instanceof M\With\DeferredBody || $node instanceof M\With\DeferredValuesQuery) {
                 return $node->problem();
             }

@@ -78,6 +78,7 @@ final class InputErrors
     public function query(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause => new SqlError(\MySqlMemory\Error\Family\StatementError::WrongUsage, $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar => \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error(),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain => (new \MySqlMemory\Program\Expression\ExplainUse())->error($diagnostic->explanation, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter => (new \MySqlMemory\Session\Parse\Definition\ShowInput())->error($diagnostic, $session),

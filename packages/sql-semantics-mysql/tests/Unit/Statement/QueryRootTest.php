@@ -43,6 +43,14 @@ final class QueryRootTest extends TestCase
         self::assertNull((new QueryRoot(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])))->input());
     }
 
+    public function testRenderRefusesADeferredSortInAReadRoot(): void
+    {
+        $order = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]));
+        $body = new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new Select([], [new SelectExpression(new NumberLiteral('1'))]), \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, new Select([], [new SelectExpression(new NumberLiteral('2'))])), [$order]);
+        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
+        new QueryRoot($body);
+    }
+
     public function testRenderRetainsTheQueryBody(): void
     {
         $root = new QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))]));

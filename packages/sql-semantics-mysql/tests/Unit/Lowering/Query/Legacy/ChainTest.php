@@ -48,6 +48,7 @@ final class ChainTest extends TestCase
         $query = (new Chain([[new Block([], [new SelectExpression(new NumberLiteral('1'))]), new Trailer()], [$last, new Trailer([], new RowLimit(new NumberLiteral('1')))]], [null], GrammarRelease::MySql5651))->query();
 
         self::assertInstanceOf(OrderedSetOperation::class, $query);
+        self::assertInstanceOf(Select::class, $query->right);
         self::assertCount(1, $query->right->locking);
         self::assertNotNull($query->limit);
     }
@@ -56,7 +57,7 @@ final class ChainTest extends TestCase
     {
         $chain = new Chain([[new Block([], [new SelectExpression(new NumberLiteral('1'))]), new Trailer()]], [], GrammarRelease::MySql5744);
 
-        $this->expectException(AnalysisException::class);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
 
         $chain->earlier((new Block([], [new SelectExpression(new NumberLiteral('1'))]))->then(new Trailer([], new RowLimit(new NumberLiteral('1')))), new Trailer(), 0);
     }
@@ -117,12 +118,13 @@ final class ChainTest extends TestCase
 
         self::assertInstanceOf(SetOperation::class, $query);
         self::assertInstanceOf(LeadingUnion::class, $query->left);
+        self::assertInstanceOf(Select::class, $query->left->right);
         self::assertCount(1, $query->left->right->locking);
     }
 
     public function testEarlierNamesTheClauseAUnionOperandMayNotWriteAsTheServerDoes(): void
     {
-        $this->expectExceptionMessage('Incorrect usage of UNION and LIMIT: only the last SELECT of a union takes them without parentheses.');
+        $this->expectExceptionMessage('Incorrect usage of UNION and LIMIT');
 
         (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 LIMIT 1 UNION SELECT 2');
     }

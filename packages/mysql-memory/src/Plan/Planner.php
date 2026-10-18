@@ -29,6 +29,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
@@ -117,7 +119,7 @@ final class Planner
             $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody => (new \MySqlMemory\Evaluation\Compile\Selections())->bound($query->selection, $this, $outer),
             $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery => (new \MySqlMemory\Evaluation\Compile\Selections())->values($query, $this, $outer),
             $query instanceof Select => $this->blocks->select($query, $outer),
-            $query instanceof QueryExpression => $this->expression($query, $outer),
+            $query instanceof QueryExpression, $query instanceof OrderedSetOperation => $this->expression($query, $outer),
             $query instanceof ParenthesizedQuery => $this->query($query->query, $outer),
             $query instanceof QueryStatement => $this->query($query->query, $outer),
             $query instanceof SetOperation => $this->set($query, $outer),
@@ -135,23 +137,27 @@ final class Planner
      * ORDER BY of a query block it leaves out a key constant for the
      * statement without evaluating it (verified on a live 8.4 server).
      */
-    public function expression(QueryExpression $query, ?Scope $outer): QueryPlan
+    public function expression(QueryExpression|OrderedSetOperation $query, ?Scope $outer): QueryPlan
     {
-        if ($query->with instanceof With) {
+        if ($query instanceof QueryExpression && $query->with instanceof With) {
             foreach ($query->with->tables as $table) {
                 $this->definitions[spl_object_id($table)] = [$table, $outer];
             }
         }
-        $plan = $this->query($query->body, $outer);
+        $body = $query instanceof QueryExpression ? $query->body : $query;
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) !== null) {
+            (new \MySqlMemory\Evaluation\Compile\Selections())->set($body, $this, $outer);
+        }
+        $plan = $query instanceof OrderedSetOperation ? $this->set($query, $outer) : $this->query($body, $outer);
         if ($query->orderBy === [] && $query->limit === null) {
             return $plan;
         }
         $scope = new Scope($outer);
-        $scope->place($query->body, $plan->domains, $plan->names);
+        $scope->place($body, $plan->domains, $plan->names);
         $scope->output = true;
+        $scope->clause = 'order clause';
         $expressions = array_map(static fn ($domain, int $position) => new ColumnRead($domain, $position), $plan->domains, array_keys($plan->domains));
         $keys = [];
-        $body = $query->body;
         while ($body instanceof ParenthesizedQuery) {
             $body = $body->query;
         }
@@ -203,22 +209,20 @@ final class Planner
      *
      * @param list<Domain>|null $settled The types the rows are held in, those of an operation this one is an operand of; its own when null
      */
-    public function set(SetOperation $operation, ?Scope $outer, ?array $settled = null): QueryPlan
+    public function set(SetOperation|OrderedSetOperation|LeadingUnion $operation, ?Scope $outer, ?array $settled = null): QueryPlan
     {
-        if (!$operation->left instanceof Query) {
-            throw StatementError::NotSupportedYet->error('a leading UNION');
-        }
         if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($operation) !== null) {
             (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation->left, $this, $outer);
             (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation->right, $this, $outer);
         }
+        \SqlSemantics\Diagnostic\Check::invariant(!$operation instanceof LeadingUnion || $settled !== null, 'A leading union receives the enclosing result domains.');
         $domains = $settled ?? $this->outputs($operation);
         $left = $this->operand($operation->left, $outer, $domains);
         $right = $this->operand($operation->right, $outer, $domains);
         if (count($left->domains) !== count($right->domains)) {
             throw QueryError::WrongNumberOfColumnsInSelect->error();
         }
-        $kind = match ($operation->operator) {
+        $kind = match ($operation instanceof LeadingUnion ? SetOperator::Union : $operation->operator) {
             SetOperator::Union => SetKind::Union,
             SetOperator::Intersect => SetKind::Intersect,
             SetOperator::Except => SetKind::Except,
@@ -243,8 +247,11 @@ final class Planner
      *
      * @param list<Domain> $domains The types of the columns of the outermost operation
      */
-    public function operand(Query $operand, ?Scope $outer, array $domains): QueryPlan
+    public function operand(Query|LeadingUnion $operand, ?Scope $outer, array $domains): QueryPlan
     {
+        if ($operand instanceof LeadingUnion) {
+            return $this->set($operand, $outer, $domains);
+        }
         $inner = $operand;
         while ($inner instanceof ParenthesizedQuery) {
             $inner = $inner->query;

@@ -220,6 +220,10 @@ final class Compiler
         if ($node instanceof OutputOrdinal) {
             return $this->typed($node, $this->names->ordinal($node, $scope));
         }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+            (new \MySqlMemory\Program\Expression\RowUse())->prepare($node, $this, $scope);
+            throw (new \MySqlMemory\Program\Expression\RowUse())->error($node);
+        }
         if (!$node instanceof Scalar) {
             throw StatementError::NotSupportedYet->error('value ' . (new ReflectionClass($node))->getShortName());
         }

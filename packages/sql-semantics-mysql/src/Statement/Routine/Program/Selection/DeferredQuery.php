@@ -39,6 +39,7 @@ final class DeferredQuery implements ProgramStatement
      */
     public function __construct(public readonly Query $query)
     {
+        Check::input(!$query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody, 'A single deferred block is a DeferredSelection instruction directly.');
         (new StatementQuery())->check($query);
         Check::input((new ReadColumns())->problem($query) !== null, 'A deferred query retains an intrinsic read-column constraint.');
         (new Generations())->check($this);

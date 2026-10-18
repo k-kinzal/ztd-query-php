@@ -104,6 +104,11 @@ final class SubqueryRule
     {
         $form = $this->lowering->form($specification);
         $trailer = $ordering === null ? new Trailer() : (new UnionRule($this->lowering))->ordering($ordering);
+        $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->block($specification);
+        if ($selection !== null) {
+            (new RetainedTails())->subquery($selection);
+            return [$selection instanceof Block ? $selection : new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection), $trailer];
+        }
         $blocks = new BlockRule($this->lowering);
 
         return match ($form->signature) {
@@ -122,6 +127,11 @@ final class SubqueryRule
      */
     public function paren(Node $paren): ParenthesizedQuery
     {
+        $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->block($paren);
+        if ($selection !== null) {
+            (new RetainedTails())->subquery($selection);
+            return new ParenthesizedQuery($selection instanceof Block ? $selection->select() : new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection));
+        }
         $form = $this->lowering->form($paren);
         $blocks = new BlockRule($this->lowering);
 

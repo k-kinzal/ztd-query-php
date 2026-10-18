@@ -73,7 +73,7 @@ final class SelectFacts
         $visible = $from->visible;
         $aggregation = new AggregationScope($visible);
         (new FromScope())->unique($visible, $derivation);
-        $ordering = array_map(static fn (OrderItem $item): object => $item->expression, [...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)]);
+        $ordering = array_map(static fn (OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem $item): object => $item->expression, [...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)]);
         $expressions = array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items);
         $aggregate = $select->groupBy === null && (new Aggregation())->aggregates([...$expressions, ...$ordering, ...array_values(array_filter([$select->having, $select->qualify]))]);
         $output = $aggregate || $select->groupBy?->modifier !== null ? array_map(static fn ($relation) => (new Joining())->extend($relation), $visible) : $visible;

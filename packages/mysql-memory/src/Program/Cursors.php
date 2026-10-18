@@ -96,6 +96,10 @@ final class Cursors
             $session->diagnostics->clear();
             (new Expression\QueryUse())->raise($root, $session, false);
         }
+        if ($root instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            $session->diagnostics->clear();
+            (new Expression\SelectionUse())->raise($root, $session, false);
+        }
         $query = $root->query;
         $operation = $this->statements->operation($root);
         $session->diagnostics->clear();

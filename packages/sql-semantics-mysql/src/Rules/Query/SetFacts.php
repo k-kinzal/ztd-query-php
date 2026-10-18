@@ -92,7 +92,7 @@ final class SetFacts
     {
         $release = $derivation->context->profile->grammar;
         Check::input(in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true), 'A SELECT that keeps its own clauses before a later UNION needs MySQL 5.6 or 5.7.');
-        Check::input($leading->right->limit === null || $release === GrammarRelease::MySql5651, 'A SELECT that keeps its own LIMIT before a later UNION needs MySQL 5.6.');
+        Check::input(($leading->right instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $leading->right->limit === null) || $release === GrammarRelease::MySql5651, 'A SELECT that keeps its own LIMIT before a later UNION needs MySQL 5.6.');
 
         return $this->operands($leading->left, SetOperator::Union, $leading->right, $derivation, $outer);
     }

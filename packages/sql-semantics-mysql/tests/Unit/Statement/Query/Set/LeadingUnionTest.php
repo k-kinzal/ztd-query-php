@@ -39,7 +39,9 @@ final class LeadingUnionTest extends TestCase
         $first = $leading->left;
         self::assertInstanceOf(LeadingUnion::class, $first);
 
+        self::assertInstanceOf(Select::class, $leading->right);
         self::assertNotNull($leading->right->limit);
+        self::assertInstanceOf(Select::class, $first->right);
         self::assertCount(1, $first->right->locking);
         self::assertSame(SetQuantifier::All, $first->quantifier);
         self::assertInstanceOf(Select::class, $first->left);

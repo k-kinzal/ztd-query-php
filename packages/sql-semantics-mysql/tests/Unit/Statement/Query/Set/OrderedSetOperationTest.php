@@ -42,6 +42,7 @@ final class OrderedSetOperationTest extends TestCase
         $union = $subquery->query;
         self::assertInstanceOf(OrderedSetOperation::class, $union);
 
+        self::assertInstanceOf(Select::class, $union->right);
         self::assertNotNull($union->right->limit);
         self::assertNotNull($union->limit);
         self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($union->orderBy[0]->expression)->resolution);

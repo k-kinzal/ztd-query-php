@@ -29,6 +29,20 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class SortScopesTest extends TestCase
 {
+    public function testItemsRetainsTheDeferredSortRole(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $item = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem($row);
+        self::assertSame([$item], (new SortScopes())->items([$item]));
+        self::assertNull((new SortScopes())->word($row));
+    }
+
+    public function testItemsRefusesAnUnrelatedNode(): void
+    {
+        $this->expectExceptionMessage('A query ordering retains scalar, ordinal or deferred operands.');
+        (new SortScopes())->items([new NumberLiteral('1')]);
+    }
+
     public function testCheckRefusesAnIntegerItem(): void
     {
         $this->expectExceptionMessage('An integer in ORDER BY or GROUP BY is a select list position.');

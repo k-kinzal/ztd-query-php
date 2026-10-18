@@ -79,7 +79,7 @@ final class Select implements Query, Selection
     public readonly array $windows;
 
     /**
-     * @var list<OrderItem> The ORDER BY items in written order
+     * @var list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> The ORDER BY items in written order
      */
     public readonly array $orderBy;
 
@@ -102,7 +102,7 @@ final class Select implements Query, Selection
      * @param Scalar|null $having The group predicate
      * @param list<WindowDefinition> $windows The named windows
      * @param Scalar|null $qualify The window predicate of QUALIFY
-     * @param list<OrderItem> $orderBy The ORDER BY items
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy The ORDER BY items
      * @param Limit|null $limit The LIMIT clause
      * @param ProcedureAnalyse|null $procedure The PROCEDURE ANALYSE clause of the 5.x grammars
      * @param list<LockingClause> $locking The locking clauses
@@ -133,7 +133,7 @@ final class Select implements Query, Selection
         $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
         $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'A selection projects at least one item.');
         $this->windows = Check::listOf($windows, WindowDefinition::class, 'The WINDOW clause holds window definitions.');
-        $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
+        $this->orderBy = (new SortScopes())->items($orderBy);
         $this->locking = Check::listOf($locking, LockingClause::class, 'The locking clauses of a selection are locking clauses.');
         (new SortScopes())->check([...$this->orderBy, ...($groupBy === null ? [] : $groupBy->items)]);
         Check::input(($into === null) === ($intoPosition === null), 'An INTO destination is written at exactly one position.');

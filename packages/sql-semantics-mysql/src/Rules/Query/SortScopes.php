@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 
@@ -41,9 +41,26 @@ use SqlSemantics\Statement\Shape\OpenStar;
 final class SortScopes
 {
     /**
+     * Retains each sort operand's scalar, ordinal or deferred role.
+     *
+     * @param list<\SqlSemantics\Statement\Node> $items Ordered sort items
+     * @return list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem>
+     */
+    public function items(array $items): array
+    {
+        $ordered = [];
+        foreach (Check::listOf($items, \SqlSemantics\Statement\Node::class, 'ORDER BY holds ordering items.') as $item) {
+            Check::input($item instanceof OrderItem || $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem, 'A query ordering retains scalar, ordinal or deferred operands.');
+            $ordered[] = $item;
+        }
+        $this->check($ordered);
+        return $ordered;
+    }
+
+    /**
      * Requires every integer literal item to be given as a select list position.
      *
-     * @param list<OrderItem> $items
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $items
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an integer literal is an ordinary item
      */
     public function check(array $items): void
@@ -56,7 +73,7 @@ final class SortScopes
     /**
      * Derives the items in the given environment, whose aliases are the aliased output fields.
      *
-     * @param list<OrderItem> $items
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $items
      * @param list<Field|OpenStar> $projection The output of the query, in order
      * @param bool $aliasFirst Whether a bare name looks at the aliases first, as in ORDER BY
      * @return list<ScalarFact> The facts of the items, in order
@@ -73,6 +90,10 @@ final class SortScopes
         $open = count($known) < count($projection);
         $facts = [];
         foreach ($items as $item) {
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem) {
+                $facts[] = $derivation->scalar($item->expression, $environment);
+                continue;
+            }
             $word = $aliasFirst ? $this->word($item->expression) : null;
             if ($item->expression instanceof OutputOrdinal) {
                 $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, $open ? $environment->relations : [], [], $known, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument, projection: $environment->projection));
@@ -89,7 +110,7 @@ final class SortScopes
     /**
      * Answers the name of an item that is a bare unqualified column reference, possibly in parentheses.
      */
-    public function word(Scalar|OutputOrdinal $expression): ?Name
+    public function word(Operand $expression): ?Name
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;

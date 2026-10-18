@@ -19,8 +19,11 @@ final class QueryMeaning
     /**
      * Retains contradictory fixed columns only as a deferred stored instruction.
      */
-    public function of(Query $query): QueryRoot|DeferredQuery
+    public function of(Query $query): QueryRoot|DeferredQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection
     {
+        if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
+            return $query->selection;
+        }
         return (new ReadColumns())->problem($query) === null ? new QueryRoot($query) : new DeferredQuery($query);
     }
 }

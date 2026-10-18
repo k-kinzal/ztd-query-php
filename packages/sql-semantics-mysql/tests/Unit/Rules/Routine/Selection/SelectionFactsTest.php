@@ -16,7 +16,7 @@ final class SelectionFactsTest extends TestCase
 {
     public function testDeriveKeepsTheProgramVariableAndProjectionAliasScopes(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SELECT x AS v ORDER BY (v,2)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SELECT x AS v, (x, 3) ORDER BY (v,2)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->statement->body);
         $row = $operation->statement->body->orderBy[0]->expression;
@@ -48,8 +48,8 @@ final class SelectionFactsTest extends TestCase
 
     public function testOrderingBindsAnOutputAliasInsideADeferredRow(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SELECT x AS v ORDER BY (v,2)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SELECT x AS v, (x, 3) ORDER BY (v,2)');
         self::assertSame([], $operation->facts->diagnostics);
-        self::assertSame('CREATE PROCEDURE p(x INT) SELECT x AS v ORDER BY (v, 2)', $operation->toString());
+        self::assertSame('CREATE PROCEDURE p(x INT) SELECT x AS v, (x, 3) ORDER BY (v, 2)', $operation->toString());
     }
 }

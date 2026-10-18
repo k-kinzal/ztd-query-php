@@ -33,9 +33,10 @@ final class StoredClausesTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t ORDER BY 1,(a,2)')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $create->body);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\OrderItem::class, $create->body->orderBy[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal::class, $create->body->orderBy[0]->expression);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem::class, $create->body->orderBy[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $create->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $create->body->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\OrderItem::class, $create->body->query->orderBy[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal::class, $create->body->query->orderBy[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem::class, $create->body->query->orderBy[1]);
     }
 }

@@ -101,6 +101,10 @@ final class SubqueryRows
         if ($row && $release === GrammarRelease::MySql5651 && $body instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation && $this->tableless($body)) {
             return Nullability::NotNull;
         }
+        $combined = $body instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $body instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
+        if (!$row && $combined && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && $this->tableless($body, $release === GrammarRelease::MySql5744)) {
+            return $query->shape->slots[0]->nullability;
+        }
         if (!(new ScalarReduction())->preservesNullability($statement, $release)) {
             return Nullability::Nullable;
         }
@@ -116,14 +120,15 @@ final class SubqueryRows
 
     /**
      * Tells whether every UNION operand has no FROM relation other than DUAL.
+     * The optional filter check preserves MySQL 5.7's different empty-row metadata.
      */
-    public function tableless(Query $query): bool
+    public function tableless(Query|\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion $query, bool $unfiltered = false): bool
     {
         return match (true) {
-            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery => $this->tableless($query->query),
-            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression => $this->tableless($query->body),
-            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation => $query->left instanceof Query && $this->tableless($query->left) && $this->tableless($query->right),
-            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select => $query->from === null || $query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual,
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery => $this->tableless($query->query, $unfiltered),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression => $this->tableless($query->body, $unfiltered),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation, $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation, $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion => $this->tableless($query->left, $unfiltered) && $this->tableless($query->right, $unfiltered),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select => ($query->from === null || $query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual) && (!$unfiltered || ($query->where === null && $query->having === null)),
             default => false,
         };
     }

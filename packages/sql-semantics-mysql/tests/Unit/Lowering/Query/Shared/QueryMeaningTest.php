@@ -14,6 +14,15 @@ use SqlSemantics\Platform\MySql\Statement as M;
 #[Small]
 final class QueryMeaningTest extends TestCase
 {
+    public function testOfUsesTheSingleBlockInstructionWithoutARedundantQueryWrapper(): void
+    {
+        $selection = new M\Routine\Program\DeferredSelection([new M\Routine\Program\DeferredProjection(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
+        $body = new M\Query\With\DeferredBody($selection);
+        self::assertSame($selection, (new QueryMeaning())->of($body));
+        $this->expectExceptionMessage('A single deferred block is a DeferredSelection instruction directly.');
+        new M\Routine\Program\Selection\DeferredQuery($body);
+    }
+
     public function testOfAssignsTheReadOrStoredRoleWithoutLosingTheQuery(): void
     {
         $query = new M\Query\ValuesQuery([new M\Query\ValueRow([])]);

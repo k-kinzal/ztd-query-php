@@ -39,11 +39,11 @@ final class SelectionsTest extends TestCase
         (new SelectionUse())->raise($selection, $session);
     }
 
-    public function testOperandResolvesAnOutputAliasBeforeTheOrderingRowCondition(): void
+    public function testOperandResolvesAnOutputAliasBeforeTheHavingRowCondition(): void
     {
         $session = (new Instance())->connect();
-        $ordering = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem(new Row([new ColumnUse(new Name('v')), new NumberLiteral('2')]));
-        $selection = new DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('7'), new Name('v'))], orderBy: [$ordering]);
+        $having = new Row([new ColumnUse(new Name('v')), new NumberLiteral('2')]);
+        $selection = new DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('7'), new Name('v'))], having: $having);
         $session->text = 'unrelated invalid input';
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1241);

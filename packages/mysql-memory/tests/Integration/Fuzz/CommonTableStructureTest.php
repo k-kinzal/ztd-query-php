@@ -52,9 +52,9 @@ final class CommonTableStructureTest extends TestCase
                 0 => new M\Routine\Program\DeferredSelection([new M\Routine\Program\DeferredProjection($row)], $input),
                 1 => new M\Routine\Program\DeferredSelection($items, $input, $row),
                 2 => new M\Routine\Program\DeferredSelection($items, $input, having: $row),
-                3 => new M\Routine\Program\DeferredSelection($items, $input, orderBy: [new M\Routine\Program\Selection\DeferredOrderItem($row)]),
+                3 => new M\Query\Select([], $items, $input, orderBy: [new M\Routine\Program\Selection\DeferredOrderItem($row)]),
             };
-            $with = new M\Query\With\With(false, [new M\Query\With\CommonTableExpression(new Name('c'), [], new M\Query\With\DeferredBody($selection))]);
+            $with = new M\Query\With\With(false, [new M\Query\With\CommonTableExpression(new Name('c'), [], $selection instanceof M\Query\Select ? $selection : new M\Query\With\DeferredBody($selection))]);
             $body = new M\Query\Select([], [new M\Query\SelectExpression(new M\Name\ColumnUse(new Name('a')))], new M\Relation\TableReference(new QualifiedName(new Name('t'), new Name('d'))), orderBy: [new M\Query\OrderItem(new M\Name\ColumnUse(new Name('a')))]);
             $structures[] = new M\QueryRoot(new M\Query\QueryExpression($with, $body));
         }

@@ -65,6 +65,7 @@ final class BlockFactsTest extends TestCase
         self::assertInstanceOf(Block::class, $block);
         $cursor = $block->declarations[1];
         self::assertInstanceOf(CursorDeclaration::class, $cursor);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $cursor->query);
         $query = $cursor->query->query;
         self::assertInstanceOf(Select::class, $query);
         $where = $query->where;

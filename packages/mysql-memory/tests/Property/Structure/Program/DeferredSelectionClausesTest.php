@@ -69,7 +69,7 @@ final class DeferredSelectionClausesTest extends TestCase
             'where' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection($ordinary, $source, $row),
             'group' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection($ordinary, $source, groupBy: new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping([$order])),
             'having' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection($ordinary, $source, having: $row),
-            'order' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection($ordinary, $source, orderBy: [$order]),
+            'order' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], $ordinary, $source, orderBy: [$order])),
         };
         $branch = new ConditionalBranch(new UserVariable(new Name('run')), [$body]);
         $create = new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), new IfStatement([$branch]));

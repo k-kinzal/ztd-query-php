@@ -1760,6 +1760,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedSelection": {
         "selection": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedSetClause": {
+        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select|SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\DeferredBody"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\UnenclosedUnion": {
         "offset": "?int"
     },
@@ -1832,7 +1835,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\LeadingUnion": {
         "left": "SqlSemantics\\Statement\\Query|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\LeadingUnion",
         "quantifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetQuantifier",
-        "right": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select"
+        "right": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select|SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\DeferredBody"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\OrderedSetOperation": {
         "left": "SqlSemantics\\Statement\\Query|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\LeadingUnion",
@@ -1840,7 +1843,7 @@
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperator",
         "orderBy": "array",
         "quantifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetQuantifier",
-        "right": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select"
+        "right": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select|SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\DeferredBody"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperation": {
         "left": "SqlSemantics\\Statement\\Query|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\LeadingUnion",
@@ -2333,7 +2336,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\CursorDeclaration": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "query": "SqlSemantics\\Platform\\MySql\\Statement\\QueryRoot|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery"
+        "query": "SqlSemantics\\Platform\\MySql\\Statement\\QueryRoot|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\FetchCursor": {
         "cursor": "SqlSemantics\\Statement\\Identifier\\Name",

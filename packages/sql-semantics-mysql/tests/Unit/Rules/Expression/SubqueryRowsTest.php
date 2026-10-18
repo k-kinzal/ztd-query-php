@@ -48,6 +48,16 @@ final class SubqueryRowsTest extends TestCase
         self::assertSame(Nullability::NotNull, $operation->field(3)->nullability);
     }
 
+    public function testAttributeRetainsLegacyUnionColumnNullabilityEvenWhenItsLimitIsEmpty(): void
+    {
+        $old = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $later = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        self::assertSame(Nullability::NotNull, $old->analyze('SELECT (SELECT 1 UNION SELECT 2 LIMIT 1 LIMIT 0)')->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $old->analyze('SELECT (SELECT NULL UNION SELECT 2 LIMIT 1 LIMIT 0)')->field(0)->nullability);
+        self::assertSame(Nullability::NotNull, $later->analyze('SELECT (SELECT 1 UNION SELECT 2 LIMIT 0)')->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $later->analyze('SELECT (SELECT 1 FROM DUAL WHERE 0 UNION SELECT 2 LIMIT 0)')->field(0)->nullability);
+    }
+
     public function testTablelessDistinguishesDualFromActualRelationsAcrossUnionOperands(): void
     {
         $semantics = new Semantics(Dialect::MySql);

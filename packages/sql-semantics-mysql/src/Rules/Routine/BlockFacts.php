@@ -71,7 +71,11 @@ final class BlockFacts
                 $this->ordered($stage, 1, $derivation);
                 $stage = max($stage, 1);
                 $this->distinct($cursors, $declaration->name, ProgramRule::DuplicateCursor, $derivation, $inside);
-                $derivation->query($declaration->query->query, $inside->environment);
+                if ($declaration->query instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+                    $declaration->query->deriveProgram($derivation, $inside);
+                } else {
+                    $derivation->query($declaration->query->query, $inside->environment);
+                }
                 $cursors[] = $declaration->name;
                 $inside = $inside->declared($inside->environment, $inside->conditions, [...$inside->cursors, $declaration->name]);
             } elseif ($declaration instanceof HandlerDeclaration) {

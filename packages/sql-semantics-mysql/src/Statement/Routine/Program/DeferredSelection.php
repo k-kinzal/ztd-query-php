@@ -84,7 +84,7 @@ final class DeferredSelection implements ProgramStatement
         $this->orderBy = $ordering;
         (new \SqlSemantics\Platform\MySql\Rules\Query\SortScopes())->check(array_values(array_filter([...$ordering, ...($groupBy->items ?? [])], static fn ($item): bool => $item instanceof OrderItem)));
         $list = [];
-        $deferred = $where instanceof RowOperand || $where instanceof DeferredOperand || $having instanceof RowOperand || $having instanceof DeferredOperand || $groupBy instanceof DeferredGrouping || array_filter($ordering, static fn ($item): bool => $item instanceof DeferredOrderItem) !== [];
+        $deferred = $where instanceof RowOperand || $where instanceof DeferredOperand || $having instanceof RowOperand || $having instanceof DeferredOperand || $groupBy instanceof DeferredGrouping;
         foreach (Check::listOf($items, Node::class, 'A stored selection has at least one item.', 1) as $position => $item) {
             Check::input($item instanceof SelectExpression || $item instanceof DeferredProjection || $item instanceof TableWildcard || ($item instanceof Star && $position === 0), 'A projection is an expression or qualified star; a bare star occurs only first.');
             $list[] = $item;

@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Modern\ExpressionRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
-use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
@@ -85,15 +84,15 @@ final class UnionRule
     }
 
     /**
-     * Retains deferred operands of an untrailed UNION block before assigning read ownership.
-     * Blocks with an open tail stay with the clause-ownership rules.
+     * Retains complete deferred SELECT operands before assigning their tail to a UNION.
+     * Deferred sort operands remain with their separate ordering interpretation.
      *
      * @param list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> $hints The SELECT hints
      */
     public function retained(Node $part, array $hints): Block|Query
     {
         $selection = $hints === [] ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->block($part) : null;
-        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection && $selection->orderBy === [] && $selection->limit === null && $selection->procedure === null) {
+        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
             return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
         }
         return ($selection instanceof Block ? $selection : (new BlockRule($this->lowering))->part($part))->hinted($hints);
@@ -109,7 +108,7 @@ final class UnionRule
         $form = $this->lowering->form($paren);
 
         return match ($form->signature) {
-            'select_paren: SELECT_SYM select_part2' => (new BlockRule($this->lowering))->part($form->node(1))->hinted($this->lowering->hints($form->token(0)))->select(),
+            'select_paren: SELECT_SYM select_part2' => $this->chain($this->retained($form->node(1), $this->lowering->hints($form->token(0))), null),
             'select_paren: ( select_paren )', 'create_view_select_paren: ( create_view_select_paren )' => new ParenthesizedQuery($this->paren($form->node(1))),
             'create_view_select_paren: create_view_select' => $this->view($form->node(0))->select(),
             default => throw ImplementationGap::production($form),
@@ -171,7 +170,7 @@ final class UnionRule
         return match ($form->signature) {
             'opt_union_order_or_limit:' => new Trailer(),
             'opt_union_order_or_limit: union_order_or_limit', 'union_order_or_limit: order_or_limit' => $this->ordering($form->node(0)),
-            'order_or_limit: order_clause opt_limit_clause_init', 'order_or_limit: order_clause opt_limit_clause' => new Trailer((new ClauseRule($this->lowering))->ordering($form->node(0)), $tail->limit($form->node(1))),
+            'order_or_limit: order_clause opt_limit_clause_init', 'order_or_limit: order_clause opt_limit_clause' => new Trailer((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->ordering($form->node(0)), $tail->limit($form->node(1))),
             'order_or_limit: limit_clause' => new Trailer([], $tail->limit($form->node(0))),
             default => throw ImplementationGap::production($form),
         };

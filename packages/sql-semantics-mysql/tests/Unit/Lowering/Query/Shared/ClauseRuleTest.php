@@ -75,7 +75,7 @@ final class ClauseRuleTest extends TestCase
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame([Direction::Ascending, Direction::Descending, null], array_map(static fn (OrderItem $item): ?Direction => $item->direction, $operation->statement->query->orderBy));
+        self::assertSame([Direction::Ascending, Direction::Descending, null], array_map(static fn (OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem $item): ?Direction => $item->direction, $operation->statement->query->orderBy));
     }
 
     public function testPositionsWrapsUnsignedIntegers(): void

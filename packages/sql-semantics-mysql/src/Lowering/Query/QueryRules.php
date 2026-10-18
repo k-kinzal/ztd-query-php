@@ -123,6 +123,9 @@ final class QueryRules
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection), $end, false);
         }
         $meaning = (new Shared\QueryMeaning())->of($selection);
+        if ($meaning instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($meaning), $end, false);
+        }
         if ($meaning instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery($meaning), $end, false);
         }
