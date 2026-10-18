@@ -25,6 +25,24 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 final class LoadNotices
 {
     /**
+     * Loads CALL during preparation. MySQL 5.6 and 5.7 defer missing procedures and
+     * wrong arities until execution; MySQL 8.0 onward checks both at preparation.
+     * Load notices belong to PREPARE and are not repeated by its first EXECUTE.
+     */
+    public function prepare(\SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall $call, Session $session): void
+    {
+        if (!in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            (new \MySqlMemory\Command\Program\CallCommand())->routine($call, $session);
+            return;
+        }
+        $schema = $call->procedure->schema->value ?? $session->variables->database;
+        $routine = $session->instance->dictionary->schema($schema)?->procedures[strtolower($call->procedure->name->value)] ?? null;
+        if ($routine !== null) {
+            (new \MySqlMemory\Session\Access\OpenedTables())->routine($routine, $session);
+        }
+    }
+
+    /**
      * Loads a user definition's notices once per session and dictionary generation.
      */
     public function record(Routine $routine, Session $session): void
@@ -73,6 +91,10 @@ final class LoadNotices
      */
     public function notice(\SqlSemantics\Statement\Node $node, \SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation
     {
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse) {
+            $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ProcedureAnalyse;
+            return $release === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice) : null;
+        }
         if ($node instanceof CollationName) {
             return $node->deprecation($release);
         }

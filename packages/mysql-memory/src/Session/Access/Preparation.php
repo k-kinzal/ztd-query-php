@@ -40,6 +40,9 @@ final class Preparation
         (new Reading())->read($operation, $session, true);
         (new DefaultDatabase())->check($operation->statement, $session);
         $this->definitions($operation, $session);
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall) {
+            (new \MySqlMemory\Program\Routine\LoadNotices())->prepare($operation->statement, $session);
+        }
         (new DefaultDatabase())->referenced($operation, $session);
         $application = (new Hints())->apply($operation->statement, $session, true);
         try {

@@ -68,10 +68,11 @@ final class StoredSelections
         $having = isset($clauses['having']) ? $this->predicate($clauses['having']) : null;
         $ordering = isset($clauses['order']) ? (new StoredClauses($this->lowering))->ordering($clauses['order']) : [];
         $limit = isset($clauses['limit']) ? (new TailRule($this->lowering))->limit($clauses['limit']) : null;
+        $procedure = isset($clauses['procedure']) ? (new TailRule($this->lowering))->procedure($clauses['procedure']) : null;
         $windows = isset($clauses['windows']) ? (new ClauseRule($this->lowering))->windows($clauses['windows']) : [];
         $deferred = $this->deferred($items, $predicate, $grouping, $having, $ordering);
         if ($deferred) {
-            return new DeferredSelection($items, $input, $predicate, $options, $grouping, $having, $ordering, $limit, $windows);
+            return new DeferredSelection($items, $input, $predicate, $options, $grouping, $having, $ordering, $limit, $windows, $procedure);
         }
         $ordinary = [];
         foreach ($items as $item) {
@@ -82,7 +83,7 @@ final class StoredSelections
         \SqlSemantics\Diagnostic\Check::invariant($having === null || $having instanceof Scalar, 'An ordinary group predicate is scalar.');
         \SqlSemantics\Diagnostic\Check::invariant($grouping === null || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping, 'An ordinary grouping has scalar or ordinal items.');
         $order = array_values(array_filter($ordering, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\OrderItem));
-        return new Block($options, $ordinary, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, trailer: new Trailer($order, $limit), source: $node, origins: $this->lowering->origins);
+        return new Block($options, $ordinary, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, trailer: new Trailer($order, $limit, $procedure), source: $node, origins: $this->lowering->origins);
     }
 
     /**
@@ -103,7 +104,7 @@ final class StoredSelections
      */
     public function frontier(Node $node): ?array
     {
-        $wrappers = ['statement', 'simple_statement', 'select', 'select_init', 'select_init2', 'select_stmt', 'select_part2', 'select_options_and_item_list', 'select_into', 'select_from', 'view_select_aux', 'create_view_select', 'query_expression_with_opt_locking_clauses', 'query_expression', 'query_expression_body', 'query_primary', 'query_specification'];
+        $wrappers = ['statement', 'simple_statement', 'select', 'select_init', 'select_init2', 'select_stmt', 'select_part2', 'select_options_and_item_list', 'select_into', 'select_from', 'create_select', 'opt_select_from', 'table_expression', 'view_select_aux', 'create_view_select', 'query_expression_with_opt_locking_clauses', 'query_expression', 'query_expression_body', 'query_primary', 'query_specification'];
         $list = null;
         $from = null;
         $where = null;
@@ -157,6 +158,7 @@ final class StoredSelections
             'order_clause', 'opt_order_clause' => 'order',
             'opt_limit_clause', 'opt_limit_clause_init', 'limit_clause' => 'limit',
             'opt_window_clause' => 'windows',
+            'procedure_analyse_clause', 'opt_procedure_analyse_clause' => 'procedure',
             default => null,
         };
     }

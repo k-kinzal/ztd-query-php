@@ -28,6 +28,11 @@ use SqlSemantics\Statement\Snapshot;
  * also applies to directly constructed statements, independently of parsing.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert-select.html. Status: Implemented.
  *
+ * @example Refusing a read source with no relation for its star
+ *     $head = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto(false, null, false, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery($head, $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading the source of an INSERT ... SELECT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a) SELECT b FROM u');
@@ -52,6 +57,7 @@ final class InsertQuery implements Explainable
     {
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || $this->onDuplicate === [], 'REPLACE has no ON DUPLICATE KEY UPDATE.');
+        Check::input($this->values() !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($source) === null, 'An INSERT read source has coherent fixed columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -93,13 +93,13 @@ final class Planner
     public ?array $carried = null;
 
     /**
-     * @param Statement|Query|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows $statement The bound statement, query or stored expression being prepared
+     * @param Statement|Query|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $statement The bound statement, query or stored expression being prepared
      * @param Facts $facts The facts of the statement
      * @param Settings $settings The session settings
      * @param Connection $connection What the statement reads of its connection
      * @param Dictionary $dictionary The databases of the server
      */
-    public function __construct(public readonly Statement|Query|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows $statement, Facts $facts, public readonly Settings $settings, Connection $connection, public readonly Dictionary $dictionary)
+    public function __construct(public readonly Statement|Query|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $statement, Facts $facts, public readonly Settings $settings, Connection $connection, public readonly Dictionary $dictionary)
     {
         $this->compiler = new Compiler($facts, $settings, $this, $connection);
         $this->blocks = new Blocks($this);

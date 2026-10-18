@@ -13,6 +13,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Scalar;
@@ -31,7 +32,7 @@ final class InsertUse
     /**
      * Returns the standalone input's preparation error.
      */
-    public function error(DeferredInsertRows $write, Session $session): SqlError
+    public function error(DeferredInsertRows|DeferredInsertQuery $write, Session $session): SqlError
     {
         try {
             $this->raise($write, $session, false);
@@ -45,7 +46,7 @@ final class InsertUse
      *
      * @throws SqlError When the reached write cannot prepare
      */
-    public function raise(DeferredInsertRows $write, Session $session, bool $invocation = true): never
+    public function raise(DeferredInsertRows|DeferredInsertQuery $write, Session $session, bool $invocation = true): never
     {
         if ($invocation) {
             \MySqlMemory\Session\State\StatementCounters::query($session);
@@ -70,7 +71,7 @@ final class InsertUse
             }
         }
         foreach ($facts->diagnostics as $problem) {
-            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\DuplicateColumn) {
+            if ($write instanceof DeferredInsertRows && ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\DuplicateColumn)) {
                 throw (new Errors())->error($problem, $session);
             }
         }
@@ -86,18 +87,25 @@ final class InsertUse
      * @throws SqlError When an operand cannot prepare
      * @throws LogicException If a constructed template loses its required condition
      */
-    public function prepare(DeferredInsertRows $write, \MySqlMemory\Plan\Planner $planner, Session $session): never
+    public function prepare(DeferredInsertRows|DeferredInsertQuery $write, \MySqlMemory\Plan\Planner $planner, Session $session): never
     {
         $schema = $write->into->table->name->schema->value ?? $session->variables->database;
         $table = $session->instance->dictionary->table($schema, $write->into->table->name->name->value);
         \SqlSemantics\Diagnostic\Check::invariant($table !== null, 'The write target was opened before value preparation.');
-        $scope = new \MySqlMemory\Evaluation\Scope();
-        $scope->place($write->into->table, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);
-        foreach ($write->into->columns->columns ?? [] as $column) {
-            if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
-                (new \MySqlMemory\Command\Write\Assignments($planner, $table))->position($column);
+        if ($write instanceof DeferredInsertRows || !$session->settings()->legacy() || ($session->preparation->inputPrepared && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651)) {
+            foreach ($write->into->columns->columns ?? [] as $column) {
+                if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
+                    (new \MySqlMemory\Command\Write\Assignments($planner, $table))->position($column);
+                }
             }
         }
+        if ($write instanceof DeferredInsertQuery) {
+            (new QueryUse())->prepare($write->source, $planner->compiler, write: $session->preparation->inputPrepared ? null : $write);
+            $planner->query($write->source, null);
+            throw (new Errors())->error($write->problem(), $session);
+        }
+        $scope = new \MySqlMemory\Evaluation\Scope();
+        $scope->place($write->into->table, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);
         foreach ($write->rows as $row) {
             foreach ($row->values as $value) {
                 if ($value instanceof DefaultRequest) {

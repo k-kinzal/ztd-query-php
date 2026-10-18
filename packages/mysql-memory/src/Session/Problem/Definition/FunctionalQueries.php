@@ -18,10 +18,12 @@ use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 
 /**
- * Opens functional-index subquery tables before checking the creation target.
+ * Opens functional-index dependencies in their statement ownership order.
  *
- * References are already resolved by SQL Semantics. Their failures precede
- * target existence, missing key columns and the forbidden-subquery diagnostic.
+ * References are already resolved by SQL Semantics. CREATE TABLE opens its
+ * subquery dependencies before testing target existence; ALTER and CREATE INDEX
+ * open their existing target first. Missing key columns and forbidden-subquery
+ * diagnostics follow these relation dependencies.
  * Explicit row-width conflicts precede table lookup. Verified through SQL
  * on MySQL 8.0.44, 8.4.7 and 9.1.0 without consulting implementation code.
  *
@@ -48,6 +50,11 @@ final class FunctionalQueries
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof OperandColumns && $diagnostic->expression !== null && $walker->find($diagnostic->expression, Query::class) === []) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $create);
+            }
+        }
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if (!$create instanceof CreateTable && $diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name === $create->table) {
+                throw (new Errors())->error($diagnostic, $session);
             }
         }
         $problems->opened($operation, $session, $operation->facts->diagnostics);

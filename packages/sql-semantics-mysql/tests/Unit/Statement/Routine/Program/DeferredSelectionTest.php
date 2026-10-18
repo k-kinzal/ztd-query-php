@@ -38,6 +38,16 @@ final class DeferredSelectionTest extends TestCase
         self::assertSame($create->body->having, $create->body->deferred()[2]);
     }
 
+    public function testRenderRetainsLegacyAnalysisWithTheDeferredWriteSource(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT ROW(1,2) PROCEDURE ANALYSE(3)');
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->statement->body->source);
+        self::assertNotNull($operation->statement->body->source->selection->procedure);
+        self::assertSame('CREATE PROCEDURE p() INSERT INTO t SELECT ROW(1, 2) PROCEDURE ANALYSE(3)', $operation->toString());
+    }
+
     public function testRenderKeepsTheInputAndPredicate(): void
     {
         self::assertSame('CREATE PROCEDURE p() SELECT 1 FROM DUAL WHERE (2, 3)', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 FROM DUAL WHERE (2,3)')->toString());

@@ -85,9 +85,7 @@ final class RoutineCommand implements Command
         $function = $statement instanceof CreateFunction;
         $kind = $function ? 'FUNCTION' : 'PROCEDURE';
         $database = ProgramSource::database($statement->name->schema, $session);
-        if ($statement instanceof CreateFunction && $statement->nameCollision($session->settings()->release())) {
-            $context->note(\MySqlMemory\Error\Family\AdministrationError::NativeFunctionName, $statement->name->name->value);
-        }
+        ProgramSource::definer($statement->definer, $session, $context);
         $key = strtolower($statement->name->name->value);
         $schema = $session->instance->dictionary->schema($database);
         if ($schema !== null && isset(self::routines($schema, $function)[$key])) {
@@ -117,12 +115,16 @@ final class RoutineCommand implements Command
     }
 
     /**
-     * Resolves the routine database and checks ENUM and SET before the body conditions.
+     * Resolves the routine database, reports its name relationship and checks ENUM and SET before the body conditions.
      *
      * @throws \MySqlMemory\Error\SqlError When an enumeration repeats a member under strict mode
      */
     public function types(CreateProcedure|CreateFunction|RefusedProgramBody $statement, Session $session, Context $context): void
     {
+        ProgramSource::database($statement->name->schema, $session);
+        if ($statement instanceof CreateFunction && $statement->nameCollision($session->settings()->release())) {
+            $context->note(\MySqlMemory\Error\Family\AdministrationError::NativeFunctionName, $statement->name->name->value);
+        }
         $types = new RoutineDeclarations();
         $types->check($statement->name, $types->items($statement), $session, $context);
     }
@@ -143,7 +145,7 @@ final class RoutineCommand implements Command
         return new Routine(
             $schema->name,
             $statement->name->name->value,
-            ProgramSource::definer($statement->definer, $session, $context),
+            ProgramSource::definer($statement->definer, $session),
             $text->parameters($statement->parameters, $function),
             $statement instanceof CreateFunction ? $this->returns($statement, $schema, $session->settings()->release()) : '',
             $text->routineBody($statement->body),

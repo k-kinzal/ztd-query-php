@@ -26,6 +26,18 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class RoutineCommandTest extends TestCase
 {
+    public function testExecuteKeepsDefinitionNoticesBeforeUnsafeFunctionRefusal(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->run("CREATE DEFINER=missing FUNCTION PERSIST() RETURNS INT LANGUAGE JAVASCRIPT AS 'return 1'");
+        self::assertSame([1585, 6001, 1449, 1418], array_column($session->diagnostics->conditions, 1));
+        $session->query('SET GLOBAL log_bin_trust_function_creators=1');
+        $session->query("CREATE DEFINER=missing FUNCTION PERSIST() RETURNS INT LANGUAGE JAVASCRIPT AS 'return 1'");
+        self::assertSame([1585, 6001, 1449], array_column($session->diagnostics->conditions, 1));
+        $session->run("CREATE DEFINER=missing FUNCTION PERSIST() RETURNS INT LANGUAGE JAVASCRIPT AS 'return 1'");
+        self::assertSame([1585, 6001, 1449, 1304], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testExecuteWarnsWhenTheExternalLanguageComponentIsAbsent(): void
     {
         $session = (new Instance())->connect();

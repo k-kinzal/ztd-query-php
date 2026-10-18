@@ -17,6 +17,19 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRo
 #[Medium]
 final class InsertUseTest extends TestCase
 {
+    public function testErrorOpensTheDestinationBeforeAQueryReadCondition(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run('INSERT INTO t SELECT *');
+        self::assertSame([['Error', 1146, "Table 'd.t' doesn't exist"]], $session->diagnostics->conditions);
+        $session->query('CREATE TABLE t(a INT)');
+        $session->run('INSERT INTO t SELECT *');
+        self::assertSame([['Error', 1096, 'No tables used']], $session->diagnostics->conditions);
+        $session->run('INSERT INTO t SELECT ROW(1, 2)');
+        self::assertSame([['Error', 1241, 'Operand should contain 1 column(s)']], $session->diagnostics->conditions);
+    }
+
     public function testErrorOpensTheDestinationBeforeNestedValueDependencies(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

@@ -58,6 +58,12 @@ final class SelectionFacts
         (new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->check($selection, $derivation);
         $this->ordering($selection->orderBy, $derivation, $results, $fields, true);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts())->limit($selection->limit, $derivation, $scope->environment);
+        if ($selection->procedure !== null) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ProcedureAnalyse, $derivation);
+            foreach ($selection->procedure->arguments as $argument) {
+                $derivation->scalar($argument, $scope->environment);
+            }
+        }
         return $fields;
     }
 

@@ -137,7 +137,11 @@ final class QueryRules
      */
     public function legacyQuery(Node $select, ?Node $union = null): Query
     {
-        return (new UnionRule($this->lowering))->chain((new BlockRule($this->lowering))->create($select), $union);
+        $first = $union === null || $union->tokens() === [] ? (new Shared\StoredSelections($this->lowering))->block($select) : null;
+        if ($first instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            $first = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($first);
+        }
+        return (new UnionRule($this->lowering))->chain($first ?? (new BlockRule($this->lowering))->create($select), $union);
     }
 
     /**
@@ -150,7 +154,7 @@ final class QueryRules
      */
     public function legacyParenthesizedQuery(Node $select, Node $union): Query
     {
-        return (new UnionRule($this->lowering))->chain(new ParenthesizedQuery((new BlockRule($this->lowering))->create($select)->select()), $union);
+        return (new UnionRule($this->lowering))->chain(new ParenthesizedQuery($this->legacyQuery($select)), $union);
     }
 
     /**

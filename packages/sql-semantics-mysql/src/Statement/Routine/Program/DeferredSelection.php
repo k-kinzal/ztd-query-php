@@ -70,8 +70,9 @@ final class DeferredSelection implements ProgramStatement
      * @param TableSource|Dual|null $from The complete input relation
      * @param Scalar|RowOperand|DeferredOperand|null $where The row predicate
      * @param list<\SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition> $windows The complete WINDOW clause
+     * @param \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse|null $procedure The legacy result-analysis clause
      */
-    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [])
+    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [], public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse $procedure = null)
     {
         $this->windows = Check::listOf($windows, \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition::class, 'A stored selection retains its named window definitions.');
         $this->options = Check::listOf($options, SelectOption::class, 'A stored selection retains SELECT modifiers.');
@@ -159,6 +160,6 @@ final class DeferredSelection implements ProgramStatement
         if ($this->orderBy !== []) {
             $out->keyword('ORDER', 'BY')->list($this->orderBy);
         }
-        $out->node($this->limit);
+        $out->node($this->limit)->node($this->procedure);
     }
 }

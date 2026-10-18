@@ -145,11 +145,14 @@ final class InsertRule
                 $origin = $this->lowering->origins->publish()->of($body);
                 throw new \SqlSemantics\Construction\RejectedInput($problem, $origin === null ? 0 : $origin->offset + $origin->length, false);
             }
+            if ((new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($body) === null && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($body) !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery($into, $body, $updates)), $end, false);
+            }
             return new InsertQuery($into, $body, $updates);
         }
 
         if (array_filter($body, static fn ($row): bool => $row instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow) !== []) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedInsertRows(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows($into, $body, $alias, $updates)), $end, false);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows($into, $body, $alias, $updates)), $end, false);
         }
         return new InsertRows($into, array_values(array_filter($body, static fn ($row): bool => $row instanceof InsertedRow)), $alias, $updates);
     }

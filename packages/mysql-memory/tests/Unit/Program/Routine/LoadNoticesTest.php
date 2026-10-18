@@ -14,6 +14,48 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class LoadNoticesTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\TestWith(['8.0.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['8.4.7'])]
+    public function testPrepareRequiresAnExistingProcedureOnModernReleases(string $release): void
+    {
+        $session = (new Instance($release, [], ['d']))->connect(database: 'd');
+        $call = new \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('missing')));
+        $this->expectExceptionCode(1305);
+        (new LoadNotices())->prepare($call, $session);
+    }
+
+    public function testPrepareChecksModernArityWithoutExecutingTheProcedure(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE PROCEDURE p(x INT) SELECT * FROM missing');
+        $call = new \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')));
+        $this->expectExceptionCode(1318);
+        (new LoadNotices())->prepare($call, $session);
+    }
+
+    public function testPrepareLoadsExistingDefinitionsWithoutCheckingInvocationArity(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $call = new \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')));
+        (new LoadNotices())->prepare($call, $session);
+        self::assertSame([], $session->diagnostics->conditions);
+        $session->query('CREATE PROCEDURE p(x INT) SELECT * FROM t PROCEDURE ANALYSE()');
+        $session->diagnostics->clear();
+        (new LoadNotices())->prepare($call, $session);
+        self::assertSame([1681], array_column($session->diagnostics->conditions, 1));
+        $session->diagnostics->clear();
+        (new LoadNotices())->prepare($call, $session);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testNoticeKeepsTheLegacyAnalysisWarningOnRoutineLoad(): void
+    {
+        $clause = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse();
+        self::assertSame(1681, (new LoadNotices())->notice($clause, \SqlSemantics\Contract\GrammarRelease::MySql5744)?->code());
+        self::assertNull((new LoadNotices())->notice($clause, \SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertNull((new LoadNotices())->notice($clause, \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     #[\PHPUnit\Framework\Attributes\TestWith(['utf8', 3719])]
     #[\PHPUnit\Framework\Attributes\TestWith(['ucs2', null])]
     #[\PHPUnit\Framework\Attributes\TestWith(['utf8mb3', null])]

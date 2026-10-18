@@ -160,10 +160,10 @@ final class InsertFacts
     /**
      * Derives INSERT ... SELECT, TABLE or VALUES.
      */
-    public function query(InsertQuery $insert, Derivation $derivation, Environment $outer): void
+    public function query(InsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $insert, Derivation $derivation, Environment $outer): void
     {
         [$target, $fact] = $this->target($insert->into, $derivation, $outer);
-        $values = $insert->values();
+        $values = $insert instanceof InsertQuery ? $insert->values() : null;
         $late = $this->late($derivation) && $values === null;
         $written = $late ? null : $this->columns($insert->into, $target, $fact, $derivation, $outer);
         if ($values !== null) {
@@ -196,13 +196,13 @@ final class InsertFacts
      *
      * @param list<Field> $written
      */
-    public function source(InsertQuery $insert, array $written, QueryFact $rows, Derivation $derivation): void
+    public function source(InsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $insert, array $written, QueryFact $rows, Derivation $derivation): void
     {
         if ($this->defaulted($insert)) {
             return;
         }
         if ($rows->shape->complete() && count($rows->shape->slots) !== count($written)) {
-            if ($insert->values() === null) {
+            if (!$insert instanceof InsertQuery || $insert->values() === null) {
                 $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots), 1));
             }
 
@@ -215,9 +215,9 @@ final class InsertFacts
     /**
      * Tells whether a source writes only empty VALUES ROW() rows, which write the defaults.
      */
-    public function defaulted(InsertQuery $insert): bool
+    public function defaulted(InsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $insert): bool
     {
-        $values = $insert->values();
+        $values = $insert instanceof InsertQuery ? $insert->values() : null;
         if ($values === null || ($insert->into->columns !== null && $insert->into->columns->columns !== [])) {
             return false;
         }

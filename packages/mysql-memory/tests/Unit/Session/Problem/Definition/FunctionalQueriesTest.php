@@ -21,6 +21,10 @@ final class FunctionalQueriesTest extends TestCase
      */
     public static function providerPreparation(): iterable
     {
+        yield 'missing indexed target' => ['CREATE INDEX i ON missing (((TABLE absent)))', 1146, "Table 'd.missing' doesn't exist"];
+        yield 'missing altered target' => ['ALTER TABLE missing ADD INDEX i (((TABLE absent)))', 1146, "Table 'd.missing' doesn't exist"];
+        yield 'indexed target present' => ['CREATE INDEX i ON present (((TABLE absent)))', 1146, "Table 'd.absent' doesn't exist"];
+        yield 'explicit widths before indexed target' => ['CREATE INDEX i ON missing (((1,2)=(3,4,5) AND EXISTS(TABLE absent)))', 1241, 'Operand should contain 2 column(s)'];
         yield 'missing subquery table' => ['CREATE TABLE t(a INT,INDEX i(missing,((TABLE absent))))', 1146, "Table 'd.absent' doesn't exist"];
         yield 'existing subquery table' => ['CREATE TABLE t(a INT,INDEX i(missing,((TABLE present))))', 3758, "Expression of functional index 'i' contains a disallowed function."];
         yield 'unnamed index' => ['CREATE TABLE t(a INT,INDEX(missing,((TABLE present))))', 3758, "Expression of functional index 'functional_index' contains a disallowed function."];

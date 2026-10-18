@@ -104,7 +104,7 @@ final class Problems
             throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
         }
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            $this->analysed($operation->statement);
+            $this->analysed($operation instanceof QueryPreparation && $operation->write !== null ? $operation->write : $operation->statement);
         }
     }
 
@@ -118,7 +118,7 @@ final class Problems
     {
         $starred = array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables) !== [];
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 || ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && !$starred)) {
-            $this->analysed($operation->statement);
+            $this->analysed($operation instanceof QueryPreparation && $operation->write !== null ? $operation->write : $operation->statement);
         }
         if ($operation instanceof QueryPreparation) {
             (new \MySqlMemory\Program\Expression\QueryUse())->templates($operation, $session);
@@ -133,11 +133,12 @@ final class Problems
     public function analysed(Node $statement): void
     {
         $query = match (true) {
-            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery => $statement->source,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery => $statement->source,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable => $statement->query,
             default => null,
         };
-        foreach ($query === null ? [] : (new Walker())->find($query, Select::class) as $select) {
+        foreach ($query === null ? [] : [...(new Walker())->find($query, Select::class), ...(new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class)] as $select) {
             if ($select->procedure !== null) {
                 throw StatementError::WrongUsage->error('PROCEDURE', 'non-SELECT');
             }

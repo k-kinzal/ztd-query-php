@@ -28,6 +28,24 @@ use SqlSemantics\Platform\MySql\Statement\Query\Star;
 #[Medium]
 final class QueryRulesTest extends TestCase
 {
+    public function testLegacyParenthesizedQueryRetainsItsCompleteWriteSource(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t (SELECT ROW(1,2) FROM missing)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->body->source);
+        self::assertSame('CREATE PROCEDURE p() INSERT INTO t (SELECT ROW(1, 2) FROM missing)', $operation->toString());
+    }
+
+    public function testLegacyQueryRetainsTheWriteSourceBeforeItsDestinationIsAvailable(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT ROW(1, 2) FROM missing');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
+        self::assertSame('t', $operation->statement->body->into->table->name->name->value);
+        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->statement->body->problem()->message());
+    }
+
     public function testEmbeddedKeepsOnlyThePublishedQueryInTheSourceMap(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) AS SELECT 1 AS b');
