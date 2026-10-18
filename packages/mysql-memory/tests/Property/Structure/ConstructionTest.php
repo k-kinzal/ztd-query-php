@@ -30,6 +30,25 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 final class ConstructionTest extends TestCase
 {
     /**
+     * A stricter scalar ownership invariant still has an inhabitant in the complete inventory.
+     *
+     * @throws JsonException When the value inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testQuantifiedComparisonFitsTheBudgetAfterWriteClauseRefusals(): void
+    {
+        $catalogue = new Catalogue();
+        $choices = new Choices('row-roles-20261017:92');
+        $choices->one($catalogue->roots());
+        $construction = new Construction($choices, $catalogue, new Metadata());
+        $node = $construction->object(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison::class, 6);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison::class, $node);
+        self::assertSame('mysql', (new \Fuzz\Structure\Profiles())->select($node)->grammar->database());
+        self::assertLessThanOrEqual(10000, $construction->attempts);
+    }
+
+    /**
      * A repaired clone operand remains representable in a supported language profile.
      *
      * @throws JsonException When the value inventory is invalid

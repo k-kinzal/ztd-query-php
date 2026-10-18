@@ -12,7 +12,7 @@ composer fuzz:structures -- 100 example-seed
 
 The campaign discovers concrete types from the reviewed semantic value inventories. Its generator interprets native constructor types and PHPDoc collection types, chooses enum cases, and builds fresh nested objects. A readonly field's declared `@var` type takes precedence over the corresponding constructor parameter: for example, a constructor may accept a broad list and check that every element is a select item before retaining it as a `non-empty-list<SelectExpression|Star|TableWildcard>`. Constructor invariant violations cause another construction attempt. The generator has finite depth and attempt budgets; exhaustion is reported as an incomplete trial and never as a successful execution. Primitive values and collection lengths are bounded, so passing a finite campaign is evidence about the sampled inputs.
 
-Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. The selected root can use the shared 2,000-attempt cap. Each nested constructor retains a smaller depth-dependent cap that includes its descendants, preventing one nested alternative from taking the entire root search budget. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
+Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. The selected root can use the shared 10,000-attempt cap. Each nested constructor retains a smaller depth-dependent cap that includes its descendants, preventing one nested alternative from taking the entire root search budget. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
 
 A rejected constructor keeps its completed arguments so the next trial can resample one argument instead of rebuilding unrelated children. Under a repeated invariant, the argument positions are visited in order so that no slot is starved by random selection. Repeated rejection by the same invariant switches that candidate to complete resampling until the rejected constraint changes. The invariant is identified by its constructor type and check call site, rather than a message containing generated names. Detailed messages remain in the rejection report. Both strategies use the same shared attempt cap. They inspect constructor types and invariant refusals only; they do not use MySQL outcomes to choose or discard values. Exhaustion remains a failure. The bounded search can still exhaust; neither a passing inventory run nor a repaired seed establishes that every random construction search will finish.
 
@@ -128,7 +128,7 @@ The arguments are `COUNT [SEED] [CLASS|-|@each] [RELEASE] [START] [native|compar
 composer fuzz:structures -- 244 all-model-roots @each
 ```
 
-The constructor search shares one 2,000-attempt cap across each root and its
+The constructor search shares one 10,000-attempt cap across each root and its
 children. When a constructor rejects an argument combination, the search retains
 its completed child values and resamples one argument for the same concrete type
 and depth. This lets constraints involving several fields be explored without
@@ -2668,5 +2668,10 @@ escape through EXISTS or a quantified comparison and fail only when a later
 consumer selects a language profile. Constructor examples cover both predicates.
 The full semantic and Memory test suites pass after the change. The original
 EXISTS generation now reaches native comparison without a profile failure. The
-quantified-comparison trial instead exhausts its construction budget; this is a
-remaining generator failure, not a passing comparison or an accepted SQL error.
+quantified-comparison trial exhausted the former 2,000-attempt budget. The shared
+budget is now 10,000 attempts, retaining the same root, seed, type inventory and
+constructor refusals. The original trial reaches strict native comparison and
+agrees through the database-selection transition. Exhaustion still fails; no
+accepted structure is discarded. The construction property suite passes 292
+tests after the budget increase. This sampled comparison does not close the
+remaining whole-model invariant audit.
