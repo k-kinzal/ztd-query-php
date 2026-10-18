@@ -8,3 +8,18 @@
 /.requirements-cache/
 /.php-cs-fixer.php
 !/composer.lock
+
+# Local benchmark results, reports, and PHPBench storage.
+/.phpbench/
+/bench/result/
+/bench/results/
+/bench/report/
+/bench/reports/
+/bench/*.csv
+/bench/*.html
+/bench/*.json
+/bench/*.jsonl
+/bench/*.log
+/bench/*.tsv
+/bench/*.txt
+/bench/*.xml
