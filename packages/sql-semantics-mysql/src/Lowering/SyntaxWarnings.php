@@ -49,8 +49,9 @@ final class SyntaxWarnings
         $operands = new Notice\OperandCompletion();
         $passwords = new Account\Authentication\SyntaxPasswords();
         $header = new Routine\Program\NoticeHeader();
+        $handlers = new Routine\Condition\HandlerPrefix();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $passwords, $replicaNetTimeout): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $passwords, $replicaNetTimeout): void {
                 if ($state->aborted) {
                     return;
                 }
@@ -74,7 +75,7 @@ final class SyntaxWarnings
                     $state->record($ranges->span($node, true)[1] ?? 0, ParseStop::ProgramStatement);
                     return;
                 }
-                $notice = $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
+                $notice = $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
                 $conditions = [...(new Server\Instance\SyntaxForeignStrings())->converted($node, $lowering, $tokens), ...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
                     $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];

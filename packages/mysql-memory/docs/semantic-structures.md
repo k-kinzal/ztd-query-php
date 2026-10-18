@@ -2161,3 +2161,18 @@ inputs pass on three releases through both protocols (360 native observations),
 including unused and reached CTE bodies. This preserves information needed for
 the remaining window constructor work; it does not close those invariants or the
 final differential acceptance gates.
+
+
+### Handler condition prefixes
+
+Handler condition lists resolve against their lexical declarations before their
+body is read. Completed handlers retain their identities within the block;
+inner handlers neither conflict with nor escape into enclosing blocks. The input
+adapter uses the same condition identity and name-resolution rules as complete
+program derivation, retaining typed declarations rather than SQL or parser nodes.
+
+Snapshot `query416` passes all three static suites and 637 core, 8,567 MySQL
+Semantics and 18,073 Memory unit/property/doctest tests. Live comparisons pass
+260 observations on five releases through both protocols, including the complete
+`query409` generated failure. The next unseeded run found an EXPLAIN INTO target
+name/format precedence difference at input 41; this remains an acceptance failure.
