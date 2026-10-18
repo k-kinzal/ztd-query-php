@@ -299,6 +299,8 @@ final class Session
             $operation = $this->analyze($statement, $prepared, $parameters);
             $this->hinted = $prepared ? [] : $this->hinted;
             $command = (new Dispatcher())->command($operation->statement);
+        } catch (Parse\Definition\CompletedTemplate $completed) {
+            return $completed->reply;
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $this->diagnostics->clear();

@@ -80,6 +80,7 @@ final class MultipleDelete implements Explainable
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->targets = $input->targets;
         $this->tables = $input->tables;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables) === null, 'An ordinary DELETE target cannot be a derived or JSON relation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -2981,3 +2981,48 @@ available. Deferred stored operands retain the complete aggregate and its
 argument for invocation-time preparation. The expanded temporal corpus compares
 168 requests through text and prepared protocols on three releases; direct
 construction reuses 36 stored definitions across seven invocation states.
+
+
+Generated-column declarations now distinguish ordinary generation expressions
+from the compound scalar-subquery declarations MySQL 5.7 can retain in a stored
+program or prepared statement. Ordinary generated-column values exclude forbidden
+functions, variables and subqueries before scalar-width preparation. The legacy
+instruction retains the complete column, expression and CREATE header; it does
+not retain SQL or an AST. A direct construction property varies twelve complete
+definitions across skipped invocation, missing destination, existing destination,
+dropped destination and skipped invocation again. `IF NOT EXISTS` can complete
+against the existing destination. The same definitions are reused throughout.
+
+Native observation also exposed an unresolved MySQL 5.7.44 failure: preparing
+`CREATE TABLE IF NOT EXISTS t(g INT AS (1+(SELECT 1)))`, executing it, creating
+`t`, executing it again, dropping `t` and executing again disconnects the native
+session with error 2006. Two independent instances reproduced the failure.
+Memory currently reports the retained generation condition and stays connected.
+The strict regression keeps this history. No native-crash exception has been
+accepted, and this mismatch prevents acceptance.
+
+Ordinary multiple-table DELETE values now exclude targets whose only possible
+input occurrences are derived or JSON relations. A complete
+`DeferredMultipleDelete` instruction retains the target namespace, relations,
+predicate and modifiers inside a stored program. Its diagnostic identifies the
+owning write, so legacy preparation does not reject a stored definition merely
+because an unvisited instruction has a read-only target. Invocation resolves the
+complete dependency graph before reporting the target condition. Snapshot
+`query717-work-20261019` passed twelve native tests across MySQL 5.7.44, 8.0.44,
+8.4.7 and 9.1.0: eight text/prepared corpus cases and four direct construction
+cases, with 112 assertions. The direct cases vary twelve definitions per release
+and compare creation plus five observations of the same call, including populated
+and missing source tables. SQL text in the memory session is deliberately
+unrelated to the constructed statements.
+
+Acceptance remains unmet. Snapshot `query690-work-20261019` passed all nine
+provided SQL Faker seed corpora, but later changes require their own final
+campaign. The subsequent `query706-work-20261019` whole-model campaign constructed
+all 244 roots and matched 99 successes and 145 SQL errors without generation,
+profile or internal failures; the errors still require classification and state
+witnesses. Its unseeded run stopped after 717 matches at a partition-expression
+error that incorrectly preceded an unknown storage engine. The table-option
+ordering repair in `query717-work-20261019` addresses that input, with further
+validation in progress. Additional native probes retain unresolved function-arity
+and table-option ordering differences; passing the repaired cases is not a claim
+that all constructible structures satisfy the contract.

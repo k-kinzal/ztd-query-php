@@ -173,7 +173,12 @@ final class ChangeRule
             $problem = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets($targets, $tables, $with, $where, $this->lowering->programName);
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744);
         }
-        return new MultipleDelete($with, $options, new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets), $form, $where, $hints);
+        $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets);
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables) !== null) {
+            $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete($with, $options, $input, $form, $where, $hints);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
+        }
+        return new MultipleDelete($with, $options, $input, $form, $where, $hints);
     }
 
     /**

@@ -59,4 +59,13 @@ final class TargetReferencesTest extends TestCase
         self::assertSame($table->name, $rules->missing([$table->name], [$derived]));
         self::assertNull($rules->missing([new QualifiedName(new Name('visible'))], [$derived]));
     }
+    public function testReadOnlyRejectsOnlyTargetsWithNoPossibleWritableOccurrence(): void
+    {
+        $derived = new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]), new Name('q'));
+        $target = new QualifiedName(new Name('q'));
+        $rules = new TargetReferences();
+        self::assertSame($target, $rules->readOnly([$target], [$derived]));
+        self::assertNull($rules->readOnly([$target], [$derived, new TableReference(new QualifiedName(new Name('Q')))]));
+    }
+
 }

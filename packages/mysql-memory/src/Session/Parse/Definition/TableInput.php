@@ -97,6 +97,7 @@ final class TableInput
      * Retains a complete table template across PREPARE or reports its reached input condition.
      *
      * @throws DeferredPreparation When the header and source have prepared successfully
+     * @throws CompletedTemplate When a conditional table definition completes
      */
     public function template(RejectedInput $failure, string $statement, Session $session): SqlError
     {
@@ -117,10 +118,10 @@ final class TableInput
             $use = new \MySqlMemory\Program\Expression\TableUse();
             if ($session->preparation->inputPrepared) {
                 $query = $use->prepare($problem->definition, $session);
-                $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($query);
+                $bindings = $query === null ? null : \MySqlMemory\Command\Prepared\ParameterBindings::capture($query);
                 throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, $bindings));
             }
-            $use->raise($problem->definition, $session, false);
+            throw new CompletedTemplate($use->raise($problem->definition, $session, false));
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);

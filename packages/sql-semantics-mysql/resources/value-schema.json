@@ -1006,6 +1006,9 @@
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "source": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Delete\\RefusedDelete": {
+        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -1062,6 +1065,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteMisuse": {
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteRule",
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\MultipleDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete|null",
         "table": "?SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteRule": {
@@ -2718,6 +2722,15 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertedRow": {
         "values": "array"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete": {
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\MultipleDeleteForm",
+        "hints": "array",
+        "options": "array",
+        "tables": "array",
+        "targets": "array",
+        "where": "?SqlSemantics\\Statement\\Scalar",
+        "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement": {
         "name": "string",
         "value": "string"
@@ -3234,6 +3247,14 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultLiteral": {
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal|SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DeferredGeneratedColumn": {
+        "attributes": "array",
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "expression": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
+        "storage": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage",
+        "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\EnforcementAttribute": {
         "enforced": "bool"
     },
@@ -3476,6 +3497,14 @@
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
         "options": "array",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\OperandKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\RefusedOperand": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "function": "?string",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\OperandKind"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\IncorrectColumnName": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"

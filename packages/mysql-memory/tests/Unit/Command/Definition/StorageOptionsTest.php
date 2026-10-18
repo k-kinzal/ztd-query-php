@@ -133,4 +133,15 @@ final class StorageOptionsTest extends TestCase
         (new StorageOptions())->directories($create, $session);
     }
 
+    public function testBeforePartitionUsesTheOwningStoredInstructionAndPreservesSyntaxWarnings(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run('CREATE PROCEDURE p() CREATE TABLE t(a INT) ENGINE missing PARTITION BY HASH(!USER())');
+        self::assertSame([1287, 1286], array_column($session->diagnostics->conditions, 1));
+        $session->run("SET sql_mode=''");
+        $session->run('ALTER TABLE absent ENGINE missing PARTITION BY HASH(USER())');
+        self::assertSame([1286, 1064], array_column($session->diagnostics->conditions, 1));
+    }
+
 }

@@ -94,14 +94,14 @@ final class TableProblems
                 continue;
             }
             $specification = $element->specification;
-            if ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn || $specification instanceof GeneratedColumn) {
+            if ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn || ($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn)) {
                 foreach ($specification->attributes as $attribute) {
                     if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute) {
                         $names[] = $attribute->collation;
                     }
                 }
             }
-            if ($specification instanceof GeneratedColumn) {
+            if (($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn)) {
                 $names[] = $specification->collation;
             }
         }
@@ -154,7 +154,7 @@ final class TableProblems
         $comparison = $derivation->context->columnNames;
         foreach ((new TableDeclaration())->settled($output) as $field) {
             foreach ($definition->elements as $element) {
-                if ($field->name !== null && $element instanceof ColumnDefinition && $element->specification instanceof GeneratedColumn && $comparison->equal($element->name->column->value, $field->name->value)) {
+                if ($field->name !== null && $element instanceof ColumnDefinition && ($element->specification instanceof GeneratedColumn || $element->specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn) && $comparison->equal($element->name->column->value, $field->name->value)) {
                     $derivation->report(new GeneratedColumnWrite($field->name, $definition->name->name));
                 }
             }

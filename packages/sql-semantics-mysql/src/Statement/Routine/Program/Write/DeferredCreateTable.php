@@ -29,11 +29,14 @@ use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A stored table-creation instruction retaining both MERGE sources and a query.
+ * A stored table-creation instruction retaining a deferred source or generation role.
  *
  * A definition retains the complete header and query without opening tables.
  * When invoked, the MERGE/query role condition precedes query preparation.
  * Prepared input instead prepares the query before retaining this instruction.
+ * MySQL 5.7 compound generation expressions with nested subqueries also retain
+ * their complete column declarations. Destination existence precedes their
+ * invocation condition; IF NOT EXISTS can complete against an existing table.
  * This is a program template, not an ordinary table-creation statement.
  *
  * @example Retaining a stored creation with both source roles
@@ -86,7 +89,7 @@ final class DeferredCreateTable implements ProgramStatement, Relation
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
-        Check::input($query !== null && array_filter($this->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\UnionOption) !== [], 'A deferred table creation retains MERGE sources together with a query.');
+        Check::input(($query !== null && array_filter($this->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\UnionOption) !== []) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->elements), 'A deferred table creation retains MERGE sources together with a query or a deferred generation declaration.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -95,6 +95,39 @@ final class StorageOptions
     }
 
     /**
+     * Resolves the table options before a partition contextualization failure.
+     *
+     * The notice identifies its stored instruction; options of sibling writes
+     * are not read. Engine substitution does not happen after a refused operand.
+     *
+     * @throws SqlError When an earlier engine name is unavailable
+     */
+    public function beforePartition(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure $notice, \SqlSemantics\Statement\Operation $operation, Session $session): void
+    {
+        if (!$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
+            return;
+        }
+        $statement = $operation->facts->warningInstruction($notice) ?? $operation->statement;
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        if ($statement instanceof CreateTable) {
+            $this->header($statement, $session, $context);
+        } elseif ($statement instanceof AlterTable) {
+            if ($statement->table->schema === null && $session->variables->database === '') {
+                throw QueryError::NoDatabase->error();
+            }
+            foreach ($statement->commands as $command) {
+                if ($command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Command\SetTableOptions) {
+                    foreach ($command->options as $option) {
+                        if ($option instanceof EngineOption) {
+                            $this->named($option->engine->value, $context);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Resolves one engine name, preserving option order and substitution mode.
      *
      * @throws SqlError When engine substitution is disabled

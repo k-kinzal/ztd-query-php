@@ -142,7 +142,8 @@ final class ChangeFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1 AS k) DELETE z FROM c AS z');
 
-        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'))], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $operation->statement);
+        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'), $operation->statement)], $operation->facts->diagnostics);
     }
 
     public function testDeleteFindsTheInvisibleColumnsOfTheTable(): void

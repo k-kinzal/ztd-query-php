@@ -97,10 +97,14 @@ final class ColumnRule
             $attributes = $this->attributes($form->node($list));
             $this->refuse($attributes, $type);
             $this->compatible($type, $attributes, $name, $definition);
-
+            $value = $this->expression($form->node($expression), $name);
+            if ($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->contains($value)) {
+                return new \SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references);
+            }
+            \SqlSemantics\Diagnostic\Check::invariant($value instanceof Scalar, 'An ordinary generation expression has a scalar role.');
             return new GeneratedColumn(
                 $type,
-                $this->expression($form->node($expression)),
+                $value,
                 $this->lowering->charsets->collation($form->node($collation)),
                 $this->storage($form->node($storage)),
                 [...$attributes, ...$trailing],
@@ -212,19 +216,27 @@ final class ColumnRule
     /**
      * Lowers a generation expression: a node of `generated_column_func` or `expr`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the generation role excludes an operand
      * @throws ImplementationGap When a production has no rule
      */
-    public function expression(Node $expression): Scalar
+    public function expression(Node $expression, ?\SqlSemantics\Statement\Identifier\Name $column = null): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
-        if ($expression->name === 'expr') {
-            return $this->lowering->expressions->expression($expression);
+        if ($expression->name !== 'expr') {
+            $form = $this->lowering->productions->form($expression);
+            if ($form->signature !== 'generated_column_func: expr') {
+                throw ImplementationGap::production($form);
+            }
+            $expression = $form->node(0);
         }
-        $form = $this->lowering->productions->form($expression);
-        if ($form->signature !== 'generated_column_func: expr') {
-            throw ImplementationGap::production($form);
+        $operand = $this->lowering->expressions->operand($expression);
+        if ($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->contains($operand)) {
+            return $operand;
         }
-
-        return $this->lowering->expressions->expression($form->node(0));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($operand, $column ?? new \SqlSemantics\Statement\Identifier\Name(''));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($expression)[1] ?? 0, false);
+        }
+        return (new \SqlSemantics\Platform\MySql\Lowering\Expression\OperandRule())->scalar($operand, $expression);
     }
 
     /**

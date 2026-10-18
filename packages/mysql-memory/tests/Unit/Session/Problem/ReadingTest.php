@@ -309,7 +309,7 @@ final class ReadingTest extends TestCase
     public function testTargetsRequiresADatabaseBeforeInspectingTheInputRelations(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('DELETE y FROM (SELECT 1) AS y')->statement;
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('missing')), new \SqlSemantics\Statement\Identifier\Name('y'))]), \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::BeforeFrom);
         $session->text = 'unrelated invalid input';
         $this->expectExceptionCode(1046);
         (new Reading())->targets($statement, $session);

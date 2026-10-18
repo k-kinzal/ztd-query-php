@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTa
 use SqlSemantics\Statement\Operation;
 
 /**
- * Prepares or invokes a retained MERGE/query table definition using only its semantic fields.
+ * Prepares or invokes a retained table definition using only its semantic fields.
  *
  * @visibility MySqlMemory
  */
@@ -25,7 +25,7 @@ final class TableUse
      *
      * @throws SqlError When a header name or the incompatible table role is reached
      */
-    public function raise(DeferredCreateTable $definition, Session $session, bool $invocation = true): never
+    public function raise(DeferredCreateTable $definition, Session $session, bool $invocation = true): \MySqlMemory\Result\Reply
     {
         if ($invocation) {
             \MySqlMemory\Session\State\StatementCounters::query($session);
@@ -33,6 +33,9 @@ final class TableUse
             $session->diagnostics->clear();
         }
         $this->header($definition, $session);
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
+            return (new GenerationUse())->execute($definition, $session);
+        }
         throw SchemaError::WrongObject->error($definition->name->schema->value ?? $session->variables->database, $definition->name->name->value, 'BASE TABLE');
     }
 
@@ -52,10 +55,13 @@ final class TableUse
      *
      * @throws SqlError When the header or the creation query cannot prepare
      */
-    public function prepare(DeferredCreateTable $definition, Session $session): Operation
+    public function prepare(DeferredCreateTable $definition, Session $session): ?Operation
     {
         $this->header($definition, $session);
         $query = $definition->query;
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
+            return null;
+        }
         \SqlSemantics\Diagnostic\Check::invariant($query !== null, 'A deferred table creation retains its query.');
         if ($query->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
             (new SelectionUse())->raise($query->query->selection, $session, false);

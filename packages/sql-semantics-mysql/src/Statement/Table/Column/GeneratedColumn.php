@@ -58,6 +58,7 @@ final class GeneratedColumn implements ColumnSpecification
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->generated($type, $this->attributes) === null, 'A generated column cannot have a DEFAULT, ON UPDATE, AUTO_INCREMENT, SERIAL DEFAULT VALUE, COLUMN_FORMAT, STORAGE or SERIAL type.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $this->attributes) === [], 'Column attributes must fit the declared type and temporal precision.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($expression, new \SqlSemantics\Statement\Identifier\Name('')) === null, 'A generation expression excludes subqueries, session variables and forbidden functions.');
     }
 
     /**

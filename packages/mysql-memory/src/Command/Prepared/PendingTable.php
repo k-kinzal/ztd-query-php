@@ -46,6 +46,9 @@ final class PendingTable
         $session->text = $label;
         $database = $this->header->name->schema->value ?? $this->database;
         if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) {
+            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->header->elements)) {
+                return (new \MySqlMemory\Program\Expression\GenerationUse())->execute($this->header, $session, $database);
+            }
             throw \MySqlMemory\Error\Family\SchemaError::WrongObject->error($database, $this->header->name->name->value, 'BASE TABLE');
         }
         if ($session->instance->dictionary->schema($database) === null) {

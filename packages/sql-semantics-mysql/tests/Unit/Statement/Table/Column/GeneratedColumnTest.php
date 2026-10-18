@@ -53,6 +53,12 @@ final class GeneratedColumnTest extends TestCase
         new GeneratedColumn($type, new NumberLiteral('1'), attributes: $attributes);
     }
 
+    public function testRejectsASessionFunctionBeforeOperationConstruction(): void
+    {
+        $this->expectExceptionMessage('A generation expression excludes subqueries, session variables and forbidden functions.');
+        new GeneratedColumn(new Integral(Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []));
+    }
+
     public function testDeriveSpecificationResolvesItsLeadingCollation(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a INT COLLATE unknown AS (1)');

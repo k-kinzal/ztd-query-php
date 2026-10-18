@@ -66,6 +66,24 @@ final class TargetReferences
     }
 
     /**
+     * Finds a target that can only name a derived or JSON relation.
+     *
+     * @param list<QualifiedName> $targets The requested targets
+     * @param list<TableSource> $tables The input namespace
+     */
+    public function readOnly(array $targets, array $tables): ?QualifiedName
+    {
+        $occurrences = $this->occurrences($tables);
+        foreach ($targets as $target) {
+            $matches = array_filter($occurrences, fn (TableReference|DerivedTable|JsonTable $table): bool => $this->admits($target, $table));
+            if ($matches !== [] && array_filter($matches, static fn ($table): bool => $table instanceof TableReference) === []) {
+                return $target;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Enumerates only the visible terms, preserving their written order.
      *
      * @param list<TableSource> $tables The input relation tree

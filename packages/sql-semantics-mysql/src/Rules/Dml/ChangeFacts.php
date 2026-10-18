@@ -101,11 +101,11 @@ final class ChangeFacts
     /**
      * Derives a multiple-table DELETE.
      */
-    public function deleteMultiple(MultipleDelete $delete, Derivation $derivation, Environment $outer): void
+    public function deleteMultiple(MultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete $delete, Derivation $derivation, Environment $outer): void
     {
         $base = $this->base($delete->with, $derivation, $outer);
         $visible = $this->references($delete->tables, $derivation, $base);
-        $this->targets($delete->targets, $visible, $derivation);
+        $this->targets($delete->targets, $visible, $derivation, $delete);
         $this->clauses($delete->where, [], null, $derivation, $base, new Environment($derivation->context, $base, $visible));
     }
 
@@ -115,7 +115,7 @@ final class ChangeFacts
      * @param list<QualifiedName> $targets The requested deletion targets
      * @param list<VisibleRelation> $visible The complete input namespace
      */
-    public function targets(array $targets, array $visible, Derivation $derivation): void
+    public function targets(array $targets, array $visible, Derivation $derivation, MultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|null $statement = null): void
     {
         $projection = new Projection();
         foreach ($targets as $target) {
@@ -127,7 +127,7 @@ final class ChangeFacts
             if ($found === null) {
                 $derivation->report(new UnknownDeleteTable($target));
             } elseif (!$this->updatable($found->relation, $derivation)) {
-                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($found->relation)));
+                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($found->relation), $statement));
             }
             if ($found !== null) {
                 $derivation->bindReference($target, $found->relation);
