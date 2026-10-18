@@ -1,0 +1,46 @@
+{
+    "name": "bench/harbor-cli",
+    "description": "Harbor community operations service",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4.1",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
+        "symfony/clock": "^8.1",
+        "symfony/console": "^8.1",
+        "symfony/event-dispatcher": "^8.1",
+        "symfony/lock": "^8.1",
+        "symfony/mailer": "^8.1",
+        "symfony/property-access": "^8.1",
+        "symfony/property-info": "^8.1",
+        "symfony/serializer": "^8.1",
+        "symfony/validator": "^8.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "HarborOps\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "HarborOps\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "symfony/runtime": true
+        },
+        "optimize-autoloader": true,
+        "platform": {
+            "php": "8.4.1"
+        }
+    }
+}

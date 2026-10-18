@@ -1,0 +1,32 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    csrf_protection: true
+    session:
+        cookie_secure: auto
+        cookie_samesite: lax
+        cookie_httponly: true
+    form: true
+    validation: { email_validation_mode: html5 }
+    serializer: { enabled: true }
+    router: { utf8: true }
+    http_method_override: false
+    handle_all_throwables: true
+    mailer: { dsn: '%env(MAILER_DSN)%' }
+    lock: 'flock'
+    rate_limiter:
+        publishing:
+            policy: token_bucket
+            limit: 20
+            rate: { interval: '1 minute', amount: 20 }
+        registration:
+            policy: fixed_window
+            limit: 10
+            interval: '1 hour'
+    cache:
+        pools:
+            cache.scheduler: { adapter: cache.adapter.filesystem }
+when@test:
+    framework:
+        test: true
+        session: { storage_factory_id: session.storage.factory.mock_file }
+        mailer: { dsn: 'null://null' }

@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Deriver\Deriver\Evaluator\Execution\Offset;
+
+use Deriver\Deriver\Evaluator\Execution\Memory\Location;
+use Deriver\Deriver\Evaluator\Term;
+
+/**
+ * A byte position whose assignment updates the containing string cell.
+ * @visibility Deriver\Deriver\Evaluator
+ * @visibility Deriver\Deriver\Evaluator\Execution
+ */
+final class StringAccess
+{
+    /**
+     * @param Location $container Storage of the complete string
+     * @param Term|null $key Evaluated offset, or append syntax
+     */
+    public function __construct(public readonly Location $container, public readonly ?Term $key)
+    {
+    }
+}

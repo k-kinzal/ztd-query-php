@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+use HarborOps\{ApplicationFactory,Database};
+use Symfony\Component\Clock\NativeClock;
+use Symfony\Component\Mailer\{Mailer,Transport};
+
+require dirname(__DIR__).'/vendor/autoload.php';
+
+$path=getenv('HARBOR_DATABASE') ?: dirname(__DIR__).'/var/operations.sqlite';
+if (!is_dir(dirname($path)) && !mkdir(dirname($path),0700,true) && !is_dir(dirname($path))) { throw new RuntimeException('Cannot create the database directory.'); }
+$database=new Database(new PDO('sqlite:'.$path));
+$database->pdo->exec('PRAGMA journal_mode = WAL');
+$dsn=getenv('MAILER_DSN') ?: 'null://null';
+$application=(new ApplicationFactory())->create($database,new NativeClock(),new Mailer(Transport::fromDsn($dsn)),getenv('HARBOR_MAIL_FROM') ?: 'harbor@localhost',getenv('HARBOR_OPERATOR') ?: get_current_user());
+exit($application->run());
