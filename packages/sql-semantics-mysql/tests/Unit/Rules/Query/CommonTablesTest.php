@@ -252,11 +252,27 @@ final class CommonTablesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $twice = $semantics->analyze('WITH c AS (SELECT 1), c AS (SELECT 2) SELECT 1')->facts->diagnostics;
-        $alone = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c) SELECT 1 FROM c')->facts->diagnostics;
-        $late = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c UNION SELECT 1) SELECT 1 FROM c')->facts->diagnostics;
-
         self::assertEquals([new Misuse(MisuseRule::DuplicateCommonTable, new Name('c'))], $twice);
-        self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutUnion, new Name('c'))], $alone);
-        self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutAnchor, new Name('c'))], $late);
+    }
+
+    /**
+     * @return iterable<string, array{string, MisuseRule}>
+     */
+    public static function providerRecursiveRefusals(): iterable
+    {
+        yield 'missing union' => ['WITH RECURSIVE c AS (SELECT 1 FROM c) SELECT 1 FROM c', MisuseRule::RecursiveWithoutUnion];
+        yield 'missing anchor' => ['WITH RECURSIVE c AS (SELECT 1 FROM c UNION SELECT 1) SELECT 1 FROM c', MisuseRule::RecursiveWithoutAnchor];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRecursiveRefusals')]
+    public function testBindRetainsARefusedReadWithoutConstructingAnOrdinaryStatement(string $sql, MisuseRule $rule): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A contradictory recursive read cannot become an ordinary statement.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery::class, $failure->problem);
+            self::assertEquals(new Misuse($rule, new Name('c')), $failure->problem->query->problem());
+        }
     }
 }

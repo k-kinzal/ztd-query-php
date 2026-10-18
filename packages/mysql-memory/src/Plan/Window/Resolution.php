@@ -267,4 +267,17 @@ final class Resolution
             default => '',
         };
     }
+
+    /**
+     * Resolves a bare window name before refusing a call outside a window stage.
+     * A parenthesized specification keeps the call's placement condition first.
+     */
+    public static function unavailable(\SqlSemantics\Statement\Operand $call, \MySqlMemory\Evaluation\Scope $scope): \MySqlMemory\Error\SqlError
+    {
+        \SqlSemantics\Diagnostic\Check::invariant($call instanceof WindowFunction || $call instanceof Aggregate || $call instanceof GroupConcat || $call instanceof JsonObjectAggregate, 'A window preparation condition belongs to a window call.');
+        if ($call->over instanceof Name && array_filter($scope->windowNames, static fn (Name $name): bool => strcasecmp($name->value, $call->over->value) === 0) === []) {
+            return QueryError::WindowNotDefined->error($call->over->value);
+        }
+        return QueryError::WindowFunctionMisplaced->error(self::named($call));
+    }
 }

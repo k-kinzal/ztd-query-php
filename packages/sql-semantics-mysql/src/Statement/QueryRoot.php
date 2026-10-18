@@ -17,7 +17,9 @@ use SqlSemantics\Statement\Snapshot;
  * Query bodies also occur in subqueries and INSERT sources, whose grammar
  * positions admit different forms. Only this wrapper implements the statement
  * role. Its checks concern that grammatical position and fixed output columns,
- * independently of catalog resolution or execution eligibility.
+ * independently of catalog resolution or execution eligibility. Reached recursive
+ * definitions require an anchor and direct, single self references in each
+ * recursive block. Unused definitions remain templates.
  *
  * @visibility public
  * @example Refusing a statement without read columns

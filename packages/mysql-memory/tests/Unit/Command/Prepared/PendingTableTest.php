@@ -55,4 +55,28 @@ final class PendingTableTest extends TestCase
         self::assertSame($definition->bindings, $definition->parameters());
         self::assertCount(1, $definition->parameters()->types);
     }
+    public function testExecuteKeepsTheSameImplicitKeyInstructionAndItsPreparationDatabase(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d', 'other']))->connect(database: 'd');
+        $prepared = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(a INT) PARTITION BY KEY()', $session);
+        self::assertInstanceOf(PendingTable::class, $prepared);
+        $header = $prepared->header;
+        $session->query('USE other; CREATE TABLE t(a INT); INSERT INTO t VALUES(9)');
+        $missing = $prepared->run($session, 'not SQL', []);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $missing[0]);
+        self::assertSame(1488, $missing[0]->getCode());
+        $session->query('CREATE TABLE d.t(a INT); INSERT INTO d.t VALUES(7)');
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $prepared->run($session, 'still not SQL', [])[0]);
+        self::assertSame($header, $prepared->header);
+        self::assertSame('other', $session->variables->database);
+        $rows = $session->query('SELECT * FROM d.t')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rows);
+        self::assertSame([['7']], $rows->rows);
+        $session->query('DROP TABLE d.t');
+        $again = $prepared->run($session, 'unrelated request', []);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $again[0]);
+        self::assertSame(1488, $again[0]->getCode());
+        self::assertSame('other', $session->variables->database);
+    }
+
 }

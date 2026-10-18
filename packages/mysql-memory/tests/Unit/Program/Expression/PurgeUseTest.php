@@ -16,6 +16,17 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 #[Medium]
 final class PurgeUseTest extends TestCase
 {
+    public function testErrorResolvesTheRetainedWindowBeforeItsFollowingRowConstraint(): void
+    {
+        $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Rank, [], new \SqlSemantics\Statement\Identifier\Name('w'));
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated request label';
+        $error = (new PurgeUse())->error(new Row([$window, new NumberLiteral('2')]), $session);
+        self::assertSame(3579, $error->getCode());
+        self::assertSame([[1210, 'Incorrect arguments to PURGE LOGS BEFORE']], $error->following);
+        self::assertSame('unrelated request label', $session->text);
+    }
+
     public function testErrorReportsTheWidthFailureAndFollowingCutoffCondition(): void
     {
         $error = (new PurgeUse())->error(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), (new Instance())->connect());

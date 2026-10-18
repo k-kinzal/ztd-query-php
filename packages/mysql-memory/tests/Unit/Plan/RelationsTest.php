@@ -169,6 +169,15 @@ final class RelationsTest extends TestCase
         self::assertSame('x', $result->columns[0]->table);
     }
 
+    public function testCommonTablePreservesTheInnerReferenceAsTheOriginalTable(): void
+    {
+        $result = (new Instance())->connect()->query('WITH c AS (SELECT 1 AS a), d AS (SELECT a FROM c AS x) TABLE d')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertSame('d', $result->columns[0]->table);
+        self::assertSame('x', $result->columns[0]->originalTable);
+    }
+
     public function testTableReadsATableOfAnotherDatabase(): void
     {
         $session = (new Instance())->connect();

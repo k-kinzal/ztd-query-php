@@ -42,6 +42,44 @@ final class SpatialChecks
     private const LIMITS = ['NAME' => 80, 'DEFINITION' => 4096, 'ORGANIZATION' => 256, 'DESCRIPTION' => 2048];
 
     /**
+     * Finds a declaration contradiction without a catalog, profile or execution state.
+     *
+     * @param list<SpatialAttribute> $attributes The complete written attribute list
+     */
+    public function declaration(Numeral $srid, array $attributes): ?SpatialProblem
+    {
+        $identifier = $this->identifier($srid);
+        if ($identifier !== null) {
+            return $identifier;
+        }
+        foreach ([SpatialAttributeKind::Name, SpatialAttributeKind::Definition, SpatialAttributeKind::Organization, SpatialAttributeKind::Description] as $kind) {
+            $matching = array_filter($attributes, static fn (SpatialAttribute $attribute): bool => $attribute->kind === $kind);
+            if ($matching === [] && ($kind === SpatialAttributeKind::Name || $kind === SpatialAttributeKind::Definition)) {
+                return new SpatialProblem(SpatialRule::MissingAttribute, $kind);
+            }
+            foreach ($matching as $attribute) {
+                $problems = $this->valueProblems($attribute);
+                if ($problems !== []) {
+                    return $problems[0];
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Identifies a system identifier outside the modifiable unsigned 32-bit domain.
+     */
+    public function identifier(Numeral $srid): ?SpatialProblem
+    {
+        $magnitudes = new Magnitudes();
+        if (!$magnitudes->atMost($srid, '4294967295')) {
+            return new SpatialProblem(SpatialRule::IdentifierOutOfRange);
+        }
+        return $magnitudes->atMost($srid, '0') ? new SpatialProblem(SpatialRule::IdentifierZero) : null;
+    }
+
+    /**
      * Reports literal and duplicate problems before identifier and attribute constraints.
      *
      * @param list<SpatialAttribute> $attributes The attributes in written order
@@ -65,10 +103,9 @@ final class SpatialChecks
         if (!$magnitudes->integer($derivation, $srid)) {
             return;
         }
-        if (!$magnitudes->atMost($srid, '4294967295')) {
-            $derivation->report(new SpatialProblem(SpatialRule::IdentifierOutOfRange));
-        } elseif ($magnitudes->atMost($srid, '0')) {
-            $derivation->report(new SpatialProblem(SpatialRule::IdentifierZero));
+        $problem = $this->identifier($srid);
+        if ($problem !== null) {
+            $derivation->report($problem);
         }
     }
 
@@ -119,23 +156,37 @@ final class SpatialChecks
      */
     public function attribute(Derivation $derivation, SpatialAttribute $attribute): void
     {
+        foreach ($this->valueProblems($attribute) as $problem) {
+            $derivation->report($problem);
+        }
+    }
+
+    /**
+     * Checks one attribute's context-independent value constraints in diagnostic order.
+     *
+     * @return list<SpatialProblem>
+     */
+    public function valueProblems(SpatialAttribute $attribute): array
+    {
+        $problems = [];
         $value = $attribute->value->value;
         $blank = $value === '' || preg_match('/\A[ \t\n\v\f\r]|[ \t\n\v\f\r]\z/', $value) === 1;
         if ($blank && $attribute->kind === SpatialAttributeKind::Name) {
-            $derivation->report(new SpatialProblem(SpatialRule::BlankName, $attribute->kind));
+            $problems[] = new SpatialProblem(SpatialRule::BlankName, $attribute->kind);
         }
         if ($blank && $attribute->kind === SpatialAttributeKind::Organization) {
-            $derivation->report(new SpatialProblem(SpatialRule::BlankOrganization, $attribute->kind));
+            $problems[] = new SpatialProblem(SpatialRule::BlankOrganization, $attribute->kind);
         }
         if (preg_match('/[\x00-\x1F\x7F]/', $value) === 1) {
-            $derivation->report(new SpatialProblem(SpatialRule::ControlCharacter, $attribute->kind));
+            $problems[] = new SpatialProblem(SpatialRule::ControlCharacter, $attribute->kind);
         }
         if (strlen($value) - (int) preg_match_all('/[\x80-\xBF]/', $value) > self::LIMITS[$attribute->kind->value]) {
-            $derivation->report(new SpatialProblem(SpatialRule::TooLong, $attribute->kind));
+            $problems[] = new SpatialProblem(SpatialRule::TooLong, $attribute->kind);
         }
         $magnitudes = new Magnitudes();
         if ($attribute->identifier !== null && $magnitudes->integral($attribute->identifier) && !$magnitudes->atMost($attribute->identifier, '4294967295')) {
-            $derivation->report(new SpatialProblem(SpatialRule::IdentifierOutOfRange, $attribute->kind));
+            $problems[] = new SpatialProblem(SpatialRule::IdentifierOutOfRange, $attribute->kind);
         }
+        return $problems;
     }
 }

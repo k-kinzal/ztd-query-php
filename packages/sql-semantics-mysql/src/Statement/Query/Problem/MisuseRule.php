@@ -24,6 +24,7 @@ enum MisuseRule: string
     case DuplicateCommonTable = 'Not unique table/alias in WITH';
     case RecursiveWithoutUnion = 'Recursive Common Table Expression should contain a UNION';
     case RecursiveWithoutAnchor = 'Recursive Common Table Expression should have one or more non-recursive query blocks followed by one or more recursive ones';
+    case RecursiveReferencePosition = 'A recursive table must be referenced only once per query block and not in a subquery';
     case DuplicateColumn = 'Duplicate column name';
     case DuplicateWindow = 'Window name is defined more than once';
     case UnknownWindow = 'Window name is not defined';

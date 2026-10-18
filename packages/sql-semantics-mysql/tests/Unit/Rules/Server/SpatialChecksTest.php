@@ -19,9 +19,9 @@ final class SpatialChecksTest extends TestCase
 {
     public function testSridReportsAnIdentifierOutOfRange(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 4294967296');
-
-        self::assertInstanceOf(SpatialProblem::class, $operation->facts->diagnostics[0]);
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        (new SpatialChecks())->srid($derivation, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4294967296'));
+        self::assertInstanceOf(SpatialProblem::class, $derivation->facts()->diagnostics[0]);
     }
 
     public function testDefinitionsReportsRepeatedAndMissingAttributes(): void
@@ -32,26 +32,46 @@ final class SpatialChecksTest extends TestCase
         self::assertSame(['ER_SRS_MULTIPLE_ATTRIBUTE_DEFINITIONS', 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $derivation->facts()->diagnostics));
     }
 
-    public function testAttributeReportsBlankControlAndLongValues(): void
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerIntrinsicDeclarations(): iterable
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE SPATIAL REFERENCE SYSTEM 5 NAME \'\' DEFINITION \'d\' ORGANIZATION \' o\' IDENTIFIED BY 99999999999 DESCRIPTION \'a\\tb\'');
-
-        self::assertSame(['ER_SRS_NAME_CANT_BE_EMPTY_OR_WHITESPACE', 'ER_SRS_ORGANIZATION_CANT_BE_EMPTY_OR_WHITESPACE', 'ER_DATA_OUT_OF_RANGE', 'ER_SRS_INVALID_CHARACTER_IN_ATTRIBUTE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $create->facts->diagnostics));
+        yield 'attribute ordering' => ['CREATE SPATIAL REFERENCE SYSTEM 5 NAME \'\' DEFINITION \'d\' ORGANIZATION \' o\' IDENTIFIED BY 99999999999 DESCRIPTION \'a\\tb\'', 'name cannot be an empty string'];
+        yield 'missing name before organization' => ["CREATE SPATIAL REFERENCE SYSTEM 2 ORGANIZATION 'a''b' IDENTIFIED BY 04111845221216", 'Missing mandatory attribute NAME'];
+        yield 'invalid name before missing definition' => ["CREATE SPATIAL REFERENCE SYSTEM 5 NAME 'a\tb'", 'Invalid character in attribute NAME'];
+        yield 'drop range' => ['DROP SPATIAL REFERENCE SYSTEM 4294967296', 'SRID is out of range'];
     }
 
-    public function testAttributesReportsAMissingNameBeforeTheOrganization(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerIntrinsicDeclarations')]
+    public function testDeclarationRefusesIntrinsicContradictionsBeforePublishingAStatement(string $sql, string $message): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 2 ORGANIZATION 'a''b' IDENTIFIED BY 04111845221216");
-
-        self::assertSame(['ER_SRS_MISSING_MANDATORY_ATTRIBUTE', 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE', 'ER_DATA_OUT_OF_RANGE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $create->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 
-    public function testAttributesReportsTheNameBeforeAMissingDefinition(): void
+    public function testIdentifierChecksTheModifiableRange(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 5 NAME 'a\tb'");
-
-        self::assertSame(['ER_SRS_INVALID_CHARACTER_IN_ATTRIBUTE', 'ER_SRS_MISSING_MANDATORY_ATTRIBUTE'], array_map(static fn (Diagnostic $problem): string => $problem instanceof SpatialProblem ? $problem->rule->value : '', $create->facts->diagnostics));
+        $checks = new SpatialChecks();
+        self::assertNull($checks->identifier(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4294967295')));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierZero, $checks->identifier(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'))?->rule);
     }
+
+    public function testAttributeRetainsEveryIntrinsicValueCondition(): void
+    {
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        $attribute = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Organization, new \SqlSemantics\Platform\MySql\Statement\Literal\Text(' o'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('99999999999'));
+        (new SpatialChecks())->attribute($derivation, $attribute);
+        self::assertCount(2, $derivation->facts()->diagnostics);
+    }
+
+    public function testValueProblemsChecksLengthAndControlCharacters(): void
+    {
+        $attribute = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text(str_repeat('a', 80) . "\t"));
+        self::assertSame(['ER_SRS_NAME_CANT_BE_EMPTY_OR_WHITESPACE', 'ER_SRS_INVALID_CHARACTER_IN_ATTRIBUTE', 'ER_SRS_ATTRIBUTE_STRING_TOO_LONG'], array_map(static fn (SpatialProblem $problem): string => $problem->rule->value, (new SpatialChecks())->valueProblems($attribute)));
+    }
+
     public function testCreateKeepsLiteralAndDefinitionOrderBeforeIdentifierRange(): void
     {
         $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
@@ -61,4 +81,11 @@ final class SpatialChecksTest extends TestCase
         self::assertInstanceOf(SpatialProblem::class, $first);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::RepeatedAttribute, $first->rule);
     }
+    public function testAttributesRetainsBothMissingOperandConditions(): void
+    {
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        (new SpatialChecks())->attributes($derivation, []);
+        self::assertSame(['Missing mandatory attribute NAME (ER_SRS_MISSING_MANDATORY_ATTRIBUTE).', 'Missing mandatory attribute DEFINITION (ER_SRS_MISSING_MANDATORY_ATTRIBUTE).'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $derivation->facts()->diagnostics));
+    }
+
 }

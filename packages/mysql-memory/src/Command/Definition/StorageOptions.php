@@ -170,7 +170,7 @@ final class StorageOptions
      *
      * @throws SqlError When an option is invalid or unsupported
      */
-    public function check(CreateTable $create, Session $session, Context $context): void
+    public function check(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Session $session, Context $context): void
     {
         $this->directories($create, $session);
         $engine = $this->engine($create, $session->variables);

@@ -49,8 +49,16 @@ final class CreateTableCommand implements Command
     #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        return $this->create($operation, $session, $context, $connection);
+    }
+
+    /**
+     * Uses the same declaration pipeline for ordinary and complete deferred creations.
+     */
+    public function create(Operation|\MySqlMemory\Session\Resolution\TablePreparation $operation, Session $session, Context $context, Connection $connection): Reply
+    {
         $create = $operation->statement;
-        assert($create instanceof CreateTable);
+        assert($create instanceof CreateTable || $create instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable);
         $started = (new \MySqlMemory\Session\Access\TableCreation())->requested($create);
         if ($create->temporaryWords === 0) {
             $session->transaction->commit();
@@ -79,6 +87,7 @@ final class CreateTableCommand implements Command
             $session->transaction->temporaries['created'] = true;
         }
         if ($create->query !== null) {
+            \SqlSemantics\Diagnostic\Check::invariant($operation instanceof Operation && $create instanceof CreateTable, 'A creation query uses its ordinary operation after read preparation.');
             return (new TableQueries($session, $context, $connection))->create($create, $operation, $schema);
         }
         $definition = Partition\PartitionDefinitions::apply($planner, $create, $definition ?? $definitions->shape($create, $operation->declarations()[0], $schemaName));
@@ -95,7 +104,7 @@ final class CreateTableCommand implements Command
      * Legacy empty definitions fail before schema lookup. Modern tablespace lookup
      * precedes the existing-table shortcut, including IF NOT EXISTS.
      */
-    public function schema(CreateTable $create, Operation $operation, Session $session, Connection $connection): \MySqlMemory\Dictionary\Schema
+    public function schema(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Operation|\MySqlMemory\Session\Resolution\TablePreparation $operation, Session $session, Connection $connection): \MySqlMemory\Dictionary\Schema
     {
         $schemaName = $create->name->schema->value ?? $session->variables->database;
         if ($schemaName === '') {
@@ -126,7 +135,7 @@ final class CreateTableCommand implements Command
     /**
      * Raises the semantic empty-definition condition at the release's preparation phase.
      */
-    public function columns(Operation $operation, Session $session, Connection $connection): void
+    public function columns(Operation|\MySqlMemory\Session\Resolution\TablePreparation $operation, Session $session, Connection $connection): void
     {
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns) {

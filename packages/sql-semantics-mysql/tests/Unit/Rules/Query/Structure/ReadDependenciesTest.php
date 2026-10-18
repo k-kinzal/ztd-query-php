@@ -28,6 +28,8 @@ final class ReadDependenciesTest extends TestCase
         yield 'qualified' => ['WITH a AS (SELECT @x) SELECT * FROM d.a', []];
         yield 'ignored write clauses' => ['INSERT INTO t VALUES ROW(@written) ORDER BY @ignored', ['written']];
         yield 'explicit' => ['WITH a AS (SELECT @x AS x) TABLE a', ['x']];
+        yield 'case-distinct' => ['WITH c AS (SELECT @lower AS a), C AS (SELECT @upper AS b) SELECT c.a,C.b FROM c,C', ['lower', 'upper']];
+        yield 'case-distinct unused recursion' => ['WITH RECURSIVE c AS (TABLE c) TABLE C', []];
     }
 
     /**

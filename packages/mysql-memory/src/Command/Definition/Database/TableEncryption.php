@@ -28,7 +28,7 @@ final class TableEncryption
     /**
      * Answers the last explicit encryption operand, or null when absent.
      */
-    public function operand(CreateTable $create): ?string
+    public function operand(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create): ?string
     {
         $value = null;
         foreach ($create->options as $option) {
@@ -43,7 +43,7 @@ final class TableEncryption
     /**
      * Answers the database default, without applying it to temporary tables.
      */
-    public function inherited(CreateTable $create, Session $session): Encryption
+    public function inherited(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Session $session): Encryption
     {
         $name = $create->name->schema->value ?? $session->variables->database;
 
@@ -53,7 +53,7 @@ final class TableEncryption
     /**
      * Answers the effective operand for the storage engine.
      */
-    public function value(CreateTable $create, Session $session): string
+    public function value(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Session $session): string
     {
         $operand = $this->operand($create);
 
@@ -65,7 +65,7 @@ final class TableEncryption
      *
      * @throws SqlError When encryption is unavailable for this table kind or engine
      */
-    public function check(CreateTable $create, string $engine, Session $session, Context $context): void
+    public function check(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, string $engine, Session $session, Context $context): void
     {
         if ($session->settings()->legacy()) {
             return;

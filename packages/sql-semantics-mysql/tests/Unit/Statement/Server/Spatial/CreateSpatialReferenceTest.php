@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference;
 
 #[CoversClass(CreateSpatialReference::class)]
@@ -22,11 +21,17 @@ final class CreateSpatialReferenceTest extends TestCase
         self::assertSame("CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 9 NAME 'n' DEFINITION 'd'", (new Semantics(Dialect::MySql))->analyze("create spatial reference system if not exists 9 name 'n' definition 'd'")->toString());
     }
 
-    public function testDeriveStatementReportsAMissingAttribute(): void
+    public function testDeriveStatementLeavesCatalogConditionsToTheConsumer(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'");
+        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n' DEFINITION 'd'");
+        self::assertSame([], $operation->facts->diagnostics);
+    }
 
-        self::assertInstanceOf(SpatialProblem::class, $operation->facts->diagnostics[0]);
+    public function testInputRefusesTheOriginalIntrinsicCounterexample(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Missing mandatory attribute DEFINITION');
+        (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'");
     }
     /**
      * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Literal\Numeral}>
@@ -44,6 +49,31 @@ final class CreateSpatialReferenceTest extends TestCase
         $this->expectExceptionMessage('A spatial reference identifier is an integer token.');
 
         new CreateSpatialReference(false, false, $number, []);
+    }
+
+    /**
+     * @return iterable<string, array{string, list<\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute>}>
+     */
+    public static function providerContradictoryDeclarations(): iterable
+    {
+        $name = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('n'));
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Definition, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('GEOGCS[]'));
+        yield 'reserved zero' => ['0', [$name, $definition]];
+        yield 'range' => ['4294967296', [$name, $definition]];
+        yield 'missing name' => ['7', [$definition]];
+        yield 'missing definition' => ['7', [$name]];
+        yield 'empty list' => ['7', []];
+        yield 'blank name' => ['7', [new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text(' ')), $definition]];
+    }
+
+    /**
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute> $attributes
+     */
+    #[DataProvider('providerContradictoryDeclarations')]
+    public function testDeclarationExcludesIntrinsicContradictions(string $srid, array $attributes): void
+    {
+        $this->expectExceptionMessage('A spatial reference declaration has a modifiable identifier and complete, well-formed attributes.');
+        new CreateSpatialReference(false, false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral($srid), $attributes);
     }
 
 }

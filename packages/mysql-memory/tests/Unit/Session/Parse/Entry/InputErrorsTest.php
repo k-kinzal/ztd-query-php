@@ -242,4 +242,14 @@ final class InputErrorsTest extends TestCase
         self::assertSame(42, (new InputErrors())->precedingEnd(new \SqlSemantics\Construction\RejectedInput($problem, 42, false)));
     }
 
+    public function testServerRetainsTheOperationOfSpatialRangeRefusals(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Drop, new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierOutOfRange));
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated request';
+        $error = (new InputErrors())->server($problem, $session);
+        self::assertSame("SRID value is out of range in 'DROP SPATIAL REFERENCE SYSTEM'", $error?->getMessage());
+        self::assertNull((new InputErrors())->server(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset('missing'), $session));
+    }
+
 }

@@ -42,9 +42,10 @@ final class CreationRoles
      * @param list<TableElement> $elements The ordered column and constraint definitions
      * @param list<TableOption> $options The table options
      */
-    public function deferred(array $elements, array $options, ?TableQuery $query): bool
+    public function deferred(array $elements, array $options, ?TableQuery $query, ?\SqlSemantics\Platform\MySql\Statement\Partition\Partitioning $partitioning = null): bool
     {
-        return $this->readProblem($query) !== null
+        return (new PartitionKeyRole())->missing($elements, $partitioning, $query)
+            || $this->readProblem($query) !== null
             || $this->columnless($elements, $query)
             || ($query !== null && array_filter($options, static fn (TableOption $option): bool => $option instanceof UnionOption) !== [])
             || (new LegacySubqueries())->columns($elements);

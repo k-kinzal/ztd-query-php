@@ -17,10 +17,12 @@ use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A stored query whose fixed column constraint is checked when it is reached.
+ * A stored query whose fixed read constraint is checked when it is reached.
  *
  * It retains the complete query but is neither an ordinary Statement nor a
  * Scalar. A skipped instruction or unopened cursor does not prepare its rows.
+ * Lexical recursive-reference restrictions still apply to the enclosing program
+ * declaration; anchor and output-column restrictions wait for invocation.
  *
  * @visibility public
  * @example Keeping an empty VALUES row as a stored instruction

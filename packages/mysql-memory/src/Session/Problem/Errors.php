@@ -395,6 +395,7 @@ final class Errors
             MisuseRule::DuplicateAlias, MisuseRule::DuplicateCommonTable => QueryError::NonUniqueTable->error($name),
             MisuseRule::RecursiveWithoutUnion => QueryError::RecursiveRequiresUnion->error($name),
             MisuseRule::RecursiveWithoutAnchor => QueryError::RecursiveRequiresNonrecursiveFirst->error($name),
+            MisuseRule::RecursiveReferencePosition => QueryError::RecursiveWithoutUnion->error($name),
             MisuseRule::DuplicateColumn => SchemaError::DuplicateFieldName->error($name),
             MisuseRule::DuplicateWindow => QueryError::WindowDefinedTwice->error($name),
             MisuseRule::UnknownWindow => QueryError::WindowNotDefined->error($name),

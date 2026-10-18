@@ -178,13 +178,21 @@ final class TableDeclarationTest extends TestCase
     public function testPartitionsNarrowsCountsBeforeExpandingNamesAndKeepsOversizedClausesIntact(): void
     {
         $semantics = new Semantics(Dialect::MySql, '8.4.7');
-        $wrapped = $semantics->analyze('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 4294967297');
-        self::assertEquals([new Name('p0')], $wrapped->declarations()[0]->partitions);
-        $large = $semantics->analyze('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 0xFFFFFFFFFFFFFFFF');
-        self::assertNull($large->declarations()[0]->partitions);
-        self::assertInstanceOf(CreateTable::class, $large->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause::class, $large->statement->partitioning);
-        self::assertSame('FFFFFFFFFFFFFFFF', $large->statement->partitioning->partitions?->text);
+        $retained = static function (string $sql) use ($semantics): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable {
+            try {
+                $semantics->analyze($sql);
+            } catch (\SqlSemantics\Construction\RejectedInput $error) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate::class, $error->problem);
+                return $error->problem->definition;
+            }
+            self::fail('An implicit partition key without a source retains a complete instruction.');
+        };
+        $wrapped = $retained('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 4294967297');
+        self::assertEquals([new Name('p0')], (new TableDeclaration())->partitions($wrapped));
+        $large = $retained('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 0xFFFFFFFFFFFFFFFF');
+        self::assertNull((new TableDeclaration())->partitions($large));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause::class, $large->partitioning);
+        self::assertSame('FFFFFFFFFFFFFFFF', $large->partitioning->partitions?->text);
     }
 
     public function testPartitionsNameEveryPartitionAndSubpartition(): void

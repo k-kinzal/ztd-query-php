@@ -98,7 +98,7 @@ final class Definitions
      *
      * @throws \MySqlMemory\Error\SqlError When the column or key definition is invalid
      */
-    public function shape(CreateTable $create, Table $declaration, string $schema): TableDefinition
+    public function shape(CreateTable|DeferredCreateTable $create, Table $declaration, string $schema): TableDefinition
     {
         $declaration = new Table(new \SqlSemantics\Statement\Identifier\QualifiedName($declaration->name->name, new \SqlSemantics\Statement\Identifier\Name($schema)), $declaration->profile, $declaration->columns, $declaration->implicit, $declaration->complete, $declaration->kind, $declaration->keys, $declaration->partitions);
         $collation = $this->collation($create);
@@ -106,7 +106,7 @@ final class Definitions
         [$columns, $keys] = $this->parts($create, $declaration, $schema, $engine, $collation);
         $expressions = new TableExpressions($this->planner, $create);
         $constraints = new Constraints($this->planner, $create, $this->checkBase, $this->foreignBase, $this->keptForeign);
-        $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create, rowFormat: (new InnoDbOptions())->format($create, $this->planner->compiler->connection->variables));
+        $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create instanceof CreateTable ? $create : null, rowFormat: (new InnoDbOptions())->format($create, $this->planner->compiler->connection->variables));
         (new Constraint\IndexOptions())->check($definition);
         $definition = $expressions->computed($definition, $this->planner->settings->connectionCollation->charset->name);
 
@@ -131,7 +131,6 @@ final class Definitions
         $columns = [];
         $keys = [];
         foreach ($elements as $position => $element) {
-            \SqlSemantics\Diagnostic\Check::invariant($create instanceof CreateTable, 'Column declarations use the ordinary shape builder.');
             $columns[] = $this->column($element, $this->declared($declaration, $element->name->column->value), $declared, $scope, $create);
             foreach ($this->inlineKeys($element, $position) as $key) {
                 $keys[] = $key;
@@ -223,7 +222,7 @@ final class Definitions
     /**
      * Builds the definition of one column.
      */
-    public function column(ColumnElement $element, ?\SqlSemantics\Statement\Declaration\Column $declaration, Declared $declared, Scope $scope, CreateTable $create): ColumnDefinition
+    public function column(ColumnElement $element, ?\SqlSemantics\Statement\Declaration\Column $declaration, Declared $declared, Scope $scope, CreateTable|DeferredCreateTable $create): ColumnDefinition
     {
         $session = $this->planner->compiler->connection->session();
         if ($session !== null) {
@@ -279,7 +278,7 @@ final class Definitions
      *
      * @throws \MySqlMemory\Error\SqlError When the column cannot take the default
      */
-    public function default(array $attributes, ColumnDefinition $column, CreateTable $create): Fill
+    public function default(array $attributes, ColumnDefinition $column, CreateTable|DeferredCreateTable $create): Fill
     {
         foreach ($attributes as $attribute) {
             if ($attribute instanceof DefaultExpression) {

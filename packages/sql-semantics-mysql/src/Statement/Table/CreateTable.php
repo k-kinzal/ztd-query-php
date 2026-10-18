@@ -104,6 +104,7 @@ final class CreateTable implements Statement, Relation
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->elements), 'Deferred generation declarations belong to a stored table-creation instruction.');
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->elements, $query), 'An ordinary table creation has a declared column or a creation query.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($query) === null, 'A creation query with a fixed read-shape constraint belongs to a deferred instruction.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->elements, $partitioning, $query), 'An implicit partition key absent from the declaration belongs to a deferred creation instruction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

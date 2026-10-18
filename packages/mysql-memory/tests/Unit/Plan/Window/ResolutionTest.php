@@ -24,6 +24,16 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ResolutionTest extends TestCase
 {
+    public function testUnavailableResolvesBareNamesBeforeCallPlacement(): void
+    {
+        $scope = new \MySqlMemory\Evaluation\Scope();
+        $bare = new WindowFunction(WindowFunctionKind::Rank, [], new Name('w'));
+        self::assertSame(3579, Resolution::unavailable($bare, $scope)->getCode());
+        self::assertSame(3593, Resolution::unavailable(new WindowFunction(WindowFunctionKind::Rank, [], new WindowSpec(base: new Name('w'))), $scope)->getCode());
+        $scope->windowNames = [new Name('W')];
+        self::assertSame(3593, Resolution::unavailable($bare, $scope)->getCode());
+    }
+
     public function testResolveListsTheNamedWindowsFirstAndGivesEachItsCalls(): void
     {
         $session = (new Instance())->connect();

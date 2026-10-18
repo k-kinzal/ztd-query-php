@@ -38,6 +38,9 @@ final class RefusedCreateTemplate implements Diagnostic
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->definition->elements)) {
             return 'The table definition retains generation conditions resolved at invocation.';
         }
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->definition->elements, $this->definition->partitioning, $this->definition->query)) {
+            return 'The declaration supplies no key for implicit KEY partitioning.';
+        }
         $read = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($this->definition->query);
         if ($read !== null) {
             return $read->message();

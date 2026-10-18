@@ -448,7 +448,7 @@ final class Compiler
             $node instanceof FunctionCall => $this->calls->function($node, $scope),
             $node instanceof KeywordCall => $this->calls->keyword($node, $scope),
             $node instanceof ClockCall => $this->calls->clock($node, $scope),
-            Windowing::windowed($node) => $scope->windowing?->compile($node, $scope) ?? throw QueryError::WindowFunctionMisplaced->error(Resolution::named($node)),
+            Windowing::windowed($node) => $scope->windowing?->compile($node, $scope) ?? throw Resolution::unavailable($node, $scope),
             $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate,
             $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat,
             $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate => $scope->grouping?->compile($node, $scope) ?? throw QueryError::InvalidGroupFunctionUse->error(),

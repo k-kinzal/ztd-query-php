@@ -34,6 +34,8 @@ use SqlSemantics\Statement\Operation;
  * itself. The recipient plugin determines its format: mysql_native_password accepts 41
  * characters starting with `*`, mysql_old_password accepts 16 characters and warns, and
  * sha256_password requires its own hash format (verified on a live 5.6.51 server).
+ * SHA-256 plugins reject a new password exceeding 256 bytes before checking REPLACE;
+ * the native plugin accepts longer values (observed on 5.7.44, 8.0.44 and 8.4.7).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-password.html.
  *
  * @visibility MySqlMemory
@@ -124,6 +126,9 @@ final class SetPasswordCommand implements Command
         $account = $session->instance->accounts->find($identity);
         if ($account === null) {
             throw AccountError::PasswordNoMatch->error();
+        }
+        if (in_array($account->plugin, ['sha256_password', 'caching_sha2_password'], true) && strlen($statement->password?->text->value ?? '') > 256) {
+            throw AccountError::CannotUser->error('SET PASSWORD', $identity->quoted());
         }
         if ($statement->replace !== null) {
             (new AlterUserCommand())->replace($account, $statement->replace->value, $session);

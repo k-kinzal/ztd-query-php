@@ -186,4 +186,13 @@ final class StagesTest extends TestCase
         self::assertTrue(Stages::parsed(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::NameTooLong, str_repeat('f', 65))));
     }
 
+    public function testCharactersDistinguishesGrammarCollationsFromLegacyResolution(): void
+    {
+        $collation = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation('missing');
+        self::assertTrue(Stages::characters($collation, false));
+        self::assertFalse(Stages::characters($collation, true));
+        self::assertFalse(Stages::characters(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation(''), false));
+        self::assertTrue(Stages::characters(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset('missing'), true));
+    }
+
 }

@@ -15,7 +15,6 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
@@ -86,7 +85,12 @@ final class Reading
     {
         (new Identifiers())->check($operation->statement, $session->settings()->release(), $session);
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof UnknownCollation && $diagnostic->name !== '' && !$session->settings()->legacy() || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString) {
+            if (Stages::characters($diagnostic, $session->settings()->legacy())) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+            }
+        }
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RecursiveReferencePosition) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }

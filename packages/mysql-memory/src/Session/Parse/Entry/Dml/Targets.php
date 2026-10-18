@@ -38,7 +38,7 @@ final class Targets
         $derivation = new \SqlSemantics\Construction\Derivation($context);
         $problem->derive($derivation);
         foreach ($derivation->facts()->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset) {
+            if (\MySqlMemory\Session\Problem\Stages::characters($diagnostic, $session->settings()->legacy())) {
                 return (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session);
             }
         }

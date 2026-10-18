@@ -255,7 +255,7 @@ final class Origins
 
             $inner = $scope->merged[$id][$position] ?? null;
 
-            return new ColumnOrigin($inner->schema ?? '', $scope->derived[$id], $inner->originalTable ?? '', $scope->names[$id][$position] ?? '', $inner->flags ?? 0, $inner->exact ?? false, $inner?->underlying);
+            return new ColumnOrigin($inner->schema ?? '', $scope->derived[$id], $inner->originalTable ?? '', $scope->names[$id][$position] ?? '', $inner->flags ?? $scope->columns[$id][$position]->flags(), $inner->exact ?? true, $inner?->underlying);
         }
         if (!isset($scope->tables[$id])) {
             return $field->expression instanceof ColumnUse && $this->planner->compiler->connection->program !== null && $scope->locate($resolution->relation) === null ? (new ProgramColumns($this->planner))->flagged($field, true) : null;

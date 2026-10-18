@@ -73,6 +73,10 @@ final class ReadColumns
      */
     public function templates(Query|M\Set\LeadingUnion $query): ?Diagnostic
     {
+        $recursion = (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->problem($query);
+        if ($recursion !== null) {
+            return $recursion;
+        }
         foreach ((new ReadDependencies())->nodes($query) as $node) {
             if ($node instanceof M\Select) {
                 $problem = $this->windows($node);

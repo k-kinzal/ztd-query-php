@@ -228,4 +228,14 @@ final class ReaderTest extends TestCase
         self::assertNull((new Reader())->template($failure, 'SELECT ROW(1,2)', $session));
     }
 
+    public function testAppendTargetRequiresModernGrammarInterpretationToSucceed(): void
+    {
+        $reader = new Reader();
+        $failure = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation('missing'));
+        self::assertFalse($reader->appendTarget([[1, $failure]], true, false));
+        self::assertTrue($reader->appendTarget([], true, false));
+        self::assertTrue($reader->appendTarget([[1, $failure]], true, true));
+        self::assertTrue($reader->appendTarget([[1, $failure]], false, false));
+    }
+
 }

@@ -68,7 +68,7 @@ final class CreateTableCommandTest extends TestCase
         self::assertSame([], $table->data->rows);
     }
 
-    public function testExecuteCreatesATableInTheDatabaseItNames(): void
+    public function testCreateUsesTheDatabaseNamedByTheDefinition(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; CREATE DATABASE e; USE d');

@@ -248,7 +248,7 @@ final class Locations
         }
         foreach ($locator->functions as [$call, $clause, $at]) {
             if ($ungrouped) {
-                $refusal = Windowing::windowed($call) ? QueryError::WindowFunctionMisplaced->error(Resolution::named($call)) : QueryError::InvalidGroupFunctionUse->error();
+                $refusal = Windowing::windowed($call) ? Resolution::unavailable($call, new \MySqlMemory\Evaluation\Scope()) : QueryError::InvalidGroupFunctionUse->error();
                 $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];
                 continue;
             }

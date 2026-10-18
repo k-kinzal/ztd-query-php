@@ -19,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
-use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
@@ -32,7 +31,6 @@ use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\TypeFact;
-use SqlSemantics\Validation\ValueGraph;
 
 /**
  * Binds the common table expressions of a WITH clause.
@@ -76,12 +74,7 @@ final class CommonTables
             $recursive = $with->recursive && $this->refers($table->query, $table->name, $derivation);
             $problem = null;
             if ($recursive) {
-                $operands = $this->operands($table->query);
-                if (count($operands) < 2) {
-                    $problem = new Misuse(MisuseRule::RecursiveWithoutUnion, $table->name);
-                } elseif ($this->refers($operands[0], $table->name, $derivation)) {
-                    $problem = new Misuse(MisuseRule::RecursiveWithoutAnchor, $table->name);
-                }
+                $problem = (new Recursion\Constraints())->definition($table, $derivation->context->relationNames);
                 $scope = $this->extended($outer, [...$bindings, new CommonBinding($table->name, $table, new RowShape([], [new RecursiveReference($table->name)]))]);
             }
             $shape = $derivation->deferred($table, static function () use ($table, $scope, $derivation, $recursive, $problem): RowShape {
@@ -210,13 +203,6 @@ final class CommonTables
      */
     public function refers(Query $query, Name $table, Derivation $derivation): bool
     {
-        $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']);
-        foreach ($graph->objects($query) as $object) {
-            if (($object instanceof TableReference || $object instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) && $object->name()->schema === null && $derivation->context->relationNames->equal($object->name()->name->value, $table->value)) {
-                return true;
-            }
-        }
-
-        return false;
+        return (new Recursion\References())->of($query, $table, $derivation->context->relationNames) !== [];
     }
 }

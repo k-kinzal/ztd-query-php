@@ -130,4 +130,20 @@ final class SetPasswordCommandTest extends TestCase
         self::assertSame($reply->rows[0][2], $session->instance->accounts->find(new Identity('root', '%'))?->password);
     }
 
+    public function testExecuteChecksThePluginByteLimitBeforeReplacementWithoutChangingCredentials(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET PASSWORD='old'");
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Account\SetPassword(null, new \SqlSemantics\Platform\MySql\Statement\Account\Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text(str_repeat('a', 257))), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('wrong'), true);
+        $session->text = 'unrelated input';
+        $result = (new \Fuzz\Structure\Audit\Memory())->observe($session, $statement);
+        self::assertArrayHasKey('error', $result);
+        self::assertSame([1396, 'HY000', "Operation SET PASSWORD failed for 'root'@'%'"], $result['error'] ?? null);
+        $account = $session->instance->accounts->find(new Identity('root', '%'));
+        self::assertNotNull($account);
+        self::assertSame('old', $account->password);
+        self::assertNull($account->secondary);
+        self::assertSame('unrelated input', $session->text);
+    }
+
 }

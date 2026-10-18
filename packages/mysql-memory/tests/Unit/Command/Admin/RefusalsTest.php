@@ -86,8 +86,10 @@ final class RefusalsTest extends TestCase
 
     public function testSpatialNamesTheStatementOfAnSridOutOfRange(): void
     {
-        $statement = (new Instance())->connect()->analyze('DROP SPATIAL REFERENCE SYSTEM 4294967296')->statement;
-        $error = (new Refusals())->spatial(new SpatialProblem(SpatialRule::IdentifierOutOfRange), $statement);
+        $reply = (new Instance())->connect()->run('DROP SPATIAL REFERENCE SYSTEM 4294967296')[0];
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1690, $reply->getCode());
+        $error = (new Refusals())->spatial(new SpatialProblem(SpatialRule::IdentifierOutOfRange), null, \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Drop);
 
         self::assertSame([1690, "SRID value is out of range in 'DROP SPATIAL REFERENCE SYSTEM'", '22003'], [$error->getCode(), $error->getMessage(), $error->sqlState()]);
     }

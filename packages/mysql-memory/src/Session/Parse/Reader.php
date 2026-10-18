@@ -217,7 +217,8 @@ final class Reader
         }
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
-        return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);
+        $append = $this->appendTarget($notices, $target !== null, $session->settings()->legacy());
+        return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session, $append);
     }
 
     /**
@@ -247,6 +248,16 @@ final class Reader
     public function targetNotices(array $notices, bool $target, bool $legacy): array
     {
         return !$target ? $notices : array_values(array_filter($notices, static fn (array $notice): bool => !$notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure || (!$legacy && $notice[1]->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax)));
+    }
+
+    /**
+     * Tells whether grammar interpretation reached the later target condition.
+     *
+     * @param list<array{int, object}> $notices The retained input conditions
+     */
+    public function appendTarget(array $notices, bool $target, bool $legacy): bool
+    {
+        return !$target || $legacy || array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure) === [];
     }
 
     /**

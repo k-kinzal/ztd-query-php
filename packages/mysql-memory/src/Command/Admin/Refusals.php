@@ -100,10 +100,10 @@ final class Refusals
     /**
      * Answers the error of a spatial reference system problem.
      */
-    public function spatial(SpatialProblem $problem, ?Node $statement): SqlError
+    public function spatial(SpatialProblem $problem, ?Node $statement, ?\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand $command = null): SqlError
     {
         $attribute = $problem->attribute === null ? 'SRID' : $problem->attribute->value;
-        $verb = $statement instanceof DropSpatialReference ? 'DROP' : ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference && $statement->orReplace ? 'CREATE OR REPLACE' : 'CREATE');
+        $verb = $command->value ?? ($statement instanceof DropSpatialReference ? 'DROP' : ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference && $statement->orReplace ? 'CREATE OR REPLACE' : 'CREATE'));
         $subject = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable ? 'SRID' : $verb . ' SPATIAL REFERENCE SYSTEM';
 
         return match ($problem->rule) {

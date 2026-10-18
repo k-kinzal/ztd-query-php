@@ -149,6 +149,7 @@ final class Stages
     public static function closing(Diagnostic $diagnostic): bool
     {
         return $diagnostic instanceof UndeclaredVariable
+            || ($diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::RecursiveReferencePosition)
             || ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::DEPENDENCIES)
             || ($diagnostic instanceof Misuse && ($diagnostic->rule === MisuseRule::UnknownLockedTable || $diagnostic->rule === MisuseRule::RepeatedLockedTable));
     }
@@ -251,4 +252,14 @@ final class Stages
         }
         return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
     }
+    /**
+     * Identifies character interpretation failures before relation contextualization.
+     */
+    public static function characters(Diagnostic $diagnostic, bool $legacy): bool
+    {
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset
+            || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString
+            || ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation && $diagnostic->name !== '' && !$legacy);
+    }
+
 }

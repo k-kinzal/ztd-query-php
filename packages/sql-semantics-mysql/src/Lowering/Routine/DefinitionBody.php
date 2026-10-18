@@ -55,7 +55,7 @@ final class DefinitionBody
         if ($scoped !== null) {
             throw new RejectedInput(new RefusedProgramBody($name, $kind, new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment($sources?->of($scoped)?->offset), $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $end, true);
         }
-        $problem = (new BodyStructure())->problem($body, $kind, $name, $parameters);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->position($body) ?? (new BodyStructure())->problem($body, $kind, $name, $parameters);
         if ($language !== null && ($problem === null || in_array($problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::MissingReturn, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ResultSet, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::AutocommitInFunction, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::FunctionStatement], true))) {
             $problem = $language;
         }

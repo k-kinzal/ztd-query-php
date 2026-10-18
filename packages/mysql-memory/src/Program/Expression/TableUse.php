@@ -12,6 +12,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Statement\Operation;
+use WeakReference;
 
 /**
  * Prepares or invokes a retained table definition using only its semantic fields.
@@ -42,7 +43,35 @@ final class TableUse
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($definition->query) !== null) {
             return (new \MySqlMemory\Program\Definition\CreationQueryUse())->execute($definition, $session);
         }
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($definition->elements, $definition->partitioning, $definition->query)) {
+            return $this->partition($definition, $session);
+        }
         throw SchemaError::WrongObject->error($definition->name->schema->value ?? $session->variables->database, $definition->name->name->value, 'BASE TABLE');
+    }
+
+    /**
+     * Binds the complete declaration before the ordinary partition preparation path.
+     */
+    public function partition(DeferredCreateTable $definition, Session $session, ?string $preparationDatabase = null): \MySqlMemory\Result\Reply
+    {
+        $saved = $session->variables->database;
+        $session->variables->database = $preparationDatabase ?? $saved;
+        try {
+            $database = $definition->name->schema->value ?? $session->variables->database;
+            $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution()));
+            $definition->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
+            $facts = $derivation->facts();
+            $table = $facts->relation($definition)->table;
+            \SqlSemantics\Diagnostic\Check::invariant($table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable, 'A complete creation instruction supplies a table declaration.');
+            $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+            $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, session: WeakReference::create($session));
+            $prepared = new \MySqlMemory\Session\Resolution\TablePreparation($definition, $facts, $table->table);
+            $reply = (new \MySqlMemory\Command\Definition\CreateTableCommand())->create($prepared, $session, $context, $connection);
+            $session->variables->rowCount = $reply instanceof \MySqlMemory\Result\Completion ? $reply->affectedRows : -1;
+            return $reply;
+        } finally {
+            $session->variables->database = $saved;
+        }
     }
 
     /**
@@ -66,6 +95,9 @@ final class TableUse
     {
         $this->header($definition, $session);
         $query = $definition->query;
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($definition->elements, $definition->partitioning, $query)) {
+            return null;
+        }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($definition->elements, $query) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
             return null;
         }

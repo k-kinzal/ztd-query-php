@@ -77,4 +77,17 @@ final class TargetsTest extends TestCase
         self::assertSame('unrelated invalid input', $session->text);
     }
 
+    public function testUnmatchedResolvesModernCollationsBeforeTheTargetWithoutSourceText(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->text = 'unrelated invalid input';
+        $predicate = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['a']), new Name('absent'));
+        $table = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')), new Name('y'));
+        $refusal = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([new QualifiedName(new Name('x'))], [$table], where: $predicate);
+        self::assertSame(1273, (new Targets())->unmatched($refusal, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+        $session->run("WITH c AS (SELECT 'a' COLLATE absent AS v) DELETE x FROM t AS y");
+        self::assertSame([['Error', 1273, "Unknown collation: 'absent'"]], $session->diagnostics->conditions);
+    }
+
 }

@@ -58,21 +58,53 @@ final class SpatialRule
         $options = $this->lowering->options;
 
         return match ($form->signature) {
-            'create_srs_stmt: CREATE OR_SYM REPLACE_SYM SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM real_ulonglong_num srs_attributes' => new CreateSpatialReference(
+            'create_srs_stmt: CREATE OR_SYM REPLACE_SYM SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM real_ulonglong_num srs_attributes' => $this->create(
+                $form,
                 true,
                 false,
                 $numbers->integral($form->node(6)),
                 $this->attributes($form->node(7)),
             ),
-            'create_srs_stmt: CREATE SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM opt_if_not_exists real_ulonglong_num srs_attributes' => new CreateSpatialReference(
+            'create_srs_stmt: CREATE SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM opt_if_not_exists real_ulonglong_num srs_attributes' => $this->create(
+                $form,
                 false,
                 $options->present($form->node(4)),
                 $numbers->integral($form->node(5)),
                 $this->attributes($form->node(6)),
             ),
-            'drop_srs_stmt: DROP SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM if_exists real_ulonglong_num' => new DropSpatialReference($options->present($form->node(4)), $numbers->integral($form->node(5))),
+            'drop_srs_stmt: DROP SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM if_exists real_ulonglong_num' => $this->drop($form, $options->present($form->node(4)), $numbers->integral($form->node(5))),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Refuses intrinsic declaration constraints before publishing a CREATE value.
+     *
+     * @param list<SpatialAttribute> $attributes The complete written attributes
+     * @throws \SqlSemantics\Construction\RejectedInput When a declaration cannot form a coherent statement
+     */
+    public function create(Form $form, bool $replace, bool $ifNotExists, \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $srid, array $attributes): CreateSpatialReference
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks())->declaration($srid, $attributes);
+        if ($problem !== null) {
+            $command = $replace ? \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Replace : \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Create;
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial($command, $problem), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+        return new CreateSpatialReference($replace, $ifNotExists, $srid, $attributes);
+    }
+
+    /**
+     * Refuses unmodifiable identifiers before publishing a DROP value.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the identifier is unmodifiable
+     */
+    public function drop(Form $form, bool $ifExists, \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $srid): DropSpatialReference
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks())->identifier($srid);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Drop, $problem), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+        return new DropSpatialReference($ifExists, $srid);
     }
 
     /**

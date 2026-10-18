@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Node;
 
 /**
@@ -24,7 +25,7 @@ final class ReadDependencies
     /**
      * @return list<Node> Nodes used by the read, including transitively referenced definitions
      */
-    public function nodes(Node $root): array
+    public function nodes(Node $root, Comparison $names = Comparison::Sensitive): array
     {
         /** @var list<array<string, int>> $scopes */
         $scopes = [[]];
@@ -48,7 +49,7 @@ final class ReadDependencies
                     $id = count($definitions);
                     $definitionScope = count($scopes);
                     $previous = $bindings;
-                    $bindings[strtolower($table->name->value)] = $id;
+                    $bindings[$names->fold($table->name->value)] = $id;
                     $scopes[] = $node->with->recursive ? $bindings : $previous;
                     $definitions[] = [$table, $definitionScope];
                 }
@@ -56,7 +57,7 @@ final class ReadDependencies
                 $scopes[] = $bindings;
             }
             if (($node instanceof TableReference || $node instanceof ExplicitTable) && $node->name()->schema === null) {
-                $definition = $scopes[$scope][strtolower($node->name()->name->value)] ?? null;
+                $definition = $scopes[$scope][$names->fold($node->name()->name->value)] ?? null;
                 if ($definition !== null) {
                     $pending[] = $definitions[$definition];
                 }

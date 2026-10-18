@@ -35,6 +35,8 @@ final class BodyStructure
      */
     public function check(Node $body, ProgramKind $kind, ?QualifiedName $name = null, ?\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList $parameters = null): void
     {
+        $recursive = (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->position($body);
+        Check::input($recursive === null, $recursive?->message() ?? 'Recursive references occupy their own query block.');
         $locals = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
         Check::input((new LocalAssignments())->scoped($body, $locals) === null, (new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment())->message());
         $problem = $this->problem($body, $kind, $name, $parameters);

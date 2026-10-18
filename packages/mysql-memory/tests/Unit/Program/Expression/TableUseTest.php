@@ -43,4 +43,32 @@ final class TableUseTest extends TestCase
         $this->expectExceptionCode(1146);
         $session->query("PREPARE st FROM 'CREATE TABLE t UNION=() SELECT * FROM missing'");
     }
+    public function testPartitionKeepsTheSameConditionalInstructionAcrossDestinationChanges(): void
+    {
+        $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
+        $partition = new M\Partition\PartitionClause(new M\Partition\Method\KeyMethod(false, null, []), null, null, []);
+        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [$column], partitioning: $partition, ifNotExists: true);
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $observe = static function () use ($definition, $session): int {
+            $session->text = 'unrelated input';
+            try {
+                (new TableUse())->raise($definition, $session);
+                return 0;
+            } catch (SqlError $error) {
+                return $error->getCode();
+            }
+        };
+        self::assertSame(1488, $observe());
+        $session->query('CREATE TABLE t(a INT)');
+        $session->query('INSERT INTO t VALUES(7)');
+        self::assertSame(0, $observe());
+        self::assertSame(0, $session->variables->rowCount);
+        self::assertSame('unrelated input', $session->text);
+        $rows = $session->query('SELECT a FROM t')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rows);
+        self::assertSame([['7']], $rows->rows);
+        $session->query('DROP TABLE t');
+        self::assertSame(1488, $observe());
+        self::assertNull((new TableUse())->prepare($definition, $session));
+    }
 }

@@ -3172,20 +3172,56 @@ the complete diagnostic histories and check that preparation does not change
 stored rows. The saved unseeded counterexamples are included in the native
 integration corpora without removing their nested operands.
 
-Partition construction and inspection now share the interpreted unsigned count,
+Partition construction and inspection share the interpreted unsigned count,
 including hexadecimal counts and wrapped defaults. `KEY()` can resolve to an
-entirely nonnullable unique key when no primary key is declared. Native
-comparison covers creation, existing-destination shortcuts and `SHOW CREATE`
-for these cases. The structure campaign's implicit-key definition without any
-eligible key still needs a constructor-role classification; native agreement on
-its field-list error does not discharge that obligation.
+entirely nonnullable unique key when no primary key is declared. An ordinary
+`CreateTable` now excludes an implicit partition key when its declared columns
+supply no eligible key. `DeferredCreateTable` retains that complete instruction:
+its existing-destination shortcut can succeed, while creation can report the
+partition condition. Direct, prepared and stored-program tests reuse the same
+definition against an existing populated table and after dropping it. Prepared
+execution preserves its preparation database and updates statement row counts.
+The consumer uses semantic values through `TablePreparation`, without recovering
+columns, options or partition clauses from SQL.
 
-The full normal suites pass with these changes: 9,001 semantic unit/doctest
-cases with 18,920 assertions and 18,256 memory unit/property/doctest cases with
-75,397 assertions. Both packages pass their static checks, including the
-parser dependency boundary and 994 retained-value definitions. The explanation,
-partition and PDO integration selection passes 11 tests with 35 assertions.
-Both preceding unseeded campaigns stopped on differences and do not count as a
-900-second pass. Fresh seed and unseeded campaigns are running. The acceptance
-contract remains open until the final revision passes every required campaign
-and the unresolved structure rejections have been classified and repaired.
+Spatial declarations enforce intrinsic identifier and attribute constraints:
+SRID zero, out-of-range identifiers and missing NAME or DEFINITION cannot become
+ordinary spatial statements. `RefusedSpatial` retains the operation kind and its
+typed cause. Definition text remains input data interpreted against the spatial
+catalog at execution. The same `IF NOT EXISTS` structure is compared with an
+absent SRID, an existing SRID and the absent SRID again, including the shortcut
+that does not interpret a replacement definition's text.
+
+Recursive CTE references now follow lexical definition scopes. Qualified names
+address the catalog, inner definitions can shadow an outer name, and unused
+CTEs do not activate their dependencies. Reached ordinary reads require an
+anchor and at most one direct self reference per query block. Contradictory
+query templates remain complete deferred instructions. Missing anchors can be
+checked when an instruction executes; a recursive reference in a subquery is a
+lexical error even in an inactive stored branch, so a program declaration cannot
+contain it. Native tests distinguish these phases instead of treating every
+matching SQL error as an acceptable structure. A directly constructed recursive
+read is held fixed across no database, missing input table, populated input,
+empty input and dropped input. The memory consumer receives unrelated request
+text throughout; rows and column metadata are compared exactly.
+
+The differential regressions also preserve the entire generated password,
+DELETE and PURGE counterexamples. Password byte limits precede replacement
+password authentication for the applicable plugins. Completed charset and
+collation failures precede multiple-DELETE target contextualization. Retained
+PURGE operands resolve a bare window name before a later operand or placement
+condition and keep the command's following argument diagnostic. Nested CTE
+outputs preserve both their inner relation identity and computed-column flags.
+No comparison is weakened to accommodate these changes.
+
+Acceptance remains open. The whole-model `query829-implicit-key` snapshot
+compared all 244 public roots: 100 matching successes, 144 matching SQL errors,
+171 matching database-transition observations, no generation exhaustion or
+internal failures. This precedes the spatial and recursive-domain repairs and
+is not evidence for the final revision. The 144 matching SQL errors still need
+the classifications required by the acceptance contract. Later unseeded runs
+found the saved recursive-reference and PURGE-window differences; they do not
+count as 900-second passes. All supplied seed corpora and the unseeded duration
+must pass on the delivered revision, together with the constructor, dependency,
+normal and state-transition checks. The previously recorded native 5.7
+disconnect, physical-path and client-character-set cases remain unresolved.
