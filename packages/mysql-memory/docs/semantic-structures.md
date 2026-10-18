@@ -2972,3 +2972,12 @@ prepared requests, handler invocation and prepared source-drop histories.
 The 240 direct observations and the complete request corpus compare results,
 metadata, conditions and warnings. They exercise this operand-role distinction;
 the acceptance contract still requires the whole-model and fuzz campaigns.
+
+MIN/MAX retain the result field family of their argument. They do not turn a
+numeric expression, a DATETIME cast, or a TIMESTAMP literal's DATETIME field
+into a TIMESTAMP field. Their ordinary AT TIME ZONE input role excludes these
+fixed contradictions, while NULL and unresolved column dependencies remain
+available. Deferred stored operands retain the complete aggregate and its
+argument for invocation-time preparation. The expanded temporal corpus compares
+168 requests through text and prepared protocols on three releases; direct
+construction reuses 36 stored definitions across seven invocation states.

@@ -40,7 +40,7 @@ final class DeferredTemporalCallStructureTest extends TestCase
         $catalogue = new Catalogue();
         $metadata = new Metadata();
         $structures = [];
-        for ($trial = 0; $trial < 8; $trial++) {
+        for ($trial = 0; $trial < 12; $trial++) {
             $construction = new Construction(new Choices('temporal-call-source:' . $trial), $catalogue, $metadata);
             $number = $construction->object(M\Literal\NumberLiteral::class, 0);
             assert($number instanceof M\Literal\NumberLiteral);
@@ -50,6 +50,9 @@ final class DeferredTemporalCallStructureTest extends TestCase
                 1 => new M\Call\Aggregate\Aggregate(M\Call\Aggregate\AggregateFunction::Average, [$column]),
                 2 => new M\Call\Aggregate\Aggregate(M\Call\Aggregate\AggregateFunction::Sum, [$column]),
             };
+            if ($trial >= 8) {
+                $input = new M\Call\Aggregate\Aggregate($trial % 2 === 0 ? M\Call\Aggregate\AggregateFunction::Minimum : M\Call\Aggregate\AggregateFunction::Maximum, [new M\Call\Extract(M\Expression\IntervalUnit::Day, $column)]);
+            }
             $zone = new M\Routine\Program\Expression\DeferredTimeZone($input, new M\Literal\Text('+00:00'));
             $call = $trial % 2 === 0 ? new M\Routine\Program\Expression\Call\DeferredGetFormat(M\Call\Temporal\TemporalFormat::Date, $zone) : new M\Routine\Program\Expression\Call\DeferredExtract(M\Expression\IntervalUnit::Day, $zone);
             $write = new M\Routine\Program\DeferredSelection([new M\Routine\Program\DeferredProjection($call), new M\Query\SelectExpression($number)], new M\Relation\TableReference(new QualifiedName(new Name('times'))));

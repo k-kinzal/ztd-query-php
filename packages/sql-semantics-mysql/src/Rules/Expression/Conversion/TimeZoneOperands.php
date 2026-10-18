@@ -16,7 +16,8 @@ use SqlSemantics\Statement\Scalar;
  *
  * A TIMESTAMP literal is accepted although its output field is DATETIME.
  * Other non-null literals cannot denote a TIMESTAMP input. Parentheses retain
- * that role. MIN/MAX and unresolved names still require their resolved facts.
+ * that role. MIN/MAX preserve an argument's field family, not the special
+ * TIMESTAMP literal role. Unresolved names still require their resolved facts.
  * Numeric and JSON aggregates, EXTRACT and GET_FORMAT cannot produce TIMESTAMP.
  * Verified through standalone and stored SQL on MySQL 8.0, 8.4 and 9.1.
  *
@@ -48,7 +49,7 @@ final class TimeZoneOperands
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate) {
             return match ($operand->function) {
                 \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Minimum,
-                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Maximum => null,
+                \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Maximum => $this->field($operand->arguments[0]),
                 \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count,
                 \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::BitAnd,
                 \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::BitOr,
@@ -65,6 +66,17 @@ final class TimeZoneOperands
         }
 
         return $this->literal($operand);
+    }
+
+    /**
+     * Retains an aggregate argument's field family; TIMESTAMP literals have DATETIME fields.
+     */
+    public function field(Scalar $operand): ?bool
+    {
+        while ($operand instanceof Grouped) {
+            $operand = $operand->operand;
+        }
+        return $operand instanceof TemporalLiteral ? false : $this->input($operand);
     }
 
     /**
