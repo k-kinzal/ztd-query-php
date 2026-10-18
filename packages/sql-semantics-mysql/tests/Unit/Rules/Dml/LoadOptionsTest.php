@@ -38,4 +38,30 @@ final class LoadOptionsTest extends TestCase
         self::assertSame(LoadRule::MultipleFilesWithoutBulk, $options->input(new LoadInput(false, LoadSource::Url, new Text('f'), new Numeral('1')), new Text('ZSTD')));
         self::assertSame(LoadRule::CompressionWithoutBulk, $options->input(new LoadInput(false, LoadSource::Infile, new Text('f')), new Text('ZSTD')));
     }
+
+    public function testStartingUsesTheFinalPrefixEvenWhenItIsEmpty(): void
+    {
+        $prefix = new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Starting, new Text('x'));
+        $empty = new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Starting, new Text(''));
+        $rules = new LoadOptions();
+        self::assertSame('', $rules->starting([$prefix, $empty]));
+        self::assertSame('x', $rules->starting([$empty, $prefix]));
+        $input = new LoadInput(false, LoadSource::S3, new Text('f'));
+        self::assertSame(LoadRule::LinesStartingBulk, $rules->conflict(LoadFormat::Data, $input, DuplicateHandling::Ignore, null, false, false, new BulkOptions(bulk: true), [$prefix])?->rule);
+        self::assertNull($rules->conflict(LoadFormat::Data, $input, null, null, false, false, new BulkOptions(bulk: true), [$prefix, $empty]));
+    }
+
+    public function testConflictRejectsModernBulkPrefixesBeforeOperationConstruction(): void
+    {
+        $this->expectExceptionMessage('LOAD source features and algorithm options must share a supported language interpretation.');
+        new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable(
+            LoadFormat::Data,
+            null,
+            new LoadInput(false, LoadSource::S3, new Text('f')),
+            null,
+            new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
+            lines: [new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Starting, new Text('x'))],
+            bulk: new BulkOptions(bulk: true),
+        );
+    }
 }

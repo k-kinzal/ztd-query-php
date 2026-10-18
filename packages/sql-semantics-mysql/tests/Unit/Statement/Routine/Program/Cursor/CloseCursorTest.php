@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CloseCursor;
 use SqlSemantics\Statement\Fact\Diagnostic;
 
@@ -20,13 +19,8 @@ final class CloseCursorTest extends TestCase
 {
     public function testDeriveProgramReportsAnUndefinedCursor(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CLOSE c');
-        $create = $operation->statement;
-        self::assertInstanceOf(CreateProcedure::class, $create);
-        self::assertInstanceOf(CloseCursor::class, $create->body);
-
-        self::assertSame('c', $create->body->cursor->value);
-        self::assertSame(['Undefined CURSOR: c'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectExceptionMessage('Undefined CURSOR: c');
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CLOSE c');
     }
 
     /**
@@ -49,8 +43,6 @@ final class CloseCursorTest extends TestCase
         yield 'a cursor of an outer block' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; BEGIN CLOSE c; END; END', []];
         yield 'a cursor in another case' => ['CREATE PROCEDURE p() BEGIN DECLARE C CURSOR FOR SELECT 1; CLOSE c; END', []];
         yield 'a cursor from a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE EXIT HANDLER FOR SQLWARNING CLOSE c; END', []];
-        yield 'a cursor of an inner block' => ['CREATE PROCEDURE p() BEGIN BEGIN DECLARE c CURSOR FOR SELECT 1; END; CLOSE c; END', ['Undefined CURSOR: c']];
-        yield 'a cursor declared after a handler that uses it' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING CLOSE c; DECLARE c CURSOR FOR SELECT 1; END', ['Undefined CURSOR: c', 'Cursor declaration after handler declaration']];
     }
 
     #[DataProvider('providerRenderWritesTheStatement')]
@@ -65,6 +57,29 @@ final class CloseCursorTest extends TestCase
     public static function providerRenderWritesTheStatement(): iterable
     {
         yield '5.6' => ['mysql-5.6.51', 'create procedure p() begin declare c cursor for select 1; close c; end', 'CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; CLOSE c; END'];
-        yield '8.0' => ['mysql-8.0.44', 'create procedure p() close `c d`', 'CREATE PROCEDURE p() CLOSE `c d`'];
+        yield '8.0' => ['mysql-8.0.44', 'create procedure p() begin declare `c d` cursor for select 1; close `c d`; end', 'CREATE PROCEDURE p() BEGIN DECLARE `c d` CURSOR FOR SELECT 1; CLOSE `c d`; END'];
+    }
+
+
+    #[DataProvider('providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRejectsBeforePublication')]
+    public function testDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRejectsBeforePublication(string $sql, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRejectsBeforePublication(): iterable
+    {
+        yield 'a cursor of an inner block' => ['CREATE PROCEDURE p() BEGIN BEGIN DECLARE c CURSOR FOR SELECT 1; END; CLOSE c; END', 'Undefined CURSOR: c'];
+        yield 'a cursor declared after a handler that uses it' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING CLOSE c; DECLARE c CURSOR FOR SELECT 1; END', 'Undefined CURSOR: c'];
+    }
+    public function testRenderRejectsTheUnboundQuotedCursorBeforePublication(): void
+    {
+        $this->expectExceptionMessage('Undefined CURSOR: c d');
+        (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('create procedure p() close `c d`');
     }
 }

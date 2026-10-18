@@ -3249,15 +3249,38 @@ grammar failure. For an otherwise valid input, resolving an implicit table datab
 precedes the lock-clause condition. The regression corpus retains the complete
 unseeded counterexample and reduced nested-query cases.
 
-Acceptance remains open. The whole-model `query874-recursion-purge` snapshot
-(`e79f7cd19a3`) compared all 244 public roots: 100 matching successes, 144 matching
-SQL errors, 171 matching database-transition observations, no generation
-exhaustion or internal failures. This precedes the condition-binding and
-replication repairs and is not evidence for the final revision. Matching SQL
-errors still need the classifications required by the acceptance contract.
-Later unseeded runs found saved compression, debug-diagnostic and empty-prepare
-differences; they do not count as 900-second passes. All supplied seed corpora
-and the unseeded duration must pass on the delivered revision, together with the
-constructor, dependency, normal and state-transition checks. The previously
-recorded native 5.7 disconnect, physical-path and client-character-set cases
-remain unresolved.
+Completed routine declarations now require distinct variable, condition and cursor
+names within each block, with separate namespaces and lexical shadowing. Variables
+and conditions precede cursors, which precede handlers. OPEN, CLOSE and FETCH bind
+only visible cursors; FETCH targets bind visible parameters or locals. Handler
+conditions resolve to their numeric, SQLSTATE or general-condition meaning before
+duplicate detection. Repeating a condition in one block is invalid, while numeric
+codes and SQLSTATE conditions remain distinct and nested blocks may redeclare
+handlers. Inactive branches receive the same structural checks. These checks
+apply to direct public construction before Operation and to SQL input lowering.
+Instruction source spans stay in the input side table, allowing an earlier
+unbound cursor to precede a later declaration-order error without retaining SQL.
+
+Legacy cursor execution also preserves SQL diagnostic history. MySQL 5.6 keeps
+preceding conditions while opening a table-free query and fetching its rows;
+opening a table clears them. Later releases clear the area. Native regression
+histories cover successful calls after both ordinary errors and SIGNAL warnings.
+
+Bulk loading excludes a nonempty effective LINES STARTING BY prefix. The last
+written prefix wins, including an explicit empty string. This conflict follows
+XML, column-list, assignment and LOCAL conflicts, and precedes IGNORE and the
+engine's unavailable-bulk condition. New source/resource features with this
+conflict cannot form an ordinary LoadTable; input lowering retains a typed
+refusal with the target database. Legacy ignored algorithm annotations remain
+representable. The regression corpus retains the complete unseeded input and
+checks MySQL 8.1, 8.2, 8.3, 8.4 and 9.1.
+
+Acceptance remains open. The latest completed whole-model evidence remains the
+`query874-recursion-purge` snapshot (`e79f7cd19a3`): all 244 public roots, 100
+matching successes, 144 matching SQL errors and 171 matching database-transition
+observations. It predates these repairs. Matching SQL errors still need the
+classifications required by the acceptance contract. The subsequent unseeded
+runs found saved compression, diagnostics, locking and bulk-prefix differences;
+none counts as a 900-second pass. Final-revision whole-model, supplied-seed and
+unseeded campaigns remain necessary. The previously recorded native 5.7
+disconnect, physical-path and client-character-set cases remain unresolved.

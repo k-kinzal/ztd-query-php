@@ -79,4 +79,22 @@ final class CursorsTest extends TestCase
 
         $session->query('CALL p()');
     }
+
+    public function testOpenAndFetchPreserveLegacyConditionsUntilATableIsRead(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t(a INT)');
+        $session->query('INSERT INTO t VALUES(1)');
+        $session->query('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; OPEN c; FETCH c INTO x; CLOSE c; END');
+        $session->query('CREATE PROCEDURE q() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT a FROM t; OPEN c; FETCH c INTO x; CLOSE c; END');
+        $session->run('SELECT missing');
+        $before = $session->diagnostics->conditions;
+        $session->query('CALL p()');
+        self::assertSame([['Error', 1054, "Unknown column 'missing' in 'field list'"]], $before);
+        self::assertSame($before, $session->diagnostics->conditions);
+        $session->query('CALL q()');
+        self::assertSame([], $session->diagnostics->conditions);
+    }
 }

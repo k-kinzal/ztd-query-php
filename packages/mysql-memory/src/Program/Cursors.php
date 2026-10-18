@@ -102,7 +102,11 @@ final class Cursors
         }
         $query = $root->query;
         $operation = $this->statements->operation($root);
-        $session->diagnostics->clear();
+        if ((new \MySqlMemory\Session\Execution($session))->retains($root, new \MySqlMemory\Command\QueryCommand())) {
+            $session->diagnostics->retain();
+        } else {
+            $session->diagnostics->clear();
+        }
         (new Problems())->raise($operation, $session);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, microtime(true));
         $connection = new Connection($session->variables, $context, $session->user, $session->host, $session->id, [], $this->statements->activation, WeakReference::create($session));
@@ -114,13 +118,19 @@ final class Cursors
 
     /**
      * Stores the next row of a cursor into the variables FETCH names.
+     * MySQL 5.6 retains preceding conditions until a new condition replaces them;
+     * later releases clear the area. Observed through SQL on all supported major versions.
      *
      * @throws SqlError When the number of variables is wrong, no row is left, or a value is refused
      */
     public function fetch(Cursor $cursor, FetchCursor $statement): void
     {
         $session = $this->statements->session;
-        $session->diagnostics->clear();
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $session->diagnostics->retain();
+        } else {
+            $session->diagnostics->clear();
+        }
         if (count($statement->targets) !== count($cursor->domains)) {
             throw ProgramError::WrongFetchCount->error();
         }

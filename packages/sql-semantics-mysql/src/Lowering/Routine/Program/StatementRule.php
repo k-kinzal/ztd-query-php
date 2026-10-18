@@ -79,7 +79,7 @@ final class StatementRule
         $flow = new FlowRule($this->lowering);
         $blocks = new BlockRule($this->lowering);
 
-        return match ($inner->signature) {
+        $meaning = match ($inner->signature) {
             'sp_proc_stmt_statement: statement', 'sp_proc_stmt_statement: simple_statement' => $this->sql($inner->node(0)),
             'sp_proc_stmt_unlabeled: sp_unlabeled_control' => $flow->loop($inner->node(0), null, null),
             default => match ($inner->node->name) {
@@ -92,6 +92,7 @@ final class StatementRule
                 default => throw ImplementationGap::production($inner),
             },
         };
+        return $this->lowering->origins->record($meaning, $statement);
     }
 
     /**

@@ -123,7 +123,7 @@ final class LoadRule
             'assignments' => $this->assignments($parts['opt_load_data_set_spec']),
             'bulk' => $this->bulk($parts),
         ];
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->conflict($operands['format'], $operands['input'], $operands['duplicates'], $operands['compression'], $operands['columns'] !== [], $operands['assignments'] !== [], $operands['bulk']);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->conflict($operands['format'], $operands['input'], $operands['duplicates'], $operands['compression'], $operands['columns'] !== [], $operands['assignments'] !== [], $operands['bulk'], $operands['lines']);
         if ($problem !== null && (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadDomain())->modern($operands['input'], $operands['bulk'], $operands['compression'])) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions($operands['table']->name, $operands['format'], $problem, $operands['charset'], $operands['assignments']), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
         }

@@ -20,6 +20,7 @@ enum LoadRule: string
     case ColumnsBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and column list specification';
     case AssignmentsBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and assignment to columns or variables';
     case LocalBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and LOCAL client file';
+    case LinesStartingBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and LINES STARTING BY';
     case IgnoreBulk = 'Incorrect usage of LOAD DATA with BULK Algorithm and IGNORE clause';
     case MultipleFilesWithoutBulk = 'Incorrect usage of LOAD DATA without BULK Algorithm and multiple files';
     case UrlWithoutBulk = 'Incorrect usage of LOAD DATA without BULK Algorithm and URL source';

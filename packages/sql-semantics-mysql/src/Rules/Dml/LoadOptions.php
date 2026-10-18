@@ -17,7 +17,8 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * Interprets LOAD option compatibility independently of table and file state.
  *
  * MySQL 8.0 and 8.1 ignore bulk annotations. From 8.2, bulk loading excludes
- * XML, column lists, assignments, LOCAL and IGNORE, in that order. A positive
+ * XML, column lists, assignments, LOCAL, nonempty LINES STARTING BY and
+ * IGNORE, in that order. The last STARTING BY option replaces earlier ones. A positive
  * COUNT requires bulk loading; zero is the omitted-count interpretation in
  * 8.2 and 8.3 and a syntax refusal from 8.4. Observed through Testcontainers.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.
@@ -28,8 +29,10 @@ final class LoadOptions
 {
     /**
      * Answers the first incompatible combination under the active bulk semantics.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption> $lines The ordered line options
      */
-    public function conflict(LoadFormat $format, LoadInput $input, ?DuplicateHandling $duplicates, ?Text $compression, bool $columns, bool $assignments, ?BulkOptions $options): ?LoadConflict
+    public function conflict(LoadFormat $format, LoadInput $input, ?DuplicateHandling $duplicates, ?Text $compression, bool $columns, bool $assignments, ?BulkOptions $options, array $lines = []): ?LoadConflict
     {
         if (!($options->bulk ?? false)) {
             $rule = $this->input($input, $compression);
@@ -39,6 +42,7 @@ final class LoadOptions
                 $columns => LoadRule::ColumnsBulk,
                 $assignments => LoadRule::AssignmentsBulk,
                 $input->local => LoadRule::LocalBulk,
+                $this->starting($lines) !== '' => LoadRule::LinesStartingBulk,
                 $duplicates === DuplicateHandling::Ignore => LoadRule::IgnoreBulk,
                 default => null,
             };
@@ -57,5 +61,21 @@ final class LoadOptions
             $compression !== null => LoadRule::CompressionWithoutBulk,
             default => null,
         };
+    }
+
+    /**
+     * Answers the effective line prefix; an explicitly empty final prefix is allowed.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption> $lines The ordered line options
+     */
+    public function starting(array $lines): string
+    {
+        $value = '';
+        foreach ($lines as $line) {
+            if ($line->kind === \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Starting) {
+                $value = $line->text->value;
+            }
+        }
+        return $value;
     }
 }

@@ -58,6 +58,6 @@ final class LoadFacts
      */
     public function algorithm(LoadTable $load): ?LoadConflict
     {
-        return (new LoadOptions())->conflict($load->format, $load->input, $load->duplicates, $load->compression, $load->columns !== [], $load->assignments !== [], $load->bulk);
+        return (new LoadOptions())->conflict($load->format, $load->input, $load->duplicates, $load->compression, $load->columns !== [], $load->assignments !== [], $load->bulk, $load->lines);
     }
 }
