@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTa
  *
  * @visibility MySqlMemory
  */
-final class PendingTable
+final class PendingTable implements PendingInstruction
 {
     /**
      * @param RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header The complete retained definition
@@ -30,6 +30,14 @@ final class PendingTable
      */
     public function __construct(public readonly RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header, public readonly string $database, public readonly ?ParameterBindings $bindings = null)
     {
+    }
+
+    /**
+     * Exposes the retained query parameters, or an empty table instruction binding.
+     */
+    public function parameters(): ParameterBindings
+    {
+        return $this->bindings ?? new ParameterBindings([]);
     }
 
     /**

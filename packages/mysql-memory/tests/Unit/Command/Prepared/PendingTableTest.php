@@ -47,4 +47,12 @@ final class PendingTableTest extends TestCase
 
         $definition->execute($session, 'opaque label', []);
     }
+    public function testParametersRetainsTheQueryBindings(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $definition = (new Preparation())->read('CREATE TABLE t UNION=() SELECT ? AS v', $session);
+        self::assertInstanceOf(PendingTable::class, $definition);
+        self::assertSame($definition->bindings, $definition->parameters());
+        self::assertCount(1, $definition->parameters()->types);
+    }
 }

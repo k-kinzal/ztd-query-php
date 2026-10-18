@@ -73,24 +73,44 @@ final class PrivilegeChecksTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, int}>
+     * @return iterable<string, array{string}>
      */
-    public static function providerGlobalAllReleases(): iterable
+    public static function providerModernGlobalAll(): iterable
     {
-        yield '5.6' => ['mysql-5.6.51', 1];
-        yield '5.7' => ['mysql-5.7.44', 1];
-        yield '8.0' => ['mysql-8.0.44', 0];
-        yield '8.4' => ['mysql-8.4.7', 0];
-        yield '9.1' => ['mysql-9.1.0', 0];
+        yield '8.0' => ['mysql-8.0.44'];
+        yield '8.4' => ['mysql-8.4.7'];
+        yield '9.1' => ['mysql-9.1.0'];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerGlobalAllReleases')]
-    public function testRevokeGlobalAllHasNoRoutineTargetInModernReleases(string $release, int $count): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyGlobalAll(): iterable
+    {
+        yield '5.6' => ['mysql-5.6.51'];
+        yield '5.7' => ['mysql-5.7.44'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerModernGlobalAll')]
+    public function testRevokeGlobalAllHasNoRoutineTargetInModernReleases(string $release): void
     {
         $semantics = new Semantics(Dialect::MySql, $release);
-        $diagnostics = $semantics->analyze('REVOKE ALL ON FUNCTION *.* FROM u')->facts->diagnostics;
-        self::assertCount($count, $diagnostics, $release);
+        self::assertSame([], $semantics->analyze('REVOKE ALL ON FUNCTION *.* FROM u')->facts->diagnostics);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyGlobalAll')]
+    public function testRevokeLegacyGlobalAllIsNotAnOrdinaryRoutineStatement(string $release): void
+    {
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $semantics->analyze('GRANT ALL ON FUNCTION *.* TO u');
+        $this->expectExceptionMessage('The routine revocation does not name a routine object.');
+        (new Semantics(Dialect::MySql, $release))->analyze('REVOKE ALL ON FUNCTION *.* FROM u');
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyGlobalAll')]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerModernGlobalAll')]
+    public function testGrantGlobalAllRequiresTheRoutineObjectInEveryRelease(string $release): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql, $release))->analyze('GRANT ALL ON FUNCTION *.* TO u');
     }
 }

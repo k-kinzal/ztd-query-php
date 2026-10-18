@@ -139,6 +139,9 @@ final class StatementRule
      */
     public function rejected(\SqlSemantics\Construction\RejectedInput $failure): ProgramStatement|Statement
     {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Privilege\RefusedRevokeLevel) {
+            return $failure->problem->request;
+        }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery) {
             return $failure->problem->write;
         }

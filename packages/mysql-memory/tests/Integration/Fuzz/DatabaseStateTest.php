@@ -59,10 +59,10 @@ final class DatabaseStateTest extends TestCase
                 new GrantPrivileges($execute, ObjectKind::Procedure, $routine, [$user]),
                 new RevokePrivileges(false, $execute, ObjectKind::Procedure, $routine, [$user]),
                 new GrantPrivileges([new AllPrivileges()], ObjectKind::Table, new CurrentDatabaseLevel(), [$user]),
-                new RevokePrivileges(false, [new AllPrivileges()], ObjectKind::Procedure, new CurrentDatabaseLevel(), [$user]),
+                new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new QualifiedName(new Name('revoker')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRevokePrivileges(false, [new AllPrivileges()], ObjectKind::Procedure, new CurrentDatabaseLevel(), [$user])),
             ];
             $before = [1046, $legacy ? 1146 : 1049, 1046, 1046, 1046, 1046, 1046, 1046];
-            $after = [null, null, null, 1284, null, null, null, 1144];
+            $after = [null, null, null, 1284, null, null, null, null];
             if (!$legacy) {
                 $nodes[] = new ImportTable([new Text('x')]);
                 $nodes[] = new ImportTable([new Text('/var/lib/mysql-files/x.sdi')]);

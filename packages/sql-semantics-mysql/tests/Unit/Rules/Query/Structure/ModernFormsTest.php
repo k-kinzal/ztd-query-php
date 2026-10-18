@@ -19,6 +19,18 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ModernFormsTest extends TestCase
 {
+    public function testRevocationDistinguishesStoredLegacyAndOrdinaryModernGlobalAll(): void
+    {
+        $users = [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())];
+        $all = [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()];
+        $kind = \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Function;
+        $global = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel();
+        $forms = new ModernForms();
+        self::assertTrue($forms->revocation(new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges(false, $all, $kind, $global, $users)));
+        self::assertFalse($forms->revocation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRevokePrivileges(false, $all, $kind, $global, $users)));
+        self::assertTrue($forms->revocation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRevokePrivileges(true, $all, $kind, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), $users)));
+    }
+
     public function testDefinitionRecognizesLoadSourceFeaturesBeforeCombiningTheirOperands(): void
     {
         $forms = new ModernForms();

@@ -15,10 +15,10 @@ use RuntimeException;
 final class DeferredPreparation extends RuntimeException
 {
     /**
-     * @param \MySqlMemory\Command\Prepared\PendingTable $definition The retained execution-time condition
+     * @param \MySqlMemory\Command\Prepared\PendingInstruction $definition The retained execution-time condition
      */
-    public function __construct(public readonly \MySqlMemory\Command\Prepared\PendingTable $definition)
+    public function __construct(public readonly \MySqlMemory\Command\Prepared\PendingInstruction $definition)
     {
-        parent::__construct('The prepared table definition retains an execution-time partition condition.');
+        parent::__construct('The prepared instruction retains a condition resolved during execution.');
     }
 }

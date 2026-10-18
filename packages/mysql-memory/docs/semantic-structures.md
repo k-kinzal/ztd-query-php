@@ -67,10 +67,22 @@ Input lowering reports such SQL through `RefusedDeleteTargets`, which retains
 typed relations, predicates, common tables and the enclosing program name for
 diagnostic ordering. It is not a statement and retains no source SQL or AST.
 
-This namespace constraint does not yet establish the entire deletion domain:
-for example, the updatability of a derived-table target also needs its ordinary
-statement and deferred stored-instruction roles distinguished. A matching native
-refusal does not close that remaining construction issue.
+Derived-table and common-table targets have separate stored-instruction roles:
+`DeferredMultipleDelete` and `DeferredDelete` retain the complete write while
+ordinary deletion constructors exclude these intrinsically read-only targets.
+Their consumers resolve the retained dependencies at invocation. Case-distinct
+names and qualified physical tables remain binding questions.
+
+Routine REVOKE targets also distinguish ordinary statements from stored
+instructions. `DeferredRevokePrivileges` retains the complete privilege list,
+target, recipients and account flags when a routine kind is paired with a
+wildcard level. Modern global `REVOKE ALL` has an ordinary interpretation; the
+same spelling has the deferred role in legacy releases. Composition checks keep
+these version-dependent interpretations separate. Prepared requests retain the
+typed instruction and the preparation database. Invocation resolves its names,
+performs the implicit commit and reports the target condition. Direct native
+tests reuse the same definition and call through skipped and reached branches,
+then inspect the committed rows. No request text is parsed by that consumer.
 
 The generated root is a MySQL statement or an ordinary expression placed in a SELECT item. The runner derives its semantic facts against a fresh in-memory session and sends the result directly to statement execution. Every parameter occurrence receives an explicit NULL value and its type before derivation, so the fixture supplies bindings without relying on unresolved parameter types. Separate properties exercise non-NULL bindings and their occurrence order. The generator has no list of supported SQL commands and does not use execution success or semantic diagnostics to select inputs.
 

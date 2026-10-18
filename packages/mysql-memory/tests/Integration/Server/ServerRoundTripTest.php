@@ -51,6 +51,27 @@ final class ServerRoundTripTest extends TestCase
         self::assertSame(['42S02', 1146, "Table 'shop.missing' doesn't exist"], $error);
     }
 
+    public function testStartPreparesAStoredRevocationConditionThroughPdo(): void
+    {
+        $server = Server::start('8.4.7', ['shop']);
+        try {
+            $pdo = new PDO($server->dsn('shop'), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT, PDO::ATTR_EMULATE_PREPARES => false]);
+            $pdo->exec('CREATE TABLE items(id INT)');
+            $revoke = $pdo->prepare('REVOKE ALL ON PROCEDURE * FROM u');
+            self::assertSame(0, $revoke->columnCount());
+            $pdo->beginTransaction();
+            $pdo->exec('INSERT INTO items VALUES(7)');
+            self::assertFalse($revoke->execute());
+            self::assertSame(['42000', 1144, 'Illegal GRANT/REVOKE command; please consult the manual to see which privileges can be used'], $revoke->errorInfo());
+            $pdo->exec('ROLLBACK');
+            $rows = $pdo->query('SELECT id FROM items');
+            self::assertNotFalse($rows);
+            self::assertSame([[7]], $rows->fetchAll(PDO::FETCH_NUM));
+        } finally {
+            $server->stop();
+        }
+    }
+
     public function testStartServesMysqliQueriesAndPreparedStatements(): void
     {
         $server = Server::start('8.4.7', ['shop']);

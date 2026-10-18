@@ -18,7 +18,7 @@ final class DeferredPreparationTest extends TestCase
     {
         $session = (new Instance())->connect();
         $this->expectException(DeferredPreparation::class);
-        $this->expectExceptionMessage('The prepared table definition retains an execution-time partition condition.');
+        $this->expectExceptionMessage('The prepared instruction retains a condition resolved during execution.');
 
         $session->analyze('CREATE TABLE later.t(a INT) PARTITION BY HASH(ROW(1,2))', true);
     }

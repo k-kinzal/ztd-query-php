@@ -123,7 +123,7 @@ final class Preparation
      *
      * @throws SqlError When splitting or semantic interpretation refuses the input
      */
-    public function read(string $sql, Session $session): Operation|\MySqlMemory\Command\Prepared\PendingTable
+    public function read(string $sql, Session $session): Operation|\MySqlMemory\Command\Prepared\PendingInstruction
     {
         try {
             $statements = $session->split($sql);

@@ -27,6 +27,7 @@ final class TableInput
      * Resolves a complete header after grammar conditions and before tail dependencies.
      *
      * @throws DeferredPreparation When preparation retains a partition condition for execution
+     * @throws CompletedTemplate When an existing table satisfies a conditional definition
      */
     public function refused(RejectedInput $failure, string $statement, Session $session): SqlError
     {

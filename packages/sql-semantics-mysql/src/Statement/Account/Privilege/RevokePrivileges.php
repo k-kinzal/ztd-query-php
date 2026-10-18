@@ -73,6 +73,7 @@ final class RevokePrivileges implements Statement, PrivilegeChange
             Check::input($user->granted(), 'A REVOKE account is a named account with at most one authentication method.');
             Check::input($user->identification === null, 'A REVOKE account has no authentication clause.');
         }
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Account\Privilege\RevokeScopes())->deferred($this->privileges, $kind, $level), 'An ordinary revocation names a routine object or a global ALL interpretation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

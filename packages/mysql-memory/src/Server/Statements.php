@@ -85,7 +85,7 @@ final class Statements
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         try {
             $operation = (new \MySqlMemory\Session\Access\Preparation())->read($sql, $session);
-            $bindings = $operation instanceof \MySqlMemory\Command\Prepared\PendingTable ? ($operation->bindings ?? new \MySqlMemory\Command\Prepared\ParameterBindings([])) : new \MySqlMemory\Command\Prepared\ParameterBindings([]);
+            $bindings = $operation instanceof \MySqlMemory\Command\Prepared\PendingInstruction ? $operation->parameters() : new \MySqlMemory\Command\Prepared\ParameterBindings([]);
             $columns = [];
             if ($operation instanceof \SqlSemantics\Statement\Operation) {
                 (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($operation->statement));

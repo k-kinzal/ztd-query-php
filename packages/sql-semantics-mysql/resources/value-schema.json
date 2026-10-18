@@ -220,6 +220,9 @@
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
         "priority": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\Privilege\\RefusedRevokeLevel": {
+        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRevokePrivileges"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RefusedColumnLevel": {
         "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\CurrentDatabaseLevel|SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\DatabaseLevel|SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\GlobalLevel",
         "privilege": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\StaticPrivilege",
@@ -2747,6 +2750,14 @@
         "targets": "array",
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRevokePrivileges": {
+        "ifExists": "bool",
+        "ignoreUnknownUser": "bool",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectKind",
+        "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
+        "privileges": "array",
+        "users": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement": {
         "name": "string",

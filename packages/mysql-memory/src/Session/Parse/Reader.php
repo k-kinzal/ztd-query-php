@@ -159,12 +159,14 @@ final class Reader
      * Converts a typed operand refusal, preserving notices completed before its boundary.
      *
      * @throws Definition\DeferredPreparation When a CREATE definition is retained for prepared execution
+     * @throws Definition\CompletedTemplate When a conditional definition completes
      */
     public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
         $failure = (new Entry\ProgramInput())->stopped($failure, $session);
-        if ((new Definition\TableInput())->accepts($failure->problem)) {
-            return (new Definition\TableInput())->refused($failure, $statement, $session);
+        $template = $this->template($failure, $statement, $session);
+        if ($template !== null) {
+            return $template;
         }
         $parser = $session->semantics()->parser();
         $partition = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
@@ -205,6 +207,23 @@ final class Reader
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
         return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);
+    }
+
+    /**
+     * Preserves complete instructions that can be stored before their condition is reached.
+     *
+     * @throws Definition\DeferredPreparation When a typed instruction is prepared
+     * @throws Definition\CompletedTemplate When a conditional definition completes
+     */
+    public function template(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
+    {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Privilege\RefusedRevokeLevel) {
+            return (new Definition\RevocationInput())->refused($failure, $statement, $session);
+        }
+        if ((new Definition\TableInput())->accepts($failure->problem)) {
+            return (new Definition\TableInput())->refused($failure, $statement, $session);
+        }
+        return null;
     }
 
     /**

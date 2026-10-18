@@ -159,7 +159,7 @@ final class GrantRule
         $level = $this->privileges->level($form->node(5));
         $users = $this->specifications($form->node(7));
         $this->privileges->columnKind($items, $kind, $level, $end);
-        return new RevokePrivileges($ifExists, $items, $kind, $level, $users, $ignore);
+        return (new Privilege\RevokeRule($this->lowering))->statement($ifExists, $items, $kind, $level, $users, $ignore, $end);
     }
 
     /**
@@ -169,7 +169,7 @@ final class GrantRule
     {
         $this->privileges->words($form->node(3));
 
-        return new RevokePrivileges($ifExists, [new AllPrivileges()], $this->privileges->kind($form->node(5)), $this->privileges->level($form->node(6)), $this->specifications($form->node(8)), $ignore);
+        return (new Privilege\RevokeRule($this->lowering))->statement($ifExists, [new AllPrivileges()], $this->privileges->kind($form->node(5)), $this->privileges->level($form->node(6)), $this->specifications($form->node(8)), $ignore, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**

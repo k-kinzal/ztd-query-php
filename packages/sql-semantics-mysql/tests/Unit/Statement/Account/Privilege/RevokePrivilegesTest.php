@@ -50,4 +50,9 @@ final class RevokePrivilegesTest extends TestCase
         new RevokePrivileges($ifExists, [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel(), [$user], $ignoreUnknownUser);
     }
 
+    public function testRoutineWildcardCannotBeConstructedAsAnOrdinaryStatement(): void
+    {
+        $this->expectExceptionMessage('An ordinary revocation names a routine object or a global ALL interpretation.');
+        new RevokePrivileges(false, [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Function, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
+    }
 }

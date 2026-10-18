@@ -76,8 +76,8 @@ final class PreparedCommand implements Command
             $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
         }
         $prepared = (new \MySqlMemory\Session\Access\Preparation())->read($text, $session);
-        if ($prepared instanceof PendingTable) {
-            $bindings = $prepared->bindings ?? new ParameterBindings([]);
+        if ($prepared instanceof PendingInstruction) {
+            $bindings = $prepared->parameters();
             $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
             return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
         }

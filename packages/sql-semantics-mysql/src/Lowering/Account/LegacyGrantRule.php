@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Statement;
@@ -137,7 +136,7 @@ final class LegacyGrantRule
         (new Privilege\LegacyColumns())->requireTable($items, $level, (new \SqlSemantics\Construction\SourceRanges())->span($command->node(3))[1] ?? 0);
         $users = $this->users($command->node(5));
         $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
-        return new RevokePrivileges(false, $items, $kind, $level, $users);
+        return (new Privilege\RevokeRule($this->lowering))->statement(false, $items, $kind, $level, $users, end: (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**

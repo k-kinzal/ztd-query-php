@@ -221,4 +221,11 @@ final class ReaderTest extends TestCase
         $this->expectExceptionMessage("Not unique table/alias: 'c'");
         $session->query('WITH unused AS (WITH c AS (SELECT 1), c AS (SELECT 2) SELECT 1) DELETE FROM x USING t');
     }
+    public function testTemplateLeavesIndependentOperandConditionsAtTheirOwnBoundary(): void
+    {
+        $session = (new Instance())->connect();
+        $failure = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2), 0);
+        self::assertNull((new Reader())->template($failure, 'SELECT ROW(1,2)', $session));
+    }
+
 }

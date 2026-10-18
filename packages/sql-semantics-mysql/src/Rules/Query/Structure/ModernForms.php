@@ -65,6 +65,8 @@ final class ModernForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRevokePrivileges => $this->revocation($value),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint => $value->enforced !== null,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute => true,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions => true,
@@ -79,6 +81,14 @@ final class ModernForms
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,
             default => false,
         };
+    }
+
+    /**
+     * Identifies modern account flags and the ordinary global routine interpretation.
+     */
+    public function revocation(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRevokePrivileges $value): bool
+    {
+        return $value->ifExists || $value->ignoreUnknownUser || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges && (new \SqlSemantics\Platform\MySql\Rules\Account\Privilege\RevokeScopes())->globalAll($value->privileges, $value->kind, $value->level));
     }
 
     /**

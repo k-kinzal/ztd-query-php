@@ -28,16 +28,16 @@ final class PreparedCache
     /**
      * @param list<array{string, string, Table}> $tables Resolved schema, name and declaration identities
      */
-    public function __construct(public PreparedStatement|PendingTable $definition, public array $tables)
+    public function __construct(public PreparedStatement|PendingInstruction $definition, public array $tables)
     {
     }
 
     /**
      * Retains a definition and the declarations its named relations resolved to.
      */
-    public static function capture(Operation|PendingTable $operation, Session $session): self
+    public static function capture(Operation|PendingInstruction $operation, Session $session): self
     {
-        if ($operation instanceof PendingTable) {
+        if ($operation instanceof PendingInstruction) {
             return new self($operation, []);
         }
         $tables = [];
@@ -78,7 +78,7 @@ final class PreparedCache
      */
     public function refresh(Session $session, string $sql, ParameterBindings $bindings, array $parameters): void
     {
-        if (!$this->changed($session)) {
+        if (!$this->definition instanceof PreparedStatement || !$this->changed($session)) {
             return;
         }
         $database = $session->variables->database;

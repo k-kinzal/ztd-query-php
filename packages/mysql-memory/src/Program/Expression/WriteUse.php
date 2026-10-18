@@ -17,9 +17,11 @@ final class WriteUse
     /**
      * Runs the template's preparation and preserves a conditional CREATE completion.
      */
-    public function prepare(W\DeferredAlterTable|W\DeferredDelete|W\DeferredMultipleDelete|W\DeferredInsertRows|W\DeferredInsertQuery|W\DeferredCreateTable $statement, Session $session): void
+    public function prepare(W\DeferredRevokePrivileges|W\DeferredAlterTable|W\DeferredDelete|W\DeferredMultipleDelete|W\DeferredInsertRows|W\DeferredInsertQuery|W\DeferredCreateTable $statement, Session $session): void
     {
-        if ($statement instanceof W\DeferredAlterTable) {
+        if ($statement instanceof W\DeferredRevokePrivileges) {
+            (new \MySqlMemory\Program\Account\RevokeUse())->raise($statement, $session);
+        } elseif ($statement instanceof W\DeferredAlterTable) {
             (new AlterUse())->raise($statement, $session);
         } elseif ($statement instanceof W\DeferredCreateTable) {
             (new TableUse())->raise($statement, $session);
