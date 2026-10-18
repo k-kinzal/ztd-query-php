@@ -104,7 +104,7 @@
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a><span class="tok-com">     * Tells whether any part requires the early partition-expression refusal.</span></span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">forbidden</span>(<span class="tok-id">Scalar</span> <span class="tok-var">$expression</span>, <span class="tok-id">GrammarRelease</span> <span class="tok-var">$release</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">forbidden</span>(<span class="tok-id">\SqlSemantics\Statement\Operand</span> <span class="tok-var">$expression</span>, <span class="tok-id">GrammarRelease</span> <span class="tok-var">$release</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    {</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-var">$graph</span> = <span class="tok-kw">new</span> <span class="tok-id">ValueGraph</span>([<span class="tok-str">&#039;SqlSemantics\\Statement\\&#039;</span>, <span class="tok-str">&#039;SqlSemantics\\Contract\\&#039;</span>, <span class="tok-str">&#039;SqlSemantics\\Platform\\MySql\\Statement\\&#039;</span>]);</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$graph</span>-&gt;<span class="tok-id">objects</span>(<span class="tok-var">$expression</span>) <span class="tok-kw">as</span> <span class="tok-var">$part</span>) {</span>
@@ -122,8 +122,22 @@
 <span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a></span>
 <span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
 <span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    }</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>}</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a></span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-com">     * Classifies a refused partition operand without assigning it a scalar type.</span></span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">condition</span>(<span class="tok-id">\SqlSemantics\Statement\Operand</span> <span class="tok-var">$expression</span>, <span class="tok-id">GrammarRelease</span> <span class="tok-var">$release</span>): <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition</span></span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    {</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-var">$graph</span> = <span class="tok-kw">new</span> <span class="tok-id">ValueGraph</span>([<span class="tok-str">&#039;SqlSemantics\\Statement\\&#039;</span>, <span class="tok-str">&#039;SqlSemantics\\Contract\\&#039;</span>, <span class="tok-str">&#039;SqlSemantics\\Platform\\MySql\\Statement\\&#039;</span>]);</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$graph</span>-&gt;<span class="tok-id">objects</span>(<span class="tok-var">$expression</span>) <span class="tok-kw">as</span> <span class="tok-var">$part</span>) {</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>            <span class="tok-kw">if</span> (<span class="tok-var">$part</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Statement\Query</span>) {</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>                <span class="tok-kw">return</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition</span>::<span class="tok-id">Subquery</span>;</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>            }</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        }</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">forbidden</span>(<span class="tok-var">$expression</span>, <span class="tok-var">$release</span>) ? <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition</span>::<span class="tok-id">SessionState</span> : <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition</span>::<span class="tok-kw">Function</span>;</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>    }</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>}</span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

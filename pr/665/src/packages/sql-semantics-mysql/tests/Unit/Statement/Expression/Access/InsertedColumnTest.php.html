@@ -84,7 +84,7 @@
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>        (<span class="tok-kw">new</span> <span class="tok-id">InsertedColumn</span>(<span class="tok-kw">new</span> <span class="tok-id">ColumnUse</span>(<span class="tok-kw">new</span> <span class="tok-id">Name</span>(<span class="tok-str">&#039;a&#039;</span>))))-&gt;<span class="tok-id">render</span>(<span class="tok-var">$out</span>);</span>
 <span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a></span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;VALUES(a)&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Lexical</span>())-&gt;<span class="tok-id">join</span>(<span class="tok-var">$out</span>-&gt;<span class="tok-id">pieces</span>()));</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    }</span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a></span>
 <span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveScalarReadsTheWrittenTableInOnDuplicateKeyUpdate</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    {</span>
@@ -104,9 +104,17 @@
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a></span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\SqlSemantics\Statement\Type\Known</span>::<span class="tok-kw">class</span>, <span class="tok-var">$type</span>);</span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind</span>::<span class="tok-id">Null</span>, <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated</span>::<span class="tok-id">ValuesElsewhere</span>-&gt;<span class="tok-id">value</span>], [<span class="tok-var">$type</span>-&gt;<span class="tok-id">descriptor</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain</span> ? <span class="tok-var">$type</span>-&gt;<span class="tok-id">descriptor</span>-&gt;<span class="tok-id">kind</span> : <span class="tok-id">null</span>, <span class="tok-var">$query</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">warnings</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">message</span>()]);</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    }</span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>}</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    }</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveScalarKeepsAnUnboundHandlerColumnFromEmittingAPreparationNotice</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    {</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Dialect</span>::<span class="tok-id">MySql</span>);</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;HANDLER absent READ FIRST WHERE VALUES(id)&#039;</span>)-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">warnings</span>);</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-id">self</span>::<span class="tok-id">assertCount</span>(<span class="tok-num">1</span>, <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;HANDLER absent READ FIRST WHERE BINARY id&#039;</span>)-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">warnings</span>);</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT VALUES(id) FROM unknown_table&#039;</span>)-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">warnings</span>);</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    }</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>}</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
