@@ -2046,3 +2046,22 @@ constructor constraint. The `query372` unseeded campaign stopped after 353.086
 seconds with 434 matching inputs and one locking-clause diagnostic difference.
 That failure and the remaining constructor domains are unresolved acceptance
 work; the final seed and 900-second gates have not passed on this revision.
+
+### Partition addition across table lifetimes
+
+Added partitions are interpreted against the existing RANGE, LIST, HASH or KEY
+method before a replacement layout is constructed. Missing bounds, wrong bound
+roles, omitted subpartitions, incompatible explicit counts and duplicate names
+produce SQL conditions. Explicit names survive HASH additions. Reusing the same
+addition object checks existing names before combining graphs, so a repeated
+operation reports the duplicate instead of violating the node-occurrence
+invariant. MySQL 5.6 reports copied rows for HASH additions.
+
+The `query385` snapshot passes all three package static suites and 637 core,
+8,521 MySQL Semantics and 18,053 Memory tests. Live comparisons pass 1,010
+partition alteration observations and 480 same-object observations on five
+releases. Eight directly constructed additions and reads are reused across
+absent, ordinary, populated partitioned, already-added, incompatible-method and
+recreated tables. Another 860 saved native observations replay without a
+difference. This is evidence for the tested state constraints, not closure of
+all partition constructor invariants or the final fuzz gates.

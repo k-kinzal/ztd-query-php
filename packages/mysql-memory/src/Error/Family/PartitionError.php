@@ -29,6 +29,7 @@ enum PartitionError: int implements ErrorCode
     case RangeNotIncreasing = 1493;
     case ListConstantTwice = 1495;
     case TooManyPartitions = 1499;
+    case MixedSubpartitionMethods = 1500;
     case UniqueKeyColumns = 1503;
     case NoPartitions = 1504;
     case ForeignKeys = 1506;
@@ -38,6 +39,8 @@ enum PartitionError: int implements ErrorCode
     case ReorganizeHashCount = 1510;
     case ReorganizeWithoutNames = 1511;
     case OnlyRangeList = 1512;
+    case AddedSubpartitionCount = 1513;
+    case NoPartitionsAdded = 1514;
     case DuplicatePartition = 1517;
     case ReorganizeConsecutive = 1519;
     case ReorganizeRange = 1520;

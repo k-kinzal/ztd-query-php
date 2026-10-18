@@ -48,7 +48,7 @@ final class Reorganization
         }
         $this->roles($clause, $command);
         $definitions = $clause->definitions === [] ? array_map(static fn (int $index): PartitionDefinition => new PartitionDefinition(new Name('p' . $index), null, [], []), range(0, (int) ($clause->partitions->text ?? '1') - 1)) : $clause->definitions;
-        $count = $clause->subpartitioning === null ? 0 : (int) ($clause->subpartitioning->count->text ?? (string) count($definitions[0]->subpartitions));
+        $count = $clause->subpartitioning === null ? 0 : (int) ($clause->subpartitioning->count->text ?? (string) max(1, count($definitions[0]->subpartitions)));
         $replacement = $this->subpartitions($command->definitions, $count);
         $definitions = $this->subpartitions($definitions, $count);
         $names = array_map(static fn (PartitionDefinition $definition): string => mb_strtolower($definition->name->value), $definitions);
@@ -94,12 +94,15 @@ final class Reorganization
      *
      * @throws SqlError When a replacement bound disagrees with the existing method
      */
-    public function roles(PartitionClause $clause, ReorganizePartition $command): void
+    public function roles(PartitionClause $clause, ReorganizePartition|\SqlSemantics\Platform\MySql\Statement\Alter\Partition\AddPartition $command): void
     {
         foreach ($command->definitions as $definition) {
             $problem = (new DefinitionShape())->problem($definition, $clause->method, null);
             if ($problem !== null) {
                 throw new SqlError($problem === DefinitionIssue::MissingRangeValues || $problem === DefinitionIssue::MissingListValues ? PartitionError::MissingValues : PartitionError::WrongValuesKind, $problem->message());
+            }
+            if ($clause->subpartitioning === null && $definition->subpartitions !== []) {
+                throw PartitionError::MixedSubpartitionMethods->error();
             }
         }
     }

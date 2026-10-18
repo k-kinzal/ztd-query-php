@@ -70,11 +70,12 @@ final class PartitionChange
             return;
         }
         $ranged = $clause->method instanceof ExpressionMethod || $clause->method instanceof ColumnsMethod;
+        if ($command instanceof AddPartition && !$ranged && $this->change->release === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $this->change->copies = true;
+        }
         match (true) {
             $command instanceof RemovePartitioning => $this->removed(),
-            $command instanceof AddPartition => $layout->partitioning = $ranged
-                ? new PartitionClause($clause->method, null, $clause->subpartitioning, [...$clause->definitions, ...$command->definitions])
-                : new PartitionClause($clause->method, new Numeral((string) ($this->count($clause) + (int) ($command->count->text ?? (string) count($command->definitions)))), $clause->subpartitioning, []),
+            $command instanceof AddPartition => $layout->partitioning = (new Addition())->rewrite($clause, $command),
             $command instanceof CoalescePartition => $layout->partitioning = $this->coalesced($clause, $ranged, (int) $command->count->text),
             $command instanceof DropPartition => $layout->partitioning = $this->dropped($clause, $ranged, $command->partitions),
             $command instanceof MaintainPartitions && $command->kind === MaintenanceKind::Truncate => $this->truncated($clause, $command),
