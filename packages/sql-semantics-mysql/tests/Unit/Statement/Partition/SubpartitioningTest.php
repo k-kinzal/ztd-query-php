@@ -16,6 +16,16 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning;
 #[Medium]
 final class SubpartitioningTest extends TestCase
 {
+    public function testCountPreservesHexadecimalValuesForDefinitionShapeChecks(): void
+    {
+        $count = new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('b', true);
+        $method = new KeyMethod(false, null, [new \SqlSemantics\Statement\Identifier\Name('a')]);
+        self::assertSame($count, (new Subpartitioning($method, $count))->count);
+        $this->expectExceptionMessage('A subpartition count is an integer token.');
+        new Subpartitioning($method, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1e2'));
+    }
+
+
     public function testDeriveSubpartitioningDerivesTheMethod(): void
     {
         $semantics = new Semantics(Dialect::MySql);

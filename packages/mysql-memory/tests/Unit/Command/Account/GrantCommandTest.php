@@ -52,6 +52,31 @@ final class GrantCommandTest extends TestCase
         ], $warnings->rows);
     }
 
+    public function testExistingReportsEveryMissingOccurrenceAndLeavesPrivilegesUnchanged(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE USER u');
+        $account = $session->instance->accounts->find(new Identity('u', '%'));
+        self::assertSame([$account, $account], (new GrantCommand())->existing([new Identity('u', '%'), new Identity('u', '%')], $session));
+        $error = $session->run('GRANT ALL ON *.* TO u,missing_user,missing_user')[0];
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1410, $error->getCode());
+        self::assertSame([1410, 1410], array_column($session->diagnostics->conditions, 1));
+        $grants = $session->query('SHOW GRANTS FOR u')[0];
+        self::assertInstanceOf(ResultSet::class, $grants);
+        self::assertSame([['GRANT USAGE ON *.* TO `u`@`%`']], $grants->rows);
+    }
+
+    public function testExecuteGrantsAProxyAfterExplicitlyConfiguringAuthority(): void
+    {
+        $session = (new Instance())->connect('root', '192.168.65.1');
+        $session->query('GRANT PROXY ON CURRENT_USER TO CURRENT_USER WITH GRANT OPTION');
+        $session->query('GRANT PROXY ON nobody TO root');
+        $account = $session->instance->accounts->find(new Identity('root', '%'));
+        self::assertNotNull($account);
+        self::assertArrayHasKey((new Identity('nobody', '%'))->key(), $account->grants->proxies);
+    }
+
     public function testExecuteRefusesAProxyGrant(): void
     {
         $session = (new Instance())->connect('root', '192.168.65.1');
@@ -63,7 +88,7 @@ final class GrantCommandTest extends TestCase
         $session->query('GRANT PROXY ON nobody TO root');
     }
 
-    public function testPrivilegesRefusesAnUnregisteredDynamicPrivilege(): void
+    public function testApplyRefusesAnUnregisteredDynamicPrivilege(): void
     {
         $session = (new Instance())->connect();
 

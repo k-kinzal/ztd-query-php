@@ -63,6 +63,7 @@ enum ProgramError: int implements ErrorCode
     case NoRecursion = 1424;
     case TriggerInWrongSchema = 1435;
     case UsedTableInProgram = 1442;
+    case AutocommitInFunction = 1445;
     case VariableShadow = 1453;
     case RecursionLimit = 1456;
     case IncorrectName = 1458;

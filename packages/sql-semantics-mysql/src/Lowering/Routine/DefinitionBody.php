@@ -48,10 +48,15 @@ final class DefinitionBody
      * @param list<int> $typeEnds The completion offsets for preceding parameter and return declarations
      * @throws RejectedInput When no declaration can contain the body
      */
-    public function check(Node $body, ProgramKind $kind, QualifiedName $name, ?Account $definer, int $end, ?ParameterList $parameters = null, ?DeclaredName $returns = null, ?CollationName $collation = null, array $typeEnds = [], int $nameEnd = 0, ?\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch $language = null): void
+    public function check(Node $body, ProgramKind $kind, QualifiedName $name, ?Account $definer, int $end, ?ParameterList $parameters = null, ?DeclaredName $returns = null, ?CollationName $collation = null, array $typeEnds = [], int $nameEnd = 0, ?\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch $language = null, ?\SqlSemantics\Statement\Source\SourceMap $sources = null): void
     {
-        $problem = (new BodyStructure())->problem($body, $kind, $name);
-        if ($language !== null && ($problem === null || in_array($problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::MissingReturn, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ResultSet, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::FunctionStatement], true))) {
+        $locals = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
+        $scoped = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\LocalAssignments())->scoped($body, $locals);
+        if ($scoped !== null) {
+            throw new RejectedInput(new RefusedProgramBody($name, $kind, new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment($sources?->of($scoped)?->offset), $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $end, true);
+        }
+        $problem = (new BodyStructure())->problem($body, $kind, $name, $parameters);
+        if ($language !== null && ($problem === null || in_array($problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::MissingReturn, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ResultSet, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::AutocommitInFunction, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::FunctionStatement], true))) {
             $problem = $language;
         }
         $problem ??= (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyBindings())->problem($body, $kind);

@@ -84,7 +84,9 @@ final class BlockFactsTest extends TestCase
 
         self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN SET x = 1; CLOSE c; END; END')->facts->diagnostics);
         self::assertSame(['Undeclared variable: y'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND FETCH c INTO x, y; END')->facts->diagnostics));
-        self::assertSame(['LEAVE with no matching label: b'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() b: BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION LEAVE b; END b')->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('LEAVE with no matching label: b');
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() b: BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION LEAVE b; END b');
     }
 
     /**

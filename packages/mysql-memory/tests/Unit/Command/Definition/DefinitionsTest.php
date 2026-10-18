@@ -30,7 +30,7 @@ final class DefinitionsTest extends TestCase
     }
 
 
-    public function testTableRejectsAnEmptyDefinitionAfterCheckingConstraints(): void
+    public function testPartsRejectsAnEmptyDefinitionAfterCheckingConstraints(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d');

@@ -77,7 +77,7 @@ final class CreateProcedure implements Statement
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
         $this->body = (new ProgramFacts())->body($body);
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyLanguage())->check($this->body, $this->characteristics);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Procedure, $name);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Procedure, $name, $parameters);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

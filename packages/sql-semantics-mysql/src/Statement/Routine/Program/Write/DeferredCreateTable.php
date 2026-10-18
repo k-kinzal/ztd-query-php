@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A stored table-creation instruction retaining a deferred source or generation role.
+ * A stored table-creation instruction retaining a columnless, source or generation condition.
  *
  * A definition retains the complete header and query without opening tables.
  * When invoked, the MERGE/query role condition precedes query preparation.
@@ -38,11 +38,20 @@ use SqlSemantics\Statement\Snapshot;
  * their complete column declarations, including forbidden native calls, variables,
  * row operands and compound expressions containing scalar-position subqueries. Destination existence precedes their
  * invocation condition; IF NOT EXISTS can complete against an existing table.
+ * Columnless definitions retain all constraints and options. Their condition is
+ * checked at invocation; some releases can satisfy IF NOT EXISTS from the catalog.
+ * Fixed read-shape conditions are also retained: source dependencies open before
+ * the destination shortcut, and column preparation follows it. PREPARE checks
+ * the read before storing a prepared instruction.
  * This is a program template, not an ordinary table-creation statement.
  *
  * @example Retaining a stored creation with both source roles
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t UNION=() SELECT 1');
  *     $operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable // => true
+ *
+ * @example Retaining a columnless definition for conditional invocation
+ *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE IF NOT EXISTS t ENGINE=InnoDB');
+ *     [$operation->statement->body->elements, $operation->statement->body->ifNotExists] // => [[], true]
  *
  * @visibility public
  */
@@ -90,7 +99,7 @@ final class DeferredCreateTable implements ProgramStatement, Relation
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
-        Check::input(($query !== null && array_filter($this->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\UnionOption) !== []) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->elements), 'A deferred table creation retains MERGE sources together with a query or a deferred generation declaration.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($this->elements, $this->options, $query), 'A deferred table creation retains a columnless declaration, fixed read-shape condition, incompatible source roles or deferred generation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

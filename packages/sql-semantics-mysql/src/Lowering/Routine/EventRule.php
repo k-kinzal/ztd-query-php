@@ -97,7 +97,7 @@ final class EventRule
         $name = $this->lowering->names->qualified($form->node($first + 2));
         $schedule = $this->schedule($form->node($first + 5), $name, $definer);
         $body = (new StatementRule($this->lowering->inProgram($name)))->event($form->node($first + 10));
-        (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node($first + 2))[1] ?? 0);
+        (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node($first + 2))[1] ?? 0, sources: $this->lowering->origins->publish());
 
         return new CreateEvent(
             $name,
@@ -145,7 +145,7 @@ final class EventRule
             default => throw ImplementationGap::production($body),
         };
         if ($instruction !== null) {
-            (new DefinitionBody())->check($instruction, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node(3))[1] ?? 0);
+            (new DefinitionBody())->check($instruction, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node(3))[1] ?? 0, sources: $this->lowering->origins->publish());
         }
         $status = $this->status($form->node(6));
         $comment = $this->comment($form->node(7));

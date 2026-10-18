@@ -39,9 +39,6 @@ final class CommandPrefix
         if (!$this->applicable($tokens, $session)) {
             return null;
         }
-        if ($session->variables->database !== '' && $this->tableCommand($tokens)) {
-            return null;
-        }
         $semantics = $session->semantics();
         foreach ($tokens as $index => $token) {
             if ($token->end() > $end) {
@@ -60,8 +57,10 @@ final class CommandPrefix
             }
             try {
                 $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
-            } catch (\SqlSemantics\Construction\RejectedInput) {
-                return null;
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate
+                    ? $this->completed($failure->problem->definition, $tokens[$index + 1] ?? null, $statement, $session)
+                    : null;
             } catch (AnalysisException $failure) {
                 return (new Syntax())->error($failure, $statement, $session->settings()->release(), $session->following);
             }
@@ -82,6 +81,10 @@ final class CommandPrefix
     public function applicable(array $tokens, Session $session): bool
     {
         $command = strtoupper($tokens[0]->text ?? '');
+
+        if ($session->variables->database !== '' && $this->tableCommand($tokens)) {
+            return false;
+        }
 
         return ($command === 'ALTER' && in_array(strtoupper($tokens[1]->text ?? ''), ['DATABASE', 'SCHEMA'], true))
             || ($session->settings()->legacy() && (in_array($command, ['LOAD', 'CREATE', 'REVOKE', 'SET'], true) || $command === 'ALTER' && in_array(strtoupper($tokens[1]->text ?? ''), ['TABLE', 'IGNORE'], true)));
@@ -118,9 +121,9 @@ final class CommandPrefix
     /**
      * Answers the condition raised after a command prefix has been resolved.
      */
-    public function completed(\SqlSemantics\Statement\Statement $model, ?Token $next, string $statement, Session $session): ?SqlError
+    public function completed(\SqlSemantics\Statement\Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $model, ?Token $next, string $statement, Session $session): ?SqlError
     {
-        if (($model instanceof LoadTable && $model->table->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $model->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $model->table->schema === null)) {
+        if (($model instanceof LoadTable && $model->table->name->schema === null) || (($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $model instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) && $model->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $model->table->schema === null)) {
             return $session->variables->database === '' ? QueryError::NoDatabase->error() : null;
         }
         if ($model instanceof \SqlSemantics\Platform\MySql\Statement\Account\SetPassword && $next?->text === ',' && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {

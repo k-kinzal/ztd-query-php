@@ -10,6 +10,7 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write as W;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
@@ -155,6 +156,9 @@ final class ExplainRule
             return new ExplainConnection($this->lowering->numbers->integral($command->node(2)), $format, $modifier);
         }
         $statement = $this->deferred($command);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets($statement, $format, modifier: $modifier), (new \SqlSemantics\Construction\SourceRanges())->span($command->node)[1] ?? 0, false);
+        }
         if (!$statement instanceof Explainable) {
             $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($statement, $format, modifier: $modifier);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain($instruction), (new \SqlSemantics\Construction\SourceRanges())->span($command->node)[1] ?? 0);
@@ -181,13 +185,12 @@ final class ExplainRule
         }
         $database = (self::EXPLAINED[$explainable->signature] ?? 0) === 1 ? (new OptionRule($this->lowering))->database($explainable->node(0)) : null;
 
-        if ($variable !== null && !(new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->target($variable)) {
-            if (!in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true)) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget($variable), (new \SqlSemantics\Construction\SourceRanges())->span($into ?? $options)[1] ?? 0);
-            }
-        }
+        $this->target($variable, $into ?? $options);
         $statement = $this->deferred($explainable);
         $empty = (new OptionRule($this->lowering))->emptyInto($options);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets($statement, $format, $variable, $database, $analyze, emptyInto: $empty), (new \SqlSemantics\Construction\SourceRanges())->span($explainable->node)[1] ?? 0, false);
+        }
         if (!$statement instanceof Explainable || !(new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->target($variable) || ($analyze && strcasecmp($format->value ?? '', 'TRADITIONAL') === 0)) {
             $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($statement, $format, $variable, $database, $analyze, emptyInto: $empty);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain($instruction), (new \SqlSemantics\Construction\SourceRanges())->span($explainable->node)[1] ?? 0);
@@ -213,11 +216,25 @@ final class ExplainRule
         return $explained;
     }
     /**
+     * Validates an explicit output name at the selected generation's input boundary.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the release refuses the target immediately
+     */
+    public function target(?\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable $variable, Node $boundary): void
+    {
+        if ($variable !== null && !(new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->target($variable)) {
+            if (!in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true)) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget($variable), (new \SqlSemantics\Construction\SourceRanges())->span($boundary)[1] ?? 0);
+            }
+        }
+    }
+
+    /**
      * Retains a query whose intrinsic read condition is checked before the output target.
      *
      * @throws \SqlSemantics\Construction\RejectedInput When another input operand is refused
      */
-    public function deferred(Form $form): Explainable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery
+    public function deferred(Form $form): Explainable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery|W\DeferredInsertRows|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets
     {
         try {
             return $this->explained($form);
@@ -227,6 +244,12 @@ final class ExplainRule
             }
             if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery) {
                 return $failure->problem->query;
+            }
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete) {
+                return $failure->problem->write;
+            }
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {
+                return $failure->problem;
             }
             throw $failure;
         }

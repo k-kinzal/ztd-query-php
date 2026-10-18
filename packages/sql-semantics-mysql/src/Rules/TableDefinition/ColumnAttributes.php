@@ -26,6 +26,29 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 final class ColumnAttributes
 {
     /**
+     * Finds enforcement detached from a preceding CHECK or its enforcement chain.
+     *
+     * Repeated enforcement replaces the previous choice. Any other intervening
+     * attribute ends that chain. Observed through MySQL 8.0.44 and 8.4.7 SQL.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute> $attributes The written attributes
+     */
+    public function enforcement(array $attributes): ?int
+    {
+        $check = false;
+        foreach ($attributes as $index => $attribute) {
+            if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute) {
+                if (!$check) {
+                    return $index;
+                }
+            } else {
+                $check = $attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Names the first attribute, or the SERIAL type, excluded from a generated column.
      *
      * These declarations are rejected even inside an unreachable stored instruction.

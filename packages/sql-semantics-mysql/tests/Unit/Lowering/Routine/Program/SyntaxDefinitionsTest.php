@@ -20,6 +20,15 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
 #[Medium]
 final class SyntaxDefinitionsTest extends TestCase
 {
+    public function testAlterRecognizesTheViewBranchBeforeItsRequiredKeyword(): void
+    {
+        $tree = (new MySqlParser('mysql-5.7.44'))->parse('ALTER VIEW v AS SELECT 1');
+        $failure = (new SyntaxDefinitions())->alter($tree->find('view_suid')[0], $tree->tokens()[1], $tree->tokens());
+        self::assertSame('ALTER VIEW is not allowed in stored procedures', $failure?->problem->message());
+        self::assertSame(strlen('ALTER '), $failure->end);
+        self::assertTrue($failure->aborts);
+    }
+
     public function testHandlerRecognizesTheOperationBoundaryWithoutItsFollowingOperands(): void
     {
         $tree = (new MySqlParser('mysql-8.4.7'))->parse('HANDLER t READ NEXT');

@@ -25,4 +25,16 @@ final class RefusedEvaluationTest extends TestCase
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $failure->problem->evaluation->items[1]);
         }
     }
+    public function testMessageRetainsWildcardDependenciesAfterLowering(): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DO t.*, (SELECT a FROM t)');
+            self::fail('A wildcard cannot be an ordinary DO scalar.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(RefusedEvaluation::class, $failure->problem);
+            self::assertCount(2, $failure->problem->evaluation->items);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $failure->problem->evaluation->items[1]);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $failure->problem->evaluation->items[1]->expression);
+        }
+    }
 }

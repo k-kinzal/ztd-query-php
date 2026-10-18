@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Problem;
 
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write as W;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
@@ -35,6 +36,12 @@ final class RefusedExplain implements Diagnostic
     public function message(): string
     {
         $statement = $this->explanation->statement;
+        if ($statement instanceof W\DeferredInsertRows || $statement instanceof W\DeferredInsertQuery) {
+            return $statement->problem()->message();
+        }
+        if ($statement instanceof W\DeferredDelete || $statement instanceof W\DeferredMultipleDelete) {
+            return (new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($statement))->message();
+        }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery) {
             return $statement->problem()->message();
         }

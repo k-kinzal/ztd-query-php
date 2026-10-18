@@ -147,7 +147,7 @@ final class ItemRule
         [$name, $qualifier] = $this->variable($form->node(0));
         $this->lowering->options->skip($form->node(1));
 
-        return new NameAssignment($name, (new ValueRule($this->lowering))->value($form->node(2), $scope !== null), $scope, $qualifier);
+        return $this->lowering->origins->record(new NameAssignment($name, (new ValueRule($this->lowering))->value($form->node(2), $scope !== null), $scope, $qualifier), $form->node(0));
     }
 
     /**

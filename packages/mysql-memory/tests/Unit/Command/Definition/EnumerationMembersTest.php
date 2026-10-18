@@ -14,6 +14,12 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class EnumerationMembersTest extends TestCase
 {
+    public function testMembersRetainsAResolvedNonEnumerationDomain(): void
+    {
+        $domain = \MySqlMemory\Typing\Domain::integer();
+        self::assertSame($domain, (new EnumerationMembers())->members($domain, null, \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testCheckUsesTheCollationAndTrimsTrailingSpaces(): void
     {
         $session = (new Instance())->connect();

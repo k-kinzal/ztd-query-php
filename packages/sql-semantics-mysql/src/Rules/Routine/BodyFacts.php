@@ -65,6 +65,17 @@ final class BodyFacts
         if ($statement instanceof SetVariables && $scope->time !== null && $scope->event !== null) {
             (new TriggerAssignments())->check($statement, $scope->time, $scope->event, $derivation, $scope);
         }
+        if ($statement instanceof SetVariables) {
+            foreach ($statement->items as $item) {
+                if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment || $item->qualifier === null) {
+                    continue;
+                }
+                $row = $scope->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger && $item->scope === null && in_array(strtoupper($item->qualifier->value), ['NEW', 'OLD'], true);
+                if (!$row) {
+                    (new \SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget($item->name, null, $item->qualifier))->structured($derivation);
+                }
+            }
+        }
         if ($statement instanceof Statement) {
             $derivation->program($statement, $scope->environment);
         }

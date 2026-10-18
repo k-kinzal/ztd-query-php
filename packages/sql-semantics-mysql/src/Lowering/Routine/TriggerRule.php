@@ -89,7 +89,7 @@ final class TriggerRule
 
         $name = $this->lowering->names->qualified($parts['sp_name']);
         $body = (new StatementRule($this->lowering->inProgram($name)))->statement($parts['sp_proc_stmt']);
-        (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0);
+        (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0, sources: $this->lowering->origins->publish());
         return new CreateTrigger(
             $name,
             self::TIMES[$time->signature] ?? throw ImplementationGap::production($time),

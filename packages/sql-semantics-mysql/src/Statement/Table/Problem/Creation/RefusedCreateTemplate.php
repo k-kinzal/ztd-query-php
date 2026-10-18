@@ -32,6 +32,16 @@ final class RefusedCreateTemplate implements Diagnostic
      */
     public function message(): string
     {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->definition->elements, $this->definition->query)) {
+            return 'The table definition has no declared column or creation query.';
+        }
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->definition->elements)) {
+            return 'The table definition retains generation conditions resolved at invocation.';
+        }
+        $read = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($this->definition->query);
+        if ($read !== null) {
+            return $read->message();
+        }
         return 'A MERGE source list and a creation query do not define a base table.';
     }
 }

@@ -18,6 +18,42 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard;
 final class EvaluationInput
 {
     /**
+     * Resolves DO's completed database dependencies before a later input refusal.
+     * Parser objects stay at the input boundary; execution receives the complete
+     * semantic instruction instead. A routine dependency emits two conditions
+     * in modern releases, whereas a table dependency emits one.
+     */
+    public function before(string $statement, int $end, Session $session): ?SqlError
+    {
+        if ($session->variables->database !== '') {
+            return null;
+        }
+        $semantics = $session->semantics();
+        $parser = $semantics->parser();
+        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
+        if (($tokens[0]->name ?? '') !== 'DO_SYM') {
+            return null;
+        }
+        $conditions = [];
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\Call\SyntaxCalls())->dependencies($parser, $statement, $end, $semantics->profile()) as [$offset, $name]) {
+            $conditions[$offset] = (new \MySqlMemory\Session\Problem\Errors())->routine(new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall($name), $session);
+        }
+        try {
+            $parser->parse($statement, static function (\SqlParser\Parser\Node $node) use (&$conditions, $end): void {
+                foreach ((new DerivedInput())->conditions($node, $end, '') as [$offset, $error]) {
+                    $conditions[$offset] ??= $error;
+                }
+            });
+        } catch (\SqlParser\Lexer\SourceException) {
+            // Only completed dependencies precede the original refusal.
+        }
+        ksort($conditions);
+        $offset = array_key_first($conditions);
+        return $offset === null ? null : (new \MySqlMemory\Session\CacheOptions())->literal($conditions[$offset], $offset, $statement, $session);
+    }
+
+    /**
      * Resolves every retained DO dependency before reporting its operand constraint.
      */
     public function deferred(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation $problem, Session $session): SqlError

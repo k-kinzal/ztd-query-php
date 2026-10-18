@@ -32,4 +32,20 @@ final class ExplainInput
         }
         return $problem->format === null ? StatementError::ExplainIntoImplicitFormat->error() : StatementError::ExplainIntoFormat->error(strtoupper($problem->format->value));
     }
+    /**
+     * Resolves an explanation's database before its retained DELETE namespace.
+     */
+    public function targets(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets $problem, \MySqlMemory\Session\Session $session): SqlError
+    {
+        if ($problem->database !== null && $session->instance->dictionary->schema($problem->database->value) === null) {
+            return \MySqlMemory\Error\Family\QueryError::BadDatabase->error($problem->database->value);
+        }
+        $previous = $session->variables->database;
+        $session->variables->database = $problem->database->value ?? $previous;
+        try {
+            return (new Dml\Targets())->unmatched($problem->targets, $session);
+        } finally {
+            $session->variables->database = $previous;
+        }
+    }
 }

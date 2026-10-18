@@ -51,4 +51,28 @@ final class EvaluationUseTest extends TestCase
         $this->expectExceptionCode($code);
         (new EvaluationUse())->raise($statement, $session);
     }
+    public function testDatabaseAndTableTransitionsUseTheSameRetainedInstruction(): void
+    {
+        $table = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t'));
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new SelectExpression(new ColumnUse(new Name('a')))], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($table));
+        $statement = new DeferredEvaluation([new Star(), new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($query))]);
+        $session = (new Instance())->connect();
+        $observe = static function () use ($session, $statement): int {
+            $session->text = 'unrelated invalid input';
+            try {
+                (new EvaluationUse())->raise($statement, $session);
+            } catch (\MySqlMemory\Error\SqlError $error) {
+                return $error->getCode();
+            }
+        };
+        self::assertSame(1046, $observe());
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        self::assertSame(1146, $observe());
+        $session->query('CREATE TABLE t(a INT)');
+        self::assertSame(1096, $observe());
+        $session->query('DROP TABLE t');
+        self::assertSame(1146, $observe());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
 }

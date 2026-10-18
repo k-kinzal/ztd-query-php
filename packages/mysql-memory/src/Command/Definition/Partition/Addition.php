@@ -31,19 +31,19 @@ final class Addition
     {
         $reorganization = new Reorganization();
         $reorganization->roles($clause, $command);
-        $count = $clause->definitions === [] ? (int) ($clause->partitions->text ?? '1') : count($clause->definitions);
+        $count = $clause->definitions === [] ? ($clause->partitions === null ? 1 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->partitions)) : count($clause->definitions);
         if ($command->definitions === []) {
             if ($clause->method instanceof ExpressionMethod || $clause->method instanceof ColumnsMethod) {
                 throw PartitionError::PartitionsNotDefined->error($clause->method->kind->value);
             }
-            $added = (int) ($command->count->text ?? '0');
+            $added = ($command->count === null ? 0 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($command->count));
             if ($added === 0) {
                 throw PartitionError::NoPartitionsAdded->error();
             }
             return new PartitionClause($clause->method, new Numeral((string) ($count + $added)), $clause->subpartitioning, []);
         }
         $definitions = $clause->definitions === [] ? array_map(static fn (int $index): PartitionDefinition => new PartitionDefinition(new Name('p' . $index), null, [], []), range(0, $count - 1)) : $clause->definitions;
-        $subpartitions = $clause->subpartitioning === null ? 0 : (int) ($clause->subpartitioning->count->text ?? (string) max(1, count($definitions[0]->subpartitions)));
+        $subpartitions = $clause->subpartitioning === null ? 0 : ($clause->subpartitioning->count === null ? max(1, count($definitions[0]->subpartitions)) : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->subpartitioning->count));
         foreach ($command->definitions as $definition) {
             if ($definition->subpartitions !== [] && count($definition->subpartitions) !== $subpartitions) {
                 throw PartitionError::AddedSubpartitionCount->error();

@@ -14,6 +14,7 @@ use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\Family\ConstraintError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Plan\Planner;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceOption;
@@ -36,12 +37,12 @@ final class Constraints
 {
     /**
      * @param Planner $planner The planner of the statement, which compiles the conditions
-     * @param CreateTable $create The statement that declares the table
+     * @param CreateTable|DeferredCreateTable $create The statement that declares the table
      * @param int $checkBase The number the first unnamed CHECK constraint is numbered after
      * @param int $foreignBase The number the first unnamed foreign key is numbered after
      * @param array<string, true> $kept The foreign keys, by lowercase name, a changed table had, which are not checked against the table they reference again
      */
-    public function __construct(public readonly Planner $planner, public readonly CreateTable $create, public readonly int $checkBase = 0, public readonly int $foreignBase = 0, public readonly array $kept = [])
+    public function __construct(public readonly Planner $planner, public readonly CreateTable|DeferredCreateTable $create, public readonly int $checkBase = 0, public readonly int $foreignBase = 0, public readonly array $kept = [])
     {
     }
 

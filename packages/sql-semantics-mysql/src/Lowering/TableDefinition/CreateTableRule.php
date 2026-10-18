@@ -199,7 +199,7 @@ final class CreateTableRule
                 default => throw ImplementationGap::production($part),
             };
 
-            return $this->create($name, $elements, $options, $clause, $this->query($query, array_filter($options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\UnionOption) !== []), $temporary, $exists);
+            return $this->create($name, $elements, $options, $clause, $this->query($query, true), $temporary, $exists);
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
                 throw $failure;
@@ -249,7 +249,7 @@ final class CreateTableRule
      */
     public function create(QualifiedName $name, array $elements, array $options, ?Partitioning $partitioning, ?TableQuery $query, int $temporary, bool $exists, bool $enclosed = false): CreateTable
     {
-        if (($query !== null && array_filter($options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\UnionOption) !== []) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($elements)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($elements, $options, $query)) {
             $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate($definition), 0, false);
         }

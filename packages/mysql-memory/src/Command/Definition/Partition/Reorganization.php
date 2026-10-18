@@ -47,8 +47,8 @@ final class Reorganization
             return $clause;
         }
         $this->roles($clause, $command);
-        $definitions = $clause->definitions === [] ? array_map(static fn (int $index): PartitionDefinition => new PartitionDefinition(new Name('p' . $index), null, [], []), range(0, (int) ($clause->partitions->text ?? '1') - 1)) : $clause->definitions;
-        $count = $clause->subpartitioning === null ? 0 : (int) ($clause->subpartitioning->count->text ?? (string) max(1, count($definitions[0]->subpartitions)));
+        $definitions = $clause->definitions === [] ? array_map(static fn (int $index): PartitionDefinition => new PartitionDefinition(new Name('p' . $index), null, [], []), range(0, ($clause->partitions === null ? 1 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->partitions)) - 1)) : $clause->definitions;
+        $count = $clause->subpartitioning === null ? 0 : ($clause->subpartitioning->count === null ? max(1, count($definitions[0]->subpartitions)) : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->subpartitioning->count));
         $replacement = $this->subpartitions($command->definitions, $count);
         $definitions = $this->subpartitions($definitions, $count);
         $names = array_map(static fn (PartitionDefinition $definition): string => mb_strtolower($definition->name->value), $definitions);

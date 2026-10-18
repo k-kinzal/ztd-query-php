@@ -72,6 +72,30 @@ final class ServerRoundTripTest extends TestCase
         }
     }
 
+    public function testStartKeepsAColumnlessPreparedInstructionAcrossCatalogChanges(): void
+    {
+        $server = Server::start('8.4.7', ['shop', 'other']);
+        try {
+            $pdo = new PDO($server->dsn('shop'), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT, PDO::ATTR_EMULATE_PREPARES => false]);
+            $create = $pdo->prepare('CREATE TABLE IF NOT EXISTS items');
+            self::assertSame(0, $create->columnCount());
+            self::assertFalse($create->execute());
+            self::assertSame(['HY000', 4028, 'A table must have at least one visible column.'], $create->errorInfo());
+            $pdo->exec('CREATE TABLE shop.items(id INT)');
+            $pdo->exec('INSERT INTO shop.items VALUES(7)');
+            $pdo->exec('USE other');
+            self::assertTrue($create->execute());
+            $rows = $pdo->query('SELECT id FROM shop.items');
+            self::assertNotFalse($rows);
+            self::assertSame([[7]], $rows->fetchAll(PDO::FETCH_NUM));
+            $pdo->exec('DROP TABLE shop.items');
+            self::assertFalse($create->execute());
+            self::assertSame(['HY000', 4028, 'A table must have at least one visible column.'], $create->errorInfo());
+        } finally {
+            $server->stop();
+        }
+    }
+
     public function testStartServesMysqliQueriesAndPreparedStatements(): void
     {
         $server = Server::start('8.4.7', ['shop']);

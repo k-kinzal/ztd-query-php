@@ -69,4 +69,13 @@ final class TableInputTest extends TestCase
         self::assertFalse((new TableInput())->accepts(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2)));
     }
 
+    public function testWarningsUseLegacyCacheRules(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $reader = new TableInput();
+        self::assertNull($reader->warnings('retained condition', 'CREATE TABLE t (SELECT SQL_NO_CACHE SQL_CALC_FOUND_ROWS *)', $session));
+        self::assertSame([1681], array_column($session->diagnostics->conditions, 1));
+        self::assertSame(1221, $reader->warnings('retained condition', 'CREATE TABLE t (SELECT SQL_NO_CACHE SQL_CACHE *)', $session)?->getCode());
+        self::assertSame([1681, 1681, 1221], array_column($session->diagnostics->conditions, 1));
+    }
 }

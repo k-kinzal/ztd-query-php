@@ -56,7 +56,7 @@ final class PartitionInput
         }
         $problem = $failure->problem;
         \SqlSemantics\Diagnostic\Check::invariant($problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue, 'A partition-definition refusal has a typed reason.');
-        if ($problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions) {
+        if ($problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions || $problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroPartitions) {
             return new SqlError(\MySqlMemory\Error\Family\PartitionError::NoPartitions, $problem->message(), $failure);
         }
         if ($problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::RangeValues || $problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ListValues) {

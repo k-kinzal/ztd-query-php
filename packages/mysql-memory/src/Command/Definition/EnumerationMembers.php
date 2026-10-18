@@ -24,6 +24,25 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 final class EnumerationMembers
 {
     /**
+     * Resolves member bytes and character lengths in the declared column's character set.
+     */
+    public function members(Domain $domain, ?\SqlSemantics\Statement\Type\TypeDescriptor $type, \SqlSemantics\Contract\GrammarRelease $release): Domain
+    {
+        if ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) {
+            return (new \MySqlMemory\Typing\Declared($domain->collation, $release))->enumeration($type, $domain->collation);
+        }
+        $charset = $domain->collation->charset;
+        if ($domain->members === [] || Encoding::utf8($charset)) {
+            return $domain;
+        }
+        $members = array_map(static fn (string $member): string => Encoding::convert($member, Charset::known('utf8mb4'), $charset), $domain->members);
+        $lengths = array_map(static fn (string $member): int => Encoding::length($member, $charset), $members);
+        $length = $domain->field === Field::Enum ? max([0, ...$lengths]) : array_sum($lengths) + count($members) - 1;
+
+        return new Domain($domain->kind, $domain->field, $length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->nullable, $members, $domain->coercibility, $domain->numericBytes, $domain->display);
+    }
+
+    /**
      * Reports every member that has an equivalent later member, in definition order.
      *
      * @throws \MySqlMemory\Error\SqlError When a duplicate is found under strict SQL mode

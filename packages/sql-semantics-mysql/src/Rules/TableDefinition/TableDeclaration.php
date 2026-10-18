@@ -336,26 +336,31 @@ final class TableDeclaration
      *
      * Partitions that are not defined one by one are named p0, p1 and so on; subpartitions that are
      * not named take the name of their partition followed by sp0, sp1 and so on.
+     * Counts use unsigned 32-bit conversion. A count beyond MySQL's 8192-partition
+     * bound leaves the derived name set unknown; the original clause stays intact.
      *
-     * @return list<Name>
+     * @return list<Name>|null
      */
-    public function partitions(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition): array
+    public function partitions(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition): ?array
     {
         $partitioning = $definition->partitioning;
         if (!$partitioning instanceof PartitionClause) {
             return [];
+        }
+        $count = $partitioning->definitions === [] ? ($partitioning->partitions === null ? 1 : max(1, (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($partitioning->partitions))) : count($partitioning->definitions);
+        $subpartitions = $partitioning->subpartitioning?->count === null ? 0 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($partitioning->subpartitioning->count);
+        if ($count * max(1, $subpartitions) > 8192) {
+            return null;
         }
         $partitions = [];
         foreach ($partitioning->definitions as $partition) {
             $partitions[] = [$partition->name, array_map(static fn (SubpartitionDefinition $subpartition): Name => $subpartition->name, $partition->subpartitions)];
         }
         if ($partitions === []) {
-            $count = $partitioning->partitions === null ? 1 : max(1, (int) $partitioning->partitions->text);
             for ($index = 0; $index < $count; $index++) {
                 $partitions[] = [new Name('p' . $index), []];
             }
         }
-        $subpartitions = $partitioning->subpartitioning?->count === null ? 0 : (int) $partitioning->subpartitioning->count->text;
         $names = [];
         foreach ($partitions as [$partition, $named]) {
             $names[] = $partition;

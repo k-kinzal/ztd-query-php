@@ -16,6 +16,20 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PartitionDefinitionsTest extends TestCase
 {
+    public function testNamesReadsHexadecimalAndWrappedCountsAsUnsignedValues(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->query("CREATE TABLE d.t(a INT PRIMARY KEY) PARTITION BY KEY() PARTITIONS X'0b'");
+        $table = $session->instance->dictionary->schema('d')?->table('t');
+        self::assertNotNull($table);
+        self::assertCount(11, $table->definition->partitioning->partitions ?? []);
+        $session->query('DROP TABLE d.t');
+        $session->query('CREATE TABLE d.t(a INT PRIMARY KEY) PARTITION BY KEY() PARTITIONS 4294967297');
+        $table = $session->instance->dictionary->schema('d')?->table('t');
+        self::assertNotNull($table);
+        self::assertCount(1, $table->definition->partitioning->partitions ?? []);
+    }
+
     public function testApplyIsDeferredUntilCreationAndPreservedInTheStoredDefinition(): void
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect();
@@ -144,5 +158,14 @@ final class PartitionDefinitionsTest extends TestCase
         $result1 = $session->query('SHOW CREATE TABLE a')[0];
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result1);
         self::assertSame("CREATE TABLE `a` (\n  `a` int DEFAULT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci\n/*!50100 PARTITION BY RANGE ((`a` + 1))\n(PARTITION p0 VALUES LESS THAN (2) ENGINE = InnoDB) */", $result1->rows[0][1]);
+    }
+    public function testKeyColumnsUsesANonnullableUniqueKey(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, b INT NOT NULL UNIQUE) PARTITION BY KEY() PARTITIONS 3');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table?->definition->partitioning);
+        self::assertSame([1], $table->definition->partitioning->columns);
+        self::assertCount(3, $table->definition->partitioning->partitions);
     }
 }

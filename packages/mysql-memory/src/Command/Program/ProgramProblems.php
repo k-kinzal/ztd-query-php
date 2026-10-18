@@ -217,7 +217,7 @@ final class ProgramProblems
             return $trigger && $diagnostic->qualifier?->schema === null && ($qualifier === 'NEW' || $qualifier === 'OLD');
         }
 
-        return $diagnostic instanceof ProgramProblem || $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable || $diagnostic instanceof ProgramProblem || $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable;
     }
 }

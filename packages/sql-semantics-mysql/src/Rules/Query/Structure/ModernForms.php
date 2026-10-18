@@ -60,11 +60,22 @@ final class ModernForms
             };
     }
     /**
+     * Distinguishes wrapped zero counts interpreted as defaults by modern releases.
+     */
+    public function partition(\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause|\SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning $value): bool
+    {
+        $count = $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause ? $value->partitions : $value->count;
+        return $count !== null && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0;
+    }
+
+    /**
      * Identifies modern table and routine declaration features.
      */
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning => $this->partition($value),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRevokePrivileges => $this->revocation($value),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint => $value->enforced !== null,

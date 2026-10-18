@@ -19,6 +19,17 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ModernFormsTest extends TestCase
 {
+    public function testPartitionReservesWrappedZeroDefaultsForModernReleases(): void
+    {
+        $forms = new ModernForms();
+        $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, [new \SqlSemantics\Statement\Identifier\Name('a')]);
+        $count = new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4294967296');
+        self::assertTrue($forms->partition(new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause($method, $count, null, [])));
+        self::assertTrue($forms->partition(new \SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning($method, $count)));
+        self::assertFalse($forms->partition(new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause($method, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('b', true), null, [])));
+    }
+
+
     public function testRevocationDistinguishesStoredLegacyAndOrdinaryModernGlobalAll(): void
     {
         $users = [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())];

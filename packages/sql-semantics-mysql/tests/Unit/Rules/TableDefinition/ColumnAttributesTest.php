@@ -17,6 +17,20 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute;
 #[Small]
 final class ColumnAttributesTest extends TestCase
 {
+    public function testEnforcementRequiresAnUninterruptedCheckChain(): void
+    {
+        $rules = new ColumnAttributes();
+        $check = new \SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint(new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(true));
+        $yes = new \SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute(true);
+        $no = new \SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute(false);
+        $comment = new \SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('x'));
+        self::assertNull($rules->enforcement([$check, $yes, $no]));
+        self::assertSame(0, $rules->enforcement([$yes]));
+        self::assertSame(2, $rules->enforcement([$check, $comment, $no]));
+        $this->expectExceptionMessage('Column enforcement follows a CHECK constraint or its enforcement chain.');
+        new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), [$yes]);
+    }
+
     public function testGeneratedNamesTheFirstConflictingAttributeBeforeTheType(): void
     {
         $type = new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Serial);

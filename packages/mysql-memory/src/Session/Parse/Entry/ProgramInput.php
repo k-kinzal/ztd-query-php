@@ -92,7 +92,7 @@ final class ProgramInput
             if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ParameterScopeMismatch) {
                 return \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
             }
-            if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch) {
+            if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch || $refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment) {
                 return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($refusal->problem->offset ?? strlen($session->text), $session->text, $session->following, new RuntimeException($refusal->problem->message()), true, $session->semantics()->parser());
             }
             if (!$refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem) {

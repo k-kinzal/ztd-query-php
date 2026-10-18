@@ -41,14 +41,12 @@ final class EvaluationUse
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_do');
             $session->diagnostics->clear();
         }
-        if ($statement->problem() instanceof EvaluationWildcard) {
-            throw (new Errors())->error($statement->problem(), $session);
-        }
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
         $statement->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        $this->database($statement, $derivation->facts(), $session);
         foreach ($derivation->facts()->diagnostics as $problem) {
             if (Stages::parsed($problem)) {
                 throw (new Errors())->error($problem, $session);
@@ -59,10 +57,40 @@ final class EvaluationUse
                 throw (new Errors())->error($problem, $session);
             }
         }
+        (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($statement, $session);
+        if ($statement->problem() instanceof EvaluationWildcard) {
+            throw (new Errors())->error($statement->problem(), $session);
+        }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($statement, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
         $this->prepare($statement, $planner);
+    }
+
+    /**
+     * Checks implicit databases in retained operand order, before name resolution.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a reached dependency has no default database
+     */
+    public function database(DeferredEvaluation $statement, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    {
+        if ($session->variables->database !== '') {
+            return;
+        }
+        $missing = [];
+        foreach ($facts->diagnostics as $problem) {
+            if ($problem instanceof MissingTable && $problem->name->schema === null) {
+                $missing[spl_object_id($problem->name)] = $problem;
+            }
+        }
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($statement) as $node) {
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && isset($missing[spl_object_id($node->name)])) {
+                throw (new Errors())->error($missing[spl_object_id($node->name)], $session);
+            }
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall && $node->schema === null && !$node->native($session->settings()->release())) {
+                throw (new Errors())->routine($node, $session);
+            }
+        }
     }
 
     /**

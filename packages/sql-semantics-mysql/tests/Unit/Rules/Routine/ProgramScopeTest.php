@@ -119,6 +119,8 @@ final class ProgramScopeTest extends TestCase
         self::assertSame([], $handler->loops);
         self::assertSame([$condition], $handler->conditions);
         self::assertEquals([new Name('cur')], $handler->cursors);
-        self::assertSame(['LEAVE with no matching label: l'], array_map(static fn (Diagnostic $problem): string => $problem->message(), (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() l: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE l; END')->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('LEAVE with no matching label: l');
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() l: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE l; END');
     }
 }

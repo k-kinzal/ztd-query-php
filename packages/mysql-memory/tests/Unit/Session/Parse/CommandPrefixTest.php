@@ -131,7 +131,7 @@ final class CommandPrefixTest extends TestCase
     public function testCompletedRequiresADatabaseForUnqualifiedCreation(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $model = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $model = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
 
         self::assertSame(1046, (new CommandPrefix())->completed($model, null, '', $session)?->getCode());
         $session->use('mysql');

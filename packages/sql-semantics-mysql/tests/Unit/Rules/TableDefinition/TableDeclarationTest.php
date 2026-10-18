@@ -175,6 +175,18 @@ final class TableDeclarationTest extends TestCase
         self::assertTrue($table->keys[0]->primary);
     }
 
+    public function testPartitionsNarrowsCountsBeforeExpandingNamesAndKeepsOversizedClausesIntact(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, '8.4.7');
+        $wrapped = $semantics->analyze('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 4294967297');
+        self::assertEquals([new Name('p0')], $wrapped->declarations()[0]->partitions);
+        $large = $semantics->analyze('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 0xFFFFFFFFFFFFFFFF');
+        self::assertNull($large->declarations()[0]->partitions);
+        self::assertInstanceOf(CreateTable::class, $large->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause::class, $large->statement->partitioning);
+        self::assertSame('FFFFFFFFFFFFFFFF', $large->statement->partitioning->partitions?->text);
+    }
+
     public function testPartitionsNameEveryPartitionAndSubpartition(): void
     {
         $semantics = new Semantics(Dialect::MySql);

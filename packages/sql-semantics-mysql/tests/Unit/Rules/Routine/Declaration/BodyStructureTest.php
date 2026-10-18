@@ -56,6 +56,6 @@ final class BodyStructureTest extends TestCase
     public function testPriorityPlacesDynamicSqlBeforeResultSetsAndTransactionBoundaries(): void
     {
         $rules = new BodyStructure();
-        self::assertSame([0, 1, 2, 3, 4, 5], array_map($rules->priority(...), [new ProgramProblem(ProgramRule::FunctionStatement, 'Dynamic SQL'), new ProgramProblem(ProgramRule::ResultSet, 'function'), new ProgramProblem(ProgramRule::CommitInFunction), new ProgramProblem(ProgramRule::FunctionStatement, 'RESET'), new ProgramProblem(ProgramRule::FunctionStatement, 'FLUSH'), new ProgramProblem(ProgramRule::MissingReturn, 'f')]));
+        self::assertSame([0, 1, 3, 4, 5, 6], array_map($rules->priority(...), [new ProgramProblem(ProgramRule::FunctionStatement, 'Dynamic SQL'), new ProgramProblem(ProgramRule::ResultSet, 'function'), new ProgramProblem(ProgramRule::CommitInFunction), new ProgramProblem(ProgramRule::FunctionStatement, 'RESET'), new ProgramProblem(ProgramRule::FunctionStatement, 'FLUSH'), new ProgramProblem(ProgramRule::MissingReturn, 'f')]));
     }
 }

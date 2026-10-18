@@ -11,6 +11,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
@@ -33,7 +34,7 @@ final class CheckDefinitions
      *
      * @return list<array{CheckConstraint, int|null, string, bool, bool}>
      */
-    public static function written(CreateTable $create, bool $legacy, int $checkBase = 0): array
+    public static function written(CreateTable|DeferredCreateTable $create, bool $legacy, int $checkBase = 0): array
     {
         if ($legacy) {
             return [];
@@ -73,7 +74,7 @@ final class CheckDefinitions
      *
      * @throws SqlError When a constraint is refused
      */
-    public static function forbidden(CreateTable $create, bool $legacy, int $checkBase = 0, GrammarRelease $release = GrammarRelease::MySql847): void
+    public static function forbidden(CreateTable|DeferredCreateTable $create, bool $legacy, int $checkBase = 0, GrammarRelease $release = GrammarRelease::MySql847): void
     {
         $seen = [];
         $written = self::written($create, $legacy, $checkBase);

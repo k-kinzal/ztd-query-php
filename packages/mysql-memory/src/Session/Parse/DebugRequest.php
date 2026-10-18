@@ -29,7 +29,17 @@ final class DebugRequest
      */
     public function refusal(Operation $operation, SqlError $syntax, Session $session): SqlError
     {
-        $notices = array_values(array_filter($operation->facts->warnings, static fn (Warning $warning): bool => ($warning instanceof Deprecation || ($warning instanceof ParseFailure && $warning->phase === NoticePhase::Syntax)) && !Stages::afterReading($warning)));
+        return $this->notices($operation->facts->warnings, $syntax, $session);
+    }
+
+    /**
+     * Retains syntax-stage notices before the debug-only entry refusal.
+     *
+     * @param list<Warning> $warnings Completed semantic notices
+     */
+    public function notices(array $warnings, SqlError $syntax, Session $session): SqlError
+    {
+        $notices = array_values(array_filter($warnings, static fn (Warning $warning): bool => ($warning instanceof Deprecation || ($warning instanceof ParseFailure && $warning->phase === NoticePhase::Syntax)) && !Stages::afterReading($warning)));
 
         return (new ModernWarnings())->recorded($notices, $syntax, $session);
     }

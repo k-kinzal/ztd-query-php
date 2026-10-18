@@ -76,7 +76,7 @@ final class PartitionChange
         match (true) {
             $command instanceof RemovePartitioning => $this->removed(),
             $command instanceof AddPartition => $layout->partitioning = (new Addition())->rewrite($clause, $command),
-            $command instanceof CoalescePartition => $layout->partitioning = $this->coalesced($clause, $ranged, (int) $command->count->text),
+            $command instanceof CoalescePartition => $layout->partitioning = $this->coalesced($clause, $ranged, (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($command->count)),
             $command instanceof DropPartition => $layout->partitioning = $this->dropped($clause, $ranged, $command->partitions),
             $command instanceof MaintainPartitions && $command->kind === MaintenanceKind::Truncate => $this->truncated($clause, $command),
             default => throw StatementError::NotSupportedYet->error('ALTER TABLE ' . (new ReflectionClass($command))->getShortName()),
@@ -97,7 +97,7 @@ final class PartitionChange
      */
     public function count(PartitionClause $clause): int
     {
-        return $clause->definitions === [] ? (int) ($clause->partitions->text ?? '1') : count($clause->definitions);
+        return $clause->definitions === [] ? ($clause->partitions === null ? 1 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->partitions)) : count($clause->definitions);
     }
 
     /**

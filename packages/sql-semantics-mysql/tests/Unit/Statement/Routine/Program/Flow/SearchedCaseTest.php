@@ -33,9 +33,9 @@ final class SearchedCaseTest extends TestCase
 
     public function testDeriveProgramChecksTheLabelsInTheBranches(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) l: LOOP CASE WHEN a > 0 THEN LEAVE l; ELSE LEAVE m; END CASE; END LOOP');
-
-        self::assertSame(['LEAVE with no matching label: m'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('LEAVE with no matching label: m');
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) l: LOOP CASE WHEN a > 0 THEN LEAVE l; ELSE LEAVE m; END CASE; END LOOP');
     }
 
     #[DataProvider('providerRenderWritesTheStatement')]

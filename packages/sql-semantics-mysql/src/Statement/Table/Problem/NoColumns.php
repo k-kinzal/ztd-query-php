@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t ENGINE = InnoDB')->facts->diagnostics[0]->message() // => 'A table must have at least 1 column.'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t ENGINE = InnoDB')->facts->diagnostics[0]->message() // => 'A table must have at least 1 column.'
  */
 final class NoColumns implements Diagnostic
 {

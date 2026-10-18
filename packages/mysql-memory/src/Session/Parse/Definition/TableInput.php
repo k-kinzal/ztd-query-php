@@ -39,15 +39,8 @@ final class TableInput
         if ($header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue || $header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong) {
             return (new \MySqlMemory\Session\Parse\Reader())->rejection(new RejectedInput($header->problem, $failure->end, $failure->aborts), $statement, $session);
         }
-        $parser = $session->semantics()->parser();
-        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, strlen($statement), $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
-        foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, strlen($statement), $parser) as $offset => $notice) {
-            $notices[] = [$offset, $notice];
-        }
-        usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
-        $syntax = (new ModernWarnings())->recorded(array_column($notices, 1), new SqlError(StatementError::UnknownError, $header->message()), $session, false);
-        if (array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof ParseFailure) !== []) {
+        $syntax = $this->warnings($header->message(), $statement, $session);
+        if ($syntax !== null) {
             return $syntax;
         }
         try {
@@ -104,15 +97,8 @@ final class TableInput
     {
         $problem = $failure->problem;
         \SqlSemantics\Diagnostic\Check::invariant($problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate, 'The table refusal retains its complete template.');
-        $parser = $session->semantics()->parser();
-        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
-        $notices = (new SyntaxWarnings())->completed($parser, $statement, strlen($statement), $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
-        foreach ((new ModernWarnings())->before($parser->tokenize($statement), $statement, strlen($statement), $parser) as $offset => $notice) {
-            $notices[] = [$offset, $notice];
-        }
-        usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
-        $syntax = (new ModernWarnings())->recorded(array_column($notices, 1), new SqlError(StatementError::UnknownError, $problem->message()), $session, false);
-        if (array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof ParseFailure) !== []) {
+        $syntax = $this->warnings($problem->message(), $statement, $session);
+        if ($syntax !== null) {
             return $syntax;
         }
         try {
@@ -142,6 +128,33 @@ final class TableInput
         }
     }
 
+
+    /**
+     * Records the selected release's completed definition notices before execution.
+     * A legacy cache conflict stops at its second modifier; modern-only notices
+     * never enter the legacy diagnostic sequence.
+     */
+    public function warnings(string $message, string $statement, Session $session): ?SqlError
+    {
+        $parser = $session->semantics()->parser();
+        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        $tokens = $parser->tokenize($statement);
+        $end = strlen($statement);
+        $fallback = new SqlError(StatementError::UnknownError, $message);
+        $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
+        $conflict = null;
+        if ($session->settings()->legacy()) {
+            $modifiers = new \MySqlMemory\Session\Parse\Modifiers($tokens, $session->settings()->release());
+            [$operators, $conflict] = $modifiers->scan($end, $end);
+            $notices = array_values(array_filter($notices, static fn (array $notice): bool => $notice[0] <= ($modifiers->stoppedAt ?? $end)));
+        } else {
+            $operators = (new ModernWarnings())->before($tokens, $statement, $end, $parser);
+        }
+        $notices = (new ModernWarnings())->merge($notices, $operators, $tokens);
+        usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+        $syntax = (new ModernWarnings())->recorded(array_column($notices, 1), $conflict === null ? $fallback : (new \MySqlMemory\Session\CacheOptions())->refusal($conflict), $session, $conflict !== null);
+        return $conflict !== null || array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof ParseFailure) !== [] ? $syntax : null;
+    }
 
     /**
      * Selects typed table-definition refusals whose header precedes later conditions.

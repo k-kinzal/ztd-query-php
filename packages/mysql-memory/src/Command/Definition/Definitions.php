@@ -18,8 +18,8 @@ use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Typing\Declared;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Value\Encoding;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute;
@@ -42,7 +42,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -104,6 +103,25 @@ final class Definitions
         $declaration = new Table(new \SqlSemantics\Statement\Identifier\QualifiedName($declaration->name->name, new \SqlSemantics\Statement\Identifier\Name($schema)), $declaration->profile, $declaration->columns, $declaration->implicit, $declaration->complete, $declaration->kind, $declaration->keys, $declaration->partitions);
         $collation = $this->collation($create);
         $engine = (new StorageOptions())->engine($create, $this->planner->compiler->connection->variables);
+        [$columns, $keys] = $this->parts($create, $declaration, $schema, $engine, $collation);
+        $expressions = new TableExpressions($this->planner, $create);
+        $constraints = new Constraints($this->planner, $create, $this->checkBase, $this->foreignBase, $this->keptForeign);
+        $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create, rowFormat: (new InnoDbOptions())->format($create, $this->planner->compiler->connection->variables));
+        (new Constraint\IndexOptions())->check($definition);
+        $definition = $expressions->computed($definition, $this->planner->settings->connectionCollation->charset->name);
+
+        return $constraints->constrained($definition);
+    }
+
+    /**
+     * Prepares columns and constraints for an ordinary or columnless creation role.
+     * The retained columnless role reaches a SQL condition before any stored layout exists.
+     *
+     * @return array{list<ColumnDefinition>, list<Key>}
+     * @throws \MySqlMemory\Error\SqlError When a column, constraint or key definition is invalid
+     */
+    public function parts(CreateTable|DeferredCreateTable $create, Table $declaration, string $schema, string $engine, Collation $collation): array
+    {
         $elements = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof ColumnElement));
         if ($elements === [] && $this->planner->settings->legacy()) {
             throw SchemaError::TableMustHaveColumns->error();
@@ -113,6 +131,7 @@ final class Definitions
         $columns = [];
         $keys = [];
         foreach ($elements as $position => $element) {
+            \SqlSemantics\Diagnostic\Check::invariant($create instanceof CreateTable, 'Column declarations use the ordinary shape builder.');
             $columns[] = $this->column($element, $this->declared($declaration, $element->name->column->value), $declared, $scope, $create);
             foreach ($this->inlineKeys($element, $position) as $key) {
                 $keys[] = $key;
@@ -131,11 +150,7 @@ final class Definitions
         $this->check($columns, $keys);
         $expressions->keyed($columns, $keys);
         usort($keys, static fn (Key $left, Key $right): int => ($right->kind === KeyKind::Primary) <=> ($left->kind === KeyKind::Primary));
-        $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create, rowFormat: (new InnoDbOptions())->format($create, $this->planner->compiler->connection->variables));
-        (new Constraint\IndexOptions())->check($definition);
-        $definition = $expressions->computed($definition, $this->planner->settings->connectionCollation->charset->name);
-
-        return $constraints->constrained($definition);
+        return [$columns, $keys];
     }
 
     /**
@@ -146,7 +161,7 @@ final class Definitions
      *
      * @return list<Key>
      */
-    public function tableKeys(CreateTable $create, array $columns, array $keys, string $engine = 'InnoDB'): array
+    public function tableKeys(CreateTable|DeferredCreateTable $create, array $columns, array $keys, string $engine = 'InnoDB'): array
     {
         $foreign = new ForeignKeys($this->planner, $create);
         $implicit = [];
@@ -190,7 +205,7 @@ final class Definitions
     /**
      * Answers the default collation of the table: its option, else the database's.
      */
-    public function collation(CreateTable $create): Collation
+    public function collation(CreateTable|DeferredCreateTable $create): Collation
     {
         $collation = Collation::named($this->schemaCollation) ?? Collation::known('utf8mb4_0900_ai_ci');
         foreach ($create->options as $option) {
@@ -248,18 +263,7 @@ final class Definitions
      */
     public function members(Domain $domain, ?\SqlSemantics\Statement\Type\TypeDescriptor $type = null): Domain
     {
-        if ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) {
-            return (new Declared($domain->collation, $this->planner->settings->release()))->enumeration($type, $domain->collation);
-        }
-        $charset = $domain->collation->charset;
-        if ($domain->members === [] || Encoding::utf8($charset)) {
-            return $domain;
-        }
-        $members = array_map(static fn (string $member): string => Encoding::convert($member, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'), $charset), $domain->members);
-        $lengths = array_map(static fn (string $member): int => Encoding::length($member, $charset), $members);
-        $length = $domain->field === Field::Enum ? max([0, ...$lengths]) : array_sum($lengths) + count($members) - 1;
-
-        return new Domain($domain->kind, $domain->field, $length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->nullable, $members, $domain->coercibility, $domain->numericBytes, $domain->display);
+        return (new EnumerationMembers())->members($domain, $type, $this->planner->settings->release());
     }
 
     /**

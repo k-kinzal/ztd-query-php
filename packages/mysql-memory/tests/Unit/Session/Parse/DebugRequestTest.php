@@ -42,12 +42,12 @@ final class DebugRequestTest extends TestCase
      * @param list<int> $codes The ordered native conditions
      */
     #[DataProvider('providerOperands')]
-    public function testRefusalUsesTypedNoticesBeforeTheDebugBoundary(Scalar $operand, array $codes): void
+    public function testNoticesUsesTypedNoticesBeforeTheDebugBoundary(Scalar $operand, array $codes): void
     {
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
         $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), new ShowParseTree(new QueryRoot(new Select([], [new SelectExpression($operand)]))));
-        $error = (new DebugRequest())->refusal($operation, (new InternalCommand())->error($operation), $session);
+        $error = (new DebugRequest())->notices($operation->facts->warnings, (new InternalCommand())->error($operation), $session);
 
         self::assertSame($codes[0], $error->getCode());
         self::assertTrue($error->recorded);
@@ -59,7 +59,7 @@ final class DebugRequestTest extends TestCase
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
         $partitioning = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new Collated(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('v')), new Name('missing'))), null, null, []);
-        $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), partitioning: $partitioning));
+        $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)))], partitioning: $partitioning));
         $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
 
         $error = (new DebugRequest())->refusal($operation, (new InternalCommand())->error($operation), $session);
@@ -67,4 +67,13 @@ final class DebugRequestTest extends TestCase
         self::assertSame(1273, $error->getCode());
         self::assertSame([1273, 1064], array_column($session->diagnostics->conditions, 1));
     }
+    public function testRefusalPreservesTheColumnlessInputWithTheSameContextualCondition(): void
+    {
+        $session = (new Instance())->connect();
+        $error = $session->run('SHOW PARSE_TREE CREATE TABLE t PARTITION BY HASH(@v COLLATE missing)')[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $error);
+        self::assertSame(1273, $error->getCode());
+        self::assertSame([1273, 1064], array_column($session->diagnostics->conditions, 1));
+    }
+
 }

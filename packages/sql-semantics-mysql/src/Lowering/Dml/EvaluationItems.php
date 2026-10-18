@@ -9,7 +9,6 @@ use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
-use SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 
@@ -36,25 +35,12 @@ final class EvaluationItems
         $items = $node->name === 'expr_list'
             ? array_map(static fn ($value) => $value instanceof \SqlSemantics\Statement\Scalar ? new SelectExpression($value) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($value), (new \SqlSemantics\Platform\MySql\Lowering\Expression\ListRule($this->lowering))->operands($node))
             : (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->items($node);
-        $expressions = [];
-        $wildcard = null;
-        foreach ($items as $item) {
-            if ($item instanceof SelectExpression) {
-                $expressions[] = $item;
-            } elseif (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection) {
-                $wildcard ??= $item;
-            }
-        }
-        if ($wildcard !== null) {
-            $end = (new SourceRanges())->span($node)[1] ?? 0;
-            throw new RejectedInput(new EvaluationWildcard($wildcard instanceof TableWildcard ? $wildcard->table : null, $this->requiresDatabase($expressions)), $end, false);
-        }
         $stored = $this->stored($items);
         if ($stored instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation) {
             throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation($stored), (new SourceRanges())->span($node)[1] ?? 0, false);
         }
 
-        return $expressions;
+        return $stored->items;
     }
 
     /**

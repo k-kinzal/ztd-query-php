@@ -120,7 +120,7 @@ final class CacheOptions
                 $boundary = min($boundary, $offset);
             }
         }
-        $database = (new Parse\RoutinePrefix())->database($statement, $boundary, $session) ?? (new Parse\Definition\DefinitionPrefix())->before($statement, $boundary, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $boundary, $session);
+        $database = (new Parse\Entry\EvaluationInput())->before($statement, $boundary, $session) ?? (new Parse\RoutinePrefix())->database($statement, $boundary, $session) ?? (new Parse\Definition\DefinitionPrefix())->before($statement, $boundary, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $boundary, $session);
         if ($database !== null) {
             return $database;
         }
@@ -242,6 +242,9 @@ final class CacheOptions
         }
         $failure = $conflict === null ? $error : $this->refusal($conflict);
         $session->diagnostics->error($failure->getCode(), $failure->getMessage());
+        foreach ($failure->following as [$code, $message]) {
+            $session->diagnostics->error($code, $message);
+        }
 
         return new SqlError($failure->error, $failure->getMessage(), $previous, [], null, null, true);
     }

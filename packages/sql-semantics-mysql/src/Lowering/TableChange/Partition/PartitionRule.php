@@ -149,6 +149,7 @@ final class PartitionRule
      * Lowers the method, counts, subpartitioning and definitions: a node of `partition` or `partition_clause`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a partition count is zero in the selected release
      */
     public function clause(Node $clause): PartitionClause
     {
@@ -157,12 +158,15 @@ final class PartitionRule
 
         $method = $this->method($this->lowering->form($form->node($positions[0])));
         $count = $this->count($form->node($positions[1]));
+        if ($count !== null && ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0') || in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0)) {
+            throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroPartitions, (new \SqlSemantics\Construction\SourceRanges())->span($form->node($positions[1]))[1] ?? 0);
+        }
         $subpartitioning = $this->subpartitioning($form->node($positions[2]));
         return new PartitionClause(
             $method,
             $count,
             $subpartitioning,
-            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3]), $method, $subpartitioning?->count === null ? null : (int) $subpartitioning->count->text),
+            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3]), $method, $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count)),
         );
     }
 
@@ -201,7 +205,7 @@ final class PartitionRule
 
         $countNode = $form->node(count($form->node->children) - 1);
         $count = $this->count($countNode);
-        if ($count !== null && (int) $count->text === 0) {
+        if ($count !== null && ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0') || in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0)) {
             throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions, (new \SqlSemantics\Construction\SourceRanges())->span($countNode)[1] ?? 0);
         }
         return new Subpartitioning($this->method($form), $count);
@@ -250,7 +254,7 @@ final class PartitionRule
 
         return match ($form->signature) {
             'opt_num_parts:', 'opt_num_subparts:' => null,
-            'opt_num_parts: PARTITIONS_SYM real_ulong_num', 'opt_num_subparts: SUBPARTITIONS_SYM real_ulong_num' => $this->lowering->numbers->numeral($form->node(1)),
+            'opt_num_parts: PARTITIONS_SYM real_ulong_num', 'opt_num_subparts: SUBPARTITIONS_SYM real_ulong_num' => $this->lowering->numbers->integral($form->node(1)),
             default => throw ImplementationGap::production($form),
         };
     }

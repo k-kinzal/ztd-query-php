@@ -34,4 +34,18 @@ final class ExplainInputTest extends TestCase
         self::assertSame(3061, $error->getCode());
         self::assertSame("User variable name '" . str_repeat('a', 100) . "' is illegal", $error->getMessage());
     }
+    public function testTargetsKeepsTheSameNamespaceAcrossDatabaseCreation(): void
+    {
+        $target = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('x'));
+        $table = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), new Name('y'));
+        $targets = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([$target], [$table]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets($targets, database: new Name('d'));
+        $session = (new \MySqlMemory\Instance('8.4.7', [], ['other']))->connect(database: 'other');
+        $input = new ExplainInput();
+        self::assertSame(1049, $input->targets($problem, $session)->getCode());
+        $session->query('CREATE DATABASE d');
+        self::assertSame(1109, $input->targets($problem, $session)->getCode());
+        self::assertSame('other', $session->variables->database);
+        self::assertSame($targets, $problem->targets);
+    }
 }

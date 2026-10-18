@@ -90,6 +90,7 @@ final class CreateFunction implements Statement
         }
         $this->characteristics = $implementation->characteristics;
         $this->body = $implementation->body;
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Function, $name, $parameters);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

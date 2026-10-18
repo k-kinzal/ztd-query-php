@@ -152,6 +152,17 @@ final class Reader
             (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($tree, $statement);
         }
 
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
+            try {
+                (new Syntax($session->resolution()->client))->debugOnly($tree, $statement);
+            } catch (SqlError $error) {
+                $parser = $session->semantics()->parser();
+                \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+                $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, strlen($statement), $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
+                $reading = array_values(array_filter(array_column($notices, 1), static fn ($notice): bool => !$notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure || ($notice->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax && !\MySqlMemory\Session\Problem\Stages::afterReading($notice))));
+                return (new ModernWarnings())->recorded($reading, $error, $session);
+            }
+        }
         return $this->rejection($failure, $statement, $session);
     }
 

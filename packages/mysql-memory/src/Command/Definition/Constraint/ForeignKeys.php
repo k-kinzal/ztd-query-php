@@ -14,6 +14,7 @@ use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey as ForeignKeyElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceEvent;
@@ -40,11 +41,11 @@ final class ForeignKeys
 {
     /**
      * @param Planner $planner The planner of the statement
-     * @param CreateTable $create The statement that declares the table
+     * @param CreateTable|DeferredCreateTable $create The statement that declares the table
      * @param int $base The number the first unnamed foreign key is numbered after
      * @param array<string, true> $kept The foreign keys, by lowercase name, a changed table had, which are not checked against the table they reference again
      */
-    public function __construct(public readonly Planner $planner, public readonly CreateTable $create, public readonly int $base = 0, public readonly array $kept = [])
+    public function __construct(public readonly Planner $planner, public readonly CreateTable|DeferredCreateTable $create, public readonly int $base = 0, public readonly array $kept = [])
     {
     }
 

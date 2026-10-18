@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program\Expression;
 
-use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Problems;
@@ -15,6 +14,7 @@ use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write as W;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Statement\Operation;
 
@@ -34,15 +34,22 @@ final class ExplainUse
      */
     public function error(DeferredExplain $explanation, Session $session): SqlError
     {
-        (new \MySqlMemory\Command\Explain\ExplainCommand())->check($explanation, $session);
-        $database = $explanation->database->value ?? $session->variables->database;
-        if ($explanation->database !== null && $session->instance->dictionary->schema($database) === null) {
-            return QueryError::BadDatabase->error($database);
+        try {
+            (new \MySqlMemory\Command\Explain\ExplainCommand())->check($explanation, $session);
+        } catch (SqlError $error) {
+            return $error;
         }
+        $database = $explanation->database->value ?? $session->variables->database;
         Views::refreshAll($session->instance->dictionary, $session->settings());
         $previous = $session->variables->database;
         $session->variables->database = $database;
         try {
+            if ($explanation->statement instanceof W\DeferredInsertRows || $explanation->statement instanceof W\DeferredInsertQuery) {
+                (new InsertUse())->raise($explanation->statement, $session, false);
+            }
+            if ($explanation->statement instanceof W\DeferredDelete || $explanation->statement instanceof W\DeferredMultipleDelete) {
+                (new DeleteUse())->raise($explanation->statement, $session, false);
+            }
             if ($explanation->statement instanceof DeferredQuery) {
                 (new QueryUse())->raise($explanation->statement, $session, false);
             }

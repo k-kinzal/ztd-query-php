@@ -16,6 +16,19 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 #[Medium]
 final class PartitionClauseTest extends TestCase
 {
+    public function testExplicitCountRejectsFractionalTokensBeforeConstructingAClause(): void
+    {
+        $this->expectExceptionMessage('A partition count is an integer token.');
+        new PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, []), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.0'), null, []);
+    }
+
+    public function testExplicitCountRejectsLiteralZero(): void
+    {
+        $this->expectExceptionMessage('The explicit partition count is positive.');
+        new PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, []), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'), null, []);
+    }
+
+
     public function testDerivePartitioningDerivesTheMethodAndTheValues(): void
     {
         $semantics = new Semantics(Dialect::MySql);

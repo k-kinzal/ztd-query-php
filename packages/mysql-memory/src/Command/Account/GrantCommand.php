@@ -41,8 +41,8 @@ use SqlSemantics\Statement\Operation;
  * (ER_CANT_CREATE_USER_WITH_GRANT), except in MySQL 5.6 and 5.7, where it creates it; a dynamic privilege the server does not register is then a
  * syntax error. GRANT of roles refuses an account or a role that does not exist
  * (ER_UNKNOWN_AUTHID) and a grant that would make a role reach itself (ER_ROLE_GRANTED_TO_ITSELF).
- * PROXY grants require authority over the proxied account (see Proxies). Nothing is granted
- * when the statement fails (verified on a live 8.4 server).
+ * PROXY grants require authority over the proxied account (see Proxies). Modern grants apply nothing when any recipient fails. Legacy grants retain
+ * the grants for existing recipients and report each missing one (verified on 5.7 and 8.4).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html.
  *
  * @visibility MySqlMemory
@@ -95,25 +95,30 @@ final class GrantCommand implements Command
         if ($statement->as !== null) {
             $this->as($statement->as, $session);
         }
-        $accounts = $session->instance->accounts;
         foreach ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $statement->grantees : [] as $grantee) {
             if ($grantee->identification?->credential === Credential::PasswordHash) {
                 $session->diagnostics->warning(1287, "'IDENTIFIED BY PASSWORD' is deprecated and will be removed in a future release. Please use IDENTIFIED WITH <plugin> AS <hash> instead");
             }
         }
-        $found = [];
         $session->databaseGrants->refused($target);
         if ((new Catalog($session->settings()->release()))->legacy()) {
-            $found = $this->accounts($statement, $grantees, $session);
+            (new Grant\LegacyGrants())->execute($statement, $operation, $grantees, $target, $session);
+            return;
         }
-        foreach ($found === [] ? $grantees : [] as $identity) {
-            $account = $accounts->find($identity);
-            if ($account === null) {
-                $accounts->reload();
-                throw AccountError::CantCreateUserWithGrant->error();
-            }
-            $found[] = $account;
+        foreach ($this->existing($grantees, $session, $operation) as $account) {
+            $this->apply($statement, $operation, $account, $target, $session);
         }
+    }
+
+    /**
+     * Applies one resolved recipient's privileges after checking their level.
+     *
+     * @param array{string, string, string} $target The resolved privilege level
+     * @throws SqlError When a privilege cannot be granted at this level
+     */
+    public function apply(GrantPrivileges $statement, Operation $operation, Account $account, array $target, Session $session): void
+    {
+        $levels = new Levels($session->settings()->release());
         $levels->usage($operation);
         [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);
         foreach ($dynamic as $name) {
@@ -123,11 +128,39 @@ final class GrantCommand implements Command
         }
         $named = $static !== [] || $columns !== [] || $all || $option || ($dynamic === [] && array_filter($statement->privileges, static fn ($privilege): bool => $privilege instanceof StaticPrivilege) !== []);
         $option = $option || array_filter($statement->options, static fn ($with): bool => $with instanceof GrantOptionRight) !== [];
-        foreach ($found as $account) {
-            $this->conversions($account->identity, $target[0], count($dynamic), $session);
-            $this->grant($account, $target, $static, $columns, $dynamic, $option, $all, $named);
-            $session->databaseGrants->remember($account, $target);
+        $this->conversions($account->identity, $target[0], count($dynamic), $session);
+        $this->grant($account, $target, $static, $columns, $dynamic, $option, $all, $named);
+        $session->databaseGrants->remember($account, $target);
+    }
+
+    /**
+     * Resolves every modern recipient and retains one error for each absent occurrence.
+     *
+     * @param list<Identity> $grantees The recipients in written order, including duplicates
+     * @return list<Account>
+     * @throws SqlError When any recipient does not exist
+     */
+    public function existing(array $grantees, Session $session, ?Operation $operation = null): array
+    {
+        $found = [];
+        $failure = null;
+        foreach ($grantees as $identity) {
+            try {
+                $account = $session->instance->accounts->find($identity) ?? throw AccountError::CantCreateUserWithGrant->error();
+                if ($operation !== null) {
+                    (new Levels($session->settings()->release()))->usage($operation);
+                }
+                $found[] = $account;
+            } catch (SqlError $error) {
+                $failure ??= $error;
+                $session->diagnostics->error($error->getCode(), $error->getMessage());
+            }
         }
+        if ($failure !== null) {
+            $session->instance->accounts->reload();
+            throw new SqlError($failure->error, $failure->getMessage(), recorded: true);
+        }
+        return $found;
     }
 
     /**

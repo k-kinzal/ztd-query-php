@@ -53,6 +53,7 @@ final class StoredItems
         [$name, $qualifier] = $rule->variable($form->node(0));
         $this->lowering->options->skip($form->node(1));
         $value = (new ValueRule($this->lowering))->operand($form->node(2), $scope !== null);
-        return $value instanceof Scalar || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord ? new NameAssignment($name, $value, $scope, $qualifier) : new DeferredAssignment($name, $value, $scope, $qualifier);
+        $item = $value instanceof Scalar || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord ? new NameAssignment($name, $value, $scope, $qualifier) : new DeferredAssignment($name, $value, $scope, $qualifier);
+        return $this->lowering->origins->record($item, $form->node(0));
     }
 }

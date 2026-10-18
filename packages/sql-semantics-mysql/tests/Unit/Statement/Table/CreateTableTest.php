@@ -46,9 +46,9 @@ final class CreateTableTest extends TestCase
         self::assertSame($create->declarations()[0]->columns[1], $resolution->slot->column);
     }
 
-    public function testDeriveStatementReportsTheProblems(): void
+    public function testDeriveStatementReportsTheProblemsOfOrdinaryAndStoredDefinitions(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t ENGINE = InnoDB');
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t ENGINE = InnoDB');
         $keys = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
 
         self::assertInstanceOf(NoColumns::class, $create->facts->diagnostics[0]);

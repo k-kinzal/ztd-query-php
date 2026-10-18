@@ -44,4 +44,33 @@ final class ExplainUseTest extends TestCase
         $this->expectExceptionCode(3061);
         (new ExplainUse())->raise($instruction, $session);
     }
+    public function testErrorKeepsTheDatabaseAndDeferredWriteAcrossStateTransitions(): void
+    {
+        $target = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')));
+        $head = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto(false, null, false, $target);
+        $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery($head, new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()]));
+        $instruction = new DeferredExplain($write, database: new Name('d'));
+        $session = (new Instance('8.4.7', [], ['other']))->connect(database: 'other');
+        $session->text = 'unrelated invalid input';
+        $observe = static function () use ($instruction, $session): int {
+            $session->text = 'unrelated invalid input';
+            try {
+                return (new ExplainUse())->error($instruction, $session)->getCode();
+            } catch (\MySqlMemory\Error\SqlError $error) {
+                return $error->getCode();
+            }
+        };
+        self::assertSame(1049, $observe());
+        $session->query('CREATE DATABASE d');
+        self::assertSame(1146, $observe());
+        $session->query('CREATE TABLE d.t(a INT)');
+        $session->query('INSERT INTO d.t VALUES(7)');
+        self::assertSame(1096, $observe());
+        self::assertSame('other', $session->variables->database);
+        self::assertSame('unrelated invalid input', $session->text);
+        self::assertSame($write, $instruction->statement);
+        $rows = $session->query('SELECT a FROM d.t')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rows);
+        self::assertSame([['7']], $rows->rows);
+    }
 }

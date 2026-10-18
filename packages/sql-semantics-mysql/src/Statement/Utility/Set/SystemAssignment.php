@@ -47,7 +47,7 @@ final class SystemAssignment implements SetItem
     }
 
     /**
-     * Derives the variable and the value, and checks that SET can change the variable in the scope written; a stored program is checked when it runs.
+     * Derives the variable and the value, and checks that SET can change the variable in the scope written; a stored target is resolved now and its writability is checked when it runs.
      */
     public function deriveItem(Derivation $derivation): void
     {
@@ -56,9 +56,13 @@ final class SystemAssignment implements SetItem
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
         $derivation->scalar($this->variable, $derivation->environment());
-        if ($this->variable->instance === null && !$derivation->inProgram()) {
-            (new VariableAccess())->assign($this->variable->name->value, $this->variable->scope, $derivation);
-        } elseif (!$derivation->inProgram()) {
+        if ($this->variable->instance === null) {
+            if ($derivation->inProgram()) {
+                (new VariableAccess())->find($this->variable->name->value, $derivation, true);
+            } else {
+                (new VariableAccess())->assign($this->variable->name->value, $this->variable->scope, $derivation);
+            }
+        } else {
             $this->variable->structured($derivation);
         }
         if (!$valueFirst && !$this->value instanceof SetWord) {

@@ -22,6 +22,8 @@ use SqlSemantics\Statement\Snapshot;
  * invariants are independent of the declaration's name, parameters and result
  * type, so this value can be constructed before those other operands. It is a
  * declaration operand, not an instruction that can be placed in another body.
+ * CreateFunction checks assignments whose interpretation depends on its parameter
+ * names after the body and parameter list have been combined.
  *
  * @visibility public
  * @example Refusing an SQL body interpreted as an external language

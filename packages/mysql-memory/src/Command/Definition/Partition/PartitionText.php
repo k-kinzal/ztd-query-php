@@ -46,7 +46,8 @@ final class PartitionText
             PartitionMethod::Key => $this->key($source instanceof KeyMethod ? $source : null, $columns),
         };
         if ($clause->definitions === []) {
-            return $head . ($clause->partitions === null ? '' : "\nPARTITIONS " . $clause->partitions->text) . ' */';
+            $count = $clause->partitions === null ? 0 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->partitions);
+            return $head . ($count === 0 ? '' : "\nPARTITIONS " . $count) . ' */';
         }
         $lines = [];
         foreach ($clause->definitions as $index => $written) {

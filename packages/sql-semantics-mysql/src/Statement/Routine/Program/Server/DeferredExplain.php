@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write as W;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -35,7 +36,7 @@ final class DeferredExplain implements ProgramStatement
     use Snapshot;
 
     /**
-     * @param Explainable|DeferredSelection|DeferredQuery $statement The complete explained statement, including deferred query operands
+     * @param Explainable|DeferredSelection|DeferredQuery|W\DeferredInsertRows|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete $statement The complete explained statement, including deferred query operands
      * @param Name|null $format The explicit report format, if present
      * @param UserVariable|null $into The retained output target
      * @param Name|null $database The optional database used to bind the explained statement
@@ -43,7 +44,7 @@ final class DeferredExplain implements ProgramStatement
      * @param \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier|null $modifier The optional legacy report modifier
      * @param bool $emptyInto Whether the ignored empty INTO spelling of 8.2–8.3 is present
      */
-    public function __construct(public readonly Explainable|DeferredSelection|DeferredQuery $statement, public readonly ?Name $format = null, public readonly ?UserVariable $into = null, public readonly ?Name $database = null, public readonly bool $analyze = false, public readonly ?\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier $modifier = null, public readonly bool $emptyInto = false)
+    public function __construct(public readonly Explainable|DeferredSelection|DeferredQuery|W\DeferredInsertRows|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete $statement, public readonly ?Name $format = null, public readonly ?UserVariable $into = null, public readonly ?Name $database = null, public readonly bool $analyze = false, public readonly ?\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier $modifier = null, public readonly bool $emptyInto = false)
     {
         Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
         Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');

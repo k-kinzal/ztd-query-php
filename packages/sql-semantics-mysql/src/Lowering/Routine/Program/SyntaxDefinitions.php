@@ -22,6 +22,29 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 final class SyntaxDefinitions
 {
     /**
+     * Reports the ALTER VIEW branch before its required VIEW token, including incomplete input.
+     * The completed view_suid production distinguishes this branch from other ALTER forms.
+     *
+     * @param list<\SqlParser\Lexer\Token> $tokens Transient tokens of the current input
+     */
+    public function alter(Node $node, \SqlParser\Lexer\Token $lookahead, array $tokens): ?RejectedInput
+    {
+        if ($node->name !== 'view_suid') {
+            return null;
+        }
+        $command = null;
+        foreach ($tokens as $token) {
+            if ($token->offset >= $lookahead->offset) {
+                break;
+            }
+            if (in_array($token->name, ['ALTER', 'CREATE'], true)) {
+                $command = $token->name;
+            }
+        }
+        return $command === 'ALTER' ? new RejectedInput(new ProgramProblem(ProgramRule::BadStatement, 'ALTER VIEW'), $lookahead->offset, true) : null;
+    }
+
+    /**
      * Refuses a completed HANDLER name followed by its operation keyword in a stored body.
      *
      * READ, OPEN and CLOSE stop before later operands, including incomplete reads.

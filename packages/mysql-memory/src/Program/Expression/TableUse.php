@@ -33,8 +33,14 @@ final class TableUse
             $session->diagnostics->clear();
         }
         $this->header($definition, $session);
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($definition->elements, $definition->query)) {
+            return (new \MySqlMemory\Program\Definition\ColumnlessUse())->execute($definition, $session);
+        }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
             return (new GenerationUse())->execute($definition, $session);
+        }
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($definition->query) !== null) {
+            return (new \MySqlMemory\Program\Definition\CreationQueryUse())->execute($definition, $session);
         }
         throw SchemaError::WrongObject->error($definition->name->schema->value ?? $session->variables->database, $definition->name->name->value, 'BASE TABLE');
     }
@@ -48,6 +54,7 @@ final class TableUse
         $storage = new StorageOptions();
         $storage->header($definition, $session, $context);
         $storage->engine($definition, $session->variables, $context);
+        $storage->directories($definition, $session);
     }
 
     /**
@@ -59,7 +66,7 @@ final class TableUse
     {
         $this->header($definition, $session);
         $query = $definition->query;
-        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($definition->elements, $query) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
             return null;
         }
         \SqlSemantics\Diagnostic\Check::invariant($query !== null, 'A deferred table creation retains its query.');

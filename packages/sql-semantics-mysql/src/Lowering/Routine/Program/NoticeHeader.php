@@ -62,9 +62,9 @@ final class NoticeHeader
         }
 
         $legacy = in_array($lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        $failure = $this->kind === null ? null : (new SyntaxDefinitions())->handler($node, $lookahead, $tokens, $legacy);
+        $failure = $this->kind === null ? null : ((new SyntaxDefinitions())->handler($node, $lookahead, $tokens, $legacy) ?? (new SyntaxDefinitions())->alter($node, $lookahead, $tokens));
         if ($failure !== null) {
-            \SqlSemantics\Diagnostic\Check::invariant($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem, 'A stored HANDLER has a program restriction.');
+            \SqlSemantics\Diagnostic\Check::invariant($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem, 'A prohibited stored instruction has a program restriction.');
             return new \SqlSemantics\Construction\RejectedInput(new RefusedProgramBody($this->name, $this->kind, $failure->problem, $this->definer, nameEnd: $this->nameEnd), $failure->end, true);
         }
         return null;

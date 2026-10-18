@@ -58,6 +58,9 @@ final class PendingTable implements PendingInstruction
         }
         $database = $this->header->name->schema->value ?? $this->database;
         if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) {
+            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->header->elements, $this->header->query)) {
+                return (new \MySqlMemory\Program\Definition\ColumnlessUse())->execute($this->header, $session, $database);
+            }
             if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->header->elements)) {
                 return (new \MySqlMemory\Program\Expression\GenerationUse())->execute($this->header, $session, $database);
             }

@@ -17,7 +17,10 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall;
+use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
+use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use Testcontainers\Testcontainers;
@@ -105,7 +108,11 @@ final class EmptyTableDefinitionsTest extends TestCase
             $session = (new Instance($release))->connect();
             $session->query('CREATE DATABASE d; USE d');
             $observations = array_map(static function (string $name) use ($session, $native): array {
-                $statement = new CreateTable(new QualifiedName(new Name($name)), ifNotExists: true);
+                $definition = new DeferredCreateTable(new QualifiedName(new Name($name)), ifNotExists: true);
+                $create = new CreateProcedure(new QualifiedName(new Name('p_' . $name)), new ParameterList([]), $definition);
+                $native->query((new \Fuzz\Structure\Reference())->sql($create, $session->semantics()->profile()));
+                (new Memory())->observe($session, $create);
+                $statement = new ProcedureCall($create->name);
                 $sql = (new \Fuzz\Structure\Reference())->sql($statement, $session->semantics()->profile());
                 return array_map(static function (array $history) use ($statement, $sql, $session, $native): array {
                     array_map(static fn (string $setup): mysqli_result|bool => $native->query($setup), $history);

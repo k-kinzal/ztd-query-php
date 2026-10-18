@@ -14,6 +14,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PartitionNamesTest extends TestCase
 {
+    public function testRequiredPrecedesTheColumnlessAndExistingTableConditions(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect();
+        $session->query('USE d; CREATE TABLE t(a INT)');
+        $session->run('CREATE TABLE IF NOT EXISTS t PARTITION BY RANGE COLUMNS ()');
+        self::assertSame([1492], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testCheckKeepsStoredInstructionsUntilTheirBranchIsReached(): void
     {
         $session = (new Instance())->connect();

@@ -237,4 +237,12 @@ final class CacheOptionsTest extends TestCase
         self::assertTrue($condition->recorded);
         self::assertNull((new CacheOptions())->condition($error, "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = +", $session));
     }
+    public function testRecordedPreservesFollowingConditions(): void
+    {
+        $session = (new Instance())->connect();
+        $error = new SqlError(\MySqlMemory\Error\Family\QueryError::NoDatabase, 'No database selected', following: [[1046, 'No database selected']]);
+        $recorded = (new CacheOptions())->recorded([], null, $error, $session);
+        self::assertTrue($recorded->recorded);
+        self::assertSame([1046, 1046], array_column($session->diagnostics->conditions, 1));
+    }
 }

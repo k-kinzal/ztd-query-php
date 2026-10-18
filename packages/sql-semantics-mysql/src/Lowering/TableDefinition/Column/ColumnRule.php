@@ -151,6 +151,7 @@ final class ColumnRule
      *
      * @return list<ColumnAttribute>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When enforcement has no preceding CHECK constraint
      */
     public function attributes(Node $list): array
     {
@@ -161,7 +162,13 @@ final class ColumnRule
         $rule = new AttributeRule($this->lowering);
         $attributes = [];
         foreach ((new Spine($this->lowering))->items($form->node(0), self::LISTS, ['attribute', 'column_attribute', 'gcol_attribute']) as $item) {
-            $attributes[] = $rule->attribute($item);
+            $attribute = $rule->attribute($item);
+            $attributes[] = $attribute;
+            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->enforcement($attributes) !== null) {
+                $first = $item->tokens()[0];
+                $offset = $first->offset - ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute && $attribute->enforced ? strlen($first->leading) : 0);
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement($offset), $offset, true);
+            }
         }
 
         return $attributes;

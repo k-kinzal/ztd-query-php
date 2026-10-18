@@ -31,9 +31,16 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerBranchesDerivesEveryConditionAndStatement')]
     public function testBranchesDerivesEveryConditionAndStatement(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $actual = (static function () use ($release, $sql): array {
+            try {
+                $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+                return [$failure->problem->message()];
+            }
+        })();
+        self::assertSame($messages, $actual);
     }
 
     /**
@@ -71,9 +78,16 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerLoopDerivesTheLabelsTheConditionAndTheStatements')]
     public function testLoopDerivesTheLabelsTheConditionAndTheStatements(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $actual = (static function () use ($release, $sql): array {
+            try {
+                $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+                return [$failure->problem->message()];
+            }
+        })();
+        self::assertSame($messages, $actual);
     }
 
     /**
@@ -83,7 +97,8 @@ final class FlowFactsTest extends TestCase
     {
         yield 'WHILE with an unknown name in 5.7' => ['mysql-5.7.44', 'CREATE PROCEDURE p(x INT) w: WHILE x > y DO ITERATE w; END WHILE w', ['Column y does not exist.']];
         yield 'REPEAT with its label in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL x < 0 END REPEAT r', []];
-        yield 'REPEAT with another end label' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT s', ['End-label s without match', 'Column q does not exist.']];
+        yield 'REPEAT with another end label' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT s', ['End-label s without match']];
+        yield 'REPEAT with coherent labels and an unknown condition' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT r', ['Column q does not exist.']];
         yield 'LOOP with an unknown name' => ['mysql-9.1.0', 'CREATE PROCEDURE p() l: LOOP SELECT z; LEAVE l; END LOOP', ['Column z does not exist.']];
         yield 'a redefined loop label' => ['mysql-9.1.0', 'CREATE PROCEDURE p() a: BEGIN a: WHILE 1 DO LEAVE a; END WHILE; END', ['Redefining label a']];
     }
@@ -112,9 +127,16 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerJumpChecksTheLabel')]
     public function testJumpChecksTheLabel(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $actual = (static function () use ($sql): array {
+            try {
+                $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+                return [$failure->problem->message()];
+            }
+        })();
+        self::assertSame($messages, $actual);
     }
 
     /**

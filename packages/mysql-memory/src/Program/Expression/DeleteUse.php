@@ -51,7 +51,7 @@ final class DeleteUse
         }
         $database = $session->variables->database;
         $targets = $write instanceof DeferredDelete ? [$write->table->name] : $write->targets;
-        if ($database === '' && array_filter($targets, static fn ($target): bool => $target->schema === null) !== []) {
+        if ($write instanceof DeferredMultipleDelete && $database === '' && array_filter($targets, static fn ($target): bool => $target->schema === null) !== []) {
             throw QueryError::NoDatabase->error();
         }
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());

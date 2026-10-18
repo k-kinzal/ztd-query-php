@@ -125,11 +125,13 @@ final class PartitionDefinitions
         if ($ranged && $clause->definitions === []) {
             throw PartitionError::PartitionsNotDefined->error($method === PartitionMethod::Range || $method === PartitionMethod::RangeColumns ? 'RANGE' : 'LIST');
         }
-        $count = $clause->definitions === [] ? (int) ($clause->partitions->text ?? '1') : count($clause->definitions);
+        $count = $clause->definitions === [] ? ($clause->partitions === null ? 1 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->partitions)) : count($clause->definitions);
+        $count = $this->planner->settings->legacy() ? $count : max(1, $count);
         if ($count === 0) {
             throw PartitionError::NoPartitions->error();
         }
-        if ($count > self::LIMIT) {
+        $subcount = $clause->subpartitioning?->count === null ? max(1, count($clause->definitions[0]->subpartitions ?? [])) : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->subpartitioning->count);
+        if ($count * max(1, $subcount) > self::LIMIT) {
             throw PartitionError::TooManyPartitions->error();
         }
         if ($clause->definitions === []) {
@@ -185,7 +187,7 @@ final class PartitionDefinitions
             $columns[] = $definition->position($name->value) ?? throw SchemaError::FieldNotFoundInPartitionFunction->error();
         }
         if ($method instanceof KeyMethod && $columns === []) {
-            $columns = $definition->primaryKey()->columns ?? throw SchemaError::FieldNotFoundInPartitionFunction->error();
+            $columns = $this->keyColumns($definition);
         }
         foreach ($method instanceof ColumnsMethod ? $columns : [] as $position) {
             $kind = $definition->columns[$position]->domain->kind;
@@ -195,6 +197,26 @@ final class PartitionDefinitions
         }
 
         return [null, $columns, $columns];
+    }
+
+    /**
+     * Resolves KEY() to the primary key or the first entirely nonnullable unique key.
+     *
+     * @return list<int> Indexed column positions
+     * @throws SqlError When the definition has no usable implicit partition key
+     */
+    public function keyColumns(TableDefinition $definition): array
+    {
+        $primary = $definition->primaryKey();
+        if ($primary !== null) {
+            return $primary->columns;
+        }
+        foreach ($definition->keys as $key) {
+            if ($key->unique() && array_filter($key->columns, static fn (int $column): bool => $definition->columns[$column]->domain->nullable) === []) {
+                return $key->columns;
+            }
+        }
+        throw SchemaError::FieldNotFoundInPartitionFunction->error();
     }
 
     /**

@@ -57,7 +57,9 @@ final class SyntaxColumns
             return null;
         }
         try {
-            if ($legacy && $node->name === 'field_ident') {
+            if ($node->name === 'opt_column_attribute_list') {
+                (new ColumnRule($lowering))->attributes($node);
+            } elseif ($legacy && $node->name === 'field_ident') {
                 $lowering->names->columnName($node);
             } elseif ($legacy && $node->name === 'field_spec') {
                 $lowering->tableDefinitions->tableElement($node);
@@ -67,7 +69,7 @@ final class SyntaxColumns
                 $lowering->tableChanges->statement($node);
             }
         } catch (RejectedInput $failure) {
-            return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName
+            return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName
                 ? new ParseFailure($failure->problem, $failure->aborts) : null;
         } catch (\SqlSemantics\Diagnostic\AnalysisException) {
             // Other refusals retain their own declaration and notice boundaries.

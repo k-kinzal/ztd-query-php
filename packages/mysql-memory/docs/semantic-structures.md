@@ -1086,7 +1086,10 @@ refusals.
 Stored-program declaration constructors now check the body against its kind,
 including instructions in unreachable branches and handlers. Functions and
 triggers reject privilege changes that imply a commit, dynamic SQL, returned
-result sets, transaction boundaries, RESET and FLUSH. Other program kinds reject
+result sets, transaction boundaries, RESET and FLUSH. Permanent table, database,
+storage, account, foreign-server and plugin DDL also introduce forbidden
+transaction boundaries. Temporary CREATE/DROP TABLE remain valid instructions;
+they preserve any later invocation condition. Other program kinds reject
 RETURN, and functions require a RETURN instruction somewhere in their body.
 Restrictions shared by every program kind are checked before these body-wide
 conditions. This describes a language structure; it does not ask Semantics to
@@ -1543,17 +1546,20 @@ all window function families, aliases, arithmetic parents, empty input and
 ordinary populated input on MySQL 8.0.44, 8.4.7 and 9.1.0. These checks do not
 close the remaining whole-model constructor invariant gate.
 
-Empty table definitions retain their semantic condition while Memory applies
-release-specific preparation order. MySQL 5.6 and 5.7 reject missing columns
-before looking up the database or validating storage options. MySQL 8.0 and
-8.4 can complete an empty `CREATE TABLE IF NOT EXISTS` when the target already
-exists; the same directly constructed object fails when that table is absent
-and succeeds against a populated target. MySQL 9.0 and 9.1 reject the empty
-definition even when that target exists. These latter observations are not
-counted as successful state-transition witnesses for constructor validity.
-Constraint diagnostics and tablespace lookup retain their precedence. The
-ordinary empty-definition and deferred definition domains still need review;
-matching their SQL errors alone does not establish the construction property.
+Ordinary `CreateTable` values require a column declaration or a creation query.
+Columnless definitions use `DeferredCreateTable`, retaining all constraints,
+options, partitioning, identity and IF NOT EXISTS. Stored routines and prepared
+requests can retain this complete instruction without opening the destination.
+Memory consumes its semantic fields directly, including when the request label
+contains unrelated text. The same instruction is tested before creation,
+against a populated target, and after dropping it; prepared requests retain
+their original default database when USE changes the session database.
+
+MySQL 5.6 and 5.7 reject missing columns before destination schema lookup.
+MySQL 8.0 and 8.4 can complete columnless IF NOT EXISTS against an existing table;
+8.1–8.3 and 9.x require columns before that shortcut. Header errors, tablespace
+lookup and CHECK conditions retain their respective precedence. Full native
+histories preserve standalone, prepared and reached/skipped stored forms.
 
 Legacy EXPLAIN modifiers carry their deprecation notices as semantic values.
 Completed modifiers retain those notices when later input is refused; a bare
@@ -3102,3 +3108,84 @@ and later-release campaigns hit infrastructure deadlines while containers and
 normal suites ran concurrently, so they are not recorded as passes. Fresh
 complete campaigns, all state witnesses and the unresolved native 5.7 disconnect
 history remain required before acceptance.
+
+Complete routine declarations now validate the lexical label graph before they
+can be constructed. A block label admits LEAVE; only a loop label admits ITERATE.
+Sibling labels do not remain visible after their block, and a handler starts its
+own label scope. Every branch participates, including unreachable branches.
+The body also checks implicit-commit restrictions for functions and triggers,
+parameter/local shadowing of unqualified assignments, and explicit session/global
+assignment to a local binding. These are language relationships of the public
+structure; they do not certify an operation's execution eligibility.
+
+An ordinary `CreateTable` requires declared columns or a creation query whose
+fixed read shape is coherent. `DeferredCreateTable` retains columnless requests
+and fixed read-shape constraints as complete program instructions. Invocation
+opens query sources and checks destination existence in the observed order.
+`IF NOT EXISTS` can complete against an existing destination before preparing the
+retained columns on the applicable releases. The same object is tested against
+an existing populated table and after its removal. PREPARE checks its query at
+preparation time. The tests deliberately replace the memory session's input label
+with unrelated text; neither the creation query nor the destination is recovered
+from that text.
+
+Column enforcement belongs to an immediately preceding CHECK constraint or to
+its uninterrupted sequence of enforcement attributes. Repeated enforcement
+updates that constraint; another column attribute ends the sequence. Ordinary,
+generated and retained generated-column specifications enforce this relationship.
+Input refusals retain a typed cause and an offset, never a parser node or SQL
+fragment. Partition counts similarly retain their numeral and use its radix and
+unsigned conversion. A declaration does not materialize billions of synthetic
+partition names: counts outside the server's partition bound leave the derived
+name set unknown while retaining the complete clause for its consumer.
+
+The additional native corpora include columnless and query-based creation,
+program transactions, assignment bindings, grant-recipient ordering and column
+attribute relationships. Legacy grants preserve successful recipients and order
+all recipient conditions; modern grants remain atomic. Native account tests
+first apply identical password and proxy-authority setup SQL on both sides,
+because container-image bootstrap grants are not a session-history invariant.
+No account privilege or password observation is removed from comparison.
+
+Acceptance is still open. The label corpus exposes client-character-set lexical
+differences, and the previously recorded MySQL 5.7 disconnect and physical-path
+cases remain unresolved. Whole-model reconstruction, classification of matching
+SQL errors, same-object state witnesses and final seed/time campaigns must all
+pass on the delivered revision. Selected repaired cases and a passing normal test
+suite do not replace those gates.
+
+
+`DO` wildcard refusals now retain every operand in `DeferredEvaluation`,
+including subqueries whose tables must open before wildcard expansion. The
+consumer derives these dependencies from the retained values. A same-object
+regression moves from no default database, to a missing table, to a present
+table, and back after dropping it; no original SQL is used by that consumer.
+Completed input dependencies also preserve their diagnostic ordering and the
+two conditions emitted by a modern unqualified routine without a database.
+
+An explanation similarly retains deferred INSERT, REPLACE and DELETE operands,
+together with its format, output destination and `FOR DATABASE` scope. An
+intrinsically absent multiple-DELETE target remains an input refusal, now wrapped
+with the explanation's options. The explanation resolves its database before
+that namespace and restores the connection database afterward. Tests compare
+the complete diagnostic histories and check that preparation does not change
+stored rows. The saved unseeded counterexamples are included in the native
+integration corpora without removing their nested operands.
+
+Partition construction and inspection now share the interpreted unsigned count,
+including hexadecimal counts and wrapped defaults. `KEY()` can resolve to an
+entirely nonnullable unique key when no primary key is declared. Native
+comparison covers creation, existing-destination shortcuts and `SHOW CREATE`
+for these cases. The structure campaign's implicit-key definition without any
+eligible key still needs a constructor-role classification; native agreement on
+its field-list error does not discharge that obligation.
+
+The full normal suites pass with these changes: 9,001 semantic unit/doctest
+cases with 18,920 assertions and 18,256 memory unit/property/doctest cases with
+75,397 assertions. Both packages pass their static checks, including the
+parser dependency boundary and 994 retained-value definitions. The explanation,
+partition and PDO integration selection passes 11 tests with 35 assertions.
+Both preceding unseeded campaigns stopped on differences and do not count as a
+900-second pass. Fresh seed and unseeded campaigns are running. The acceptance
+contract remains open until the final revision passes every required campaign
+and the unresolved structure rejections have been classified and repaired.

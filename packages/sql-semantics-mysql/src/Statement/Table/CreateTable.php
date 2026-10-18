@@ -102,6 +102,8 @@ final class CreateTable implements Statement, Relation
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
         Check::input($query === null || array_filter($this->options, static fn ($option): bool => $option instanceof Option\UnionOption) === [], 'MERGE sources with a query belong to a deferred table-creation instruction.');
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->elements), 'Deferred generation declarations belong to a stored table-creation instruction.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->elements, $query), 'An ordinary table creation has a declared column or a creation query.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($query) === null, 'A creation query with a fixed read-shape constraint belongs to a deferred instruction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

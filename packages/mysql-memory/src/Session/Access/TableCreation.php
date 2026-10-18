@@ -65,7 +65,7 @@ final class TableCreation
     /**
      * Tells whether a table definition requests a transaction that keeps the new table unpublished.
      */
-    public function requested(CreateTable $create): bool
+    public function requested(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create): bool
     {
         return array_filter($create->options, static fn ($option): bool => $option instanceof StartTransaction) !== [];
     }

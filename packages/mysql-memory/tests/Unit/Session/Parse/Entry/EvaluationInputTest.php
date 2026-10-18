@@ -39,4 +39,15 @@ final class EvaluationInputTest extends TestCase
         self::assertSame('unrelated invalid input', $session->text);
         self::assertSame([], $session->diagnostics->conditions);
     }
+    public function testBeforeUsesTheFirstCompletedDependency(): void
+    {
+        $session = (new Instance())->connect();
+        $reader = new EvaluationInput();
+        self::assertSame(1046, $reader->before('DO t.*,f(),(SELECT a FROM t)', 100, $session)?->getCode());
+        self::assertCount(2, $session->diagnostics->conditions);
+        self::assertSame(1046, $reader->before('DO t.*,(SELECT a FROM t),f()', 100, $session)?->getCode());
+        self::assertCount(1, $session->diagnostics->conditions);
+        self::assertNull($reader->before('DO t.*,(SELECT a FROM t)', 10, $session));
+        self::assertNull($reader->before('SELECT a FROM t', 100, $session));
+    }
 }

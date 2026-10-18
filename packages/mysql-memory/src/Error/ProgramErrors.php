@@ -65,6 +65,7 @@ final class ProgramErrors
         'NestedAlterOrDrop' => ProgramError::NestedProgramChange,
         'EventRecursion' => ProgramError::EventRecursion,
         'ResultSet' => ProgramError::ResultSetFromProgram,
+        'AutocommitInFunction' => ProgramError::AutocommitInFunction,
         'CommitInFunction' => ProgramError::CommitInFunction,
         'FunctionStatement' => ProgramError::FunctionStatement,
         'OldRowUpdate' => ProgramError::TriggerRowChange,

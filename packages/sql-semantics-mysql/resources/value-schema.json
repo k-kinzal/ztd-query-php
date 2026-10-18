@@ -2319,13 +2319,16 @@
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "nameEnd": "int",
         "parameters": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList",
-        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ParameterScopeMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\EmptyEventAlteration|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WrongArgumentCount|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\NamedArgument|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\ReservedFunction",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ScopedLocalAssignment|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ParameterScopeMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\EmptyEventAlteration|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WrongArgumentCount|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\NamedArgument|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\ReservedFunction",
         "returns": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName",
         "typeEnds": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\RefusedSignalItems": {
         "prefix": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Resignal",
         "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedTemporalLiteral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ScopedLocalAssignment": {
+        "offset": "?int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind": {
         "name": "string",
@@ -2689,7 +2692,7 @@
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
-        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredKill": {
         "process": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
@@ -3558,6 +3561,9 @@
         "position": "int",
         "reason": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\UnattachedEnforcement": {
+        "offset": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\UnknownIndexParser": {
         "parser": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -3824,6 +3830,15 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedExplainInto": {
         "analyze": "bool",
         "format": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedExplainTargets": {
+        "analyze": "bool",
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "emptyInto": "bool",
+        "format": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
+        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
+        "targets": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedDeleteTargets"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedNamesAssignment": {
         "end": "int",
