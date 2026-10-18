@@ -26,6 +26,7 @@ final class ReadDependenciesTest extends TestCase
         yield 'shadowed' => ['WITH a AS (SELECT @outer AS x) SELECT * FROM (WITH a AS (SELECT @inner AS x) SELECT * FROM a) AS t', ['inner']];
         yield 'recursive' => ['WITH RECURSIVE a(x) AS (SELECT @x UNION ALL SELECT x FROM a) SELECT * FROM a', ['x']];
         yield 'qualified' => ['WITH a AS (SELECT @x) SELECT * FROM d.a', []];
+        yield 'ignored write clauses' => ['INSERT INTO t VALUES ROW(@written) ORDER BY @ignored', ['written']];
         yield 'explicit' => ['WITH a AS (SELECT @x AS x) TABLE a', ['x']];
     }
 
@@ -41,4 +42,11 @@ final class ReadDependenciesTest extends TestCase
 
         self::assertSame($variables, array_map(static fn (UserVariable $node): string => $node->name->value, $inputs));
     }
+    public function testChildrenKeepsWrittenRowsButExcludesInactiveWriteClauses(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t VALUES ROW(@written) ORDER BY @ignored')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $statement);
+        self::assertSame([$statement->into, $statement->values()], (new ReadDependencies())->children($statement));
+    }
+
 }

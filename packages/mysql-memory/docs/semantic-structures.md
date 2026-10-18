@@ -2709,3 +2709,28 @@ scalar refusal. Call-name ownership also remains open: native MySQL permits an
 invalid stored-function name or native arity in an unused CTE, while a reached
 definition rejects it before table resolution. Those observations remain repair
 obligations, not exceptions to comparison or constructor validation.
+
+Routine identities are now constructor invariants of ordinary `FunctionCall`:
+empty names, trailing spaces, names longer than 64 characters and NUL bytes
+cannot inhabit that scalar role. An unused CTE can still retain an invalid
+identity or native signature in `DeferredCall` or `DormantCall`. Lexical CTE
+references and the active operands of VALUES writes determine which calls
+contextualize. The input adapter uses the same role distinction, preserving
+nested arguments and input hints; stored declarations check reached identities
+even when a runtime branch would skip the instruction.
+
+The call-identity regression fixture compares 71 requests through text and
+prepared protocols on MySQL 8.0.44, 8.4.7 and 9.1.0. A separate direct-construction
+fixture uses ten generated routine names and populated rows on 5.6.51, 5.7.44,
+8.0.44, 8.4.7 and 9.1.0: the same objects produce a missing-routine error, successful
+results after registration, then the missing-routine error after removal. Memory
+receives these objects with unrelated request text. The call-identity snapshot
+passed 8,797 semantic tests, 18,161 memory tests, both packages' complete static
+checks and the 967-definition retained-field schema check.
+
+These results do not close the acceptance contract. The preceding seed replay
+passed all nine supplied release corpora, but belongs to an earlier revision.
+The full constructor replay and final-revision seed/unseeded campaigns remain
+required. An unseeded input also exposed a separate write-template defect: a
+non-scalar INSERT value discarded its destination before preparation. The full
+write head and row operands must be retained before that campaign can pass.

@@ -31,6 +31,12 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/function-resolution.html.
  * Status: Implemented.
  *
+ * @example Refusing an empty contextualized routine name
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a trailing space in a contextualized routine name
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('f ')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an overlong contextualized routine name
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name(str_repeat('f', 65))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @visibility public
  * @example Typing a call of a native function reached by name
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT concat('a', 'b')");
@@ -61,6 +67,7 @@ final class FunctionCall implements Scalar
      */
     public function __construct(public readonly Name $name, array $arguments = [], public readonly ?Name $schema = null)
     {
+        \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check(new \SqlSemantics\Statement\Identifier\QualifiedName($name, $schema));
         $this->arguments = Check::listOf($arguments, CallArgument::class, 'Function arguments are call arguments.');
         Check::input($schema === null || !$this->named(), 'Only an unqualified call takes argument aliases.');
         Check::input($schema !== null || (new NativeFunctions())->possible($name, count($this->arguments), $this->named()), 'A generic call must have a supported native signature or a stored-function interpretation.');

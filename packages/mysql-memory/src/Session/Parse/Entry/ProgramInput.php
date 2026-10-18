@@ -97,6 +97,9 @@ final class ProgramInput
             if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch) {
                 return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($refusal->problem->offset ?? strlen($session->text), $session->text, $session->following, new RuntimeException($refusal->problem->message()), true, $session->semantics()->parser());
             }
+            if (!$refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem) {
+                return (new \MySqlMemory\Session\Problem\Errors())->error($refusal->problem, $session);
+            }
             $error = $refusal->problem->rule === ProgramRule::MissingReturn
                 ? ProgramError::MissingReturn->error($database . '.' . $refusal->name->name->value)
                 : (new ProgramErrors())->error($refusal->problem, $session->settings()->release());

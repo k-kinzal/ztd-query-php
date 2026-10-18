@@ -166,4 +166,18 @@ final class LoweringTest extends TestCase
         self::assertTrue($lowering->contextualized);
     }
 
+    public function testUnpreparedRetainsHintsAndColumnOwnershipInDefinitions(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('SELECT /*+ INDEX(t ka) */ a FROM t');
+        $lowering->statements($tree);
+        $lowering->columnTable = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+        $inactive = $lowering->unprepared();
+        self::assertNotEmpty($lowering->hints($tree->tokens()[0]));
+        self::assertSame($lowering->hints($tree->tokens()[0]), $inactive->hints($tree->tokens()[0]));
+        self::assertSame($lowering->columnTable, $inactive->columnTable);
+    }
+
 }

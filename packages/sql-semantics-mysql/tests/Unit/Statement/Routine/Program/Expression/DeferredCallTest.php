@@ -69,4 +69,22 @@ final class DeferredCallTest extends TestCase
         self::assertTrue($value->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 
+    public function testDeriveScalarReportsAnIdentityBeforeItsArgumentDependencies(): void
+    {
+        $value = new DeferredCall(new Name(''), []);
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context([]));
+        $fact = $derivation->scalar($value, $derivation->environment());
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Invalid::class, $fact->type);
+        self::assertEquals([$value->problem()], $derivation->facts()->diagnostics);
+        self::assertSame([], $value->operands());
+    }
+
+    public function testRenderRetainsAnUnreferencedInvalidIdentity(): void
+    {
+        $sql = 'WITH c AS (SELECT ``(ABS())) SELECT 7';
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertSame($sql, $operation->toString());
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
 }

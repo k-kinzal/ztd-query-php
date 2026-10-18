@@ -2296,7 +2296,7 @@
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "nameEnd": "int",
         "parameters": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterList",
-        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ParameterScopeMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\EmptyEventAlteration",
+        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ProgramProblem|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\LanguageBodyMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ParameterScopeMismatch|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\EmptyEventAlteration|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WrongArgumentCount|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\NamedArgument|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\ReservedFunction",
         "returns": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName",
         "typeEnds": "array"
     },

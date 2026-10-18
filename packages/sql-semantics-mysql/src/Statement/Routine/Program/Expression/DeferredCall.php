@@ -25,11 +25,13 @@ use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * A stored generic call with an argument that requires invocation-time scalar preparation.
+ * A generic call template with an identity or scalar-argument condition.
  *
  * The call's name, qualification, arguments and aliases remain semantic values.
  * The surrounding program can be defined and can skip the instruction. This
- * expression never implements Scalar; ordinary calls use FunctionCall.
+ * expression never implements Scalar; ordinary calls use FunctionCall. An invalid
+ * routine name is retained only in unreferenced definitions and inactive clauses,
+ * not in the contextualized instructions of a stored declaration.
  *
  * @visibility public
  * @example Refusing a scalar-only deferred call
@@ -40,24 +42,25 @@ final class DeferredCall implements DeferredOperand
     use Snapshot;
 
     /**
-     * @var non-empty-list<CallArgument|DeferredCallArgument> Arguments in written order
+     * @var list<CallArgument|DeferredCallArgument> Arguments in written order
      */
     public readonly array $arguments;
 
     /**
      * @param Name $name The generic function name
-     * @param list<CallArgument|DeferredCallArgument> $arguments At least one deferred argument
+     * @param list<CallArgument|DeferredCallArgument> $arguments Complete arguments, with a retained name or argument condition
      * @param Name|null $schema The database of a qualified stored function
      */
     public function __construct(public readonly Name $name, array $arguments, public readonly ?Name $schema = null)
     {
         $accepted = [];
-        foreach (Check::listOf($arguments, Node::class, 'A deferred call has argument operands.', 1) as $argument) {
+        Check::input(!str_contains($name->value, "\0"), 'A routine name cannot contain NUL.');
+        foreach (Check::listOf($arguments, Node::class, 'A deferred call has argument operands.') as $argument) {
             Check::input($argument instanceof CallArgument || $argument instanceof DeferredCallArgument, 'Call operands retain their argument role.');
             $accepted[] = $argument;
         }
         $this->arguments = $accepted;
-        Check::input(array_filter($accepted, static fn ($argument): bool => $argument instanceof DeferredCallArgument) !== [], 'A deferred call contains a non-scalar argument.');
+        Check::input(\SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($name) !== null || array_filter($accepted, static fn ($argument): bool => $argument instanceof DeferredCallArgument) !== [], 'A deferred call contains a name or non-scalar argument condition.');
         Check::input($schema === null || !$this->named(), 'Only an unqualified call takes argument aliases.');
         Check::input($schema !== null || (new NativeFunctions())->possible($name, count($accepted), $this->named()), 'A call requires a possible native signature or stored-function interpretation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -92,6 +95,10 @@ final class DeferredCall implements DeferredOperand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $name = \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($this->name);
+        if ($name !== null) {
+            $derivation->report($name);
+        }
         foreach ($this->arguments as $argument) {
             $derivation->scalar($argument->expression, $environment);
         }
@@ -101,7 +108,7 @@ final class DeferredCall implements DeferredOperand
     /**
      * Exposes the arguments in written order.
      *
-     * @return non-empty-list<Scalar|RowOperand|DeferredOperand>
+     * @return list<Scalar|RowOperand|DeferredOperand>
      */
     public function operands(): array
     {
@@ -115,6 +122,10 @@ final class DeferredCall implements DeferredOperand
      */
     public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
+        $name = \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($this->name);
+        if ($name !== null) {
+            return $name;
+        }
         foreach ($this->arguments as $argument) {
             $operand = $argument->expression;
             if (!$operand instanceof Scalar) {

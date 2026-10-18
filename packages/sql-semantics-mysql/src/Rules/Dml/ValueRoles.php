@@ -8,22 +8,21 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesClauses;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall;
 use SqlSemantics\Statement\Node;
 
 /**
- * Constrains dormant operands to the clauses a VALUES write never contextualizes.
+ * Constrains call templates and VALUES-only clauses to their owning roles.
  *
  * The check is structural and independent of catalogs, sessions and execution.
  * Statement and scalar constructors check this through the shared graph invariants.
  *
  * @visibility SqlSemantics\Platform\MySql
- * @example Refusing a dormant call even in an unused ordinary CTE
+ * @example Retaining a dormant call in an unused ordinary CTE
  *     $call = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall(new \SqlSemantics\Statement\Identifier\Name('ABS'));
  *     $body = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($call)]));
  *     $with = new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [new \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('x'), [], $body)]);
  *     $select = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
- *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression($with, $select)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression($with, $select))) instanceof \SqlSemantics\Statement\Statement // => true
  * @example Refusing a dormant call in a stored instruction
  *     $call = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall(new \SqlSemantics\Statement\Identifier\Name('ABS'));
  *     $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($call)]);
@@ -46,6 +45,8 @@ final class ValueRoles
      */
     public function check(Node $root): void
     {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($root);
+        Check::input($problem === null, $problem?->message() ?? 'Contextualized calls have valid identities and signatures.');
         /** @var list<array{Node, bool, array<int, true>}> $pending */
         $pending = [[$root, false, []]];
         while ($pending !== []) {
@@ -53,7 +54,6 @@ final class ValueRoles
             if ($node instanceof InsertQuery) {
                 $wrappers = array_fill_keys(array_map(spl_object_id(...), $node->wrappers()), true);
             }
-            Check::input(!$node instanceof DormantCall || $inactive, 'A dormant native signature belongs only to an unused VALUES-write clause.');
             Check::input(!$node instanceof ValuesClauses || isset($wrappers[spl_object_id($node)]) || $inactive, 'Retained VALUES ordering belongs to a VALUES write.');
             foreach (get_object_vars($node) as $property => $value) {
                 $body = $node instanceof QueryExpression || $node instanceof ValuesClauses ? 'body' : 'query';

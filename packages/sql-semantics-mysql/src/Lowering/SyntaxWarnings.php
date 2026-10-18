@@ -138,7 +138,7 @@ final class SyntaxWarnings
             return $entry;
         }
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
-        $inactive = (new Query\Shared\ValueQueries($lowering))->inactive($tree);
+        $inactive = (new Query\Shared\ValueQueries($lowering))->inactive($tree) + (new Call\UncontextualizedCalls())->inactive($tree, $lowering);
         $unprepared = $lowering->unprepared();
         $pending = [$tree];
         $scopes = [false];

@@ -167,4 +167,29 @@ final class FunctionRuleTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
+    public function testQualifiedRetainsAnInvalidNameAndItsNestedSignature(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT d.``(ABS())')->find('function_call_generic')[0];
+        $call = (new FunctionRule($lowering))->qualified($lowering->form($node));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall::class, $call);
+        self::assertSame(['', 'd'], [$call->name->value, $call->schema?->value]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall::class, $call->arguments[0]->expression);
+    }
+
+    public function testArgumentRulesPreservesContextAndRetainsNestedConditions(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $rule = new FunctionRule($lowering);
+        $retained = $rule->argumentRules(new \SqlSemantics\Statement\Identifier\Name(''));
+        self::assertSame($rule, $rule->argumentRules(new \SqlSemantics\Statement\Identifier\Name('f')));
+        $node = $platform->parser($profile)->parse('SELECT ABS()')->find('function_call_generic')[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall::class, $retained->generic($lowering->form($node)));
+        self::assertSame($retained, $retained->argumentRules(new \SqlSemantics\Statement\Identifier\Name('')));
+    }
+
 }

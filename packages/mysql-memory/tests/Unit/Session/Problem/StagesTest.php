@@ -180,4 +180,10 @@ final class StagesTest extends TestCase
         self::assertFalse(Stages::viewTarget($session->analyze('SELECT 1')->statement, $target));
     }
 
+    public function testParsedRetainsRoutineIdentityConditionsBeforeOpeningTables(): void
+    {
+        self::assertTrue(Stages::parsed(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::IncorrectName, '')));
+        self::assertTrue(Stages::parsed(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::NameTooLong, str_repeat('f', 65))));
+    }
+
 }

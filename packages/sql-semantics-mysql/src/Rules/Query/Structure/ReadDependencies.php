@@ -61,17 +61,32 @@ final class ReadDependencies
                     $pending[] = $definitions[$definition];
                 }
             }
-            foreach (array_reverse(get_object_vars($node)) as $property => $value) {
-                if ($node instanceof QueryExpression && $property === 'with') {
-                    continue;
-                }
-                foreach (array_reverse(is_array($value) ? $value : [$value]) as $child) {
-                    if ($child instanceof Node) {
-                        $pending[] = [$child, $scope];
-                    }
-                }
+            foreach (array_reverse($this->children($node)) as $child) {
+                $pending[] = [$child, $scope];
             }
         }
         return $found;
+    }
+
+    /**
+     * @return list<Node> Owned operands, excluding separately bound definitions and inactive write clauses
+     */
+    public function children(Node $node): array
+    {
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery && ($values = $node->values()) !== null) {
+            return [$node->into, $values, ...$node->onDuplicate];
+        }
+        $children = [];
+        foreach (get_object_vars($node) as $property => $value) {
+            if ($node instanceof QueryExpression && $property === 'with') {
+                continue;
+            }
+            foreach (is_array($value) ? $value : [$value] as $child) {
+                if ($child instanceof Node) {
+                    $children[] = $child;
+                }
+            }
+        }
+        return $children;
     }
 }

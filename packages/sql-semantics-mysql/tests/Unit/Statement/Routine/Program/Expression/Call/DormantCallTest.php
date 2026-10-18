@@ -44,7 +44,7 @@ final class DormantCallTest extends TestCase
         $call = new DormantCall(new Name('ABS'));
         $fact = $derivation->scalar($call, $derivation->environment());
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Invalid::class, $fact->type);
-        self::assertSame([], $derivation->facts()->diagnostics);
+        self::assertEquals([$call->problem()], $derivation->facts()->diagnostics);
     }
 
     public function testRenderRetainsTheUnusedCall(): void

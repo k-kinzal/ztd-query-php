@@ -56,6 +56,7 @@ final class DefinitionBody
         }
         $problem ??= (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyBindings())->problem($body, $kind);
         $problem ??= (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyArrays())->problem($body);
+        $problem ??= (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($body);
         if ($problem !== null) {
             throw new RejectedInput(new RefusedProgramBody($name, $kind, $problem, $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $end, false);
         }

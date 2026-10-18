@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCal
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
@@ -23,10 +22,10 @@ use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * A native-call spelling that exists only in an uncontextualized VALUES-write clause.
+ * A native-call spelling retained in an uncontextualized clause or CTE definition.
  *
  * This is not a Scalar or an invocable stored expression. Statement constructor
- * checks restrict it to the unused clauses of INSERT/REPLACE VALUES sources.
+ * checks restrict it to unused definitions and clauses of INSERT/REPLACE VALUES sources.
  * No SQL text or parser node is retained.
  *
  * @visibility public
@@ -79,6 +78,7 @@ final class DormantCall implements DeferredOperand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $derivation->report($this->problem());
         foreach ($this->arguments as $argument) {
             $derivation->scalar($argument->expression, $environment);
         }
@@ -88,7 +88,7 @@ final class DormantCall implements DeferredOperand
     /**
      * Answers the call's fixed contextualization condition.
      */
-    public function problem(): Diagnostic
+    public function problem(): \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount|\SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument|\SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction
     {
         $problem = (new NativeFunctions())->problem(GrammarRelease::MySql847, $this->name, count($this->arguments), $this->named());
         Check::invariant($problem !== null, 'A dormant native call retains its signature condition.');

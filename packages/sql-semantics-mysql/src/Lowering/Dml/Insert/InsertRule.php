@@ -134,10 +134,17 @@ final class InsertRule
      *
      * @param list<InsertedRow>|Query $body
      * @param list<Assignment> $updates
+     * @throws \SqlSemantics\Construction\RejectedInput When a reached call has an invalid identity or signature
      */
     public function build(InsertInto $into, array|Query $body, ?RowAlias $alias, array $updates): Statement
     {
         if ($body instanceof Query) {
+            $used = (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($body) ?? $body;
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($used);
+            if ($problem !== null) {
+                $origin = $this->lowering->origins->publish()->of($body);
+                throw new \SqlSemantics\Construction\RejectedInput($problem, $origin === null ? 0 : $origin->offset + $origin->length, false);
+            }
             return new InsertQuery($into, $body, $updates);
         }
 

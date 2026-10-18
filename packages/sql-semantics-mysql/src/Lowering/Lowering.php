@@ -219,7 +219,10 @@ final class Lowering
      */
     public function unprepared(): self
     {
-        return new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $this->programName, false);
+        $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $this->programName, false);
+        $lowering->hints = $this->hints;
+        $lowering->columnTable = $this->columnTable;
+        return $lowering;
     }
 
     /**

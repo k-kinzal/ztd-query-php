@@ -169,11 +169,7 @@ final class FunctionRule
             'function_call_keyword: CURRENT_USER optional_braces' => $this->niladic($form, KeywordFunction::CurrentUser),
             'function_call_nonkeyword: POSITION_SYM ( bit_expr IN_SYM expr )' => $this->position((new \SqlSemantics\Platform\MySql\Lowering\Expression\BitRule($this->lowering))->bitExpression($form->node(2)), $expressions->operand($form->node(4))),
             'function_call_generic: IDENT_sys ( opt_udf_expr_list )' => $this->generic($form),
-            'function_call_generic: ident . ident ( opt_expr_list )' => $this->compose(
-                $this->lowering->names->identifier($form->node(2)),
-                array_map(fn ($argument) => $this->argumentValue($argument), $expressions->operands($form->node(4))),
-                $this->lowering->names->identifier($form->node(0)),
-            ),
+            'function_call_generic: ident . ident ( opt_expr_list )' => $this->qualified($form),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -212,8 +208,8 @@ final class FunctionRule
      */
     public function generic(Form $form): FunctionCall|DeferredCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall
     {
-        $arguments = $this->arguments($form->node(2));
         $name = $this->lowering->names->identifier($form->node(0));
+        $arguments = $this->argumentRules($name)->arguments($form->node(2));
         $named = array_filter($arguments, static fn (CallArgument|DeferredCallArgument $argument): bool => $argument->alias !== null) !== [];
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->problem($this->lowering->profile->grammar, $name, count($arguments), $named);
         if ($problem !== null && !$this->lowering->contextualized) {
@@ -225,6 +221,30 @@ final class FunctionRule
         }
 
         return $this->compose($name, $arguments);
+    }
+
+    /**
+     * Retains a qualified call and its arguments before assigning a scalar role.
+     */
+    public function qualified(Form $form): FunctionCall|DeferredCall
+    {
+        $name = $this->lowering->names->identifier($form->node(2));
+        $schema = $this->lowering->names->identifier($form->node(0));
+        $rules = $this->argumentRules($name);
+        $arguments = $rules->lowering->expressions->operands($form->node(4));
+        return $this->compose($name, array_map($rules->argumentValue(...), $arguments), $schema);
+    }
+
+    /**
+     * Retains inner signatures when an outer routine identity cannot contextualize.
+     */
+    public function argumentRules(\SqlSemantics\Statement\Identifier\Name $name): self
+    {
+        if (\SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($name) === null || !$this->lowering->contextualized) {
+            return $this;
+        }
+        $lowering = $this->lowering->unprepared();
+        return new self($lowering);
     }
 
     /**
@@ -330,6 +350,9 @@ final class FunctionRule
      */
     public function compose(\SqlSemantics\Statement\Identifier\Name $name, array $arguments, ?\SqlSemantics\Statement\Identifier\Name $schema = null): FunctionCall|DeferredCall
     {
+        if (\SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($name) !== null) {
+            return new DeferredCall($name, $arguments, $schema);
+        }
         $scalars = [];
         foreach ($arguments as $argument) {
             if ($argument instanceof DeferredCallArgument) {

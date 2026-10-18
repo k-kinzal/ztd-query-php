@@ -134,7 +134,7 @@ final class Stages
      */
     public static function parsed(Diagnostic $diagnostic): bool
     {
-        return $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction
+        return ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && in_array($diagnostic->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::IncorrectName, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::NameTooLong], true)) || $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction
             || $diagnostic instanceof UnknownSystemVariable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable
             || ($diagnostic instanceof NotSupportedYet && in_array($diagnostic->feature, ['AT LOCAL', 'LIMIT & IN/ALL/ANY/SOME subquery'], true))
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber

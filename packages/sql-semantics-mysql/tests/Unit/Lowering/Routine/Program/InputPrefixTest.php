@@ -49,7 +49,9 @@ final class InputPrefixTest extends TestCase
         yield 'cursor in loop' => ['LOOP OPEN c; END LOOP;', 'Undefined CURSOR: c'];
         yield 'outer cursor in loop' => ['DECLARE c CURSOR FOR SELECT 1; LOOP OPEN c; END LOOP;', null];
         yield 'duplicate variable' => ['DECLARE x INT; DECLARE x INT;', 'Duplicate variable: x'];
-        yield 'unknown system variable' => ['SELECT @@missing_variable;', "Unknown system variable 'missing_variable'"];
+        yield 'call identity before argument' => ['SELECT ``(@@missing_variable);', "Incorrect routine name ''"];
+        yield 'earlier statement before call' => ['SELECT @@missing_variable; SELECT ``();', "Unknown system variable 'missing_variable'"];
+        yield 'unknown system variable'  => ['SELECT @@missing_variable;', "Unknown system variable 'missing_variable'"];
         yield 'declared condition' => ["DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c;", null];
         yield 'outer condition' => ["DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN SIGNAL c; END;", null];
         yield 'closed inner scope' => ["BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; END; SIGNAL c;", 'Undefined CONDITION: c'];

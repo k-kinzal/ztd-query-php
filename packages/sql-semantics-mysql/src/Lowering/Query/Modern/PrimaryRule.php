@@ -193,13 +193,14 @@ final class PrimaryRule
      */
     public function definition(Node $subquery): Query
     {
+        $lowering = $this->lowering->unprepared();
         $node = $subquery;
         while (in_array($node->name, ['table_subquery', 'subquery'], true)) {
             $node = $this->lowering->form($node)->node(0);
         }
         $form = $this->lowering->form($node);
         if ($form->signature === 'query_expression_parens: ( query_expression_with_opt_locking_clauses )') {
-            $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->body($form->node(1));
+            $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($lowering))->body($form->node(1));
             if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
                 return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
             }
@@ -207,7 +208,7 @@ final class PrimaryRule
                 return $selection;
             }
         }
-        return (new ExpressionRule($this->lowering))->subquery($subquery);
+        return (new ExpressionRule($lowering))->subquery($subquery);
     }
 
     /**
