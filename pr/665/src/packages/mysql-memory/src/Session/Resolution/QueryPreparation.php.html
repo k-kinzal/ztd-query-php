@@ -64,20 +64,21 @@
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * @param LanguageProfile $language The grammar and lexical interpretation</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * @param bool $exists Whether this query is prepared only as an existence test</span></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * @param bool $deferSetWidth Whether the surrounding legacy predicate binds its operand before fixed set widths</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Query</span> <span class="tok-var">$statement</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Facts</span> <span class="tok-var">$facts</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">LanguageProfile</span> <span class="tok-var">$language</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$exists</span> = <span class="tok-id">false</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$deferSetWidth</span> = <span class="tok-id">false</span>)</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    {</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    }</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * Answers the interpretation used to derive these facts.</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">profile</span>(): <span class="tok-id">LanguageProfile</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    {</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">language</span>;</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    }</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>}</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @param \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|null $write The complete write owning this read, after its destination opens</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Query</span> <span class="tok-var">$statement</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Facts</span> <span class="tok-var">$facts</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">LanguageProfile</span> <span class="tok-var">$language</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$exists</span> = <span class="tok-id">false</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$deferSetWidth</span> = <span class="tok-id">false</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery</span> <span class="tok-var">$write</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    {</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    }</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Answers the interpretation used to derive these facts.</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">profile</span>(): <span class="tok-id">LanguageProfile</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    {</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">language</span>;</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>}</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
