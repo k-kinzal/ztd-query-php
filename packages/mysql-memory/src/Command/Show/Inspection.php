@@ -51,7 +51,7 @@ final class Inspection
                 (new \MySqlMemory\Session\Access\OpenedTables())->listing($statement->database->value ?? $session->variables->database, $session);
             }
             if (($statement instanceof ShowColumns && $this->system($statement->table, $statement->database, $session) === null) || $statement instanceof ShowKeys) {
-                $this->table($statement->table, $statement->database, $session);
+                $this->opening($statement, $session, $prepared);
             }
             if (($statement instanceof DescribeTable && $this->system($statement->table, null, $session) === null) || $statement instanceof ShowCreateTable) {
                 $this->table($statement->table, null, $session);
@@ -166,5 +166,20 @@ final class Inspection
         }
 
         return $stored;
+    }
+    /**
+     * Opens a table inspection at its protocol-specific preparation boundary.
+     *
+     * @throws SqlError When the reached database or table does not exist
+     */
+    public function opening(ShowColumns|ShowKeys $statement, Session $session, bool $prepared): void
+    {
+        $selected = $statement->database->value ?? $statement->table->name->schema->value ?? $session->variables->database;
+        if ($selected === '') {
+            throw QueryError::NoDatabase->error();
+        }
+        if ((!$prepared && !$session->settings()->legacy()) || !$statement->filter instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere) {
+            $this->table($statement->table, $statement->database, $session);
+        }
     }
 }

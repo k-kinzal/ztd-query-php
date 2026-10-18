@@ -150,7 +150,7 @@ final class PrimaryRule
     /**
      * Lowers a leaf of a kind.
      */
-    public function leaf(string $kind, Node $leaf): Scalar
+    public function leaf(string $kind, Node $leaf): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment
     {
         return match ($kind) {
             'column' => $this->lowering->names->column($leaf),

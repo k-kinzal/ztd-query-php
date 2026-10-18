@@ -79,4 +79,65 @@ final class EnginePrefix
         return [min($end, $first), [], $engines[$first]];
     }
 
+    /**
+     * Resolves completed table and partition engine operands before a contextual definition refusal.
+     *
+     * A complete parser input is required; modern syntax errors precede these lookups.
+     * Only lowered names and their diagnostic boundaries leave the parser callback.
+     *
+     * @return array<int, SqlError> Unknown engines by completion boundary
+     */
+    public function completed(string $statement, int $end, Session $session): array
+    {
+        $parser = $session->semantics()->parser();
+        \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'Engine operands come from completed grammar productions.');
+        $profile = $session->semantics()->profile();
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering((new \SqlSemantics\Platform\MySql\Platform())->productions($profile), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $errors = [];
+        try {
+            $parser->parse($statement, static function (\SqlParser\Parser\Node $node) use ($lowering, $end, &$errors): void {
+                if (!in_array($node->name, ['create_table_option', 'opt_part_option', 'part_option'], true)) {
+                    return;
+                }
+                if (!in_array($lowering->form($node)->signature, ['create_table_option: ENGINE_SYM opt_equal storage_engines', 'create_table_option: ENGINE_SYM opt_equal ident_or_text', 'opt_part_option: opt_storage ENGINE_SYM opt_equal storage_engines', 'part_option: opt_storage ENGINE_SYM opt_equal ident_or_text'], true)) {
+                    return;
+                }
+                $offset = (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0;
+                if ($offset > $end) {
+                    return;
+                }
+                $option = $node->name === 'create_table_option' ? (new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\TableOptionRule($lowering))->option($node) : (new \SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\OptionRule($lowering))->option($node);
+                $name = $option instanceof EngineOption ? $option->engine : ($option instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption && $option->kind === \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOptionKind::Engine ? $option->name : null);
+                if ($name !== null && ServerCatalog::shared()->engine($name->value) === null) {
+                    $errors[$offset] = SchemaError::UnknownStorageEngine->error($name->value);
+                }
+            });
+        } catch (SourceException) {
+            // Modern engine contextualization requires a complete syntactically valid input.
+            return [];
+        }
+        ksort($errors);
+        return $errors;
+    }
+
+    /**
+     * Interleaves resolved engine warnings or stops at the first non-substitutable engine.
+     *
+     * @template T of object
+     * @param list<array{int, T}> $notices Earlier semantic notices
+     * @param array<int, SqlError> $engines Completed engine conditions
+     * @return array{list<array{int, T|SqlError}>, SqlError}
+     */
+    public function reached(array $notices, array $engines, SqlError $fallback, bool $strict): array
+    {
+        $first = array_key_first($engines);
+        if ($first !== null && $strict) {
+            return [array_values(array_filter($notices, static fn (array $notice): bool => $notice[0] < $first)), $engines[$first]];
+        }
+        foreach ($engines as $offset => $engine) {
+            $notices[] = [$offset, $engine];
+        }
+        return [$notices, $fallback];
+    }
+
 }

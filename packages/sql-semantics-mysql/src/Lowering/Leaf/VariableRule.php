@@ -64,7 +64,7 @@ final class VariableRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function variable(Node $variable): UserVariable|SystemVariable|VariableAssignment
+    public function variable(Node $variable): UserVariable|SystemVariable|VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment
     {
         $form = $this->lowering->productions->form($variable);
         if ($form->signature === 'variable: @ variable_aux') {
@@ -92,9 +92,13 @@ final class VariableRule
     /**
      * Lowers a user variable assignment.
      */
-    public function assignment(Node $name, Node $value): VariableAssignment
+    public function assignment(Node $name, Node $value): VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment
     {
-        return $this->lowering->leaves->record(new VariableAssignment($this->user($name), $this->lowering->expressions->expression($value)));
+        $target = $this->user($name);
+        $operand = $this->lowering->expressions->operand($value);
+        return $operand instanceof \SqlSemantics\Statement\Scalar
+            ? $this->lowering->leaves->record(new VariableAssignment($target, $operand))
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment($target, $operand);
     }
 
     /**

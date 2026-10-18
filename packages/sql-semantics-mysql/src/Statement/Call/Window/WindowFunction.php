@@ -70,6 +70,7 @@ final class WindowFunction implements Scalar
         }
         $limit = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->limitation($nulls, $edge);
         Check::input($limit === null, 'An ordinary window call cannot use an unsupported option: ' . ($limit->value ?? '') . '.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $values), 'An ordinary window count or offset literal belongs to its signed integer domain.');
         $this->arguments = $values;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

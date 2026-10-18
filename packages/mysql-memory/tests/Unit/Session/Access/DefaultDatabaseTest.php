@@ -92,4 +92,12 @@ final class DefaultDatabaseTest extends TestCase
         $session->query("LOAD XML INFILE 'missing' INTO TABLE t CHARSET ``");
     }
 
+    public function testCheckRequiresTheLegacyIndexDatabaseBeforeItsPlugin(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $answer = $session->run('CREATE FULLTEXT INDEX i ON t(a DESC) WITH PARSER missing')[0];
+        self::assertInstanceOf(SqlError::class, $answer);
+        self::assertSame(1046, $answer->getCode());
+    }
+
 }

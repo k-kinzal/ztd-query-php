@@ -52,6 +52,7 @@ final class ReleaseDomain
     public function of(object $value): int
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex, $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($value->kind, $value->parts, $value->algorithm, $value->options) ? 3 : self::ALL,
             $value instanceof LanguageProfile => $this->bit($value->grammar),
             $value instanceof Explain, $value instanceof DeferredExplain => $this->explanation($value),
             $value === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Vector => 384,

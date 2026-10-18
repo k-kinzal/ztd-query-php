@@ -62,7 +62,7 @@ final class PreparedStatement
         $database = $session->variables->database;
         $replayed = $session->replayed;
         $engines = $session->variables->preparedEngines;
-        $session->variables->preparedEngines = $this->engine === null ? [] : [spl_object_id($this->statement) => $this->engine];
+        $session->variables->preparedEngines = $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable ? [spl_object_id($this->statement) => $this->engine] : [];
         $session->variables->database = $this->database;
         $session->replayed = true;
         $session->text = $label;

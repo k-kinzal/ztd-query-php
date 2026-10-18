@@ -150,4 +150,30 @@ final class KeyPartRule
         }
         return $this->lowering->numbers->token($this->lowering->productions->form($part)->token(2));
     }
+    /**
+     * Reads only the immediate key directions, independently of expression preparation.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Query\Direction>
+     */
+    public function directions(Node $list): array
+    {
+        $directions = [];
+        foreach ((new Spine($this->lowering))->items($list, self::LISTS, ['key_part', 'key_part_with_expression', 'order_dir', 'opt_ordering_direction']) as $item) {
+            $form = $this->lowering->form($item);
+            if ($form->signature === 'key_part_with_expression: key_part') {
+                $item = $form->node(0);
+            }
+            $nodes = in_array($item->name, ['order_dir', 'opt_ordering_direction'], true) ? [$item] : $item->children;
+            foreach ($nodes as $node) {
+                if ($node instanceof Node && in_array($node->name, ['order_dir', 'opt_ordering_direction'], true)) {
+                    $direction = $this->lowering->queries->direction($node);
+                    if ($direction !== null) {
+                        $directions[] = $direction;
+                    }
+                }
+            }
+        }
+        return $directions;
+    }
+
 }

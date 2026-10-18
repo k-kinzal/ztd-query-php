@@ -168,7 +168,7 @@ final class SignalRule
             'signal_allowed_expr: simple_ident' => $this->lowering->names->column($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
-        if ($value instanceof VariableAssignment) {
+        if ($value instanceof VariableAssignment || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment) {
             $tokens = $expression->tokens();
             $end = $tokens[count($tokens) - 1]->end();
             $at = new \SqlParser\Lexer\Token(0, '$end', '', $end);

@@ -50,7 +50,7 @@ final class Variables
     public array $connected = [];
 
     /**
-     * @var array<int, string> Resolved prepared table engines, scoped to their original statement identities
+     * @var array<int, string|null> Prepared engine lookups by statement identity; null retains an omitted table engine
      */
     public array $preparedEngines = [];
 

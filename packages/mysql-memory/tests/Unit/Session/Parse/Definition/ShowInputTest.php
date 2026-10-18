@@ -51,4 +51,21 @@ final class ShowInputTest extends TestCase
         $this->expectExceptionCode(1241);
         $session->query('SHOW TABLE STATUS WHERE ROW(Name,2) LIKE 1');
     }
+    public function testResolveKeepsTheQualifiedInspectionTargetAndProtocol(): void
+    {
+        $session = (new Instance())->connect();
+        $prepared = $session->run('SHOW KEYS FROM missing.t WHERE ROW(1,2) LIKE 1', prepared: true)[0];
+        $direct = $session->run('SHOW KEYS FROM missing.t WHERE ROW(1,2) LIKE 1')[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $prepared);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $direct);
+        self::assertSame([1241, 1049], [$prepared->getCode(), $direct->getCode()]);
+    }
+    public function testSelectedUsesTheWrittenTableDatabase(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $header = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('d'))));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter($header, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($row));
+        self::assertSame('d', (new ShowInput())->selected($problem, $session));
+    }
 }

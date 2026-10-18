@@ -29,6 +29,9 @@ final class ColumnPrefixes
      */
     public function length(ColumnPart $part, Domain $domain, IndexKind $kind): ?int
     {
+        if ($part->length === null && !in_array($kind, [IndexKind::FullText, IndexKind::Spatial], true) && in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true)) {
+            throw SchemaError::BlobKeyWithoutLength->error($part->column->value);
+        }
         if ($part->length === null || $kind === IndexKind::FullText) {
             return null;
         }

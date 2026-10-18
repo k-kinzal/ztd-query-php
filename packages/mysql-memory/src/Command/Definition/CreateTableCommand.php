@@ -58,6 +58,8 @@ final class CreateTableCommand implements Command
         $schema = $this->schema($create, $operation, $session, $connection);
         $schemaName = $schema->name;
         $name = $create->name->name->value;
+        $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $definition = $session->settings()->legacy() && $create->query === null ? (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName) : null;
         if ($create->temporaryWords > 0 ? $session->temporaries->table($schemaName, $name) !== null : $schema->table($name) !== null || isset($schema->views[$name])) {
             if (!$create->ifNotExists) {
                 throw SchemaError::TableExists->error($name);
@@ -78,8 +80,7 @@ final class CreateTableCommand implements Command
         if ($create->query !== null) {
             return (new TableQueries($session, $context, $connection))->create($create, $operation, $schema);
         }
-        $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
-        $definition = (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName);
+        $definition ??= (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName);
         if (!$definition->temporary) {
             Constraints::unique($definition, $schema);
         }

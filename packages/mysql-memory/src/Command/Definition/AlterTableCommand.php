@@ -39,13 +39,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -88,7 +82,7 @@ final class AlterTableCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex);
         [$name, $commands] = $this->request($statement);
-        $this->read($commands, $operation);
+        $this->read($commands, $operation, $session->settings()->legacy());
         $database = $session->variables->database;
         $schema = $name->schema->value ?? $database;
         if ($schema === '') {
@@ -210,6 +204,7 @@ final class AlterTableCommand implements Command
         if ($records > 0 && $context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
             $updated = (int) floor($context->variables->clock());
         }
+        (new Constraint\FullText\History())->changed($table, $definition, $context);
         $table->definition = $definition;
         $table->data = $data;
         $table->indexStatistics = \MySqlMemory\Storage\IndexStatistics::sample($table);
@@ -234,7 +229,7 @@ final class AlterTableCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the statement has such a problem
      */
-    public function read(array $commands, Operation $operation): void
+    public function read(array $commands, Operation $operation, bool $legacy = false): void
     {
         $indexes = $this->indexes($commands);
         foreach ($operation->facts->diagnostics as $diagnostic) {
@@ -251,7 +246,7 @@ final class AlterTableCommand implements Command
             }
         }
         foreach ($indexes as $index) {
-            if ($this->misordered($index)) {
+            if (!$legacy && $this->misordered($index)) {
                 throw StatementError::WrongUsage->error('spatial/fulltext/hash index', 'explicit index order');
             }
         }
@@ -311,10 +306,7 @@ final class AlterTableCommand implements Command
      */
     public function misordered(IndexDefinition $index): bool
     {
-        $hashed = $index->algorithm === IndexAlgorithm::Hash || array_filter($index->options, static fn ($option): bool => $option instanceof IndexUsing && $option->algorithm === IndexAlgorithm::Hash) !== [];
-        $ordered = array_filter($index->parts, static fn ($part): bool => ($part instanceof ColumnPart || $part instanceof ExpressionPart || $part instanceof ArrayPart) && $part->direction !== null) !== [];
-
-        return $ordered && ($hashed || $index->kind === IndexKind::FullText || $index->kind === IndexKind::Spatial);
+        return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($index->kind, $index->parts, $index->algorithm, $index->options);
     }
 
     /**

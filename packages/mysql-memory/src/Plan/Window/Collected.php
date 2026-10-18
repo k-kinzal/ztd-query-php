@@ -85,7 +85,7 @@ final class Collected
                 }
             }
         }
-        (new Resolution())->windows($this->windows, $references);
+        $windows = (new Resolution())->windows($this->windows, $references);
         foreach ($calls as $call) {
             if (!$call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction) {
                 continue;
@@ -94,6 +94,15 @@ final class Collected
             if ($limit !== null) {
                 throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($limit->value);
             }
+        }
+        foreach ($windows as $window) {
+            (new Frames($this->planner))->check($window, $input);
+        }
+        foreach ($calls as $call) {
+            if ($call instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction) {
+                throw \MySqlMemory\Error\Family\StatementError::WrongArguments->error(strtolower($call->kind->value));
+            }
+            (new Functions($this->planner))->compile($call, $input);
         }
     }
 

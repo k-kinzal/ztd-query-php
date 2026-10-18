@@ -197,4 +197,19 @@ final class InputErrorsTest extends TestCase
         self::assertSame(1234, (new InputErrors())->query($problem, $session)?->getCode());
     }
 
+    public function testIndexOrderResolvesTheRetainedTargetBeforeItsDirection(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText, \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        self::assertSame(1046, (new InputErrors())->indexOrder($problem, $session)->getCode());
+        $session->query('USE d');
+        self::assertSame(1221, (new InputErrors())->indexOrder($problem, $session)->getCode());
+    }
+
+    public function testPrecedingEndIncludesTheFinalIndexPluginToken(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText, \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        self::assertSame(42, (new InputErrors())->precedingEnd(new \SqlSemantics\Construction\RejectedInput($problem, 42, false)));
+    }
+
 }

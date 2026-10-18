@@ -72,4 +72,12 @@ final class KeyPartRuleTest extends TestCase
 
         self::assertSame('7', (new KeyPartRule($lowering))->length($node)->text);
     }
+    public function testDirectionsDoesNotReadNestedExpressionOrdering(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $tree = $semantics->parser()->parse('CREATE INDEX i ON t (a DESC, ((SELECT b FROM q ORDER BY b ASC)))');
+        $lowering = new Lowering(\SqlSemantics\Contract\Platforms::of('mysql')->productions($semantics->profile()), new Leaves(), $semantics->profile());
+        self::assertSame([Direction::Descending], (new KeyPartRule($lowering))->directions($tree->find('key_list_with_expression')[0]));
+    }
+
 }

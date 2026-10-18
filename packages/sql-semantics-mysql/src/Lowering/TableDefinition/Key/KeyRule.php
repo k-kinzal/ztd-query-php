@@ -111,12 +111,15 @@ final class KeyRule
             $named = $this->lowering->names->optionalColumnName($form->node($name));
         }
 
+        $indexOptions = $rule->options($form->node($options));
+        $keyParts = (new OrderingRule())->parts($this->lowering, $form->node, $form->node($parts), $kind, $algorithm, $indexOptions);
+
         return new IndexDefinition(
             $kind,
-            (new KeyPartRule($this->lowering))->parts($form->node($parts)),
+            $keyParts,
             $named,
             $algorithm,
-            $rule->options($form->node($options)),
+            $indexOptions,
             null,
             $keyword !== null && $this->lowering->options->present($form->node($keyword)),
         );
@@ -138,7 +141,9 @@ final class KeyRule
             default => throw ImplementationGap::production($type),
         };
 
-        return new IndexDefinition($kind, (new KeyPartRule($this->lowering))->parts($form->node($parts)), $name, $algorithm, (new KeyOptionRule($this->lowering))->options($form->node($options)), $constraint, $keyword);
+        $indexOptions = (new KeyOptionRule($this->lowering))->options($form->node($options));
+        $keyParts = (new OrderingRule())->parts($this->lowering, $form->node, $form->node($parts), $kind, $algorithm, $indexOptions);
+        return new IndexDefinition($kind, $keyParts, $name, $algorithm, $indexOptions, $constraint, $keyword);
     }
 
     /**

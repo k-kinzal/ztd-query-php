@@ -69,4 +69,13 @@ final class DefinitionPrefix
 
         return $missing ? QueryError::NoDatabase->error() : null;
     }
+    /**
+     * Legacy CREATE INDEX completes its ON target before later key syntax and plugins.
+     */
+    public function before(string $statement, int $end, Session $session): ?SqlError
+    {
+        return $this->database($statement, $end, $session)
+            ?? ($session->settings()->legacy() ? $this->database($statement, $end, $session, 'ON') : null);
+    }
+
 }

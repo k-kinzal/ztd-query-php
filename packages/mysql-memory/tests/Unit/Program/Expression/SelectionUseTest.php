@@ -44,4 +44,12 @@ final class SelectionUseTest extends TestCase
         $this->expectExceptionCode(1241);
         (new SelectionUse())->raise($selection, $session);
     }
+    public function testDiagnosedReportsAssignmentNoticesAfterRelationBinding(): void
+    {
+        $session = (new Instance())->connect();
+        $notice = new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AssignmentInExpression);
+        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [], [$notice]);
+        (new SelectionUse())->diagnosed($facts, $session);
+        self::assertSame([['Warning', 1287, $notice->message()]], $session->diagnostics->conditions);
+    }
 }

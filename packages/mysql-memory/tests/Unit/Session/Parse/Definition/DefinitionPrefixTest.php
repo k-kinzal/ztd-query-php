@@ -22,4 +22,12 @@ final class DefinitionPrefixTest extends TestCase
         self::assertNull((new DefinitionPrefix())->database('ALTER VIEW d.v AS VALUES ROW(1)', 100, $session));
         self::assertNull((new DefinitionPrefix())->database('SELECT 1', 100, $session));
     }
+    public function testBeforeRetainsTheLegacyIndexTargetBeforeUnsupportedKeySyntax(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $sql = 'CREATE INDEX i ON t (((SELECT 1)))';
+        self::assertSame(1046, (new DefinitionPrefix())->before($sql, strlen($sql), $session)?->getCode());
+        self::assertNull((new DefinitionPrefix())->before('CREATE INDEX i ON d.t (((SELECT 1)))', 100, $session));
+    }
+
 }

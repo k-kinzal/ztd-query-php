@@ -181,6 +181,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets => (new Dml\Targets())->unmatched($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget => (new Dml\Targets())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute => $this->column($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder => $this->indexOrder($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ZeroKeyPrefix => SchemaError::KeyPartZeroLength->error($diagnostic->column->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute => (new Json\AttributeInput())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns => ($diagnostic->program ?? $diagnostic->view)->schema === null && $session->variables->database === '' ? \MySqlMemory\Error\Family\QueryError::NoDatabase->error() : SchemaError::WrongColumnName->error($diagnostic->column->value),
@@ -211,6 +212,44 @@ final class InputErrors
         $suffix = ltrim(substr($session->text, $problem->offset), " \t\n\r\f\v");
         $offset = strlen($session->text) - (rtrim($suffix) === ';' ? 0 : strlen($suffix));
         return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($offset, $session->text, $session->following, new RuntimeException($problem->message()), true, $session->semantics()->parser());
+    }
+
+    /**
+     * Resolves the retained definition identity before an incompatible index direction.
+     */
+    public function indexOrder(\SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder $problem, Session $session): SqlError
+    {
+        if ($problem->table->schema === null && $session->variables->database === '') {
+            return \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+        }
+        $rules = new \MySqlMemory\Command\Definition\Expression\ExpressionRules();
+        try {
+            foreach ($problem->elements as $element) {
+                if (!$element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition) {
+                    continue;
+                }
+                $specification = $element->specification;
+                if ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn) {
+                    $rules->forbidden($specification->expression, \MySqlMemory\Command\Definition\Expression\ExpressionRole::Generated, $element->name->column->value);
+                }
+                foreach ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn ? $specification->attributes : [] as $attribute) {
+                    if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression) {
+                        $rules->forbidden($attribute->expression, \MySqlMemory\Command\Definition\Expression\ExpressionRole::Default, $element->name->column->value);
+                    }
+                }
+            }
+        } catch (SqlError $error) {
+            return $error;
+        }
+        return \MySqlMemory\Error\Family\StatementError::WrongUsage->error('spatial/fulltext/hash index', 'explicit index order');
+    }
+
+    /**
+     * Contextual index conditions follow the complete header, including its final plugin token.
+     */
+    public function precedingEnd(\SqlSemantics\Construction\RejectedInput $failure): int
+    {
+        return $failure->end - ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder ? 0 : 1);
     }
 
 }

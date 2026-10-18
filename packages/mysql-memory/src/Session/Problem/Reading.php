@@ -70,7 +70,7 @@ final class Reading
         $this->legacyWrites($operation, $session);
         $this->diagnosed($operation, $session);
         (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($operation->statement, $session);
-        if ($operation instanceof Operation && ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus)) {
+        if ($operation instanceof Operation && ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys)) {
             (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
         }
         (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session, $prepared);

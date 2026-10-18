@@ -90,6 +90,7 @@ return [
     1147 => ['42000', "There is no such grant defined for user '%s' on host '%s' on table '%s'"],
     1149 => ['42000', 'You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use'],
     1166 => ['42000', "Incorrect column name '%s'"],
+    1170 => ['42000', "BLOB/TEXT column '%s' used in key specification without a key length"],
     1171 => ['42000', 'All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use UNIQUE instead'],
     1172 => ['42000', 'Result consisted of more than one row'],
     1176 => ['42000', "Key '%s' doesn't exist in table '%s'"],

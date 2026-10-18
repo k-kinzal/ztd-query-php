@@ -85,4 +85,24 @@ final class EnginePrefixTest extends TestCase
         self::assertSame($fallback, $error);
     }
 
+    public function testCompletedStopsBeforeUnreachedSubpartitionOptions(): void
+    {
+        $session = (new Instance())->connect();
+        $sql = 'CREATE TABLE t(a INT) ENGINE=first PARTITION BY KEY() (PARTITION p0 ENGINE=second,PARTITION p1 (SUBPARTITION s0 ENGINE=third))';
+        $end = (int) strpos($sql, 'SUBPARTITION');
+        $errors = (new EnginePrefix())->completed($sql, $end, $session);
+        self::assertSame(["Unknown storage engine 'first'", "Unknown storage engine 'second'"], array_map(static fn ($error): string => $error->getMessage(), array_values($errors)));
+        self::assertSame([], (new EnginePrefix())->completed(substr($sql, 0, $end), $end, $session));
+    }
+
+    public function testReachedKeepsEngineWarningsOrEndsAtTheFirstStrictFailure(): void
+    {
+        $note = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator;
+        $engine = \MySqlMemory\Error\Family\SchemaError::UnknownStorageEngine->error('missing');
+        $fallback = \MySqlMemory\Error\Family\StatementError::ParseError->error('', 1);
+        $notices = [[1, $note], [4, $note]];
+        self::assertSame([[[1, $note]], $engine], (new EnginePrefix())->reached($notices, [2 => $engine], $fallback, true));
+        self::assertSame([[...$notices, [2, $engine]], $fallback], (new EnginePrefix())->reached($notices, [2 => $engine], $fallback, false));
+    }
+
 }

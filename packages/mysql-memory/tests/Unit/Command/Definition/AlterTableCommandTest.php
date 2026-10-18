@@ -138,31 +138,21 @@ final class AlterTableCommandTest extends TestCase
         $session->query('CREATE INDEX i ON abc.t ((zz + 1))');
     }
 
-    public function testReadRefusesAnOrderOfAFullTextKeyPart(): void
+    public function testExecuteRefusesAnOrderOfAFullTextKeyPart(): void
     {
-        $session = (new Instance())->connect();
-        $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t (a ASC)');
-        $statement = $operation->statement;
-        self::assertInstanceOf(CreateIndex::class, $statement);
-
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage('Incorrect usage of spatial/fulltext/hash index and explicit index order');
-
-        (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation);
+        $session->query('CREATE FULLTEXT INDEX i ON t (a ASC)');
     }
 
-    public function testReadRefusesAParserThatIsNotInstalledFirst(): void
+    public function testExecuteRefusesAParserThatIsNotInstalledBeforeIndexOrdering(): void
     {
-        $session = (new Instance())->connect();
-        $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t (a DESC) WITH PARSER zz ALGORITHM = DEFAULT');
-        $statement = $operation->statement;
-        self::assertInstanceOf(CreateIndex::class, $statement);
-
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1128);
         $this->expectExceptionMessage("Function 'zz' is not defined");
-
-        (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation);
+        $session->query('CREATE FULLTEXT INDEX i ON t (a DESC) WITH PARSER zz ALGORITHM = DEFAULT');
     }
 
     public function testValidationRefusesWithValidationOutsideApplicableOperations(): void
@@ -330,7 +320,7 @@ final class AlterTableCommandTest extends TestCase
 
     public function testMisorderedAnswersTrueForAnOrderedFullTextKeyPart(): void
     {
-        $session = (new Instance())->connect();
+        $session = (new Instance('5.7.44'))->connect();
         $statement = $session->analyze('CREATE FULLTEXT INDEX i ON t (a ASC)')->statement;
         self::assertInstanceOf(CreateIndex::class, $statement);
         $index = (new AlterTableCommand())->indexes((new AlterTableCommand())->request($statement)[1])[0];
@@ -461,4 +451,14 @@ final class AlterTableCommandTest extends TestCase
 
         self::assertNull($table->updated);
     }
+    public function testReadAcceptsLegacyFullTextDirections(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t (a DESC)');
+        $statement = $operation->statement;
+        self::assertInstanceOf(CreateIndex::class, $statement);
+        (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation, true);
+        self::assertSame('i', $statement->name->value);
+    }
+
 }

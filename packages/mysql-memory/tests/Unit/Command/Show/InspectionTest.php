@@ -177,4 +177,12 @@ final class InspectionTest extends TestCase
 
         self::assertSame(['SCHEMATA', null, null], [(new Inspection())->system(new InspectedTable(new QualifiedName(new Name('schemata'), new Name('INFORMATION_SCHEMA'))), null, $s)?->name, (new Inspection())->system(new InspectedTable(new QualifiedName(new Name('t'))), null, $s), (new Inspection())->system(new InspectedTable(new QualifiedName(new Name('user'))), new Name('nowhere'), $s)]);
     }
+    public function testOpeningDefersTheTargetUntilAfterPreparedFilterResolution(): void
+    {
+        $session = (new Instance())->connect();
+        $header = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys(new InspectedTable(new QualifiedName(new Name('t'), new Name('missing'))), filter: new \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere(new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(true)));
+        (new Inspection())->opening($header, $session, true);
+        $this->expectExceptionCode(1049);
+        (new Inspection())->opening($header, $session, false);
+    }
 }

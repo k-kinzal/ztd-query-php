@@ -92,8 +92,8 @@ final class WindowFunctionTest extends TestCase
 
     #[\PHPUnit\Framework\Attributes\TestWith(['0'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['0001'])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['18446744073709551615'])]
-    public function testValueRetainsTheEntireIntegerTokenDomain(string $text): void
+    #[\PHPUnit\Framework\Attributes\TestWith(['9223372036854775807'])]
+    public function testValueRetainsTheSignedOffsetDomain(string $text): void
     {
         $call = new WindowFunction(WindowFunctionKind::Lag, [new NumberLiteral('1'), new NumberLiteral($text)], new WindowSpec());
         self::assertInstanceOf(NumberLiteral::class, $call->arguments[1]);
@@ -110,6 +110,14 @@ final class WindowFunctionTest extends TestCase
     {
         $this->expectExceptionMessage('An ordinary window call cannot use an unsupported option: FROM LAST.');
         new WindowFunction(WindowFunctionKind::NthValue, [new NumberLiteral('1'), new NumberLiteral('2')], new WindowSpec(), edge: CountingEdge::Last);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['9223372036854775808'])]
+    public function testValueRejectsALiteralOutsideTheBucketCountDomain(string $text): void
+    {
+        $this->expectExceptionMessage('An ordinary window count or offset literal belongs to its signed integer domain.');
+        new WindowFunction(WindowFunctionKind::Tile, [new NumberLiteral($text)], new WindowSpec());
     }
 
 }

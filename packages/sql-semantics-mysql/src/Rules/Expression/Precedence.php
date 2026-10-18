@@ -195,7 +195,7 @@ final class Precedence
             $expression instanceof Unary, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary => [self::PRIMARY, self::PREFIX, null, $expression->operand],
             $expression instanceof BinaryCast => [self::PRIMARY, self::PRIMARY, null, $expression->operand],
             $expression instanceof IntervalAddition, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval && $expression->leading => [self::PRIMARY, self::NEGATION, null, $expression->operand],
-            $expression instanceof VariableAssignment => [self::PRIMARY, self::ASSIGNMENT, null, $expression->value],
+            $expression instanceof VariableAssignment, $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment => [self::PRIMARY, self::ASSIGNMENT, null, $expression->value],
             default => $this->postfix($expression),
         };
     }

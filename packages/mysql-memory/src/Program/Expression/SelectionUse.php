@@ -76,6 +76,11 @@ final class SelectionUse
                 throw (new Errors())->error($problem, $session);
             }
         }
+        foreach ($facts->warnings as $warning) {
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation && $warning->construct === \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AssignmentInExpression) {
+                $session->diagnostics->warning($warning->code(), $warning->message());
+            }
+        }
     }
 
 }

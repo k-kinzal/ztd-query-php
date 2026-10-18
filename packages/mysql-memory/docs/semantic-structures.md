@@ -2217,8 +2217,8 @@ then its partition condition after that database is created. Explicit ENGINE
 selection is retained at preparation; an omitted ENGINE uses the current default
 at execution. Request text is only an observable label on this path.
 
-Matching these diagnostics does not close the constructor-adequacy gate. Ordinary
-window values still admit unsupported options, and partition values still need
+Matching these diagnostics does not close the constructor-adequacy gate. At that checkpoint, ordinary
+window values still admitted unsupported options, and partition values needed
 additional intrinsic-domain constraints. EXPLAIN table-plan documents and measured
 output also remain unresolved. The complete construction campaign, all nine Faker
 corpora and the uninterrupted 900-second differential run must pass together on
@@ -2268,3 +2268,70 @@ The `query454` unseeded campaign found another difference at input 15: an unknow
 partition engine must precede a later incompatible subpartition count. That
 failure and the remaining window count/frame and partition constructor domains
 remain open. No final acceptance gate is claimed from these focused repairs.
+
+
+### Partition engines and literal window counts
+
+CREATE TABLE now resolves explicit partition engines before later partition
+shape conditions. Preparation retains whether engine lookup already occurred;
+an omitted table ENGINE still uses the execution-time default. The complete
+saved unseeded failure and adjacent phase cases pass 264 native observations
+through text and prepared protocols on 8.0, 8.4 and 9.1 (`query459`).
+
+Ordinary window calls exclude literal counts outside their signed integer domain,
+including NTILE(0) and offsets above 9223372036854775807. Retained instructions
+keep the complete deferred invocation and a typed count condition; dependencies,
+window options and frame conditions precede that condition. This constrains
+literal operands without evaluating database or session state in Semantics.
+Snapshot `query462` passes both static suites, the 942-entry value schema,
+8,612 Semantics tests, 18,107 Memory tests and 684 native count observations.
+These focused gates do not close the remaining frame and partition domains.
+
+The `query458` whole-root campaign also passes all 244 roots: 97 matching
+successes, 147 matching SQL errors, and 171 state observations for 57 objects,
+without generation, profile, structure or comparison failures. The earlier
+`query431` campaign passes all nine supplied Faker corpora. Neither is
+final-revision evidence. The `query458` unseeded run stops at input 167 with
+an explicit FULLTEXT index order incorrectly losing precedence to a missing
+subquery table. The generated input remains a required regression.
+
+### Index release domains and retained inspection context
+
+Explicit FULLTEXT, SPATIAL and HASH index ordering belongs to the legacy
+language domain. Its composition with a modern-only functional key is rejected
+by constructor invariants. Modern input refusals retain the index kind,
+direction, algorithm, options, target and completed preceding column definitions.
+Consequently, plugin lookup, default-expression conditions and database identity
+keep their native precedence without inspecting SQL during planning.
+
+Legacy InnoDB tables retain whether their first FULLTEXT index introduced the
+implicit document identity. Dropping the index does not erase this history.
+Eight directly constructed definitions pass 96 native observations on 5.6 and
+5.7, across absent tables, populated tables, duplicate indexes, index removal
+and table recreation. The complete saved FULLTEXT Fuzz failure and neighboring
+cases pass 740 observations across five releases and both protocols.
+
+A variable assignment to a retained row computation is `DeferredAssignment`,
+not a Scalar. The same eight procedure definitions are reused across seven
+reachability/table/column states on 8.0, 8.4 and 9.1: all 192 observations agree,
+including warnings and the unchanged destination variable after refusal.
+Literal window-count structures also pass 192 direct state observations.
+
+Refused SHOW filters retain their inspection target and output-column scope for
+SHOW COLUMNS and SHOW KEYS as well as database listings. Qualified targets,
+nested table dependencies and earlier notices survive input refusal. Modern
+text execution opens the inspection first; preparation and legacy execution
+resolve the filter first, while still requiring an implicit default database.
+The original unseeded input and adjacent histories pass 760 native observations
+across five releases and both protocols (`query476`/`query478`). ALTER USER stops
+at an invalid shared attribute while retaining earlier recipient conditions;
+the saved generated input and nearby recipient orders pass 126 observations.
+
+The `query470` whole-root comparison completes all 244 roots with 97 matching
+successes, 147 matching SQL errors and 168 matching state observations for 56
+structures. The nine `query431` Faker corpora also pass. These precede the latest
+repairs and do not establish final-revision acceptance. The later unseeded
+failures at inputs 577 (`query467`, account attributes) and 177 (`query472`, SHOW
+inspection scope) remain saved regression inputs and now pass their focused
+native comparisons. Frame/partition constructor domains and EXPLAIN measured
+output remain unresolved; matching errors do not close those model obligations.

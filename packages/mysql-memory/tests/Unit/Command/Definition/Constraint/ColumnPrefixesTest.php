@@ -42,4 +42,11 @@ final class ColumnPrefixesTest extends TestCase
         $this->expectExceptionCode(1089);
         (new ColumnPrefixes())->length(new ColumnPart(new Name('a'), new Numeral('2')), Domain::string(1, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary()), IndexKind::Index);
     }
+    public function testLengthRequiresAnExplicitPrefixForAnOrdinaryBlobIndex(): void
+    {
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1170);
+        (new ColumnPrefixes())->length(new ColumnPart(new Name('a')), Domain::string(65535, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Blob), IndexKind::Index);
+    }
+
 }

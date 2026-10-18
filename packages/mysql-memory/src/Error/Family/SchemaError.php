@@ -61,6 +61,7 @@ enum SchemaError: int implements ErrorCode
     case TableMustHaveColumns = 1113;
     case UnknownCharacterSet = 1115;
     case WrongColumnName = 1166;
+    case BlobKeyWithoutLength = 1170;
     case PrimaryCantHaveNull = 1171;
     case KeyMissing = 1176;
     case CantReopenTable = 1137;

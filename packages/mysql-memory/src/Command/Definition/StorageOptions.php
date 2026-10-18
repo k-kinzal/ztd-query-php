@@ -48,7 +48,7 @@ final class StorageOptions
      */
     public function resolve(Statement $statement, Session $session, Context $context): void
     {
-        if ($statement instanceof CreateTable && isset($session->variables->preparedEngines[spl_object_id($statement)])) {
+        if ($statement instanceof CreateTable && array_key_exists(spl_object_id($statement), $session->variables->preparedEngines)) {
             return;
         }
         $name = match (true) {

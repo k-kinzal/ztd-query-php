@@ -164,7 +164,7 @@ final class Reader
         $error = new SqlError($error->error, $error->getMessage(), $failure, $error->following, $error->signalled, $error->getCode(), $error->recorded);
         $target = (new Entry\DerivedInput())->refusal($failure, $statement, $session, $error);
         $error = $target ?? $error;
-        $earlier = ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias ? (new Entry\DerivedInput())->before($statement, $failure->end, $session) : null) ?? ($failure->end === 0 || $target !== null ? null : (new CacheOptions())->condition($error, $statement, $session, $failure->end - 1));
+        $earlier = ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias ? (new Entry\DerivedInput())->before($statement, $failure->end, $session) : null) ?? ($failure->end === 0 || $target !== null ? null : (new CacheOptions())->condition($error, $statement, $session, (new Entry\InputErrors())->precedingEnd($failure)));
         if ($earlier !== null) {
             return $earlier;
         }
@@ -172,12 +172,8 @@ final class Reader
             return (new ContinuingRefusal())->error($failure, $statement, $session);
         }
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
-        try {
-            $tokens = $parser->tokenize($statement);
-        } catch (SourceException $lexical) {
-            $statement = substr($statement, 0, $lexical->offset);
-            $tokens = $parser->tokenize($statement);
-        }
+        $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
+        $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
         $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, (new Entry\InputErrors())->noticeEnd($failure), $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         $notices = $this->targetNotices($notices, $target !== null, $session->settings()->legacy());
         if ($session->settings()->legacy()) {
@@ -194,6 +190,9 @@ final class Reader
             }
         }
         $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session)];
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
+            [$notices, $error] = (new EnginePrefix())->reached($notices, (new EnginePrefix())->completed($statement, $failure->end, $session), $error, $session->modes()->has('NO_ENGINE_SUBSTITUTION'));
+        }
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
         return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session);

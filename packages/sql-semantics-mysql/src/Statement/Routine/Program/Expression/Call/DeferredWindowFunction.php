@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * A stored window invocation retaining an argument or unsupported option condition.
+ * A stored window invocation retaining an argument, option or literal-count condition.
  *
  * Function identity, window, options, counts and all argument roles survive
  * until the program reaches the instruction. This is not a Scalar.
@@ -51,7 +51,7 @@ final class DeferredWindowFunction implements DeferredOperand
     public function __construct(public readonly WindowFunctionKind $kind, array $arguments, public readonly Name|WindowSpecification $over, public readonly ?NullTreatment $nulls = null, public readonly ?CountingEdge $edge = null)
     {
         $values = (new Arguments())->checked($kind, $arguments, $nulls, $edge);
-        Check::input($values !== [] && (array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || (new Arguments())->limitation($nulls, $edge) !== null), 'A deferred window call retains an argument or option preparation condition.');
+        Check::input($values !== [] && (array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || (new Arguments())->limitation($nulls, $edge) !== null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $values)), 'A deferred window call retains an argument, option or count preparation condition.');
         $this->arguments = $values;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -85,8 +85,7 @@ final class DeferredWindowFunction implements DeferredOperand
             return (new DeferredArguments())->problem($this->arguments);
         }
         $limit = (new Arguments())->limitation($this->nulls, $this->edge);
-        Check::invariant($limit !== null, 'A scalar-only deferred window call retains an unsupported option.');
-        return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing($limit, $this);
+        return $limit !== null ? new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing($limit, $this) : new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount($this->kind);
     }
 
     /**

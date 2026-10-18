@@ -48,6 +48,7 @@ final class DefaultDatabase
             return;
         }
         $names = match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex && $session->settings()->legacy() => [$statement->table],
             $statement instanceof MultipleDelete => $statement->targets,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $session->settings()->legacy() => [$statement->table->name],
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,

@@ -45,4 +45,13 @@ final class ReleaseDomainTest extends TestCase
         self::assertSame(8, $rule->explanation(new DeferredExplain($query, new Name('JSON'), new UserVariable(new Name('')))));
         self::assertSame(56, $rule->explanation(new DeferredExplain($query, new Name('JSON'), new UserVariable(new Name(str_repeat('a', 65))))));
     }
+    public function testOfRetainsLegacyIndexOrderingWithoutAllowingModernFunctionalParts(): void
+    {
+        $part = new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new Name('a'), direction: \SqlSemantics\Platform\MySql\Statement\Query\Direction::Ascending);
+        $index = new \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText, [$part]);
+        self::assertSame(3, (new ReleaseDomain())->of($index));
+        $this->expectExceptionMessage('The retained operands must share a supported MySQL release.');
+        new \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition($index->kind, [$part, new \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart(new NumberLiteral('1'))]);
+    }
+
 }

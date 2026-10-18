@@ -110,4 +110,11 @@ final class PreparationTest extends TestCase
         $this->expectExceptionCode(1295);
         (new Preparation())->check($operation, $session);
     }
+    public function testCheckResolvesLegacyIndexDatabaseBeforeParserPlugin(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t(a) WITH PARSER missing', true);
+        $this->expectExceptionCode(1046);
+        (new Preparation())->check($operation, $session);
+    }
 }

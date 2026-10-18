@@ -155,7 +155,7 @@ final class RowUse
      */
     public function pending(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Scope $scope): bool
     {
-        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
+        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount);
     }
 
     /**
@@ -204,6 +204,7 @@ final class RowUse
         }
         $problem = $operand->problem();
         return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount => \MySqlMemory\Error\Family\StatementError::WrongArguments->error(strtolower($problem->function->value)),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing => \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($problem->limit->value),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow => QueryError::ValuesEmptyRow->error(),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse => (new Errors())->misuse($problem),

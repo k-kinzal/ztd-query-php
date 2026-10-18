@@ -44,6 +44,12 @@ final class StoredTable
     public ?int $updated = null;
 
     /**
+     * Whether this InnoDB table has acquired a full-text document identity.
+     * Dropping a full-text index retains it until the table is recreated.
+     */
+    public bool $fullTextDocumentId;
+
+    /**
      * @param TableDefinition $definition The definition
      * @param Heap $data The rows
      * @param array<string, string> $histograms The columns that have histogram statistics, by lowercase name
@@ -53,6 +59,7 @@ final class StoredTable
      */
     public function __construct(public TableDefinition $definition, public Heap $data, public array $histograms = [], ?int $created = null, ?int $clock = null, public ?Closure $loader = null)
     {
+        $this->fullTextDocumentId = strcasecmp($definition->engine, 'InnoDB') === 0 && ($definition->position('FTS_DOC_ID') !== null || array_filter($definition->keys, static fn (Key $key): bool => $key->kind === KeyKind::FullText) !== []);
         $clock ??= time();
         $this->created = $created ?? $clock;
         $this->updated = strcasecmp($definition->engine, 'MyISAM') === 0 ? $clock : null;

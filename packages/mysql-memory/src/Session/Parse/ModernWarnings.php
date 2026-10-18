@@ -65,7 +65,7 @@ final class ModernWarnings
     /**
      * Records typed conditions in order, retaining the first error as the reply.
      *
-     * @param list<Entry\InputNote|Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|ParseStop> $notices The completed semantic notices
+     * @param list<SqlError|Entry\InputNote|Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure|ParseStop> $notices The completed semantic notices
      * @param bool $append Whether the final refusal follows the recorded notices or is already among them
      */
     public function recorded(array $notices, SqlError $syntax, Session $session, bool $append = true): SqlError
@@ -115,9 +115,11 @@ final class ModernWarnings
     /**
      * Records a non-aborting input note or grammar warning.
      */
-    public function note(Entry\InputNote|Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure $notice, Session $session): bool
+    public function note(SqlError|Entry\InputNote|Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|ParseFailure $notice, Session $session): bool
     {
-        if ($notice instanceof Entry\InputNote) {
+        if ($notice instanceof SqlError) {
+            $session->diagnostics->warning($notice->getCode(), $notice->getMessage());
+        } elseif ($notice instanceof Entry\InputNote) {
             $session->diagnostics->note($notice->code, $notice->message);
         } elseif ($notice instanceof Deprecated) {
             $session->diagnostics->warning($notice->code(), $notice->value);

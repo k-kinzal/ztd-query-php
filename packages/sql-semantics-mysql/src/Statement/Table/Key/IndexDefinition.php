@@ -70,6 +70,7 @@ final class IndexDefinition implements TableElement
         Check::input($constraint === null || $kind === IndexKind::Primary || $kind === IndexKind::Unique, 'Only a primary key or a unique index has a CONSTRAINT clause.');
         Check::input(!$keyword || $kind === IndexKind::Unique || $kind === IndexKind::FullText || $kind === IndexKind::Spatial, 'Only UNIQUE, FULLTEXT and SPATIAL are followed by an optional INDEX.');
         Check::input($algorithm === null || ($kind !== IndexKind::FullText && $kind !== IndexKind::Spatial), 'A full-text or spatial index has no USING clause before its key parts.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

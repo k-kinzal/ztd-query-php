@@ -41,4 +41,14 @@ final class AlterRecipientsTest extends TestCase
         self::assertFalse($session->passwordExpired);
     }
 
+    public function testApplyStopsAtInvalidSharedAttributesAfterEarlierRecipientErrors(): void
+    {
+        $session = (new Instance())->connect();
+        $answer = $session->run("ALTER USER IF EXISTS absent IDENTIFIED WITH missing, CURRENT_USER DISCARD OLD PASSWORD, absent2 IDENTIFIED WITH missing2 ATTRIBUTE 'bad'")[0];
+        self::assertInstanceOf(SqlError::class, $answer);
+        self::assertSame(1524, $answer->getCode());
+        self::assertSame([1524, 3982], array_column($session->diagnostics->conditions, 1));
+        self::assertFalse($session->passwordExpired);
+    }
+
 }

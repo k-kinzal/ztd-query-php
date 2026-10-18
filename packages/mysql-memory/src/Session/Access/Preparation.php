@@ -29,6 +29,9 @@ final class Preparation
      */
     public function check(Operation $operation, Session $session): void
     {
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) {
+            (new DefaultDatabase())->check($operation->statement, $session);
+        }
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
         if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
@@ -98,8 +101,7 @@ final class Preparation
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable) {
             $storage = new \MySqlMemory\Command\Definition\StorageOptions();
             $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
-            $storage->header($statement, $session, $context);
-            $storage->engine($statement, $session->variables, $context);
+            $storage->resolve($statement, $session, $context);
         }
         $dropEvent = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && $statement->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event;
         $event = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent || $dropEvent;

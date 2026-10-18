@@ -71,7 +71,15 @@ final class ElementRule
         }
         $elements = [];
         foreach ((new Spine($this->lowering))->items($list, self::LISTS, ['field_list_item', 'table_element']) as $item) {
-            $elements[] = $this->element($item);
+            try {
+                $elements[] = $this->element($item);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                $problem = $failure->problem;
+                if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder) {
+                    throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder($problem->kind, $problem->direction, $problem->table, $problem->algorithm, $problem->options, $elements), $failure->end, $failure->aborts);
+                }
+                throw $failure;
+            }
         }
 
         return $elements === [] ? throw ImplementationGap::production($form) : $elements;

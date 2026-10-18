@@ -63,6 +63,9 @@ final class AlterRecipients
             } catch (SqlError $error) {
                 $this->session->diagnostics->error($error->getCode(), $error->getMessage());
                 $first ??= $error;
+                if ($error->error === \MySqlMemory\Error\Family\AccountError::InvalidUserAttributeJson) {
+                    break;
+                }
             }
         }
         $legacy = $this->session->settings()->release() === GrammarRelease::MySql5744;

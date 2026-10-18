@@ -658,6 +658,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\InvalidNamedConstant": {
         "nullName": "bool"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\InvalidWindowCount": {
+        "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunctionKind"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\NamedArgument": {
         "function": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -2424,6 +2427,10 @@
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "truth": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Truth"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredAssignment": {
+        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredCollated": {
         "collation": "SqlSemantics\\Statement\\Identifier\\Name",
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
@@ -3284,6 +3291,14 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\ExplicitIndexOrder": {
+        "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm",
+        "direction": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
+        "elements": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
+        "options": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\IncorrectColumnName": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -3675,7 +3690,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\RefusedFilter": {
         "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedScalar",
-        "header": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTables|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTableStatus|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTriggers"
+        "header": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTables|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTableStatus|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowTriggers|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowColumns|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowKeys"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Replication\\ShowBinaryLogStatus": {
         "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"

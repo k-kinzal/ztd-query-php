@@ -147,12 +147,12 @@ final class LegacyObjectRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function columns(Form $form): ShowColumns
+    public function columns(Form $form): Statement
     {
         $clauses = new ClauseRule($this->lowering);
         $clauses->preposition($form->node(2));
 
-        return new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4)), $clauses->filter($form->node(5)));
+        return $clauses->inspection(new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4))), $form->node(5));
     }
 
     /**
@@ -160,13 +160,13 @@ final class LegacyObjectRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function keys(Form $form): ShowKeys
+    public function keys(Form $form): Statement
     {
         $clauses = new ClauseRule($this->lowering);
         $this->lowering->options->skip($form->node(0));
         $clauses->preposition($form->node(1));
 
-        return new ShowKeys(new InspectedTable($this->lowering->names->qualified($form->node(2))), false, $clauses->database($form->node(3)), $clauses->where($form->node(4)));
+        return $clauses->inspection(new ShowKeys(new InspectedTable($this->lowering->names->qualified($form->node(2))), false, $clauses->database($form->node(3))), $form->node(4));
     }
 
     /**

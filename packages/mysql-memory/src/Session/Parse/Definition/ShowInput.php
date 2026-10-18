@@ -34,6 +34,20 @@ final class ShowInput
      */
     public function error(RefusedFilter $problem, Session $session): SqlError
     {
+        try {
+            return $this->resolve($problem, $session);
+        } catch (SqlError $error) {
+            return $error;
+        }
+    }
+
+    /**
+     * Resolves retained operands without bypassing the input adapter's earlier notices.
+     *
+     * @throws SqlError When opening or preparing a dependency fails
+     */
+    public function resolve(RefusedFilter $problem, Session $session): SqlError
+    {
         $operand = $problem->condition->operand;
         (new \MySqlMemory\Session\Problem\Identifiers())->check($operand, $session->settings()->release());
         $database = $session->variables->database;
@@ -47,7 +61,7 @@ final class ShowInput
                 return QueryError::NoDatabase->error();
             }
         }
-        $selected = $problem->header->database->value ?? $database;
+        $selected = $this->selected($problem, $session);
         if ($selected === '') {
             return QueryError::NoDatabase->error();
         }
@@ -75,6 +89,8 @@ final class ShowInput
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($problem->condition->operand, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
         $headings = match (true) {
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys => (new \MySqlMemory\Command\Show\ShowKeysCommand())->headings(),
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns => (new \MySqlMemory\Command\Show\ShowColumnsCommand())->headings($problem->header->listing?->full() === true, $session->settings()->legacy(), $session->modes()->strict()),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => (new \MySqlMemory\Command\ShowTablesCommand())->headings($problem->header, $session),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus => $session->settings()->legacy() ? (new \MySqlMemory\Command\Show\ShowTableStatusCommand())->legacyHeadings() : (new \MySqlMemory\Command\Show\ShowTableStatusCommand())->headings(false),
             default => (new \MySqlMemory\Command\Program\ShowTriggersCommand())->headings($session->settings()->release()),
@@ -83,5 +99,18 @@ final class ShowInput
         $scope = new \MySqlMemory\Evaluation\Scope();
         $scope->place($problem->header, $domains);
         (new RowUse())->prepare($problem->condition->operand, $planner->compiler, $scope);
+    }
+    /**
+     * Resolves the inspection identity before preparing a refused filter.
+     *
+     * @throws SqlError When modern text execution cannot open its inspection target
+     */
+    public function selected(RefusedFilter $problem, Session $session): string
+    {
+        $table = $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys;
+        if ($table && !$session->preparation->inputPrepared && !$session->settings()->legacy()) {
+            (new \MySqlMemory\Command\Show\Inspection())->check($problem->header, $session, $session->preparation->inputPrepared);
+        }
+        return $problem->header->database->value ?? ($table ? $problem->header->table->name->schema->value ?? $session->variables->database : $session->variables->database);
     }
 }
