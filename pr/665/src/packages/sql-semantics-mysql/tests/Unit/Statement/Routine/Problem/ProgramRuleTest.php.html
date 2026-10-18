@@ -81,54 +81,56 @@
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>            <span class="tok-str">&quot;Can&#039;t drop or alter a %s from within another stored routine&quot;</span>,</span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>            <span class="tok-str">&#039;Recursion of EVENT DDL statements is forbidden when body is present&#039;</span>,</span>
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>            <span class="tok-str">&#039;Not allowed to return a result set from a %s&#039;</span>,</span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>            <span class="tok-str">&#039;Explicit or implicit commit is not allowed in stored function or trigger.&#039;</span>,</span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>            <span class="tok-str">&#039;%s is not allowed in stored function or trigger&#039;</span>,</span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>            <span class="tok-str">&#039;Updating of OLD row is not allowed in trigger&#039;</span>,</span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>            <span class="tok-str">&#039;Updating of NEW row is not allowed in after trigger&#039;</span>,</span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>            <span class="tok-str">&#039;There is no NEW row in on DELETE trigger&#039;</span>,</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>            <span class="tok-str">&#039;Incorrect usage of CAST( .. AS .. ARRAY) and stored routines&#039;</span>,</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>        ], <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">ProgramRule</span> <span class="tok-var">$rule</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$rule</span>-&gt;<span class="tok-id">value</span>, <span class="tok-id">ProgramRule</span>::<span class="tok-id">cases</span>()));</span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    }</span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a></span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCasesNameTheCasesOfTheServerErrors</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    {</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>            <span class="tok-str">&#039;Not allowed to set autocommit from a stored function or trigger&#039;</span>,</span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>            <span class="tok-str">&#039;Explicit or implicit commit is not allowed in stored function or trigger.&#039;</span>,</span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>            <span class="tok-str">&#039;%s is not allowed in stored function or trigger&#039;</span>,</span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>            <span class="tok-str">&#039;Updating of OLD row is not allowed in trigger&#039;</span>,</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>            <span class="tok-str">&#039;Updating of NEW row is not allowed in after trigger&#039;</span>,</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>            <span class="tok-str">&#039;There is no NEW row in on DELETE trigger&#039;</span>,</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>            <span class="tok-str">&#039;Incorrect usage of CAST( .. AS .. ARRAY) and stored routines&#039;</span>,</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        ], <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">ProgramRule</span> <span class="tok-var">$rule</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$rule</span>-&gt;<span class="tok-id">value</span>, <span class="tok-id">ProgramRule</span>::<span class="tok-id">cases</span>()));</span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>    }</span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a></span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCasesNameTheCasesOfTheServerErrors</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    {</span>
+<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([</span>
 <span class="src-line" data-diff="removed"><span class="ln">55</span>            <span class="tok-str">&#039;DuplicateParameter&#039;</span>,</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>            <span class="tok-str">&#039;IncorrectName&#039;</span>, <span class="tok-str">&#039;NameTooLong&#039;</span>, <span class="tok-str">&#039;DuplicateParameter&#039;</span>,</span>
-<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>            <span class="tok-str">&#039;DuplicateVariable&#039;</span>,</span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;DuplicateCondition&#039;</span>,</span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>            <span class="tok-str">&#039;DuplicateCursor&#039;</span>,</span>
-<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>            <span class="tok-str">&#039;RedefinedLabel&#039;</span>,</span>
-<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>            <span class="tok-str">&#039;EndLabelMismatch&#039;</span>,</span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>            <span class="tok-str">&#039;LeaveWithoutLabel&#039;</span>,</span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>            <span class="tok-str">&#039;IterateWithoutLabel&#039;</span>,</span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>            <span class="tok-str">&#039;UndefinedCondition&#039;</span>,</span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>            <span class="tok-str">&#039;UndefinedCursor&#039;</span>,</span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>            <span class="tok-str">&#039;UndeclaredVariable&#039;</span>,</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>            <span class="tok-str">&#039;ReturnOutsideFunction&#039;</span>,</span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>            <span class="tok-str">&#039;MissingReturn&#039;</span>,</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>            <span class="tok-str">&#039;DeclarationAfterCursorOrHandler&#039;</span>,</span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>            <span class="tok-str">&#039;CursorAfterHandler&#039;</span>,</span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>            <span class="tok-str">&#039;BadSqlState&#039;</span>,</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>            <span class="tok-str">&#039;ZeroErrorCode&#039;</span>,</span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>            <span class="tok-str">&#039;DuplicateHandler&#039;</span>,</span>
-<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>            <span class="tok-str">&#039;SignalConditionKind&#039;</span>,</span>
-<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>            <span class="tok-str">&#039;DuplicateSignalItem&#039;</span>,</span>
-<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>            <span class="tok-str">&#039;BadStatement&#039;</span>,</span>
-<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>            <span class="tok-str">&#039;RecursiveCreate&#039;</span>,</span>
-<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>            <span class="tok-str">&#039;NestedAlterOrDrop&#039;</span>,</span>
-<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>            <span class="tok-str">&#039;EventRecursion&#039;</span>,</span>
-<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>            <span class="tok-str">&#039;ResultSet&#039;</span>,</span>
-<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>            <span class="tok-str">&#039;CommitInFunction&#039;</span>,</span>
-<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>            <span class="tok-str">&#039;FunctionStatement&#039;</span>,</span>
-<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>            <span class="tok-str">&#039;OldRowUpdate&#039;</span>,</span>
-<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>            <span class="tok-str">&#039;AfterRowUpdate&#039;</span>,</span>
-<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>            <span class="tok-str">&#039;NoNewRow&#039;</span>,</span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>            <span class="tok-str">&#039;ArrayCast&#039;</span>,</span>
-<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>        ], <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">ProgramRule</span> <span class="tok-var">$rule</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$rule</span>-&gt;<span class="tok-id">name</span>, <span class="tok-id">ProgramRule</span>::<span class="tok-id">cases</span>()));</span>
-<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    }</span>
-<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>}</span>
-<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-str">&#039;IncorrectName&#039;</span>, <span class="tok-str">&#039;NameTooLong&#039;</span>, <span class="tok-str">&#039;DuplicateParameter&#039;</span>,</span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;DuplicateVariable&#039;</span>,</span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>            <span class="tok-str">&#039;DuplicateCondition&#039;</span>,</span>
+<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>            <span class="tok-str">&#039;DuplicateCursor&#039;</span>,</span>
+<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>            <span class="tok-str">&#039;RedefinedLabel&#039;</span>,</span>
+<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>            <span class="tok-str">&#039;EndLabelMismatch&#039;</span>,</span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>            <span class="tok-str">&#039;LeaveWithoutLabel&#039;</span>,</span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>            <span class="tok-str">&#039;IterateWithoutLabel&#039;</span>,</span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>            <span class="tok-str">&#039;UndefinedCondition&#039;</span>,</span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>            <span class="tok-str">&#039;UndefinedCursor&#039;</span>,</span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>            <span class="tok-str">&#039;UndeclaredVariable&#039;</span>,</span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>            <span class="tok-str">&#039;ReturnOutsideFunction&#039;</span>,</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>            <span class="tok-str">&#039;MissingReturn&#039;</span>,</span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>            <span class="tok-str">&#039;DeclarationAfterCursorOrHandler&#039;</span>,</span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>            <span class="tok-str">&#039;CursorAfterHandler&#039;</span>,</span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>            <span class="tok-str">&#039;BadSqlState&#039;</span>,</span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>            <span class="tok-str">&#039;ZeroErrorCode&#039;</span>,</span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>            <span class="tok-str">&#039;DuplicateHandler&#039;</span>,</span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>            <span class="tok-str">&#039;SignalConditionKind&#039;</span>,</span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>            <span class="tok-str">&#039;DuplicateSignalItem&#039;</span>,</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>            <span class="tok-str">&#039;BadStatement&#039;</span>,</span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>            <span class="tok-str">&#039;RecursiveCreate&#039;</span>,</span>
+<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>            <span class="tok-str">&#039;NestedAlterOrDrop&#039;</span>,</span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>            <span class="tok-str">&#039;EventRecursion&#039;</span>,</span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>            <span class="tok-str">&#039;ResultSet&#039;</span>,</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>            <span class="tok-str">&#039;AutocommitInFunction&#039;</span>,</span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>            <span class="tok-str">&#039;CommitInFunction&#039;</span>,</span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>            <span class="tok-str">&#039;FunctionStatement&#039;</span>,</span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>            <span class="tok-str">&#039;OldRowUpdate&#039;</span>,</span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>            <span class="tok-str">&#039;AfterRowUpdate&#039;</span>,</span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>            <span class="tok-str">&#039;NoNewRow&#039;</span>,</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>            <span class="tok-str">&#039;ArrayCast&#039;</span>,</span>
+<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>        ], <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">ProgramRule</span> <span class="tok-var">$rule</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$rule</span>-&gt;<span class="tok-id">name</span>, <span class="tok-id">ProgramRule</span>::<span class="tok-id">cases</span>()));</span>
+<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a>    }</span>
+<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a>}</span>
+<span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
