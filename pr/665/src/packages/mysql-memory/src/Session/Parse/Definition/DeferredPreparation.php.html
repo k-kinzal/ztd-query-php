@@ -55,11 +55,11 @@
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DeferredPreparation</span> <span class="tok-kw">extends</span> <span class="tok-id">RuntimeException</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>{</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     * @param \MySqlMemory\Command\Prepared\PendingTable $definition The retained execution-time condition</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     * @param \MySqlMemory\Command\Prepared\PendingInstruction $definition The retained execution-time condition</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">\MySqlMemory\Command\Prepared\PendingTable</span> <span class="tok-var">$definition</span>)</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">\MySqlMemory\Command\Prepared\PendingInstruction</span> <span class="tok-var">$definition</span>)</span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    {</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-id">parent</span>::<span class="tok-id">__construct</span>(<span class="tok-str">&#039;The prepared table definition retains an execution-time partition condition.&#039;</span>);</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-id">parent</span>::<span class="tok-id">__construct</span>(<span class="tok-str">&#039;The prepared instruction retains a condition resolved during execution.&#039;</span>);</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    }</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>}</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a></span>
