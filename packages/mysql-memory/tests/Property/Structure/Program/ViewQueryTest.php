@@ -92,12 +92,11 @@ final class ViewQueryTest extends TestCase
     }
 
     /**
-     * A generated view INTO depends only on typed clause order, with no original input.
+     * An intrinsic view restriction is excluded from ordinary construction and retains typed diagnostic order.
      */
     #[DataProvider('providerNames')]
-    public function testLegacyIntoReadsOnlyPrecedingClauses(string $release, string $name, string $kind): void
+    public function testForbiddenBodiesCannotBecomeOrdinaryViews(string $release, string $name, string $kind): void
     {
-        $release = str_starts_with($release, '5.6') ? '5.6.51' : '5.7.44';
         $session = (new Instance($release, [], ['d']))->connect('root', 'localhost', 'd');
         $session->text = 'unrelated invalid input';
         $before = $kind === 'column';
@@ -105,11 +104,13 @@ final class ViewQueryTest extends TestCase
         $item = new SelectExpression($before ? $read : new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
         $into = new \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables([new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('target_' . $name))]);
         $query = new Select([], [$item], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), where: $before ? null : $read, into: $into, intoPosition: \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition::AfterItems);
-        $view = new \SqlSemantics\Platform\MySql\Statement\View\CreateView(new ViewDefinition(new QualifiedName(new Name('v')), $query));
-        $this->expectExceptionCode($before ? 1351 : 1350);
-        $this->expectExceptionMessage($before ? "View's SELECT contains a variable or parameter" : "View's SELECT contains a 'INTO' clause");
-
-        (new Execution())->runIn($session, $view);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedBody(new QualifiedName(new Name('v')), false, $query);
+        $error = (new \MySqlMemory\Session\Parse\Definition\ViewInput())->error($problem, $session);
+        self::assertSame($before ? 1351 : 1350, $error->getCode());
+        self::assertSame($before ? "View's SELECT contains a variable or parameter" : "View's SELECT contains a 'INTO' clause", $error->getMessage());
+        self::assertSame('unrelated invalid input', $session->text);
+        $this->expectExceptionMessage($problem->message());
+        new ViewDefinition(new QualifiedName(new Name('v')), $query);
     }
 
 }

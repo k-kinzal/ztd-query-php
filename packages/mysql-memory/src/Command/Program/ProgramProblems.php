@@ -6,7 +6,6 @@ namespace MySqlMemory\Command\Program;
 
 use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\Family\QueryError;
-use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\ProgramErrors;
 use MySqlMemory\Error\SqlError;
@@ -135,9 +134,7 @@ final class ProgramProblems
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
         $others = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => !$named($diagnostic) && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount
             && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName));
-        $this->clause($statement, $session);
         ProgramSource::database($name->schema, $session);
-        $this->variables($statement);
         (new \MySqlMemory\Session\Problem\Reading())->read($operation, $session);
         $problems->paths($operation, $session, $others);
         $problems->opened($operation, $session, $others);
@@ -150,41 +147,6 @@ final class ProgramProblems
             \MySqlMemory\Command\View\ViewCommand::checkName($statement, $schema, $database, $name->name->value);
         } else {
             ProgramSource::definer($statement->definition->definer, $session, diagnostics: $session->diagnostics);
-        }
-    }
-
-    /**
-     * Refuses a legacy view INTO using its typed clause positions and preceding modifiers.
-     *
-     * @throws SqlError When the view redirects its query result
-     */
-    public function clause(CreateView|AlterView $statement, Session $session): void
-    {
-        $prefix = $session->settings()->legacy() ? (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewClauses())->before($statement->definition->query, $session->settings()->release()) : null;
-        if ($prefix === null) {
-            return;
-        }
-        [$variable, $notices] = $prefix;
-        $error = $variable ? SchemaError::ViewSelectVariable->error() : SchemaError::ViewSelectClause->error('INTO');
-
-        throw (new \MySqlMemory\Session\Parse\ModernWarnings())->recorded($notices, $error, $session);
-    }
-
-    /**
-     * Refuses a variable or a parameter in the query of a view (ER_VIEW_SELECT_VARIABLE), which the server finds where it parses the variable, so before a system variable it does not know (verified on a live 8.4 server).
-     *
-     * @throws SqlError When the query of a view reads a variable or a parameter
-     */
-    public function variables(\SqlSemantics\Statement\Statement $statement): void
-    {
-        if (!$statement instanceof CreateView && !$statement instanceof AlterView) {
-            return;
-        }
-        $walker = new Walker();
-        foreach ([\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable::class, \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable::class, \SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class] as $class) {
-            if ($walker->find($statement->definition->query, $class) !== []) {
-                throw SchemaError::ViewSelectVariable->error();
-            }
         }
     }
 

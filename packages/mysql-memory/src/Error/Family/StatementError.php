@@ -34,6 +34,7 @@ enum StatementError: int implements ErrorCode
     case SetConstantExpression = 1204;
     case WrongArguments = 1210;
     case WrongUsage = 1221;
+    case MisplacedInto = 3954;
     case DuplicateArgument = 1225;
     case CantUseOptionHere = 1234;
     case NotSupportedYet = 1235;

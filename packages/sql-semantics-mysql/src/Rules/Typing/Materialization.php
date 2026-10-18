@@ -66,7 +66,7 @@ final class Materialization
      */
     public function view(Query $query, GrammarRelease $release = GrammarRelease::MySql847, ?\SqlSemantics\Statement\Fact\Facts $facts = null): bool
     {
-        while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->with === null && $query->orderBy === [] && $query->limit === null)) {
+        while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->orderBy === [] && $query->limit === null)) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
         if (!$query instanceof Select || $query->from === null || $query->from instanceof Dual) {

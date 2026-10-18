@@ -13,7 +13,8 @@ use SqlSemantics\Statement\Query;
 /**
  * Enforces the query grammar shared by CREATE VIEW and ALTER VIEW.
  *
- * A view query cannot invoke the legacy PROCEDURE ANALYSE result processor.
+ * A view query cannot read session inputs, redirect its result, or invoke
+ * the legacy PROCEDURE ANALYSE result processor.
  * The restriction applies through query wrappers and set operations.
  * Source: https://dev.mysql.com/doc/refman/5.7/en/create-view.html.
  *
@@ -22,10 +23,12 @@ use SqlSemantics\Statement\Query;
 final class ViewQueries
 {
     /**
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a view query holds PROCEDURE ANALYSE
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the query has an intrinsic view-body restriction
      */
     public function check(Query $query): void
     {
+        $problem = $this->problem($query);
+        Check::input($problem === null, $problem?->message() ?? 'A view query has a persistent read role.');
         $pending = [$query];
         $seen = new SplObjectStorage();
         while ($pending !== []) {
@@ -38,5 +41,34 @@ final class ViewQueries
                 array_push($pending, ...array_values(get_object_vars($value)));
             }
         }
+    }
+
+    /**
+     * Answers the first variable or destination in the body's structural clause order.
+     */
+    public function problem(Node $query): ?\SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction
+    {
+        $node = $this->occurrence($query);
+        return $node === null ? null : ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination ? \SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction::Into : \SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction::Variable);
+    }
+
+    /**
+     * Answers the first reached session input or destination in written clause order.
+     */
+    public function occurrence(Node $query): ?Node
+    {
+        $reached = array_fill_keys(array_map(spl_object_id(...), (new ReadDependencies())->nodes($query)), true);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewClauses())->nodes($query) as $node) {
+            if (!isset($reached[spl_object_id($node)])) {
+                continue;
+            }
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable || $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable || $node instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter) {
+                return $node;
+            }
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination) {
+                return $node;
+            }
+        }
+        return null;
     }
 }

@@ -141,7 +141,8 @@ final class Relations
         $merged = $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && $this->mergeable($resolution->definition->query);
         $placed = $this->shaped($reference, $plan->domains);
         $scope->place($reference, $placed, $plan->names);
-        $scope->merged[spl_object_id($reference)] = $merged ? $plan->origins : $this->planner->materialized($placed);
+        $stored = array_map(static fn (?ColumnOrigin $source, ?ColumnOrigin $temporary): ColumnOrigin => new ColumnOrigin($source->schema ?? '', '', $source->originalTable ?? '', '', ($temporary->flags ?? 0) | (($source->flags ?? 0) & \MySqlMemory\Result\ColumnFlag::NoDefaultValue->value)), $plan->origins === [] ? array_fill(0, count($placed), null) : $plan->origins, $this->planner->materialized($placed));
+        $scope->merged[spl_object_id($reference)] = $merged ? $plan->origins : $stored;
         $scope->derived[spl_object_id($reference)] = $reference->alias->value ?? $reference->name->name->value;
 
         $once = !$merged && !$plan->root instanceof Path\Source\WorkingTable && $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && \MySqlMemory\Evaluation\Compile\Constancy::of($resolution->definition->query, $this->planner->compiler->facts, effects: false)->constant();

@@ -1703,6 +1703,10 @@
         "release": "SqlSemantics\\Contract\\GrammarRelease",
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\GroupingRule"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedIntoSetOperand": {
+        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Set\\SetOperator"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedQuery": {
         "query": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery"
     },
@@ -3847,6 +3851,16 @@
         "behavior": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropBehavior",
         "ifExists": "bool",
         "views": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\Problem\\BodyRestriction": {
+        "name": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\View\\Problem\\RefusedBody": {
+        "alter": "bool",
+        "body": "SqlSemantics\\Statement\\Query|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "restriction": "SqlSemantics\\Platform\\MySql\\Statement\\View\\Problem\\BodyRestriction",
+        "view": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\View\\Problem\\RefusedColumns": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name",

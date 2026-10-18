@@ -375,4 +375,11 @@ final class MaterializationTest extends TestCase
         self::assertFalse($rules->mergeable($query, GrammarRelease::MySql5651));
     }
 
+    public function testViewKeepsAnUnusedCommonTableExpressionSeparateFromItsBody(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH unused AS (SELECT @x) SELECT a FROM t');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertTrue((new Materialization())->view($operation->statement->query));
+    }
+
 }

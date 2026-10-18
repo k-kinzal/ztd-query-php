@@ -32,4 +32,19 @@ final class ViewQueriesTest extends TestCase
 
         $this->addToAssertionCount(1);
     }
+
+    public function testProblemRecognizesSessionInputsInsideNestedQueryRoles(): void
+    {
+        $variable = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('x'));
+        $inner = new Select([], [new SelectExpression($variable)]);
+        $outer = new Select([], [new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists($inner))]);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction::Variable, (new ViewQueries())->problem($outer));
+    }
+
+    public function testOccurrenceIdentifiesTheRetainedSessionInput(): void
+    {
+        $variable = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('x'));
+        self::assertSame($variable, (new ViewQueries())->occurrence(new Select([], [new SelectExpression($variable)])));
+    }
 }

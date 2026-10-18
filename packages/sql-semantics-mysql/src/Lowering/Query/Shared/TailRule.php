@@ -163,7 +163,7 @@ final class TailRule
         return match ($form->signature) {
             'opt_into:' => null,
             'opt_into: into' => $this->into($form->node(0)),
-            'into: INTO into_destination', 'into_clause: INTO into_destination' => $this->destination($form->node(1)),
+            'into: INTO into_destination', 'into_clause: INTO into_destination' => $this->lowering->origins->record($this->destination($form->node(1)), $clause),
             default => throw ImplementationGap::production($form),
         };
     }

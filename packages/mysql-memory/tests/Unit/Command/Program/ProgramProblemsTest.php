@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Program;
 
 use MySqlMemory\Command\Program\ProgramProblems;
-use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Problems;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers;
-use SqlSemantics\Platform\MySql\Statement\View\CreateView;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
@@ -108,7 +106,7 @@ final class ProgramProblemsTest extends TestCase
         $session->query('CREATE VIEW v AS SELECT @x FROM nope');
     }
 
-    public function testRaiseResolvesTheQueryOfAViewBeforeItsName(): void
+    public function testViewResolvesTheQueryBeforeItsTargetName(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');
@@ -174,20 +172,6 @@ final class ProgramProblemsTest extends TestCase
         $session->query("CREATE DEFINER = 'u'@'" . str_repeat('h', 256) . "' VIEW v AS SELECT 1");
     }
 
-    public function testViewRefusesAParameterInTheQuery(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $operation = $session->analyze('CREATE VIEW v AS SELECT ?', true);
-        $statement = $operation->statement;
-        self::assertInstanceOf(CreateView::class, $statement);
-
-        $this->expectExceptionCode(1351);
-
-        (new ProgramProblems())->view($statement, $operation, $session, new Problems());
-    }
-
     public function testScheduleRefusesATableInTheScheduleOfAnEvent(): void
     {
         $session = (new Instance())->connect();
@@ -216,27 +200,4 @@ final class ProgramProblemsTest extends TestCase
         (new ProgramProblems())->body($operation->statement, $operation, $session, new Problems());
     }
 
-    public function testVariablesRefusesAVariableInTheQueryOfAView(): void
-    {
-        $session = (new Instance())->connect();
-        (new ProgramProblems())->variables($session->analyze('SELECT @x')->statement);
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1351);
-
-        (new ProgramProblems())->variables($session->analyze('CREATE VIEW v AS SELECT @@nosuch')->statement);
-    }
-
-    public function testClauseRefusesIntoInTheQueryOfAViewInMySql57(): void
-    {
-        $session = (new Instance('5.7.44'))->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1350);
-        $this->expectExceptionMessage("View's SELECT contains a 'INTO' clause");
-
-        $session->query('CREATE VIEW v AS SELECT 1 INTO @a UNION SELECT SQL_CACHE 2');
-    }
 }

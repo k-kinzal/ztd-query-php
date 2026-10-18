@@ -76,13 +76,13 @@ final class Views
         return array_map(static function (Domain $domain, ?ColumnOrigin $origin) use ($view, $merged, $legacy): ColumnOrigin {
             if ($merged) {
                 $source = $origin->underlying ?? $origin;
-                $computed = $source === null || $source->originalTable === '';
+                $computed = $source === null || ($source->originalTable === '' && $source->table === '');
                 $flags = $computed ? $domain->flags() : ($origin->flags ?? 0);
                 $base = $source ?? new ColumnOrigin('', '', '', '', $domain->flags(), true);
                 return new ColumnOrigin($computed ? '' : $view->schema, '', $view->name, $origin->column ?? '', $flags, $computed || ($origin->exact ?? false), $base);
             }
             $source = $origin?->unkeyed();
-            $original = $source->originalTable ?? '';
+            $original = $source === null ? '' : ($source->originalTable !== '' ? $source->originalTable : $source->table);
             return new ColumnOrigin($legacy ? '' : ($source->schema ?? $view->schema), '', $original === '' && !$legacy ? $view->name : $original, $source->column ?? '', $source->flags ?? 0);
         }, $plan->domains, array_pad($plan->origins, count($plan->domains), null));
     }

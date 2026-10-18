@@ -226,4 +226,16 @@ final class ViewsTest extends TestCase
         self::assertSame($direct->rows, $derived->rows);
     }
 
+    public function testOriginsRetainsAMaterializedCommonTablesPublicIdentity(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE VIEW v AS WITH c AS (SELECT 1 AS a) SELECT a FROM c');
+        $merged = $session->query('SELECT * FROM v')[0];
+        $session->query('ALTER ALGORITHM=TEMPTABLE VIEW v AS WITH c AS (SELECT 1 AS a) SELECT a FROM c');
+        $stored = $session->query('SELECT * FROM v')[0];
+        self::assertInstanceOf(ResultSet::class, $merged);
+        self::assertInstanceOf(ResultSet::class, $stored);
+        self::assertSame(['v', 'c'], [$merged->columns[0]->originalTable, $stored->columns[0]->originalTable]);
+    }
+
 }

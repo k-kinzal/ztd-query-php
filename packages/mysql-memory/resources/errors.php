@@ -627,4 +627,5 @@ return [
     4066 => ['HY000', "REQUIRE_ROW_FORMAT cannot be disabled for replication channel '%s' when GTID_ONLY=1."],
     4067 => ['HY000', "SOURCE_AUTO_POSITION cannot be disabled for replication channel '%s' when GTID_ONLY=1."],
     4160 => ['HY000', 'The value supplied for %s in the SET list cannot be null'],
+    3954 => ['HY000', 'Misplaced INTO clause, INTO is not allowed inside subqueries, and must be placed at end of UNION clauses.'],
 ];

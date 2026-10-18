@@ -1977,3 +1977,26 @@ A replay of 710 saved native observations has zero differences, including the
 original unseeded failure. A fresh unseeded run is in progress; these targeted
 results do not close the remaining view and window constructor domains or the
 final-revision fuzz gates.
+
+### Persistent view bodies and lexical read dependencies
+
+`ViewDefinition` rejects session variables, parameters and result destinations
+in reached query bodies. Lexically scoped CTE dependencies determine which
+bodies are reached: an unused CTE may retain such an expression, while a used
+CTE or subquery cannot introduce it into a persistent view. SQL lowering emits
+`RefusedBody` before constructing an invalid view, retaining the definition
+identity, definer and typed body. A misplaced leading INTO in a set operation
+retains its offending selection in `RefusedIntoSetOperand`. Neither refusal
+retains SQL or a parser tree.
+
+The `query357` validation snapshot passed static checks and unit/property/doctest
+suites for SQL Semantics, MySQL semantics and MySQL Memory. Native comparisons
+covered 1,010 view-input observations on five releases, 117 CTE metadata
+observations on three modern releases, and 240 same-object observations on
+three modern releases. The same eight directly constructed views and read
+queries were reused with missing, empty, populated, dropped and recreated
+source tables. The session input text remained unrelated to these objects.
+Another 1,489 saved native observations replayed without a difference. CTE
+materialization now preserves base-column identity; view metadata distinguishes
+merged and explicit TEMPTABLE algorithms. These observations close the tested
+view cases, not the remaining acceptance gates.

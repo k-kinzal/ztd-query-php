@@ -166,14 +166,35 @@ final class ViewRule
         try {
             $read = $this->lowering->queries->statement($query->node(0));
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand) {
+                $this->body($identity, $failure->problem->operand, $definer, $alter, $failure->end);
+            }
             if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery && !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection) {
                 throw $failure;
             }
+            $body = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery ? $failure->problem->query : $failure->problem->selection;
+            $this->body($identity, $body, $definer, $alter, $failure->end);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery($identity, $alter, $failure->problem, $definer), $failure->end, false);
         }
         \SqlSemantics\Diagnostic\Check::invariant($read instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'A view definition retains a complete read query.');
         $this->lowering->origins->forget($read);
+        $this->body($identity, $read->query, $definer, $alter, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0);
         return new ViewDefinition($identity, $read->query, $columns, $algorithm, $definer, self::SECURITY[$suid->signature], self::CHECKS[$check->signature], $exists);
+    }
+
+    /**
+     * Retains a variable or result destination outside ordinary view definitions.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the body has an intrinsic view restriction
+     */
+    public function body(\SqlSemantics\Statement\Identifier\QualifiedName $view, \SqlSemantics\Statement\Query|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $body, ?Account $definer, bool $alter, int $end): void
+    {
+        $occurrence = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ViewQueries())->occurrence($body);
+        if ($occurrence !== null) {
+            $origin = $this->lowering->origins->publish()->of($occurrence);
+            $end = $origin === null ? $end : $origin->offset + ($occurrence instanceof \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination ? 1 : $origin->length);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedBody($view, $alter, $body, $definer), $end);
+        }
     }
 
     /**

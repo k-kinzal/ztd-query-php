@@ -125,4 +125,11 @@ final class ViewRuleTest extends TestCase
         self::assertSame('CREATE VIEW v (``) AS SELECT 1', $semantics->analyze('CREATE VIEW v (``) AS SELECT 1')->toString());
     }
 
+
+    public function testBodyRetainsARefusedOperandWithItsVariableRole(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("View's SELECT contains a variable or parameter");
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE VIEW v AS SELECT ROW(@x,2)');
+    }
 }

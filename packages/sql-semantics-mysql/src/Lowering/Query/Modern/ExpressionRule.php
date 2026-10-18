@@ -129,6 +129,8 @@ final class ExpressionRule
     /**
      * Lowers a query expression body; a single query block stays open for the clauses written after it.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a leading operand redirects its result
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function body(Node $body): Block|Query
@@ -149,6 +151,10 @@ final class ExpressionRule
         }
         $query = $first instanceof Block ? $first->select() : $first;
         foreach (array_reverse($steps) as [$operator, $quantifier, $right]) {
+            if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $query->into !== null) {
+                $origin = $this->lowering->origins->publish()->of($query->into);
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand($query, $operator), $origin->offset ?? 0);
+            }
             $operand = $this->body($right);
             $query = new SetOperation($query, $operator, $quantifier, $operand instanceof Block ? $operand->select() : $operand);
         }

@@ -109,9 +109,7 @@ final class Reading
                 throw StatementError::WrongUsage->error('CUBE/ROLLUP', 'ORDER BY');
             }
         }
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\View\AlterView) {
-            (new \MySqlMemory\Command\Program\ProgramProblems())->clause($operation->statement, $session);
-        }
+
     }
 
     /**
@@ -154,9 +152,6 @@ final class Reading
         $alias = null;
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && $operation instanceof Operation && Stages::selfChecked($operation->statement))) {
-                if ($diagnostic instanceof UnknownSystemVariable && $operation instanceof Operation) {
-                    (new \MySqlMemory\Command\Program\ProgramProblems())->variables($operation->statement);
-                }
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
             if (Stages::closing($diagnostic)) {
