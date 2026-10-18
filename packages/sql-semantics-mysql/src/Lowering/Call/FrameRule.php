@@ -75,14 +75,21 @@ final class FrameRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function specification(Node $specification): WindowSpec
+    public function specification(Node $specification): WindowSpec|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec
     {
         $form = $this->lowering->form($specification);
         $this->lowering->names->claimed($form, ['window_spec: ( window_spec_details )']);
         $details = $this->lowering->form($form->node(1));
         $this->lowering->names->claimed($details, ['window_spec_details: opt_existing_window_name opt_partition_clause opt_window_order_by_clause opt_window_frame_clause']);
 
-        return new WindowSpec($this->base($details->node(0)), $this->ordering($details->node(1)), $this->ordering($details->node(2)), $this->frame($details->node(3)));
+        $base = $this->base($details->node(0));
+        $partition = $this->ordering($details->node(1));
+        $order = $this->ordering($details->node(2));
+        $frame = $this->frame($details->node(3));
+        if (array_filter([...$partition, ...$order], static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec($base, $partition, $order, $frame);
+        }
+        return new WindowSpec($base, array_values(array_filter($partition, static fn ($item): bool => $item instanceof OrderItem)), array_values(array_filter($order, static fn ($item): bool => $item instanceof OrderItem)), $frame);
     }
 
     /**
@@ -104,7 +111,7 @@ final class FrameRule
     /**
      * Lowers the partitioning or the ordering: a node of opt_partition_clause or opt_window_order_by_clause.
      *
-     * @return list<OrderItem>
+     * @return list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem>
      * @throws ImplementationGap When the production has no rule
      */
     public function ordering(Node $clause): array
@@ -113,7 +120,7 @@ final class FrameRule
 
         return match ($form->signature) {
             'opt_partition_clause:', 'opt_window_order_by_clause:' => [],
-            'opt_partition_clause: PARTITION_SYM BY group_list', 'opt_window_order_by_clause: ORDER_SYM BY order_list' => $this->lowering->queries->ordering($form->node(2)),
+            'opt_partition_clause: PARTITION_SYM BY group_list', 'opt_window_order_by_clause: ORDER_SYM BY order_list' => (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->items($form->node(2), false),
             default => throw ImplementationGap::production($form),
         };
     }

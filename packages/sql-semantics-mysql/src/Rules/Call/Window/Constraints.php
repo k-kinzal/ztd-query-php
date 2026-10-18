@@ -26,6 +26,9 @@ final class Constraints
      */
     public function problem(\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification|null $window, bool $used = true): ?\SqlSemantics\Statement\Fact\Diagnostic
     {
+        if ($window instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec) {
+            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint($window);
+        }
         if (!$window instanceof WindowSpec) {
             return null;
         }

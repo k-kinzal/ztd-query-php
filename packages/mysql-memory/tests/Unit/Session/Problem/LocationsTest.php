@@ -201,7 +201,7 @@ final class LocationsTest extends TestCase
         $late = $session->run('SELECT zz FROM t WINDOW w AS (y)')[0];
         $early = $session->run('SELECT ROW_NUMBER() OVER w2, zz FROM t')[0];
 
-        self::assertSame([[1, 0], [6, PHP_INT_MAX], [6, PHP_INT_MAX]], array_map(static fn (array $entry): array => $entry[1][1], $located));
+        self::assertSame([[1, 0], [6, PHP_INT_MAX, PHP_INT_MAX], [6, PHP_INT_MAX, PHP_INT_MAX]], array_map(static fn (array $entry): array => $entry[1][1], $located));
         self::assertInstanceOf(SqlError::class, $late);
         self::assertInstanceOf(SqlError::class, $early);
         self::assertSame([1054, 3579], [$late->getCode(), $early->getCode()]);

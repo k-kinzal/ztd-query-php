@@ -24,6 +24,9 @@ final class LibraryErrorsTest extends TestCase
         yield '5.6 process errno' => ['5.6.51', $two, $eleven, true];
         yield '5.7 process errno' => ['5.7.44', $two, $eleven, true];
         yield '8.0 process errno' => ['8.0.44', str_replace('errno: 2 ', 'errno: 0 ', $two), $eleven, true];
+        yield '8.1 process errno' => ['8.1.0', str_replace('errno: 2 ', 'errno: 0 ', $two), $eleven, true];
+        yield '8.1 unobserved errno stays exact' => ['8.1.0', $two, $eleven, false];
+        yield '8.1 different path stays exact' => ['8.1.0', str_replace('errno: 2 ', 'errno: 0 ', $two), str_replace('/plugin/', '/other/', $eleven), false];
         yield '8.2 process errno' => ['8.2.0', str_replace('errno: 2 ', 'errno: 0 ', $two), $eleven, true];
         yield '8.2 unobserved errno stays exact' => ['8.2.0', $two, $eleven, false];
         yield '8.2 permission errno stays exact' => ['8.2.0', str_replace('errno: 2 ', 'errno: 13 ', $two), $eleven, false];

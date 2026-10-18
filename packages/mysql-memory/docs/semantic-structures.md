@@ -2428,3 +2428,41 @@ That missing retained operand role, partition constructor domains, additional
 frame/inheritance domains, EXPLAIN measured output and final same-revision
 campaigns remain unresolved. No matching SQL error or earlier campaign is used
 as a substitute for those obligations.
+
+
+### Complete window ordering roles
+
+`DeferredWindowSpec` retains every partition and ordering item, its direction,
+base window and frame when a non-scalar operand prevents ordinary scalar use.
+It cannot substitute for an ordinary scalar expression. Named definitions and
+unused common tables keep this structure until their query is prepared. Window
+partition items cannot carry ASC or DESC; both ordinary and deferred window
+constructors now enforce that grammar invariant before Operation construction.
+
+Preparation locates each deferred operand after its own dependencies and before
+later items or inherited-window lookup. An earlier ROW width failure therefore
+precedes a later unknown column, while a missing column inside that ROW still
+fails first. The consumer uses semantic ownership and clause order without
+accessing SQL input or parser nodes. The original SHOW filter fuzz failure,
+whose unused CTE previously prevented complete outer-query lowering, is retained
+in the native regression corpus.
+
+On the `query530` source snapshot, 69 SQL submissions compare exactly through
+text and prepared protocols on MySQL 8.0.44, 8.4.7 and 9.1.0 (414 observations).
+Sixteen directly constructed procedure objects pass 384 native comparisons
+across declaration, skipped and reached branches, missing tables and columns,
+schema changes and populated rows. These objects retain later missing columns
+to check error ordering, and execution receives unrelated invalid session text.
+The reviewed retained-value schema contains 959 definitions.
+
+The supplied MySQL 8.1.0 corpus separately observed missing-library errno 0,
+while the identical SQL on two fresh instances returned errno 11 in 30 trials
+each. The bounded loader comparison contract now includes that release. Error
+1126, SQLSTATE HY000, library, path, complete loader text and corresponding
+warnings remain exact; unobserved errno values and different paths still fail.
+The original observation and fresh-instance observations are saved together.
+
+These repaired domains do not close the partition, additional frame/inheritance
+or measured EXPLAIN output obligations. Whole-model native comparisons and
+900-second unseeded campaigns remain required on the final revision; matching
+SQL errors alone do not certify the construction contract.

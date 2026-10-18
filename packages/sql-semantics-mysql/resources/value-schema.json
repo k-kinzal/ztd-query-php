@@ -683,6 +683,9 @@
         "positional": "bool",
         "window": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowSpec"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowOperandConstraint": {
+        "window": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredWindowSpec"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowingLimit": {
         "name": "string",
         "value": "string"
@@ -2593,6 +2596,12 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery": {
         "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredWindowSpec": {
+        "base": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "frame": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\Frame",
+        "order": "array",
+        "partition": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredExplain": {
         "analyze": "bool",

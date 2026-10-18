@@ -27,6 +27,7 @@ final class CallErrors
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint => $this->frame($diagnostic),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint => (new \MySqlMemory\Program\Expression\RowUse())->error($diagnostic->window->operand()),
             $diagnostic instanceof WrongArgumentCount => QueryError::WrongParameterCountToNativeFunction->error($diagnostic->function->value),
             $diagnostic instanceof NamedArgument => QueryError::WrongParametersToNativeFunction->error($originalCase ? $diagnostic->function->value : strtolower($diagnostic->function->value)),
             $diagnostic instanceof ReservedFunction => QueryError::NativeFunctionRejected->error($diagnostic->function->value),

@@ -73,6 +73,15 @@ final class WindowingTest extends TestCase
         self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long], [$direct->columns[0]->type, $stored->columns[0]->type]);
     }
 
+    public function testPlanPreparesRetainedNamedWindowOperands(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1241);
+        $this->expectExceptionMessage('Operand should contain 1 column(s)');
+        $session->query('SELECT 1 WINDOW w AS (ORDER BY ROW(1, 2))');
+    }
+
     public function testPlanBindsIndependentDirectAggregatesForEachRollupOutput(): void
     {
         $session = (new Instance())->connect();

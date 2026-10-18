@@ -76,14 +76,14 @@ final class StoredClauses
     /**
      * @return list<OrderItem|DeferredOrderItem> Items in written order
      */
-    public function items(Node $list): array
+    public function items(Node $list, bool $positions = true): array
     {
         $nodes = (new Lists())->items($list);
         $items = [];
         for ($index = 0; $index < count($nodes); $index++) {
             $item = $nodes[$index];
             $direction = $item->name === 'order_ident' ? $nodes[++$index] : null;
-            $items[] = $this->item($item, $direction);
+            $items[] = $this->item($item, $direction, $positions);
         }
         return $items;
     }
@@ -91,7 +91,7 @@ final class StoredClauses
     /**
      * Reads the same item role and direction as the ordinary clause rules.
      */
-    public function item(Node $item, ?Node $direction = null): OrderItem|DeferredOrderItem
+    public function item(Node $item, ?Node $direction = null, bool $positions = true): OrderItem|DeferredOrderItem
     {
         $form = $this->lowering->form($item);
         $rules = new ClauseRule($this->lowering);
@@ -101,6 +101,6 @@ final class StoredClauses
             default => throw ImplementationGap::production($form),
         };
         $operand = $this->lowering->expressions->operand($form->node(0));
-        return $operand instanceof Scalar ? $rules->positions([new OrderItem($operand, $ordering)])[0] : new DeferredOrderItem($operand, $ordering);
+        return $operand instanceof Scalar ? ($positions ? $rules->positions([new OrderItem($operand, $ordering)])[0] : new OrderItem($operand, $ordering)) : new DeferredOrderItem($operand, $ordering);
     }
 }

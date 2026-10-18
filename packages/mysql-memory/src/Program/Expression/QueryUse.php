@@ -52,7 +52,7 @@ final class QueryUse
         $query->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         $preparation = new QueryPreparation($query->query, $derivation->facts(), $context->profile);
         (new Problems())->raise($preparation, $session);
-        if ($query->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint) {
+        if ($query->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || $query->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint) {
             $this->plan($preparation, $session);
         }
         throw (new Errors())->error($query->problem(), $session);

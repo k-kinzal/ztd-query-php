@@ -76,15 +76,7 @@ final class Collected
         $input = clone $scope;
         $input->windowing = null;
         $specifications = [...array_map(static fn ($window): array => [$window->name->value, $window->specification], $this->windows), ...array_map(static fn ($over): array => [Specification::UNNAMED, $over], array_values(array_filter($references, static fn ($over): bool => !$over instanceof Name)))];
-        foreach ($specifications as [$name, $specification]) {
-            \SqlSemantics\Diagnostic\Check::invariant($specification instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec, 'A MySQL window retains its complete specification.');
-            foreach (['window partition by' => $specification->partition, 'window order by' => $specification->order] as $clause => $items) {
-                foreach ($items as $item) {
-                    (new Resolution())->item($name, $item);
-                    $this->planner->compiler->compile($item->expression, $input->inClause($clause));
-                }
-            }
-        }
+        $this->dependencies($specifications, $input);
         $windows = (new Resolution())->windows($this->windows, $references);
         $this->options();
         foreach ($windows as $window) {
@@ -100,6 +92,27 @@ final class Collected
                 throw $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing ? \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($problem->limit->value) : QueryError::WindowFrameIllegal->error(Specification::UNNAMED);
             }
             (new Functions($this->planner))->compile($call, $input);
+        }
+    }
+
+    /**
+     * Prepares every retained partitioning and ordering item in native clause order.
+     *
+     * @param list<array{string, \SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification}> $specifications Named definitions followed by inline specifications
+     * @throws \MySqlMemory\Error\SqlError When a reached item cannot prepare
+     */
+    public function dependencies(array $specifications, Scope $input): void
+    {
+        foreach ($specifications as [$name, $specification]) {
+            \SqlSemantics\Diagnostic\Check::invariant($specification instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec, 'A MySQL window retains its complete specification.');
+            foreach (['window partition by' => $specification->partition, 'window order by' => $specification->order] as $clause => $items) {
+                foreach ($items as $item) {
+                    if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Query\OrderItem) {
+                        (new Resolution())->item($name, $item);
+                    }
+                    (new \MySqlMemory\Evaluation\Compile\Selections())->operand($item->expression, $this->planner->compiler, $input->inClause($clause));
+                }
+            }
         }
     }
 

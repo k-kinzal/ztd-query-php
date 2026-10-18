@@ -36,6 +36,10 @@ final class Windows
      */
     public function located(Locator $locator, array $diagnostics, array $located): array
     {
+        foreach ($locator->windowOperands as [$operand, $clause, $at]) {
+            $error = (new \MySqlMemory\Program\Expression\RowUse())->error($operand);
+            $located[spl_object_id($error)] = [$error, [$clause, $at]];
+        }
         foreach ($locator->windows as [$name, $at]) {
             foreach ($diagnostics as $diagnostic) {
                 if ($diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::UnknownWindow && $diagnostic->name === $name) {

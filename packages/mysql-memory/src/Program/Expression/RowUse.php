@@ -179,7 +179,7 @@ final class RowUse
      */
     public function pending(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Scope $scope): bool
     {
-        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint);
+        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint);
     }
 
     /**
@@ -228,6 +228,7 @@ final class RowUse
         }
         $problem = $operand->problem();
         return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint => $this->error($problem->window->operand()),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint => (new \MySqlMemory\Session\Problem\CallErrors())->frame($problem),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint => ($problem->positional ? QueryError::WindowPositionalOrdering : QueryError::WindowFrameIllegal)->error('<unnamed window>'),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount => \MySqlMemory\Error\Family\StatementError::WrongArguments->error(strtolower($problem->function->value)),

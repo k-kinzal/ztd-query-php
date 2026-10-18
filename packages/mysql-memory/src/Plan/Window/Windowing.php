@@ -74,6 +74,9 @@ final class Windowing
         if ($calls === [] && $select->windows === []) {
             return [$input, false, false];
         }
+        if (array_filter($select->windows, static fn ($window): bool => $window->specification instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec) !== []) {
+            (new Collected($this->planner, $input->width()))->dependencies(array_map(static fn ($window): array => [$window->name->value, $window->specification], $select->windows), $scope);
+        }
         $windows = (new Resolution())->resolve($select, $calls);
         $functions = new Functions($this->planner);
         foreach ($calls as $call) {

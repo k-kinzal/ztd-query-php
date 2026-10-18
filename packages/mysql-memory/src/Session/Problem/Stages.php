@@ -249,6 +249,6 @@ final class Stages
             }
             return false;
         }
-        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
     }
 }

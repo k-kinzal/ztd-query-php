@@ -77,7 +77,7 @@ final class WindowReferences
             }
             $reference = match (true) {
                 $node instanceof WindowFunction, $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction, $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof JsonObjectAggregate => $node->over,
-                $node instanceof WindowSpec && $bases => $node->base,
+                ($node instanceof WindowSpec || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec) && $bases => $node->base,
                 default => null,
             };
             if ($reference instanceof Name) {

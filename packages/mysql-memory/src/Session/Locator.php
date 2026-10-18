@@ -26,6 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
@@ -79,7 +80,7 @@ final class Locator
     public array $windows = [];
 
     /**
-     * @var list<WindowSpec> The windows written after OVER in the query block being located, whose names are resolved after its ORDER BY
+     * @var list<WindowSpec|DeferredWindowSpec> The windows written after OVER in the query block being located, whose names are resolved after its ORDER BY
      */
     public array $specifications = [];
 
@@ -97,6 +98,11 @@ final class Locator
      * @var array<int, string> The labels of window specifications, by semantic owner
      */
     public array $windowNames = [];
+
+    /**
+     * @var list<array{\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand, string, list<int>}> Deferred window items after their own dependencies, before later items
+     */
+    public array $windowOperands = [];
 
     /**
      * @var list<array{SetOperation|OrderedSetOperation, list<int>}> Each set operation, with the resolution order its operands are compared at: once its right operand is resolved
@@ -248,7 +254,7 @@ final class Locator
                 $this->visit($current->operand, 'IN/ALL/ANY subquery', [...$at, $this->operandFirst ? 0 : ($early ? 2 : 1)]);
                 $children[] = $current->query;
                 $positions[] = [...$at, $this->operandFirst ? 1 : 0];
-            } elseif ($current instanceof WindowSpec) {
+            } elseif (($current instanceof WindowSpec || $current instanceof DeferredWindowSpec)) {
                 $this->record($current, $clause, $at);
                 $this->specifications[] = $current;
             } elseif ($current instanceof Node) {
@@ -293,6 +299,9 @@ final class Locator
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ValueRow || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone || $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall) {
             $this->places[spl_object_id($node)] = [$clause, $order];
         }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem && in_array($clause, ['window partition by', 'window order by'], true)) {
+            $this->windowOperands[] = [$node->expression, $clause, [...$order, PHP_INT_MAX]];
+        }
         $this->windowed($node, $clause, $order);
     }
 
@@ -308,15 +317,15 @@ final class Locator
             $this->windowChecks[spl_object_id($node)] = [...$this->block, 8, ...$order];
         }
         $over = $node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate ? $node->over : null;
-        if ($over instanceof WindowSpec) {
+        if (($over instanceof WindowSpec || $over instanceof DeferredWindowSpec)) {
             $this->windowChecks[spl_object_id($over)] ??= [...$this->block, 8, ...$order];
             $this->windowNames[spl_object_id($over)] ??= \MySqlMemory\Plan\Window\Specification::UNNAMED;
         }
         if ($over instanceof Name) {
             $this->windows[] = [$over, $order];
         }
-        if ($node instanceof WindowSpec && $node->base !== null) {
-            $this->windows[] = [$node->base, [...$this->block, 6, PHP_INT_MAX]];
+        if (($node instanceof WindowSpec || $node instanceof DeferredWindowSpec) && $node->base !== null) {
+            $this->windows[] = [$node->base, [...$this->block, 6, PHP_INT_MAX, PHP_INT_MAX]];
         }
     }
 
@@ -381,8 +390,8 @@ final class Locator
         $this->specifications = $outerSpecifications;
         $pending = $select->windows;
         while (($node = array_pop($pending)) !== null) {
-            if ($node instanceof WindowSpec && $node->base !== null) {
-                $this->windows[] = [$node->base, [...$order, 6, PHP_INT_MAX]];
+            if (($node instanceof WindowSpec || $node instanceof DeferredWindowSpec) && $node->base !== null) {
+                $this->windows[] = [$node->base, [...$order, 6, PHP_INT_MAX, PHP_INT_MAX]];
             }
             foreach (get_object_vars($node) as $value) {
                 foreach (is_array($value) ? $value : [$value] as $member) {
@@ -405,7 +414,7 @@ final class Locator
         $windows = [];
         $named = [];
         foreach ($select->windows as $definition) {
-            if ($definition->specification instanceof WindowSpec) {
+            if (($definition->specification instanceof WindowSpec || $definition->specification instanceof DeferredWindowSpec)) {
                 $windows[] = $definition->specification;
                 $id = spl_object_id($definition->specification);
                 $named[strtolower($definition->name->value)] = $id;

@@ -307,7 +307,7 @@ final class LocatorTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $locator = (new Locator())->statement($session->analyze('SELECT ROW_NUMBER() OVER w FROM t WINDOW w AS (v), v AS ()')->statement);
 
-        self::assertSame([['w', [1, 0]], ['v', [6, PHP_INT_MAX]]], array_map(static fn (array $entry): array => [$entry[0]->value, $entry[1]], $locator->windows));
+        self::assertSame([['w', [1, 0]], ['v', [6, PHP_INT_MAX, PHP_INT_MAX]]], array_map(static fn (array $entry): array => [$entry[0]->value, $entry[1]], $locator->windows));
     }
 
     public function testRecordLocatesASetOperationAfterItsRightOperand(): void
