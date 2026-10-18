@@ -28,7 +28,7 @@ final class ReplicationSettings
             return;
         }
         $legacy = in_array($context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
-        foreach ($context->variables->instance->registry->replication->heartbeatPeriods as $period) {
+        foreach ($context->variables->replicationPeriods() as $period) {
             if ($period > (float) $value) {
                 $context->warning(AdministrationError::HeartbeatAboveTimeout, $legacy ? 'slave_net_timeout' : 'replica_net_timeout');
             }

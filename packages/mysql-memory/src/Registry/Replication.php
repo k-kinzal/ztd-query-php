@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Registry;
 
 /**
- * The connection repository and relay log lifecycle of the default replication channel.
+ * The connection repository and relay log lifecycle of one replication channel.
  *
  * CHANGE REPLICATION SOURCE initializes the repository after validating GTID settings, even
  * when a later option fails. RESET closes the repository and relay log. A subsequent change

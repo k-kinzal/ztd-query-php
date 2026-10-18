@@ -60,7 +60,7 @@ final class LegacyReplication
             }
         }
         if ($statement instanceof ShowRelaylogEvents) {
-            (new ReplicaCommand())->channel($statement->channel, true);
+            (new ReplicaCommand())->channel($statement->channel, true, $session->instance->registry);
         }
         if ($replica && (int) $session->variables->read('server_id') === 0) {
             if ($master && $release === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {

@@ -70,6 +70,11 @@ final class Registry
     public readonly Replication $replication;
 
     /**
+     * @var array<string, Replication> Named replication channels, separate from the permanent default channel
+     */
+    public array $channels = [];
+
+    /**
      * Creates the objects of a server that has just been installed.
      *
      * @param bool $resourcePriorities Whether the emulated platform applies thread priorities

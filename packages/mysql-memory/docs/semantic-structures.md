@@ -2932,3 +2932,15 @@ scalar-subquery NULL metadata when LIMIT removes all rows. Both tests compare
 rows, metadata, errors and warnings without dropping error outcomes. These
 338 native observations cover this repaired domain; they do not replace the
 whole-model and final-revision fuzzing gates in the acceptance contract.
+
+### Replication channel histories
+
+A failed source change can leave its named channel present. The memory registry
+keeps a separate repository and thread state for each channel, including creation
+before GTID validation and removal by `RESET REPLICA ALL FOR CHANNEL`. An
+unqualified source change reports the native ambiguity condition while multiple
+channels remain; an unqualified thread/reset command selects the channel set.
+`ReplicationChannelTest` compares 65-request histories on MySQL 8.0.44, 8.4.7 and
+9.1.0, including failures followed by channel-specific starts, stops and resets.
+This repairs a history-dependent unseeded differential failure; it does not
+establish replication transport between servers.

@@ -269,4 +269,35 @@ final class ReplicaCommandTest extends TestCase
 
         $session->query('RESET MASTER');
     }
+
+    public function testTargetsSelectsIndependentNamedRepositories(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO GET_SOURCE_PUBLIC_KEY=0 FOR CHANNEL 'alpha'");
+        $registry = $session->instance->registry;
+        $command = new ReplicaCommand();
+        self::assertSame(['', 'alpha'], array_keys($command->targets(null, $registry)));
+        self::assertSame(['alpha' => $registry->channels['alpha']], $command->targets(new Text('ALPHA'), $registry));
+        self::assertFalse($registry->replication->initialized);
+    }
+
+    public function testStartChannelPreservesASeparateDefaultApplier(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO GET_SOURCE_PUBLIC_KEY=0 FOR CHANNEL 'alpha'");
+        $session->query("START REPLICA SQL_THREAD FOR CHANNEL 'alpha'");
+        self::assertTrue($session->instance->registry->channels['alpha']->applying);
+        self::assertFalse($session->instance->registry->replication->applying);
+    }
+
+    public function testStopSuppressesAlreadyStoppedNotesOnlyForAChannelSet(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO GET_SOURCE_PUBLIC_KEY=0 FOR CHANNEL 'alpha'");
+        $session->query('STOP REPLICA');
+        self::assertSame([], $session->diagnostics->conditions);
+        $session->query("STOP REPLICA FOR CHANNEL 'alpha'");
+        self::assertSame([['Note', 3084, "Replication thread(s) for channel 'alpha' are already stopped."]], $session->diagnostics->conditions);
+    }
+
 }

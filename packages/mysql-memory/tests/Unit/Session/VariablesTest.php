@@ -346,4 +346,15 @@ final class VariablesTest extends TestCase
 
         self::assertSame([PHP_INT_MAX, 7], [$session->variables->count('group_concat_max_len', 1024), $session->variables->count('nosuch', 7)]);
     }
+
+    public function testReplicationPeriodsFollowIndependentChannelResets(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=2 FOR CHANNEL ''");
+        $session->query("CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=3 FOR CHANNEL 'alpha'");
+        self::assertSame([2.0, 3.0], $session->variables->replicationPeriods());
+        $session->query("RESET REPLICA ALL FOR CHANNEL 'alpha'");
+        self::assertSame([2.0], $session->variables->replicationPeriods());
+    }
+
 }

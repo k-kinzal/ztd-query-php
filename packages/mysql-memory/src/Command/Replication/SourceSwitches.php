@@ -29,7 +29,7 @@ final class SourceSwitches
      */
     public function check(array $options, Session $session, string $channel): void
     {
-        $state = $session->instance->registry->replication;
+        $state = $channel === '' ? $session->instance->registry->replication : $session->instance->registry->channels[$channel];
         $mode = strtoupper((string) $session->variables->read('gtid_mode'));
         $position = $this->value($options, SourceOptionKind::AutoPosition, $state->autoPosition);
         $row = $this->value($options, SourceOptionKind::RequireRowFormat, $state->requireRowFormat);
@@ -58,9 +58,9 @@ final class SourceSwitches
      *
      * @param array<string, SourceOption> $options The last supplied value of each setting
      */
-    public function apply(array $options, Session $session): void
+    public function apply(array $options, Session $session, string $channel = ''): void
     {
-        $state = $session->instance->registry->replication;
+        $state = $channel === '' ? $session->instance->registry->replication : $session->instance->registry->channels[$channel];
         $state->autoPosition = $this->value($options, SourceOptionKind::AutoPosition, $state->autoPosition);
         $state->requireRowFormat = $this->value($options, SourceOptionKind::RequireRowFormat, $state->requireRowFormat);
         $state->gtidOnly = $this->value($options, SourceOptionKind::GtidOnly, $state->gtidOnly);

@@ -290,4 +290,16 @@ final class Variables
 
         return $number < 0 && $this->catalog->find($name)?->shape === \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape::Unsigned ? PHP_INT_MAX : $number;
     }
+
+    /**
+     * Reads channel heartbeat periods used to validate changes to the global network timeout.
+     *
+     * @return list<float> Periods retained by the default and named channels
+     */
+    public function replicationPeriods(): array
+    {
+        $registry = $this->instance->registry;
+        return array_merge(...array_map(static fn (\MySqlMemory\Registry\Replication $channel): array => array_values($channel->heartbeatPeriods), [$registry->replication, ...array_values($registry->channels)]));
+    }
+
 }

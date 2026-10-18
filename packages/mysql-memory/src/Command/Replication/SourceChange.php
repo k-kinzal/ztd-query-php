@@ -36,16 +36,21 @@ final class SourceChange
      */
     public function check(ChangeReplicationSource $statement, Session $session, Context $context): void
     {
-        (new SourceRepository())->open($session->instance->registry->replication);
         $options = [];
         foreach ($statement->options as $option) {
             $options[$option->kind->value] = $option;
         }
         $channel = $statement->channel === null ? '' : strtolower((new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($statement->channel));
         $this->channel($channel, $session);
+        $registry = $session->instance->registry;
+        if ($statement->channel === null && $registry->channels !== []) {
+            throw AdministrationError::ReplicaMultipleChannels->error();
+        }
+        $state = $channel === '' ? $registry->replication : ($registry->channels[$channel] ??= new \MySqlMemory\Registry\Replication());
+        (new SourceRepository())->open($state);
         $this->gtids($options, $session);
         (new SourceSwitches())->check($options, $session, $channel);
-        $session->instance->registry->replication->initialized = true;
+        $state->initialized = true;
         $user = $options[SourceOptionKind::PrivilegeChecksUser->value]->value ?? null;
         if ($user instanceof AccountName) {
             $identity = (new Names())->identity($user, $session);
@@ -54,15 +59,15 @@ final class SourceChange
             }
         }
         $timeout = $session->variables->read($session->settings()->legacy() ? 'slave_net_timeout' : 'replica_net_timeout');
-        (new SourceRepository())->update($options, $session->instance->registry->replication, $channel, (float) $timeout / 2);
+        (new SourceRepository())->update($options, $state, $channel, (float) $timeout / 2);
         $this->warnings($options, $session, $context);
         $compression = $options[SourceOptionKind::CompressionAlgorithms->value]->value ?? null;
         if ($compression instanceof Text) {
             $this->compression((new Literals())->bytes($compression), $channel);
         }
-        (new SourceRepository())->check($session->instance->registry->replication);
-        $this->relay($options, $session);
-        (new SourceSwitches())->apply($options, $session);
+        (new SourceRepository())->check($state);
+        $this->relay($options, $session, $channel);
+        (new SourceSwitches())->apply($options, $session, $channel);
     }
 
     /**
@@ -70,9 +75,9 @@ final class SourceChange
      *
      * @param array<string, SourceOption> $options The final option of each kind
      */
-    public function relay(array $options, Session $session): void
+    public function relay(array $options, Session $session, string $channel = ''): void
     {
-        $replication = $session->instance->registry->replication;
+        $replication = $channel === '' ? $session->instance->registry->replication : $session->instance->registry->channels[$channel];
         $file = $options[SourceOptionKind::RelayLogFile->value]->value ?? null;
         if ($file instanceof Text) {
             $base = basename((string) $session->variables->read('relay_log'));

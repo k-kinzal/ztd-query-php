@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Operation;
  * Executes the statements that control replication: START and STOP REPLICA, CHANGE REPLICATION SOURCE and FILTER, RESET BINARY LOGS AND GTIDS and RESET REPLICA, and START and STOP GROUP_REPLICATION.
  *
  * The emulated server starts with an unconfigured default channel, and a
- * statement naming another channel fails (ER_REPLICA_CHANNEL_DOES_NOT_EXIST). Each statement but
+ * CHANGE creates named channels before validating their source options. Each statement but
  * the group replication ones commits the open transaction. START REPLICA requires a configured
  * source host for the receiver, noting first that USER or PASSWORD credentials are sent in plain text;
  * it records the requested local state without opening a network replication connection.
@@ -79,7 +79,6 @@ final class ReplicaCommand implements Command
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
-        $registry = $session->instance->registry;
         (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof StartGroupReplication || $statement instanceof StopGroupReplication) {
             throw $session->transaction->open ? StatementError::LockedOrActiveTransaction->error() : AdministrationError::GroupReplicationNotConfigured->error();
@@ -88,12 +87,7 @@ final class ReplicaCommand implements Command
         if ($statement instanceof StartReplica) {
             $this->start($statement, $session);
         } elseif ($statement instanceof StopReplica) {
-            $this->channel($statement->channel, $session->settings()->legacy());
-            if ($registry->replication->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
-                $registry->replication->applying = false;
-            } else {
-                $session->diagnostics->note(AdministrationError::ReplicaThreadsStopped, AdministrationError::ReplicaThreadsStopped->message(''));
-            }
+            $this->stop($statement, $session);
         } elseif ($statement instanceof ChangeReplicationFilter) {
             if ($statement->channel !== null) {
                 throw AdministrationError::ReplicaNotInitialized->error();
@@ -135,11 +129,20 @@ final class ReplicaCommand implements Command
      */
     public function start(StartReplica $statement, Session $session): void
     {
-        $this->channel($statement->channel, $session->settings()->legacy());
+        $channels = $this->targets($statement->channel, $session->instance->registry, $session->settings()->legacy());
+        foreach ($channels as $name => $replication) {
+            $this->startChannel($statement, $session, $replication, $name);
+        }
+    }
+
+    /**
+     * Starts one selected channel without changing a sibling's repository or thread state.
+     */
+    public function startChannel(StartReplica $statement, Session $session, \MySqlMemory\Registry\Replication $replication, string $name): void
+    {
         if ($statement->user !== null || $statement->password !== null) {
             $session->diagnostics->note(AccountError::InsecurePlainText, AccountError::InsecurePlainText->message());
         }
-        $replication = $session->instance->registry->replication;
         $receiver = $statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true);
         $applier = $statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true);
         if ($receiver) {
@@ -152,7 +155,7 @@ final class ReplicaCommand implements Command
             if ($statement->until !== null && $receiver) {
                 $session->diagnostics->note(AdministrationError::ReplicaUntilIgnored, AdministrationError::ReplicaUntilIgnored->message());
             } elseif ($applier && $replication->applying) {
-                $session->diagnostics->note(AdministrationError::ReplicaThreadsRunning, AdministrationError::ReplicaThreadsRunning->message(''));
+                $session->diagnostics->note(AdministrationError::ReplicaThreadsRunning, AdministrationError::ReplicaThreadsRunning->message($name));
             }
             return;
         }
@@ -174,33 +177,69 @@ final class ReplicaCommand implements Command
             $registry->binaryLog->reset($target->first === null ? 1 : (int) (new Literals())->number($target->first));
         }
         if ($target instanceof ResetReplica) {
-            $this->channel($target->channel, $legacy);
-            if ($registry->replication->applying) {
-                throw AdministrationError::ReplicaChannelRunning->error('');
-            }
-            $registry->replication->reset($target->all);
-            if (!$legacy && !$target->all) {
-                (new SourceRepository())->check($registry->replication, true);
+            foreach ($this->targets($target->channel, $registry, $legacy) as $name => $state) {
+                if ($state->applying) {
+                    throw AdministrationError::ReplicaChannelRunning->error($name);
+                }
+                $state->reset($target->all);
+                if ($target->all && $name !== '') {
+                    unset($registry->channels[$name]);
+                }
+                if (!$legacy && !$target->all) {
+                    (new SourceRepository())->check($state, true);
+                }
             }
         }
     }
 
     /**
-     * Refuses a channel other than the default one, naming it in lower case, and a channel name with a line feed.
+     * Resolves an existing channel by its lower-case name and rejects a line feed.
      *
-     * @throws \MySqlMemory\Error\SqlError When the channel is not the default one
+     * @throws \MySqlMemory\Error\SqlError When the named channel does not exist
      */
-    public function channel(?Text $channel, bool $legacy = false): void
+    public function channel(?Text $channel, bool $legacy = false, ?Registry $registry = null): string
     {
         if ($channel === null) {
-            return;
+            return '';
         }
         $name = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($channel);
         if (str_contains($name, "\n")) {
             throw DataError::WrongValue->error('argument contains not-allowed LF', (new DiagnosticText())->bytes($name, 128, $legacy));
         }
-        if ($name !== '') {
-            throw $legacy ? new \MySqlMemory\Error\SqlError(AdministrationError::ReplicaChannelMissing, "Slave channel '" . strtolower($name) . "' does not exist.") : AdministrationError::ReplicaChannelMissing->error(strtolower($name));
+        $name = strtolower($name);
+        if ($name !== '' && !isset($registry?->channels[$name])) {
+            throw $legacy ? new \MySqlMemory\Error\SqlError(AdministrationError::ReplicaChannelMissing, "Slave channel '" . $name . "' does not exist.") : AdministrationError::ReplicaChannelMissing->error($name);
+        }
+        return $name;
+    }
+
+    /**
+     * Selects the requested channel or every channel for an unqualified thread/reset command.
+     *
+     * @return array<string, \MySqlMemory\Registry\Replication> Channels in repository order
+     */
+    public function targets(?Text $channel, Registry $registry, bool $legacy = false): array
+    {
+        if ($channel === null) {
+            return ['' => $registry->replication, ...$registry->channels];
+        }
+        $name = $this->channel($channel, $legacy, $registry);
+        return [$name => $name === '' ? $registry->replication : $registry->channels[$name]];
+    }
+
+    /**
+     * Stops the selected appliers, suppressing individual already-stopped notes for a multi-channel command.
+     */
+    public function stop(StopReplica $statement, Session $session): void
+    {
+        $channels = $this->targets($statement->channel, $session->instance->registry, $session->settings()->legacy());
+        foreach ($channels as $name => $state) {
+            if ($state->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
+                $state->applying = false;
+            } elseif (count($channels) === 1) {
+                $session->diagnostics->note(AdministrationError::ReplicaThreadsStopped, AdministrationError::ReplicaThreadsStopped->message($name));
+            }
         }
     }
+
 }
