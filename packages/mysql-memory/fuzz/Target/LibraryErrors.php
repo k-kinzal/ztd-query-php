@@ -8,7 +8,7 @@ namespace Fuzz\Target;
  * Compares the absent-library error despite MySQL's process-local errno.
  *
  * Black-box observations of 5.6.51 and 5.7.44 return errno 2 or 11 for the same failed load,
- * including independent instances. The 8.0.44 supplied corpus also observed 0 and 11
+ * including independent instances. The 8.0.44 and 8.2.0 supplied corpora also observed 0 and 11
  * for identical requests. Only these release-specific integers are interchangeable:
  * SQL error 1126, HY000, the library, path, complete loader message and warnings stay exact.
  * All result sets and table effects remain part of the ordinary differential comparison.
@@ -27,7 +27,7 @@ final class LibraryErrors
     public function comparable(array $observation, string $version): array
     {
         $error = $observation['error'] ?? null;
-        $allowed = in_array($version, ['5.6.51', '5.7.44'], true) ? '2|11' : ($version === '8.0.44' ? '0|11' : null);
+        $allowed = in_array($version, ['5.6.51', '5.7.44'], true) ? '2|11' : (in_array($version, ['8.0.44', '8.2.0'], true) ? '0|11' : null);
         if ($allowed === null || !is_array($error) || ($error[0] ?? null) !== 1126 || ($error[1] ?? null) !== 'HY000' || !is_string($error[2] ?? null)) {
             return $observation;
         }

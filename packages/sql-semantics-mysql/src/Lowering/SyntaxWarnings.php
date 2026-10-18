@@ -138,12 +138,14 @@ final class SyntaxWarnings
             return $entry;
         }
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
+        $inactive = (new Query\Shared\ValueQueries($lowering))->inactive($tree);
+        $unprepared = $lowering->unprepared();
         $pending = [$tree];
         $scopes = [false];
         while ($pending !== []) {
             $condition = array_pop($pending);
             $body = array_pop($scopes) === true || in_array($condition->name, ['sp_proc_stmt', 'stored_routine_body', 'ev_sql_stmt'], true);
-            $failure = ($body ? (new Routine\Program\SyntaxDefinitions())->rejected($condition) ?? (new Routine\Program\SyntaxArrays())->rejected($condition, $lowering) : null) ?? (new RejectedOperand())->of($condition, $lowering);
+            $failure = ($body ? (new Routine\Program\SyntaxDefinitions())->rejected($condition) ?? (new Routine\Program\SyntaxArrays())->rejected($condition, $lowering) : null) ?? (new RejectedOperand())->of($condition, isset($inactive[spl_object_id($condition)]) ? $unprepared : $lowering);
             if ($failure !== null) {
                 $failure = (new Account\Privilege\LegacyColumns())->scoped($tree, $failure, $lowering);
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) {

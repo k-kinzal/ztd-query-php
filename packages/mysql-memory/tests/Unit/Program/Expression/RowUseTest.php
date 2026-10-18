@@ -128,4 +128,17 @@ final class RowUseTest extends TestCase
         $session->query('SELECT 2+FIRST_VALUE(1) IGNORE NULLS OVER (), missing');
     }
 
+    public function testDeferredPreservesFullTextFollowingConditions(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a TEXT)');
+        try {
+            $session->query('WITH x AS (SELECT MATCH(a) AGAINST(ROW(1,2)) FROM t) SELECT * FROM x');
+            self::fail('A reached full-text row use must be rejected.');
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            self::assertSame(1241, $error->getCode());
+            self::assertSame([['Error', 1241, 'Operand should contain 1 column(s)'], ['Error', 1210, 'Incorrect arguments to AGAINST']], $session->diagnostics->conditions);
+        }
+    }
+
 }

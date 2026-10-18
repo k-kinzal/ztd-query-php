@@ -6,6 +6,7 @@ namespace MySqlMemory\Session\State;
 
 use MySqlMemory\Command\Prepared\ParameterBindings;
 use MySqlMemory\Typing\Domain;
+use WeakMap;
 
 /**
  * Named SQL preparations, derived parameter domains and session routine lookups.
@@ -48,4 +49,9 @@ final class Preparation
      * @var array<int, true> Loaded routine object identities in the current dictionary generation
      */
     public array $routines = [];
+    /**
+     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection, array{list<\SqlSemantics\Statement\Declaration\Table|null>, bool}>|null Stored selection relation snapshots and pending operand retries
+     */
+    public ?WeakMap $selections = null;
+
 }

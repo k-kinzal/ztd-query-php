@@ -25,4 +25,13 @@ final class CallErrorsTest extends TestCase
         self::assertSame(3592, $error->getCode());
         self::assertSame("Window '<unnamed window>': " . $problem->message(), $error->getMessage());
     }
+    public function testFrameRetainsTheOwningWindowName(): void
+    {
+        $window = new WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::Preceding, new NumberLiteral('1.5'))));
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint($window, \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameCondition::Offset);
+        $error = (new CallErrors())->frame($problem, 'w');
+        self::assertSame(3586, $error->getCode());
+        self::assertStringStartsWith("Window 'w':", $error->getMessage());
+    }
+
 }

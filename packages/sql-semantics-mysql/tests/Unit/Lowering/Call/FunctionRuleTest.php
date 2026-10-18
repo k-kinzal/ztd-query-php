@@ -152,4 +152,12 @@ final class FunctionRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall::class, $call);
     }
 
+    public function testPositionRetainsDeferredDependenciesOfAnUnusedCte(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('WITH x AS (SELECT POSITION(ROW(1,2) IN 3)) SELECT 7');
+        self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
 }

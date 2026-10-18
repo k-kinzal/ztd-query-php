@@ -163,7 +163,9 @@ final class InsertFacts
         $late = $this->late($derivation) && $values === null;
         $written = $late ? null : $this->columns($insert->into, $target, $fact, $derivation, $outer);
         if ($values !== null) {
-            $derivation->writes($values, $written ?? [], $insert->into->columns === null || $insert->into->columns->columns === []);
+            foreach ([$values, ...$insert->wrappers()] as $source) {
+                $derivation->writes($source, $written ?? [], $insert->into->columns === null || $insert->into->columns->columns === []);
+            }
         }
         $rows = $derivation->query($insert->source, $outer);
         $listed = count($insert->into->columns->columns ?? []);

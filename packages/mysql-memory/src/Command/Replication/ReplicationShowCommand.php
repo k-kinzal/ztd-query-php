@@ -107,9 +107,9 @@ final class ReplicationShowCommand implements Command
     public const LEGACY_EVENTS = [['Log_name', 20], ['Pos', Field::LongLong, 11], ['Event_type', 20], ['Server_id', Field::Long, 10], ['End_log_pos', Field::LongLong, 11], ['Info', 20]];
 
     /**
-     * The highest position SHOW BINLOG EVENTS reads from.
+     * The highest signed log offset; a larger unsigned position cannot be read.
      */
-    public const LAST_POSITION = '17592186040320';
+    public const LAST_POSITION = '9223372036854775807';
 
     /**
      * Answers true.

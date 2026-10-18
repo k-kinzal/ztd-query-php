@@ -103,7 +103,7 @@ final class Locations
     {
         $dropped = array_diff(array_map(spl_object_id(...), $operation->facts->diagnostics), array_map(spl_object_id(...), $diagnostics));
         $searched = [];
-        foreach ((new Walker())->find($operation->statement, FullTextSearch::class) as $search) {
+        foreach ([...(new Walker())->find($operation->statement, FullTextSearch::class), ...(new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch::class)] as $search) {
             foreach ($search->columns as $column) {
                 $searched[spl_object_id($column)] = true;
             }

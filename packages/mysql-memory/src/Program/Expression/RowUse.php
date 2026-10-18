@@ -97,16 +97,7 @@ final class RowUse
             return;
         }
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
-            foreach ($operand->operands() as $part) {
-                if ($part instanceof \SqlSemantics\Statement\Scalar || $part instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable) {
-                    $compiler->compile($part, $scope);
-                } else {
-                    $this->prepare($part, $compiler, $scope);
-                    if (!$this->pending($part, $scope)) {
-                        throw $this->error($part);
-                    }
-                }
-            }
+            $this->deferred($operand, $compiler, $scope);
             return;
         }
 
@@ -121,6 +112,33 @@ final class RowUse
             } else {
                 $compiler->compile($element, $scope);
             }
+        }
+    }
+
+    /**
+     * Prepares deferred arguments and preserves MATCH's following AGAINST condition.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a dependency fails preparation
+     */
+    public function deferred(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
+    {
+        try {
+            foreach ($operand->operands() as $part) {
+                if ($part instanceof \SqlSemantics\Statement\Scalar || $part instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable) {
+                    $compiler->compile($part, $scope);
+                } else {
+                    $this->prepare($part, $compiler, $scope);
+                    if (!$this->pending($part, $scope)) {
+                        throw $this->error($part);
+                    }
+                }
+            }
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch) {
+                $following = \MySqlMemory\Error\Family\StatementError::WrongArguments;
+                throw new \MySqlMemory\Error\SqlError($error->error, $error->getMessage(), $error, [...$error->following, [$following->value, $following->message('AGAINST')]]);
+            }
+            throw $error;
         }
     }
 
@@ -161,7 +179,7 @@ final class RowUse
      */
     public function pending(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Scope $scope): bool
     {
-        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint);
+        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint);
     }
 
     /**
@@ -210,6 +228,7 @@ final class RowUse
         }
         $problem = $operand->problem();
         return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint => (new \MySqlMemory\Session\Problem\CallErrors())->frame($problem),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint => ($problem->positional ? QueryError::WindowPositionalOrdering : QueryError::WindowFrameIllegal)->error('<unnamed window>'),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount => \MySqlMemory\Error\Family\StatementError::WrongArguments->error(strtolower($problem->function->value)),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing => \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($problem->limit->value),

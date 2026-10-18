@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Compile;
 
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Selections;
 use MySqlMemory\Instance;
 use MySqlMemory\Program\Expression\SelectionUse;
@@ -23,7 +24,7 @@ final class SelectionsTest extends TestCase
     public function testBoundKeepsTheDefiningCommonTableScope(): void
     {
         $session = (new Instance())->connect();
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectException(SqlError::class);
         $this->expectExceptionCode(1241);
         $session->query('WITH b AS (SELECT 7 AS a), c AS (SELECT ROW(a,2) FROM b) SELECT 1 FROM c');
     }
@@ -33,7 +34,7 @@ final class SelectionsTest extends TestCase
         $session = (new Instance())->connect();
         $selection = new DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))], where: new ColumnUse(new Name('missing')), having: new Row([new NumberLiteral('1'), new NumberLiteral('2')]));
         $session->text = 'unrelated invalid input';
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectException(SqlError::class);
         $this->expectExceptionMessage("Unknown column 'missing' in 'where clause'");
         (new SelectionUse())->raise($selection, $session);
     }
@@ -44,8 +45,15 @@ final class SelectionsTest extends TestCase
         $ordering = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem(new Row([new ColumnUse(new Name('v')), new NumberLiteral('2')]));
         $selection = new DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('7'), new Name('v'))], orderBy: [$ordering]);
         $session->text = 'unrelated invalid input';
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectException(SqlError::class);
         $this->expectExceptionCode(1241);
         (new SelectionUse())->raise($selection, $session);
+    }    public function testSetPreparesItsOperandBeforeRequiringACombinedOutputType(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1241);
+        $session->query('WITH x AS (SELECT ROW(1,2) REGEXP 3 UNION SELECT 4) SELECT * FROM x');
     }
+
 }

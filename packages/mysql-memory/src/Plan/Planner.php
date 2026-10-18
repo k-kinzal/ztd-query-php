@@ -207,6 +207,10 @@ final class Planner
         if (!$operation->left instanceof Query) {
             throw StatementError::NotSupportedYet->error('a leading UNION');
         }
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($operation) !== null) {
+            (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation->left, $this, $outer);
+            (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation->right, $this, $outer);
+        }
         $domains = $settled ?? $this->outputs($operation);
         $left = $this->operand($operation->left, $outer, $domains);
         $right = $this->operand($operation->right, $outer, $domains);

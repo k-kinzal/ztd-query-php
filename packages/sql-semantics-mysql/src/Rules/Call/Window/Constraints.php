@@ -24,7 +24,7 @@ final class Constraints
     /**
      * Finds a fixed window contradiction without resolving inherited names or offsets.
      */
-    public function problem(\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification|null $window): ?\SqlSemantics\Statement\Fact\Diagnostic
+    public function problem(\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification|null $window, bool $used = true): ?\SqlSemantics\Statement\Fact\Diagnostic
     {
         if (!$window instanceof WindowSpec) {
             return null;
@@ -37,6 +37,10 @@ final class Constraints
             $window->frame?->exclusion !== null => \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::Exclusion,
             default => null,
         };
+        $frame = (new FrameConstraints())->condition($window, $used);
+        if ($limit === null && $frame !== null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint($window, $frame);
+        }
         return $limit === null ? null : new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing($limit, $window);
     }
 

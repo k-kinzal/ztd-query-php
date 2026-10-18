@@ -71,11 +71,36 @@ final class ReadColumns
     public function templates(Query|M\Set\LeadingUnion $query): ?Diagnostic
     {
         foreach ((new ReadDependencies())->nodes($query) as $node) {
+            if ($node instanceof M\Select) {
+                $problem = $this->windows($node);
+                if ($problem !== null) {
+                    return $problem;
+                }
+            }
             if ($node instanceof M\With\DeferredBody) {
                 return $node->problem();
             }
             if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec) {
-                $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($node);
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($node, false);
+                if ($problem !== null) {
+                    return $problem;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Applies literal frame constraints only to named windows used in this block.
+     * Nested queries own their names and unused definitions retain inert offsets.
+     */
+    public function windows(M\Select $query): ?Diagnostic
+    {
+        $parts = [...$query->items, ...$query->orderBy, ...array_values(array_filter([$query->where, $query->groupBy, $query->having, $query->qualify, $query->late]))];
+        $names = array_map(static fn ($name): string => strtolower($name->value), (new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->names($parts, false));
+        foreach ($query->windows as $definition) {
+            if (in_array(strtolower($definition->name->value), $names, true)) {
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($definition->specification);
                 if ($problem !== null) {
                     return $problem;
                 }

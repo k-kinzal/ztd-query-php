@@ -74,4 +74,19 @@ final class InsertQueryTest extends TestCase
         self::assertNull($queried->values());
     }
 
+    public function testWrappersSeparateUnusedClausesFromWrittenExpressions(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE t(id INT)')->declarations();
+        $insert = $semantics->analyze('INSERT INTO t WITH x AS (SELECT absent) (VALUES ROW(1)) ORDER BY ABS() LIMIT absent FOR UPDATE OF missing', $tables);
+        $union = $semantics->analyze('INSERT INTO t VALUES ROW(1) UNION VALUES ROW(2)', $tables);
+        self::assertInstanceOf(InsertQuery::class, $insert->statement);
+        self::assertInstanceOf(InsertQuery::class, $union->statement);
+
+        self::assertCount(3, $insert->statement->wrappers());
+        self::assertSame([], $insert->facts->diagnostics);
+        self::assertSame([], $union->statement->wrappers());
+        self::assertStringContainsString('ORDER BY ABS() LIMIT absent FOR UPDATE OF missing', $insert->toString());
+    }
+
 }

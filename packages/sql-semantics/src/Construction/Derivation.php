@@ -337,11 +337,13 @@ final class Derivation
      * @template T
      *
      * @param Closure(): T $derive Derives the parts of the definition
+     * @param Closure(Warning): bool|null $warnings Optional warning selection for an unused semantic role
      * @return T
      */
-    public function deferred(Node $definition, Closure $derive): mixed
+    public function deferred(Node $definition, Closure $derive, ?Closure $warnings = null): mixed
     {
-        return $this->conditions->deferred($definition, $derive);
+        return $warnings === null ? $this->conditions->deferred($definition, $derive)
+            : $this->warnings->filtered(fn () => $this->conditions->deferred($definition, $derive), $warnings);
     }
 
     /**

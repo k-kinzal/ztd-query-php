@@ -26,6 +26,7 @@ final class CallErrors
     public function error(Diagnostic $diagnostic, bool $originalCase = false): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint => $this->frame($diagnostic),
             $diagnostic instanceof WrongArgumentCount => QueryError::WrongParameterCountToNativeFunction->error($diagnostic->function->value),
             $diagnostic instanceof NamedArgument => QueryError::WrongParametersToNativeFunction->error($originalCase ? $diagnostic->function->value : strtolower($diagnostic->function->value)),
             $diagnostic instanceof ReservedFunction => QueryError::NativeFunctionRejected->error($diagnostic->function->value),
@@ -35,4 +36,16 @@ final class CallErrors
             default => null,
         };
     }
+    /**
+     * Maps a retained frame condition after the owning query prepares its inputs.
+     */
+    public function frame(\SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint $diagnostic, string $name = '<unnamed window>'): SqlError
+    {
+        return (match ($diagnostic->condition) {
+            \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameCondition::RowsInterval => QueryError::WindowRowsInterval,
+            \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameCondition::RangeOrder => QueryError::WindowRangeOrderType,
+            \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameCondition::Offset => QueryError::WindowFrameIllegal,
+        })->error($name);
+    }
+
 }

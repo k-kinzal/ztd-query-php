@@ -68,10 +68,18 @@ final class ConstructRule
             'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )' => throw new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($form->node)[1] ?? 0, false),
             'simple_expr: CAST_SYM ( expr AT_SYM TIME_SYM ZONE_SYM opt_interval TEXT_STRING_literal AS DATETIME_SYM type_datetime_precision )' => $this->zone($form),
             'simple_expr: CONVERT_SYM ( expr USING charset_name )' => $this->charset($form),
-            'simple_expr: BINARY simple_expr', 'simple_expr: BINARY_SYM simple_expr' => new BinaryCast($expressions->simpleExpression($form->node(1))),
+            'simple_expr: BINARY simple_expr', 'simple_expr: BINARY_SYM simple_expr' => $this->binary((new PrimaryRule($this->lowering))->simpleExpression($form->node(1))),
             'simple_expr: MATCH ident_list_arg AGAINST ( bit_expr fulltext_options )' => $this->search($form),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Preserves a BINARY operand's scalar or deferred role.
+     */
+    public function binary(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand): BinaryCast|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredBinaryCast
+    {
+        return $operand instanceof Scalar ? new BinaryCast($operand) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredBinaryCast($operand);
     }
 
     /**
@@ -207,20 +215,20 @@ final class ConstructRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function search(Form $form): FullTextSearch
+    public function search(Form $form): FullTextSearch|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch
     {
         $options = $this->lowering->form($form->node(5));
         $stated = $options->signature === 'fulltext_options: opt_natural_language_mode opt_query_expansion'
             && $this->lowering->form($options->node(0))->signature === 'opt_natural_language_mode: IN_SYM NATURAL LANGUAGE_SYM MODE_SYM';
         $parenthesized = $this->lowering->form($form->node(1))->signature === 'ident_list_arg: ( ident_list )';
 
-        return new FullTextSearch(
-            $this->columns($form->node(1)),
-            $this->lowering->expressions->bitExpression($form->node(4)),
-            $this->mode($form->node(5)),
-            $parenthesized ? OptionalWords::Written : OptionalWords::Omitted,
-            $stated ? OptionalWords::Written : OptionalWords::Omitted,
-        );
+        $against = (new BitRule($this->lowering))->bitExpression($form->node(4));
+        $columns = $this->columns($form->node(1));
+        $mode = $this->mode($form->node(5));
+        $parentheses = $parenthesized ? OptionalWords::Written : OptionalWords::Omitted;
+        $words = $stated ? OptionalWords::Written : OptionalWords::Omitted;
+        return $against instanceof Scalar ? new FullTextSearch($columns, $against, $mode, $parentheses, $words)
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch($columns, $against, $mode, $parentheses, $words);
     }
 
     /**

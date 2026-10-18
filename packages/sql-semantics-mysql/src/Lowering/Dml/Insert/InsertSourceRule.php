@@ -81,7 +81,8 @@ final class InsertSourceRule
             throw ImplementationGap::production($form);
         }
         if ($body->name === 'query_expression_with_opt_locking_clauses') {
-            return [$columns, $this->lowering->queries->query($body)];
+            $values = new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\ValueQueries($this->lowering);
+            return [$columns, $values->values($body) === null ? $this->lowering->queries->query($body) : $values->query($body)];
         }
         $inner = $this->source($body);
         if ($inner[0] !== null) {

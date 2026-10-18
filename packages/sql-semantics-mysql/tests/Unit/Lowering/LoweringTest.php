@@ -154,4 +154,16 @@ final class LoweringTest extends TestCase
         self::assertSame($lowering->leaves, $scoped->leaves);
     }
 
+    public function testUnpreparedSharesInputOwnershipWithoutNativeContextualization(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $inactive = $lowering->unprepared();
+        self::assertFalse($inactive->contextualized);
+        self::assertSame($lowering->leaves, $inactive->leaves);
+        self::assertSame($lowering->origins, $inactive->origins);
+        self::assertTrue($lowering->contextualized);
+    }
+
 }

@@ -2373,3 +2373,58 @@ PROCESSLIST observation also failed its bounded process comparison contract and
 remains unresolved. These campaign results predate the complete repair and are
 not final acceptance. Additional frame/partition constructor domains, EXPLAIN
 measured output and same-revision full campaigns remain open.
+
+
+### Inactive VALUES clauses and complete deferred expressions
+
+A standalone INSERT/REPLACE VALUES source retains its WITH, ordering, limit and
+locking clauses in their inactive role. `ValuesClauses` and `DormantCall` preserve
+those operands without assigning them scalar execution semantics. Constructor
+checks keep these roles out of active query positions. Row values still prepare
+normally, and input notices retain their distinct parsing/contextualization
+phases. The direct property reuses eight structures across five states on three
+releases; all 120 observations agree. The 50-input SQL history agrees through
+text and prepared protocols on all three releases (300 observations).
+
+Deferred BETWEEN, REGEXP, SOUNDS LIKE, POSITION, BINARY, MATCH and row constructors
+retain all their operands, dependencies and spelling choices. They do not inhabit
+Scalar. Query composition retains the complete block and its open tail, including
+set operands and unused common table definitions. The 142-input history agrees
+in 852 text/prepared observations; 14 directly constructed objects agree in 252
+state observations. BINARY notices follow the observed stored-instruction
+preparation history, including table replacement; that history belongs to the
+memory session, not to semantic values.
+
+### Frame operand relationships
+
+An ordinary window invocation excludes INTERVAL in ROWS, an offset RANGE with
+no possible single ordering, and a ROWS literal outside the unsigned integer
+category. A base-window reference leaves inherited ordering open. Named windows
+validate literal offsets only when the enclosing block uses them; a nested query
+owns its own window names. Deferred invocations and read templates keep the
+complete specification and its typed `FrameConstraint`. They remain available in
+skipped stored branches and unused CTE definitions.
+
+The `query522` native regression passes 1,338 observations on MySQL 8.0, 8.4 and
+9.1 through text/prepared protocols. Twenty directly constructed stored objects
+pass 480 observations while the same objects survive skipped/reached branches,
+missing tables, missing columns, column additions and inserted rows. The named
+window's condition follows column resolution and retains its name. These checks
+do not establish every frame expression or inherited-window invariant.
+
+The earlier `query500` replay passes eight of the nine supplied seed corpora.
+Its sole 8.2 difference is native loader errno 0 versus 11 for the identical
+missing library; `fixtures/library-errno-820.json` retains that report and samples
+from two additional fresh instances. The bounded comparison still requires the
+same SQL error, SQLSTATE, library, path, complete loader reason and warnings.
+PROCESSLIST's recorded coherent one-second clock rollback is also bounded across
+the whole identity cohort; isolated or larger changes remain failures.
+
+Acceptance remains open. Later unseeded failures exposed CREATE USER initial
+plugin/default-role priority and the logical range of SHOW BINLOG EVENTS positions;
+both complete inputs are regression cases. The `query519` unseeded run then finds
+a refused window ordering inside an unused CTE in a SHOW filter (input 127).
+That missing retained operand role, partition constructor domains, additional
+frame/inheritance domains, EXPLAIN measured output and final same-revision
+campaigns remain unresolved. No matching SQL error or earlier campaign is used
+as a substitute for those obligations.

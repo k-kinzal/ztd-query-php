@@ -60,4 +60,12 @@ final class ReadColumnsTest extends TestCase
         self::assertNull((new ReadColumns())->combined($one, $one));
         self::assertNull((new ReadColumns())->combined($one, new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))))));
     }
+    public function testWindowsValidateOffsetsOnlyWhenTheSameBlockNamesThem(): void
+    {
+        $window = new M\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('w'), new M\Call\Window\WindowSpec(frame: new M\Call\Window\Frame(M\Call\Window\FrameUnit::Rows, new M\Call\Window\FrameBound(M\Call\Window\FrameBoundKind::Preceding, new M\Literal\NumberLiteral('1.5')))));
+        $read = new M\Query\Select([], [new M\Query\SelectExpression(new M\Call\Window\WindowFunction(M\Call\Window\WindowFunctionKind::RowNumber, [], new \SqlSemantics\Statement\Identifier\Name('W')))], windows: [$window]);
+        self::assertInstanceOf(M\Call\Problem\FrameConstraint::class, (new ReadColumns())->windows($read));
+        self::assertNull((new ReadColumns())->windows(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], windows: [$window])));
+    }
+
 }

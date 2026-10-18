@@ -167,7 +167,7 @@ final class FunctionRule
             'function_call_keyword: CHAR_SYM ( expr_list )' => new CharCall($expressions->expressions($form->node(2))),
             'function_call_keyword: CHAR_SYM ( expr_list USING charset_name )' => new CharCall($expressions->expressions($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
             'function_call_keyword: CURRENT_USER optional_braces' => $this->niladic($form, KeywordFunction::CurrentUser),
-            'function_call_nonkeyword: POSITION_SYM ( bit_expr IN_SYM expr )' => new Position($expressions->bitExpression($form->node(2)), $this->expression($form, 4)),
+            'function_call_nonkeyword: POSITION_SYM ( bit_expr IN_SYM expr )' => $this->position((new \SqlSemantics\Platform\MySql\Lowering\Expression\BitRule($this->lowering))->bitExpression($form->node(2)), $expressions->operand($form->node(4))),
             'function_call_generic: IDENT_sys ( opt_udf_expr_list )' => $this->generic($form),
             'function_call_generic: ident . ident ( opt_expr_list )' => $this->compose(
                 $this->lowering->names->identifier($form->node(2)),
@@ -179,16 +179,29 @@ final class FunctionRule
     }
 
     /**
+     * Keeps POSITION's operand roles when its query is deferred.
+     */
+    public function position(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $substring, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $string): Position|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredPosition
+    {
+        return $substring instanceof Scalar && $string instanceof Scalar ? new Position($substring, $string)
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredPosition($substring, $string);
+    }
+
+    /**
      * Lowers arguments before checking the current release's native signature.
      *
      * @throws \SqlSemantics\Construction\RejectedInput When a completed native call is outside its operand domain
      */
-    public function generic(Form $form): FunctionCall|DeferredCall
+    public function generic(Form $form): FunctionCall|DeferredCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall
     {
         $arguments = $this->arguments($form->node(2));
         $name = $this->lowering->names->identifier($form->node(0));
         $named = array_filter($arguments, static fn (CallArgument|DeferredCallArgument $argument): bool => $argument->alias !== null) !== [];
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->problem($this->lowering->profile->grammar, $name, count($arguments), $named);
+        if ($problem !== null && !$this->lowering->contextualized) {
+            return (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->possible($name, count($arguments), $named)
+                ? $this->compose($name, $arguments) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall($name, $arguments);
+        }
         if ($problem !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651);
         }

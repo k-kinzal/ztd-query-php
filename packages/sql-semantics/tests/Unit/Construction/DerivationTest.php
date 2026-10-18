@@ -465,4 +465,18 @@ final class DerivationTest extends TestCase
         }
     }
 
+    public function testDeferredCanKeepOnlyTheWarningsOfAnUnusedRole(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $kept = self::createStub(Warning::class);
+        $omitted = self::createStub(Warning::class);
+        $node = new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1');
+        $derivation->deferred($node, static function () use ($derivation, $kept, $omitted): void {
+            $derivation->warn($kept);
+            $derivation->warn($omitted);
+        }, static fn (Warning $warning): bool => $warning === $kept);
+        $derivation->warn($omitted);
+        self::assertSame([$kept, $omitted], $derivation->facts()->warnings);
+    }
+
 }

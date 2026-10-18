@@ -22,7 +22,10 @@ use SqlSemantics\Statement\Snapshot;
  * INSERT or REPLACE of the rows of a query (SELECT, TABLE, VALUES or a set operation), with the optional ON DUPLICATE KEY UPDATE.
  *
  * Rule: MYSQL-INSERT-QUERY-001. The facts follow MYSQL-INSERT-001 with the
- * query as the source.
+ * query as the source. A standalone VALUES source supplies its rows directly.
+ * Its enclosing WITH, ORDER BY, LIMIT and locking clauses remain represented
+ * for rendering, but do not bind names or change the written rows. This role
+ * also applies to directly constructed statements, independently of parsing.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert-select.html. Status: Implemented.
  *
  * @visibility public
@@ -60,12 +63,30 @@ final class InsertQuery implements Explainable
      */
     public function values(): ?ValuesQuery
     {
-        $source = $this->source;
-        while ($source instanceof QueryStatement || $source instanceof ParenthesizedQuery || $source instanceof QueryExpression) {
-            $source = $source instanceof QueryExpression ? $source->body : $source->query;
-        }
+        return (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($this->source);
+    }
 
-        return $source instanceof ValuesQuery ? $source : null;
+    /**
+     * Answers the query wrappers whose clauses do not participate in a standalone VALUES write.
+     *
+     * The row expressions keep their ordinary meaning, including their own subqueries.
+     * A set operation and SELECT keep all of their clauses. Verified against MySQL
+     * 8.0, 8.4 and 9.1, including absent local variables and common-table names.
+     *
+     * @return list<QueryStatement|ParenthesizedQuery|QueryExpression|ValuesClauses>
+     */
+    public function wrappers(): array
+    {
+        if ($this->values() === null) {
+            return [];
+        }
+        $wrappers = [];
+        $source = $this->source;
+        while ($source instanceof QueryStatement || $source instanceof ParenthesizedQuery || $source instanceof QueryExpression || $source instanceof ValuesClauses) {
+            $wrappers[] = $source;
+            $source = $source instanceof QueryExpression || $source instanceof ValuesClauses ? $source->body : $source->query;
+        }
+        return $wrappers;
     }
 
     /**

@@ -46,6 +46,15 @@ final class StoredSelections
      */
     public function body(Node $node): DeferredSelection|\SqlSemantics\Statement\Query|null
     {
+        $selection = $this->block($node);
+        return $selection instanceof Block ? $selection->select() : $selection;
+    }
+
+    /**
+     * Retains an ordinary block's open tail while deferring non-scalar selection roles.
+     */
+    public function block(Node $node): Block|DeferredSelection|null
+    {
         $parts = $this->frontier($node);
         if ($parts === null) {
             return null;
@@ -73,8 +82,7 @@ final class StoredSelections
         \SqlSemantics\Diagnostic\Check::invariant($having === null || $having instanceof Scalar, 'An ordinary group predicate is scalar.');
         \SqlSemantics\Diagnostic\Check::invariant($grouping === null || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping, 'An ordinary grouping has scalar or ordinal items.');
         $order = array_values(array_filter($ordering, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\OrderItem));
-        $select = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Query\Select($options, $ordinary, $input, $predicate, $grouping, $having, windows: $windows, orderBy: $order, limit: $limit), $node);
-        return $select;
+        return new Block($options, $ordinary, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, trailer: new Trailer($order, $limit), source: $node, origins: $this->lowering->origins);
     }
 
     /**

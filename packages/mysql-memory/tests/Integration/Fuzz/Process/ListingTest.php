@@ -7,11 +7,13 @@ namespace Tests\Integration\Fuzz\Process;
 use Fuzz\Target\Process\Listing;
 use Fuzz\Target\Process\Sample;
 use Fuzz\Target\Servers;
+use JsonException;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 #[CoversNothing]
 #[Large]
@@ -83,6 +85,53 @@ final class ListingTest extends TestCase
 
         self::assertSame($listing->rows($rows, $sample), $listing->rows([2 => array_replace($guard, [5 => -1]), 7 => $current], $sample));
         self::assertNull($listing->rows([2 => array_replace($guard, [4 => 'Query', 5 => -1]), 7 => $current], $sample));
+    }
+
+    /**
+     * @return iterable<string, array{Sample, array<int, array{int, string, string, ?string, string, int, ?string, ?string}>, Sample}>
+     * @throws JsonException When the saved observations cannot be decoded
+     * @throws RuntimeException When a saved row is malformed
+     */
+    public static function providerNativeCohorts(): iterable
+    {
+        /** @var list<array{instance: int, before: array{current: int, age: int, scheduler: string, rows: array<int, array{int, string, string, ?string, string, int, ?string, ?string}>}, rows: list<array{int, string, string, ?string, string, int, ?string, ?string}>, after: array{current: int, age: int, scheduler: string, rows: array<int, array{int, string, string, ?string, string, int, ?string, ?string}>}}> $observations */
+        $observations = json_decode((string) file_get_contents(__DIR__ . '/../fixtures/process-clock-cohorts.json'), true, 512, JSON_THROW_ON_ERROR);
+        foreach ($observations as $observation) {
+            $first = $observation['before'];
+            $last = $observation['after'];
+            yield 'independent server ' . $observation['instance'] => [new Sample($first['current'], $first['age'], $first['scheduler'], $first['rows']), Sample::indexed($observation['rows']) ?? throw new RuntimeException('Malformed saved process rows.'), new Sample($last['current'], $last['age'], $last['scheduler'], $last['rows'])];
+        }
+    }
+
+    /**
+     * @param array<int, array{int, string, string, ?string, string, int, ?string, ?string}> $rows Complete rows from an independent native instance
+     */
+    #[DataProvider('providerNativeCohorts')]
+    public function testCoherentReplaysBothIndependentNativeObservations(Sample $before, array $rows, Sample $after): void
+    {
+        $listing = new Listing($before, 10);
+        self::assertTrue($listing->coherent($rows, $after));
+        self::assertNotNull($listing->rows($rows, $after));
+    }
+
+    public function testCoherentRequiresTheWholeObservedClockShift(): void
+    {
+        $current = [7, 'root', 'localhost:1234', 'fz', 'Query', 100, 'init', 'SHOW PROCESSLIST'];
+        $guard = [2, 'memory_guard', 'localhost:2345', null, 'Sleep', 0, '', null];
+        $daemon = [5, 'event_scheduler', 'localhost', null, 'Daemon', 1, 'Waiting on empty queue', null];
+        $rows = [2 => $guard, 5 => $daemon, 7 => $current];
+        $sample = new Sample(7, 100, 'ON', $rows);
+        $listing = new Listing($sample, 2);
+        $shifted = array_map(static fn (array $row): array => array_replace($row, [5 => $row[5] - 1]), $rows);
+
+        self::assertTrue($listing->coherent($shifted, $sample));
+        self::assertSame($listing->rows($rows, $sample), $listing->rows($shifted, $sample));
+        self::assertFalse($listing->coherent(array_replace($shifted, [5 => $daemon]), $sample));
+        self::assertFalse($listing->coherent($shifted, new Sample(7, 101, 'ON', $rows)));
+        self::assertFalse((new Listing($sample, null))->coherent($shifted, $sample));
+        self::assertNull($listing->rows(array_replace($shifted, [5 => array_replace($daemon, [5 => -1])]), $sample));
+        self::assertNull($listing->rows(array_replace($shifted, [7 => array_replace($current, [5 => 98])]), $sample));
+        self::assertNull($listing->rows(array_replace($shifted, [2 => array_replace($guard, [4 => 'Query', 5 => -1])]), $sample));
     }
 
     public function testRowsKeepsEveryStaticFieldAndChecksTheDaemon(): void

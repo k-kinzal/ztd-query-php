@@ -46,4 +46,24 @@ final class CreateFactorsTest extends TestCase
         self::assertSame([4058, 4052], array_column($session->diagnostics->conditions, 1));
         self::assertStringStartsWith('3 factor', $session->diagnostics->conditions[0][2]);
     }
+    public function testCheckInitialAuthenticationLoadsThePrimaryPluginBeforeDefaultRoles(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = $session->run("CREATE USER IF NOT EXISTS CURRENT_USER, fresh IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED BY 'p' DEFAULT ROLE missing_role");
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(1524, $answers[0]->getCode());
+        self::assertSame([3163, 1524], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testCheckInitialAuthenticationRejectsAnUnsuitablePluginBeforeAttributes(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = $session->run("CREATE USER IF NOT EXISTS CURRENT_USER, fresh IDENTIFIED WITH caching_sha2_password INITIAL AUTHENTICATION IDENTIFIED BY 'p' ATTRIBUTE 'bad'");
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(4054, $answers[0]->getCode());
+        self::assertSame([3163, 4054], array_column($session->diagnostics->conditions, 1));
+    }
+
 }

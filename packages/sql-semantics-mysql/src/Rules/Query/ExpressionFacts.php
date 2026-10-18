@@ -34,6 +34,12 @@ final class ExpressionFacts
      */
     public function derive(QueryExpression $expression, Derivation $derivation, Environment $outer): QueryFact
     {
+        if ($derivation->written($expression) !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->deferred($expression, $derivation, fn () => $expression->with?->bind($derivation, $outer));
+            $fact = $derivation->query($expression->body, $outer);
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->deferred($expression, $derivation, fn () => $this->ordering($fact, $expression->orderBy, $expression->limit, $derivation, $outer));
+            return $fact;
+        }
         $environment = $expression->with === null ? $outer : $expression->with->bind($derivation, $outer);
         $fact = $derivation->query($expression->body, $environment);
         $this->ordering($fact, $expression->orderBy, $expression->limit, $derivation, $environment);

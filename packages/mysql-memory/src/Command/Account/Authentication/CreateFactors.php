@@ -16,6 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  * reach their existence error without loading additional plugins; new accounts validate
  * the second factor before the third. CURRENT_USER retains only its primary authentication
  * method, including when the account was removed earlier in the same connection.
+ * Initial authentication checks a new account's primary plugin before default roles
+ * and account attributes; an existing account retains its existence outcome.
  * Verified on live MySQL 8.0, 8.4 and 9.1 servers.
  *
  * @visibility MySqlMemory
@@ -29,6 +31,10 @@ final class CreateFactors
      */
     public function check(UserSpecification $user, bool $exists, Session $session): void
     {
+        if (!$exists && $user->initial !== null) {
+            $credentials = new Credentials($session->settings()->release());
+            throw AccountError::PluginOperationUnsupported->error($credentials->plugin($user->identification->plugin->value ?? $credentials->default()));
+        }
         if ($user->user instanceof \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser) {
             return;
         }

@@ -44,7 +44,13 @@ final class SelectionUse
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
         $selection->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        if ($instruction) {
+            (new \MySqlMemory\Program\Routine\SelectionNotices())->start($selection, $derivation->facts(), $session);
+        }
         $this->diagnosed($derivation->facts(), $session, $selection);
+        if ($instruction) {
+            (new \MySqlMemory\Program\Routine\SelectionNotices())->failed($selection, $session);
+        }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session), viewDefinition: $viewDefinition);
         $planner = new \MySqlMemory\Plan\Planner($selection, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);

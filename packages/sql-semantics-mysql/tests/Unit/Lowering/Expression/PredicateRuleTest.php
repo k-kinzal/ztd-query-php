@@ -96,4 +96,26 @@ final class PredicateRuleTest extends TestCase
         self::assertInstanceOf(StringLiteral::class, $rule->escape($platform->parser($profile)->parse("SELECT 'a' LIKE 'b' ESCAPE '!'")->find('opt_escape')[0]));
         self::assertNull($rule->escape($platform->parser($profile)->parse("SELECT 'a' LIKE 'b'")->find('opt_escape')[0]));
     }
+    public function testRegexpRetainsARowOperandInsideAnUnusedDefinition(): void
+    {
+        $sql = 'WITH x AS (SELECT ROW(1, 2) REGEXP 1) SELECT 7';
+        self::assertSame($sql, (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze($sql)->toString());
+    }
+
+    public function testBetweenRetainsDeferredDependenciesOfAnUnusedCte(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('WITH x AS (SELECT ROW(1,2) BETWEEN 3 AND 4) SELECT 7');
+        self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testSoundsRetainsDeferredDependenciesOfAnUnusedCte(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('WITH x AS (SELECT ROW(1,2) SOUNDS LIKE 3) SELECT 7');
+        self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
 }

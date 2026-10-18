@@ -56,4 +56,13 @@ final class QueryUseTest extends TestCase
         $this->expectExceptionCode($code);
         (new QueryUse())->raise($query, $session);
     }
+    public function testPlanKeepsNamedFramesAfterMissingColumnResolution(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(x INT)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1054);
+        $session->query('SELECT FIRST_VALUE(id) OVER w FROM t WINDOW w AS (ROWS 1.5 PRECEDING)');
+    }
+
 }

@@ -264,4 +264,10 @@ final class ReplicationShowCommandTest extends TestCase
 
         $session->query('SHOW BINARY LOGS');
     }
+    public function testWindowReturnsNoEventsBeyondTheLogicalEndAtLargeSignedPositions(): void
+    {
+        $command = new ReplicationShowCommand();
+        self::assertSame([], $command->window([['binlog.000001', 4, 'Format_desc', 1, 127, '']], '813695816104325698', null, 'SHOW BINLOG EVENTS'));
+    }
+
 }

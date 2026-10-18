@@ -50,7 +50,11 @@ final class QueryUse
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
         $query->deriveProgram($derivation, new ProgramScope($derivation->environment()));
-        (new Problems())->raise(new QueryPreparation($query->query, $derivation->facts(), $context->profile), $session);
+        $preparation = new QueryPreparation($query->query, $derivation->facts(), $context->profile);
+        (new Problems())->raise($preparation, $session);
+        if ($query->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint) {
+            $this->plan($preparation, $session);
+        }
         throw (new Errors())->error($query->problem(), $session);
     }
     /**
@@ -72,6 +76,16 @@ final class QueryUse
                 throw (new Errors())->error($problem, $session);
             }
         }
+        $this->plan($query, $session);
+    }
+
+    /**
+     * Compiles a retained query after the caller has checked its preceding conditions.
+     *
+     * @throws \MySqlMemory\Error\SqlError When query preparation is refused
+     */
+    public function plan(QueryPreparation $query, Session $session): void
+    {
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($query->statement, $query->facts, $session->settings(), $connection, $session->instance->dictionary);

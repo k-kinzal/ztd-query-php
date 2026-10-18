@@ -57,8 +57,8 @@ final class FormRule
 
         return match ($form->signature) {
             'simple_expr: ( expr )' => (new OperandRule())->grouped($expressions->operand($form->node(1))),
-            'simple_expr: ( expr , expr_list )' => new Row([(new OperandRule())->row($expressions->operand($form->node(1)), $form->node(1)), ...array_map(static fn ($operand) => (new OperandRule())->row($operand, $form->node(3)), $expressions->operands($form->node(3)))]),
-            'simple_expr: ROW_SYM ( expr , expr_list )' => new Row([(new OperandRule())->row($expressions->operand($form->node(2)), $form->node(2)), ...array_map(static fn ($operand) => (new OperandRule())->row($operand, $form->node(4)), $expressions->operands($form->node(4)))], OptionalWords::Written),
+            'simple_expr: ( expr , expr_list )' => $this->row([$expressions->operand($form->node(1)), ...$expressions->operands($form->node(3))]),
+            'simple_expr: ROW_SYM ( expr , expr_list )' => $this->row([$expressions->operand($form->node(2)), ...$expressions->operands($form->node(4))], OptionalWords::Written),
             'simple_expr: ( subselect )' => (new OperandRule())->subquery($queries->query($form->node(1))),
             'simple_expr: row_subquery' => (new OperandRule())->subquery($queries->query($form->node(0))),
             'simple_expr: EXISTS ( subselect )' => (new OperandRule())->exists($queries->query($form->node(2))),
@@ -72,4 +72,20 @@ final class FormRule
             default => (new ConstructRule($this->lowering))->lower($form),
         };
     }
+    /**
+     * @param list<Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $elements Written row elements
+     */
+    public function row(array $elements, OptionalWords $keyword = OptionalWords::Omitted): Row|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Constructor\DeferredRow
+    {
+        if (array_filter($elements, static fn ($element): bool => $element instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Constructor\DeferredRow($elements, $keyword);
+        }
+        $ordinary = [];
+        foreach ($elements as $element) {
+            \SqlSemantics\Diagnostic\Check::invariant($element instanceof Scalar || $element instanceof RowOperand, 'An ordinary row retains only scalar or row elements.');
+            $ordinary[] = $element;
+        }
+        return new Row($ordinary, $keyword);
+    }
+
 }

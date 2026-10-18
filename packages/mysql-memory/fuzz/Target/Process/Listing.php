@@ -17,7 +17,11 @@ use RuntimeException;
  * Current-query time must follow SYSDATE minus the pinned timestamp; idle and daemon times
  * must lie between their sampled values. A sleeping repair connection can briefly
  * report -1 between two zero samples (observed on independent MySQL 8.4 servers);
- * only that exact clock bracket admits the negative value. Only these validated
+ * only that exact clock bracket admits the negative value. Independently started
+ * MySQL 8.0 servers also report a complete listing exactly one second below two
+ * identical clock samples, including the current query, sleeping repair client
+ * and daemon. That coherent shift is accepted only when every row demonstrates
+ * it; individual or larger clock deviations remain failures. Only these validated
  * fields become interchangeable.
  * All columns, rows, users, host names, databases, commands, states, query text and warnings
  * remain in the comparison. Missing, additional, duplicated or malformed rows stay raw.
@@ -138,6 +142,7 @@ final class Listing
         if ($before->current !== $after->current || $before->current === $this->guard || $before->scheduler !== $after->scheduler || count($rows) !== $expected || array_keys($rows) !== array_keys($before->rows) || array_keys($rows) !== array_keys($after->rows) || (!isset($rows[$before->current]) || ($this->guard !== null && !isset($rows[$this->guard])))) {
             return null;
         }
+        $coherent = $this->coherent($rows, $after);
         $result = [];
         foreach ($rows as $id => $row) {
             $role = $id === $before->current ? 'current' : ($id === $this->guard ? 'guard' : 'daemon');
@@ -147,13 +152,40 @@ final class Listing
             $upper = $role === 'current' ? $after->age : $last[5];
             $host = $this->host($row, $first, $last, $role);
             $transient = $role === 'guard' && $row[4] === 'Sleep' && $first[4] === 'Sleep' && $last[4] === 'Sleep' && $lower === 0 && $upper === 0 && $row[5] === -1;
-            if ($host === null || (!$transient && ($row[5] < $lower || $row[5] > $upper || ($role !== 'current' && $row[5] < 0))) || ($role === 'daemon' && ($row[1] !== 'event_scheduler' || $row[4] !== 'Daemon'))) {
+            if ($host === null || (!$coherent && !$transient && ($row[5] < $lower || $row[5] > $upper || ($role !== 'current' && $row[5] < 0))) || ($role === 'daemon' && ($row[1] !== 'event_scheduler' || $row[4] !== 'Daemon'))) {
                 return null;
             }
             $result[] = ['{' . self::CONTRACT . ':' . $role . '}', $row[1], $host, $row[3], $row[4], '{' . self::CONTRACT . ':elapsed}', $row[6], $row[7]];
         }
 
         return $result;
+    }
+
+    /**
+     * Checks a complete one-second clock shift against two identical independent samples.
+     *
+     * @param array<int, ProcessRow> $rows The unchanged indexed observation
+     */
+    public function coherent(array $rows, Sample $after): bool
+    {
+        if ($this->guard === null || !isset($rows[$this->guard], $rows[$this->before->current])) {
+            return false;
+        }
+        foreach ($rows as $id => $row) {
+            $first = $this->before->rows[$id] ?? null;
+            $last = $after->rows[$id] ?? null;
+            if ($first === null || $last === null) {
+                return false;
+            }
+            $current = $id === $this->before->current;
+            $lower = $current ? $this->before->age : $first[5];
+            $upper = $current ? $after->age : $last[5];
+            if ($lower !== $upper || $row[5] !== $lower - 1 || (!$current && $id !== $this->guard && $row[5] < 0)
+                || ($id === $this->guard && ($row[4] !== 'Sleep' || $first[4] !== 'Sleep' || $last[4] !== 'Sleep' || $lower < 0))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

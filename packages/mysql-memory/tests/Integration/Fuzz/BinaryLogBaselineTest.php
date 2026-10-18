@@ -26,6 +26,8 @@ final class BinaryLogBaselineTest extends TestCase
         yield 'fractional exponent' => ['SHOW BINLOG EVENTS FROM 1.27e2'];
         yield 'boundary exponent' => ['SHOW BINLOG EVENTS FROM 127e0'];
         yield 'leading fraction' => ['SHOW BINLOG EVENTS FROM .1'];
+        yield 'large position' => ['SHOW BINLOG EVENTS FROM 813695816104325698'];
+        yield 'large prefix with exponent' => ['SHOW BINLOG EVENTS FROM 813695816104325698e-16'];
         yield 'overflow' => ['SHOW BINLOG EVENTS FROM 18446744073709551616'];
         yield 'rotation within input' => ['FLUSH BINARY LOGS; SHOW BINARY LOGS; SHOW BINLOG EVENTS'];
     }

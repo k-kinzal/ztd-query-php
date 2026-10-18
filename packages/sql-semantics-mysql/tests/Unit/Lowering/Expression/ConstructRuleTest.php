@@ -243,4 +243,12 @@ final class ConstructRuleTest extends TestCase
         $operation = $semantics->analyze('CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1,2) END');
         self::assertSame('CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1, 2) END', $operation->toString());
     }
+    public function testBinaryRetainsDeferredDependenciesOfAnUnusedCte(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('WITH x AS (SELECT BINARY ROW(1,2)) SELECT 7');
+        self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
 }

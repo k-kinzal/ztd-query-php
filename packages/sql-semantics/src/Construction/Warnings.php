@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Construction;
 
+use Closure;
 use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Source\SourceMap;
@@ -24,6 +25,11 @@ final class Warnings
     private array $entries = [];
 
     /**
+     * @var list<Closure(Warning): bool> Filters of the current derivation scopes
+     */
+    private array $filters = [];
+
+    /**
      * @param SourceMap $sources The original input locations and spelling notices
      */
     public function __construct(public readonly SourceMap $sources)
@@ -35,8 +41,32 @@ final class Warnings
      */
     public function append(Warning $warning, ?Node $at, bool $after = true, ?Node $instruction = null): void
     {
+        foreach ($this->filters as $keep) {
+            if (!$keep($warning)) {
+                return;
+            }
+        }
         $origin = $at === null ? null : $this->sources->of($at);
         $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0), $instruction];
+    }
+
+    /**
+     * Records only the warnings belonging to a selected semantic role.
+     * Input spelling notices are independent and remain unchanged.
+     *
+     * @template T
+     * @param Closure(): T $derive The nested derivation
+     * @param Closure(Warning): bool $keep The warnings that belong to this role
+     * @return T
+     */
+    public function filtered(Closure $derive, Closure $keep): mixed
+    {
+        $this->filters[] = $keep;
+        try {
+            return $derive();
+        } finally {
+            array_pop($this->filters);
+        }
     }
 
     /**

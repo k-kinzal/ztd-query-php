@@ -152,7 +152,7 @@ final class Problems
     public function calls(Operation|QueryPreparation $operation): array
     {
         $calls = array_values(array_filter((new Walker())->find($operation->statement, FunctionCall::class), static fn (FunctionCall $call): bool => Locations::undeclared($call, $operation)));
-        if ($calls !== [] && (new Walker())->find($operation->statement, CommonTableExpression::class) !== []) {
+        if ($calls !== []) {
             $reached = array_fill_keys(array_map(spl_object_id(...), $this->reached($operation->statement)), true);
             $calls = array_values(array_filter($calls, static fn (FunctionCall $call): bool => isset($reached[spl_object_id($call)])));
         }
@@ -341,6 +341,17 @@ final class Problems
     {
         $references = array_filter((new Walker())->find($statement, Node::class), static fn (Node $node): bool => ($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) && $node->name()->schema === null);
         $skipped = [];
+        foreach ((new Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class) as $insert) {
+            foreach ($insert->wrappers() as $wrapper) {
+                $body = $wrapper instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression || $wrapper instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesClauses ? $wrapper->body : $wrapper->query;
+                $included = array_fill_keys(array_map(spl_object_id(...), (new Walker())->find($body, Node::class)), true);
+                foreach ((new Walker())->find($wrapper, Node::class) as $node) {
+                    if ($node !== $wrapper && !isset($included[spl_object_id($node)])) {
+                        $skipped[spl_object_id($node)] = true;
+                    }
+                }
+            }
+        }
         foreach ((new Walker())->find($statement, CommonTableExpression::class) as $table) {
             $inside = array_fill_keys(array_map(spl_object_id(...), (new Walker())->find($table, Node::class)), true);
             $used = array_filter($references, static fn (TableReference|ExplicitTable|WriteTarget $reference): bool => strcasecmp($reference->name()->name->value, $table->name->value) === 0 && !isset($inside[spl_object_id($reference)]));

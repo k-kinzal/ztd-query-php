@@ -70,4 +70,12 @@ final class StoredSelectionsTest extends TestCase
     {
         self::assertSame('CREATE PROCEDURE p() SELECT 1 FROM DUAL WHERE (2, 3)', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 FROM DUAL WHERE (2,3)')->toString());
     }
+    public function testBlockKeepsItsOpenTailUntilTheOuterClausesAreKnown(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $operation = $semantics->analyze('WITH x AS (SELECT 1) SELECT * FROM x ORDER BY 1 FOR UPDATE');
+        self::assertSame('WITH x AS (SELECT 1) SELECT * FROM x ORDER BY 1 FOR UPDATE', $operation->toString());
+        self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
+    }
+
 }

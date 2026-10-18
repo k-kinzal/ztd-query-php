@@ -83,4 +83,22 @@ final class WarningsTest extends TestCase
 
         self::assertSame([$before, $notice, $after, $unlocated], $warnings->all());
     }
+    public function testFilteredKeepsInputNoticesAndRestoresTheOuterScope(): void
+    {
+        $kept = self::createStub(Warning::class);
+        $omitted = self::createStub(Warning::class);
+        $syntax = self::createStub(Warning::class);
+        $node = new IntegerLiteral('1');
+        $warnings = new Warnings(new SourceMap([], [new SourceNotice($node, $syntax, 0)]));
+        $answer = $warnings->filtered(static function () use ($warnings, $kept, $omitted): int {
+            $warnings->append($kept, null);
+            $warnings->append($omitted, null);
+            return 42;
+        }, static fn (Warning $warning): bool => $warning === $kept);
+        $warnings->append($omitted, null);
+
+        self::assertSame(42, $answer);
+        self::assertSame([$syntax, $kept, $omitted], $warnings->all());
+    }
+
 }

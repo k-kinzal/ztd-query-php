@@ -184,13 +184,14 @@ final class Lowering
     private array $hints = [];
 
     /**
+     * @param bool $contextualized Whether native function signatures are bound in these operands
      * @param Productions $productions The productions of the grammar release
      * @param Leaves $leaves The record of operand leaves of this analysis
      * @param LanguageProfile $profile The language profile the tree was parsed under
      * @param \SqlSemantics\Construction\Origins $origins The input locations recorded for this lowering
      * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null $client The character set of identifier bytes in this input
      */
-    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins(), public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $programName = null)
+    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins(), public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $programName = null, public readonly bool $contextualized = true)
     {
         $this->names = new NameRule($this);
         $this->literals = new LiteralRule($this);
@@ -211,6 +212,14 @@ final class Lowering
         $this->replication = new ReplicationRules($this);
         $this->server = new ServerRules($this);
         $this->utility = new UtilityRules($this);
+    }
+
+    /**
+     * Shares input ownership while retaining clauses that a VALUES write does not contextualize.
+     */
+    public function unprepared(): self
+    {
+        return new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $this->programName, false);
     }
 
     /**

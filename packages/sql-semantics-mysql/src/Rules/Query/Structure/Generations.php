@@ -53,6 +53,9 @@ final class Generations
      */
     public function check(Node $root): void
     {
+        if ($root instanceof \SqlSemantics\Statement\Statement) {
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles())->check($root);
+        }
         $pending = [$root];
         $seen = new SplObjectStorage();
         $requirements = 0;

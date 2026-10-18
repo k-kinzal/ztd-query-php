@@ -70,7 +70,11 @@ final class QueryStatement implements Query
     public function deriveQuery(Derivation $derivation, Environment $outer): QueryFact
     {
         $fact = $derivation->query($this->query, $outer);
-        (new TailFacts())->derive($derivation, $outer, $fact, $this);
+        if ($derivation->written($this) !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->deferred($this, $derivation, fn () => (new TailFacts())->derive($derivation, $outer, $fact, $this));
+        } else {
+            (new TailFacts())->derive($derivation, $outer, $fact, $this);
+        }
 
         return $fact;
     }

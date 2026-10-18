@@ -139,6 +139,10 @@ final class ExpressionRule
      */
     public function body(Node $body): Block|Query
     {
+        $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->block($body);
+        if ($selection !== null) {
+            return $selection instanceof Block ? $selection : new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+        }
         $steps = [];
         $form = $this->lowering->form($body);
         while (isset(self::OPERATIONS[$form->signature])) {
@@ -146,7 +150,7 @@ final class ExpressionRule
             $form = $this->lowering->form($form->node(0));
         }
         $first = match ($form->signature) {
-            'query_expression_body: query_primary' => (new PrimaryRule($this->lowering))->primary($form->node(0)),
+            'query_expression_body: query_primary' => $steps === [] ? (new PrimaryRule($this->lowering))->primary($form->node(0)) : $this->body($form->node),
             'query_expression_body: query_expression_parens' => $this->parenthesized($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
