@@ -8,7 +8,7 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * Leading nongraphic characters were removed from an explicit result alias.
+ * A result name lost a leading nongraphic prefix or exceeded the name byte limit.
  *
  * The full alias remains available even when a NUL ends its diagnostic display.
  * Observed on MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
@@ -22,7 +22,7 @@ final class TrimmedName implements CodedWarning
     use Snapshot;
 
     /**
-     * @param Name $name The decoded explicit alias before normalization
+     * @param Name $name The decoded result name before normalization
      */
     public function __construct(public readonly Name $name)
     {
@@ -41,6 +41,7 @@ final class TrimmedName implements CodedWarning
      */
     public function message(): string
     {
-        return "Leading spaces are removed from name '" . explode("\0", $this->name->value, 2)[0] . "'";
+        $name = (string) preg_replace('/[\xF0-\xF4][\x80-\xBF]{3}/', '????', $this->name->value);
+        return mb_strcut("Leading spaces are removed from name '" . explode("\0", $name, 2)[0] . "'", 0, 511, 'UTF-8');
     }
 }

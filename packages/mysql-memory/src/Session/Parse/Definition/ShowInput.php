@@ -91,7 +91,7 @@ final class ShowInput
         $headings = match (true) {
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys => (new \MySqlMemory\Command\Show\ShowKeysCommand())->headings(),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns => (new \MySqlMemory\Command\Show\ShowColumnsCommand())->headings($problem->header->listing?->full() === true, $session->settings()->legacy(), $session->modes()->strict()),
-            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => (new \MySqlMemory\Command\ShowTablesCommand())->headings($problem->header, $session),
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => (new \MySqlMemory\Command\ShowTablesCommand())->headings((new \SqlSemantics\Statement\Operation($derivation->context, $problem->header)), $session),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus => $session->settings()->legacy() ? (new \MySqlMemory\Command\Show\ShowTableStatusCommand())->legacyHeadings() : (new \MySqlMemory\Command\Show\ShowTableStatusCommand())->headings(false),
             default => (new \MySqlMemory\Command\Program\ShowTriggersCommand())->headings($session->settings()->release()),
         };

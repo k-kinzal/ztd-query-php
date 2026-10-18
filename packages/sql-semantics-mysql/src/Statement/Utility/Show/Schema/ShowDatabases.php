@@ -56,7 +56,10 @@ final class ShowDatabases implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        return (new ShowFacts())->fact($derivation, Report::Databases, $this->filter instanceof ShowLike ? 'Database (' . $this->filter->pattern->value . ')' : null);
+        $heading = new \SqlSemantics\Platform\MySql\Rules\Utility\ShowHeading();
+        $name = $this->filter instanceof ShowLike ? 'Database (' . $heading->pattern($derivation, $this->filter->pattern, false) . ')' : 'Database';
+
+        return (new ShowFacts())->fact($derivation, Report::Databases, $heading->name($derivation, $name, false));
     }
 
     /**

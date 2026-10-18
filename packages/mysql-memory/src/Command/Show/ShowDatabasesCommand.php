@@ -12,7 +12,6 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases;
-use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Statement\Operation;
 
 /**
@@ -49,7 +48,9 @@ final class ShowDatabasesCommand implements Command
         if ($session->settings()->legacy()) {
             $names = ['information_schema', ...array_values(array_diff($names, ['information_schema']))];
         }
-        $heading = 'Database' . ($statement->filter instanceof ShowLike ? ' (' . $statement->filter->pattern->value . ')' : '');
+        $heading = $operation->field(0)->name;
+        \SqlSemantics\Diagnostic\Check::invariant($heading !== null, 'A database inspection has a resolved column name.');
+        $heading = $heading->value;
         $legacy = $session->settings()->legacy();
         $headings = [Heading::text($heading, Field::VarString, 64, $legacy ? 1 : 4225, 0, $legacy ? 'SCHEMA_NAME' : $heading, 'SCHEMATA', $legacy ? 'SCHEMATA' : 'schemata', $legacy ? 'information_schema' : '')];
 

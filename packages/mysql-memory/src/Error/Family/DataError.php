@@ -84,6 +84,7 @@ enum DataError: int implements ErrorCode
     case WrongJsonTableValue = 3666;
     case JsonTableValueOutOfRange = 3669;
     case InvalidJsonTypeRequired = 3853;
+    case CannotConvertString = 3854;
     case MissingJsonValue = 3966;
     case MultipleJsonValues = 3967;
     case BitwiseOperandsSize = 3513;

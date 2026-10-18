@@ -255,6 +255,7 @@ return [
     3167 => ['HY000', "The '%s' feature is disabled; see the documentation for '%s'"],
     3676 => ['HY000', 'Could not parse argument to digest function: "%s".'],
     3853 => ['22032', 'Invalid JSON type in argument %d to function %s; an %s is required.'],
+    3854 => ['HY000', "Cannot convert string '%s' from %s to %s"],
     3987 => ['HY000', "The function %s does not support the character set '%s'."],
     6138 => ['HY000', "Data cannot be converted to a valid vector: '%s'"],
     1527 => ['HY000', 'It is not allowed to specify %s more than once'],

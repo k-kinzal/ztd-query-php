@@ -27,4 +27,13 @@ final class TrimmedNameTest extends TestCase
         self::assertSame("Leading spaces are removed from name ' name'", $warning->message());
         self::assertSame($name, $warning->name);
     }
+
+    public function testMessageBoundsTheWholeMessageAtUtf8CharacterBoundaries(): void
+    {
+        $warning = new TrimmedName(new Name('Database (' . str_repeat('é', 300) . ')'));
+
+        self::assertSame(510, strlen($warning->message()));
+        self::assertTrue(mb_check_encoding($warning->message(), 'UTF-8'));
+        self::assertSame(611, strlen($warning->name->value));
+    }
 }

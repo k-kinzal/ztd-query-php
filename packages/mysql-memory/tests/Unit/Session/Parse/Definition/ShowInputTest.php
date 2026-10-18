@@ -44,6 +44,14 @@ final class ShowInputTest extends TestCase
         self::assertFalse($session->preparation->inputPrepared);
     }
 
+    public function testPrepareReadsTheTableHeadingFromTheResolvedStructure(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $this->expectExceptionCode(1241);
+        $session->query('SHOW TABLES WHERE ROW(Tables_in_d,2) LIKE 1');
+    }
+
     public function testPrepareResolvesTheShowColumnBeforeTheOperandWidth(): void
     {
         $session = (new Instance())->connect();

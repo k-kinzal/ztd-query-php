@@ -12,7 +12,6 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
-use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Statement\Operation;
 
 /**
@@ -69,7 +68,7 @@ final class ShowTablesCommand implements Command
         }
         usort($rows, static fn (array $left, array $right): int => strcmp($left[0], $right[0]));
         $full = $statement->listing?->full() ?? false;
-        $headings = $this->headings($statement, $session);
+        $headings = $this->headings($operation, $session);
         $rows = array_map(static fn (array $row): array => $full ? $row : [$row[0]], $rows);
 
         return $this->result($headings, $rows, $operation, $session, $context, $connection, $session->settings()->legacy(), $headings[0]->name);
@@ -80,11 +79,14 @@ final class ShowTablesCommand implements Command
      *
      * @return non-empty-list<Show\Heading>
      */
-    public function headings(ShowTables $statement, Session $session): array
+    public function headings(Operation $operation, Session $session): array
     {
-        $name = $statement->database->value ?? $session->variables->database;
+        $statement = $operation->statement;
+        assert($statement instanceof ShowTables);
         $full = $statement->listing?->full() ?? false;
-        $heading = 'Tables_in_' . $name . ($statement->filter instanceof ShowLike ? ' (' . $statement->filter->pattern->value . ')' : '');
+        $heading = $operation->field(0)->name;
+        \SqlSemantics\Diagnostic\Check::invariant($heading !== null, 'A table inspection has a resolved column name.');
+        $heading = $heading->value;
         $legacy = $session->settings()->legacy();
         $headings = [$legacy ? Show\Heading::text($heading, Field::VarString, 64, 1, 0, 'TABLE_NAME', 'TABLE_NAMES', 'TABLE_NAMES', 'information_schema') : Show\Heading::text($heading, Field::VarString, 64, 4225, 0, $heading, 'TABLES', 'tables')];
         if ($full) {

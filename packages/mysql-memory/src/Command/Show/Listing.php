@@ -64,8 +64,12 @@ final class Listing
     {
         $this->constantEmpty = false;
         if ($filter instanceof ShowLike) {
-            $this->mix($filter->pattern->value, $collation, $derivation, $context);
-            $rows = $this->like($rows, $filter->pattern->value, $named, $collation, $context);
+            $pattern = $filter->pattern->value;
+            if ($session->settings()->legacy() && ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables)) {
+                $pattern = Encoding::convert($pattern, $session->resolution()->client ?? Charset::known('utf8mb4'), Charset::known('utf8mb3'));
+            }
+            $this->mix($pattern, $collation, $derivation, $context);
+            $rows = $this->like($rows, $pattern, $named, $collation, $context);
         }
         if ($filter instanceof ShowWhere) {
             $rows = $this->where($rows, $filter, $operation, $session, $context, $connection);
@@ -87,6 +91,11 @@ final class Listing
         $connection = Collation::named((string) $context->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
         if ($column->charset === $connection->charset || $column->bytes() || Encoding::convertible($pattern, $connection->charset, $column->charset) === strlen($pattern)) {
             return;
+        }
+
+        if ($context->variables->instance->version === '9.1.0' && $column->charset->name === 'utf8mb3' && $connection->charset->name === 'utf8mb4') {
+            $excerpt = implode('', array_map(static fn (string $byte): string => ord($byte) >= 32 && ord($byte) <= 126 ? $byte : '\\x' . strtoupper(bin2hex($byte)), str_split(substr($pattern, 0, 6))));
+            throw DataError::CannotConvertString->error($excerpt . (strlen($pattern) > 6 ? '...' : ''), 'utf8mb3', 'utf8mb4');
         }
 
         throw DataError::CantAggregateTwoCollations->error($collation, $derivation, $connection->name, 'COERCIBLE', 'like');

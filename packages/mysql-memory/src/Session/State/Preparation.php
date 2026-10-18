@@ -54,4 +54,9 @@ final class Preparation
      */
     public ?WeakMap $selections = null;
 
+    /**
+     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables, true>|null Stored inspections whose unresolved labels require another preparation
+     */
+    public ?WeakMap $inspections = null;
+
 }

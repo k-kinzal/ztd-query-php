@@ -34,6 +34,7 @@ final class LoadNotices
         if ($prepared->routineGeneration !== $generation) {
             $prepared->routineGeneration = $generation;
             $prepared->routines = [];
+            $prepared->inspections = null;
         }
         $identity = spl_object_id($routine);
         if (isset($prepared->routines[$identity]) || $routine->statement === null) {
@@ -57,6 +58,7 @@ final class LoadNotices
                 $session->diagnostics->warning($notice->code(), $notice->message());
             }
         }
+        (new InspectionNotices())->load($routine, $session);
         if ($routine->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction && $routine->statement->nameCollision($session->settings()->release())) {
             $code = \MySqlMemory\Error\Family\AdministrationError::NativeFunctionName;
             $session->diagnostics->note($code, $code->message($routine->name));

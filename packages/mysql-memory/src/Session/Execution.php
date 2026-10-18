@@ -146,6 +146,9 @@ final class Execution
         if ($read && !$session->replayed) {
             $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
         }
+        if (!$read) {
+            (new \MySqlMemory\Program\Routine\InspectionNotices())->start($operation, $session);
+        }
         try {
             (new Problem\Reading())->read($operation, $session);
         } catch (SqlError $error) {

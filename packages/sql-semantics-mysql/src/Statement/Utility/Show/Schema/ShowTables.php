@@ -69,13 +69,15 @@ final class ShowTables implements Statement, Relation
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
         $facts = new ShowFacts();
+        $heading = new \SqlSemantics\Platform\MySql\Rules\Utility\ShowHeading();
+        $pattern = $this->filter instanceof ShowLike ? ' (' . $heading->pattern($derivation, $this->filter->pattern, true) . ')' : '';
         $database = $facts->database($derivation, $this->database);
         if ($database === null) {
             return $facts->open($facts->currentDatabase());
         }
-        $name = 'Tables_in_' . $database . ($this->filter instanceof ShowLike ? ' (' . $this->filter->pattern->value . ')' : '');
+        $name = 'Tables_in_' . $database . $pattern;
 
-        return $facts->fact($derivation, $this->listing?->full() === true ? Report::FullTables : Report::Tables, $name);
+        return $facts->fact($derivation, $this->listing?->full() === true ? Report::FullTables : Report::Tables, $heading->name($derivation, $name, true));
     }
 
     /**

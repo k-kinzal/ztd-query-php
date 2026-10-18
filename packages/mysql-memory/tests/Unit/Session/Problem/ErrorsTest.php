@@ -34,6 +34,16 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Small]
 final class ErrorsTest extends TestCase
 {
+    public function testErrorBoundsAnUnknownColumnWithoutLosingItsSemanticName(): void
+    {
+        $name = new Name(str_repeat('é', 97));
+        $problem = new \SqlSemantics\Statement\Reference\Column\MissingColumn($name);
+        $error = (new Errors())->error($problem, (new Instance())->connect(), 'field list');
+
+        self::assertSame("Unknown column '" . str_repeat('é', 96) . "' in 'field list'", $error->getMessage());
+        self::assertSame(194, strlen($problem->name->value));
+    }
+
     /**
      * @return iterable<string, array{string, string, bool, bool, bool}>
      */

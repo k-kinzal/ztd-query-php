@@ -2587,3 +2587,28 @@ existing table, and a dropped destination. A partition-specific read follows
 each creation. All 720 observations match MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and
 9.1.0 with unrelated invalid session text. These histories establish the repaired
 consumer behavior; they do not close the remaining partition-role audit.
+
+## Computed inspection names and preparation notices
+
+Database and table inspection facts now retain their resolved result names,
+including the 256-byte UTF-8 boundary. The original LIKE operand remains intact.
+Modern truncation notices and references to an unshortened table label are
+semantic facts; Memory consumes the resolved column name instead of constructing
+it again. NUL boundaries, legacy system-character conversion and diagnostic
+message limits remain distinct from the stored operand. MySQL 9.1's conversion
+failure is distinguished from the collation failure returned through MySQL 9.0.
+
+Stored inspection notices use semantic instruction identities. Definition and
+initial loading report the corresponding warnings; repeated successful calls
+reuse preparation, while an unresolved table label reports preparation warnings
+again. No routine display SQL is parsed to recover these notices.
+
+The saved regression corpus includes the unseeded long-SHOW counterexample,
+ASCII and multibyte byte boundaries, supplementary characters, NULs, routine
+creation and repeated calls, and missing databases. All 400 SQL observations
+match across MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0. Direct construction
+adds 54 inspection objects reused with two selected databases and no current
+database: 810 comparisons, including names, rows, metadata and conditions, with
+unrelated invalid session text. These bounded results do not replace the final
+whole-model, supplied-seed and 900-second gates or close the outstanding
+constructor and matching-error classification audit.

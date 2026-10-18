@@ -52,6 +52,17 @@ final class ListingTest extends TestCase
         $session->query("SHOW COLUMNS FROM t LIKE '\u{1F600}'");
     }
 
+    public function testMixReportsTheNewConversionFailureOnMySql91(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3854);
+        $this->expectExceptionMessage("Cannot convert string '\\xF0\\x9F\\x98\\x80\\xF0\\x9F...' from utf8mb3 to utf8mb4");
+
+        $session->query("SHOW DATABASES LIKE '😀😀'");
+    }
+
     public function testMixAcceptsAPatternOfAColumnInTheCharacterSetOfTheConnection(): void
     {
         $session = (new Instance())->connect();
