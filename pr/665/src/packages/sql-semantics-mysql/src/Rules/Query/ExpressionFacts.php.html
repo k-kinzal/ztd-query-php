@@ -89,7 +89,8 @@
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a><span class="tok-com">     * Derives an ORDER BY and a LIMIT that apply to the rows of a query in an environment.</span></span>
 <span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     * @param list&lt;OrderItem&gt; $orderBy</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">46</span><span class="tok-com">     * @param list&lt;OrderItem&gt; $orderBy</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     * @param list&lt;OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem&gt; $orderBy</span></span>
 <span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">ordering</span>(<span class="tok-id">QueryFact</span> <span class="tok-var">$fact</span>, <span class="tok-kw">array</span> <span class="tok-var">$orderBy</span>, ?<span class="tok-id">Limit</span> <span class="tok-var">$limit</span>, <span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    {</span>

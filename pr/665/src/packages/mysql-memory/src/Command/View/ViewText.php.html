@@ -200,7 +200,7 @@
 <span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a><span class="tok-com">     * Writes an ORDER BY and a LIMIT clause, each when there is one.</span></span>
 <span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a><span class="tok-com">     * @param list&lt;OrderItem&gt; $order</span></span>
+<span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a><span class="tok-com">     * @param list&lt;OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem&gt; $order</span></span>
 <span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">tail</span>(<span class="tok-kw">array</span> <span class="tok-var">$order</span>, ?<span class="tok-id">object</span> <span class="tok-var">$limit</span>): ?<span class="tok-id">string</span></span>
 <span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a>    {</span>
