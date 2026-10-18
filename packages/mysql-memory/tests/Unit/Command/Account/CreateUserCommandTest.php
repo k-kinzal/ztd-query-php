@@ -50,6 +50,24 @@ final class CreateUserCommandTest extends TestCase
         self::assertSame([3163], array_column($session->diagnostics->conditions, 1));
     }
 
+    public function testAbsentValidatesInitialAuthenticationBeforeSkippingExistingAccounts(): void
+    {
+        $session = (new Instance())->connect();
+        $error = $session->run("CREATE USER IF NOT EXISTS CURRENT_USER, CURRENT_USER IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED WITH SESSION AS X'0f'")[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame([1524, "Plugin 'SESSION' is not loaded", [3163, 1524]], [$error->getCode(), $error->getMessage(), array_column($session->diagnostics->conditions, 1)]);
+    }
+
+    public function testAbsentDefersRegistrationCredentialsAfterValidInitialAuthentication(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->query("CREATE USER IF NOT EXISTS CURRENT_USER IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED BY 'p'")[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([3163], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testCreateRefusesInitialAuthenticationForBuiltInPlugins(): void
     {
         $session = (new Instance())->connect();

@@ -123,7 +123,7 @@ final class Credentials
     {
         if ($plugin === 'mysql_native_password' || $plugin === 'mysql_old_password') {
             if ($hash !== '' && (strlen($hash) !== 41 || $hash[0] !== '*')) {
-                throw AccountError::PasswordFormat->error("The password hash doesn't have the expected format. Check if the correct password algorithm is being used with the PASSWORD() function.");
+                throw AccountError::PasswordFormat->error($this->legacy() ? "The password hash doesn't have the expected format. Check if the correct password algorithm is being used with the PASSWORD() function." : AccountError::PasswordFormat->message());
             }
 
             return;

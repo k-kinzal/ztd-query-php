@@ -95,7 +95,8 @@ final class CreateUserCommand implements Command
     /**
      * Answers the accounts of CREATE USER that do not exist yet, each named once.
      *
-     * Existing accounts under IF NOT EXISTS draw notes without validating replacement credentials.
+     * Initial authentication is checked even for existing accounts under IF NOT EXISTS.
+     * Existing accounts then draw notes without validating replacement credentials.
      * Other occurrences validate their credentials before checking existence. All occurrences
      * contribute diagnostics in order; credential failures precede the final existence error.
      * Default roles are resolved only for new recipients. After a role refusal,
@@ -117,12 +118,13 @@ final class CreateUserCommand implements Command
             $identity = $names->identity($user->user, $session);
             (new Authentication\DefinerReferences())->record($identity, $session, $context);
             $exists = $session->instance->accounts->find($identity) !== null || isset($created[$identity->key()]);
-            if ($exists && $statement->ifNotExists) {
-                $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));
-                continue;
-            }
             try {
-                $options->check($user->initial ?? $user->identification, $plugin);
+                $options->check($user->initial, $plugin);
+                if ($exists && $statement->ifNotExists) {
+                    $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));
+                    continue;
+                }
+                $options->check($user->initial === null ? $user->identification : null, $plugin);
                 (new Authentication\CreateFactors())->check($user, $exists, $session);
                 if (!$exists) {
                     if ($rolesRefused) {

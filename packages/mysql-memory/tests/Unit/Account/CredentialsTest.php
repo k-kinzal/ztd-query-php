@@ -100,6 +100,15 @@ final class CredentialsTest extends TestCase
         self::assertSame('60671c896665c3fa', (new Credentials(\SqlSemantics\Contract\GrammarRelease::MySql5651))->hash('mysql_old_password', 'a'));
     }
 
+    public function testCheckUsesTheModernNativeHashDiagnostic(): void
+    {
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1827);
+        $this->expectExceptionMessage("The password hash doesn't have the expected format.");
+
+        (new Credentials(\SqlSemantics\Contract\GrammarRelease::MySql8044))->check('mysql_native_password', 'bad');
+    }
+
     public function testCheckRefusesAMySqlNativePasswordStringOfAnotherLength(): void
     {
         $this->expectException(SqlError::class);
