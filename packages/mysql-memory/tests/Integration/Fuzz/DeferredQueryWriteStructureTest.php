@@ -45,7 +45,14 @@ final class DeferredQueryWriteStructureTest extends TestCase
             $number = $construction->object(M\Literal\NumberLiteral::class, 0);
             assert($number instanceof M\Literal\NumberLiteral);
             $row = new M\Expression\Row([new M\Name\ColumnUse(new Name('a')), $number]);
-            $source = new M\Query\With\DeferredBody(new M\Routine\Program\DeferredSelection([new M\Routine\Program\DeferredProjection($row)], new M\Relation\TableReference(new QualifiedName(new Name('source')))));
+            $source = new M\Query\With\DeferredBody(new M\Routine\Program\DeferredSelection([new M\Routine\Program\DeferredProjection($row)], new M\Relation\TableReference(new QualifiedName(new Name('source'))), limit: $trial % 4 === 3 ? new M\Query\Clause\RowLimit(new M\Literal\NumberLiteral('1')) : null));
+            $other = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('3'))]);
+            $source = match ($trial % 4) {
+                1 => new M\Query\Set\SetOperation($source, M\Query\Set\SetOperator::Union, null, $other),
+                2 => new M\Query\Set\SetOperation($other, M\Query\Set\SetOperator::Union, null, $source),
+                3 => new M\Query\Set\SetOperation(new M\Query\ParenthesizedQuery($source), M\Query\Set\SetOperator::Union, null, new M\Query\ParenthesizedQuery($other)),
+                0 => $source,
+            };
             $head = new M\Dml\Insert\InsertInto($trial % 2 === 0, null, false, new M\Dml\WriteTarget(new QualifiedName(new Name('target'))));
             $write = new M\Routine\Program\Write\DeferredInsertQuery($head, $source);
             $branch = new M\Routine\Program\Flow\ConditionalBranch(new M\Variable\UserVariable(new Name('active')), [$write]);

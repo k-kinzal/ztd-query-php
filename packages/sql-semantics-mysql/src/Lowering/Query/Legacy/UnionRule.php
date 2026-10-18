@@ -67,7 +67,6 @@ final class UnionRule
     public function operand(Node $init): array
     {
         $form = $this->lowering->form($init);
-        $blocks = new BlockRule($this->lowering);
         switch ($form->signature) {
             case 'select_init: SELECT_SYM select_init2':
                 $second = $this->lowering->form($form->node(1));
@@ -75,14 +74,29 @@ final class UnionRule
                     throw ImplementationGap::production($second);
                 }
 
-                return [$blocks->part($second->node(0))->hinted($this->lowering->hints($form->token(0))), $second->node(1)];
+                return [$this->retained($second->node(0), $this->lowering->hints($form->token(0))), $second->node(1)];
             case 'select_init: ( select_paren ) union_opt':
                 return [new ParenthesizedQuery($this->paren($form->node(1))), $form->node(3)];
             case 'select_init: SELECT_SYM select_part2 opt_union_clause':
-                return [$blocks->part($form->node(1))->hinted($this->lowering->hints($form->token(0))), $form->node(2)];
+                return [$this->retained($form->node(1), $this->lowering->hints($form->token(0))), $form->node(2)];
             default:
                 throw ImplementationGap::production($form);
         }
+    }
+
+    /**
+     * Retains deferred operands of an untrailed UNION block before assigning read ownership.
+     * Blocks with an open tail stay with the clause-ownership rules.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> $hints The SELECT hints
+     */
+    public function retained(Node $part, array $hints): Block|Query
+    {
+        $selection = $hints === [] ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->block($part) : null;
+        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection && $selection->orderBy === [] && $selection->limit === null && $selection->procedure === null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+        }
+        return ($selection instanceof Block ? $selection : (new BlockRule($this->lowering))->part($part))->hinted($hints);
     }
 
     /**

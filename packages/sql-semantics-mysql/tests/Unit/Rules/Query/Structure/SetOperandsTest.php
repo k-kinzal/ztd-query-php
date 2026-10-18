@@ -25,6 +25,16 @@ use SqlSemantics\Statement\Node;
 #[Small]
 final class SetOperandsTest extends TestCase
 {
+    public function testRightAllowsParenthesizedRetainedClauses(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($row)], limit: new RowLimit(new NumberLiteral('1')));
+        $right = new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery(new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection));
+        (new SetOperands())->right($right);
+        $union = new SetOperation(new Select([], [new SelectExpression(new NumberLiteral('3'))]), SetOperator::Union, null, $right);
+        self::assertSame($right, $union->right);
+    }
+
     /**
      * @return iterable<string, array{Closure(Select, Select): Node}>
      */

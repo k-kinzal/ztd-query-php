@@ -18,6 +18,24 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CreateUserCommandTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\TestWith(['missing', 1524])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['caching_sha2_password', 1827])]
+    public function testAbsentChecksExplicitAuthenticationStringsBeforeSkippingExistingAccounts(string $plugin, int $code): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->run('CREATE USER IF NOT EXISTS CURRENT_USER IDENTIFIED WITH ' . $plugin . " AS 'bad'")[0];
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame($code, $reply->getCode());
+        self::assertSame([$code], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testAbsentResolvesAnExplicitPasswordPluginBeforeExistence(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1524);
+        $session->query("CREATE USER IF NOT EXISTS CURRENT_USER IDENTIFIED WITH missing BY 'p'");
+    }
+
     public function testExecuteSkipsDefaultRolesWhenAllUsersAlreadyExist(): void
     {
         $session = (new Instance())->connect();

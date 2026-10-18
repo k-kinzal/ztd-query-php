@@ -28,6 +28,16 @@ final class SetOperands
     public function left(Query|LeadingUnion $query): void
     {
         Check::input(!$query instanceof Select || ($query->orderBy === [] && $query->into === null && $query->procedure === null), 'A SELECT before a set operator has no unparenthesized ORDER BY, INTO or PROCEDURE ANALYSE.');
+        Check::input(!$query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody || ($query->selection->orderBy === [] && $query->selection->procedure === null), 'A retained SELECT before a set operator has no unparenthesized ORDER BY or PROCEDURE ANALYSE.');
+    }
+
+    /**
+     * Rejects a final operand whose clauses would belong to the complete set expression.
+     */
+    public function right(Query $query): void
+    {
+        Check::input(!$query instanceof Select || !$query->trailed(), 'The last operand of a set operation has no ORDER BY, LIMIT, INTO or locking clause of its own unless it is written in parentheses.');
+        Check::input(!$query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody || ($query->selection->orderBy === [] && $query->selection->limit === null && $query->selection->procedure === null), 'A retained final SELECT has no ORDER BY, LIMIT or PROCEDURE ANALYSE of its own unless it is written in parentheses.');
     }
     /**
      * Identifies the first unenclosed operand after an enclosed UNION start.

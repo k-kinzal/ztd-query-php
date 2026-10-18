@@ -23,6 +23,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ReleaseDomainTest extends TestCase
 {
+    public function testOfKeepsALimitBeforeUnionInMySql56(): void
+    {
+        $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new NumberLiteral('1')));
+        $union = new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection), \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, new Select([], [new SelectExpression(new NumberLiteral('3'))]));
+        self::assertSame(1, (new ReleaseDomain())->of($union));
+        self::assertSame(511, (new ReleaseDomain())->of($union->right));
+    }
+
     public function testBitIdentifiesSupportedGrammarReleases(): void
     {
         self::assertSame(1, (new ReleaseDomain())->bit(GrammarRelease::MySql5651));

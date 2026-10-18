@@ -24,6 +24,18 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 #[Medium]
 final class UnionRuleTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.7.44'])]
+    public function testRetainedKeepsTheCompleteWriteAroundADeferredUnionOperand(string $release): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze('CREATE PROCEDURE p() INSERT INTO target SELECT 1 UNION SELECT ROW(a, 2) FROM source');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
+        self::assertInstanceOf(SetOperation::class, $operation->statement->body->source);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->statement->body->source->right);
+        self::assertSame('CREATE PROCEDURE p() INSERT INTO target SELECT 1 UNION SELECT ROW(a, 2) FROM `source`', $operation->toString());
+    }
+
     public function testStatementLiftsTheOrderingOfTheLastSelect(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2');

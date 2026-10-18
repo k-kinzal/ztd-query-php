@@ -137,8 +137,11 @@ final class QueryRules
      */
     public function legacyQuery(Node $select, ?Node $union = null): Query
     {
-        $first = $union === null || $union->tokens() === [] ? (new Shared\StoredSelections($this->lowering))->block($select) : null;
+        $first = (new Shared\StoredSelections($this->lowering))->block($select);
         if ($first instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            if ($union !== null && $union->tokens() !== [] && ($first->orderBy !== [] || $first->limit !== null || $first->procedure !== null)) {
+                return (new UnionRule($this->lowering))->chain((new BlockRule($this->lowering))->create($select), $union);
+            }
             $first = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($first);
         }
         return (new UnionRule($this->lowering))->chain($first ?? (new BlockRule($this->lowering))->create($select), $union);
