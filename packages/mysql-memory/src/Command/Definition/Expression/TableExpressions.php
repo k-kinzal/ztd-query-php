@@ -176,7 +176,7 @@ final class TableExpressions
      * @param list<ColumnDefinition> $columns
      * @return list<int|string>
      */
-    public function references(Scalar $expression, array $columns): array
+    public function references(\SqlSemantics\Statement\Node $expression, array $columns): array
     {
         $facts = $this->planner->compiler->facts;
         $positions = [];

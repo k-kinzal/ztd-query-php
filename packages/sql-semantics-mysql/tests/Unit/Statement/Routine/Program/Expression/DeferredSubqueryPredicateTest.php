@@ -19,6 +19,12 @@ final class DeferredSubqueryPredicateTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
+    public function testDeriveScalarKeepsLimitRestrictionsBeforeInvocation(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 IN (SELECT 1,2 LIMIT 1)');
+        self::assertContains("This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'.", array_map(static fn ($problem): string => $problem->message(), $operation->facts->diagnostics));
+    }
+
     public function testRenderKeepsBothCompleteOperands(): void
     {
         self::assertSame('CREATE PROCEDURE p() SELECT 1 = ALL (SELECT 2, 3)', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 = ALL (SELECT 2,3)')->toString());

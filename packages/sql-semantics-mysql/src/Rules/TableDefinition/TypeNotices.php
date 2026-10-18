@@ -44,8 +44,10 @@ final class TypeNotices
         if ($type instanceof Integral || $type instanceof Decimal || $type instanceof Floating) {
             $this->numeric($type, $derivation);
         }
-        if ($type instanceof Temporal && $type->kind === TemporalKind::Year && $type->precision === '4') {
-            Deprecation::raise(Deprecated::YearWidth, $derivation, $type);
+        if ($type instanceof Temporal) {
+            foreach ($this->temporalWarnings($type) as $notice) {
+                Deprecation::raise($notice, $derivation, $type);
+            }
         }
         if ($type instanceof Character || $type instanceof Enumeration) {
             $this->charset($type->charset, $derivation, $type);
@@ -77,8 +79,10 @@ final class TypeNotices
         if ($type instanceof Integral && $type->width !== null && !($type->kind === IntegralKind::TinyInt && $type->width === '1') && !in_array(NumericModifier::Zerofill, $modifiers, true)) {
             $notices[] = Deprecated::DisplayWidth;
         }
-        if (in_array(NumericModifier::Zerofill, $modifiers, true)) {
-            $notices[] = Deprecated::Zerofill;
+        foreach ($modifiers as $modifier) {
+            if ($modifier === NumericModifier::Zerofill) {
+                $notices[] = Deprecated::Zerofill;
+            }
         }
         if ($type instanceof Floating && $type->scale !== null) {
             $notices[] = Deprecated::FloatingDigits;
@@ -87,6 +91,25 @@ final class TypeNotices
             $notices[] = Deprecated::UnsignedFraction;
         }
 
+        return $notices;
+    }
+
+    /**
+     * Lists YEAR attribute notices in their input order, preserving repetitions.
+     *
+     * @return list<Deprecated> ZEROFILL notices precede the completed YEAR width
+     */
+    public function temporalWarnings(Temporal $type): array
+    {
+        $notices = [];
+        foreach ($type->modifiers as $modifier) {
+            if ($modifier === NumericModifier::Zerofill) {
+                $notices[] = Deprecated::Zerofill;
+            }
+        }
+        if ($type->kind === TemporalKind::Year && $type->precision === '4') {
+            $notices[] = Deprecated::YearWidth;
+        }
         return $notices;
     }
 

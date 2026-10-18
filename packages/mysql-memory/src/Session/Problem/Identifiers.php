@@ -56,6 +56,9 @@ final class Identifiers
     public function check(Node $statement, GrammarRelease $release): void
     {
         foreach ((new Walker())->find($statement, Node::class) as $node) {
+            if ($node instanceof TableWildcard && $node->table->schema?->value === '' && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                throw SchemaError::WrongDatabaseName->error('');
+            }
             foreach ($this->names($node, $release) as $name) {
                 if ($name !== null && mb_strlen($name->value) > self::LONGEST) {
                     throw SchemaError::TooLongIdentifier->error($name->value);

@@ -569,6 +569,7 @@ return [
     3753 => ['42000', 'Cannot create a functional index on a function that returns a JSON or GEOMETRY value.'],
     3754 => ['HY000', "Functional index '%s' cannot refer to an auto-increment column."],
     3756 => ['HY000', 'The primary key cannot be a functional index'],
+    3800 => ['HY000', "Expression of functional index '%s' cannot refer to a row value."],
     3758 => ['HY000', "Expression of functional index '%s' contains a disallowed function."],
     3759 => ['HY000', 'Fulltext functional index is not supported.'],
     3760 => ['HY000', 'Spatial functional index is not supported.'],

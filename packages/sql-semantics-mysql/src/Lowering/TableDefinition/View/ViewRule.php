@@ -169,7 +169,7 @@ final class ViewRule
             if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery && !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection) {
                 throw $failure;
             }
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery($identity, $alter, $failure->problem), $failure->end, false);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery($identity, $alter, $failure->problem, $definer), $failure->end, false);
         }
         \SqlSemantics\Diagnostic\Check::invariant($read instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'A view definition retains a complete read query.');
         $this->lowering->origins->forget($read);

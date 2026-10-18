@@ -136,6 +136,7 @@ final class ProgramProblems
         $others = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => !$named($diagnostic) && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount
             && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName));
         $this->clause($statement, $session);
+        ProgramSource::database($name->schema, $session);
         $this->variables($statement);
         (new \MySqlMemory\Session\Problem\Reading())->read($operation, $session);
         $problems->paths($operation, $session, $others);

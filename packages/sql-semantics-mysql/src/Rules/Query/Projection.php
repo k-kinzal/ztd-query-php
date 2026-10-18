@@ -137,6 +137,10 @@ final class Projection
      */
     public function qualified(array $fields, Derivation $derivation, Environment $environment, QualifiedName $table): array
     {
+        if ($table->name->value === '') {
+            $derivation->report(new Misuse(MisuseRule::StarWithoutTables));
+            return $fields;
+        }
         $found = false;
         foreach ($environment->relations as $relation) {
             if ((new \SqlSemantics\Platform\MySql\Rules\RelationQualifiers())->admits($environment, $relation, $table)) {

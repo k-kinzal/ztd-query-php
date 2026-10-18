@@ -89,7 +89,11 @@ final class InputErrors
      */
     public function view(\SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery $problem, Session $session): SqlError
     {
+        if ($problem->definer instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName) {
+            (new \MySqlMemory\Command\Account\Names($session->settings()->release()))->check([$problem->definer]);
+        }
         $query = $problem->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery ? $problem->query->query : $problem->query->selection;
+        (new \MySqlMemory\Session\Problem\Identifiers())->check($query, $session->settings()->release());
         $database = $problem->view->schema->value ?? $session->variables->database;
         if ($database === '') {
             return \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
@@ -98,16 +102,20 @@ final class InputErrors
         $derivation = new \SqlSemantics\Construction\Derivation($context);
         $query->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
         (new \MySqlMemory\Program\Expression\SelectionUse())->diagnosed($derivation->facts(), $session);
+        $schema = $session->instance->dictionary->schema($database);
+        if ($schema === null) {
+            return \MySqlMemory\Error\Family\QueryError::BadDatabase->error($database);
+        }
         if ($problem->alter) {
-            $schema = $session->instance->dictionary->schema($database);
             $name = $problem->view->name->value;
-            if ($schema?->table($name) !== null) {
+            if ($schema->table($name) !== null) {
                 return SchemaError::WrongObject->error($database, $name, 'VIEW');
             }
             if (!isset($schema->views[$name])) {
                 return \MySqlMemory\Error\Family\QueryError::NoSuchTable->error($database, $name);
             }
         }
+        \MySqlMemory\Command\Program\ProgramSource::definer($problem->definer, $session, diagnostics: $session->diagnostics);
         return $this->selection($query, $session, true);
     }
 

@@ -44,6 +44,17 @@ final class FunctionalQueriesTest extends TestCase
 
         $session->query($sql);
     }
+    public function testDeferredKeepsIndexedConversionsWithTheirIndexOwner(): void
+    {
+        $session = (new Instance())->connect();
+        $indexed = $session->analyze("CREATE TABLE t(a INT,PRIMARY KEY ((CAST(a AT TIME ZONE 'text' AS DATETIME))))");
+        $selected = $session->analyze("SELECT CAST(NULL AT TIME ZONE 'text' AS DATETIME)");
+        $owned = array_values(array_filter($indexed->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion));
+        self::assertCount(1, $owned);
+        self::assertTrue((new FunctionalQueries())->deferred($owned[0], $indexed->statement));
+        self::assertFalse((new FunctionalQueries())->deferred($selected->facts->diagnostics[0], $selected->statement));
+    }
+
     public function testForbiddenReportsTheIndexNameBeforeMissingKeyColumns(): void
     {
         $session = (new Instance())->connect();

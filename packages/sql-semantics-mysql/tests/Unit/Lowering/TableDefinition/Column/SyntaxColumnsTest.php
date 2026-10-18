@@ -55,6 +55,15 @@ final class SyntaxColumnsTest extends TestCase
         self::assertSame('d', $notices[0][1]->problem->scope?->schema?->value);
     }
 
+    public function testCompletedDoesNotRepeatAnInnerCastRefusalAtTableCompletion(): void
+    {
+        $sql = 'CREATE TABLE d.t(a INT, PRIMARY KEY ((CAST(1 AT LOCAL AS SIGNED))))';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(ParseFailure::class, $notices[0][1]);
+        self::assertSame("This version of MySQL doesn't yet support 'AT LOCAL'.", $notices[0][1]->problem->message());
+    }
+
     public function testCompletedRequiresTheModernStatementBeforeItsColumnCondition(): void
     {
         $sql = 'CREATE TABLE d.t(a BIT DEFAULT CURRENT_TIMESTAMP, BOGUS)';

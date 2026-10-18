@@ -118,7 +118,10 @@ final class KeyPartRule
      */
     public function expression(Node $node, ?\SqlSemantics\Platform\MySql\Statement\Query\Direction $direction): KeyPart
     {
-        $expression = $this->lowering->expressions->expression($node);
+        $expression = $this->lowering->expressions->operand($node);
+        if (!$expression instanceof \SqlSemantics\Statement\Scalar) {
+            return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart($expression, $direction);
+        }
         $ungrouped = $expression;
         while ($ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
             $ungrouped = $ungrouped->operand;

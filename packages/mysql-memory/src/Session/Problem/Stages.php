@@ -218,6 +218,9 @@ final class Stages
      */
     public static function tableDefinition(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $statement, Diagnostic $diagnostic): bool
     {
+        if ((new Definition\FunctionalQueries())->deferred($diagnostic, $statement)) {
+            return true;
+        }
         return $diagnostic instanceof MissingColumn || $diagnostic instanceof MissingTable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
     }

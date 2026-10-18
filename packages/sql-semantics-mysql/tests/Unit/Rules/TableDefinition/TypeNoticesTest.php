@@ -31,6 +31,12 @@ final class TypeNoticesTest extends TestCase
         self::assertSame([Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction], (new TypeNotices())->numericWarnings($type));
     }
 
+    public function testTemporalWarningsPreservesRepeatedYearAttributes(): void
+    {
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Year, '4', [NumericModifier::Zerofill, NumericModifier::Signed, NumericModifier::Zerofill]);
+        self::assertSame([Deprecated::Zerofill, Deprecated::Zerofill, Deprecated::YearWidth], (new TypeNotices())->temporalWarnings($type));
+    }
+
     public function testCharsetWarningsPreservesTheTypedAttributeOrder(): void
     {
         $attribute = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Unicode, mark: \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Leading);

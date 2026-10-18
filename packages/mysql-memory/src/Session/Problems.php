@@ -178,7 +178,8 @@ final class Problems
         }
         foreach ((new Walker())->find($operation->statement, Select::class) as $select) {
             $starred = array_filter($select->items, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star) !== [];
-            if ($starred && ($select->from === null || $select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual) && !in_array($select, $existing, true)) {
+            $empty = array_filter($select->items, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard && $item->table->name->value === '') !== [];
+            if (($empty || ($starred && ($select->from === null || $select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual))) && !in_array($select, $existing, true)) {
                 return false;
             }
         }

@@ -53,6 +53,7 @@ enum ConstraintError: int implements ErrorCode
     case FunctionalAutoIncrement = 3754;
     case FunctionalPrimary = 3756;
     case FunctionalIndexFunction = 3758;
+    case FunctionalRow = 3800;
     case FunctionalFullText = 3759;
     case FunctionalSpatial = 3760;
     case FunctionalColumn = 3762;

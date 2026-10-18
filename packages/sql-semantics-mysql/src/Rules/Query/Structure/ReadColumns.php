@@ -45,6 +45,13 @@ final class ReadColumns
         if (!$exists && $query instanceof M\Select && ($query->from === null || $query->from instanceof Dual) && $query->items[0] instanceof M\Star) {
             return new M\Problem\Misuse(M\Problem\MisuseRule::StarWithoutTables);
         }
+        if (!$exists && $query instanceof M\Select) {
+            foreach ($query->items as $item) {
+                if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard && $item->table->name->value === '') {
+                    return new M\Problem\Misuse(M\Problem\MisuseRule::StarWithoutTables);
+                }
+            }
+        }
         return null;
     }
 

@@ -22,6 +22,14 @@ final class ReadColumnsTest extends TestCase
         self::assertInstanceOf(M\Query\Problem\Misuse::class, (new ReadColumns())->problem(new M\Query\ParenthesizedQuery($query)));
     }
 
+    public function testProblemRejectsEmptyQualifiersIndependentlyOfTheInputRelation(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name(''));
+        $query = new M\Query\Select([], [new M\Name\TableWildcard($name)], new M\Relation\Dual());
+        self::assertInstanceOf(M\Query\Problem\Misuse::class, (new ReadColumns())->problem($query));
+        self::assertNull((new ReadColumns())->problem($query, true));
+    }
+
     public function testRowsDistinguishesDefaultsEmptyAndInconsistentWidths(): void
     {
         $rules = new ReadColumns();

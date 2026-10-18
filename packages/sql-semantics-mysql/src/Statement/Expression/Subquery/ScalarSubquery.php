@@ -46,6 +46,8 @@ use SqlSemantics\Statement\Snapshot;
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([$one]), new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')])]);
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
+ * @example Refusing an empty qualifier as a scalar read
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('')))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @visibility public
  * @example Comparing with a scalar subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = (SELECT 1)');

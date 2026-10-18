@@ -56,7 +56,7 @@ final class ExpressionRules
      *
      * @throws SqlError When the expression holds one
      */
-    public function forbidden(Scalar $expression, ExpressionRole $role, string $owner): void
+    public function forbidden(Node $expression, ExpressionRole $role, string $owner): void
     {
         $refused = $role->refused();
         foreach ((new Walker())->find($expression, Node::class) as $node) {
@@ -95,7 +95,7 @@ final class ExpressionRules
      *
      * @throws SqlError When the expression holds one
      */
-    public function grouped(Scalar $expression): void
+    public function grouped(Node $expression): void
     {
         foreach ((new Walker())->find($expression, Node::class) as $node) {
             if ($node instanceof WindowFunction) {

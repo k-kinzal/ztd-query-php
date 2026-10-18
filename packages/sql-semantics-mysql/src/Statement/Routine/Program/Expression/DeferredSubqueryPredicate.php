@@ -59,6 +59,7 @@ final class DeferredSubqueryPredicate implements DeferredOperand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows())->checkLimit($this->query, $derivation);
         $operand = $derivation->scalar($this->operand, $environment);
         $derivation->query($this->query, $environment);
         return new ScalarFact(new Invalid($this->problem()), $operand->nullability);

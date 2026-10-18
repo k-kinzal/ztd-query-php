@@ -14,6 +14,7 @@ use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart as DeferredExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 
@@ -51,7 +52,7 @@ final class FunctionalKeys
                 continue;
             }
             foreach ($index->parts as $part) {
-                if (!$part instanceof ExpressionPart && !$part instanceof ArrayPart) {
+                if (!$part instanceof ExpressionPart && !$part instanceof ArrayPart && !$part instanceof DeferredExpressionPart) {
                     continue;
                 }
                 $this->check($part, $index);
@@ -60,6 +61,13 @@ final class FunctionalKeys
                 $rules->grouped($part->expression);
                 $this->references($part, $expressions, $definition, $owner);
                 $this->storage($index, $definition->engine);
+                if ($part instanceof DeferredExpressionPart) {
+                    if ($part->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand) {
+                        throw \MySqlMemory\Error\Family\ConstraintError::FunctionalRow->error($owner);
+                    }
+                    (new \MySqlMemory\Program\Expression\RowUse())->prepare($part->expression, $planner->compiler, $scope);
+                    throw (new \MySqlMemory\Program\Expression\RowUse())->error($part->expression);
+                }
                 $value = $expressions->compiled($part->expression, $scope);
                 $written = $text->text($part->expression);
                 if ($part instanceof ArrayPart) {
@@ -78,7 +86,7 @@ final class FunctionalKeys
     /**
      * Identifies a computed slot without allocating a name in the SQL identifier domain.
      */
-    public function name(ExpressionPart|ArrayPart $part): string
+    public function name(ExpressionPart|ArrayPart|DeferredExpressionPart $part): string
     {
         return "\0index:" . spl_object_id($part);
     }
@@ -98,7 +106,7 @@ final class FunctionalKeys
                 continue;
             }
             foreach ($index->parts as $part) {
-                if ($part instanceof ExpressionPart || $part instanceof ArrayPart) {
+                if ($part instanceof ExpressionPart || $part instanceof ArrayPart || $part instanceof DeferredExpressionPart) {
                     return true;
                 }
             }
@@ -112,7 +120,7 @@ final class FunctionalKeys
      *
      * @throws \MySqlMemory\Error\SqlError When the index kind, expression or storage engine is forbidden
      */
-    public function check(ExpressionPart|ArrayPart $part, IndexDefinition $index): void
+    public function check(ExpressionPart|ArrayPart|DeferredExpressionPart $part, IndexDefinition $index): void
     {
         if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalPrimary->error();
@@ -158,7 +166,7 @@ final class FunctionalKeys
      *
      * @throws \MySqlMemory\Error\SqlError When a referenced column is missing or generates its value through AUTO_INCREMENT
      */
-    public function references(ExpressionPart|ArrayPart $part, TableExpressions $expressions, TableDefinition $definition, string $owner): void
+    public function references(ExpressionPart|ArrayPart|DeferredExpressionPart $part, TableExpressions $expressions, TableDefinition $definition, string $owner): void
     {
         foreach ($expressions->references($part->expression, $definition->columns) as $reference) {
             if (is_string($reference)) {

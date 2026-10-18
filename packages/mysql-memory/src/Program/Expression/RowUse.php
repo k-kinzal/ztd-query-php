@@ -35,6 +35,7 @@ final class RowUse
      */
     public function raise(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Session $session, bool $invocation = true): never
     {
+        (new \MySqlMemory\Session\Problem\Identifiers())->check($operand, $session->settings()->release());
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         if ($invocation && $session->settings()->release() === GrammarRelease::MySql5651) {
             $session->diagnostics->retain();

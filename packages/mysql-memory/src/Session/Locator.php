@@ -308,6 +308,10 @@ final class Locator
             $this->windowChecks[spl_object_id($node)] = [...$this->block, 8, ...$order];
         }
         $over = $node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate ? $node->over : null;
+        if ($over instanceof WindowSpec) {
+            $this->windowChecks[spl_object_id($over)] ??= [...$this->block, 8, ...$order];
+            $this->windowNames[spl_object_id($over)] ??= \MySqlMemory\Plan\Window\Specification::UNNAMED;
+        }
         if ($over instanceof Name) {
             $this->windows[] = [$over, $order];
         }
@@ -361,14 +365,9 @@ final class Locator
         }
         $clause = new FromClause($this);
         $clause->derived($select->from, $order);
-        foreach ($select->items as $item) {
-            if ($item instanceof TableWildcard) {
-                $this->wildcards[] = [$item, [...$order, 1, -1]];
-            }
-            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star && ($select->from === null || $select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual)) {
-                $this->stars[] = [$select, [...$order, 1, -2]];
-            }
-        }
+        [$wildcards, $stars] = (new Resolution\ProjectionStars())->locate($select, $order);
+        array_push($this->wildcards, ...$wildcards);
+        array_push($this->stars, ...$stars);
         foreach ($select->items as $index => $item) {
             $this->visit($item instanceof SelectExpression ? $item->expression : $item, 'field list', [...$order, 1, $index]);
         }

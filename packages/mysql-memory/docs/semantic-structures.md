@@ -1924,3 +1924,36 @@ stopped after 93.4 seconds at input 65: preceding YEAR/ZEROFILL notices were
 missing and an AT LOCAL refusal was duplicated. The failing input is retained;
 these failures require repair and a fresh full-duration run. Passing targeted
 predicate tests does not replace the whole-model and SQL Faker gates.
+
+### Qualified stars, view definers, and indexed operand roles
+
+The `query339` validation snapshot rejects empty table qualifiers from ordinary
+read operands while retaining existence projections. Refused view inputs keep
+their definer and target, and functional key parts retain a distinct deferred
+operand role instead of masquerading as scalars. Native state histories show why
+that role belongs in a definition: the identical CREATE TABLE IF NOT EXISTS
+structure can leave an existing table untouched, then prepare its key expression
+after that table is dropped. The key's subquery dependencies and target lookup
+retain their observed preparation order. Window specifications outside query
+blocks retain their owning expression's location. Input notices also preserve
+repeated type modifiers without duplicating a later AT LOCAL condition.
+
+The repaired domains pass 2,080 native observations across six integration tests
+on snapshots `query334` and `query335`, including 120 observations of directly
+constructed table definitions across catalog states. Replaying 1,980 saved native
+observations yields no differences. The final `query339` snapshot extracts
+wildcard location calculation into a source-independent collaborator; its Memory
+static checks and 18,026 unit/property/doctest tests pass. The unchanged Semantics
+packages pass their static checks and 637 core / 8,484 MySQL tests on `query338`.
+The retained-value schema has 927 definitions.
+
+The whole-model `query334` campaign (`row-roles-20261017`) constructs all 244
+public roots: 97 matching successes, 147 matching SQL errors, zero exhausted or
+failed generations, zero profile/internal failures and zero native differences.
+Its 57 same-object database histories produce 171 matching observations. This
+is outcome evidence, not closure of intrinsic constructor constraints: ordinary
+view variables and window options still require structural repair. Unseeded
+fuzzing finds another difference at input 58 (zero based): PURGE loses its
+following argument condition when lowering refuses a nested row operand. That
+input is retained for repair. Final-revision seed replay and the 900-second
+unseeded gate remain unmet.

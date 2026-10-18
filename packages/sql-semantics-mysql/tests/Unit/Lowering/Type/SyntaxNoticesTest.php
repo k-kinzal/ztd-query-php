@@ -42,6 +42,8 @@ final class SyntaxNoticesTest extends TestCase
      */
     public static function providerAttributes(): iterable
     {
+        yield 'year attributes' => ['YEAR(4) ZEROFILL SIGNED ZEROFILL', [Deprecated::Zerofill, Deprecated::Zerofill, Deprecated::YearWidth]];
+        yield 'repeated numeric attribute' => ['INT ZEROFILL SIGNED ZEROFILL', [Deprecated::Zerofill, Deprecated::Zerofill]];
         yield 'numeric digits' => ['FLOAT(3,1)', [Deprecated::FloatingDigits]];
         yield 'integer display width' => ['INT(3)', [Deprecated::DisplayWidth]];
         yield 'numeric attributes' => ['DOUBLE(3,1) UNSIGNED ZEROFILL', [Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction]];

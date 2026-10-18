@@ -41,6 +41,7 @@ final class SelectionUse
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_select');
             $session->diagnostics->clear();
         }
+        (new \MySqlMemory\Session\Problem\Identifiers())->check($selection, $session->settings()->release());
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
@@ -49,6 +50,11 @@ final class SelectionUse
         $this->diagnosed($derivation->facts(), $session);
         if ($selection->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star && ($selection->from === null || $selection->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual)) {
             throw \MySqlMemory\Error\Family\QueryError::NoTablesUsed->error();
+        }
+        foreach ($selection->items as $item) {
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard && $item->table->name->value === '') {
+                throw \MySqlMemory\Error\Family\QueryError::NoTablesUsed->error();
+            }
         }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session), viewDefinition: $viewDefinition);

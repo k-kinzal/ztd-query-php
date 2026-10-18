@@ -67,7 +67,8 @@ final class SyntaxColumns
                 $lowering->tableChanges->statement($node);
             }
         } catch (RejectedInput $failure) {
-            return new ParseFailure($failure->problem, $failure->aborts);
+            return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName
+                ? new ParseFailure($failure->problem, $failure->aborts) : null;
         } catch (\SqlSemantics\Diagnostic\AnalysisException) {
             // Other refusals retain their own declaration and notice boundaries.
         }

@@ -99,6 +99,7 @@ final class AlterTableCommand implements Command
         if ($last instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions && $last->kind->reports()) {
             return (new \MySqlMemory\Command\Maintenance\AdministrationCommand())->partitions($last, $name, $session);
         }
+        (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->prepare($operation, $session, new \MySqlMemory\Session\Problems());
         $table = $this->table($session, $schema, $name->name->value);
         $this->resolve($operation, $session);
         $layout = TableLayout::of($table->definition);
@@ -163,7 +164,7 @@ final class AlterTableCommand implements Command
     public function resolve(Operation $operation, Session $session): void
     {
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (!$diagnostic instanceof MissingTable && !$diagnostic instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
+            if (!(new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->deferred($diagnostic, $operation->statement) && !$diagnostic instanceof MissingTable && !$diagnostic instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }

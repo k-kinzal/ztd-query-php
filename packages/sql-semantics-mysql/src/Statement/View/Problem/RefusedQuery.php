@@ -32,8 +32,9 @@ final class RefusedQuery implements Diagnostic
      * @param QualifiedName $view The target view
      * @param bool $alter Whether this is ALTER VIEW
      * @param QueryInput|RefusedSelection $query The complete retained read dependencies
+     * @param \SqlSemantics\Platform\MySql\Statement\Name\Account|null $definer The account checked before preparing the view body
      */
-    public function __construct(public readonly QualifiedName $view, public readonly bool $alter, public readonly QueryInput|RefusedSelection $query)
+    public function __construct(public readonly QualifiedName $view, public readonly bool $alter, public readonly QueryInput|RefusedSelection $query, public readonly ?\SqlSemantics\Platform\MySql\Statement\Name\Account $definer = null)
     {
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($view);
     }

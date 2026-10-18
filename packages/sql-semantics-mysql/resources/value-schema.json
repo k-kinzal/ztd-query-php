@@ -3120,6 +3120,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ConstraintName": {
         "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Deferred\\ExpressionPart": {
+        "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ExpressionPart": {
         "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
         "expression": "SqlSemantics\\Statement\\Scalar"
@@ -3845,6 +3849,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\View\\Problem\\RefusedQuery": {
         "alter": "bool",
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
         "query": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedQuery|SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\Operand\\RefusedSelection",
         "view": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
