@@ -76,9 +76,7 @@ final class RowUse
     public function prepare(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
     {
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery) {
-            $session = $compiler->connection->session();
-            \SqlSemantics\Diagnostic\Check::invariant($session !== null, 'A deferred query prepares in its invocation session.');
-            (new \MySqlMemory\Session\Problems())->raise(new \MySqlMemory\Session\Resolution\QueryPreparation($operand->query, $compiler->facts->forQuery($operand->query), $session->semantics()->profile()), $session);
+            (new QueryUse())->prepare($operand->query, $compiler, $operand->exists);
             $compiler->planner->query($operand->query, $scope);
             return;
         }

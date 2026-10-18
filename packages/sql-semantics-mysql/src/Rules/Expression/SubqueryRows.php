@@ -167,7 +167,10 @@ final class SubqueryRows
 
     /**
      * Derives membership metadata; positive row membership in MySQL 5.6 and 5.7
-     * reports the full BIGINT width, while its negation reports width 1 (verified through PDO).
+     * reports the full BIGINT width, while its negation reports width 1. Other unreduced
+     * quantified predicates retain only the outer operand's NULL attribute on these
+     * legacy releases, even when comparison with an inner NULL yields NULL.
+     * Verified through PDO metadata and row values.
      */
     public function predicate(ScalarFact $operand, QueryFact $query, Derivation $derivation, Scalar $expression, bool $negated): ScalarFact
     {
@@ -176,15 +179,22 @@ final class SubqueryRows
             $nullability = Nullability::Nullable;
         }
         $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
-        $wide = $legacy && !$negated && (new Operands())->width($operand) > 1;
+        if ($legacy && $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison && (new ScalarReduction())->expression($expression->query) === null) {
+            $membership = ($expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal && $expression->quantifier === \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any)
+                || ($expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual && $expression->quantifier === \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::All);
+            if (!$membership) {
+                $nullability = $operand->nullability;
+            }
+        }
+        $wide = $legacy && !$negated && ((new Operands())->width($operand) > 1 || $this->stored($expression, $derivation->context->profile->grammar) !== null);
 
         return new ScalarFact(new Known(Domain::integer(ResolvedField::LongLong, $wide ? 21 : 1)), $nullability);
     }
 
     /**
      * Answers the temporary-column domain of an unreduced positive membership test.
-     * Legacy releases store IN and = ANY as full-width signed BIGINT even when
-     * their direct scalar result reports width one. Negation has its own wrapper.
+     * Legacy releases report unreduced positive IN and = ANY as full-width signed
+     * BIGINT, both directly and through a temporary column. Negation has its own wrapper.
      * Verified through PDO metadata from MySQL 5.6.51 and 5.7.44 Testcontainers.
      */
     public function stored(?Scalar $expression, GrammarRelease $release): ?Domain

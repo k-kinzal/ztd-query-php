@@ -108,7 +108,7 @@ final class InputErrors
                 return \MySqlMemory\Error\Family\QueryError::NoSuchTable->error($database, $name);
             }
         }
-        return $this->selection($query, $session);
+        return $this->selection($query, $session, true);
     }
 
     /**
@@ -126,10 +126,13 @@ final class InputErrors
     /**
      * Resolves a retained selection condition without bypassing input notice ordering.
      */
-    public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $selection, Session $session): SqlError
+    public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $selection, Session $session, bool $viewDefinition = false): SqlError
     {
         try {
-            ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery ? new \MySqlMemory\Program\Expression\QueryUse() : new \MySqlMemory\Program\Expression\SelectionUse())->raise($selection, $session, false);
+            if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery) {
+                (new \MySqlMemory\Program\Expression\QueryUse())->raise($selection, $session, false);
+            }
+            (new \MySqlMemory\Program\Expression\SelectionUse())->raise($selection, $session, false, $viewDefinition);
         } catch (SqlError $error) {
             return $error;
         }

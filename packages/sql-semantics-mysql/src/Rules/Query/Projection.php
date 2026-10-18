@@ -51,12 +51,15 @@ final class Projection
      * @param list<SelectExpression|Star|TableWildcard> $items
      * @return list<Field|OpenStar>
      */
-    public function items(array $items, Derivation $derivation, Environment $environment, JoinedInput $from): array
+    public function items(array $items, Derivation $derivation, Environment $environment, JoinedInput $from, bool $exists = false): array
     {
         $fields = [];
         $projection = $this->scope($items, $derivation, $environment);
         $environment = new Environment($environment->context, $environment->outer, $environment->relations, $environment->commonTables, $environment->aliases, $environment->written, $environment->aggregation, $environment->aggregatesAllowed, $environment->aggregateArgument, $projection);
         foreach ($items as $position => $item) {
+            if ($exists && ($item instanceof Star || $item instanceof TableWildcard)) {
+                $item = new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+            }
             if ($item instanceof SelectExpression) {
                 $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
                 if ($item->alias !== null && ltrim($item->alias->value, "\x00..\x20\x7F") !== $item->alias->value) {

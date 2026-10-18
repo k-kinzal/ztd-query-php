@@ -34,7 +34,7 @@ final class SelectionUse
      *
      * @throws \MySqlMemory\Error\SqlError Always, after binding the reached operands
      */
-    public function raise(DeferredSelection $selection, Session $session, bool $instruction = true): never
+    public function raise(DeferredSelection $selection, Session $session, bool $instruction = true, bool $viewDefinition = false): never
     {
         if ($instruction) {
             \MySqlMemory\Session\State\StatementCounters::query($session);
@@ -51,7 +51,7 @@ final class SelectionUse
             throw \MySqlMemory\Error\Family\QueryError::NoTablesUsed->error();
         }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
-        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
+        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session), viewDefinition: $viewDefinition);
         $planner = new \MySqlMemory\Plan\Planner($selection, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
         $scope = new \MySqlMemory\Evaluation\Scope();
         $width = $selection->from === null ? 0 : $planner->relations->plan($selection->from, $scope)->width();

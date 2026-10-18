@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Expression\Row;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
-use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Statement\Scalar;
 
@@ -62,8 +61,8 @@ final class FormRule
             'simple_expr: ROW_SYM ( expr , expr_list )' => new Row([(new OperandRule())->row($expressions->operand($form->node(2)), $form->node(2)), ...array_map(static fn ($operand) => (new OperandRule())->row($operand, $form->node(4)), $expressions->operands($form->node(4)))], OptionalWords::Written),
             'simple_expr: ( subselect )' => (new OperandRule())->subquery($queries->query($form->node(1))),
             'simple_expr: row_subquery' => (new OperandRule())->subquery($queries->query($form->node(0))),
-            'simple_expr: EXISTS ( subselect )' => new Exists($queries->query($form->node(2))),
-            'simple_expr: EXISTS table_subquery' => new Exists($queries->query($form->node(1))),
+            'simple_expr: EXISTS ( subselect )' => (new OperandRule())->exists($queries->query($form->node(2))),
+            'simple_expr: EXISTS table_subquery' => (new OperandRule())->exists($queries->query($form->node(1))),
             'simple_expr: { ident expr }' => new OdbcEscape($names->identifier($form->node(1)), $expressions->expression($form->node(2))),
             'simple_expr: DEFAULT ( simple_ident )', 'simple_expr: DEFAULT_SYM ( simple_ident )' => new DefaultOfColumn($names->column($form->node(2))),
             'simple_expr: VALUES ( simple_ident_nospvar )' => new InsertedColumn($names->column($form->node(2))),

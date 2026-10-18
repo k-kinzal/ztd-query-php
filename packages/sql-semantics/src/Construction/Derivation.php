@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Construction;
 
 use Closure;
+use SplObjectStorage;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Resolution\Environment;
@@ -71,6 +72,11 @@ final class Derivation
      */
     public array $introducedVariables = [];
 
+    /**
+     * @var SplObjectStorage<Query, null> Query blocks whose rows are tested for existence
+     */
+    public readonly SplObjectStorage $existenceQueries;
+
     private ?Node $reading = null;
 
     private ?QueryFact $output = null;
@@ -94,6 +100,7 @@ final class Derivation
         $this->warnings = new Warnings($sources);
         $this->conditions = new Conditions();
         $this->instructions = new InstructionScope();
+        $this->existenceQueries = new SplObjectStorage();
     }
 
     /**

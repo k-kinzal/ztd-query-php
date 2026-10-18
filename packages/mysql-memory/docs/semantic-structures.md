@@ -1897,3 +1897,30 @@ and one native connection timeout. Its unseeded campaign failed on its first
 input, and its seed campaigns found view target-order differences. A prior
 900-second success on the account-fix snapshot does not replace a passing
 campaign on the final revision. The acceptance contract remains unmet.
+
+
+The predicate refinement validated in snapshot `/query321-work-20261018`
+excludes inconsistent read columns from ordinary `Exists`, `InQuery`, and
+`QuantifiedComparison` values. Deferred instructions retain the complete query
+and whether it is tested for existence. View definition preparation retains its
+own operand order and error clause; it does not use invocation-only predicate
+transformations. `EXISTS` wildcard projections are resolved to constant fields
+by Semantics, including set operands, while derived tables and CTE definitions
+keep their own projection roles. Result attributes retain observed differences
+between legacy and modern releases.
+
+The new native comparisons passed 1,810 SQL observations through direct,
+stored, prepared, and view contexts; 560 observations of the same 16 directly
+constructed predicate statements across seven catalog/cardinality states and
+five releases; 305 existence-projection observations; and 500 quantified
+comparison observations. The direct path keeps unrelated invalid session text
+throughout each state history. The three packages passed their full static
+checks and unit/property/doctest suites. Replaying 3,425 saved native
+observations found no differences for the repaired predicate domains.
+
+Acceptance remains unmet. The broader `/query319-work-20261018` campaign
+found an empty qualified wildcard with the wrong error, and unseeded fuzzing
+stopped after 93.4 seconds at input 65: preceding YEAR/ZEROFILL notices were
+missing and an AT LOCAL refusal was duplicated. The failing input is retained;
+these failures require repair and a fresh full-duration run. Passing targeted
+predicate tests does not replace the whole-model and SQL Faker gates.

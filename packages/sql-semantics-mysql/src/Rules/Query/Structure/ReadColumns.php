@@ -37,7 +37,7 @@ final class ReadColumns
             return $this->problem($query->body, $exists);
         }
         if ($query instanceof M\Set\SetOperation || $query instanceof M\Set\OrderedSetOperation || $query instanceof M\Set\LeadingUnion) {
-            return $this->problem($query->left, $exists) ?? $this->problem($query->right, $exists) ?? $this->combined($query->left, $query->right);
+            return $this->problem($query->left, $exists) ?? $this->problem($query->right, $exists) ?? $this->combined($query->left, $query->right, $exists);
         }
         if ($query instanceof M\ValuesQuery) {
             return $this->rows($query);
@@ -74,10 +74,10 @@ final class ReadColumns
     /**
      * Compares fixed output widths; unknown declarations remain a resolution dependency.
      */
-    public function combined(Query|M\Set\LeadingUnion $left, Query $right): ?Diagnostic
+    public function combined(Query|M\Set\LeadingUnion $left, Query $right, bool $exists = false): ?Diagnostic
     {
-        $one = (new QueryWidth())->of($left);
-        $two = (new QueryWidth())->of($right);
+        $one = (new QueryWidth())->of($left, $exists);
+        $two = (new QueryWidth())->of($right, $exists);
         return $one !== null && $two !== null && $one !== $two ? new M\Problem\CountMismatch(M\Problem\CountedList::SetOperands, $one, $two) : null;
     }
 }

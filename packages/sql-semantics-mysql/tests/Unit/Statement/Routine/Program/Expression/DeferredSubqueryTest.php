@@ -46,6 +46,7 @@ final class DeferredSubqueryTest extends TestCase
 
     public function testRenderPreservesTheStoredSubquery(): void
     {
+        self::assertSame('CREATE PROCEDURE p() SELECT EXISTS (VALUES ROW())', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT EXISTS(VALUES ROW())')->toString());
         self::assertSame('CREATE PROCEDURE p() SELECT (VALUES ROW())', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT (VALUES ROW())')->toString());
     }
 }

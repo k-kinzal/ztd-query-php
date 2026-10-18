@@ -43,6 +43,17 @@ final class OperandRuleTest extends TestCase
         self::assertInstanceOf(GroupedRow::class, (new OperandRule())->grouped(new Row([new NumberLiteral('1'), new NumberLiteral('2')])));
     }
 
+    public function testExistsPermitsATablelessStarButRetainsAnIntrinsicReadConstraint(): void
+    {
+        $rules = new OperandRule();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists::class, $rules->exists(new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()])));
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]);
+        $deferred = $rules->exists($query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery::class, $deferred);
+        self::assertSame($query, $deferred->query);
+        self::assertTrue($deferred->exists);
+    }
+
     public function testSubqueryDistinguishesExplicitMultiColumnOutput(): void
     {
         $query = new Select([], [new SelectExpression(new NumberLiteral('1')), new SelectExpression(new NumberLiteral('2'))]);

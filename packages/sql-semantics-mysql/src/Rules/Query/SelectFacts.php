@@ -77,7 +77,7 @@ final class SelectFacts
         $expressions = array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items);
         $aggregate = $select->groupBy === null && (new Aggregation())->aggregates([...$expressions, ...$ordering, ...array_values(array_filter([$select->having, $select->qualify]))]);
         $output = $aggregate || $select->groupBy?->modifier !== null ? array_map(static fn ($relation) => (new Joining())->extend($relation), $visible) : $visible;
-        $items = (new Projection())->items($select->items, $derivation, new Environment($context, $outer, $output, aggregation: $aggregation, aggregatesAllowed: true), new JoinedInput($from->fact, $output, $from->star));
+        $items = (new Projection())->items($select->items, $derivation, new Environment($context, $outer, $output, aggregation: $aggregation, aggregatesAllowed: true), new JoinedInput($from->fact, $output, $from->star), $derivation->existenceQueries->offsetExists($select));
         $aliases = $this->aliases($select, $items, $context->profile);
         if ($select->where !== null) {
             (new Operands())->single($derivation->scalar($select->where, new Environment($context, $outer, $visible, aggregation: $aggregation)), $derivation);

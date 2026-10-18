@@ -322,7 +322,7 @@ final class LocatorTest extends TestCase
     public function testSelectLocatesAStarWithoutTablesBeforeTheItems(): void
     {
         $session = (new Instance())->connect();
-        $locator = (new Locator())->statement($session->analyze('SELECT 1 IN (SELECT *)')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT EXISTS (SELECT *)')->statement);
 
         self::assertCount(1, $locator->stars);
     }

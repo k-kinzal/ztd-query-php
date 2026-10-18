@@ -161,6 +161,7 @@ final class Problems
 
         return array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => ($grouping || (!$diagnostic instanceof NonGroupedColumn && !($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering && $diagnostic->distinct)))
             && !($tested && $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables)
+            && !($operation instanceof QueryPreparation && $operation->deferSetWidth && $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch && $diagnostic->list === \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList::SetOperands)
             && !Stages::answered($operation->statement, $diagnostic)
             && !Stages::planned($diagnostic)
             && !($operation->statement instanceof DropTable && $diagnostic instanceof MissingTable && ($diagnostic->name->schema !== null || $database !== ''))));

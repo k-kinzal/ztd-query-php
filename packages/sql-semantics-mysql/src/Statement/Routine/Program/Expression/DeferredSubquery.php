@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * A stored value use of a query with an intrinsic read-column constraint.
+ * A stored value or existence use of a query with an intrinsic read-column constraint.
  *
  * The complete query remains available for invocation-time dependency checks.
  * It cannot supply an ordinary Scalar, but an unreached stored instruction may
@@ -43,10 +43,11 @@ final class DeferredSubquery implements DeferredOperand
 
     /**
      * @param Query $query The complete query with an intrinsic read-column constraint
+     * @param bool $exists Whether only row existence is tested, allowing a tableless star
      */
-    public function __construct(public readonly Query $query)
+    public function __construct(public readonly Query $query, public readonly bool $exists = false)
     {
-        Check::input((new ReadColumns())->problem($query) !== null, 'A deferred subquery value retains an intrinsic read-column constraint.');
+        Check::input((new ReadColumns())->problem($query, $exists) !== null, 'A deferred subquery value retains an intrinsic read-column constraint.');
         (new SubqueryOptions())->check($query);
         (new Generations())->check($this);
     }
@@ -56,6 +57,9 @@ final class DeferredSubquery implements DeferredOperand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        if ($this->exists) {
+            (new \SqlSemantics\Platform\MySql\Rules\Query\Existence())->mark($this->query, $derivation);
+        }
         $derivation->query($this->query, $environment);
 
         return new ScalarFact(new Invalid($this->problem()), Nullability::Dependent);
@@ -76,7 +80,7 @@ final class DeferredSubquery implements DeferredOperand
      */
     public function problem(): Diagnostic
     {
-        $problem = (new ReadColumns())->problem($this->query);
+        $problem = (new ReadColumns())->problem($this->query, $this->exists);
         Check::invariant($problem !== null, 'A deferred subquery value retains its read-column constraint.');
         return $problem;
     }
@@ -86,6 +90,9 @@ final class DeferredSubquery implements DeferredOperand
      */
     public function render(Output $out): void
     {
+        if ($this->exists) {
+            $out->keyword('EXISTS');
+        }
         $out->symbol('(')->node($this->query)->symbol(')');
     }
 }

@@ -18,6 +18,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class QueryUseTest extends TestCase
 {
+    public function testPrepareReportsAnInsertOnlyDefaultBeforeCompilation(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3943);
+        $session->query('SELECT (VALUES ROW(DEFAULT))');
+    }
+
     /**
      * @return iterable<string, array{M\Routine\Program\Selection\DeferredQuery, int}>
      */

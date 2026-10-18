@@ -23,6 +23,16 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuer
 final class QueryUse
 {
     /**
+     * Prepares the query's already resolved dependencies without sibling conditions.
+     */
+    public function prepare(\SqlSemantics\Statement\Query $query, \MySqlMemory\Evaluation\Compile\Compiler $compiler, bool $exists = false, bool $deferSetWidth = false): void
+    {
+        $session = $compiler->connection->session();
+        \SqlSemantics\Diagnostic\Check::invariant($session !== null, 'A deferred query prepares in its invocation session.');
+        (new Problems())->raise(new QueryPreparation($query, $compiler->facts->forQuery($query), $session->semantics()->profile(), $exists, $deferSetWidth), $session);
+    }
+
+    /**
      * Raises the query's first dependency or intrinsic read-column condition.
      *
      * @throws \MySqlMemory\Error\SqlError Always, after preparing the retained query

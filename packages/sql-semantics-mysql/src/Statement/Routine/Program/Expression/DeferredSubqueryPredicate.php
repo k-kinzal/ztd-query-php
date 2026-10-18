@@ -49,7 +49,7 @@ final class DeferredSubqueryPredicate implements DeferredOperand
         Check::input($operator !== ComparisonOperator::NullSafeEqual, 'Null-safe equality cannot be quantified.');
         Check::input(!$negated || $operator === null, 'Only IN carries a separate negation.');
         Check::input((new Precedence())->fits($operand, $operator === null ? Precedence::PREDICATE : Precedence::BOOL_PRI, $operator === null ? Precedence::BIT_EXPR : Precedence::BOOL_PRI), 'The compared operand preserves its precedence.');
-        Check::input($operand instanceof DeferredOperand || $this->shape() !== null, 'A deferred predicate has an invocation-time operand constraint.');
+        Check::input($operand instanceof DeferredOperand || $this->shape() !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) !== null, 'A deferred predicate has an invocation-time operand constraint.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -109,7 +109,7 @@ final class DeferredSubqueryPredicate implements DeferredOperand
      */
     public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
-        return $this->operand instanceof DeferredOperand ? $this->operand->problem() : ($this->shape() ?? throw new LogicException('A deferred subquery predicate has a fixed operand constraint.'));
+        return $this->operand instanceof DeferredOperand ? $this->operand->problem() : ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($this->query) ?? $this->shape() ?? throw new LogicException('A deferred subquery predicate has a fixed operand constraint.'));
     }
 
     /**

@@ -220,6 +220,18 @@ final class SubqueryRowsTest extends TestCase
         self::assertSame($width, $type->descriptor->metadataLength());
     }
 
+    #[DataProvider('providerStoredWidths')]
+    public function testPredicateRetainsLegacyQuantifiedNullAttributes(string $release, int $width): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $table = $semantics->analyze('CREATE TABLE t(v INT)');
+        $operation = $semantics->analyze('SELECT 1 >= ALL(SELECT v FROM t), NULL >= ALL(SELECT v FROM t), 1 IN(SELECT v FROM t)', [$table]);
+        self::assertSame($width === 21 ? Nullability::NotNull : Nullability::Nullable, $operation->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(2)->nullability);
+        self::assertEquals(new Known(Domain::integer(ResolvedField::LongLong, $width)), $operation->field(2)->type);
+    }
+
     /**
      * @return iterable<string, array{string, bool}>
      */

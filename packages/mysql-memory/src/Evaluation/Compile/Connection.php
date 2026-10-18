@@ -24,6 +24,7 @@ final class Connection
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in order
      * @param \MySqlMemory\Program\Activation|null $program The stored program whose variables the statement reads, or null outside a program
      * @param WeakReference<\MySqlMemory\Session\Session>|null $session The session that runs the statement, which runs the stored functions it calls, held weakly so that a session nothing else refers to closes; null where none can be called
+     * @param bool $viewDefinition Whether a view body is being bound without invocation-time subquery transformations
      */
     public function __construct(
         public readonly Variables $variables,
@@ -34,6 +35,7 @@ final class Connection
         public readonly array $parameters = [],
         public readonly ?\MySqlMemory\Program\Activation $program = null,
         public readonly ?WeakReference $session = null,
+        public readonly bool $viewDefinition = false,
     ) {
     }
 

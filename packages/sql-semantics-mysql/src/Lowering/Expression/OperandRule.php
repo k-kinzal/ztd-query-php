@@ -77,6 +77,16 @@ final class OperandRule
     }
 
     /**
+     * Keeps intrinsic read constraints outside the ordinary existence-test domain.
+     */
+    public function exists(Query $query): Subquery\Exists|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query, true) === null
+            ? new Subquery\Exists($query)
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery($query, true);
+    }
+
+    /**
      * Constructs a comparison after checking every statically known row field.
      *
      * @throws RejectedInput When the operands contradict one another
@@ -118,7 +128,7 @@ final class OperandRule
      */
     public function inQuery(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Query $query, bool $negated, Node $source): Subquery\InQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate
     {
-        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand || (new RowShapes())->query($operand, $query) !== null) {
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand || (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) !== null || (new RowShapes())->query($operand, $query) !== null) {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate($operand, $query, negated: $negated);
         }
         return new Subquery\InQuery($operand, $query, $negated);
@@ -131,7 +141,7 @@ final class OperandRule
     public function quantified(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, ComparisonOperator $operator, Subquery\Quantifier $quantifier, Query $query, Node $source): Subquery\QuantifiedComparison|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate
     {
         $rows = ($quantifier === Subquery\Quantifier::Any && $operator === ComparisonOperator::Equal) || ($quantifier === Subquery\Quantifier::All && $operator === ComparisonOperator::NotEqual);
-        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand || (!$rows && ($operand instanceof RowOperand || ((new QueryWidth())->of($query) ?? 1) > 1)) || (new RowShapes())->query($operand, $query) !== null) {
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand || (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) !== null || (!$rows && ($operand instanceof RowOperand || ((new QueryWidth())->of($query) ?? 1) > 1)) || (new RowShapes())->query($operand, $query) !== null) {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate($operand, $query, $operator, $quantifier);
         }
         return new Subquery\QuantifiedComparison($operand, $operator, $quantifier, $query);

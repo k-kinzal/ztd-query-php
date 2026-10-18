@@ -22,8 +22,10 @@ final class QueryPreparation
      * @param Query $statement The complete stored query being prepared
      * @param Facts $facts The query's facts in the current invocation context
      * @param LanguageProfile $language The grammar and lexical interpretation
+     * @param bool $exists Whether this query is prepared only as an existence test
+     * @param bool $deferSetWidth Whether the surrounding legacy predicate binds its operand before fixed set widths
      */
-    public function __construct(public readonly Query $statement, public readonly Facts $facts, public readonly LanguageProfile $language)
+    public function __construct(public readonly Query $statement, public readonly Facts $facts, public readonly LanguageProfile $language, public readonly bool $exists = false, public readonly bool $deferSetWidth = false)
     {
     }
 

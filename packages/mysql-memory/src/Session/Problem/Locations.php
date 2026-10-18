@@ -204,7 +204,7 @@ final class Locations
      */
     public static function existing(Operation|QueryPreparation $operation): array
     {
-        $blocks = [];
+        $blocks = $operation instanceof QueryPreparation && $operation->exists ? (new \MySqlMemory\Session\Placement())->blocks($operation->statement) : [];
         foreach ((new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists::class) as $exists) {
             array_push($blocks, ...(new \MySqlMemory\Session\Placement())->blocks($exists->query));
         }
