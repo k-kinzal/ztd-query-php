@@ -154,9 +154,9 @@
 <span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">encoding</span>(<span class="tok-var">$name</span>, <span class="tok-var">$derivation</span>, <span class="tok-var">$option</span>);</span>
 <span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a>            }</span>
 <span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a>        }</span>
-<span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a>    }</span>
-<span class="src-line" id="L114" data-diff="added"><a class="ln" href="#L114">114</a></span>
-<span class="src-line" id="L115" data-diff="added"><a class="ln" href="#L115">115</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L113" data-diff="same"><a class="ln" href="#L113">113</a>    }</span>
+<span class="src-line" id="L114" data-diff="same"><a class="ln" href="#L114">114</a></span>
+<span class="src-line" id="L115" data-diff="same"><a class="ln" href="#L115">115</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L116" data-diff="added"><a class="ln" href="#L116">116</a><span class="tok-com">     * Resolves a retained character set or collation at its enclosing table action.</span></span>
 <span class="src-line" id="L117" data-diff="added"><a class="ln" href="#L117">117</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L118" data-diff="added"><a class="ln" href="#L118">118</a><span class="tok-com">     * An unknown name aborts before table resolution, including for CONVERT TO</span></span>
@@ -173,9 +173,9 @@
 <span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a>            <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-var">$problem</span>);</span>
 <span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a>            <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">warn</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure</span>(<span class="tok-var">$problem</span>, <span class="tok-id">true</span>), <span class="tok-var">$owner</span>);</span>
 <span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a>        }</span>
-<span class="src-line" id="L132" data-diff="same"><a class="ln" href="#L132">132</a>    }</span>
-<span class="src-line" id="L133" data-diff="same"><a class="ln" href="#L133">133</a></span>
-<span class="src-line" id="L134" data-diff="same"><a class="ln" href="#L134">134</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a>    }</span>
+<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a></span>
+<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L135" data-diff="same"><a class="ln" href="#L135">135</a><span class="tok-com">     * Answers the column declaration a column definition requests, as CREATE TABLE declares it without a table-level primary key.</span></span>
 <span class="src-line" id="L136" data-diff="same"><a class="ln" href="#L136">136</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L137" data-diff="same"><a class="ln" href="#L137">137</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">declaration</span>(<span class="tok-id">ColumnDefinition</span> <span class="tok-var">$column</span>): <span class="tok-id">Column</span></span>
@@ -188,7 +188,8 @@
 <span class="src-line" id="L144" data-diff="same"><a class="ln" href="#L144">144</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L145" data-diff="same"><a class="ln" href="#L145">145</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">references</span>(<span class="tok-id">ColumnSpecification</span> <span class="tok-var">$specification</span>): ?<span class="tok-id">References</span></span>
 <span class="src-line" id="L146" data-diff="same"><a class="ln" href="#L146">146</a>    {</span>
-<span class="src-line" id="L147" data-diff="same"><a class="ln" href="#L147">147</a>        <span class="tok-kw">return</span> <span class="tok-var">$specification</span> <span class="tok-kw">instanceof</span> <span class="tok-id">OrdinaryColumn</span> || <span class="tok-var">$specification</span> <span class="tok-kw">instanceof</span> <span class="tok-id">GeneratedColumn</span> ? <span class="tok-var">$specification</span>-&gt;<span class="tok-id">references</span> : <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">84</span>        <span class="tok-kw">return</span> <span class="tok-var">$specification</span> <span class="tok-kw">instanceof</span> <span class="tok-id">OrdinaryColumn</span> || <span class="tok-var">$specification</span> <span class="tok-kw">instanceof</span> <span class="tok-id">GeneratedColumn</span> ? <span class="tok-var">$specification</span>-&gt;<span class="tok-id">references</span> : <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L147" data-diff="added"><a class="ln" href="#L147">147</a>        <span class="tok-kw">return</span> <span class="tok-var">$specification</span> <span class="tok-kw">instanceof</span> <span class="tok-id">OrdinaryColumn</span> || (<span class="tok-var">$specification</span> <span class="tok-kw">instanceof</span> <span class="tok-id">GeneratedColumn</span> || <span class="tok-var">$specification</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Table\Column\DeferredGeneratedColumn</span>) ? <span class="tok-var">$specification</span>-&gt;<span class="tok-id">references</span> : <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L148" data-diff="same"><a class="ln" href="#L148">148</a>    }</span>
 <span class="src-line" id="L149" data-diff="same"><a class="ln" href="#L149">149</a>}</span>
 <span class="src-line" id="L150" data-diff="same"><a class="ln" href="#L150">150</a></span>
