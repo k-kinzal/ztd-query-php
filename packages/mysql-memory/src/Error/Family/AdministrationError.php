@@ -112,6 +112,9 @@ enum AdministrationError: int implements ErrorCode
     case AutoPositionWithoutGtid = 1777;
     case SourceFileWithoutPosition = 3023;
     case ReplicationCompression = 3920;
+    case ReplicationCompressionLevel = 3921;
+    case ReplicationCompressionCount = 3924;
+    case ReplicationCompressionLength = 4037;
     case ReplicationUserMissing = 3926;
     case GroupUserEmpty = 3970;
     case GroupUserMissing = 3971;

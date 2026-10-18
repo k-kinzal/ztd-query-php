@@ -14,6 +14,24 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class SourceRepositoryTest extends TestCase
 {
+    public function testUnsignedClampsBeforeWrapping(): void
+    {
+        $number = \SqlSemantics\Platform\MySql\Statement\Literal\Numeral::class;
+        $rule = new SourceRepository();
+        self::assertSame(1, $rule->unsigned(new $number('4294967297')));
+        self::assertSame(4294967295, $rule->unsigned(new $number('18446744073709551616')));
+    }
+
+    public function testUpdateResetsTheHeartbeatForAnEffectiveHostOrPortAssignment(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO SOURCE_HOST='a',SOURCE_HEARTBEAT_PERIOD=7");
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_PORT=0');
+        self::assertSame(['' => 7.0], $session->instance->registry->replication->heartbeatPeriods);
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_PORT=4000');
+        self::assertSame(['' => 30.0], $session->instance->registry->replication->heartbeatPeriods);
+    }
+
     public function testUpdateRetainsAndResetsHeartbeatPeriodsWithTheConnection(): void
     {
         $session = (new Instance())->connect();

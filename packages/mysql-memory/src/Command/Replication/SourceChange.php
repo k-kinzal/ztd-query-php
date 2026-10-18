@@ -61,10 +61,7 @@ final class SourceChange
         $timeout = $session->variables->read($session->settings()->legacy() ? 'slave_net_timeout' : 'replica_net_timeout');
         (new SourceRepository())->update($options, $state, $channel, (float) $timeout / 2);
         $this->warnings($options, $session, $context);
-        $compression = $options[SourceOptionKind::CompressionAlgorithms->value]->value ?? null;
-        if ($compression instanceof Text) {
-            $this->compression((new Literals())->bytes($compression), $channel);
-        }
+        (new SourceConfiguration())->apply($options, $state, $channel);
         (new SourceRepository())->check($state);
         $this->relay($options, $session, $channel);
         (new SourceSwitches())->apply($options, $session, $channel);
@@ -147,15 +144,25 @@ final class SourceChange
     }
 
     /**
-     * Refuses the first unknown compression algorithm; names are case insensitive and a final comma is accepted.
+     * Checks the effective NUL-terminated byte string, then its count, then each algorithm.
+     *
+     * SQL observations on 8.0.44, 8.4.7 and 9.1.0 establish a maximum of 98
+     * bytes and three entries, including duplicates. A final comma is accepted.
      *
      * @throws \MySqlMemory\Error\SqlError When any algorithm is unknown
      */
     public function compression(string $algorithms, string $channel): void
     {
+        $algorithms = explode("\0", $algorithms, 2)[0];
+        if (strlen($algorithms) > 98) {
+            throw AdministrationError::ReplicationCompressionLength->error(strlen($algorithms), $channel);
+        }
         $names = explode(',', $algorithms);
         if (count($names) > 1 && $names[count($names) - 1] === '') {
             array_pop($names);
+        }
+        if (count($names) > 3) {
+            throw AdministrationError::ReplicationCompressionCount->error($algorithms, $channel);
         }
         foreach ($names as $name) {
             if (!in_array(strtolower($name), ['zlib', 'zstd', 'uncompressed'], true)) {

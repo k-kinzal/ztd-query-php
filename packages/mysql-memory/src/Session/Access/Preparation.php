@@ -33,7 +33,7 @@ final class Preparation
             (new DefaultDatabase())->check($operation->statement, $session);
         }
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose) {
+        if (($operation->statement instanceof \SqlSemantics\Statement\Script && $operation->statement->statements === []) || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
         $this->program($operation, $session);
@@ -125,6 +125,7 @@ final class Preparation
      */
     public function read(string $sql, Session $session): Operation|\MySqlMemory\Command\Prepared\PendingInstruction
     {
+        (new \MySqlMemory\Session\Parse\Preparation\EmptyPrepared())->check($sql, $session->semantics()->parser());
         try {
             $statements = $session->split($sql);
         } catch (SqlError $error) {

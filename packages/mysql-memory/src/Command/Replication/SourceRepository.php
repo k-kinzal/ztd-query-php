@@ -35,9 +35,16 @@ final class SourceRepository
     {
         $host = $options[SourceOptionKind::Host->value]->value ?? null;
         if ($host instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Text) {
+            if (explode("\0", $host->bytes(), 2)[0] === '') {
+                throw StatementError::WrongArguments->error('SOURCE_HOST');
+            }
             $state->host = explode("\0", $host->bytes(), 2)[0];
         }
         $heartbeat = $options[SourceOptionKind::HeartbeatPeriod->value]->value ?? null;
+        $port = $options[SourceOptionKind::Port->value]->value ?? null;
+        if ($host !== null || ($port instanceof Numeral && $this->unsigned($port) !== 0)) {
+            unset($state->heartbeatPeriods[$channel]);
+        }
         $state->heartbeatPeriods[$channel] ??= min($defaultHeartbeat, 4294967.0);
         if ($heartbeat instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral) {
             $period = (float) $heartbeat->text;
@@ -48,9 +55,7 @@ final class SourceRepository
             if (!$value instanceof Numeral) {
                 continue;
             }
-            $number = (new Literals())->number($value);
-            $number = bccomp($number, '18446744073709551615') > 0 ? '18446744073709551615' : $number;
-            $number = (int) bcmod($number, '4294967296');
+            $number = $this->unsigned($value);
             if ($number === 0) {
                 continue;
             }
@@ -60,6 +65,17 @@ final class SourceRepository
                 $state->connectRetry = $number;
             }
         }
+    }
+
+    /**
+     * Reads a 32-bit setting after clamping its numeral to an unsigned 64-bit value.
+     */
+    public function unsigned(Numeral $value): int
+    {
+        $number = (new Literals())->number($value);
+        $number = bccomp($number, '18446744073709551615') > 0 ? '18446744073709551615' : $number;
+
+        return (int) bcmod($number, '4294967296');
     }
 
     /**

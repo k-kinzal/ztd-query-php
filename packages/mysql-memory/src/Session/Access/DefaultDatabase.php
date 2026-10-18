@@ -66,6 +66,9 @@ final class DefaultDatabase
         };
         foreach ($names as $name) {
             if ($name->schema === null) {
+                if (\MySqlMemory\Command\Dispatcher::program($statement)) {
+                    $session->diagnostics->clear();
+                }
                 throw QueryError::NoDatabase->error();
             }
         }

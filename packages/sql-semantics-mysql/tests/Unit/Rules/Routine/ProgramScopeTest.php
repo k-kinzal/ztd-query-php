@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ProgramScope::class)]
@@ -48,7 +47,8 @@ final class ProgramScopeTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame([], $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS X = NUMBER')->facts->diagnostics);
-        self::assertSame(['Undeclared variable: y'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS y = NUMBER')->facts->diagnostics));
+        $this->expectExceptionMessage('Undeclared variable: y');
+        $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS y = NUMBER');
     }
 
     public function testConditionFindsTheInnermostDeclarationOfTheName(): void
@@ -65,10 +65,9 @@ final class ProgramScopeTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $hidden = $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c; END; END");
-        $hiding = $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END; END");
-
         self::assertSame([], $hidden->facts->diagnostics);
-        self::assertSame(['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $hiding->facts->diagnostics));
+        $this->expectExceptionMessage('SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE');
+        $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END; END");
     }
 
     public function testLabeledAddsTheLabelOfABlockOrALoop(): void

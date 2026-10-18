@@ -79,6 +79,17 @@ final class SignalTest extends TestCase
      */
     public static function providerDeriveProgramReportsTheBrokenRule(): iterable
     {
+        yield 'item set twice' => [
+            "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MYSQL_ERRNO = 1, MESSAGE_TEXT = 'a', MYSQL_ERRNO = 2; END",
+            ["Duplicate condition information item 'MYSQL_ERRNO'"],
+        ];
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerDeriveProgramReportsTheBrokenRuleBeforePublication(): iterable
+    {
         yield 'condition of an error code' => [
             'CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; SIGNAL gone; END',
             ['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE'],
@@ -95,10 +106,6 @@ final class SignalTest extends TestCase
             'CREATE PROCEDURE p() BEGIN SIGNAL gone; END',
             ['Undefined CONDITION: gone'],
         ];
-        yield 'item set twice' => [
-            "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MYSQL_ERRNO = 1, MESSAGE_TEXT = 'a', MYSQL_ERRNO = 2; END",
-            ["Duplicate condition information item 'MYSQL_ERRNO'"],
-        ];
     }
 
     /**
@@ -110,6 +117,22 @@ final class SignalTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerDeriveProgramReportsTheBrokenRuleBeforePublication')]
+    public function testDeriveProgramReportsTheBrokenRuleBeforePublication(string $sql, array $messages): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A contradictory declaration must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages, [$failure->problem->message()]);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     /**

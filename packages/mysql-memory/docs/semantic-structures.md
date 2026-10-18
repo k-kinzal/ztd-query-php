@@ -3214,14 +3214,36 @@ condition and keep the command's following argument diagnostic. Nested CTE
 outputs preserve both their inner relation identity and computed-column flags.
 No comparison is weakened to accommodate these changes.
 
-Acceptance remains open. The whole-model `query829-implicit-key` snapshot
-compared all 244 public roots: 100 matching successes, 144 matching SQL errors,
-171 matching database-transition observations, no generation exhaustion or
-internal failures. This precedes the spatial and recursive-domain repairs and
-is not evidence for the final revision. The 144 matching SQL errors still need
-the classifications required by the acceptance contract. Later unseeded runs
-found the saved recursive-reference and PURGE-window differences; they do not
-count as 900-second passes. All supplied seed corpora and the unseeded duration
-must pass on the delivered revision, together with the constructor, dependency,
-normal and state-transition checks. The previously recorded native 5.7
-disconnect, physical-path and client-character-set cases remain unresolved.
+Routine declarations now check GET DIAGNOSTICS targets and named conditions
+against their lexical scope before an Operation exists. Parameters and block
+locals bind case insensitively, inner conditions shadow outer declarations, and
+closed blocks do not export their names. A handler may name a declared numeric
+condition; SIGNAL and RESIGNAL require a named SQLSTATE condition. Inactive
+branches and handler instructions receive the same checks. Input refusals keep
+the typed header and cause so a missing default database still precedes a body
+condition. Accepted standalone instructions remain composable in their proper
+program scope; this is not a Semantics execution-eligibility certificate.
+
+Replication compression checks use the effective NUL-terminated byte string,
+then its length, entry count and algorithm names. Earlier settings survive a
+later validation failure and appear in Performance Schema; RESET without ALL
+preserves them. Tests include repeated settings, unsigned conversion, named
+channels, SSL configuration and full diagnostic/result metadata. Debug-only
+inspection similarly respects grammar-time name binding and preserves the
+previous diagnostic area of GET DIAGNOSTICS. Empty prepared inputs distinguish
+an empty query from a comment-only no-op, and failed replacement removes the old
+prepared statement. Both input paths and directly constructed semantic values
+are checked without giving planning access to SQL or ASTs.
+
+Acceptance remains open. The whole-model `query874-recursion-purge` snapshot
+(`e79f7cd19a3`) compared all 244 public roots: 100 matching successes, 144 matching
+SQL errors, 171 matching database-transition observations, no generation
+exhaustion or internal failures. This precedes the condition-binding and
+replication repairs and is not evidence for the final revision. Matching SQL
+errors still need the classifications required by the acceptance contract.
+Later unseeded runs found saved compression, debug-diagnostic and empty-prepare
+differences; they do not count as 900-second passes. All supplied seed corpora
+and the unseeded duration must pass on the delivered revision, together with the
+constructor, dependency, normal and state-transition checks. The previously
+recorded native 5.7 disconnect, physical-path and client-character-set cases
+remain unresolved.

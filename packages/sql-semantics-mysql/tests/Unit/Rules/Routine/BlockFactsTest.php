@@ -108,7 +108,6 @@ final class BlockFactsTest extends TestCase
         yield 'a duplicate variable in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE x INT; END', ['Duplicate variable: x']];
         yield 'a duplicate condition in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE C CONDITION FOR 1052; END', ['Duplicate condition: C']];
         yield 'a duplicate cursor in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE cur CURSOR FOR SELECT 1; DECLARE cur CURSOR FOR SELECT 2; END', ['Duplicate cursor: cur']];
-        yield 'an undefined handler condition' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c BEGIN END; END', ['Undefined CONDITION: c']];
         yield 'an unknown name in a cursor query' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT z; END', ['Column z does not exist.']];
         yield 'an unknown name in the statements' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT x, z; END', ['Column z does not exist.']];
     }
@@ -245,6 +244,22 @@ final class BlockFactsTest extends TestCase
         yield 'one SQLSTATE value' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '42S02', SQLSTATE VALUE '42S02' BEGIN END; END", ['Duplicate handler declared in the same block']];
         yield 'distinct values' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1051, SQLSTATE '42S02', NOT FOUND BEGIN END; DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN END; END", []];
         yield 'the same value in a nested block' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1051 BEGIN END; BEGIN DECLARE CONTINUE HANDLER FOR 1051 BEGIN END; END; END', []];
-        yield 'an undefined condition name twice' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c, c BEGIN END; END', ['Undefined CONDITION: c', 'Undefined CONDITION: c']];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerDeriveRejectsUnboundHandlerNamesBeforePublication(): iterable
+    {
+        yield 'one missing condition' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c BEGIN END; END'];
+        yield 'the same missing condition twice' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c, c BEGIN END; END'];
+    }
+
+    #[DataProvider('providerDeriveRejectsUnboundHandlerNamesBeforePublication')]
+    public function testDeriveRejectsUnboundHandlerNamesBeforePublication(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Undefined CONDITION: c');
+        (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
     }
 }

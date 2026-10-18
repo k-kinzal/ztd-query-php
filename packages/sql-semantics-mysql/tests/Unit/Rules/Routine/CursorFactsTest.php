@@ -67,8 +67,7 @@ final class CursorFactsTest extends TestCase
 
     public function testVariablesReportsATargetOfGetDiagnosticsThatIsNoVariable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(n INT) GET DIAGNOSTICS n = NUMBER, r = ROW_COUNT');
-
-        self::assertSame(['Undeclared variable: r'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectExceptionMessage('Undeclared variable: r');
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(n INT) GET DIAGNOSTICS n = NUMBER, r = ROW_COUNT');
     }
 }

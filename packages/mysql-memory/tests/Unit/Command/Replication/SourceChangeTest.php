@@ -134,9 +134,47 @@ final class SourceChangeTest extends TestCase
 
     public function testCompressionAcceptsCaseDuplicatesAndTrailingComma(): void
     {
-        (new SourceChange())->compression('ZLIB,zlib,zstd,uncompressed,', '');
+        (new SourceChange())->compression('ZLIB,zlib,zstd,', '');
 
         self::expectNotToPerformAssertions();
+    }
+
+    public function testCompressionCountsDuplicatesBeforeValidatingNames(): void
+    {
+        $this->expectExceptionCode(3924);
+        $this->expectExceptionMessage("Specified compression algorithm list 'ZLIB,zlib,zstd,uncompressed,' exceeds total count of 3 for channel ''.");
+        (new SourceChange())->compression('ZLIB,zlib,zstd,uncompressed,', '');
+    }
+
+    public function testCompressionChecksByteLengthBeforeCountingOrNames(): void
+    {
+        $this->expectExceptionCode(4037);
+        $this->expectExceptionMessage("Value too long setting SOURCE_COMPRESSION_ALGORITHMS option to a 99 chars long string for channel 'channel'.");
+        (new SourceChange())->compression(str_repeat('猫', 33), 'channel');
+    }
+
+    public function testCompressionIgnoresBytesAfterNul(): void
+    {
+        (new SourceChange())->compression("zlib\0" . str_repeat('x', 150), '');
+        self::expectNotToPerformAssertions();
+    }
+
+    public function testCheckRetainsEarlierSettingsWhenTheFinalCompressionValueFails(): void
+    {
+        $option = \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption::class;
+        $kind = \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::class;
+        $vocabulary = \SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current;
+        $text = \SqlSemantics\Platform\MySql\Statement\Literal\Text::class;
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource($vocabulary, [
+            new $option($vocabulary, $kind::Host, new $text('local')),
+            new $option($vocabulary, $kind::CompressionAlgorithms, new $text(str_repeat('x', 129))),
+        ]);
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated request label';
+        $result = (new \Fuzz\Structure\Audit\Memory())->observe($session, $statement);
+        self::assertSame([4037, 'HY000', "Value too long setting SOURCE_COMPRESSION_ALGORITHMS option to a 129 chars long string for channel ''."], $result['error'] ?? null);
+        self::assertSame('local', $session->instance->registry->replication->host);
+        self::assertSame('unrelated request label', $session->text);
     }
 
     public function testCompressionNamesTheFirstBadElement(): void

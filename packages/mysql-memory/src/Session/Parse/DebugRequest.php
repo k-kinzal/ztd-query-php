@@ -10,6 +10,10 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
+use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Operation;
 
@@ -29,7 +33,45 @@ final class DebugRequest
      */
     public function refusal(Operation $operation, SqlError $syntax, Session $session): SqlError
     {
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree && \MySqlMemory\Command\Dispatcher::program($operation->statement->statement)) {
+            try {
+                (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation->statement->statement, $session);
+            } catch (SqlError $header) {
+                return (new \MySqlMemory\Session\CacheOptions())->recorded([], null, $header, $session);
+            }
+        }
+        $problem = $this->operand($operation);
+        if ($problem !== null) {
+            $syntax = (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
+        } elseif ($this->preserves($operation)) {
+            return (new \MySqlMemory\Session\CacheOptions())->recorded([], null, $syntax, $session, clear: false);
+        }
         return $this->notices($operation->facts->warnings, $syntax, $session);
+    }
+
+    /**
+     * Finds name bindings performed by grammar actions before the debug-build check.
+     * Column references, SELECT INTO and LIMIT bindings are contextualized later.
+     */
+    public function operand(Operation $operation): ?Diagnostic
+    {
+        foreach ($operation->facts->diagnostics as $problem) {
+            if (($problem instanceof ProgramProblem && in_array($problem->rule, [ProgramRule::UndeclaredVariable, ProgramRule::UndefinedCondition], true)) || ($problem instanceof UnknownSystemVariable && $problem->assigned)) {
+                return $problem;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Keeps the previous diagnostic area for a valid GET DIAGNOSTICS inspection.
+     * Its undeclared local target instead starts a new area before reporting the error.
+     */
+    public function preserves(Operation $operation): bool
+    {
+        return $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree
+            && $operation->statement->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics
+            && $this->operand($operation) === null;
     }
 
     /**

@@ -14,6 +14,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testCheckRefusesAnEmptySemanticScriptWithoutReadingItsRequestLabel(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated SELECT 1';
+        $operation = new \SqlSemantics\Statement\Operation($session->semantics()->context(session: $session->resolution()), new \SqlSemantics\Statement\Script([]));
+        $this->expectExceptionCode(1295);
+        (new Preparation())->check($operation, $session);
+    }
+
     public function testReadKeepsTheProgramArrayErrorBeforeMalformedPreparedSyntax(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

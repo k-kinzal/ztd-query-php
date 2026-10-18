@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics as D;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operation;
@@ -28,6 +29,43 @@ use SqlSemantics\Statement\Scalar;
 #[Medium]
 final class DebugRequestTest extends TestCase
 {
+    public function testRefusalResolvesTheRoutineHeaderBeforeTheDebugBuildRestriction(): void
+    {
+        $session = (new Instance())->connect();
+        $session->diagnostics->error(1327, 'Undeclared variable: previous');
+        $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block()));
+        $session->text = 'unrelated input';
+        $actual = (new \Fuzz\Structure\Audit\Memory())->observe($session, $statement);
+        self::assertSame([1046, '3D000', 'No database selected'], $actual['error'] ?? null);
+        self::assertSame([['Error', '1046', 'No database selected']], $actual['warnings']);
+    }
+
+    public function testOperandFindsTheRetainedLocalTargetWithoutInputText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated input';
+        $statement = new ShowParseTree(new D\GetDiagnostics(new D\StatementDiagnostics([new D\InformationItem(new Name('x'), D\StatementItemName::Number)])));
+        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        $problem = (new DebugRequest())->operand($operation);
+        self::assertSame('Undeclared variable: x', $problem?->message());
+        $actual = (new \Fuzz\Structure\Audit\Memory())->observe($session, $statement);
+        self::assertSame([1327, '42000', 'Undeclared variable: x'], $actual['error'] ?? null);
+        self::assertSame('unrelated input', $session->text);
+    }
+
+    public function testPreservesThePreviousAreaForAnInspectedUserVariableTarget(): void
+    {
+        $session = (new Instance())->connect();
+        $session->diagnostics->error(1327, 'Undeclared variable: previous');
+        $statement = new ShowParseTree(new D\GetDiagnostics(new D\StatementDiagnostics([new D\InformationItem(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('x')), D\StatementItemName::Number)])));
+        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        self::assertTrue((new DebugRequest())->preserves($operation));
+        $error = (new DebugRequest())->refusal($operation, (new InternalCommand())->error($operation), $session);
+        self::assertSame(1064, $error->getCode());
+        self::assertTrue($error->recorded);
+        self::assertSame([1327, 1064], array_column($session->diagnostics->conditions, 1));
+    }
+
     /**
      * @return iterable<string, array{Scalar, list<int>}>
      */

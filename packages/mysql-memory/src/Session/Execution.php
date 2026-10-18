@@ -192,6 +192,9 @@ final class Execution
         $session->interrupted = false;
         $session->diagnostics->previous = [$session->diagnostics->raised(), $session->diagnostics->errors()];
         $session->diagnostics->limit = $session->variables->count('max_error_count', 1024);
+        if ((new Parse\DebugRequest())->preserves($operation)) {
+            return;
+        }
         $resetsOnParseFailure = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings && $session->settings()->legacy()) || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
         if ($command->clearsDiagnostics() && $this->retains($operation->statement, $command)) {
             $session->diagnostics->retain();

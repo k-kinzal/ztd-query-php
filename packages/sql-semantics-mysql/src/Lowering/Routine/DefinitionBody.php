@@ -51,6 +51,11 @@ final class DefinitionBody
     public function check(Node $body, ProgramKind $kind, QualifiedName $name, ?Account $definer, int $end, ?ParameterList $parameters = null, ?DeclaredName $returns = null, ?CollationName $collation = null, array $typeEnds = [], int $nameEnd = 0, ?\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch $language = null, ?\SqlSemantics\Statement\Source\SourceMap $sources = null): void
     {
         $locals = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
+        $binding = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\ConditionBindings())->find($body, $locals);
+        if ($binding !== null) {
+            $origin = $sources?->of($binding[1]);
+            throw new RejectedInput(new RefusedProgramBody($name, $kind, $binding[0], $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $origin === null ? $end : $origin->offset + $origin->length, true);
+        }
         $scoped = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\LocalAssignments())->scoped($body, $locals);
         if ($scoped !== null) {
             throw new RejectedInput(new RefusedProgramBody($name, $kind, new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment($sources?->of($scoped)?->offset), $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $end, true);

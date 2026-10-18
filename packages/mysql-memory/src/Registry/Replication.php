@@ -74,6 +74,11 @@ final class Replication
     public string $host = '';
 
     /**
+     * @var array<string, string|null> Effective connection settings exposed by Performance Schema
+     */
+    public array $configuration = [];
+
+    /**
      * Whether a failed reset prevents opening connection metadata for another change.
      */
     public bool $connectionFailure = false;
@@ -93,6 +98,7 @@ final class Replication
             $this->port = 3306;
             $this->connectRetry = 60;
             $this->host = '';
+            $this->configuration = [];
             $this->connectionFailure = false;
             $this->autoPosition = false;
             $this->requireRowFormat = false;

@@ -92,6 +92,17 @@ final class ResignalTest extends TestCase
      */
     public static function providerDeriveProgramReportsTheBrokenRule(): iterable
     {
+        yield 'item set twice in a handler' => [
+            "CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'; END; END",
+            ["Duplicate condition information item 'MESSAGE_TEXT'"],
+        ];
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerDeriveProgramReportsTheBrokenRuleBeforePublication(): iterable
+    {
         yield 'condition of an error code' => [
             'CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; RESIGNAL gone; END',
             ['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE'],
@@ -99,10 +110,6 @@ final class ResignalTest extends TestCase
         yield 'name without declaration' => [
             'CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL gone; END',
             ['Undefined CONDITION: gone'],
-        ];
-        yield 'item set twice in a handler' => [
-            "CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'; END; END",
-            ["Duplicate condition information item 'MESSAGE_TEXT'"],
         ];
     }
 
@@ -115,6 +122,22 @@ final class ResignalTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerDeriveProgramReportsTheBrokenRuleBeforePublication')]
+    public function testDeriveProgramReportsTheBrokenRuleBeforePublication(string $sql, array $messages): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A contradictory declaration must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages, [$failure->problem->message()]);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     /**
