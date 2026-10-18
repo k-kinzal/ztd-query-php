@@ -32,7 +32,7 @@ final class DeferredUnary implements DeferredOperand
     /**
      * Retains the operator's typed operands and observable spelling.
      */
-    public function __construct(public readonly \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator $operator, public readonly DeferredOperand $operand, public readonly bool $keyword = false)
+    public function __construct(public readonly \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator $operator, public readonly DeferredOperand|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, public readonly bool $keyword = false)
     {
         Check::input(!$keyword || $operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Not, 'Only tight negation has a keyword spelling.');
         Check::input((new Precedence())->opening($operand) >= Precedence::PREFIX, 'The operand of a prefix operator needs grouping.');
@@ -48,11 +48,12 @@ final class DeferredUnary implements DeferredOperand
         if (in_array($this->operator, [\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Not, \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::PairedNot], true) && !$this->keyword) {
             \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot, $derivation, $this, false);
         }
-        return $derivation->scalar($this->operand, $environment);
+        $derivation->scalar($this->operand, $environment);
+        return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($this->problem()), \SqlSemantics\Statement\Type\Nullability::Dependent);
     }
 
     /**
-     * @return non-empty-list<DeferredOperand> The retained preparation dependency
+     * @return non-empty-list<DeferredOperand|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand> The retained preparation dependency
      */
     public function operands(): array
     {
@@ -64,7 +65,7 @@ final class DeferredUnary implements DeferredOperand
      */
     public function problem(): Diagnostic
     {
-        return $this->operand->problem();
+        return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$this->operand]);
     }
 
     /**

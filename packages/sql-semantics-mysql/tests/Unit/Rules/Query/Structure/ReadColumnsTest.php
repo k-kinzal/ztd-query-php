@@ -43,6 +43,16 @@ final class ReadColumnsTest extends TestCase
         self::assertNull((new ReadColumns())->problem($query, true));
     }
 
+    public function testProblemRequiresAFromRelationForAQualifiedProjection(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+        $query = new M\Query\Select([], [new M\Name\TableWildcard($name)]);
+        self::assertEquals(new M\Query\Problem\UnknownQualifier($name), (new ReadColumns())->problem($query));
+        self::assertNull((new ReadColumns())->problem($query, true));
+        self::assertEquals(new M\Query\Problem\UnknownQualifier($name), (new ReadColumns())->problem(new M\Query\Select([], [new M\Name\TableWildcard($name)], new M\Relation\Dual())));
+        self::assertNull((new ReadColumns())->problem(new M\Query\Select([], [new M\Name\TableWildcard($name)], new M\Relation\TableReference($name))));
+    }
+
     public function testRowsDistinguishesDefaultsEmptyAndInconsistentWidths(): void
     {
         $rules = new ReadColumns();

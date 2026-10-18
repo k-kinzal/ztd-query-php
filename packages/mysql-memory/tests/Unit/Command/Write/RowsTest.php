@@ -21,6 +21,19 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 #[Small]
 final class RowsTest extends TestCase
 {
+    public function testWriteStartsColumnReadsFromImplicitAndUnevaluatedDefaults(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT NOT NULL,b INT NOT NULL); INSERT INTO t VALUES(a,b)');
+        $session->query('CREATE TABLE e(a INT DEFAULT 4,b INT DEFAULT (a+3)); INSERT INTO e VALUES(a,b)');
+        $ordinary = $session->query('SELECT * FROM t')[0];
+        $expression = $session->query('SELECT * FROM e')[0];
+        self::assertInstanceOf(ResultSet::class, $ordinary);
+        self::assertInstanceOf(ResultSet::class, $expression);
+        self::assertSame([['0', '0']], $ordinary->rows);
+        self::assertSame([['4', null]], $expression->rows);
+    }
+
     public function testWriteRefusesARowOfTheWrongWidth(): void
     {
         $session = (new Instance())->connect();

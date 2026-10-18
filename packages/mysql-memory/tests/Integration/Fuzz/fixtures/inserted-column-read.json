@@ -1,0 +1,19 @@
+[
+    "CREATE DATABASE d",
+    "USE d",
+    "CREATE TABLE t(a INT DEFAULT 4,b INT DEFAULT 7)",
+    "INSERT INTO t VALUES(a,b)",
+    "INSERT INTO t VALUES(10,a)",
+    "INSERT INTO t(b,a) VALUES(a,b)",
+    "INSERT INTO t SET b=a+1,a=b+2",
+    "INSERT INTO t VALUES(a+1,b+1),(a+1,b+1)",
+    "SELECT * FROM t",
+    "CREATE TABLE u(a INT NOT NULL,b INT NOT NULL)",
+    "INSERT INTO u VALUES(a,b)",
+    "SELECT * FROM u",
+    "CREATE TABLE g(a INT DEFAULT 4,b INT GENERATED ALWAYS AS(a+1))",
+    "INSERT INTO g(a) VALUES(b)",
+    "SELECT * FROM g",
+    "REPLACE INTO t VALUES (a+2,b+2)",
+    "SELECT * FROM t"
+]

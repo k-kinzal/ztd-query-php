@@ -128,9 +128,9 @@ final class PrimaryRule
     public function unary(UnaryOperator $operator, Node $node, bool $keyword): Unary|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary
     {
         $operand = $this->simpleExpression($node);
-        return $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+        return !$operand instanceof Scalar
             ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary($operator, $operand, $keyword)
-            : new Unary($operator, (new OperandRule())->scalar($operand, $node), $keyword);
+            : new Unary($operator, $operand, $keyword);
     }
 
     /**

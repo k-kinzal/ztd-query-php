@@ -124,30 +124,43 @@ final class StatementRule
         try {
             $statement = $this->lowering->statement($node);
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain) {
-                return $failure->problem->explanation;
-            }
-            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand) {
-                return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($failure->problem->moment);
-            }
-            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery) {
-                return $failure->problem->query;
-            }
-            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::NestedAlterOrDrop, 'DATABASE'), $failure->end, false);
-            }
-            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadStatement, 'LOAD ' . $failure->problem->format->value), $failure->end, false);
-            }
-            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), $failure->end);
-            }
-            throw $failure;
+            return $this->rejected($failure);
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
         }
         return $statement;
+    }
+
+    /**
+     * Retains deferred SQL members and maps refusals that have no program form.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the refusal cannot be deferred
+     */
+    public function rejected(\SqlSemantics\Construction\RejectedInput $failure): ProgramStatement|Statement
+    {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedInsertRows) {
+            return $failure->problem->write;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain) {
+            return $failure->problem->explanation;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($failure->problem->moment);
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery) {
+            return $failure->problem->query;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::NestedAlterOrDrop, 'DATABASE'), $failure->end, false);
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadStatement, 'LOAD ' . $failure->problem->format->value), $failure->end, false);
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), $failure->end);
+        }
+        throw $failure;
     }
 
     /**

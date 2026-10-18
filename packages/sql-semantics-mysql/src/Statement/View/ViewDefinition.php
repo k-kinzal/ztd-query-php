@@ -24,6 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]);
  *     new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
+ * @example Refusing a qualified projection that reads no relation
+ *     $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard($name)]);
+ *     new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading a view definition
  *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE ALGORITHM = MERGE SQL SECURITY INVOKER VIEW v (x) AS SELECT 1 WITH LOCAL CHECK OPTION');

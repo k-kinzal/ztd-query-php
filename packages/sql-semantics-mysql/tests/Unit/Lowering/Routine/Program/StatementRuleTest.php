@@ -58,6 +58,13 @@ final class StatementRuleTest extends TestCase
         (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() EXPLAIN FOR CONNECTION 0');
     }
 
+    public function testRejectedRetainsDeferredWriteOperandsAsProgramMembers(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES(ROW(1, 2))');
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows::class, $operation->statement->body);
+    }
+
     #[DataProvider('providerStatementRoutesEveryKindOfProgramStatement')]
     public function testStatementRoutesEveryKindOfProgramStatement(string $release): void
     {

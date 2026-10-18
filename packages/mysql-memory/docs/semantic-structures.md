@@ -2734,3 +2734,45 @@ The full constructor replay and final-revision seed/unseeded campaigns remain
 required. An unseeded input also exposed a separate write-template defect: a
 non-scalar INSERT value discarded its destination before preparation. The full
 write head and row operands must be retained before that campaign can pass.
+
+
+### Retained writes and destination column scopes
+
+Non-scalar INSERT values now retain the complete write head, every row, the row
+alias and duplicate-key assignments in a dedicated stored-instruction template.
+Unary and WEIGHT_STRING templates retain their row operands and typed options.
+Ordinary scalar and write constructors do not admit those deferred roles. A
+reached write opens its destination before preparing the retained values; an
+unreached stored branch leaves them dormant. No input text or parser node is
+consulted by the consumer.
+
+Destination column references also work in ordinary VALUES and SET writes. Their
+semantic resolutions bind to the current inserted row, initially holding column
+defaults and then the earlier assignments of that row. Subsequent rows start
+from their own defaults. Direct construction reuses ten write objects across
+missing, populated, default-altered and removed table states on MySQL 5.7, 8.4
+and 9.1, including queries of the accumulated rows: 132 exact observations with
+unrelated request text. The separate SQL fixture passes text and prepared
+INSERT/REPLACE comparisons on those three releases. The original deferred-write
+counterexample is retained in a 44-request fixture; 264 observations pass on
+8.0, 8.4 and 9.1 (text writes and both text/prepared reads and stored calls).
+
+A qualified projection without a FROM relation is now excluded from ordinary
+read positions, including view definitions. EXISTS continues to permit that
+projection, and stored selections can retain it until invocation. View identity
+resolution precedes body preparation; ALTER opens its target before interpreting
+a qualified projection. Constructor examples, input fixtures and direct target
+state tests cover these distinctions.
+
+The source snapshot `query631` passes 8,823 semantic tests (18,512 assertions),
+18,169 Memory tests (75,186 assertions), the 972-definition value schema and both
+dependency boundaries. The subsequent snapshot only corrects a test import and
+adds the original view counterexample to its fixture. Its full native replay was
+interrupted by loss of the Docker host. The whole-root replay and nine-release
+seed campaign were also interrupted. The unseeded campaign last reported 820
+matches at 869.84 seconds; it is not a completed 900-second run. Earlier partial
+or completed campaigns do not replace final-revision acceptance evidence.
+
+The contract remains unmet. In particular, INSERT query sources still need the
+same complete ownership treatment as retained VALUES rows, and whole-model SQL
+errors still require structural classification and relevant state witnesses.

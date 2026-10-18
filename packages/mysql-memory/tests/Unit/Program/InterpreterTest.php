@@ -289,4 +289,14 @@ final class InterpreterTest extends TestCase
         self::assertSame([['1']], $result->rows);
     }
 
+    public function testInsertKeepsTheDestinationConditionAndContinuesAfterItsHandler(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1049 SET @handled=1; INSERT INTO absent_schema.t VALUES (WEIGHT_STRING(ROW(1,2))); SET @continued=2; END');
+        $session->query('CALL p()');
+        $result = $session->query('SELECT @handled, @continued')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1', '2']], $result->rows);
+    }
+
 }

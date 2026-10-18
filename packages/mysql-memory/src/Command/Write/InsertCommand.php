@@ -136,7 +136,7 @@ final class InsertCommand implements Command
             throw QueryError::BadField->error($use->name->value, 'field list');
         };
         $scope = new Scope();
-        $scope->tables[spl_object_id($statement->into->table)] = $definition;
+        $scope->place($statement->into->table, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
         if ($statement instanceof InsertSet) {
             $positions = array_map(static fn ($assignment): int => $position($assignment->column), $statement->assignments);
             $values = array_map(fn ($assignment) => $assignment->value instanceof DefaultRequest ? $assignment->value : $planner->compiler->compile($assignment->value, $scope), $statement->assignments);

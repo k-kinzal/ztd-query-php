@@ -60,9 +60,10 @@ final class SelectionUse
     /**
      * Reports grammar conditions before relation binding and operand preparation.
      *
+     * @param bool $qualifiers Whether projection qualifiers are reached before a surrounding command opens its target
      * @throws \MySqlMemory\Error\SqlError When a retained diagnostic precedes preparation
      */
-    public function diagnosed(\SqlSemantics\Statement\Fact\Facts $facts, Session $session, ?DeferredSelection $selection = null): void
+    public function diagnosed(\SqlSemantics\Statement\Fact\Facts $facts, Session $session, ?DeferredSelection $selection = null, bool $qualifiers = true): void
     {
         foreach ($facts->diagnostics as $problem) {
             if (Stages::parsed($problem)) {
@@ -78,7 +79,7 @@ final class SelectionUse
             (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($selection, $session);
         }
         foreach ($facts->diagnostics as $problem) {
-            if ($problem instanceof MissingTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier) {
+            if ($problem instanceof MissingTable || ($qualifiers && $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier)) {
                 throw (new Errors())->error($problem, $session);
             }
         }

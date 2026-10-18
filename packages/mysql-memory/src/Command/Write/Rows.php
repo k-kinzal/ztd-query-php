@@ -114,16 +114,15 @@ final class Rows
         }
         $frame = new Frame($this->context);
         $store = new Store($this->context, $number, $this->into->table->name->name->value);
-        $row = array_map(static fn ($column) => $column->default->expression === null ? $column->default->value : null, $definition->columns);
+        $row = array_map(fn ($column) => !$column->default->declared && !$column->nullable() && $column->generated === null ? $this->writer->implicit($column) : ($column->default->expression === null ? $column->default->value : null), $definition->columns);
         $named = [];
         foreach ($positions as $index => $position) {
             $named[$position] = true;
             $value = $values[$index];
             $column = $definition->columns[$position];
+            $frame->row = $row;
             if ($value instanceof DefaultRequest) {
-                $frame->row = $row;
                 array_splice($row, $position, 1, [$column->generated !== null ? null : $this->defaulted($position, $frame, $store, $number, true)]);
-                $frame->row = [];
                 continue;
             }
             [$raw, $domain] = $value instanceof Evaluable ? [$value->evaluate($frame), $value->domain()] : $value;

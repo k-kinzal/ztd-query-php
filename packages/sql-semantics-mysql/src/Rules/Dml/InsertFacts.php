@@ -73,7 +73,7 @@ final class InsertFacts
     /**
      * Derives INSERT ... VALUES.
      */
-    public function rows(InsertRows $insert, Derivation $derivation, Environment $outer): void
+    public function rows(InsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows $insert, Derivation $derivation, Environment $outer): void
     {
         [$target, $fact] = $this->target($insert->into, $derivation, $outer);
         $early = $this->early($insert, $derivation);
@@ -88,6 +88,10 @@ final class InsertFacts
             $width ??= count($row->values);
             foreach ($row->values as $position => $value) {
                 $column = $this->column($written, $position, $target, $mismatch);
+                if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+                    $derivation->scalar($value, $environment);
+                    continue;
+                }
                 $scope->value($value, $column, $derivation, $environment);
                 $generated->value($column, $value, $mismatch === null ? $table : null, $derivation);
             }
@@ -101,7 +105,7 @@ final class InsertFacts
      * Other releases, and a statement without a column list or whose first row matches it,
      * have none.
      */
-    public function early(InsertRows $insert, Derivation $derivation): ?ValueCountMismatch
+    public function early(InsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows $insert, Derivation $derivation): ?ValueCountMismatch
     {
         $listed = count($insert->into->columns->columns ?? []);
         if (!$this->late($derivation) || $listed === 0 || count($insert->rows[0]->values) === $listed) {
@@ -125,7 +129,7 @@ final class InsertFacts
      * @param ValueCountMismatch|null $early The mismatch of the first row found before the columns
      * @return ValueCountMismatch|null The mismatch of the row, or null when its count matches
      */
-    public function mismatch(InsertRows $insert, int $index, ?int $expected, ?int $width, ?ValueCountMismatch $early, Derivation $derivation): ?ValueCountMismatch
+    public function mismatch(InsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows $insert, int $index, ?int $expected, ?int $width, ?ValueCountMismatch $early, Derivation $derivation): ?ValueCountMismatch
     {
         $count = count($insert->rows[$index]->values);
         $columns = $count === 0 && ($insert->into->columns === null || $insert->into->columns->columns === []) ? null : $expected;

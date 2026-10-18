@@ -86,6 +86,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand => (new \MySqlMemory\Program\Expression\PurgeUse())->error($diagnostic->moment, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand => (new \MySqlMemory\Program\Expression\KillUse())->error($diagnostic->process, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar => $this->scalar($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedInsertRows => (new \MySqlMemory\Program\Expression\InsertUse())->error($diagnostic->write, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation => (new EvaluationInput())->deferred($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery => $this->selection($diagnostic->query, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => $this->selection($diagnostic->selection, $session),
@@ -112,7 +113,7 @@ final class InputErrors
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution());
         $derivation = new \SqlSemantics\Construction\Derivation($context);
         $query->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
-        (new \MySqlMemory\Program\Expression\SelectionUse())->diagnosed($derivation->facts(), $session);
+        (new \MySqlMemory\Program\Expression\SelectionUse())->diagnosed($derivation->facts(), $session, qualifiers: false);
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {
             return \MySqlMemory\Error\Family\QueryError::BadDatabase->error($database);

@@ -48,6 +48,8 @@ final class DefaultDatabase
             return;
         }
         $names = match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\AlterView => [$statement->definition->name],
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex && $session->settings()->legacy() => [$statement->table],
             $statement instanceof MultipleDelete => $statement->targets,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $session->settings()->legacy() => [$statement->table->name],

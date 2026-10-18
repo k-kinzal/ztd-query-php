@@ -1035,6 +1035,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedEvaluation": {
         "evaluation": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredEvaluation"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedInsertRows": {
+        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedLoadOptions": {
         "assignments": "array",
         "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
@@ -2399,6 +2402,19 @@
         "string": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "substring": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWeightParameters": {
+        "flags": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "length": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "subject": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "weights": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWeightString": {
+        "cast": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightCast",
+        "length": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "levels": "array",
+        "range": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Weight\\WeightLevelRange",
+        "subject": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowAggregate": {
         "all": "bool",
         "arguments": "array",
@@ -2526,7 +2542,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredUnary": {
         "keyword": "bool",
-        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand",
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Predicate\\DeferredBetween": {
@@ -2651,6 +2667,15 @@
         "default": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "names": "array",
         "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\RowAlias",
+        "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
+        "onDuplicate": "array",
+        "rows": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertedRow": {
+        "values": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement": {
         "name": "string",

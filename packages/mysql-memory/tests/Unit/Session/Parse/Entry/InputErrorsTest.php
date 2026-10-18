@@ -45,6 +45,17 @@ final class InputErrorsTest extends TestCase
         self::assertSame('unrelated invalid input', $session->text);
     }
 
+    public function testViewOpensTheAlterTargetBeforeAQualifiedProjection(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run('ALTER VIEW v AS SELECT t.*');
+        self::assertSame([['Error', 1146, "Table 'd.v' doesn't exist"]], $session->diagnostics->conditions);
+        $session->query('CREATE VIEW v AS SELECT 1');
+        $session->run('ALTER VIEW v AS SELECT t.*');
+        self::assertSame([['Error', 1051, "Unknown table 't'"]], $session->diagnostics->conditions);
+    }
+
     public function testScalarBindsTheRetainedOperandWithoutLosingPriorNotices(): void
     {
         $session = (new Instance())->connect();

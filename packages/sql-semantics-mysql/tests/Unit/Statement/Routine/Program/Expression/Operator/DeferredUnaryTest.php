@@ -75,4 +75,12 @@ final class DeferredUnaryTest extends TestCase
         $this->expectExceptionMessage('The operand of a prefix operator needs grouping.');
         new DeferredUnary(UnaryOperator::Minus, $operand);
     }
+    public function testProblemPreservesRowWidthUnderSymbolicNegation(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $value = new DeferredUnary(UnaryOperator::Not, $row);
+        self::assertSame([$row], $value->operands());
+        self::assertSame('Operand should contain 1 column(s), not 2.', $value->problem()->message());
+    }
+
 }

@@ -83,6 +83,16 @@ final class InsertCommandTest extends TestCase
         $session->query('INSERT INTO t PARTITION (p0) VALUES (1)');
     }
 
+    public function testSourcesPlacesDestinationColumnsInEachNewRowsScope(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT DEFAULT 4,b INT DEFAULT 7)');
+        $session->query('INSERT INTO t VALUES(a,b); INSERT INTO t VALUES(10,a); INSERT INTO t(b,a) VALUES(a,b); INSERT INTO t SET b=a+1,a=b+2; INSERT INTO t VALUES(a+1,b+1),(a+1,b+1)');
+        $result = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['4', '7'], ['10', '10'], ['4', '4'], ['7', '5'], ['5', '8'], ['5', '8']], $result->rows);
+    }
+
     public function testSourcesWritesTheColumnsANamedListGives(): void
     {
         $session = (new Instance())->connect();

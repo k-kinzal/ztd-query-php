@@ -61,6 +61,9 @@ final class ReadColumns
             if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard && $item->table->name->value === '') {
                 return new M\Problem\Misuse(M\Problem\MisuseRule::StarWithoutTables);
             }
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard && ($query->from === null || $query->from instanceof Dual)) {
+                return new M\Problem\UnknownQualifier($item->table);
+            }
         }
         return null;
     }

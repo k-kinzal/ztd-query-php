@@ -15,6 +15,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DefaultDatabaseTest extends TestCase
 {
+    public function testCheckRequiresAViewDatabaseBeforeItsQueryLimits(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+        $session->query('CREATE VIEW v AS SELECT 1 LIMIT n');
+    }
+
     public function testCallsResolvesTheRoutineDatabaseBeforeColumnsAndTables(): void
     {
         $session = (new Instance())->connect();

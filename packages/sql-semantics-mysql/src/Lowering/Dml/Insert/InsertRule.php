@@ -97,7 +97,7 @@ final class InsertRule
         if ($form->node->children[$source] instanceof Node) {
             [$columns, $body] = (new InsertSourceRule($this->lowering))->source($form->node($source));
 
-            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, $alias, $updates);
+            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, $alias, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
 
         return new InsertSet(new InsertInto($replace, $priority, $skip, $target, hints: $hints), (new ValueRule($this->lowering))->assignments($form->node($source + 1)), $alias, $updates);
@@ -126,17 +126,17 @@ final class InsertRule
         }
         [$columns, $body] = (new InsertSourceRule($this->lowering))->source($spec->node);
 
-        return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, null, $updates);
+        return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, null, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**
      * Builds the statement of rows or of a query.
      *
-     * @param list<InsertedRow>|Query $body
+     * @param list<InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow>|Query $body
      * @param list<Assignment> $updates
      * @throws \SqlSemantics\Construction\RejectedInput When a reached call has an invalid identity or signature
      */
-    public function build(InsertInto $into, array|Query $body, ?RowAlias $alias, array $updates): Statement
+    public function build(InsertInto $into, array|Query $body, ?RowAlias $alias, array $updates, int $end = 0): Statement
     {
         if ($body instanceof Query) {
             $used = (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($body) ?? $body;
@@ -148,7 +148,10 @@ final class InsertRule
             return new InsertQuery($into, $body, $updates);
         }
 
-        return new InsertRows($into, $body, $alias, $updates);
+        if (array_filter($body, static fn ($row): bool => $row instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow) !== []) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedInsertRows(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows($into, $body, $alias, $updates)), $end, false);
+        }
+        return new InsertRows($into, array_values(array_filter($body, static fn ($row): bool => $row instanceof InsertedRow)), $alias, $updates);
     }
 
     /**
