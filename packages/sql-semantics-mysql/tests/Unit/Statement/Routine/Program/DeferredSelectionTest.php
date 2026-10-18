@@ -42,4 +42,15 @@ final class DeferredSelectionTest extends TestCase
     {
         self::assertSame('CREATE PROCEDURE p() SELECT 1 FROM DUAL WHERE (2, 3)', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 FROM DUAL WHERE (2,3)')->toString());
     }
+
+    public function testRenderRetainsNamedWindowsWithDeferredProjectionOperands(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT FIRST_VALUE(ROW(1,2)) OVER w WINDOW w AS (ORDER BY 1.5)');
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(DeferredSelection::class, $operation->statement->body);
+        self::assertCount(1, $operation->statement->body->windows);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec::class, $operation->statement->body->windows[0]->specification);
+        self::assertTrue($operation->facts->covers($operation->statement->body->windows[0]->specification->order[0]->expression));
+        self::assertSame('CREATE PROCEDURE p() SELECT FIRST_VALUE(ROW(1, 2)) OVER w WINDOW w AS (ORDER BY 1.5)', $operation->toString());
+    }
 }

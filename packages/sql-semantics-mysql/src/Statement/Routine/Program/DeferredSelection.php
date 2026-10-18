@@ -56,6 +56,11 @@ final class DeferredSelection implements ProgramStatement
     public readonly array $orderBy;
 
     /**
+     * @var list<\SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition> Named windows belonging to this selection
+     */
+    public readonly array $windows;
+
+    /**
      * @param list<SelectOption> $options The modifiers
      * @param Grouping|DeferredGrouping|null $groupBy The complete grouping clause
      * @param Scalar|RowOperand|DeferredOperand|null $having The group predicate
@@ -64,9 +69,11 @@ final class DeferredSelection implements ProgramStatement
      * @param list<Node> $items The ordered projections, including any invocation-time operands
      * @param TableSource|Dual|null $from The complete input relation
      * @param Scalar|RowOperand|DeferredOperand|null $where The row predicate
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition> $windows The complete WINDOW clause
      */
-    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null)
+    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [])
     {
+        $this->windows = Check::listOf($windows, \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition::class, 'A stored selection retains its named window definitions.');
         $this->options = Check::listOf($options, SelectOption::class, 'A stored selection retains SELECT modifiers.');
         $ordering = [];
         foreach (Check::listOf($orderBy, Node::class, 'A stored ordering retains ordering items.') as $item) {
@@ -145,6 +152,9 @@ final class DeferredSelection implements ProgramStatement
         $out->node($this->groupBy);
         if ($this->having !== null) {
             $out->keyword('HAVING')->node($this->having);
+        }
+        if ($this->windows !== []) {
+            $out->keyword('WINDOW')->list($this->windows);
         }
         if ($this->orderBy !== []) {
             $out->keyword('ORDER', 'BY')->list($this->orderBy);

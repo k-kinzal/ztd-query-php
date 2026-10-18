@@ -37,8 +37,9 @@ final class Collected
     /**
      * @param Planner $planner The statement's compiler and bound facts
      * @param int $offset The first window output slot
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition> $windows The selection's complete named definitions
      */
-    public function __construct(public readonly Planner $planner, public readonly int $offset)
+    public function __construct(public readonly Planner $planner, public readonly int $offset, public readonly array $windows = [])
     {
     }
 
@@ -48,17 +49,29 @@ final class Collected
     public function compile(Scalar $call, Scope $scope): Evaluable
     {
         \SqlSemantics\Diagnostic\Check::invariant($call instanceof WindowFunction || $call instanceof Aggregate || $call instanceof GroupConcat || $call instanceof JsonObjectAggregate, 'A collected window retains its semantic function call.');
+        if ($call->over instanceof Name) {
+            $this->named($call->over);
+        }
         $input = clone $scope;
         $input->windowing = null;
         $arguments = $call instanceof JsonObjectAggregate ? [$call->key, $call->value] : $call->arguments;
         $compiler = $this->planner->compiler;
         $prepared = array_map(static fn (Operand $argument): Evaluable => $compiler->compile($argument, $input), $arguments);
-        if ($call->over instanceof Name) {
-            throw QueryError::WindowNotDefined->error($call->over->value);
-        }
         $read = new ColumnRead($compiler->domain($call), $this->offset + count($this->calls));
         $this->calls[] = [$call, $prepared];
         $scope->bind($call, $read);
         return $read;
+    }
+
+    /**
+     * Resolves a directly named window before the call's argument preparation.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the selection has no matching definition
+     */
+    public function named(Name $name): void
+    {
+        if (array_filter($this->windows, static fn ($window): bool => strcasecmp($window->name->value, $name->value) === 0) === []) {
+            throw QueryError::WindowNotDefined->error($name->value);
+        }
     }
 }

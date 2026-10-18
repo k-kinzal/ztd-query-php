@@ -2144,3 +2144,20 @@ volatile classification. A further 140 native observations pass across seven
 releases and both text and prepared protocols, including each complete catalog's
 rows, metadata and diagnostics. The remaining constructor domains, nine-corpus
 replay and uninterrupted 900-second campaign still prevent acceptance.
+
+
+### Named windows in retained selections
+
+Deferred selections retain their complete WINDOW clause alongside projections,
+filters, grouping and ordering. Semantics derives definition operands and window
+references in the same lexical block. A directly named window resolves before
+the call's row argument is prepared; inline options still follow ordinary clause
+preparation. Unused common-table bodies remain templates and do not trigger
+these conditions merely by existing.
+
+Snapshot `query413` passes all three static suites and 637 core, 8,556 MySQL
+Semantics and 18,073 Memory unit/property/doctest tests. Sixty window/row-operand
+inputs pass on three releases through both protocols (360 native observations),
+including unused and reached CTE bodies. This preserves information needed for
+the remaining window constructor work; it does not close those invariants or the
+final differential acceptance gates.

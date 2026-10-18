@@ -59,9 +59,10 @@ final class StoredSelections
         $having = isset($clauses['having']) ? $this->predicate($clauses['having']) : null;
         $ordering = isset($clauses['order']) ? (new StoredClauses($this->lowering))->ordering($clauses['order']) : [];
         $limit = isset($clauses['limit']) ? (new TailRule($this->lowering))->limit($clauses['limit']) : null;
+        $windows = isset($clauses['windows']) ? (new ClauseRule($this->lowering))->windows($clauses['windows']) : [];
         $deferred = $this->deferred($items, $predicate, $grouping, $having, $ordering);
         if ($deferred) {
-            return new DeferredSelection($items, $input, $predicate, $options, $grouping, $having, $ordering, $limit);
+            return new DeferredSelection($items, $input, $predicate, $options, $grouping, $having, $ordering, $limit, $windows);
         }
         $ordinary = [];
         foreach ($items as $item) {
@@ -72,7 +73,7 @@ final class StoredSelections
         \SqlSemantics\Diagnostic\Check::invariant($having === null || $having instanceof Scalar, 'An ordinary group predicate is scalar.');
         \SqlSemantics\Diagnostic\Check::invariant($grouping === null || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping, 'An ordinary grouping has scalar or ordinal items.');
         $order = array_values(array_filter($ordering, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\OrderItem));
-        $select = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Query\Select($options, $ordinary, $input, $predicate, $grouping, $having, orderBy: $order, limit: $limit), $node);
+        $select = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Query\Select($options, $ordinary, $input, $predicate, $grouping, $having, windows: $windows, orderBy: $order, limit: $limit), $node);
         return $select;
     }
 
@@ -147,6 +148,7 @@ final class StoredSelections
             'having_clause', 'opt_having_clause' => 'having',
             'order_clause', 'opt_order_clause' => 'order',
             'opt_limit_clause', 'opt_limit_clause_init', 'limit_clause' => 'limit',
+            'opt_window_clause' => 'windows',
             default => null,
         };
     }

@@ -149,7 +149,7 @@ final class SelectFacts
     /**
      * Derives the named windows and reports a name defined twice.
      */
-    public function windows(Select $select, Derivation $derivation, Environment $environment): void
+    public function windows(Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $select, Derivation $derivation, Environment $environment): void
     {
         $seen = [];
         foreach ($select->windows as $window) {

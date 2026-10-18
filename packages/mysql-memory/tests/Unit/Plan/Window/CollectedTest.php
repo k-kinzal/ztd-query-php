@@ -29,4 +29,20 @@ final class CollectedTest extends TestCase
         $this->expectExceptionMessage("Unknown column 'missing' in 'field list'");
         $session->query('SELECT missing+SUM(other) OVER (),(1,2)');
     }
+
+    public function testNamedResolvesTheRetainedDefinitionBeforeTheRowArgument(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1241);
+        $session->query('WITH c AS (SELECT FIRST_VALUE(ROW(1,2)) OVER W WINDOW w AS ()) SELECT 1 FROM c');
+    }
+
+    public function testNamedReportsAMissingDefinitionBeforeTheRowArgument(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3579);
+        $session->query('WITH c AS (SELECT FIRST_VALUE(ROW(1,2)) OVER w) SELECT 1 FROM c');
+    }
 }

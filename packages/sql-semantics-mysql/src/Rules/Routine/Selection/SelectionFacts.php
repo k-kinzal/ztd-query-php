@@ -54,6 +54,8 @@ final class SelectionFacts
         if ($selection->having !== null) {
             $derivation->scalar($selection->having, $results);
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\SelectFacts())->windows($selection, $derivation, $expressions);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->check($selection, $derivation);
         $this->ordering($selection->orderBy, $derivation, $results, $fields, true);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts())->limit($selection->limit, $derivation, $scope->environment);
         return $fields;

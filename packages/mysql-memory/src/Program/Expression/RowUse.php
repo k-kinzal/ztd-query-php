@@ -92,6 +92,9 @@ final class RowUse
             $this->membership($operand, $compiler, $scope);
             return;
         }
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction && $operand->over instanceof \SqlSemantics\Statement\Identifier\Name) {
+            $scope->windowing?->named($operand->over);
+        }
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
             foreach ($operand->operands() as $part) {
                 if ($part instanceof \SqlSemantics\Statement\Scalar || $part instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable) {

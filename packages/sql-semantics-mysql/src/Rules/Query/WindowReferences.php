@@ -41,14 +41,17 @@ final class WindowReferences
     /**
      * Reports each window name of the block that its WINDOW clause does not define.
      */
-    public function check(Select $select, Derivation $derivation): void
+    public function check(Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $select, Derivation $derivation): void
     {
         $names = $derivation->context->columnNames;
         $defined = [];
         foreach ($select->windows as $window) {
             $defined[$names->fold($window->name->value)] = true;
         }
-        $parts = [...$select->items, ...$select->orderBy, ...$select->windows, ...array_values(array_filter([$select->where, $select->groupBy, $select->having, $select->qualify, $select->late]))];
+        $parts = [...$select->items, ...$select->orderBy, ...$select->windows, ...array_values(array_filter([$select->where, $select->groupBy, $select->having]))];
+        if ($select instanceof Select) {
+            array_push($parts, ...array_values(array_filter([$select->qualify, $select->late])));
+        }
         foreach ($this->names($parts) as $name) {
             if (!isset($defined[$names->fold($name->value)])) {
                 $derivation->report(new Misuse(MisuseRule::UnknownWindow, $name));
@@ -73,7 +76,7 @@ final class WindowReferences
                 continue;
             }
             $reference = match (true) {
-                $node instanceof WindowFunction, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof JsonObjectAggregate => $node->over,
+                $node instanceof WindowFunction, $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof JsonObjectAggregate => $node->over,
                 $node instanceof WindowSpec && $bases => $node->base,
                 default => null,
             };

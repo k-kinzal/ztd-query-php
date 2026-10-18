@@ -39,7 +39,7 @@ final class Selections
         $scope = new \MySqlMemory\Evaluation\Scope($outer);
         $width = $selection->from === null ? 0 : $planner->relations->plan($selection->from, $scope)->width();
         $scope->grouping = new \MySqlMemory\Plan\Grouping\Collected($planner, $width);
-        $scope->windowing = new \MySqlMemory\Plan\Window\Collected($planner, $width);
+        $scope->windowing = new \MySqlMemory\Plan\Window\Collected($planner, $width, $selection->windows);
         foreach ($selection->items as $item) {
             if ($item instanceof DeferredProjection) {
                 (new RowUse())->prepare($item->expression, $planner->compiler, $scope);
