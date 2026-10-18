@@ -29,11 +29,11 @@ final class PurgeErrorsTest extends TestCase
         self::assertSame([[1210, 'Incorrect arguments to PURGE LOGS BEFORE']], $error->following);
     }
 
-    public function testPreparedDistinguishesAnUnresolvedRoutineDatabase(): void
+    public function testMomentDistinguishesAnUnresolvedRoutineDatabase(): void
     {
         $error = \MySqlMemory\Error\Family\ProgramError::RoutineMissing->error('FUNCTION', 'missing');
         $statement = new PurgeLogsBefore(new NumberLiteral('1'));
-        $prepared = (new PurgeErrors())->prepared($error, $statement, true);
+        $prepared = (new PurgeErrors())->moment($error, true);
 
         self::assertSame($error, (new PurgeErrors())->prepared($error, $statement));
         self::assertSame([[1210, 'Incorrect arguments to PURGE LOGS BEFORE']], $prepared->following);

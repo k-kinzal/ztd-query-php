@@ -20,10 +20,20 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 #[Small]
 final class InterpreterTest extends TestCase
 {
-    public function testKillPassesTheReachedConditionToTheProgramHandler(): void
+    public function testAdministrativePassesTheReachedConditionToTheProgramHandler(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1241 SET @handled=1; KILL ROW(1,2); END');
+        $session->query('CALL p()');
+        $result = $session->query('SELECT @handled')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testAdministrativeHandlesAPurgeCutoffCondition(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1241 SET @handled=1; PURGE BINARY LOGS BEFORE ROW(1,2); END');
         $session->query('CALL p()');
         $result = $session->query('SELECT @handled')[0];
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);

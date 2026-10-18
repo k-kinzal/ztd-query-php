@@ -34,6 +34,7 @@ final class SyntaxExcerptTest extends TestCase
             }
         }
         array_push($statements, 'SET NAMES utf8mb4', 'SELECT !1, BINARY 1,? ' . str_repeat('a', 76) . '猫tail');
+        array_push($statements, "SELECT 'a\nb' nonsense )", 'SELECT "a' . "\n" . 'b" nonsense )', "SELECT `a\nb` nonsense )", "SELECT 'a\nb'\nnonsense )", "SELECT 'a\\\nb' nonsense )", "SELECT 'a\nb' + 'c\nd' nonsense )", "SELECT 'a\nb' + `c\nd` nonsense )", "SELECT _utf8mb4'a\nb' nonsense )", "SELECT N'a\nb' nonsense )");
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

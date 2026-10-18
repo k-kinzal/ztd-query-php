@@ -30,7 +30,15 @@ final class PurgeErrors
      */
     public function prepared(SqlError $error, Node $statement, bool $routineDatabaseResolved = false): SqlError
     {
-        if (!$statement instanceof PurgeLogsBefore || $error->error === QueryError::NoDatabase || ($error->error === ProgramError::RoutineMissing && !$routineDatabaseResolved)) {
+        return $statement instanceof PurgeLogsBefore ? $this->moment($error, $routineDatabaseResolved) : $error;
+    }
+
+    /**
+     * Completes a cutoff preparation error, including a retained non-scalar operand.
+     */
+    public function moment(SqlError $error, bool $routineDatabaseResolved = false): SqlError
+    {
+        if ($error->error === QueryError::NoDatabase || ($error->error === ProgramError::RoutineMissing && !$routineDatabaseResolved)) {
             return $error;
         }
         $condition = [StatementError::WrongArguments->number(), StatementError::WrongArguments->message('PURGE LOGS BEFORE')];

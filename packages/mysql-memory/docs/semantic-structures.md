@@ -1957,3 +1957,23 @@ fuzzing finds another difference at input 58 (zero based): PURGE loses its
 following argument condition when lowering refuses a nested row operand. That
 input is retained for repair. Final-revision seed replay and the 900-second
 unseeded gate remain unmet.
+
+### Retained PURGE cutoff instructions
+
+Snapshot `/query346-work-20261018` retains a refused PURGE cutoff in a dedicated
+input diagnostic and a separate stored instruction. Neither is an ordinary
+scalar or standalone executable statement. The stored form binds dependencies
+at definition time and prepares its cutoff only when reached. Memory preserves
+the command's following argument condition, with default-database lookup before
+preparing qualified and unqualified function operands. Legacy syntax diagnostics
+also exclude newlines inside completed quoted tokens, including string literals.
+
+The snapshot passes all three package static suites and 637 core, 8,490 MySQL
+Semantics, and 18,031 Memory unit/property/doctest tests. The retained schema has
+929 definitions. Native comparison passes the expanded PURGE preparation and
+syntax-excerpt suites on five releases, plus 160 observations of eight directly
+constructed stored programs reused through skipped/reached/skipped histories.
+A replay of 710 saved native observations has zero differences, including the
+original unseeded failure. A fresh unseeded run is in progress; these targeted
+results do not close the remaining view and window constructor domains or the
+final-revision fuzz gates.

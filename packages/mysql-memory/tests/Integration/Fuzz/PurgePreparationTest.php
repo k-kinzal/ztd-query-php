@@ -25,12 +25,25 @@ final class PurgePreparationTest extends TestCase
     public static function providerReleases(): iterable
     {
         $statements = [];
-        foreach (['DEFAULT(nope)', 'nope', 'DEFAULT(nope)+1', 'BINARY DEFAULT(nope)', 'ROW(1,2)', "DATE 'bad'", 'ABS()', '@@unknown_var', 'CONVERT(1 USING missing)', 'SUM(1)', "JSON_EXTRACT('1','bad')", 'missing_fun(1)', 'd.missing_fun(1)', 'COUNT(*)', 'COUNT(nope)', 'AVG(1) OVER()', 'CAST(1 AS DATETIME(7))', 'IF(FALSE,nope,0)'] as $operand) {
+        foreach (['DEFAULT(nope)', 'nope', 'DEFAULT(nope)+1', 'BINARY DEFAULT(nope)', 'ROW(1,2)', 'ROW(missing_fun(),2)', 'ROW(d.missing_fun(),2)', 'missing_fun(ROW(1,2))', 'd.missing_fun(ROW(1,2))', "DATE 'bad'", 'ABS()', '@@unknown_var', 'CONVERT(1 USING missing)', 'SUM(1)', "JSON_EXTRACT('1','bad')", 'missing_fun(1)', 'd.missing_fun(1)', 'COUNT(*)', 'COUNT(nope)', 'AVG(1) OVER()', 'CAST(1 AS DATETIME(7))', 'IF(FALSE,nope,0)'] as $operand) {
             $statements[] = 'PURGE BINARY LOGS BEFORE ' . $operand;
         }
         $statements[] = 'CREATE DATABASE d';
         $statements[] = 'USE d';
         $statements[] = 'PURGE BINARY LOGS BEFORE missing_fun(1)';
+        foreach (['ROW(1,2)', 'ROW(missing,2)', 'missing + ROW(1,2)', 'ROW(1,2) + missing', 'ROW(@@not_a_variable,2)', 'ROW(f(),2)', 'ROW(missingdb.f(),2)', "CAST(1 AT TIME ZONE 'text' AS DATETIME)"] as $operand) {
+            foreach (['BINARY', 'MASTER'] as $word) {
+                $body = 'PURGE ' . $word . ' LOGS BEFORE ' . $operand;
+                $statements[] = $body;
+                $statements[] = 'DROP PROCEDURE IF EXISTS p';
+                $statements[] = 'CREATE PROCEDURE p() ' . $body;
+                $statements[] = 'CALL p()';
+                $statements[] = 'DROP PROCEDURE IF EXISTS p';
+                $statements[] = 'CREATE PROCEDURE p() BEGIN IF 0 THEN ' . $body . '; END IF; END';
+                $statements[] = 'CALL p()';
+            }
+        }
+        $statements[] = (string) file_get_contents(__DIR__ . '/fixtures/purge-deferred-operand.sql');
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

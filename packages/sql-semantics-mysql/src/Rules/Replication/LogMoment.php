@@ -8,7 +8,6 @@ use SplObjectStorage;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Constrains a PURGE moment independently of the connection and binary logs.
@@ -25,7 +24,7 @@ final class LogMoment
     /**
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the expression contains a query
      */
-    public function check(Scalar $moment): void
+    public function check(Node $moment): void
     {
         $pending = [$moment];
         $seen = new SplObjectStorage();

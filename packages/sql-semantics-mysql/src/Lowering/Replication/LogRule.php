@@ -87,7 +87,7 @@ final class LogRule
 
         $statement = match ($option->signature) {
             'purge_option: TO_SYM TEXT_STRING_sys' => new PurgeLogsTo($this->lowering->literals->text($option->node(1))),
-            'purge_option: BEFORE_SYM expr' => new PurgeLogsBefore($this->lowering->expressions->expression($option->node(1))),
+            'purge_option: BEFORE_SYM expr' => $this->moment($option->node(1)),
             default => throw ImplementationGap::production($option),
         };
         $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::PurgeMasterLogs;
@@ -96,6 +96,20 @@ final class LogRule
         }
 
         return $statement;
+    }
+
+    /**
+     * Retains the cutoff's role when it cannot be an ordinary scalar.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the cutoff requires deferred preparation
+     */
+    public function moment(Node $node): PurgeLogsBefore
+    {
+        $moment = $this->lowering->expressions->operand($node);
+        if (!$moment instanceof \SqlSemantics\Statement\Scalar) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand($moment), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, false);
+        }
+        return new PurgeLogsBefore($moment);
     }
 
     /**

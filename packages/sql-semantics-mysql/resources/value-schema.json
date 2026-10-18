@@ -1929,6 +1929,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedLogSubquery": {
         "offset": "int"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedPurgeOperand": {
+        "moment": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedSetting": {
         "error": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\ReplicationError",
         "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
@@ -2503,6 +2506,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredKill": {
         "process": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\KillScope"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredPurge": {
+        "moment": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\VariableDeclaration": {
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",

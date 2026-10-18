@@ -26,7 +26,7 @@ final class PurgeLogsBeforeTest extends TestCase
     public function testDeriveStatementRequiresOneColumnForTheMoment(): void
     {
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        $this->expectExceptionMessage('A standalone PURGE BINARY LOGS BEFORE requires a scalar log cutoff operand.');
         (new Semantics(Dialect::MySql))->analyze('PURGE BINARY LOGS BEFORE ROW(1,2)');
     }
 

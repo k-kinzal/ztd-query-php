@@ -25,13 +25,23 @@ final class DiagnosticLineTest extends TestCase
         self::assertSame(1, $lines->at($sql, 15, true));
     }
 
-    public function testAtUsesTheSuppliedIdentifierQuoteMode(): void
+    public function testAtExcludesBothQuotedNamesAndTextOnLegacyReleases(): void
     {
         $sql = "CREATE PROCEDURE p(\"x\n\" INT) nonsense";
         $parser = new MySqlParser('mysql-5.7.44', SqlMode::fromString('ANSI_QUOTES'));
 
         self::assertSame(1, (new DiagnosticLine())->at($sql, strlen($sql), true, $parser));
-        self::assertSame(2, (new DiagnosticLine())->at($sql, strlen($sql), true));
+        self::assertSame(1, (new DiagnosticLine())->at($sql, strlen($sql), true));
+    }
+
+    public function testAtKeepsCompletedQuotedIdentifiersBeforeALaterLexicalFailure(): void
+    {
+        $sql = "SELECT `a\nb` nonsense ]";
+
+        $offset = strpos($sql, 'nonsense');
+        self::assertNotFalse($offset);
+        self::assertSame(1, (new DiagnosticLine())->at($sql, $offset, true));
+        self::assertSame(2, (new DiagnosticLine())->at($sql, $offset, false));
     }
 
     public function testAtKeepsTheOffsetLineWhenTokenizationFails(): void
