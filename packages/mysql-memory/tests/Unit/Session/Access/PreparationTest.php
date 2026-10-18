@@ -32,6 +32,16 @@ final class PreparationTest extends TestCase
         (new Preparation())->read("SELECT 1;\nSELECT 2", (new Instance())->connect());
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(["CREATE SPATIAL REFERENCE SYSTEM 500001 NAME 'local' DEFINITION 'invalid'"])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['DROP SPATIAL REFERENCE SYSTEM 4326'])]
+    public function testDefinitionsRefusesSpatialDdlBeforeCatalogMutation(string $sql): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze($sql, true);
+        $this->expectExceptionCode(1295);
+        (new Preparation())->definitions($operation, $session);
+    }
+
     public function testDefinitionsKeepsEventPreparationSeparateFromScheduleEvaluation(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

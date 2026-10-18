@@ -71,7 +71,7 @@ final class Servers
             $user = $this->environment('MYSQL_MEMORY_NATIVE_USER', 'root');
             $password = $this->environment('MYSQL_MEMORY_NATIVE_PASSWORD', 'root');
         } else {
-            $reference = Testcontainers::run(MySqlRelease::container($version));
+            $reference = Testcontainers::run($this->reference($version));
             $endpoint = $reference->getData(Endpoint::class);
             $dsn = 'mysql:host=' . $endpoint->host . ';port=' . $endpoint->port;
             $user = $endpoint->username;
@@ -88,6 +88,22 @@ final class Servers
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
         return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server, $reference), 'mysql-' . $version, $server];
+    }
+
+    /**
+     * Applies the harness's optional fixed port to the repository's reusable reference container.
+     *
+     * @throws RuntimeException When no pinned image exists for the requested release
+     */
+    public function reference(string $version): \Container\MySqlContainer
+    {
+        $definition = MySqlRelease::container($version);
+        $container = new $definition();
+        $port = filter_var(getenv('MYSQL_MEMORY_CONTAINER_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
+        if (is_int($port)) {
+            $container->withPortStrategy(new \Testcontainers\Containers\PortStrategy\StaticPortStrategy($port));
+        }
+        return $container;
     }
 
     /**

@@ -75,10 +75,10 @@ final class Registry
      * @param bool $resourcePriorities Whether the emulated platform applies thread priorities
      * @param positive-int $resourceProcessors The number of logical processors visible to resource groups
      */
-    public function __construct(bool $resourcePriorities = true, int $resourceProcessors = 8)
+    public function __construct(bool $resourcePriorities = true, int $resourceProcessors = 8, string $version = '8.4.7')
     {
         $this->resourceGroups = new ResourceGroups($resourceProcessors, $resourcePriorities);
-        $this->spatialCatalog = new SpatialCatalog();
+        $this->spatialCatalog = new SpatialCatalog($version);
         $this->binaryLog = new BinaryLog();
         $this->status = new StatusCounters();
         $this->threads = new Threads();

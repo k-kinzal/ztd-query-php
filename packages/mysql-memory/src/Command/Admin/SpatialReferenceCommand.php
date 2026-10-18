@@ -83,8 +83,32 @@ final class SpatialReferenceCommand implements Command
 
             return;
         }
+        [$name, $definition, $organization, $organizationId, $description] = $this->attributes($statement);
+        if (!(new SpatialDefinition())->valid($definition)) {
+            throw SchemaError::SrsParseError->error((string) $srid);
+        }
+        $this->reserved($srid, $session);
+        if ($systems->named($name, $srid) !== null) {
+            throw DataError::DuplicateEntry->error('1-' . $name, 'st_spatial_reference_systems.SRS_NAME');
+        }
+        if ($systems->organization($organization, $organizationId, $srid) !== null) {
+            throw DataError::DuplicateEntry->error('1-' . $organization . '-' . $organizationId, 'st_spatial_reference_systems.ORGANIZATION_AND_ID');
+        }
+        $systems->define($srid, $name, $organization, $organizationId, $definition, $description);
+    }
+
+    /**
+     * Reads the last written value of each spatial attribute from its semantic role.
+     *
+     * @return array{string, string, ?string, ?int, ?string} Name, definition, organization, organization ID and description
+     */
+    public function attributes(CreateSpatialReference $statement): array
+    {
         $name = '';
         $definition = '';
+        $organization = null;
+        $organizationId = null;
+        $description = null;
         foreach ($statement->attributes as $attribute) {
             if ($attribute->kind === SpatialAttributeKind::Name) {
                 $name = (new Literals())->bytes($attribute->value);
@@ -92,15 +116,16 @@ final class SpatialReferenceCommand implements Command
             if ($attribute->kind === SpatialAttributeKind::Definition) {
                 $definition = (new Literals())->bytes($attribute->value);
             }
+            if ($attribute->kind === SpatialAttributeKind::Organization) {
+                $organization = (new Literals())->bytes($attribute->value);
+                assert($attribute->identifier !== null);
+                $organizationId = (int) (new Literals())->number($attribute->identifier);
+            }
+            if ($attribute->kind === SpatialAttributeKind::Description) {
+                $description = (new Literals())->bytes($attribute->value);
+            }
         }
-        if (!(new SpatialDefinition())->valid($definition)) {
-            throw SchemaError::SrsParseError->error((string) $srid);
-        }
-        if ($systems->named($name, $srid) !== null) {
-            throw DataError::DuplicateEntry->error('1-' . $name, 'st_spatial_reference_systems.SRS_NAME');
-        }
-        $systems->define($srid, $name);
-        $this->reserved($srid, $session);
+        return [$name, $definition, $organization, $organizationId, $description];
     }
 
     /**

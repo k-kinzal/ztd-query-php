@@ -41,10 +41,18 @@ final class Baseline
     public readonly array $grants;
 
     /**
+     * The spatial catalog shared by each isolated observation.
+     */
+    public readonly SpatialBaseline $spatial;
+
+    /**
      * Captures the original global variables and authentication string without generating a new password salt.
+     *
+     * @throws RuntimeException When the initial spatial catalog cannot be captured
      */
     public function __construct(PDO $native, public readonly string $version)
     {
+        $this->spatial = new SpatialBaseline($native, $version);
         $server = new Servers();
         [$user, $host] = explode('@', $server->rows($native, 'SELECT CURRENT_USER()')[0][0], 2);
         $this->identity = $native->quote($user) . '@' . $native->quote($host);
@@ -69,6 +77,7 @@ final class Baseline
         foreach ($this->cleanup as $statement => $_) {
             $connection->exec($statement);
         }
+        $this->spatial->restore($connection);
         /**
          * Account rows can have a lossy host encoding while the cache retains the original spelling.
          * Reload after deletion so both observations start without the stale cache entry.
@@ -130,6 +139,7 @@ final class Baseline
      */
     public function discover(PDO $native): void
     {
+        $this->spatial->discover($native);
         $server = new Servers();
         foreach ($server->rows($native, 'SHOW DATABASES') as [$name]) {
             if (!in_array($name, ['mysql', 'sys', 'information_schema', 'performance_schema', Differential::DATABASE], true)) {

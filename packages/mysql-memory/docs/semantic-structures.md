@@ -2112,6 +2112,35 @@ the same call sees no selected database, a missing routine, a defined routine,
 and a dropped routine. All 309 saved observations replay without a difference.
 The earlier `query398` whole-model run completed all 244 roots but retained one
 routine-database ordering difference; its exact root now replays with native
-agreement. The fresh whole-model and unseeded campaigns are still in progress.
+agreement. The `query409` whole-model campaign completed all 244 roots: 97 matching
+successes, 147 matching SQL errors, no generation exhaustion or internal/profile
+failures, and 171 matching state observations across 57 structures. Its unseeded
+campaign stopped after 600.039 seconds with 709 matches and one duplicate-handler
+diagnostic ordering difference. That difference remains under repair.
 These results do not close the remaining window and partition constructor
 constraints or the final nine-corpus and 900-second acceptance gates.
+
+
+### Spatial catalog state and differential restoration
+
+The spatial catalog retains names, organizations, organization identifiers,
+definitions and descriptions. The initial records are public SQL catalog data
+captured from Testcontainers instances, not translated server implementation.
+MySQL 8.0.44 has 5,152 records; 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1 and 9.1.0
+have the same 5,238 records. The 8.0 delta preserves removed and changed records.
+Creation and replacement enforce both unique identities without mutating the
+catalog on failure. Prepared spatial DDL reports the native protocol condition
+before changing the catalog.
+
+Differential fixture restoration now discovers created, removed and replaced
+systems and restores their complete attributes on both servers. A failed repair
+aborts the campaign. This closes the `query394` spatial restoration difference;
+it is not an instance-dependent comparison exception.
+
+Snapshot `query411` passes all three static suites, 637 core tests, 8,555 MySQL
+Semantics tests and 18,071 Memory unit/property/doctest tests. Three live fixture
+restoration histories pass 24 differential observations without a difference or
+volatile classification. A further 140 native observations pass across seven
+releases and both text and prepared protocols, including each complete catalog's
+rows, metadata and diagnostics. The remaining constructor domains, nine-corpus
+replay and uninterrupted 900-second campaign still prevent acceptance.

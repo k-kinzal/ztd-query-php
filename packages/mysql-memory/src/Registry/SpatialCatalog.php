@@ -23,14 +23,21 @@ final class SpatialCatalog
     public const RESERVED = 32767;
 
     /**
-     * @var array<int, string>|null The name of each installed system, by SRID, once read
+     * @var array<string, array<int, array{string, ?string, ?int, string, ?string}>> Initial catalogs cached by generation
      */
-    private static ?array $installed = null;
+    private static array $catalogs = [];
 
     /**
-     * @var array<string, int>|null The SRID of each installed system, by the key of its name, once computed
+     * @var array<string, array<string, int>> Name indexes cached by generation
      */
-    private static ?array $keys = null;
+    private static array $keys = [];
+
+    /**
+     * Uses the installed catalog of the emulated release.
+     */
+    public function __construct(public readonly string $version = '8.4.7')
+    {
+    }
 
     /**
      * @var array<int, string|null> The name of each system changed since the server started, by SRID; null for one that was dropped
@@ -38,19 +45,43 @@ final class SpatialCatalog
     public array $changed = [];
 
     /**
+     * @var array<int, array{?string, ?int, string, ?string}> Organization, organization ID, definition and description of replaced systems
+     */
+    public array $details = [];
+
+    /**
      * Answers the name of each system the server defines when it is installed, by SRID.
      *
      * @return array<int, string>
      */
-    public static function installed(): array
+    public static function installed(string $version = '8.4.7'): array
     {
-        if (self::$installed === null) {
-            /** @var array<int, string> $names */
-            $names = require dirname(__DIR__, 2) . '/resources/spatial-reference-systems.php';
-            self::$installed = $names;
-        }
+        return array_map(static fn (array $record): string => $record[0], self::data($version));
+    }
 
-        return self::$installed;
+    /**
+     * @return array<int, array{string, ?string, ?int, string, ?string}> Initial SQL catalog records by SRID
+     */
+    public static function data(string $version = '8.4.7'): array
+    {
+        $generation = version_compare($version, '8.1.0', '<') ? '8.0' : '8.1';
+        if (!isset(self::$catalogs[$generation])) {
+            /** @var array<int, array{string, ?string, ?int, string, ?string}> $records */
+            $records = require dirname(__DIR__, 2) . '/resources/spatial-reference-systems.php';
+            if ($generation === '8.0') {
+                /** @var array<int, array{string, ?string, ?int, string, ?string}|null> $changes */
+                $changes = require dirname(__DIR__, 2) . '/resources/spatial-reference-systems-8.0.php';
+                foreach ($changes as $id => $record) {
+                    if ($record === null) {
+                        unset($records[$id]);
+                    } else {
+                        $records[$id] = $record;
+                    }
+                }
+            }
+            self::$catalogs[$generation] = $records;
+        }
+        return self::$catalogs[$generation];
     }
 
     /**
@@ -58,16 +89,16 @@ final class SpatialCatalog
      *
      * @return array<string, int>
      */
-    public static function keys(): array
+    public static function keys(string $version = '8.4.7'): array
     {
-        if (self::$keys === null) {
-            self::$keys = [];
-            foreach (self::installed() as $srid => $name) {
-                self::$keys[Registry::key($name)] ??= $srid;
+        $generation = version_compare($version, '8.1.0', '<') ? '8.0' : '8.1';
+        if (!isset(self::$keys[$generation])) {
+            self::$keys[$generation] = [];
+            foreach (self::installed($version) as $srid => $name) {
+                self::$keys[$generation][Registry::key($name)] ??= $srid;
             }
         }
-
-        return self::$keys;
+        return self::$keys[$generation];
     }
 
     /**
@@ -79,7 +110,7 @@ final class SpatialCatalog
             return $this->changed[$srid];
         }
 
-        return self::installed()[$srid] ?? null;
+        return self::data($this->version)[$srid][0] ?? null;
     }
 
     /**
@@ -93,7 +124,7 @@ final class SpatialCatalog
                 return $srid;
             }
         }
-        $srid = self::keys()[$wanted] ?? null;
+        $srid = self::keys($this->version)[$wanted] ?? null;
 
         return $srid !== null && $srid !== $except && !array_key_exists($srid, $this->changed) ? $srid : null;
     }
@@ -101,9 +132,10 @@ final class SpatialCatalog
     /**
      * Defines or replaces the system of an SRID.
      */
-    public function define(int $srid, string $name): void
+    public function define(int $srid, string $name, ?string $organization = null, ?int $organizationId = null, string $definition = '', ?string $description = null): void
     {
         $this->changed[$srid] = $name;
+        $this->details[$srid] = [$organization, $organizationId, $definition, $description];
     }
 
     /**
@@ -112,5 +144,32 @@ final class SpatialCatalog
     public function drop(int $srid): void
     {
         $this->changed[$srid] = null;
+        unset($this->details[$srid]);
+    }
+
+    /**
+     * Finds another system with the same non-null organization and identifier.
+     */
+    public function organization(?string $organization, ?int $identifier, int $except): ?int
+    {
+        if ($organization === null || $identifier === null) {
+            return null;
+        }
+        $key = Registry::key($organization);
+        foreach ($this->details as $srid => [$other, $id]) {
+            if ($srid !== $except && $other !== null && Registry::key($other) === $key && $id === $identifier) {
+                return $srid;
+            }
+        }
+        return $key === 'EPSG' && $identifier !== 0 && $identifier !== $except && isset(self::data($this->version)[$identifier]) && !array_key_exists($identifier, $this->changed) ? $identifier : null;
+    }
+
+    /**
+     * @return array{?string, ?int, string, ?string} The retained attributes, or the installed catalog defaults
+     */
+    public function attributes(int $srid): array
+    {
+        [, $organization, $identifier, $definition, $description] = self::data($this->version)[$srid] ?? ['', null, null, '', null];
+        return $this->details[$srid] ?? [$organization, $identifier, $definition, $description];
     }
 }

@@ -19,6 +19,14 @@ use SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference;
 #[Small]
 final class SpatialReferenceCommandTest extends TestCase
 {
+    public function testAttributesRetainsOrganizationAndDescription(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze("CREATE SPATIAL REFERENCE SYSTEM 500001 NAME 'local' ORGANIZATION 'custom' IDENTIFIED BY 7 DEFINITION 'definition' DESCRIPTION 'description'")->statement;
+        self::assertInstanceOf(CreateSpatialReference::class, $statement);
+        self::assertSame(['local', 'definition', 'custom', 7, 'description'], (new SpatialReferenceCommand())->attributes($statement));
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new SpatialReferenceCommand())->clearsDiagnostics());
