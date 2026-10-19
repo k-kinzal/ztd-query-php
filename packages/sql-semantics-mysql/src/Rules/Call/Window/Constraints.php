@@ -35,6 +35,12 @@ final class Constraints
         if ($this->positional($window) || $this->reversed($window)) {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint($window, $this->positional($window));
         }
+        if ((new Nesting())->contains($window)) {
+            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint($window);
+        }
+        if ((new Refinements())->condition($window, []) !== null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement($window);
+        }
         $limit = match (true) {
             $window->frame?->unit === \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups => \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::GroupsUnit,
             $window->frame?->exclusion !== null => \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::Exclusion,

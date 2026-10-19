@@ -692,6 +692,18 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowOperandConstraint": {
         "window": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredWindowSpec"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowRefinement": {
+        "ancestors": "array",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "window": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowSpec|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredWindowSpec"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowRefinementKind": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\Window\\NestingConstraint": {
+        "window": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowSpec"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowingLimit": {
         "name": "string",
         "value": "string"

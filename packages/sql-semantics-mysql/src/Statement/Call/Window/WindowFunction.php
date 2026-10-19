@@ -45,6 +45,13 @@ use SqlSemantics\Statement\Type\TypeFact;
  * @example Refusing a fixed frame in an ordinary scalar
  *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow)));
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a dependent partition in an ordinary window scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(new \SqlSemantics\Statement\Identifier\Name('w'), partition: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.1'))]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a window call in the same specification's ordering
+ *     $inner = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(order: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem($inner)]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class WindowFunction implements Scalar
 {

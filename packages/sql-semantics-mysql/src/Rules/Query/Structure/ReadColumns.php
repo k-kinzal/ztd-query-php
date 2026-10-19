@@ -110,6 +110,10 @@ final class ReadColumns
         if ($namesProblem !== null) {
             return $namesProblem;
         }
+        $dependency = (new \SqlSemantics\Platform\MySql\Rules\Query\Window\Dependencies())->problem($query);
+        if ($dependency !== null) {
+            return $dependency;
+        }
         $parts = [...$query->items, ...$query->orderBy, ...array_values(array_filter([$query->where, $query->groupBy, $query->having, $query->qualify, $query->late]))];
         $names = array_map(static fn ($name): string => strtolower($name->value), (new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->names($parts, false));
         foreach ($query->windows as $definition) {

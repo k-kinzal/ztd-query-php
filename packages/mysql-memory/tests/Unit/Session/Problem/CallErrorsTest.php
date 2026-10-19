@@ -43,4 +43,10 @@ final class CallErrorsTest extends TestCase
         self::assertStringStartsWith("Window 'w':", $error->getMessage());
     }
 
+    public function testRefinementPreservesTheIndependentPartitionCondition(): void
+    {
+        $window = new WindowSpec(new \SqlSemantics\Statement\Identifier\Name('w'), partition: [new OrderItem(new NumberLiteral('1.1'))]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement($window);
+        self::assertSame(\MySqlMemory\Error\Family\QueryError::WindowDependentPartitioning->error()->getMessage(), (new CallErrors())->refinement($problem)->getMessage());
+    }
 }

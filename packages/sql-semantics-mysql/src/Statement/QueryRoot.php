@@ -50,6 +50,22 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading the body of a SELECT statement
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1');
  *     $operation->statement->query::class // => \SqlSemantics\Platform\MySql\Statement\Query\Select::class
+ * @example Refusing partitioning on an inherited window in a completed read
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('w'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
+ *     $child = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('v'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(new \SqlSemantics\Statement\Identifier\Name('w'), partition: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.1'))]));
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], windows: [$window, $child]);
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing repeated ordering through a window ancestor
+ *     $base = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('w'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(order: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.1'))]));
+ *     $child = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('v'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(new \SqlSemantics\Statement\Identifier\Name('w'), order: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2.2'))]));
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], windows: [$base, $child]);
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing inheritance from an explicitly framed window
+ *     $frame = new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow));
+ *     $base = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('w'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: $frame));
+ *     $child = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('v'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(new \SqlSemantics\Statement\Identifier\Name('w')));
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], windows: [$base, $child]);
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class QueryRoot implements Explainable, \SqlSemantics\Statement\Selection
 {

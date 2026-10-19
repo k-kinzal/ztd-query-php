@@ -3299,8 +3299,22 @@ cannot form an ordinary QueryRoot or scalar subquery. Query templates retain
 these clauses for unused CTEs and stored instructions. A freely generated Scalar
 can still depend on an enclosing window name; the test embedding supplies empty
 window definitions on both engines and retains the original expression by
-identity. It does not repair a generated statement. Inheritance restrictions
-beyond name closure still require a separate structural audit.
+identity. It does not repair a generated statement. Ordinary reads also exclude
+partitioning on dependent windows, replacement of inherited ordering, and
+inheritance from an explicitly framed window. `WindowRefinement` retains the
+specification and a checked, connected ancestor chain. The same constraints apply
+to inline scalar invocations when no catalog can make the relationship valid.
+Complete templates still preserve every clause; reached preparation orders name,
+column, ordinal and inheritance conditions as the native engine does. The native
+regression compares 414 statements across three releases and both protocols,
+including transitive inheritance, skipped instructions and unused CTEs. Ordering
+conflicts identify the actual ancestor supplying the order. Ordinary specifications
+also exclude window calls nested in their partition or ordering expressions;
+a scalar subquery owns a separate window scope and remains valid. Retained
+instructions preserve nested calls and their operands. Their consumer prepares
+named specifications first, then inline specifications in child-before-parent
+order. This preserves inner ordinal/name errors and outer row-width errors
+before later frame, function-count or inheritance conditions.
 
 Prepared legacy generation templates retain destination identity independently
 of their SQL request label. MySQL 5.7 reprepare histories distinguish the original
@@ -3350,6 +3364,6 @@ embedding succeeds. Neither earlier campaign is final-revision acceptance.
 
 A longer database-deletion history disconnected where the isolated prepared
 history returned error 34. This observation is not normalized away. Remaining
-work includes that history, window inheritance structure, rejection classification
+work includes that history, remaining window roles, rejection classification
 and state witnesses, client-character-set-sensitive unquoted identifiers, and all
 acceptance campaigns on the final revision.

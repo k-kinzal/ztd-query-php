@@ -75,7 +75,7 @@ final class Collected
         $references = array_map(static fn ($call): Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification => $call->over ?? throw new LogicException('A collected window call retains its OVER clause.'), $calls);
         $input = clone $scope;
         $input->windowing = null;
-        $specifications = [...array_map(static fn ($window): array => [$window->name->value, $window->specification], $this->windows), ...array_map(static fn ($over): array => [Specification::UNNAMED, $over], array_values(array_filter($references, static fn ($over): bool => !$over instanceof Name)))];
+        $specifications = [...array_map(static fn ($window): array => [$window->name->value, $window->specification], $this->windows), ...array_map(static fn ($over): array => [null, $over], array_values(array_filter($references, static fn ($over): bool => !$over instanceof Name)))];
         $this->dependencies($specifications, $input);
         $windows = (new Resolution())->windows($this->windows, $references);
         $this->options();
@@ -98,22 +98,58 @@ final class Collected
     /**
      * Prepares every retained partitioning and ordering item in native clause order.
      *
-     * @param list<array{string, \SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification}> $specifications Named definitions followed by inline specifications
+     * @param list<array{?string, \SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification}> $specifications Named definitions followed by inline specifications with null names
      * @throws \MySqlMemory\Error\SqlError When a reached item cannot prepare
      */
     public function dependencies(array $specifications, Scope $input): void
     {
+        $named = [];
+        $inline = [];
         foreach ($specifications as [$name, $specification]) {
+            if ($name !== null) {
+                $named[] = [$name, $specification];
+            }
+            foreach ($this->nested($specification) as $window) {
+                if ($window !== $specification || $name === null) {
+                    $inline[spl_object_id($window)] = [Specification::UNNAMED, $window];
+                }
+            }
+        }
+        foreach ([...$named, ...array_values($inline)] as [$name, $specification]) {
             \SqlSemantics\Diagnostic\Check::invariant($specification instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec, 'A MySQL window retains its complete specification.');
             foreach (['window partition by' => $specification->partition, 'window order by' => $specification->order] as $clause => $items) {
                 foreach ($items as $item) {
                     if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Query\OrderItem) {
                         (new Resolution())->item($name, $item);
                     }
-                    (new \MySqlMemory\Evaluation\Compile\Selections())->operand($item->expression, $this->planner->compiler, $input->inClause($clause));
+                    $scope = $input->inClause($clause);
+                    $scope->windowing = $this;
+                    (new \MySqlMemory\Evaluation\Compile\Selections())->operand($item->expression, $this->planner->compiler, $scope);
+                    (new Resolution())->item($name, $item);
                 }
             }
         }
+    }
+
+    /**
+     * Collects inline specifications in completion order before their enclosing item.
+     * A subquery owns an independent window phase and is left to its own planner.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification> Specifications in child-before-parent order
+     */
+    public function nested(\SqlSemantics\Statement\Node $expression): array
+    {
+        if ($expression instanceof \SqlSemantics\Statement\Query) {
+            return [];
+        }
+        $windows = [];
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->children($expression) as $child) {
+            array_push($windows, ...$this->nested($child));
+        }
+        if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification) {
+            $windows[] = $expression;
+        }
+        return $windows;
     }
 
     /**

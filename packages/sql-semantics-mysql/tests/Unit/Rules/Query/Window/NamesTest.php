@@ -26,7 +26,7 @@ final class NamesTest extends TestCase
     {
         $call = new M\Call\Window\WindowFunction(M\Call\Window\WindowFunctionKind::RowNumber, [], new Name('w'));
         $inner = new M\Query\Select([], [new M\Query\SelectExpression($call)], windows: [new M\Query\Clause\WindowDefinition(new Name('w'), new M\Call\Window\WindowSpec())]);
-        $outer = new M\Query\Select([], [new M\Query\SelectExpression(new M\Expression\Subquery\ScalarSubquery($inner)), new M\Query\SelectExpression($call)]);
+        $outer = new M\Query\Select([], [new M\Query\SelectExpression(new M\Expression\Subquery\ScalarSubquery($inner)), new M\Query\SelectExpression(new M\Call\Window\WindowFunction(M\Call\Window\WindowFunctionKind::RowNumber, [], new Name('w')))]);
         self::assertSame(M\Query\Problem\MisuseRule::UnknownWindow, (new Names())->problem($outer)?->rule);
     }
 

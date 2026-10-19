@@ -250,7 +250,7 @@ final class Stages
             }
             return false;
         }
-        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
     }
     /**
      * Identifies character interpretation failures before relation contextualization.

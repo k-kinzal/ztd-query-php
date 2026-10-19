@@ -179,7 +179,13 @@ final class RowUse
      */
     public function pending(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Scope $scope): bool
     {
-        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint);
+        while ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped) {
+            $operand = $operand->operand;
+        }
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Constructor\DeferredRow) {
+            return false;
+        }
+        return $scope->windowing instanceof \MySqlMemory\Plan\Window\Collected && $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand && ($operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || $operand->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint);
     }
 
     /**
@@ -223,16 +229,14 @@ final class RowUse
      */
     public function error(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand): \MySqlMemory\Error\SqlError
     {
-        if ($operand instanceof RowOperand) {
+        while ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped) {
+            $operand = $operand->operand;
+        }
+        if ($operand instanceof RowOperand || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Constructor\DeferredRow) {
             return QueryError::OperandColumns->error(1);
         }
         $problem = $operand->problem();
-        return match (true) {
-            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint => $this->error($problem->window->operand()),
-            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint => (new \MySqlMemory\Session\Problem\CallErrors())->frame($problem),
-            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint => ($problem->positional ? QueryError::WindowPositionalOrdering : QueryError::WindowFrameIllegal)->error('<unnamed window>'),
-            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount => \MySqlMemory\Error\Family\StatementError::WrongArguments->error(strtolower($problem->function->value)),
-            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing => \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error($problem->limit->value),
+        return (new \MySqlMemory\Session\Problem\CallErrors())->error($problem) ?? match (true) {
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow => QueryError::ValuesEmptyRow->error(),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse => (new Errors())->misuse($problem),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch => (new Errors())->counted($problem),

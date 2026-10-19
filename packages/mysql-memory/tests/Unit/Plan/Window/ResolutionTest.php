@@ -187,4 +187,10 @@ final class ResolutionTest extends TestCase
         self::assertSame($items, (new Resolution())->prepared($items));
     }
 
+    public function testInheritanceNamesTheAncestorThatActuallyDefinesOrdering(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionMessage("Window 'u' cannot inherit 'w' since both contain an ORDER BY clause.");
+        $session->query('SELECT 1 WINDOW w AS (ORDER BY 1.1), v AS (w), u AS (v ORDER BY 2.2)');
+    }
 }

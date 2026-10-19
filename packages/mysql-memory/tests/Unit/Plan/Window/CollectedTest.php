@@ -77,4 +77,32 @@ final class CollectedTest extends TestCase
         $session->query('SELECT 1 WINDOW w AS (ORDER BY missing, (1,2))');
     }
 
+    public function testNestedPreparesAnInlineChildBeforeItsParent(): void
+    {
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3592);
+        (new Instance())->connect()->query('SELECT ROW_NUMBER() OVER (ORDER BY ROW_NUMBER() OVER (ORDER BY 1))');
+    }
+
+    public function testDependenciesPrepareNamedWindowsBeforeInlineChildren(): void
+    {
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionMessage("You cannot nest a window function in the specification of window 'w'.");
+        (new Instance())->connect()->query('SELECT 1 WINDOW w AS (ORDER BY ROW_NUMBER() OVER (ORDER BY 1))');
+    }
+
+    public function testDependenciesKeepADeferredRowsWidthBeforeItsChildFrame(): void
+    {
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1241);
+        (new Instance())->connect()->query('SELECT ROW_NUMBER() OVER (ORDER BY (ROW_NUMBER() OVER (ROWS 1.5 PRECEDING),1))');
+    }
+
+    public function testDependenciesDoNotInferTheWindowRoleFromItsDisplayName(): void
+    {
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3595);
+        (new Instance())->connect()->query('SELECT 1 WINDOW `<unnamed window>` AS (ORDER BY ROW_NUMBER() OVER (ORDER BY 1))');
+    }
+
 }

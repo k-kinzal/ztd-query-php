@@ -7,7 +7,6 @@ namespace MySqlMemory\Plan\Window;
 use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
-use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
@@ -42,11 +41,6 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class Resolution
 {
-    /**
-     * The classes of the calls that can be computed over a window.
-     */
-    public const CALLS = [WindowFunction::class, Aggregate::class, GroupConcat::class, JsonObjectAggregate::class];
-
     /**
      * @var array<string, WindowDefinition> The named windows of the block, by lower-case name
      */
@@ -183,12 +177,8 @@ final class Resolution
         if ($expression instanceof NumberLiteral && ctype_digit($expression->text)) {
             throw QueryError::WindowPositionalOrdering->error($name);
         }
-        foreach (self::CALLS as $class) {
-            foreach ((new Walker())->find($item->expression, $class, false) as $call) {
-                if ($call->over !== null) {
-                    throw QueryError::WindowFunctionInSpecification->error($name);
-                }
-            }
+        if ((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Nesting())->calls($item->expression)) {
+            throw QueryError::WindowFunctionInSpecification->error($name);
         }
     }
 
@@ -202,13 +192,14 @@ final class Resolution
         if ($node->base === null) {
             return;
         }
-        $definition = $this->definition($node->base);
-        $base = $this->specification($definition->specification);
+        $this->definition($node->base);
         if ($node->partition !== []) {
             throw QueryError::WindowDependentPartitioning->error();
         }
-        if ($node->order !== [] && $this->order($base) !== []) {
-            throw QueryError::WindowInheritedOrdering->error($name, $definition->name->value);
+        $ancestors = (new \SqlSemantics\Platform\MySql\Rules\Query\Window\Dependencies())->ancestors($node, $this->named);
+        $ordered = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Refinements())->ordered($ancestors);
+        if ($node->order !== [] && $ordered !== null) {
+            throw QueryError::WindowInheritedOrdering->error($name, $ordered->name->value);
         }
     }
 
