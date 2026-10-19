@@ -29,7 +29,7 @@ final class WindowReferencesTest extends TestCase
 
     public function testCheckReportsAWindowNameTheBlockDoesNotDefine(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ROW_NUMBER() OVER w, SUM(1) OVER (v ORDER BY 1.5) FROM DUAL WINDOW v AS (u)', []);
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT ROW_NUMBER() OVER w, SUM(1) OVER (v ORDER BY 1.5) FROM DUAL WINDOW v AS (u)', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
@@ -45,8 +45,10 @@ final class WindowReferencesTest extends TestCase
 
     public function testNamesAnswersTheWindowNamesInWrittenOrder(): void
     {
-        $select = (new Semantics(Dialect::MySql))->analyze('SELECT ROW_NUMBER() OVER a, LAG(1) OVER (b), (SELECT RANK() OVER c) FROM DUAL WINDOW d AS (e)')->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $declaration = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT ROW_NUMBER() OVER a, LAG(1) OVER (b), (SELECT RANK() OVER c WINDOW c AS ()) FROM DUAL WINDOW d AS (e)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $declaration);
+        $select = $declaration->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
 
@@ -55,7 +57,7 @@ final class WindowReferencesTest extends TestCase
 
     public function testCheckNamesTheUndefinedWindow(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 WINDOW x AS (zz)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 WINDOW x AS (zz)');
 
         self::assertEquals([new Misuse(MisuseRule::UnknownWindow, new Name('zz'))], $operation->facts->diagnostics);
     }
@@ -64,6 +66,6 @@ final class WindowReferencesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertCount(2, $semantics->analyze('SELECT 1 FROM (SELECT 1 a) t WHERE RANK() OVER w > 0 GROUP BY RANK() OVER v')->facts->diagnostics);
+        self::assertCount(2, $semantics->analyze('CREATE PROCEDURE p() SELECT 1 FROM (SELECT 1 a) t WHERE RANK() OVER w > 0 GROUP BY RANK() OVER v')->facts->diagnostics);
     }
 }

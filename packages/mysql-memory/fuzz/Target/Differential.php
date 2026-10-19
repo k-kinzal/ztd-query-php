@@ -110,19 +110,22 @@ final class Differential
         $this->repair($guard);
         $this->baseline?->restore($guard, true);
         $library = new LibraryErrors();
+        $files = new TemporaryFiles();
         $normalized = $library->comparable($expected, $this->version);
         $recordedContracts = $expected['contracts'] ?? null;
         $contracts = is_array($recordedContracts) ? array_values(array_filter($recordedContracts, 'is_string')) : [];
         $contracts = [...$contracts, ...($normalized === $expected ? [] : [LibraryErrors::CONTRACT])];
-        $expected = $normalized;
-        $again = $library->comparable($again, $this->version);
+        $fileNormalized = $files->comparable($normalized, $this->version);
+        $contracts = [...$contracts, ...($fileNormalized === $normalized ? [] : [TemporaryFiles::CONTRACT])];
+        $expected = $fileNormalized;
+        $again = $files->comparable($library->comparable($again, $this->version), $this->version);
         if ($expected !== $again) {
             return new Comparison(true, contracts: $contracts, referenceDifference: $this->describe($expected, $again));
         }
         $this->repair($this->memoryGuard());
         $this->baseline?->restore($this->memoryGuard(), false);
         try {
-            $actual = $library->comparable($this->run($this->memory, 'root', '', $sql), $this->version);
+            $actual = $files->comparable($library->comparable($this->run($this->memory, 'root', '', $sql), $this->version), $this->version);
         } finally {
             $this->repair($this->memoryGuard());
             $this->baseline?->restore($this->memoryGuard(), false);

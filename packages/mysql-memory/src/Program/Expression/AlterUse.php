@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program\Expression;
 
-use LogicException;
 use MySqlMemory\Command\Definition\AlterTableCommand;
 use MySqlMemory\Command\Definition\TableChange;
 use MySqlMemory\Command\Definition\TableLayout;
@@ -12,7 +11,6 @@ use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
 
 /**
  * Opens a retained ALTER target and applies its ordered declaration changes.
@@ -38,7 +36,6 @@ final class AlterUse
      * Preserves table and column errors before the retained generation condition.
      *
      * @throws SqlError When target lookup or a declaration is refused
-     * @throws LogicException When a retained alteration loses its condition
      */
     public function raise(DeferredAlterTable $definition, Session $session, bool $invocation = true, ?string $database = null): never
     {
@@ -54,11 +51,6 @@ final class AlterUse
         $layout = TableLayout::of($table->definition);
         $change = new TableChange($layout, $name, $database, $session->settings()->release(), (string) $session->variables->read('collation_database'));
         $change->apply($definition->commands);
-        foreach ($layout->columns as [$column]) {
-            if ($column->specification instanceof DeferredGeneratedColumn) {
-                throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->error($column, $database, $name);
-            }
-        }
-        throw new LogicException('A retained alteration has a deferred generation declaration.');
+        throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns(array_column($layout->columns, 0), $database, $name, true);
     }
 }

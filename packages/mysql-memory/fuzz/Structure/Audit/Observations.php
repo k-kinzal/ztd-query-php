@@ -25,6 +25,14 @@ final class Observations
         $left = $library->comparable($expected, $release);
         $right = $library->comparable($actual, $release);
         $contracts = $left !== $expected && $right !== $actual ? [LibraryErrors::CONTRACT] : [];
+        $files = new \Fuzz\Target\TemporaryFiles();
+        $fileLeft = $files->comparable($left, $release);
+        $fileRight = $files->comparable($right, $release);
+        if ($fileLeft !== $left && $fileRight !== $right) {
+            $contracts[] = \Fuzz\Target\TemporaryFiles::CONTRACT;
+        }
+        $left = $fileLeft;
+        $right = $fileRight;
         $left = $status?->comparable($left, false) ?? $left;
         $right = $status?->comparable($right, true) ?? $right;
         $left = $password?->comparable($left, false) ?? $left;

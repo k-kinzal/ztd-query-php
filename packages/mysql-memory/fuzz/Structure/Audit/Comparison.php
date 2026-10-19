@@ -153,7 +153,7 @@ final class Comparison
         $collation = $session->resolution()->connection;
         $domain = \MySqlMemory\Typing\Domain::string(16383, $collation)->withCollation($collation, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
 
-        $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($node)]));
+        $statement = (new \Fuzz\Structure\Embedding())->statement($node);
         $operation = (new \Fuzz\Structure\Execution())->operation($session, $statement, array_fill(0, count($values), [null, $domain]));
         $types = \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation);
 

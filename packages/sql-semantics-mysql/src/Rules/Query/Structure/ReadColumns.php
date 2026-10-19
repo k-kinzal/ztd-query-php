@@ -106,6 +106,10 @@ final class ReadColumns
      */
     public function windows(M\Select $query): ?Diagnostic
     {
+        $namesProblem = (new \SqlSemantics\Platform\MySql\Rules\Query\Window\Names())->problem($query);
+        if ($namesProblem !== null) {
+            return $namesProblem;
+        }
         $parts = [...$query->items, ...$query->orderBy, ...array_values(array_filter([$query->where, $query->groupBy, $query->having, $query->qualify, $query->late]))];
         $names = array_map(static fn ($name): string => strtolower($name->value), (new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->names($parts, false));
         foreach ($query->windows as $definition) {

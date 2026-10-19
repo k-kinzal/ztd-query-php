@@ -15,8 +15,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
-use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operation;
@@ -62,7 +60,7 @@ final class Execution
         }
         $session->hinted = [];
         $session->dots = [];
-        $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot($node instanceof \SqlSemantics\Statement\Query ? $node : new Select([], [new SelectExpression($node)]));
+        $statement = (new Embedding())->statement($node);
         $operation = $this->operation($session, $statement, $parameters);
 
         return $this->execute($session, $operation, $parameters, $prepared);

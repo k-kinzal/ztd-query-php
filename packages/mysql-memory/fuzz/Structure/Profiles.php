@@ -13,8 +13,6 @@ use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Mode;
-use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
@@ -38,7 +36,7 @@ final class Profiles
      */
     public function select(Statement|Scalar|\SqlSemantics\Statement\Query $node): LanguageProfile
     {
-        $statement = $node instanceof Statement ? $node : new \SqlSemantics\Platform\MySql\Statement\QueryRoot($node instanceof \SqlSemantics\Statement\Query ? $node : new Select([], [new SelectExpression($node)]));
+        $statement = (new Embedding())->statement($node);
         $platform = Platforms::of('mysql');
         $failures = [];
         foreach ($this->candidates($statement) as $profile) {

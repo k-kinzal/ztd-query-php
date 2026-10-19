@@ -3293,12 +3293,45 @@ creation condition. Error locations are occurrence ranges on the input refusal,
 outside the semantic definition; they retain neither SQL text nor parser nodes.
 Direct consumers derive the same condition without consulting a request label.
 
-Acceptance remains open. Completed whole-model evidence on the
-`query947` snapshot (`6e1ceab0785`) includes all 244 public roots, 100
-matching successes, 144 matching SQL errors and 171 matching database-transition
-observations. It predates the INSERT and partition repairs above. Matching SQL errors still need the
-classifications required by the acceptance contract. The subsequent unseeded
-runs found saved comparison-contract and columnless-partition differences;
-none counts as a 900-second pass. Final-revision whole-model, supplied-seed and
-unseeded campaigns remain necessary. The previously recorded native 5.7
-disconnect, physical-path and client-character-set cases remain unresolved.
+Completed read positions now close their window namespace before Operation:
+undefined names, duplicate names (ignoring ASCII case) and inheritance cycles
+cannot form an ordinary QueryRoot or scalar subquery. Query templates retain
+these clauses for unused CTEs and stored instructions. A freely generated Scalar
+can still depend on an enclosing window name; the test embedding supplies empty
+window definitions on both engines and retains the original expression by
+identity. It does not repair a generated statement. Inheritance restrictions
+beyond name closure still require a separate structural audit.
+
+Prepared legacy generation templates retain destination identity independently
+of their SQL request label. MySQL 5.7 reprepare histories distinguish the original
+destination from a later existing destination, including views and temporary
+tables. The memory lifecycle reproduces the observed disconnect after invalidating
+a refreshed destination, closing all sessions while PHP remains running. Bare
+system-variable definitions retain their different file diagnostic. A 28-history
+native regression checks 280 complete outcomes, including reprepare counters.
+Generated-column diagnostics preserve scalar operand widths and the precedence
+of an empty retained definition across columns.
+
+Temporary generated-column filenames have an explicit physical-value contract.
+Independent 5.7 instances produced different temporary names for identical
+CREATE TEMPORARY TABLE and ALTER TABLE operations; the saved observations retain
+both names. Memory returns an empty physical filename. Only recognized temporary
+1033 file diagnostics are comparable under that rule; ordinary logical filenames,
+SQLSTATEs, error numbers, warning levels and order remain exact.
+
+Acceptance remains open. The completed `query973` whole-model campaign retained
+all 244 public roots, 100 matching successes, 144 matching SQL errors and 174
+matching database-transition observations. It predates the partition and window
+name repairs. Matching errors still need the classifications required by the
+acceptance contract. The `query970` supplied-seed campaign matched all 18,622
+inputs across nine releases; the `query978` unseeded campaign matched 992 inputs
+in 900 seconds. Neither is final-revision evidence for subsequent changes.
+
+Further native probes retain an unresolved 5.7 case where a system variable on
+the left of generated-column arithmetic disappears and creation succeeds; its
+complete observation history is saved in the generation-system-operands fixture.
+A longer database-deletion history also disconnected where the isolated prepared
+history returned error 34. These observations are not normalized away. Remaining
+work includes those histories, window inheritance structure, rejection
+classification and state witnesses, client-character-set-sensitive unquoted
+identifiers, and all acceptance campaigns on the final revision.

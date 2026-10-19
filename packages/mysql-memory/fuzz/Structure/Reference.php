@@ -12,9 +12,6 @@ use PDO;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
-use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
@@ -67,7 +64,7 @@ final class Reference
      */
     public function sql(Statement|Scalar $node, LanguageProfile $profile, string $binding = 'NULL'): string
     {
-        $statement = $node instanceof Statement ? $node : new QueryRoot(new Select([], [new SelectExpression($node)]));
+        $statement = (new Embedding())->statement($node);
         $out = new Output(Platforms::of('mysql')->codec($profile));
         $statement->render($out);
         $markers = [];

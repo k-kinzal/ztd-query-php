@@ -398,6 +398,7 @@ final class Errors
             MisuseRule::RecursiveReferencePosition => QueryError::RecursiveWithoutUnion->error($name),
             MisuseRule::DuplicateColumn => SchemaError::DuplicateFieldName->error($name),
             MisuseRule::DuplicateWindow => QueryError::WindowDefinedTwice->error($name),
+            MisuseRule::WindowCircularity => QueryError::WindowCircularity->error(),
             MisuseRule::UnknownWindow => QueryError::WindowNotDefined->error($name),
             MisuseRule::UnknownLockedTable => QueryError::UnresolvedLockedTable->error(self::quoted($misuse)),
             MisuseRule::RepeatedLockedTable => QueryError::DuplicateLockedTable->error($misuse->name instanceof QualifiedName ? self::quoted($misuse) : $name),

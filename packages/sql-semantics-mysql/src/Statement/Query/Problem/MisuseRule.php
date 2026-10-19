@@ -28,6 +28,7 @@ enum MisuseRule: string
     case DuplicateColumn = 'Duplicate column name';
     case DuplicateWindow = 'Window name is defined more than once';
     case UnknownWindow = 'Window name is not defined';
+    case WindowCircularity = 'There is a circularity in the window dependency graph.';
     case UnknownLockedTable = 'Table in the locking clause is not in the query';
     case RepeatedLockedTable = 'Table appears in multiple locking clauses';
     case AmbiguousJoinColumn = 'Column in from clause is ambiguous';

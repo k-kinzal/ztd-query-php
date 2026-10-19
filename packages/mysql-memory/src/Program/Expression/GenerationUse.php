@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program\Expression;
 
-use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
@@ -12,7 +11,6 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
 
 /**
  * Invokes a retained legacy generation declaration after destination lookup.
@@ -27,7 +25,6 @@ final class GenerationUse
      * Checks the destination before reporting the declaration's invocation condition.
      *
      * @throws SqlError When a destination or generation declaration is rejected
-     * @throws LogicException When the caller supplies a different retained table role
      */
     public function execute(DeferredCreateTable $definition, Session $session, ?string $database = null): Completion
     {
@@ -49,11 +46,7 @@ final class GenerationUse
             $session->variables->rowCount = 0;
             return new Completion(warnings: $session->diagnostics->raised());
         }
-        foreach ($definition->elements as $element) {
-            if ($element instanceof ColumnDefinition && $element->specification instanceof DeferredGeneratedColumn) {
-                throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->error($element, $database, $name);
-            }
-        }
-        throw new LogicException('A retained generation declaration has a deferred column.');
+        $columns = array_values(array_filter($definition->elements, static fn ($element): bool => $element instanceof ColumnDefinition));
+        throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, $definition->temporary());
     }
 }

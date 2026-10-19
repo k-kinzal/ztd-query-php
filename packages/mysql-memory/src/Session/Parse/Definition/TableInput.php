@@ -114,7 +114,7 @@ final class TableInput
             if ($session->preparation->inputPrepared) {
                 $query = $use->prepare($problem->definition, $session);
                 $bindings = $query === null ? null : \MySqlMemory\Command\Prepared\ParameterBindings::capture($query);
-                throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, $bindings));
+                throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, $bindings, \MySqlMemory\Command\Prepared\GenerationMetadata::capture($problem->definition, $session->variables->database, $session)));
             }
             throw new CompletedTemplate($use->raise($problem->definition, $session, false));
         } catch (SqlError $error) {

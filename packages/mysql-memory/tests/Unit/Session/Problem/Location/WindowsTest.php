@@ -18,8 +18,9 @@ final class WindowsTest extends TestCase
 {
     public function testLocatedFinishesTheNestedBlockBeforeResolvingALaterOuterWindow(): void
     {
-        $operation = (new Instance())->connect()->analyze('SELECT (SELECT MIN(1) OVER inner_missing), MAX(2) OVER outer_missing');
-        $locator = (new Locator())->statement($operation->statement);
+        $operation = (new Instance())->connect()->analyze('CREATE PROCEDURE p() SELECT (SELECT MIN(1) OVER inner_missing), MAX(2) OVER outer_missing');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        $locator = (new Locator())->statement($operation->statement->body);
         $located = (new Windows())->located($locator, $operation->facts->diagnostics, []);
         $first = Locations::first($located);
 

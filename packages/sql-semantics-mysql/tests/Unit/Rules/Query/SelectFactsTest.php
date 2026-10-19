@@ -73,7 +73,7 @@ final class SelectFactsTest extends TestCase
 
     public function testWindowsReportsANameDefinedTwice(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t WINDOW w AS (), w AS ()');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 FROM t WINDOW w AS (), w AS ()');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
@@ -103,7 +103,7 @@ final class SelectFactsTest extends TestCase
 
     public function testWindowsNamesTheFirstDefinitionOfAWindowDefinedTwice(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 WINDOW X AS (), x AS (), x AS ()');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 WINDOW X AS (), x AS (), x AS ()');
 
         self::assertEquals([new Misuse(MisuseRule::DuplicateWindow, new Name('X')), new Misuse(MisuseRule::DuplicateWindow, new Name('X'))], $operation->facts->diagnostics);
     }

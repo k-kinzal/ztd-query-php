@@ -27,8 +27,9 @@ final class PendingTable implements PendingInstruction
      * @param RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header The complete retained definition
      * @param ParameterBindings|null $bindings Prepared query parameters
      * @param string $database The default database selected at preparation
+     * @param GenerationMetadata|null $metadata Legacy generation destination observations
      */
-    public function __construct(public readonly RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header, public readonly string $database, public readonly ?ParameterBindings $bindings = null)
+    public function __construct(public readonly RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header, public readonly string $database, public readonly ?ParameterBindings $bindings = null, public readonly ?GenerationMetadata $metadata = null)
     {
     }
 
@@ -53,6 +54,7 @@ final class PendingTable implements PendingInstruction
         \MySqlMemory\Session\State\StatementCounters::command($session, $this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable ? 'Com_alter_table' : 'Com_create_table');
         $session->diagnostics->clear();
         $session->text = $label;
+        $this->metadata?->refresh($session);
         if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable) {
             (new \MySqlMemory\Program\Expression\AlterUse())->raise($this->header, $session, false, $this->database);
         }

@@ -40,6 +40,39 @@ final class GenerationText
     }
 
     /**
+     * Reports a missing system-variable operand in the legacy stored expression.
+     * The suffix comes from semantic operands, never from the input request.
+     */
+    public function systemTail(Node $expression): ?string
+    {
+        while ($expression instanceof M\Expression\Grouped || $expression instanceof M\Expression\GroupedRow || $expression instanceof M\Routine\Program\Expression\DeferredGrouped) {
+            $expression = $expression->operand;
+        }
+        if ($expression instanceof M\Expression\Operator\Arithmetic || $expression instanceof M\Routine\Program\Expression\DeferredArithmetic) {
+            $right = $expression->right;
+            while ($right instanceof M\Expression\Grouped) {
+                $right = $right->operand;
+            }
+            if ($right instanceof M\Variable\SystemVariable) {
+                return '))';
+            }
+        }
+        if ($expression instanceof M\Expression\Row) {
+            foreach ($expression->elements as $index => $element) {
+                while ($element instanceof M\Expression\Grouped) {
+                    $element = $element->operand;
+                }
+                if ($element instanceof M\Variable\SystemVariable) {
+                    $following = array_slice($expression->elements, $index + 1);
+                    $text = array_map(static fn ($value): string => (new ItemText([], 'utf8mb4', \SqlSemantics\Contract\GrammarRelease::MySql5744))->text($value), $following);
+                    return mb_strcut(implode(',', $text) . '))', 0, 80, 'UTF-8');
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Writes expression pieces while marking actual query boundaries.
      *
      * @return list<array{string, bool}>

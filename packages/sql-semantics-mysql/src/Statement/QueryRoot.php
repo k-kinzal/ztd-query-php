@@ -35,6 +35,18 @@ use SqlSemantics\Statement\Snapshot;
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]);
  *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')])]);
  *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($one, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $two)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an undefined name in a completed window namespace
+ *     $call = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], new \SqlSemantics\Statement\Identifier\Name('w'));
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($call)])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing duplicate window names independently of database state
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('w'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
+ *     $item = new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [$item], windows: [$window, $window])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an unused cyclic window definition in a completed read
+ *     $name = new \SqlSemantics\Statement\Identifier\Name('w');
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition($name, new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec($name));
+ *     $item = new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+ *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [$item], windows: [$window])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the body of a SELECT statement
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1');
  *     $operation->statement->query::class // => \SqlSemantics\Platform\MySql\Statement\Query\Select::class

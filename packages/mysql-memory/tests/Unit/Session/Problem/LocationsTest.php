@@ -196,7 +196,10 @@ final class LocationsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $operation = $session->analyze('SELECT ROW_NUMBER() OVER w2, ROW_NUMBER() OVER (w3) FROM t WINDOW w AS (y)');
+        $declaration = $session->analyze('CREATE PROCEDURE p() SELECT ROW_NUMBER() OVER w2, ROW_NUMBER() OVER (w3) FROM t WINDOW w AS (y)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $declaration->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $declaration->statement->body);
+        $operation = new \MySqlMemory\Session\Resolution\QueryPreparation($declaration->statement->body->query, $declaration->facts, $declaration->profile());
         $located = array_values((new Locations())->windows((new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
         $late = $session->run('SELECT zz FROM t WINDOW w AS (y)')[0];
         $early = $session->run('SELECT ROW_NUMBER() OVER w2, zz FROM t')[0];

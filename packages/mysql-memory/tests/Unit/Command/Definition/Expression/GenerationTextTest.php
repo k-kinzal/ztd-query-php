@@ -52,4 +52,15 @@ final class GenerationTextTest extends TestCase
         self::assertNull((new GenerationText())->wrapped(new M\Literal\NumberLiteral('1')));
     }
 
+
+    public function testSystemTailUsesTheRemainingSemanticOperandsAfterAnOmittedVariable(): void
+    {
+        $variable = new M\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('version'));
+        $one = new M\Literal\NumberLiteral('1');
+        $text = new GenerationText();
+        self::assertSame('))', $text->systemTail(new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, $one, $variable)));
+        self::assertSame('1))', $text->systemTail(new M\Expression\Row([$variable, $one])));
+        self::assertSame('))', $text->systemTail(new M\Expression\Row([$one, $variable])));
+        self::assertNull($text->systemTail($variable));
+    }
 }
