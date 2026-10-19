@@ -362,7 +362,7 @@ final class Errors
             WriteRule::OrderedMultipleUpdate => StatementError::WrongUsage->error('UPDATE', 'ORDER BY'),
             WriteRule::LimitedMultipleUpdate => StatementError::WrongUsage->error('UPDATE', 'LIMIT'),
             WriteRule::WildcardColumn => QueryError::BadField->error('*', 'field list'),
-            WriteRule::CommonTableTarget, WriteRule::NonUpdatableTarget => QueryError::NonUpdatableTable->error($misuse->table->value ?? '', $statement instanceof Update ? 'UPDATE' : 'DELETE'),
+            WriteRule::CommonTableTarget, WriteRule::NonUpdatableTarget => QueryError::NonUpdatableTable->error($misuse->table->value ?? '', $statement instanceof Update || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate ? 'UPDATE' : 'DELETE'),
             WriteRule::NonUpdatableColumn => QueryError::NonUpdatableColumn->error($misuse->table->value ?? ''),
         };
     }

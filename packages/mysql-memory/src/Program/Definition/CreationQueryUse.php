@@ -56,6 +56,10 @@ final class CreationQueryUse
         }
         $problems->raise($query, $session);
         $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($definition->query);
+        if ($problem === null) {
+            (new ColumnlessUse())->columns($definition, $schema, $session);
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, $definition->query);
+        }
         Check::invariant($problem !== null, 'A retained creation query has a fixed read-shape constraint.');
         throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
     }

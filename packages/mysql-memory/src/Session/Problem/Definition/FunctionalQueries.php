@@ -36,10 +36,10 @@ final class FunctionalQueries
      *
      * @throws \MySqlMemory\Error\SqlError When an explicit width or a referenced table is invalid
      */
-    public function prepare(Operation $operation, Session $session, Problems $problems): void
+    public function prepare(Operation|\MySqlMemory\Session\Resolution\TablePreparation $operation, Session $session, Problems $problems): void
     {
         $create = $operation->statement;
-        if ((!$create instanceof CreateTable && !$create instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && !$create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) || $session->settings()->legacy()) {
+        if ((!$create instanceof CreateTable && !$create instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable && !$create instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && !$create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) || $session->settings()->legacy()) {
             return;
         }
         $indexes = $create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex ? $create->parts : (new Walker())->find($create, IndexDefinition::class);
@@ -53,7 +53,7 @@ final class FunctionalQueries
             }
         }
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (!$create instanceof CreateTable && $diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name === $create->table) {
+            if (($create instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable || $create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) && $diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name === $create->table) {
                 throw (new Errors())->error($diagnostic, $session);
             }
         }

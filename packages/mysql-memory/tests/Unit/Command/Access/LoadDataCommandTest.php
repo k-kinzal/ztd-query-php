@@ -17,6 +17,21 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 #[Small]
 final class LoadDataCommandTest extends TestCase
 {
+    public function testSeparatorBytesIncludesTheXmlRowTag(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze("LOAD XML INFILE 'x' INTO TABLE d.t ROWS IDENTIFIED BY '<猫>'");
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertSame(['xml:ROW' => '<猫>'], (new LoadDataCommand())->separatorBytes($operation->statement));
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1049);
+        try {
+            (new LoadDataCommand())->prepare($operation, $session);
+        } finally {
+            self::assertSame([1638], array_column($session->diagnostics->conditions, 1));
+        }
+    }
+
     /**
      * @return iterable<string, array{string, int, string}>
      */

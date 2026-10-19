@@ -77,9 +77,9 @@ final class TableCreation
      *
      * @throws SqlError When the table cannot be created in a restricted transaction
      */
-    public function validate(Statement $statement, Session $session): void
+    public function validate(Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $statement, Session $session): void
     {
-        if (!$statement instanceof CreateTable || !$this->requested($statement)) {
+        if ((!$statement instanceof CreateTable && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) || !$this->requested($statement)) {
             return;
         }
         $engine = (new StorageOptions())->engine($statement, $session->variables);

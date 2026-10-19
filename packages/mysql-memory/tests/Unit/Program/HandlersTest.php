@@ -14,6 +14,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class HandlersTest extends TestCase
 {
+    public function testActivatePreservesTheConditionsExplicitlyRepublishedByResignal(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query("CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '45000' RESIGNAL SQLSTATE '01000'; SIGNAL SQLSTATE '45000'; END");
+        $session->query('CALL p()');
+        self::assertSame([['Error', 1644, 'Unhandled user-defined exception condition'], ['Warning', 1642, 'Unhandled user-defined exception condition']], $session->diagnostics->conditions);
+    }
+
     public function testFailedRunsAnExitHandlerAndLeavesItsBlock(): void
     {
         $session = (new Instance())->connect();

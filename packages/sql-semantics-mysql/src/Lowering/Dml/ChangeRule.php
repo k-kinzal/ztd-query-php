@@ -99,7 +99,7 @@ final class ChangeRule
             $this->limit($form->node($limit)),
             $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
         ];
-        if ((new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->inputs($parts[3], $parts[0]) !== null) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->inputs($parts[3], $parts[0]) !== null) {
             $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate(...$parts);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate($write), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
         }
@@ -197,7 +197,7 @@ final class ChangeRule
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744);
         }
         $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets);
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->inputs($tables, $with) !== null) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->inputs($tables, $with) !== null) {
             $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete($with, $options, $input, $form, $where, $hints);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
         }

@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * An UPDATE retaining contradictory JSON_TABLE column declarations until invocation.
+ * An UPDATE retaining contradictory input-column declarations until invocation.
  * Every source, assignment and clause survives; this is not an ordinary Statement.
  *
  * @visibility public
@@ -86,7 +86,7 @@ final class DeferredUpdate implements \SqlSemantics\Platform\MySql\Statement\Rou
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'UPDATE ordering uses expressions, not output-column positions.');
         }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->of($this) !== null, 'A deferred UPDATE retains a fixed input-column contradiction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null, 'A deferred UPDATE retains a fixed input-column contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

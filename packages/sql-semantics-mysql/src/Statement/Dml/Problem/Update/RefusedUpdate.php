@@ -31,7 +31,7 @@ final class RefusedUpdate implements Diagnostic
      */
     public function message(): string
     {
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->of($this->write);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this->write);
         \SqlSemantics\Diagnostic\Check::invariant($problem !== null, 'A retained UPDATE has a fixed input-column constraint.');
         return $problem->message();
     }

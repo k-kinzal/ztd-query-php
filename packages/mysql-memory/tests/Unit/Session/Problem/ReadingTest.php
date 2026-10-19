@@ -190,11 +190,15 @@ final class ReadingTest extends TestCase
         $session = (new Instance('5.7.44'))->connect();
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
-
+        $routine = $session->analyze('CREATE PROCEDURE p() UPDATE (SELECT *) AS x SET a = 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate::class, $routine->body);
+        $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
+        $routine->body->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1288);
 
-        (new Reading())->legacyWrites($session->analyze('UPDATE (SELECT *) AS x SET a = 1'), $session);
+        (new Reading())->legacyWrites($routine->body, $derivation->facts(), $session);
     }
 
     public function testReadRefusesAnUndeclaredIntoVariableBeforeTheUnionInMySql57(): void

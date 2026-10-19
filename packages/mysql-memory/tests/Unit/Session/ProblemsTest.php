@@ -398,7 +398,13 @@ final class ProblemsTest extends TestCase
         $session = (new Instance())->connect();
 
         self::assertTrue((new Problems())->tested($session->analyze('SELECT EXISTS (SELECT *)')));
-        self::assertFalse((new Problems())->tested($session->analyze('SELECT EXISTS (SELECT *) FROM (SELECT * FROM DUAL) AS d')));
+        $routine = $session->analyze('CREATE PROCEDURE p() SELECT EXISTS (SELECT *) FROM (SELECT * FROM DUAL) AS d')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $routine->body);
+        $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
+        $routine->body->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
+        $preparation = new \MySqlMemory\Session\Resolution\QueryPreparation($routine->body->query, $derivation->facts(), $session->semantics()->profile());
+        self::assertFalse((new Problems())->tested($preparation));
         self::assertFalse((new Problems())->tested($session->analyze('SELECT 1')));
     }
 

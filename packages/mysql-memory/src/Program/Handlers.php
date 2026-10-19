@@ -24,7 +24,8 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction;
  * SQLSTATE is of class '02', which is NOT FOUND. An error ends the statement and is handled at
  * once; the warnings of a statement that succeeds are handled once it ends, the handler for the
  * last of them winning between handlers of the same precedence. The handler runs with the
- * conditions as GET STACKED DIAGNOSTICS reads them; then its conditions are cleared, and
+ * conditions as GET STACKED DIAGNOSTICS reads them. Handled conditions are discarded;
+ * new conditions and explicit RESIGNAL publications survive the handler. Then
  * CONTINUE goes on after the statement while EXIT leaves the block that declares the handler.
  * An error no handler handles ends the program; a warning without handler is left in the
  * diagnostics area (verified on a live 8.4 server).
@@ -160,7 +161,7 @@ final class Handlers
     }
 
     /**
-     * Runs a handler in the scope of its block, then clears the conditions it handled; answers where control goes.
+     * Runs a handler in its block scope, removing handled conditions only when its area was not replaced.
      *
      * @throws SqlError When the handler raises an error no handler handles
      */
@@ -183,7 +184,9 @@ final class Handlers
             array_pop($activation->stacked);
             [$activation->scope, $activation->handlers, $activation->conditions, $activation->cursors] = $saved;
         }
-        $session->diagnostics->clear();
+        if ($session->diagnostics->revision === $stacked->revision) {
+            $session->diagnostics->clear();
+        }
         if ($jump !== null) {
             return $jump;
         }

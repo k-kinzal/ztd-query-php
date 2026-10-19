@@ -97,6 +97,7 @@ final class SignalCommand implements Command
         }
         if ($statement instanceof Resignal) {
             $area = $stacked[count($stacked) - 1];
+            $context->diagnostics->revision++;
             $context->diagnostics->conditions = $area->conditions;
             $context->diagnostics->signalled = $area->signalled;
             $context->diagnostics->dropped = $area->dropped;

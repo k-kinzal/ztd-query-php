@@ -25,6 +25,11 @@ final class LoadSeparatorTest extends TestCase
     public static function providerReleases(): iterable
     {
         $statements = [];
+        foreach (["'<row>'", "'<猫>'", "'é'", "'a\\0猫'"] as $tag) {
+            $statements[] = "LOAD XML INFILE 'text' INTO TABLE t ROWS IDENTIFIED BY " . $tag;
+            $statements[] = "LOAD XML INFILE 'text' INTO TABLE missing.t ROWS IDENTIFIED BY " . $tag;
+            $statements[] = "LOAD XML LOCAL INFILE 'text' INTO TABLE missing.t ROWS IDENTIFIED BY " . $tag;
+        }
         foreach (["FIELDS TERMINATED BY X'80'", "FIELDS TERMINATED BY X'80' ENCLOSED BY 'xx'", "FIELDS TERMINATED BY X'80' TERMINATED BY 'a'", "FIELDS ESCAPED BY X'80'", "LINES STARTING BY X'80'", "LINES TERMINATED BY X'80'", "LINES STARTING BY X'80' STARTING BY 'a'"] as $options) {
             $statements[] = "LOAD DATA INFILE 'text' INTO TABLE t " . $options;
             $statements[] = "LOAD DATA INFILE 'text' INTO TABLE missing.t " . $options;

@@ -14,6 +14,16 @@ use SqlSemantics\Platform\MySql\Statement as M;
 #[Small]
 final class ReadColumnsTest extends TestCase
 {
+    public function testTemplatesChecksTheReadRoleOfNestedValues(): void
+    {
+        $row = new M\Query\ValueRow([]);
+        $table = new M\Relation\DerivedTable(new M\Query\ValuesQuery([$row]), new \SqlSemantics\Statement\Identifier\Name('q'));
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], $table);
+        $problem = (new ReadColumns())->templates($query);
+        self::assertInstanceOf(M\Query\Problem\Misuse::class, $problem);
+        self::assertSame($row, $problem->valueRow);
+    }
+
     public function testTemplatesExcludesAnUnusedDefinitionFromReadConstraints(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('WITH c AS (SELECT ROW(1,2)), d AS (SELECT * FROM c) SELECT 1');

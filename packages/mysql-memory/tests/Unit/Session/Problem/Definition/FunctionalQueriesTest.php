@@ -62,8 +62,10 @@ final class FunctionalQueriesTest extends TestCase
     public function testForbiddenReportsTheIndexNameBeforeMissingKeyColumns(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE TABLE t(a INT,INDEX i(missing,((TABLE present))))')->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $statement);
+        $routine = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,INDEX i(missing,((TABLE present))))')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
+        $statement = $routine->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable::class, $statement);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3758);
         $this->expectExceptionMessage("Expression of functional index 'i' contains a disallowed function.");

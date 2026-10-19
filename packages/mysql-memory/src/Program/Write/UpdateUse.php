@@ -57,6 +57,7 @@ final class UpdateUse
                 throw (new Errors())->error($problem, $session);
             }
         }
+        (new \MySqlMemory\Session\Problem\Reading())->legacyWrites($write, $facts, $session);
         foreach ($facts->diagnostics as $problem) {
             if ($problem instanceof MissingTable) {
                 throw (new Errors())->error($problem, $session);

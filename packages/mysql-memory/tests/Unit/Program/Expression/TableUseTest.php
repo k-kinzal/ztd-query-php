@@ -18,6 +18,19 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class TableUseTest extends TestCase
 {
+    public function testBoundKeepsTheSameCompleteDeclaration(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $routine = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,a INT)')->statement;
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $routine);
+        self::assertInstanceOf(M\Routine\Program\Write\DeferredCreateTable::class, $routine->body);
+        $session->text = 'unrelated invalid input';
+        $prepared = (new TableUse())->bound($routine->body, $session);
+        self::assertSame($routine->body, $prepared->statement);
+        self::assertCount(2, $prepared->table->columns);
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testRaiseUsesTheRetainedTargetWithoutInputText(): void
     {
         $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), options: [new M\Table\Option\UnionOption([])], query: new M\Table\TableQuery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))])));

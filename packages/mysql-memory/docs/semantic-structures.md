@@ -3388,3 +3388,36 @@ and repeated conversion warnings. A NULL stops the list; an evaluation error
 preserves its primary condition and the following component-setting diagnostic.
 The complete unseeded counterexample is retained as an integration fixture rather
 than normalizing away the additional warnings.
+
+
+Ordinary CREATE TABLE values exclude duplicate declared columns, repeated index
+parts, multiple primary keys and references to absent columns in a closed
+namespace. A creation query leaves its contributed column names open. Complete
+stored instructions retain contradictory declarations so an unvisited branch or
+an existing-table shortcut remains representable. Memory prepares that same
+retained declaration: source dependencies, protocol restrictions, spatial
+references, defaults and keys preserve their native order. No replacement SQL or
+ordinary contradictory declaration is manufactured.
+
+Input-column constraints also apply to derived and reached common tables in
+UPDATE and DELETE. An empty VALUES row can supply INSERT defaults or remain in
+an unused definition, but cannot form a read input. Ordinary statement
+constructors enforce that distinction before Operation. Direct native tests
+reuse a constructed routine across missing, empty, populated and dropped inputs
+and skipped or reached branches.
+
+Named SIGNAL and RESIGNAL instructions resolve against their owning program
+scope. Direct tests reuse each original instruction outside its scope, within a
+constructed routine, and outside again. Handler execution removes consumed
+conditions while preserving newly raised warnings and explicit RESIGNAL
+publications; it does not erase the entire diagnostics area on every successful
+handler return.
+
+The `bbf623b71f5` whole-model replay visited all 244 public roots: 101 matching
+successes, 143 matching SQL errors and 171 matching transition observations across
+57 roots. Classification found a further empty-VALUES read-input contradiction;
+matching the SQL error did not close that obligation. The subsequent `query1017`
+unseeded working snapshot matched 1,054 inputs over 904.64 seconds without a
+mismatch, crash or unclassified volatile result. Its saved counterexample from
+the preceding run requires LOAD XML to report non-ASCII row-tag warnings before
+target lookup. These runs predate later changes and are not final acceptance.

@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A stored table-creation instruction retaining a columnless, source or generation condition.
+ * A stored table-creation instruction retaining a declaration, source or generation condition.
  *
  * A definition retains the complete header and query without opening tables.
  * When invoked, the MERGE/query role condition precedes query preparation.

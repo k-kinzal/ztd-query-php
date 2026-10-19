@@ -45,6 +45,10 @@ final class RefusedCreateTemplate implements Diagnostic
         if ($read !== null) {
             return $read->message();
         }
+        $declaration = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->definition->elements, $this->definition->query);
+        if ($declaration !== null) {
+            return $declaration->message();
+        }
         return 'A MERGE source list and a creation query do not define a base table.';
     }
 }

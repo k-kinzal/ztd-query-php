@@ -66,7 +66,7 @@ final class Reading
         }
         $this->grouping($operation, $session);
         $this->variables($operation, $session);
-        $this->legacyWrites($operation, $session);
+        $this->legacyWrites($operation->statement, $operation->facts, $session);
         $this->diagnosed($operation, $session);
         (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($operation->statement, $session);
         if ($operation instanceof Operation && ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys)) {
@@ -272,16 +272,16 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function legacyWrites(Operation|QueryPreparation $operation, Session $session): void
+    public function legacyWrites(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
     {
         $release = $session->settings()->release();
         if ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744) {
             return;
         }
         $early = [\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::NonUpdatableTarget, ...($release === GrammarRelease::MySql5651 ? [\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::LimitedMultipleUpdate, \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::OrderedMultipleUpdate] : [])];
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse && in_array($diagnostic->rule, $early, true) && !$diagnostic->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
     }

@@ -241,7 +241,7 @@ final class Problems
      *
      * @throws SqlError When a table the statement reads does not exist
      */
-    public function opened(Operation|QueryPreparation $operation, Session $session, array $diagnostics): void
+    public function opened(Operation|QueryPreparation|Resolution\TablePreparation $operation, Session $session, array $diagnostics): void
     {
         (new OpenedTables())->prepare($this->reached($operation->statement), $operation->facts, $session);
         $missing = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof MissingTable));

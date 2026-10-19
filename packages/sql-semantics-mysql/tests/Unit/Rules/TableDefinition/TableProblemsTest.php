@@ -55,7 +55,7 @@ final class TableProblemsTest extends TestCase
 
     public function testDuplicatesReportsARepeatedColumn(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, A INT)');
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, A INT)');
 
         self::assertInstanceOf(DuplicateColumn::class, $create->facts->diagnostics[0]);
     }
@@ -72,7 +72,7 @@ final class TableProblemsTest extends TestCase
 
     public function testKeyColumnsReportsAMissingKeyColumn(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, UNIQUE (b))');
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, UNIQUE (b))');
 
         self::assertInstanceOf(UnknownKeyColumn::class, $create->facts->diagnostics[0]);
     }
@@ -90,7 +90,7 @@ final class TableProblemsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertEquals([new DuplicateColumn(new Name('A'))], $semantics->analyze('CREATE TABLE t (a INT, KEY (a, A, zz))')->facts->diagnostics);
-        self::assertEquals([new UnknownKeyColumn(new Name('zz')), new DuplicateColumn(new Name('a'))], $semantics->analyze('CREATE TABLE t (a INT, KEY (zz, a, a))')->facts->diagnostics);
+        self::assertEquals([new DuplicateColumn(new Name('A'))], $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, KEY (a, A, zz))')->facts->diagnostics);
+        self::assertEquals([new UnknownKeyColumn(new Name('zz')), new DuplicateColumn(new Name('a'))], $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, KEY (zz, a, a))')->facts->diagnostics);
     }
 }

@@ -126,6 +126,9 @@ final class Definitions
         if ($elements === [] && $this->planner->settings->legacy()) {
             throw SchemaError::TableMustHaveColumns->error();
         }
+        if ($elements !== []) {
+            (new Constraint\DeclarationErrors())->check($this->planner->compiler->facts);
+        }
         $scope = new Scope();
         $declared = new Declared($collation, $this->planner->settings->release());
         $columns = [];
@@ -143,6 +146,9 @@ final class Definitions
         $constraints->forbidden();
         if ($elements === [] && in_array($this->planner->settings->release(), [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830, \SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
             throw SchemaError::NoVisibleColumn->error();
+        }
+        if ($elements === []) {
+            (new Constraint\DeclarationErrors())->check($this->planner->compiler->facts);
         }
         $columns = (new Constraint\FunctionalKeys())->columns($create, new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine), $this->planner);
         $keys = $this->tableKeys($create, $columns, $keys, $engine);
@@ -444,4 +450,5 @@ final class Definitions
             throw SchemaError::MultiplePrimaryKey->error();
         }
     }
+
 }

@@ -203,6 +203,9 @@ final class LoadDataCommand implements Command
         foreach ($statement->lines as $option) {
             $bytes['line:' . $option->kind->value] = $option->text->bytes();
         }
+        if ($statement->rowTag !== null) {
+            $bytes['xml:ROW'] = $statement->rowTag->bytes();
+        }
 
         return $bytes;
     }

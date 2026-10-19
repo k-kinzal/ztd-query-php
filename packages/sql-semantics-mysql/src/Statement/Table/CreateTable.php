@@ -55,6 +55,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example The relation fact of the statement resolves to the declaration it provides
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
  *     $create->facts->scalar($create->statement->elements[1]->condition->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ * @example A contradictory column namespace cannot form an ordinary declaration
+ *     $column = static fn () => new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [$column(), $column()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class CreateTable implements Statement, Relation
 {
@@ -105,6 +108,7 @@ final class CreateTable implements Statement, Relation
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->elements, $query), 'An ordinary table creation has a declared column or a creation query.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($query) === null, 'A creation query with a fixed read-shape constraint belongs to a deferred instruction.');
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->elements, $partitioning, $query), 'An implicit partition key absent from the declaration belongs to a deferred creation instruction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->elements, $query) === null, 'Fixed column and key contradictions belong to a deferred creation instruction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
