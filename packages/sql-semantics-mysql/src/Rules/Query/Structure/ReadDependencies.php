@@ -27,12 +27,24 @@ final class ReadDependencies
      */
     public function nodes(Node $root, Comparison $names = Comparison::Sensitive): array
     {
+        return $this->inputs([$root], null, $names);
+    }
+
+    /**
+     * Resolves a list of owned inputs in an optional enclosing WITH scope.
+     *
+     * @param list<Node> $roots Input occurrences, not replacement query nodes
+     * @return list<Node> Reached nodes and their common-table dependencies
+     */
+    public function inputs(array $roots, ?With $with = null, Comparison $names = Comparison::Sensitive): array
+    {
         /** @var list<array<string, int>> $scopes */
         $scopes = [[]];
         /** @var list<array{CommonTableExpression, int}> $definitions */
         $definitions = [];
+        $initial = $with === null ? 0 : $this->define($with, $names, $scopes, $definitions, 0);
         /** @var list<array{Node, int}> $pending */
-        $pending = [[$root, 0]];
+        $pending = array_map(static fn (Node $root): array => [$root, $initial], array_reverse($roots));
         $seen = [];
         $found = [];
         while ($pending !== []) {
@@ -43,18 +55,9 @@ final class ReadDependencies
             }
             $seen[$key] = true;
             $found[] = $node;
-            if ($node instanceof QueryExpression && $node->with instanceof With) {
-                $bindings = $scopes[$scope];
-                foreach ($node->with->tables as $table) {
-                    $id = count($definitions);
-                    $definitionScope = count($scopes);
-                    $previous = $bindings;
-                    $bindings[$names->fold($table->name->value)] = $id;
-                    $scopes[] = $node->with->recursive ? $bindings : $previous;
-                    $definitions[] = [$table, $definitionScope];
-                }
-                $scope = count($scopes);
-                $scopes[] = $bindings;
+            $with = $this->with($node);
+            if ($with !== null) {
+                $scope = $this->define($with, $names, $scopes, $definitions, $scope);
             }
             if (($node instanceof TableReference || $node instanceof ExplicitTable) && $node->name()->schema === null) {
                 $definition = $scopes[$scope][$names->fold($node->name()->name->value)] ?? null;
@@ -79,7 +82,7 @@ final class ReadDependencies
         }
         $children = [];
         foreach (get_object_vars($node) as $property => $value) {
-            if ($node instanceof QueryExpression && $property === 'with') {
+            if ($property === 'with' && $this->with($node) !== null) {
                 continue;
             }
             foreach (is_array($value) ? $value : [$value] as $child) {
@@ -90,4 +93,44 @@ final class ReadDependencies
         }
         return $children;
     }
+    /**
+     * Identifies a lexical WITH owner, including retained write instructions.
+     */
+    public function with(Node $node): ?With
+    {
+        $with = match (true) {
+            $node instanceof QueryExpression,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete => $node->with,
+            default => null,
+        };
+        return $with instanceof With ? $with : null;
+    }
+
+    /**
+     * Adds ordered CTE bindings while preserving each definition's lexical scope.
+     *
+     * @param list<array<string, int>> $scopes Visible binding maps
+     * @param list<array{CommonTableExpression, int}> $definitions Definition occurrences and their scopes
+     */
+    public function define(With $with, Comparison $names, array &$scopes, array &$definitions, int $outer): int
+    {
+        $bindings = $scopes[$outer];
+        foreach ($with->tables as $table) {
+            $id = count($definitions);
+            $scope = count($scopes);
+            $previous = $bindings;
+            $bindings[$names->fold($table->name->value)] = $id;
+            $scopes[] = $with->recursive ? $bindings : $previous;
+            $definitions[] = [$table, $scope];
+        }
+        $scope = count($scopes);
+        $scopes[] = $bindings;
+        return $scope;
+    }
+
 }

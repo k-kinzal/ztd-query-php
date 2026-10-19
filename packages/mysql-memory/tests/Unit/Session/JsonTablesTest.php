@@ -20,14 +20,19 @@ final class JsonTablesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $update = (new JsonTables())->first($session->analyze("UPDATE JSON_TABLE('[]', 'text' COLUMNS (q FOR ORDINALITY)) AS j, t SET t.a = 1")->statement);
-        $column = (new JsonTables())->first($session->analyze("SELECT * FROM t JOIN JSON_TABLE('[]', '$' COLUMNS (q INT PATH '$[')) AS j ON 1")->statement);
+        $inspect = static function (string $sql) use ($session): ?\MySqlMemory\Error\SqlError {
+            $operation = $session->analyze($sql);
+            return (new JsonTables())->first($operation->statement, $operation->facts);
+        };
+        $update = $inspect("UPDATE JSON_TABLE('[]', 'text' COLUMNS (q FOR ORDINALITY)) AS j, t SET t.a = 1");
+        $column = $inspect("SELECT * FROM t JOIN JSON_TABLE('[]', '$' COLUMNS (q INT PATH '$[')) AS j ON 1");
 
         self::assertSame([3143, 'Invalid JSON path expression. The error is around character position 1.'], [$update?->getCode(), $update?->getMessage()]);
         self::assertSame('Invalid JSON path expression. The error is around character position 2.', $column?->getMessage());
-        self::assertSame(3143, (new JsonTables())->first($session->analyze("EXPLAIN UPDATE JSON_TABLE('[]', 'bad' COLUMNS (q FOR ORDINALITY)) AS j SET q=1")->statement)?->getCode());
-        self::assertNull((new JsonTables())->first($session->analyze("SELECT (SELECT 1 FROM JSON_TABLE('[]', 'bad' COLUMNS (q FOR ORDINALITY)) AS j)")->statement));
-        self::assertNull((new JsonTables())->first($session->analyze("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS (q FOR ORDINALITY)) AS j")->statement));
+        self::assertSame(3143, $inspect("EXPLAIN UPDATE JSON_TABLE('[]', 'bad' COLUMNS (q FOR ORDINALITY)) AS j SET q=1")?->getCode());
+        self::assertNull($inspect("SELECT (SELECT 1 FROM JSON_TABLE('[]', 'bad' COLUMNS (q FOR ORDINALITY)) AS j)"));
+        self::assertNull($inspect("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS (q FOR ORDINALITY)) AS j"));
+
     }
 
     public function testFunctionsAnswersTheJsonTablesOfTableReferencesInWrittenOrder(): void

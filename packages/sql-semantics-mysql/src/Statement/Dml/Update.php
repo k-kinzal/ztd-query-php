@@ -32,6 +32,10 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading an UPDATE
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10');
  *     [count($update->statement->assignments), $update->statement->where !== null, $update->toString()] // => [1, true, 'UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10']
+ * @example Refusing contradictory input columns before constructing an operation
+ *     $table = new \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), [new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Statement\Identifier\Name('b')), new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Statement\Identifier\Name('B'))], new \SqlSemantics\Statement\Identifier\Name('j'));
+ *     $assignment = new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('b')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+ *     new \SqlSemantics\Platform\MySql\Statement\Dml\Update(null, false, false, [$table], [$assignment]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Update implements Explainable
 {
@@ -91,6 +95,7 @@ final class Update implements Explainable
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'UPDATE ordering uses expressions, not output-column positions.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->of($this) === null, 'An ordinary UPDATE has a coherent input-column namespace.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

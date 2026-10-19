@@ -32,6 +32,6 @@ final class RefusedDelete implements Diagnostic
      */
     public function message(): string
     {
-        return 'An intrinsically read-only relation cannot supply a DELETE target.';
+        return (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->of($this->write)?->message() ?? 'An intrinsically read-only relation cannot supply a DELETE target.';
     }
 }

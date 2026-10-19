@@ -60,6 +60,19 @@ final class ComponentPreparationTest extends TestCase
             'INSTALL COMPONENT \'noscheme\' SET x=1/0',
             'INSTALL COMPONENT \'noscheme\' SET x=ON',
         ];
+        array_push(
+            $statements,
+            "INSTALL COMPONENT 'noscheme' SET GLOBAL x=0+'x'",
+            "INSTALL COMPONENT 'noscheme' SET PERSIST x=0+'x'",
+            "INSTALL COMPONENT 'noscheme' SET GLOBAL x=(0+'x') IS TRUE",
+            'SET @side=0',
+            "INSTALL COMPONENT 'noscheme' SET GLOBAL x=(@side:=@side+1)",
+            'SELECT @side',
+            "INSTALL COMPONENT 'noscheme' SET GLOBAL x=NULL,y=0+'x'",
+            "INSTALL COMPONENT 'noscheme' SET GLOBAL x=0+'x',y=NULL",
+            "INSTALL COMPONENT 'noscheme' SET GLOBAL x=CAST('x' AS SIGNED)",
+            "INSTALL COMPONENT 'noscheme' SET GLOBAL x=JSON_EXTRACT('bad','$')",
+        );
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

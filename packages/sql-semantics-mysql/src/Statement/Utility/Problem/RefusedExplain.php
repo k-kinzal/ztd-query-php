@@ -39,6 +39,9 @@ final class RefusedExplain implements Diagnostic
         if ($statement instanceof W\DeferredInsertRows || $statement instanceof W\DeferredInsertQuery) {
             return $statement->problem()->message();
         }
+        if ($statement instanceof W\DeferredUpdate) {
+            return (new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate($statement))->message();
+        }
         if ($statement instanceof W\DeferredDelete || $statement instanceof W\DeferredMultipleDelete) {
             return (new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($statement))->message();
         }

@@ -217,7 +217,7 @@ final class Problems
      */
     public function paths(Operation|QueryPreparation $operation, Session $session, array $diagnostics): void
     {
-        $path = (new JsonTables())->first($operation->statement);
+        $path = (new JsonTables())->first($operation->statement, $operation->facts);
         if ($path === null) {
             return;
         }

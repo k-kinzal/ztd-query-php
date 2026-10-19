@@ -32,4 +32,22 @@ final class SettingsTest extends TestCase
         $this->expectExceptionMessage('The value supplied for c.x in the SET list cannot be null');
         $session->query("INSTALL COMPONENT 'no_scheme' SET GLOBAL c.x=NULL");
     }
+    public function testPrepareEvaluatesANonNullValueAgainBeforeComponentLoading(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @side=0');
+        $session->run("INSTALL COMPONENT 'noscheme' SET GLOBAL x=(@side:=@side+1), y=0+'x'");
+        self::assertSame([1287, 1292, 1292, 3527], array_column($session->diagnostics->conditions, 1));
+        $result = $session->query('SELECT @side')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+    }
+
+    public function testPrepareKeepsTheRuntimeErrorBeforeItsNullSettingCondition(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("INSTALL COMPONENT 'noscheme' SET GLOBAL x=JSON_EXTRACT('bad','$')");
+        self::assertSame([3141, 4160], array_column($session->diagnostics->conditions, 1));
+    }
+
 }

@@ -81,13 +81,14 @@ final class ChangeRule
      * Lowers a node of `update` or `update_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the input namespace needs a retained instruction
      */
     public function update(Form $form): Update
     {
         [$with, $low, $ignore, $tables, $list, $where, $order, $limit] = self::UPDATES[$form->signature] ?? throw ImplementationGap::production($form);
         $queries = $this->lowering->queries;
 
-        return new Update(
+        $parts = [
             $with === null ? null : $queries->with($form->node($with)),
             $this->lowPriority($form->node($low)),
             $this->lowering->options->present($form->node($ignore)),
@@ -97,7 +98,12 @@ final class ChangeRule
             $queries->ordering($form->node($order)),
             $this->limit($form->node($limit)),
             $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
-        );
+        ];
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->inputs($parts[3], $parts[0]) !== null) {
+            $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate(...$parts);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate($write), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+        return new Update(...$parts);
     }
 
     /**
@@ -191,7 +197,7 @@ final class ChangeRule
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744);
         }
         $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets);
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables, $with) !== null) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->inputs($tables, $with) !== null) {
             $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete($with, $options, $input, $form, $where, $hints);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
         }

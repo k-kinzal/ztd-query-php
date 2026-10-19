@@ -9,7 +9,6 @@ use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Evaluation\Compile\Family\Jsons;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
@@ -25,19 +24,12 @@ use MySqlMemory\Plan\Path\Source\SingleRow;
 use MySqlMemory\Plan\Path\Source\TableScan;
 use MySqlMemory\Plan\Path\Transform\Materialize;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Value\Json\JsonKind;
 use MySqlMemory\Value\Json\JsonPath;
 use MySqlMemory\Value\Json\JsonSyntax;
 use ReflectionClass;
-use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse;
-use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponseKind;
-use SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns;
-use SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn;
-use SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
-use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
@@ -47,7 +39,6 @@ use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
@@ -232,42 +223,7 @@ final class Relations
      */
     public function jsonColumn(JsonTableColumn $column, array &$slots): JsonColumn
     {
-        if ($column instanceof NestedColumns) {
-            $nested = [];
-            foreach ($column->columns as $inner) {
-                $nested[] = $this->jsonColumn($inner, $slots);
-            }
-            return new JsonColumn('nested', '', Domain::null(), self::jsonPath($column->path->value()), [JsonResponseKind::Null, null], [JsonResponseKind::Null, null], $nested);
-        }
-        $slot = array_shift($slots);
-        $type = $slot?->type;
-        \SqlSemantics\Diagnostic\Check::invariant($slot !== null && $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain, 'A JSON_TABLE column has a resolved semantic domain.');
-        $domain = Domain::of($type->descriptor, $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull);
-        if ($column instanceof OrdinalityColumn) {
-            return new JsonColumn('ordinality', $column->name->value, $domain);
-        }
-        if (!$column instanceof PathColumn) {
-            throw StatementError::NotSupportedYet->error('a JSON_TABLE column');
-        }
-        $name = $column->name->value;
-        $response = static function (?JsonResponse $response) use ($domain, $name): array {
-            $default = $response?->default;
-            if ($default === null) {
-                return [$response->kind ?? JsonResponseKind::Null, null];
-            }
-            try {
-                $value = Jsons::parse($default instanceof StringLiteral ? $default->value() : '', 1, 'JSON_TABLE');
-            } catch (SqlError $failure) {
-                throw new SqlError($failure->error, $failure->getMessage(), $failure, [[SchemaError::InvalidDefault->value, SchemaError::InvalidDefault->message($name)]]);
-            }
-            if ($domain->kind !== Kind::Json && ($value->type === JsonKind::Array || $value->type === JsonKind::Object)) {
-                throw SchemaError::InvalidDefault->error($name);
-            }
-
-            return [JsonResponseKind::Default, $value];
-        };
-
-        return new JsonColumn($column->exists ? 'exists' : 'path', $name, $domain, self::jsonPath($column->path->value()), $response($column->onEmpty), $response($column->onError));
+        return (new Json\Columns())->compile($column, $slots);
     }
 
     /**

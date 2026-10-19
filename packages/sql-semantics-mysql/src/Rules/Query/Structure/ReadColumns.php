@@ -78,6 +78,12 @@ final class ReadColumns
             return $recursion;
         }
         foreach ((new ReadDependencies())->nodes($query) as $node) {
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable) {
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->problem($node->columns);
+                if ($problem !== null) {
+                    return $problem;
+                }
+            }
             if ($node instanceof M\Select) {
                 $problem = $this->windows($node);
                 if ($problem !== null) {

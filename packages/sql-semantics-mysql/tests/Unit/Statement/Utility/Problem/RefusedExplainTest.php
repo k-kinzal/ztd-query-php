@@ -22,4 +22,14 @@ final class RefusedExplainTest extends TestCase
         self::assertSame("User variable name '' is illegal", $problem->message());
         self::assertSame($operation->statement->body, $problem->explanation);
     }
+
+    public function testMessageKeepsTheExplainedUpdateColumnConstraint(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() EXPLAIN UPDATE JSON_TABLE('[]', '$[*]' COLUMNS (b FOR ORDINALITY,B FOR ORDINALITY)) j SET b=2");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain::class, $operation->statement->body);
+        $problem = new RefusedExplain($operation->statement->body);
+        self::assertSame('Duplicate column name b.', $problem->message());
+        self::assertSame($operation->statement->body, $problem->explanation);
+    }
 }

@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Value\Json\JsonPath;
-use MySqlMemory\Value\Json\JsonSyntax;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
@@ -39,23 +36,29 @@ final class JsonTables
     /**
      * Answers the error of the first path that is not valid of a JSON_TABLE the statement names among its outermost table references, if any.
      */
-    public function first(Node $statement): ?SqlError
+    public function first(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts): ?SqlError
     {
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain) {
-            return $this->first($statement->statement);
+            return $this->first($statement->statement, $facts);
         }
         $tables = match (true) {
-            $statement instanceof Update, $statement instanceof MultipleDelete => $statement->tables,
+            $statement instanceof Update, $statement instanceof MultipleDelete, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete => $statement->tables,
             default => array_filter([(new Placement())->first($statement)?->from]),
         };
         foreach ($tables as $table) {
             foreach ($this->functions($table) as $function) {
-                foreach ([$function->path->value(), ...$this->paths($function->columns)] as $path) {
-                    try {
-                        JsonPath::parse($path);
-                    } catch (JsonSyntax $failure) {
-                        return new SqlError(DataError::InvalidJsonPath, DataError::InvalidJsonPath->message($failure->position), $failure);
+                try {
+                    \MySqlMemory\Plan\Relations::jsonPath($function->path->value());
+                    $slots = $facts->relation($function)->shape->slots;
+                    foreach ($function->columns as $column) {
+                        (new \MySqlMemory\Plan\Json\Columns())->compile($column, $slots);
                     }
+                    $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->problem($function->columns);
+                    if ($problem !== null) {
+                        return \MySqlMemory\Error\Family\SchemaError::DuplicateFieldName->error($problem->column->value);
+                    }
+                } catch (SqlError $failure) {
+                    return $failure;
                 }
             }
         }

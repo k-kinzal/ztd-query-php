@@ -78,7 +78,7 @@ final class DeferredMultipleDelete implements ProgramStatement
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->targets = $input->targets;
         $this->tables = $input->tables;
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) !== null, 'A deferred DELETE retains a derived, JSON or common-table target.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->of($this) !== null, 'A deferred DELETE retains a read-only target or input-column contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

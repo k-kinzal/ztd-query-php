@@ -51,4 +51,36 @@ final class ReadDependenciesTest extends TestCase
         self::assertSame([$statement->into, $statement->values()], (new ReadDependencies())->children($statement));
     }
 
+    public function testWithRecognizesAnUpdateScopeWithoutOpeningItsDefinitions(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT @unused) UPDATE t SET a=1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $statement);
+        self::assertSame($statement->with, (new ReadDependencies())->with($statement));
+        self::assertSame([], array_values(array_filter((new ReadDependencies())->nodes($statement), static fn ($node): bool => $node instanceof UserVariable)));
+    }
+
+    public function testInputsFollowAnEnclosingCommonTableInAWrite(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT @read AS a) UPDATE t,c SET t.a=c.a')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $statement->with);
+        $nodes = (new ReadDependencies())->inputs($statement->tables, $statement->with);
+        $variables = array_values(array_filter($nodes, static fn ($node): bool => $node instanceof UserVariable));
+        self::assertSame(['read'], array_map(static fn (UserVariable $variable): string => $variable->name->value, $variables));
+    }
+
+    public function testDefineKeepsEarlierBindingsOutsideANonrecursiveDefinition(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1), b AS (TABLE a) SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\QueryExpression::class, $statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $statement->query->with);
+        $scopes = [[]];
+        $definitions = [];
+        $scope = (new ReadDependencies())->define($statement->query->with, \SqlSemantics\Statement\Identifier\Comparison::Sensitive, $scopes, $definitions, 0);
+        self::assertSame(['a' => 0, 'b' => 1], $scopes[$scope]);
+        self::assertSame([], $scopes[$definitions[0][1]]);
+        self::assertSame(['a' => 0], $scopes[$definitions[1][1]]);
+    }
+
 }

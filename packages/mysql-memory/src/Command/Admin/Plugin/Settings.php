@@ -22,7 +22,8 @@ use SqlSemantics\Statement\Operation;
 /**
  * Prepares component assignment values before attempting to load their libraries.
  *
- * Values are resolved and evaluated in written order. A failure preserves earlier
+ * Values are resolved in written order, tested for NULL, then evaluated again for
+ * their stored setting value. A failure preserves earlier
  * expression side effects, but component variable lookup waits for loading.
  * Observed through INSTALL COMPONENT on MySQL 8.0, 8.4 and 9.1.
  *
@@ -53,14 +54,20 @@ final class Settings
             }
             try {
                 $compiled = $planner->compiler->compile($value, new Scope());
-                $result = $compiled->evaluate(new Frame($context));
             } catch (SqlError $error) {
                 throw $error->error === QueryError::InvalidGroupFunctionUse ? StatementError::SetConstantExpression->error() : $error;
             }
-            if ($result === null) {
-                $variable = $setting->variable;
-                throw AdministrationError::ComponentSettingNull->error(($variable->instance === null ? '' : $variable->instance->value . '.') . $variable->name->value);
+            $variable = $setting->variable;
+            $name = ($variable->instance === null ? '' : $variable->instance->value . '.') . $variable->name->value;
+            try {
+                $result = $compiled->evaluate(new Frame($context));
+            } catch (SqlError $error) {
+                throw new SqlError($error->error, $error->getMessage(), $error, [...$error->following, [AdministrationError::ComponentSettingNull->value, AdministrationError::ComponentSettingNull->message($name)]]);
             }
+            if ($result === null) {
+                throw AdministrationError::ComponentSettingNull->error($name);
+            }
+            $compiled->evaluate(new Frame($context));
         }
     }
 }

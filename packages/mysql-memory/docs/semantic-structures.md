@@ -3367,3 +3367,24 @@ history returned error 34. This observation is not normalized away. Remaining
 work includes that history, remaining window roles, rejection classification
 and state witnesses, client-character-set-sensitive unquoted identifiers, and all
 acceptance campaigns on the final revision.
+
+
+Reached JSON_TABLE declarations have a single flattened column namespace. Ordinary
+reads and writes exclude repeated output names before Operation construction,
+including repeats inside nested paths and case variants. Unused CTEs and skipped
+stored instructions retain the complete declaration. Deferred UPDATE and DELETE
+instructions preserve their source relations, assignments, predicates and WITH
+scopes; EXPLAIN preserves the same operands. Invocation opens physical inputs
+before preparing JSON paths, defaults and the column namespace. Direct native
+comparisons reuse a constructed routine and CALL across missing, empty, populated
+and dropped input tables, and through skipped and reached branches, while memory
+receives unrelated request text. The regression covers three releases and both
+text and prepared reads; the value-schema and dependency checks remain strict.
+
+Component SET values preserve evaluation effects. Native preparation evaluates a
+value to check for NULL, then evaluates a non-NULL value again for storage. Memory
+runs the retained expression in the same order, including variable assignments
+and repeated conversion warnings. A NULL stops the list; an evaluation error
+preserves its primary condition and the following component-setting diagnostic.
+The complete unseeded counterexample is retained as an integration fixture rather
+than normalizing away the additional warnings.

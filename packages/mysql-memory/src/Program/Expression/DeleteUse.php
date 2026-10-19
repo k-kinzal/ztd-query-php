@@ -69,6 +69,10 @@ final class DeleteUse
                 throw (new Errors())->error($problem, $session);
             }
         }
+        $input = (new \MySqlMemory\Session\JsonTables())->first($write, $facts);
+        if ($input !== null) {
+            throw $input;
+        }
         foreach ($facts->diagnostics as $problem) {
             throw (new Errors())->error($problem, $session, statement: $write);
         }
