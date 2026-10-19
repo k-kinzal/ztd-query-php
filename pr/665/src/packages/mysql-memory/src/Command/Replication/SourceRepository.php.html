@@ -108,11 +108,11 @@
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    }</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a></span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a><span class="tok-com">     * Reads a 32-bit setting after clamping its numeral to an unsigned 64-bit value.</span></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a><span class="tok-com">     * Reads the leading integer digits, clamps to unsigned 64-bit and narrows to 32-bit.</span></span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">unsigned</span>(<span class="tok-id">Numeral</span> <span class="tok-var">$value</span>): <span class="tok-id">int</span></span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    {</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$number</span> = (<span class="tok-kw">new</span> <span class="tok-id">Literals</span>())-&gt;<span class="tok-id">number</span>(<span class="tok-var">$value</span>);</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$number</span> = (<span class="tok-kw">new</span> <span class="tok-id">Literals</span>())-&gt;<span class="tok-id">prefix</span>(<span class="tok-var">$value</span>);</span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-var">$number</span> = <span class="tok-id">bccomp</span>(<span class="tok-var">$number</span>, <span class="tok-str">&#039;18446744073709551615&#039;</span>) &gt; <span class="tok-num">0</span> ? <span class="tok-str">&#039;18446744073709551615&#039;</span> : <span class="tok-var">$number</span>;</span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a></span>
 <span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>        <span class="tok-kw">return</span> (int) <span class="tok-id">bcmod</span>(<span class="tok-var">$number</span>, <span class="tok-str">&#039;4294967296&#039;</span>);</span>
