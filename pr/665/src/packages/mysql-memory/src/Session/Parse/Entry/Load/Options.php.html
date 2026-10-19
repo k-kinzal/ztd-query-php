@@ -50,10 +50,10 @@
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Session\Problem\Stages</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Session\Session</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset</span>;</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset</span>;</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * Preserves LOAD input name resolution before a refused option combination.</span></span>
@@ -80,7 +80,7 @@
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        }</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-var">$derivation</span> = <span class="tok-kw">new</span> <span class="tok-id">Derivation</span>(<span class="tok-var">$session</span>-&gt;<span class="tok-id">semantics</span>()-&gt;<span class="tok-id">context</span>(<span class="tok-id">session</span>: <span class="tok-var">$session</span>-&gt;<span class="tok-id">resolution</span>()));</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$problem</span>-&gt;<span class="tok-id">assignments</span> <span class="tok-kw">as</span> <span class="tok-var">$assignment</span>) {</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>            <span class="tok-kw">if</span> (<span class="tok-var">$assignment</span>-&gt;<span class="tok-id">value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar</span>) {</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>            <span class="tok-kw">if</span> (!<span class="tok-var">$assignment</span>-&gt;<span class="tok-id">value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DefaultRequest</span>) {</span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>                <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">scalar</span>(<span class="tok-var">$assignment</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">environment</span>());</span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>            }</span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        }</span>
