@@ -44,7 +44,7 @@ final class ExplainUse
         $previous = $session->variables->database;
         $session->variables->database = $database;
         try {
-            if ($explanation->statement instanceof W\DeferredInsertRows || $explanation->statement instanceof W\DeferredInsertQuery) {
+            if ($explanation->statement instanceof W\DeferredInsertRows || $explanation->statement instanceof W\DeferredInsertSet || $explanation->statement instanceof W\DeferredInsertQuery) {
                 (new InsertUse())->raise($explanation->statement, $session, false);
             }
             if ($explanation->statement instanceof W\DeferredUpdate) {

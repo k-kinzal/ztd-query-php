@@ -101,8 +101,8 @@ final class InsertRule
             return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, $alias, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
 
-        $updates = $clause === null ? [] : $this->updates($clause);
-        return new InsertSet(new InsertInto($replace, $priority, $skip, $target, hints: $hints), (new ValueRule($this->lowering))->assignments($form->node($source + 1)), $alias, \SqlSemantics\Diagnostic\Check::listOf($updates, Assignment::class, 'Ordinary INSERT holds scalar assignments.'));
+        $updates = $clause === null ? [] : (new RetainedUpdates($this->lowering))->read($clause);
+        return $this->set(new InsertInto($replace, $priority, $skip, $target, hints: $hints), $form->node($source + 1), $alias, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**
@@ -124,8 +124,8 @@ final class InsertRule
         $clause = $replace ? null : $form->node(5);
         $spec = $this->lowering->form($form->node(3 + $offset));
         if ($spec->signature === 'insert_field_spec: SET ident_eq_list') {
-            $updates = $clause === null ? [] : $this->updates($clause);
-            return new InsertSet(new InsertInto($replace, $priority, $skip, $target, hints: $hints), (new ValueRule($this->lowering))->assignments($spec->node(1)), null, $updates);
+            $updates = $clause === null ? [] : (new RetainedUpdates($this->lowering))->read($clause);
+            return $this->set(new InsertInto($replace, $priority, $skip, $target, hints: $hints), $spec->node(1), null, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
         [$columns, $body] = (new InsertSourceRule($this->lowering))->source($spec->node);
         $updates = $clause === null ? [] : (is_array($body) ? (new RetainedUpdates($this->lowering))->read($clause) : $this->updates($clause));
@@ -160,6 +160,21 @@ final class InsertRule
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows($into, $body, $alias, $updates)), $end, false);
         }
         return new InsertRows($into, array_values(array_filter($body, static fn ($row): bool => $row instanceof InsertedRow)), $alias, \SqlSemantics\Diagnostic\Check::listOf($updates, Assignment::class, 'Ordinary INSERT holds scalar assignments.'));
+    }
+
+    /**
+     * Builds an ordinary SET write or retains the complete refused template.
+     *
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $updates Duplicate-key assignments
+     * @throws \SqlSemantics\Construction\RejectedInput When any assignment has a non-scalar role
+     */
+    public function set(InsertInto $into, Node $list, ?RowAlias $alias, array $updates, int $end): InsertSet
+    {
+        $assignments = (new RetainedUpdates($this->lowering))->assignments($list);
+        if (array_filter([...$assignments, ...$updates], static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) !== []) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet($into, $assignments, $alias, $updates)), $end, false);
+        }
+        return new InsertSet($into, \SqlSemantics\Diagnostic\Check::listOf($assignments, Assignment::class, 'Ordinary INSERT holds scalar assignments.'), $alias, \SqlSemantics\Diagnostic\Check::listOf($updates, Assignment::class, 'Ordinary INSERT holds scalar assignments.'));
     }
 
     /**

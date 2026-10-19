@@ -8,16 +8,18 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
- * A stored time-zone conversion whose literal has no TIMESTAMP input role.
+ * A stored time-zone conversion with an incompatible or deferred operand role.
  *
  * The original typed operand is retained for preparation when its instruction
  * is reached. This value is not a Scalar and cannot be embedded in an ordinary
@@ -35,14 +37,14 @@ final class DeferredTimeZone implements DeferredOperand
     use Snapshot;
 
     /**
-     * @param Scalar $operand The expression that cannot have a TIMESTAMP input role
+     * @param Scalar|RowOperand|DeferredOperand $operand The expression requiring invocation-time preparation
      * @param Text $zone The quoted zone name
      * @param bool $interval Whether INTERVAL precedes the zone
      * @param string|null $precision The fractional seconds precision exactly as written
      */
-    public function __construct(public readonly Scalar $operand, public readonly Text $zone, public readonly bool $interval = false, public readonly ?string $precision = null)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Text $zone, public readonly bool $interval = false, public readonly ?string $precision = null)
     {
-        Check::input((new TimeZoneOperands())->input($operand) === false, 'A deferred time-zone conversion retains an intrinsically incompatible operand.');
+        Check::input(!$operand instanceof Scalar || (new TimeZoneOperands())->input($operand) === false, 'A deferred time-zone conversion retains an intrinsically incompatible operand.');
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
         Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');
@@ -59,7 +61,7 @@ final class DeferredTimeZone implements DeferredOperand
     }
 
     /**
-     * @return non-empty-list<Scalar> The retained preparation dependency
+     * @return non-empty-list<Scalar|RowOperand|DeferredOperand> The retained preparation dependency
      */
     public function operands(): array
     {
@@ -69,9 +71,9 @@ final class DeferredTimeZone implements DeferredOperand
     /**
      * Answers the conversion's intrinsic operand constraint.
      */
-    public function problem(): TimeZoneConversion
+    public function problem(): Diagnostic
     {
-        return new TimeZoneConversion($this, true);
+        return $this->operand instanceof Scalar ? new TimeZoneConversion($this, true) : (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$this->operand]);
     }
 
     /**

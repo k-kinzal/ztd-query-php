@@ -24,13 +24,16 @@ final class ReplicationRetryTest extends TestCase
      */
     public static function providerInputs(): iterable
     {
-        $statements = [];
+        $statements = [(string) file_get_contents(__DIR__ . '/fixtures/replication-retry-prefix.sql')];
         $tails = ['SOURCE_CONNECT_RETRY=0', 'SOURCE_CONNECT_RETRY=4294967296', 'SOURCE_PORT=3307', 'SOURCE_CONNECT_RETRY=1', 'SOURCE_CONNECT_RETRY=4294967297', 'SOURCE_PORT=2147483648', 'SOURCE_PORT=2147483648,SOURCE_CONNECT_RETRY=2147483648', 'SOURCE_CONNECT_RETRY=2147483648,SOURCE_PORT=2147483648'];
         foreach ($tails as $tail) {
             array_push($statements, 'RESET REPLICA ALL', 'CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=2147483648', 'CHANGE REPLICATION SOURCE TO ' . $tail, 'RESET REPLICA', 'CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=1', 'RESET REPLICA ALL', 'CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=1');
         }
-        foreach (['0', '1', '2147483647', '2147483648', '4294967295', '4294967296', '9223372036854775807', '18446744073709551615'] as $value) {
+        foreach (['0', '1', '2147483647', '2147483648', '4294967295', '4294967296', '9223372036854775807', '18446744073709551615', '1e2', '1.9e2', '.9e89', '2147483648.0', '4294967297.2', '18446744073709551616.0'] as $value) {
             array_push($statements, 'RESET REPLICA ALL', 'CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=' . $value, 'CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=1');
+        }
+        foreach (['1e2', '1.9e2', '.9e89', '2147483648.0', '4294967297.2', '18446744073709551616.0'] as $value) {
+            array_push($statements, 'RESET REPLICA ALL', 'CHANGE REPLICATION SOURCE TO SOURCE_PORT=' . $value, 'CHANGE REPLICATION SOURCE TO SOURCE_PORT=3306');
         }
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];

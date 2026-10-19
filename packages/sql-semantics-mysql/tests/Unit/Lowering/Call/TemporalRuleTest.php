@@ -29,6 +29,17 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 #[Medium]
 final class TemporalRuleTest extends TestCase
 {
+    public function testTimestampRetainsTheSiblingOfANonScalarOperand(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT TIMESTAMPDIFF(DAY, ROW(1,2), (SELECT a FROM t))')->find('function_call_nonkeyword')[0];
+        $value = (new TemporalRule($lowering))->timestamp($lowering->form($node), TimestampOperation::Difference);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp::class, $value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $value->second);
+    }
+
     public function testArithmeticRetainsBothOperandsAroundAnIntrinsicRowCondition(): void
     {
         $platform = new Platform();

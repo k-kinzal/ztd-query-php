@@ -46,7 +46,9 @@ final class DeferredTimeZoneTest extends TestCase
     {
         $value = new DeferredTimeZone($operand, new Text('+00:00'));
         self::assertSame([$operand], $value->operands());
-        self::assertSame($value, $value->problem()->expression);
+        $problem = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $problem);
+        self::assertSame($value, $problem->expression);
         self::assertFalse((new TimeZoneOperands())->input($operand));
     }
 
@@ -60,8 +62,18 @@ final class DeferredTimeZoneTest extends TestCase
     public function testProblemRetainsTheOwningConversion(): void
     {
         $value = new DeferredTimeZone(new NumberLiteral('1'), new Text('+00:00'));
-        self::assertSame($value, $value->problem()->expression);
-        self::assertTrue($value->problem()->operand);
+        $problem = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $problem);
+        self::assertSame($value, $problem->expression);
+        self::assertTrue($problem->operand);
+    }
+
+    public function testProblemRetainsTheRowConstraintBeforeTheConversionConstraint(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $value = new DeferredTimeZone($row, new Text('unknown'));
+        self::assertSame([$row], $value->operands());
+        self::assertSame('Operand should contain 1 column(s), not 2.', $value->problem()->message());
     }
 
     public function testDeriveScalarRetainsTheConstraintWithoutReportingItAtDefinition(): void

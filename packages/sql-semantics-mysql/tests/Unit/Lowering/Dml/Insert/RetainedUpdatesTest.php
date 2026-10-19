@@ -19,6 +19,14 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRo
 #[Medium]
 final class RetainedUpdatesTest extends TestCase
 {
+    public function testAssignmentsKeepsTheCompleteLegacySetList(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE PROCEDURE p() INSERT INTO t SET a=1, b=DEFAULT, c=ROW(1,2)');
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->statement->body);
+        self::assertCount(3, $operation->statement->body->assignments);
+        self::assertInstanceOf(DeferredColumnAssignment::class, $operation->statement->body->assignments[2]);
+    }
     public function testReadKeepsEveryDuplicateKeyOperandInItsWrittenRole(): void
     {
         $sql = 'CREATE PROCEDURE p() INSERT INTO t VALUES (1) ON DUPLICATE KEY UPDATE a = 2, b = DEFAULT, c = ROW(3, 4)';

@@ -92,7 +92,8 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand => (new \MySqlMemory\Program\Expression\KillUse())->error($diagnostic->process, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar => $this->scalar($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery,
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows => (new \MySqlMemory\Program\Expression\InsertUse())->error($diagnostic->write, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet => (new \MySqlMemory\Program\Expression\InsertUse())->error($diagnostic->write, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation => (new EvaluationInput())->deferred($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery => $this->selection($diagnostic->query, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => $this->selection($diagnostic->selection, $session),
@@ -119,7 +120,7 @@ final class InputErrors
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution());
         $derivation = new \SqlSemantics\Construction\Derivation($context);
         $query->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
-        (new \MySqlMemory\Program\Expression\SelectionUse())->diagnosed($derivation->facts(), $session, qualifiers: false);
+        (new \MySqlMemory\Program\Expression\SelectionUse())->diagnosed($derivation->facts(), $session, qualifiers: false, viewDefinition: true);
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {
             return \MySqlMemory\Error\Family\QueryError::BadDatabase->error($database);
@@ -210,6 +211,7 @@ final class InputErrors
     public function server(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange => \MySqlMemory\Error\Family\DataError::DataOutOfRange->error('SRID', 'SRID'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting => (new Replication\Settings())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial => (new \MySqlMemory\Command\Admin\Refusals())->spatial($diagnostic->problem, null, $diagnostic->command),
             $diagnostic instanceof RefusedSourceNumber => (new SourceNumberInput())->error($diagnostic, $session->text),

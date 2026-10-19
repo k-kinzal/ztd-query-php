@@ -34,6 +34,16 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Small]
 final class ErrorsTest extends TestCase
 {
+    public function testErrorReturnsPreparationErrorsWithoutEscapingTheDiagnosticBoundary(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('missing'))));
+        $problem = new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery(new QualifiedName(new Name('v')), true, new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($body));
+        $error = (new Errors())->error($problem, $session);
+        self::assertSame(1146, $error->getCode());
+        self::assertSame("Table 'd.missing' doesn't exist", $error->getMessage());
+    }
+
     public function testErrorBoundsAnUnknownColumnWithoutLosingItsSemanticName(): void
     {
         $name = new Name(str_repeat('é', 97));

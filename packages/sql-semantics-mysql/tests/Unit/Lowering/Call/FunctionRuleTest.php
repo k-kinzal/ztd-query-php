@@ -25,6 +25,18 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 #[Small]
 final class FunctionRuleTest extends TestCase
 {
+    public function testTrimRetainsBothOperandRoles(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT TRIM(ROW(1,2) FROM (SELECT a FROM t))')->find('function_call_keyword')[0];
+        $value = (new FunctionRule($lowering))->call($lowering->form($node));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTrim::class, $value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $value->subject);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand::class, $value->removed);
+    }
+
     public function testClaimsTellsTheProductionsOfTheRule(): void
     {
         $platform = new Platform();

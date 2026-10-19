@@ -3467,3 +3467,41 @@ unseeded working snapshot matched 1,054 inputs over 904.64 seconds without a
 mismatch, crash or unclassified volatile result. Its saved counterexample from
 the preceding run requires LOAD XML to report non-ASCII row-tag warnings before
 target lookup. These runs predate later changes and are not final acceptance.
+
+INSERT SET preserves its destination, every assignment, row alias and duplicate-key
+updates together. Ordinary assignments accept scalar values or DEFAULT. A stored
+instruction can retain a row or deferred operand in an unreached branch; that
+instruction is distinct from an ordinary statement. The input diagnostic retains
+the complete instruction, including when EXPLAIN wraps it. Preparation can
+therefore resolve the destination and each value in the correct scope without
+reconstructing SQL. MySQL 5.6 prepares SET values before destination columns;
+later releases check destination columns first.
+
+TRIM, TIMESTAMPADD, TIMESTAMPDIFF and AT TIME ZONE likewise retain complete
+operands when a scalar role cannot be satisfied immediately. Their stored forms
+preserve sibling dependencies and preparation order. Column SRID restrictions,
+by contrast, have an intrinsic unsigned 32-bit domain enforced during construction.
+SQL lowering reports an out-of-range token before publishing the column, while
+availability of a valid identifier remains a catalog condition. ALTER TABLE
+checks that catalog condition before applying duplicate destination columns.
+
+REVOKE processes each recipient and its roles in order. A later missing
+recipient preserves warnings already raised for an earlier recipient. If the
+statement fails, its role changes are rolled back while those diagnostics remain
+observable. Native histories verify the warnings and SHOW GRANTS after each
+attempt, including IF EXISTS and IGNORE UNKNOWN USER.
+
+Input diagnostic conversion returns an SQL error value even when preparing its
+retained dependencies raises that error. This lets completed grammar notices
+retain their order before the dependency failure. Refused view queries keep
+their view-definition preparation context: repeated relation aliases do not
+replace missing-table, missing-view or operand-width conditions. Native histories
+exercise the same body before database selection, before table creation, after
+table creation and after view creation.
+
+Spatial CAST checks a complete four-byte SRID header against the instance's
+catalog before decoding the geometry body. Replication port and connection-retry
+settings consume the leading integer digits of their numeral, including decimal
+and exponent spellings, before unsigned clamping and narrowing. Retained native
+counterexamples and reset histories check both the returned conditions and the
+settings that survive an earlier failure.

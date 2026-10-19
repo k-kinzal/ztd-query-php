@@ -68,11 +68,11 @@ final class SourceRepository
     }
 
     /**
-     * Reads a 32-bit setting after clamping its numeral to an unsigned 64-bit value.
+     * Reads the leading integer digits, clamps to unsigned 64-bit and narrows to 32-bit.
      */
     public function unsigned(Numeral $value): int
     {
-        $number = (new Literals())->number($value);
+        $number = (new Literals())->prefix($value);
         $number = bccomp($number, '18446744073709551615') > 0 ? '18446744073709551615' : $number;
 
         return (int) bcmod($number, '4294967296');

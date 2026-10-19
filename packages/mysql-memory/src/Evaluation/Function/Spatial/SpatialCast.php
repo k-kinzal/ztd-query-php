@@ -48,12 +48,14 @@ final class SpatialCast implements Evaluable
         if ($value === null) {
             return null;
         }
+        $offset = 0;
+        $srid = Wkb::number((string) $value, $offset, true);
+        if ($srid !== null && $srid !== 0 && $frame->context->variables->instance->registry->spatialCatalog->name($srid) === null) {
+            throw \MySqlMemory\Error\Family\SchemaError::SrsNotFound->error($srid);
+        }
         $geometry = Wkb::read((string) $value);
         if ($geometry === null || !$geometry->valid()) {
             throw DataError::GisInvalidData->error('cast_as_' . strtolower($this->target));
-        }
-        if ($geometry->srid !== 0 && $frame->context->variables->instance->registry->spatialCatalog->name($geometry->srid) === null) {
-            throw \MySqlMemory\Error\Family\SchemaError::SrsNotFound->error($geometry->srid);
         }
         $type = ['POINT' => 1, 'LINESTRING' => 2, 'POLYGON' => 3, 'MULTIPOINT' => 4, 'MULTILINESTRING' => 5, 'MULTIPOLYGON' => 6, 'GEOMETRYCOLLECTION' => 7][$this->target];
 

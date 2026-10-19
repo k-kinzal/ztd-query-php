@@ -47,7 +47,7 @@ final class SelectionUse
         if ($instruction) {
             (new \MySqlMemory\Program\Routine\SelectionNotices())->start($selection, $derivation->facts(), $session);
         }
-        $this->diagnosed($derivation->facts(), $session, $selection);
+        $this->diagnosed($derivation->facts(), $session, $selection, viewDefinition: $viewDefinition);
         if ($instruction) {
             (new \MySqlMemory\Program\Routine\SelectionNotices())->failed($selection, $session);
         }
@@ -61,9 +61,10 @@ final class SelectionUse
      * Reports grammar conditions before relation binding and operand preparation.
      *
      * @param bool $qualifiers Whether projection qualifiers are reached before a surrounding command opens its target
+     * @param bool $viewDefinition Whether repeated relation aliases belong to a stored view definition
      * @throws \MySqlMemory\Error\SqlError When a retained diagnostic precedes preparation
      */
-    public function diagnosed(\SqlSemantics\Statement\Fact\Facts $facts, Session $session, ?DeferredSelection $selection = null, bool $qualifiers = true): void
+    public function diagnosed(\SqlSemantics\Statement\Fact\Facts $facts, Session $session, ?DeferredSelection $selection = null, bool $qualifiers = true, bool $viewDefinition = false): void
     {
         if ($selection !== null) {
             (new \MySqlMemory\Session\Access\RelationEntry())->check($selection, $facts, $session);
@@ -74,7 +75,7 @@ final class SelectionUse
             }
         }
         foreach ($facts->diagnostics as $problem) {
-            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
+            if (!$viewDefinition && $problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
                 throw (new Errors())->error($problem, $session);
             }
         }

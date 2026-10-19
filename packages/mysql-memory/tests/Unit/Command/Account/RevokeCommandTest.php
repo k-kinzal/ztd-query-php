@@ -20,6 +20,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class RevokeCommandTest extends TestCase
 {
+    public function testRolesPreservesEarlierWarningsWhenALaterRecipientFails(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->run('REVOKE IF EXISTS rx FROM CURRENT_USER(), nobody')[0];
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(3523, $reply->getCode());
+        self::assertSame([['Warning', 3523, 'Unknown authorization ID `rx`@`%`'], ['Error', 3523, 'Unknown authorization ID `nobody`@`%`']], $session->diagnostics->conditions);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new RevokeCommand())->clearsDiagnostics());

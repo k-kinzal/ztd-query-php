@@ -16,6 +16,15 @@ use SqlSemantics\Platform\MySql\Lowering\Dml\Insert\InsertRule;
 #[Medium]
 final class InsertRuleTest extends TestCase
 {
+    public function testSetRetainsItsHeadAndEveryAssignmentBeforeRefusal(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT LOW_PRIORITY INTO t SET a=DEFAULT, b=ROW(1,2) ON DUPLICATE KEY UPDATE c=3');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->statement->body);
+        self::assertCount(2, $operation->statement->body->assignments);
+        self::assertCount(1, $operation->statement->body->onDuplicate);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, $operation->statement->body->into->priority);
+    }
     public function testStatementLowersEveryForm(): void
     {
         self::assertSame('INSERT INTO t SET a = 1 ON DUPLICATE KEY UPDATE a = 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('insert t set a = 1 on duplicate key update a = 2')->toString());

@@ -148,7 +148,7 @@ final class InsertFacts
     /**
      * Derives INSERT ... SET.
      */
-    public function set(InsertSet $insert, Derivation $derivation, Environment $outer): void
+    public function set(InsertSet|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet $insert, Derivation $derivation, Environment $outer): void
     {
         [$target] = $this->open($insert->into, $derivation, $outer);
         $environment = new Environment($derivation->context, $outer, [$target]);

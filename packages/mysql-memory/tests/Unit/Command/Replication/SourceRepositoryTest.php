@@ -22,6 +22,14 @@ final class SourceRepositoryTest extends TestCase
         self::assertSame(4294967295, $rule->unsigned(new $number('18446744073709551616')));
     }
 
+    public function testUnsignedConsumesTheIntegerPrefixBeforeAnExponentOrFraction(): void
+    {
+        $rule = new SourceRepository();
+        self::assertSame(1, $rule->unsigned(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.9e2')));
+        self::assertSame(0, $rule->unsigned(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('.9e89')));
+        self::assertSame(1, $rule->unsigned(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4294967297.2')));
+    }
+
     public function testUpdateResetsTheHeartbeatForAnEffectiveHostOrPortAssignment(): void
     {
         $session = (new Instance())->connect();

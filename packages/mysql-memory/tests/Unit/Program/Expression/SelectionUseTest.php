@@ -22,6 +22,17 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class SelectionUseTest extends TestCase
 {
+    public function testRaisePreservesRepeatedViewRelationsBeforeTheOperandCondition(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $selection = new DeferredSelection([new DeferredProjection(new Row([new NumberLiteral('1'), new NumberLiteral('2')]))], new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([new TableReference(new QualifiedName(new Name('t'))), new TableReference(new QualifiedName(new Name('t')))]));
+        $session->text = 'unrelated invalid input';
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1241);
+        (new SelectionUse())->raise($selection, $session, false, true);
+    }
+
     public function testDiagnosedReportsGrammarConditionsBeforeQueryPreparation(): void
     {
         $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow), new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('nosuch')]);

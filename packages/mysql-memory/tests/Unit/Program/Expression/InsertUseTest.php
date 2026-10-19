@@ -17,6 +17,24 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRo
 #[Medium]
 final class InsertUseTest extends TestCase
 {
+    public function testSetKeepsDestinationBindingAheadOfTheDeferredConversion(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $operation = $session->analyze("CREATE PROCEDURE p() INSERT INTO t SET a=CAST(ROW(b,2) AT TIME ZONE 'invalid' AS DATETIME)");
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->statement->body);
+        $write = $operation->statement->body;
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1146, (new InsertUse())->error($write, $session)->getCode());
+        $session->query('CREATE TABLE t(x INT)');
+        self::assertSame("Unknown column 'a' in 'field list'", (new InsertUse())->error($write, $session)->getMessage());
+        $session->query('ALTER TABLE t ADD a INT');
+        self::assertSame("Unknown column 'b' in 'field list'", (new InsertUse())->error($write, $session)->getMessage());
+        $session->query('ALTER TABLE t ADD b INT; INSERT INTO t VALUES(1,2,3)');
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1241, (new InsertUse())->error($write, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
     public function testErrorOpensTheDestinationBeforeAQueryReadCondition(): void
     {
         $session = (new Instance())->connect();

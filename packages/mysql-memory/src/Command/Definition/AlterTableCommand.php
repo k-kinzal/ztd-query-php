@@ -166,6 +166,9 @@ final class AlterTableCommand implements Command
                 throw (new Errors())->routine($call, $session);
             }
         }
+        foreach ((new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition::class) as $column) {
+            (new Constraint\SpatialColumns())->check($column, $session->instance->registry->spatialCatalog);
+        }
     }
 
     /**

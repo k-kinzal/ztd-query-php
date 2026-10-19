@@ -159,7 +159,7 @@ final class FunctionRule
         if (isset(self::TRIMS[$form->signature])) {
             [$side, $removed, $subject] = self::TRIMS[$form->signature];
 
-            return new Trim($this->expression($form, $subject), $side, $removed === null ? null : $this->expression($form, $removed));
+            return $this->trim($form, $subject, $side, $removed);
         }
         $expressions = $this->lowering->expressions;
 
@@ -279,6 +279,16 @@ final class FunctionRule
     public function niladic(Form $form, KeywordFunction $function): KeywordCall
     {
         return new KeywordCall($function, [], $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted);
+    }
+
+    /**
+     * Retains both TRIM roles before checking their scalar interpretation.
+     */
+    public function trim(Form $form, int $subject, ?TrimSide $side, ?int $removed): Trim|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTrim
+    {
+        $value = $this->lowering->expressions->operand($form->node($subject));
+        $remove = $removed === null ? null : $this->lowering->expressions->operand($form->node($removed));
+        return $value instanceof Scalar && ($remove === null || $remove instanceof Scalar) ? new Trim($value, $side, $remove) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTrim($value, $side, $remove);
     }
 
     /**

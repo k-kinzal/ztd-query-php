@@ -264,39 +264,23 @@ final class RevokeCommand implements Command
         $accounts = $session->instance->accounts;
         foreach ($statement->users as $user) {
             $identity = $names->identity($user, $session);
-            if ($accounts->find($identity) === null && !$statement->ignoreUnknownUser) {
-                throw AccountError::UnknownAuthorizationId->error($identity->authorization());
-            }
-        }
-        $roles = [];
-        $unknown = [];
-        foreach ($listed as $role) {
-            $identity = $names->identity($role, $session);
             if ($accounts->find($identity) === null) {
-                if (!$statement->ifExists) {
+                if (!$statement->ignoreUnknownUser) {
                     throw AccountError::UnknownAuthorizationId->error($identity->authorization());
                 }
-                $unknown[] = $identity;
-                continue;
-            }
-            $roles[] = $identity;
-        }
-        $existing = [];
-        foreach ($statement->users as $user) {
-            $identity = $names->identity($user, $session);
-            if ($accounts->find($identity) === null) {
                 $session->diagnostics->warning(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->user));
                 continue;
             }
-            $existing[] = $user;
-            foreach ($unknown as $role) {
-                $session->diagnostics->warning(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($role->authorization()));
-            }
-        }
-        $found = $this->found($existing, true, $session, false);
-        foreach ($found as $account) {
-            foreach ($roles as $role) {
-                $accounts->revoke($role, $account->identity);
+            foreach ($listed as $role) {
+                $source = $names->identity($role, $session);
+                if ($accounts->find($source) === null) {
+                    if (!$statement->ifExists) {
+                        throw AccountError::UnknownAuthorizationId->error($source->authorization());
+                    }
+                    $session->diagnostics->warning(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($source->authorization()));
+                    continue;
+                }
+                $accounts->revoke($source, $identity);
             }
         }
     }

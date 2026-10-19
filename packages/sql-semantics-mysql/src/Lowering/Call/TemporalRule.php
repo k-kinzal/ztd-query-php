@@ -154,11 +154,14 @@ final class TemporalRule
     /**
      * Lowers TIMESTAMPADD or TIMESTAMPDIFF.
      */
-    public function timestamp(Form $form, TimestampOperation $operation): TimestampCall
+    public function timestamp(Form $form, TimestampOperation $operation): TimestampCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp
     {
         $expressions = $this->lowering->expressions;
 
-        return new TimestampCall($operation, $expressions->intervalUnit($form->node(2)), $expressions->expression($form->node(4)), $expressions->expression($form->node(6)));
+        $unit = $expressions->intervalUnit($form->node(2));
+        $first = $expressions->operand($form->node(4));
+        $second = $expressions->operand($form->node(6));
+        return $first instanceof Scalar && $second instanceof Scalar ? new TimestampCall($operation, $unit, $first, $second) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp($operation, $unit, $first, $second);
     }
 
     /**

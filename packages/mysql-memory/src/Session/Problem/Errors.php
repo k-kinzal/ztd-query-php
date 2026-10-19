@@ -97,17 +97,21 @@ final class Errors
             return new SqlError(SchemaError::TooBigPrecision, sprintf("Too big precision %d specified for column '%s'. Maximum is %d.", $diagnostic->precision, $diagnostic->function, $diagnostic->maximum));
         }
 
-        return (new \MySqlMemory\Session\Parse\Entry\InputErrors())->error($diagnostic, $session)
-            ?? $this->unopened($diagnostic, $session, $statement)
-            ?? $this->names($diagnostic, $database, $clause, $statement, $session->settings()->release())
-            ?? $this->query($diagnostic, $clause)
-            ?? $this->call($diagnostic, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651)
-            ?? $this->database($diagnostic, $session->settings()->release())
-            ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
-            ?? $this->manipulation($diagnostic, $statement)
-            ?? $this->expression($diagnostic, $session->settings()->legacy())
-            ?? $this->server($diagnostic, $session, $statement)
-            ?? new SqlError(StatementError::UnknownError, $diagnostic->message());
+        try {
+            return (new \MySqlMemory\Session\Parse\Entry\InputErrors())->error($diagnostic, $session)
+                ?? $this->unopened($diagnostic, $session, $statement)
+                ?? $this->names($diagnostic, $database, $clause, $statement, $session->settings()->release())
+                ?? $this->query($diagnostic, $clause)
+                ?? $this->call($diagnostic, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651)
+                ?? $this->database($diagnostic, $session->settings()->release())
+                ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
+                ?? $this->manipulation($diagnostic, $statement)
+                ?? $this->expression($diagnostic, $session->settings()->legacy())
+                ?? $this->server($diagnostic, $session, $statement)
+                ?? new SqlError(StatementError::UnknownError, $diagnostic->message());
+        } catch (SqlError $error) {
+            return $error;
+        }
     }
 
     /**

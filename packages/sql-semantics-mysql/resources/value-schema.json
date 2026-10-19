@@ -1044,6 +1044,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Insert\\RefusedInsertRows": {
         "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Insert\\RefusedInsertSet": {
+        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadConflict": {
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadRule"
     },
@@ -2479,6 +2482,17 @@
         "string": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "substring": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredTimestamp": {
+        "first": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "operation": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\TimestampOperation",
+        "second": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "unit": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\IntervalUnit"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredTrim": {
+        "removed": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
+        "side": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\TrimSide",
+        "subject": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWeightParameters": {
         "flags": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "length": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
@@ -2581,7 +2595,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredTimeZone": {
         "interval": "bool",
-        "operand": "SqlSemantics\\Statement\\Scalar",
+        "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "precision": "?string",
         "zone": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
@@ -2731,7 +2745,7 @@
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
-        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredUpdate"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredUpdate"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredKill": {
         "process": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
@@ -2788,6 +2802,12 @@
         "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
         "onDuplicate": "array",
         "rows": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\RowAlias",
+        "assignments": "array",
+        "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
+        "onDuplicate": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertedRow": {
         "values": "array"
@@ -3572,6 +3592,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\UnionOption": {
         "tables": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Column\\SridRange": {
+        "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedCreateTail": {
         "elements": "array",

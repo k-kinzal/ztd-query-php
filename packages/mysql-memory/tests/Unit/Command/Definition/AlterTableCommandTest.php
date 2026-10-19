@@ -26,6 +26,14 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 #[Small]
 final class AlterTableCommandTest extends TestCase
 {
+    public function testResolveChecksSpatialCatalogBeforeDuplicateDestinationColumns(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a POINT SRID 0)');
+        $this->expectExceptionCode(3548);
+        $session->query('ALTER TABLE t ADD a POINT SRID 4294967295');
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new AlterTableCommand())->clearsDiagnostics());

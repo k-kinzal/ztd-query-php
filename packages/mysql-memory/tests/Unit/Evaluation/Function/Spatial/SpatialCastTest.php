@@ -21,6 +21,13 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class SpatialCastTest extends TestCase
 {
+    public function testEvaluateLooksUpACompleteSridHeaderBeforeReadingTheGeometryBody(): void
+    {
+        $this->expectExceptionCode(3548);
+        $this->expectExceptionMessage("There's no spatial reference system with SRID 864190947.");
+        (new Instance())->connect()->query("SELECT CAST('あ' '3' '2' AS POLYGON)");
+    }
+
     public function testDomainAnswersTheResolvedGeometryType(): void
     {
         $domain = new Domain(Kind::String, Field::Geometry, 4294967295);

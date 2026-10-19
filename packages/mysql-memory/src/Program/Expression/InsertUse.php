@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Scalar;
 use WeakReference;
@@ -32,7 +33,7 @@ final class InsertUse
     /**
      * Returns the standalone input's preparation error.
      */
-    public function error(DeferredInsertRows|DeferredInsertQuery $write, Session $session): SqlError
+    public function error(DeferredInsertRows|DeferredInsertSet|DeferredInsertQuery $write, Session $session): SqlError
     {
         try {
             $this->raise($write, $session, false);
@@ -46,7 +47,7 @@ final class InsertUse
      *
      * @throws SqlError When the reached write cannot prepare
      */
-    public function raise(DeferredInsertRows|DeferredInsertQuery $write, Session $session, bool $invocation = true): never
+    public function raise(DeferredInsertRows|DeferredInsertSet|DeferredInsertQuery $write, Session $session, bool $invocation = true): never
     {
         if ($invocation) {
             \MySqlMemory\Session\State\StatementCounters::query($session);
@@ -56,6 +57,9 @@ final class InsertUse
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        if ($write instanceof DeferredInsertSet && $database === '' && $write->into->table->name->schema === null) {
+            throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+        }
         $derivation = new Derivation($context);
         $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         $facts = $derivation->facts();
@@ -82,13 +86,16 @@ final class InsertUse
      * @throws SqlError When an operand cannot prepare
      * @throws LogicException If a constructed template loses its required condition
      */
-    public function prepare(DeferredInsertRows|DeferredInsertQuery $write, \MySqlMemory\Plan\Planner $planner, Session $session): never
+    public function prepare(DeferredInsertRows|DeferredInsertSet|DeferredInsertQuery $write, \MySqlMemory\Plan\Planner $planner, Session $session): never
     {
         $schema = $write->into->table->name->schema->value ?? $session->variables->database;
         $table = $session->instance->dictionary->table($schema, $write->into->table->name->name->value);
         \SqlSemantics\Diagnostic\Check::invariant($table !== null, 'The write target was opened before value preparation.');
         if ($write instanceof DeferredInsertRows) {
             $this->rows($write, $planner, $session, $table);
+        }
+        if ($write instanceof DeferredInsertSet) {
+            $this->set($write, $planner, $table, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651);
         }
         if (!$session->settings()->legacy() || ($session->preparation->inputPrepared && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651)) {
             foreach ($write->into->columns->columns ?? [] as $column) {
@@ -100,6 +107,39 @@ final class InsertUse
         (new QueryUse())->prepare($write->source, $planner->compiler, write: $session->preparation->inputPrepared ? null : $write);
         $planner->query($write->source, null);
         throw (new Errors())->error($write->problem(), $session);
+    }
+
+    /**
+     * Prepares all SET destinations before their values and duplicate-key operands.
+     *
+     * @throws SqlError When a retained assignment cannot prepare
+     * @throws LogicException If the template's required condition is absent
+     */
+    public function set(DeferredInsertSet $write, \MySqlMemory\Plan\Planner $planner, \MySqlMemory\Dictionary\StoredTable $table, bool $valuesFirst = false): never
+    {
+        $scope = new \MySqlMemory\Evaluation\Scope();
+        $scope->place($write->into->table, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);
+        if (!$valuesFirst) {
+            foreach ($write->assignments as $assignment) {
+                (new \MySqlMemory\Command\Write\Assignments($planner, $table))->position($assignment->column);
+            }
+        }
+        foreach ($write->assignments as $assignment) {
+            if ($assignment instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) {
+                (new RowUse())->prepare($assignment->value, $planner->compiler, $scope);
+                throw (new RowUse())->error($assignment->value);
+            }
+            if ($assignment->value instanceof Scalar) {
+                $planner->compiler->compile($assignment->value, $scope);
+            }
+        }
+        if ($valuesFirst) {
+            foreach ($write->assignments as $assignment) {
+                (new \MySqlMemory\Command\Write\Assignments($planner, $table))->position($assignment->column);
+            }
+        }
+        $this->updates($write, $planner, $scope, $table);
+        throw new LogicException('A retained SET write has a non-scalar assignment.');
     }
 
     /**
@@ -166,7 +206,7 @@ final class InsertUse
     /**
      * Binds every duplicate-key target and value after the preceding write dependencies.
      */
-    public function updates(DeferredInsertRows $write, \MySqlMemory\Plan\Planner $planner, \MySqlMemory\Evaluation\Scope $scope, \MySqlMemory\Dictionary\StoredTable $table): void
+    public function updates(DeferredInsertRows|DeferredInsertSet $write, \MySqlMemory\Plan\Planner $planner, \MySqlMemory\Evaluation\Scope $scope, \MySqlMemory\Dictionary\StoredTable $table): void
     {
         $scope = clone $scope;
         $scope->inserted = $table->definition;

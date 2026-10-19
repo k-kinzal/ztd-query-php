@@ -43,7 +43,18 @@ final class RetainedUpdates
         if (!in_array($form->signature, ['opt_insert_update: ON DUPLICATE_SYM KEY_SYM UPDATE_SYM insert_update_list', 'opt_insert_update_list: ON DUPLICATE_SYM KEY_SYM UPDATE_SYM update_list', 'opt_insert_update_list: ON_SYM DUPLICATE_SYM KEY_SYM UPDATE_SYM update_list'], true)) {
             throw ImplementationGap::production($form);
         }
-        return array_map($this->assignment(...), (new ListRule($this->lowering))->items($form->node(4), ['update_list: update_list , update_elem', 'update_list: update_elem', 'insert_update_list: insert_update_list , insert_update_elem', 'insert_update_list: insert_update_elem']));
+        return $this->assignments($form->node(4));
+    }
+
+    /**
+     * Retains complete SET or duplicate-key lists across all supported grammars.
+     *
+     * @return list<Assignment|DeferredColumnAssignment>
+     * @throws ImplementationGap When a production has no lowering rule
+     */
+    public function assignments(Node $list): array
+    {
+        return array_map($this->assignment(...), (new ListRule($this->lowering))->items($list, ['update_list: update_list , update_elem', 'update_list: update_elem', 'insert_update_list: insert_update_list , insert_update_elem', 'insert_update_list: insert_update_elem', 'ident_eq_list: ident_eq_list , ident_eq_value', 'ident_eq_list: ident_eq_value']));
     }
 
     /**
@@ -54,7 +65,7 @@ final class RetainedUpdates
     public function assignment(Node $item): Assignment|DeferredColumnAssignment
     {
         $form = $this->lowering->form($item);
-        if (!in_array($form->signature, ['update_elem: simple_ident_nospvar equal expr_or_default', 'insert_update_elem: simple_ident_nospvar equal expr_or_default'], true)) {
+        if (!in_array($form->signature, ['update_elem: simple_ident_nospvar equal expr_or_default', 'insert_update_elem: simple_ident_nospvar equal expr_or_default', 'ident_eq_value: simple_ident_nospvar equal expr_or_default'], true)) {
             throw ImplementationGap::production($form);
         }
         $this->lowering->options->skip($form->node(1));

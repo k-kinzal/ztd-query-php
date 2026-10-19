@@ -36,7 +36,7 @@ final class RefusedExplain implements Diagnostic
     public function message(): string
     {
         $statement = $this->explanation->statement;
-        if ($statement instanceof W\DeferredInsertRows || $statement instanceof W\DeferredInsertQuery) {
+        if ($statement instanceof W\DeferredInsertRows || $statement instanceof W\DeferredInsertSet || $statement instanceof W\DeferredInsertQuery) {
             return $statement->problem()->message();
         }
         if ($statement instanceof W\DeferredUpdate) {

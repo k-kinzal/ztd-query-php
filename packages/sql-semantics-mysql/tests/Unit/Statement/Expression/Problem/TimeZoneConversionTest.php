@@ -23,6 +23,7 @@ final class TimeZoneConversionTest extends TestCase
         $zone = $semantics->analyze("SELECT CAST(NULL AT TIME ZONE 'bad' AS DATETIME)")->facts->diagnostics[0];
 
         self::assertInstanceOf(TimeZoneConversion::class, $zone);
+        self::assertInstanceOf(TimeZoneConversion::class, $type);
         self::assertTrue($type->operand);
         self::assertFalse($zone->operand);
         self::assertSame('Cannot cast value to TIMESTAMP WITH TIME ZONE.', $type->message());
