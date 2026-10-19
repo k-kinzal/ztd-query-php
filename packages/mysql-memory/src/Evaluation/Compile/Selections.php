@@ -28,6 +28,9 @@ final class Selections
      */
     public function bound(DeferredSelection $selection, \MySqlMemory\Plan\Planner $planner, ?\MySqlMemory\Evaluation\Scope $outer = null): never
     {
+        if ($selection->qualify !== null) {
+            throw \MySqlMemory\Error\Family\StatementError::HypergraphRequired->error('QUALIFY clause');
+        }
         if ($selection->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star && ($selection->from === null || $selection->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual)) {
             throw \MySqlMemory\Error\Family\QueryError::NoTablesUsed->error();
         }

@@ -126,45 +126,6 @@ final class LoadTable implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('LOAD', $this->format->value);
-        if ($this->lock !== null) {
-            $out->keyword($this->lock->value);
-        }
-        $out->node($this->input);
-        if ($this->duplicates !== null) {
-            $out->keyword($this->duplicates->value);
-        }
-        $out->keyword('INTO', 'TABLE')->node($this->table);
-        if ($this->charset !== null) {
-            $out->keyword('CHARSET')->node($this->charset);
-        }
-        if ($this->compression !== null) {
-            $out->keyword('COMPRESSION')->symbol('=')->node($this->compression);
-        }
-        if ($this->rowTag !== null) {
-            $out->keyword('ROWS', 'IDENTIFIED', 'BY')->node($this->rowTag);
-        }
-        if ($this->fields !== []) {
-            $out->keyword('COLUMNS');
-        }
-        foreach ($this->fields as $option) {
-            $out->node($option);
-        }
-        if ($this->lines !== []) {
-            $out->keyword('LINES');
-        }
-        foreach ($this->lines as $option) {
-            $out->node($option);
-        }
-        if ($this->ignored !== null) {
-            $out->keyword('IGNORE')->node($this->ignored)->keyword('LINES');
-        }
-        if ($this->columns !== []) {
-            $out->symbol('(')->list($this->columns)->symbol(')');
-        }
-        if ($this->assignments !== []) {
-            $out->keyword('SET')->list($this->assignments);
-        }
-        $out->node($this->bulk);
+        (new \SqlSemantics\Platform\MySql\Rendering\LoadRendering())->render($this, $out);
     }
 }

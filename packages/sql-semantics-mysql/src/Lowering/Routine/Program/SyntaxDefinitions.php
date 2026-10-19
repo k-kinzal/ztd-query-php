@@ -22,6 +22,19 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 final class SyntaxDefinitions
 {
     /**
+     * Refuses legacy LOAD immediately after its DATA or XML format in a stored body.
+     * Later file syntax and operand names have not been interpreted at this point.
+     */
+    public function load(Node $node, bool $legacy): ?RejectedInput
+    {
+        if (!$legacy || $node->name !== 'data_or_xml') {
+            return null;
+        }
+        $format = $node->tokens()[0];
+        return new RejectedInput(new ProgramProblem(ProgramRule::BadStatement, 'LOAD ' . strtoupper($format->text)), $format->end(), true);
+    }
+
+    /**
      * Reports the ALTER VIEW branch before its required VIEW token, including incomplete input.
      * The completed view_suid production distinguishes this branch from other ALTER forms.
      *
@@ -76,8 +89,12 @@ final class SyntaxDefinitions
     /**
      * Answers an immediate nested declaration restriction at its input boundary.
      */
-    public function rejected(Node $node): ?RejectedInput
+    public function rejected(Node $node, bool $legacy = false): ?RejectedInput
     {
+        $load = $this->load($node, $legacy);
+        if ($load !== null) {
+            return $load;
+        }
         if (in_array($node->name, ['handler', 'handler_stmt'], true)) {
             $operation = $node->children[2];
             \SqlSemantics\Diagnostic\Check::invariant($operation instanceof \SqlParser\Lexer\Token, 'A HANDLER statement has an operation keyword.');

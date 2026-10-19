@@ -70,9 +70,10 @@ final class StoredSelections
         $limit = isset($clauses['limit']) ? (new TailRule($this->lowering))->limit($clauses['limit']) : null;
         $procedure = isset($clauses['procedure']) ? (new TailRule($this->lowering))->procedure($clauses['procedure']) : null;
         $windows = isset($clauses['windows']) ? (new ClauseRule($this->lowering))->windows($clauses['windows']) : [];
-        $deferred = $this->deferred($items, $predicate, $grouping, $having, $ordering);
+        $qualify = isset($clauses['qualify']) ? $this->predicate($clauses['qualify']) : null;
+        $deferred = $this->deferred($items, $predicate, $grouping, $having, $ordering, $qualify);
         if ($deferred) {
-            return new DeferredSelection($items, $input, $predicate, $options, $grouping, $having, $ordering, $limit, $windows, $procedure);
+            return new DeferredSelection($items, $input, $predicate, $options, $grouping, $having, $ordering, $limit, $windows, $procedure, $qualify);
         }
         $ordinary = [];
         foreach ($items as $item) {
@@ -82,7 +83,8 @@ final class StoredSelections
         \SqlSemantics\Diagnostic\Check::invariant($predicate === null || $predicate instanceof Scalar, 'An ordinary predicate is scalar.');
         \SqlSemantics\Diagnostic\Check::invariant($having === null || $having instanceof Scalar, 'An ordinary group predicate is scalar.');
         \SqlSemantics\Diagnostic\Check::invariant($grouping === null || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping, 'An ordinary grouping has scalar or ordinal items.');
-        return new Block($options, $ordinary, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, trailer: new Trailer($ordering, $limit, $procedure), source: $node, origins: $this->lowering->origins);
+        \SqlSemantics\Diagnostic\Check::invariant($qualify === null || $qualify instanceof Scalar, 'An ordinary QUALIFY predicate is scalar.');
+        return new Block($options, $ordinary, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, qualify: $qualify, trailer: new Trailer($ordering, $limit, $procedure), source: $node, origins: $this->lowering->origins);
     }
 
     /**
@@ -91,9 +93,9 @@ final class StoredSelections
      * @param list<SelectExpression|DeferredProjection|Star|\SqlSemantics\Platform\MySql\Statement\Name\TableWildcard> $items
      * @param list<\SqlSemantics\Platform\MySql\Statement\Query\OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $ordering
      */
-    public function deferred(array $items, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $predicate, \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping|null $grouping, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $having, array $ordering): bool
+    public function deferred(array $items, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $predicate, \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping|null $grouping, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $having, array $ordering, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $qualify = null): bool
     {
-        return ($having !== null && !$having instanceof Scalar) || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping || array_filter($items, static fn ($item): bool => $item instanceof DeferredProjection) !== [] || ($predicate !== null && !$predicate instanceof Scalar);
+        return ($qualify !== null && !$qualify instanceof Scalar) || ($having !== null && !$having instanceof Scalar) || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping || array_filter($items, static fn ($item): bool => $item instanceof DeferredProjection) !== [] || ($predicate !== null && !$predicate instanceof Scalar);
     }
 
     /**
@@ -157,6 +159,7 @@ final class StoredSelections
             'order_clause', 'opt_order_clause' => 'order',
             'opt_limit_clause', 'opt_limit_clause_init', 'limit_clause' => 'limit',
             'opt_window_clause' => 'windows',
+            'opt_qualify_clause' => 'qualify',
             'procedure_analyse_clause', 'opt_procedure_analyse_clause' => 'procedure',
             default => null,
         };
@@ -203,7 +206,7 @@ final class StoredSelections
         $form = $this->lowering->form($where);
         return match ($form->signature) {
             'opt_where_clause: where_clause' => $this->predicate($form->node(0)),
-            'where_clause: WHERE expr', 'opt_where_clause: WHERE expr', 'having_clause: HAVING expr', 'opt_having_clause: HAVING expr' => $this->lowering->expressions->operand($form->node(1)),
+            'where_clause: WHERE expr', 'opt_where_clause: WHERE expr', 'having_clause: HAVING expr', 'opt_having_clause: HAVING expr', 'opt_qualify_clause: QUALIFY_SYM expr' => $this->lowering->expressions->operand($form->node(1)),
             default => throw \SqlSemantics\Diagnostic\ImplementationGap::production($form),
         };
     }

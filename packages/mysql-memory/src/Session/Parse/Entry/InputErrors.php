@@ -197,6 +197,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute => (new Json\AttributeInput())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns => $this->viewColumns($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount => (new SourceNumberInput())->fileCount($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments => (new Load\Assignments())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions => (new Load\Options())->error($diagnostic, $session),
             $diagnostic instanceof RoleOrPrivilegeMismatch => (new RoleInput())->error($diagnostic, $session->text),
             default => $this->server($diagnostic, $session),

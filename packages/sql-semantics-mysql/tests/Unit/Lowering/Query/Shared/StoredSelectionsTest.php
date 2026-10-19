@@ -51,6 +51,14 @@ final class StoredSelectionsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $create->body);
     }
 
+    public function testBodyRetainsAnUnusedQualifyConditionInsideTheCompleteUpdate(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, '8.4.7'))->analyze('WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE t,t SET a=1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $operation->statement);
+        self::assertSame('WITH c AS (SELECT 1 QUALIFY ROW(1, 2)) UPDATE t, t SET a = 1', $operation->toString());
+        self::assertContains(\SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable::class, array_map(static fn ($diagnostic): string => $diagnostic::class, $operation->facts->diagnostics));
+    }
+
     public function testClausePreservesEveryRepresentedClause(): void
     {
         self::assertSame('CREATE PROCEDURE p() SELECT DISTINCT (a, 2) FROM t WHERE a GROUP BY a HAVING 1 ORDER BY a LIMIT 0', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT DISTINCT (a,2) FROM t WHERE a GROUP BY a HAVING 1 ORDER BY a LIMIT 0')->toString());

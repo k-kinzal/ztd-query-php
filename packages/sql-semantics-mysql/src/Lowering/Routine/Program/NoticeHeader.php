@@ -52,7 +52,7 @@ final class NoticeHeader
             if ($this->kind === null && $node->name === 'sp_c_chistics') {
                 $function = array_filter($tokens, fn (Token $token): bool => $token->offset < $this->nameEnd && strtoupper($token->text) === 'FUNCTION') !== [];
                 $this->kind = $function ? ProgramKind::Function : ProgramKind::Procedure;
-            } elseif ($this->kind === null && ($node->name === 'trigger_follows_precedes_clause' || $node->name === 'trg_event')) {
+            } elseif ($this->kind === null && in_array($node->name, ['trigger_follows_precedes_clause', 'trg_event'], true)) {
                 $this->kind = ProgramKind::Trigger;
             } elseif ($this->kind === null && $node->name === 'opt_ev_comment' && $lookahead->name === 'DO_SYM') {
                 $this->kind = ProgramKind::Event;
@@ -62,7 +62,7 @@ final class NoticeHeader
         }
 
         $legacy = in_array($lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        $failure = $this->kind === null ? null : ((new SyntaxDefinitions())->handler($node, $lookahead, $tokens, $legacy) ?? (new SyntaxDefinitions())->alter($node, $lookahead, $tokens));
+        $failure = $this->kind === null ? null : ((new SyntaxDefinitions())->load($node, $legacy) ?? (new SyntaxDefinitions())->handler($node, $lookahead, $tokens, $legacy) ?? (new SyntaxDefinitions())->alter($node, $lookahead, $tokens));
         if ($failure !== null) {
             \SqlSemantics\Diagnostic\Check::invariant($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem, 'A prohibited stored instruction has a program restriction.');
             return new \SqlSemantics\Construction\RejectedInput(new RefusedProgramBody($this->name, $this->kind, $failure->problem, $this->definer, nameEnd: $this->nameEnd), $failure->end, true);

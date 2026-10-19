@@ -41,6 +41,17 @@ use SqlSemantics\Statement\Node as StatementNode;
 #[Medium]
 final class StatementRuleTest extends TestCase
 {
+    public function testRejectedKeepsLoadOutsideTheStoredInstructionDomain(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, '8.4.7'))->analyze("CREATE PROCEDURE p() LOAD DATA INFILE 'f' INTO TABLE t SET a=ROW(1,2)");
+            self::fail('LOAD is prohibited in a stored program.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem::class, $failure->problem);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadStatement, $failure->problem->rule);
+        }
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

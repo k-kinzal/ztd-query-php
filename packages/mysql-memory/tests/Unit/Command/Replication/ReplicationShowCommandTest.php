@@ -108,6 +108,22 @@ final class ReplicationShowCommandTest extends TestCase
         self::assertSame([], $result->rows);
     }
 
+    public function testRelaylogEventsRequiresAnExplicitChannelAfterAFailedSourceChange(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("CHANGE REPLICATION SOURCE TO SOURCE_CONNECTION_AUTO_FAILOVER=1, SOURCE_SSL_CIPHER='text' FOR CHANNEL 'a'");
+        $answers = $session->run("SHOW RELAYLOG EVENTS IN 'text'");
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(3079, $answers[0]->getCode());
+        $explicit = $session->query("SHOW RELAYLOG EVENTS IN 'text' FOR CHANNEL ''")[0];
+        self::assertInstanceOf(ResultSet::class, $explicit);
+        self::assertSame([], $explicit->rows);
+        $session->query("RESET REPLICA ALL FOR CHANNEL 'a'");
+        $reset = $session->query("SHOW RELAYLOG EVENTS IN 'text'")[0];
+        self::assertInstanceOf(ResultSet::class, $reset);
+        self::assertSame([], $reset->rows);
+    }
+
     public function testRelaylogEventsRetainsTheClosedLogWithAnExplicitPosition(): void
     {
         $session = (new Instance())->connect();

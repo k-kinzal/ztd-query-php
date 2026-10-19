@@ -21,7 +21,7 @@ final class MessagesTest extends TestCase
         $payload = (new Messages())->handshake('8.4.7', 7, 'abcdefghijklmnopqrst', 2);
 
         self::assertSame(
-            "\x0A8.4.7\x00\x07\x00\x00\x00abcdefgh\x00\x0F\xA2\xFF\x02\x00\x3F\x00\x15" . str_repeat("\x00", 10) . "ijklmnopqrst\x00mysql_native_password\x00",
+            "\x0A8.4.7\x00\x07\x00\x00\x00abcdefgh\x00\x8F\xA2\xFF\x02\x00\x3F\x00\x15" . str_repeat("\x00", 10) . "ijklmnopqrst\x00mysql_native_password\x00",
             $payload,
         );
     }
@@ -31,7 +31,7 @@ final class MessagesTest extends TestCase
         self::assertSame(
             Capability::LONG_PASSWORD | Capability::FOUND_ROWS | Capability::LONG_FLAG | Capability::CONNECT_WITH_DB | Capability::PROTOCOL_41
             | Capability::TRANSACTIONS | Capability::SECURE_CONNECTION | Capability::MULTI_STATEMENTS | Capability::MULTI_RESULTS
-            | Capability::PS_MULTI_RESULTS | Capability::PLUGIN_AUTH | Capability::CONNECT_ATTRS | Capability::PLUGIN_AUTH_LENENC_CLIENT_DATA,
+            | Capability::PS_MULTI_RESULTS | Capability::PLUGIN_AUTH | Capability::CONNECT_ATTRS | Capability::PLUGIN_AUTH_LENENC_CLIENT_DATA | Capability::LOCAL_FILES,
             Messages::CAPABILITIES,
         );
         self::assertSame(0, Messages::CAPABILITIES & Capability::SSL);

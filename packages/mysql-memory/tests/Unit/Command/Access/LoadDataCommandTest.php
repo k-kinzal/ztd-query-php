@@ -54,6 +54,26 @@ final class LoadDataCommandTest extends TestCase
         $session->query($sql);
     }
 
+    public function testEntryChecksLocalInputBeforeOpeningTheDestination(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $operation = $session->analyze("LOAD DATA LOCAL INFILE 'f' INTO TABLE absent");
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3948);
+        (new LoadDataCommand())->entry($operation->statement, $operation->facts, $session);
+    }
+
+    public function testOptionsRetainsTheReleaseSpecificBulkConditions(): void
+    {
+        $session = (new Instance('8.2.0', [], ['d']))->connect(database: 'd');
+        $operation = $session->analyze("LOAD DATA INFILE 'f' INTO TABLE absent ALGORITHM=BULK");
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1235);
+        (new LoadDataCommand())->options($operation->statement, $operation->facts, $session);
+    }
+
     public function testBulkConditionsFollowTargetAndPrimaryKeyChanges(): void
     {
         $session = (new Instance('8.2.0'))->connect();

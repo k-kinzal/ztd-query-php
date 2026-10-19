@@ -19,6 +19,7 @@ final class CapabilityTest extends TestCase
         self::assertSame(2, Capability::FOUND_ROWS);
         self::assertSame(4, Capability::LONG_FLAG);
         self::assertSame(8, Capability::CONNECT_WITH_DB);
+        self::assertSame(1 << 7, Capability::LOCAL_FILES);
         self::assertSame(1 << 9, Capability::PROTOCOL_41);
         self::assertSame(1 << 11, Capability::SSL);
         self::assertSame(1 << 13, Capability::TRANSACTIONS);

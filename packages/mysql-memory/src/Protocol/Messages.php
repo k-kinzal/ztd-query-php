@@ -21,7 +21,7 @@ final class Messages
     public const CAPABILITIES = Capability::LONG_PASSWORD | Capability::FOUND_ROWS | Capability::LONG_FLAG | Capability::CONNECT_WITH_DB
         | Capability::PROTOCOL_41 | Capability::TRANSACTIONS | Capability::SECURE_CONNECTION | Capability::MULTI_STATEMENTS
         | Capability::MULTI_RESULTS | Capability::PS_MULTI_RESULTS | Capability::PLUGIN_AUTH | Capability::CONNECT_ATTRS
-        | Capability::PLUGIN_AUTH_LENENC_CLIENT_DATA;
+        | Capability::PLUGIN_AUTH_LENENC_CLIENT_DATA | Capability::LOCAL_FILES;
 
     /**
      * Builds the initial handshake (protocol version 10), naming the collation of the server's connections.

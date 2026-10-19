@@ -237,6 +237,16 @@ final class CacheOptionsTest extends TestCase
         self::assertTrue($condition->recorded);
         self::assertNull((new CacheOptions())->condition($error, "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = +", $session));
     }
+
+    public function testConditionResolvesTheLegacyLoadTargetBeforeALaterCharset(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $answers = $session->run("LOAD DATA INFILE 'f' INTO TABLE t SET a=CONVERT(ROW(1,2) USING missing)");
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(1046, $answers[0]->getCode());
+        self::assertSame([['Error', 1046, 'No database selected']], $session->diagnostics->conditions);
+    }
     public function testRecordedPreservesFollowingConditions(): void
     {
         $session = (new Instance())->connect();

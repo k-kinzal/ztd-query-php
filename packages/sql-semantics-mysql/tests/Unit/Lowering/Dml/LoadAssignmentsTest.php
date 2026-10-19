@@ -23,7 +23,7 @@ final class LoadAssignmentsTest extends TestCase
     public static function providerUrlInputs(): iterable
     {
         foreach (['8.0.44', '8.1.0', '8.2.0', '8.4.7', '9.1.0'] as $release) {
-            yield $release => [$release, in_array($release, ['8.0.44', '8.1.0'], true) ? M\Expression\Problem\RefusedScalar::class : M\Dml\Problem\RefusedLoadOptions::class];
+            yield $release => [$release, in_array($release, ['8.0.44', '8.1.0'], true) ? M\Dml\Problem\RefusedLoadAssignments::class : M\Dml\Problem\RefusedLoadOptions::class];
         }
     }
 

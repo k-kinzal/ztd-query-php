@@ -84,7 +84,7 @@ final class Listener
      * The packets of each connection are answered in a fiber of its own, so a statement that waits
      * for a row lock suspends it, and the other connections go on being served meanwhile; every
      * waiting connection checks again for its lock after each round of packets, and at least every
-     * 10 milliseconds. A waiting connection reads no packets.
+     * 10 milliseconds. A connection waiting for a client file keeps reading its upload packets.
      *
      * @throws RuntimeException When the socket is not open
      */
@@ -97,7 +97,7 @@ final class Listener
         while (!$this->instance->stopped) {
             $read = [$server];
             foreach ($this->sockets as $id => $socket) {
-                if (!isset($this->fibers[$id])) {
+                if (!isset($this->fibers[$id]) || $this->clients[$id]->files->active) {
                     $read[] = $socket;
                 }
             }
@@ -153,6 +153,10 @@ final class Listener
             return;
         }
         $client = $this->clients[$id];
+        if ($client->files->active) {
+            $client->receive($bytes);
+            return;
+        }
         $this->run($id, static fn (): bool => $client->receive($bytes));
     }
 

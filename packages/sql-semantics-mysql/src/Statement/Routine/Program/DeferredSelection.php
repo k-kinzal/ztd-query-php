@@ -71,8 +71,9 @@ final class DeferredSelection implements ProgramStatement
      * @param Scalar|RowOperand|DeferredOperand|null $where The row predicate
      * @param list<\SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition> $windows The complete WINDOW clause
      * @param \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse|null $procedure The legacy result-analysis clause
+     * @param Scalar|RowOperand|DeferredOperand|null $qualify The complete QUALIFY predicate
      */
-    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [], public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse $procedure = null)
+    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [], public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse $procedure = null, public readonly Scalar|RowOperand|DeferredOperand|null $qualify = null)
     {
         $this->windows = Check::listOf($windows, \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition::class, 'A stored selection retains its named window definitions.');
         $this->options = Check::listOf($options, SelectOption::class, 'A stored selection retains SELECT modifiers.');
@@ -84,7 +85,7 @@ final class DeferredSelection implements ProgramStatement
         $this->orderBy = $ordering;
         (new \SqlSemantics\Platform\MySql\Rules\Query\SortScopes())->check(array_values(array_filter([...$ordering, ...($groupBy->items ?? [])], static fn ($item): bool => $item instanceof OrderItem)));
         $list = [];
-        $deferred = $where instanceof RowOperand || $where instanceof DeferredOperand || $having instanceof RowOperand || $having instanceof DeferredOperand || $groupBy instanceof DeferredGrouping;
+        $deferred = $where instanceof RowOperand || $where instanceof DeferredOperand || $having instanceof RowOperand || $having instanceof DeferredOperand || $qualify instanceof RowOperand || $qualify instanceof DeferredOperand || $groupBy instanceof DeferredGrouping;
         foreach (Check::listOf($items, Node::class, 'A stored selection has at least one item.', 1) as $position => $item) {
             Check::input($item instanceof SelectExpression || $item instanceof DeferredProjection || $item instanceof TableWildcard || ($item instanceof Star && $position === 0), 'A projection is an expression or qualified star; a bare star occurs only first.');
             $list[] = $item;
@@ -116,6 +117,9 @@ final class DeferredSelection implements ProgramStatement
         }
         if ($this->having instanceof RowOperand || $this->having instanceof DeferredOperand) {
             $operands[] = $this->having;
+        }
+        if ($this->qualify instanceof RowOperand || $this->qualify instanceof DeferredOperand) {
+            $operands[] = $this->qualify;
         }
         foreach ($this->orderBy as $item) {
             if ($item instanceof DeferredOrderItem) {
@@ -156,6 +160,9 @@ final class DeferredSelection implements ProgramStatement
         }
         if ($this->windows !== []) {
             $out->keyword('WINDOW')->list($this->windows);
+        }
+        if ($this->qualify !== null) {
+            $out->keyword('QUALIFY')->node($this->qualify);
         }
         if ($this->orderBy !== []) {
             $out->keyword('ORDER', 'BY')->list($this->orderBy);

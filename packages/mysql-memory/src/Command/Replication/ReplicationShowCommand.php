@@ -228,6 +228,9 @@ final class ReplicationShowCommand implements Command
     public function relaylogEvents(ShowRelaylogEvents $statement, Session $session, Context $context, ?\MySqlMemory\Plan\Blocks $bounds = null): Reply
     {
         $this->limit($statement->limit, $session);
+        if ($statement->channel === null && $session->instance->registry->channels !== []) {
+            throw AdministrationError::ReplicaMultipleChannels->error();
+        }
         $channel = (new ReplicaCommand())->channel($statement->channel, $session->settings()->legacy(), $session->instance->registry);
         $replication = $channel === '' ? $session->instance->registry->replication : $session->instance->registry->channels[$channel];
         if (!$replication->initialized) {

@@ -74,7 +74,7 @@ final class ClientTest extends TestCase
         $client->greet();
 
         self::assertSame(
-            [77, "\x49\x00\x00\x00\x0A8.4.7\x00\x07\x00\x00\x00" . "\x00\x0F\xA2\xFF\x02\x00\x3F\x00\x15" . str_repeat("\x00", 10) . "\x00mysql_native_password\x00"],
+            [77, "\x49\x00\x00\x00\x0A8.4.7\x00\x07\x00\x00\x00" . "\x00\x8F\xA2\xFF\x02\x00\x3F\x00\x15" . str_repeat("\x00", 10) . "\x00mysql_native_password\x00"],
             $sent->getArrayCopy(),
         );
     }

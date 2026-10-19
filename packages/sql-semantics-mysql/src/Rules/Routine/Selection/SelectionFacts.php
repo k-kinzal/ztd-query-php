@@ -56,6 +56,9 @@ final class SelectionFacts
         }
         (new \SqlSemantics\Platform\MySql\Rules\Query\SelectFacts())->windows($selection, $derivation, $expressions);
         (new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->check($selection, $derivation);
+        if ($selection->qualify !== null) {
+            $derivation->scalar($selection->qualify, $results);
+        }
         $this->ordering($selection->orderBy, $derivation, $results, $fields, true);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts())->limit($selection->limit, $derivation, $scope->environment);
         if ($selection->procedure !== null) {

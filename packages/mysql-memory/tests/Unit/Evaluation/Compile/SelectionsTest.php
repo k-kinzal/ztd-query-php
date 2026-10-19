@@ -64,4 +64,15 @@ final class SelectionsTest extends TestCase
         $session->query('WITH c AS (VALUES ROW(CHAR(ROW(missing, 2)))) SELECT * FROM c');
     }
 
+    public function testBoundRejectsQualifyBeforeProjectionWidthWithoutReadingInputText(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $row = new Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $selection = new DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($row)], qualify: new Row([new NumberLiteral('3'), new NumberLiteral('4')]));
+        $session->text = 'unrelated invalid input';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(6037);
+        (new SelectionUse())->raise($selection, $session);
+    }
+
 }

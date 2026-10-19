@@ -20,6 +20,17 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
 #[Medium]
 final class SyntaxDefinitionsTest extends TestCase
 {
+    public function testLoadStopsAtTheLegacyFormatBeforeAnyInputOperands(): void
+    {
+        $tree = (new MySqlParser('mysql-5.7.44'))->parse("LOAD XML INFILE 'f' INTO TABLE t");
+        $node = $tree->find('data_or_xml')[0];
+        $failure = (new SyntaxDefinitions())->load($node, true);
+        self::assertSame('LOAD XML is not allowed in stored procedures', $failure?->problem->message());
+        self::assertSame(strlen('LOAD XML'), $failure->end);
+        self::assertTrue($failure->aborts);
+        self::assertNull((new SyntaxDefinitions())->load($node, false));
+    }
+
     public function testAlterRecognizesTheViewBranchBeforeItsRequiredKeyword(): void
     {
         $tree = (new MySqlParser('mysql-5.7.44'))->parse('ALTER VIEW v AS SELECT 1');

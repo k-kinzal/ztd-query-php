@@ -1062,6 +1062,22 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedEvaluation": {
         "evaluation": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredEvaluation"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedLoadAssignments": {
+        "assignments": "array",
+        "bulk": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\BulkOptions",
+        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "columns": "array",
+        "compression": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "duplicates": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
+        "fields": "array",
+        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadFormat",
+        "ignored": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "input": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadInput",
+        "lines": "array",
+        "lock": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadLock",
+        "rowTag": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedLoadOptions": {
         "assignments": "array",
         "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
@@ -2406,6 +2422,7 @@
         "options": "array",
         "orderBy": "array",
         "procedure": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\ProcedureAnalyse",
+        "qualify": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "windows": "array"
     },

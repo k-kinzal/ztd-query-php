@@ -157,6 +157,7 @@ final class Reading
      */
     public function diagnosed(Operation|QueryPreparation $operation, Session $session): void
     {
+        (new \MySqlMemory\Session\Access\RelationEntry())->check($operation->statement, $operation->facts, $session);
         $alias = null;
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && $operation instanceof Operation && Stages::selfChecked($operation->statement))) {

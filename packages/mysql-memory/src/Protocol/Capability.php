@@ -34,6 +34,11 @@ final class Capability
     public const CONNECT_WITH_DB = 8;
 
     /**
+     * The connection supports client file requests (CLIENT_LOCAL_FILES).
+     */
+    public const LOCAL_FILES = 128;
+
+    /**
      * The 4.1 protocol is used, with its column definitions and SQLSTATE in errors (CLIENT_PROTOCOL_41).
      */
     public const PROTOCOL_41 = 512;

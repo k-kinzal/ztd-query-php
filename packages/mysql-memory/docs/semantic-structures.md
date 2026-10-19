@@ -1176,6 +1176,23 @@ widths or window placement before the LOAD option conflict. Ordinary
 generated counterexample and repeat operand combinations without a selected
 database, with absent tables and after the tables contain rows.
 
+A non-scalar assignment without an active option conflict retains the complete
+request as `RefusedLoadAssignments`. This diagnostic is not an ordinary
+statement. It holds the file source, LOCAL flag, target, character set, separators,
+column list and all assignments. The same input-entry checks operate on ordinary
+loads and retained refusals, followed by operand preparation in the resolved
+destination scope. A direct history changes the database and table state while
+reusing the refusal with unrelated request text. Stored programs reject LOAD
+regardless of the assignment's scalar role.
+
+Deferred selections also retain QUALIFY predicates. Unused common tables and
+unvisited stored branches preserve these operands without preparing them. Once
+reached, their relation dependencies precede the hypergraph-optimizer requirement,
+which precedes column and row-width preparation. Resolved common-table links and
+explicit clause structure determine this order without source SQL. Native tests
+cover populated inputs, missing dependencies, projection qualifiers, system
+variables and the original generated UPDATE with an unused QUALIFY body.
+
 Identifier character sets are interpreted at the input boundary. In particular,
 Latin-1 input bytes become decoded system-character-set names before the model
 is published. Planning uses those names directly; changing `character_set_client`

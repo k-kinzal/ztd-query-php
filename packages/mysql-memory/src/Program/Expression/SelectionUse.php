@@ -65,6 +65,9 @@ final class SelectionUse
      */
     public function diagnosed(\SqlSemantics\Statement\Fact\Facts $facts, Session $session, ?DeferredSelection $selection = null, bool $qualifiers = true): void
     {
+        if ($selection !== null) {
+            (new \MySqlMemory\Session\Access\RelationEntry())->check($selection, $facts, $session);
+        }
         foreach ($facts->diagnostics as $problem) {
             if (Stages::parsed($problem)) {
                 throw (new Errors())->error($problem, $session);
@@ -79,7 +82,7 @@ final class SelectionUse
             (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($selection, $session);
         }
         foreach ($facts->diagnostics as $problem) {
-            if ($problem instanceof MissingTable || ($qualifiers && $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier)) {
+            if ($problem instanceof MissingTable || ($qualifiers && $selection?->qualify === null && $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier)) {
                 throw (new Errors())->error($problem, $session);
             }
         }

@@ -54,6 +54,11 @@ final class Client
     public readonly Statements $statements;
 
     /**
+     * Receives LOAD LOCAL file packets without starting another command.
+     */
+    public readonly FileTransfer $files;
+
+    /**
      * @param Instance $instance The server
      * @param int $id The connection id
      * @param Closure $send Sends bytes to the client: fn (string): void
@@ -65,6 +70,7 @@ final class Client
         $this->generation = $instance->registry->status->generation;
         $this->messages = new Messages();
         $this->statements = new Statements($this);
+        $this->files = new FileTransfer($this);
     }
 
     /**
@@ -99,6 +105,9 @@ final class Client
                 if (!$this->handle($payload)) {
                     return false;
                 }
+                if ($this->files->active && $this->files->complete) {
+                    break;
+                }
             } catch (MalformedPacket $failure) {
                 $this->packet($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message()));
 
@@ -118,6 +127,10 @@ final class Client
      */
     public function handle(string $payload): bool
     {
+        if ($this->files->active) {
+            $this->files->receive($payload);
+            return true;
+        }
         if ($this->session === null) {
             return $this->authenticate(new PayloadReader($payload));
         }
@@ -130,6 +143,8 @@ final class Client
         }
         $running = $this->session->running;
         $previous = $running->respond;
+        $fileReader = $running->readFile;
+        $running->readFile = $this->files->request(...);
         $running->respond = function (ResultSet $result) use ($command): void {
             $this->reply($result, 8, $command === 0x17);
         };
@@ -147,6 +162,7 @@ final class Client
             };
         } finally {
             $running->respond = $previous;
+            $running->readFile = $fileReader;
         }
     }
 

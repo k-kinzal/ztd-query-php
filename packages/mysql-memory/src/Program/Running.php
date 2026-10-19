@@ -46,6 +46,11 @@ final class Running
     public ?Closure $respond = null;
 
     /**
+     * @var Closure(string): string|null Requests a named client file on a wire connection; null when client file access is unavailable
+     */
+    public ?Closure $readFile = null;
+
+    /**
      * An unfinished query result, completed by a handler or ended with an error packet.
      */
     public ?\MySqlMemory\Result\ResultSet $partial = null;
