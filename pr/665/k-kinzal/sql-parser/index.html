@@ -76,6 +76,7 @@
 
 <span class="tok-var">$parser</span> = <span class="tok-kw">new</span> <span class="tok-id">MySqlParser</span>(<span class="tok-str">&#039;mysql-8.4.7&#039;</span>, <span class="tok-id">SqlMode</span>::<span class="tok-id">fromString</span>(<span class="tok-str">&#039;ANSI_QUOTES,NO_BACKSLASH_ESCAPES&#039;</span>));
 <span class="tok-var">$parser</span>-&gt;<span class="tok-id">tokenize</span>(<span class="tok-str">&#039;SELECT &quot;x&quot;&#039;</span>)[<span class="tok-num">1</span>]-&gt;<span class="tok-id">name</span>;        <span class="tok-com">// &#039;IDENT_QUOTED&#039;</span></code></pre>
+<p>For a Latin-1 connection, pass <code>clientCharset: &#039;latin1&#039;</code> to <code>MySqlParser</code>. This selects the observed MySQL Latin-1 classes for unquoted identifier bytes and whitespace, including the nonbreaking-space byte. Quoted tokens retain their original bytes. Omitting the option keeps the existing multibyte byte classification; this option does not transcode SQL text.</p>
 <p>A named placeholder such as <code>:id</code> is not in the languages of MySQL and PostgreSQL, which read only their own markers. Their parsers read <code>:name</code> as a parameter under <code>ParameterSyntax::Named</code>, as a dialect extension; SQLite reads it natively.</p>
 <pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Lexer\ParameterSyntax</span>;
 <span class="tok-kw">use</span> <span class="tok-id">SqlParser\PostgreSql\PostgreSqlParser</span>;

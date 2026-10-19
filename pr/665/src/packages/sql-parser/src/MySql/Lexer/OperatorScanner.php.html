@@ -81,7 +81,8 @@
 <span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>        <span class="tok-var">$character</span> = <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>();</span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>        <span class="tok-kw">if</span> (<span class="tok-var">$character</span> === <span class="tok-str">&#039;?&#039;</span>) {</span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>            <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">take</span>(<span class="tok-num">1</span>);</span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>            <span class="tok-kw">if</span> (<span class="tok-id">Scan</span>::<span class="tok-id">isIdentifierByte</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>())) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">44</span>            <span class="tok-kw">if</span> (<span class="tok-id">Scan</span>::<span class="tok-id">isIdentifierByte</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>())) {</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            <span class="tok-kw">if</span> (<span class="tok-id">Scan</span>::<span class="tok-id">isIdentifierByte</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>(), <span class="tok-var">$scan</span>-&gt;<span class="tok-id">clientCharset</span>)) {</span>
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>                <span class="tok-kw">throw</span> <span class="tok-id">LexicalException</span>::<span class="tok-id">unexpectedCharacter</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">source</span>, <span class="tok-var">$start</span>);</span>
 <span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>            }</span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a></span>
@@ -114,9 +115,9 @@
 <span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>        <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">take</span>(<span class="tok-num">1</span>);</span>
 <span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a></span>
 <span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>        <span class="tok-kw">return</span> <span class="tok-var">$scan</span>-&gt;<span class="tok-id">lexeme</span>(<span class="tok-var">$scan</span>-&gt;<span class="tok-id">keywords</span>-&gt;<span class="tok-id">lookup</span>(<span class="tok-var">$character</span>, <span class="tok-id">false</span>, <span class="tok-var">$scan</span>-&gt;<span class="tok-id">mode</span>) ?? <span class="tok-var">$character</span>, <span class="tok-var">$start</span>);</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    }</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a></span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>    }</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     * Reads adjacent comparison punctuation without splitting an invalid candidate.</span></span>
 <span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-com">     * A leading less-than sign admits a third greater-than, equals or bang byte.</span></span>
@@ -138,9 +139,9 @@
 <span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>        <span class="tok-var">$scan</span>-&gt;<span class="tok-id">cursor</span>-&gt;<span class="tok-id">take</span>(<span class="tok-id">strlen</span>(<span class="tok-var">$match</span>[<span class="tok-num">0</span>]));</span>
 <span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a></span>
 <span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>        <span class="tok-kw">return</span> <span class="tok-var">$scan</span>-&gt;<span class="tok-id">lexeme</span>(<span class="tok-var">$name</span>, <span class="tok-var">$start</span>);</span>
-<span class="src-line" id="L101" data-diff="same"><a class="ln" href="#L101">101</a>    }</span>
-<span class="src-line" id="L102" data-diff="same"><a class="ln" href="#L102">102</a></span>
-<span class="src-line" id="L103" data-diff="same"><a class="ln" href="#L103">103</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>    }</span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a></span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L104" data-diff="same"><a class="ln" href="#L104">104</a><span class="tok-com">     * Names the terminal a two- or three-character operator stands for.</span></span>
 <span class="src-line" id="L105" data-diff="same"><a class="ln" href="#L105">105</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L106" data-diff="same"><a class="ln" href="#L106">106</a><span class="tok-com">     * @param Scan $scan The tokenization in progress</span></span>
@@ -178,7 +179,8 @@
 <span class="src-line" id="L138" data-diff="same"><a class="ln" href="#L138">138</a>        <span class="tok-var">$cursor</span> = <span class="tok-var">$scan</span>-&gt;<span class="tok-id">cursor</span>;</span>
 <span class="src-line" id="L139" data-diff="same"><a class="ln" href="#L139">139</a>        <span class="tok-var">$start</span> = <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">offset</span>();</span>
 <span class="src-line" id="L140" data-diff="same"><a class="ln" href="#L140">140</a>        <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">take</span>(<span class="tok-num">1</span>);</span>
-<span class="src-line" id="L141" data-diff="same"><a class="ln" href="#L141">141</a>        <span class="tok-var">$scan</span>-&gt;<span class="tok-id">next</span> = <span class="tok-id">Scan</span>::<span class="tok-id">isIdentifierByte</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>()) ? <span class="tok-id">LexerState</span>::<span class="tok-id">IdentifierStart</span> : <span class="tok-id">LexerState</span>::<span class="tok-id">Start</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">113</span>        <span class="tok-var">$scan</span>-&gt;<span class="tok-id">next</span> = <span class="tok-id">Scan</span>::<span class="tok-id">isIdentifierByte</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>()) ? <span class="tok-id">LexerState</span>::<span class="tok-id">IdentifierStart</span> : <span class="tok-id">LexerState</span>::<span class="tok-id">Start</span>;</span>
+<span class="src-line" id="L141" data-diff="added"><a class="ln" href="#L141">141</a>        <span class="tok-var">$scan</span>-&gt;<span class="tok-id">next</span> = <span class="tok-id">Scan</span>::<span class="tok-id">isIdentifierByte</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>(), <span class="tok-var">$scan</span>-&gt;<span class="tok-id">clientCharset</span>) ? <span class="tok-id">LexerState</span>::<span class="tok-id">IdentifierStart</span> : <span class="tok-id">LexerState</span>::<span class="tok-id">Start</span>;</span>
 <span class="src-line" id="L142" data-diff="same"><a class="ln" href="#L142">142</a></span>
 <span class="src-line" id="L143" data-diff="same"><a class="ln" href="#L143">143</a>        <span class="tok-kw">return</span> <span class="tok-var">$scan</span>-&gt;<span class="tok-id">lexeme</span>(<span class="tok-str">&#039;.&#039;</span>, <span class="tok-var">$start</span>);</span>
 <span class="src-line" id="L144" data-diff="same"><a class="ln" href="#L144">144</a>    }</span>

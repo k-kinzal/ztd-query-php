@@ -99,7 +99,8 @@
 <span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a><span class="tok-com">     * Answers the parser of a profile, created once per profile.</span></span>
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">parser</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">SqlParser</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">63</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">parser</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">SqlParser</span></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">parser</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>, ?<span class="tok-id">\SqlSemantics\Contract\Session</span> <span class="tok-var">$session</span> = <span class="tok-id">null</span>): <span class="tok-id">SqlParser</span></span>
 <span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    {</span>
 <span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        <span class="tok-var">$key</span> = <span class="tok-var">$profile</span>-&gt;<span class="tok-id">grammar</span>-&gt;<span class="tok-id">value</span>;</span>
 <span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a></span>
