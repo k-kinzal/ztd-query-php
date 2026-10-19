@@ -64,6 +64,15 @@ Construct a standalone query as `new QueryRoot($body)` before passing it to
 `Operation`. The wrapper enforces constraints of the statement position;
 `inputRelation()`, result fields and rendered SQL remain available on the operation.
 
+`Statement\Dml\Insert\InsertRows` requires equal written row widths and, when a
+nonempty column list is explicit, the same number of values as listed columns.
+An omitted list leaves the destination width to catalog resolution. Stored
+instructions can retain incompatible widths and nonscalar duplicate-key values
+in `DeferredInsertRows` and `DeferredColumnAssignment`; these templates preserve
+the operands needed when an instruction is reached. They do not make a row operand
+an ordinary scalar assignment. Lowering a standalone contradictory INSERT raises
+`Construction\RejectedInput` with the complete typed instruction.
+
 Written declaration types implement `Statement\Type\DeclaredName`; VARCHAR and
 VARBINARY declarations require a length. Expression facts can instead hold
 `Statement\Type\StringFamily` when the length is unresolved. This descriptor

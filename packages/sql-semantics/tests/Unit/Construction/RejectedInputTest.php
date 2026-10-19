@@ -41,4 +41,17 @@ final class RejectedInputTest extends TestCase
 
         new RejectedInput(new ProgramProblem(ProgramRule::BadSqlState, '00'), -1);
     }
+
+    public function testRetainsOccurrenceRangesOutsideTheDiagnosticStructure(): void
+    {
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('x'));
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression($expression);
+        $sources = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($expression, 12, 2)]);
+        $failure = new RejectedInput($problem, 14, sources: $sources);
+
+        self::assertSame($sources, $failure->sources);
+        self::assertSame(12, $failure->sources->of($expression)?->offset);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression::class, $failure->problem);
+        self::assertSame($expression, $failure->problem->expression);
+    }
 }

@@ -251,7 +251,7 @@ final class CreateTableRule
     {
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($elements, $options, $query, $partitioning)) {
             $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate($definition), 0, false);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate($definition), 0, false, $this->lowering->origins->publish());
         }
         return new CreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
     }

@@ -36,6 +36,18 @@ final class TableUseTest extends TestCase
         $session->query('CREATE TABLE t ENGINE=missing UNION=() SELECT ROW(1,2)');
     }
 
+    public function testContextualizeUsesThePartitionStructureBeforeTheDeferredCreationRole(): void
+    {
+        $partition = new M\Partition\PartitionClause(new M\Partition\Method\HashMethod(false, new M\Variable\UserVariable(new Name('v'))), null, null, []);
+        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t'), new Name('missing')), partitioning: $partition);
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated input';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage('Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed');
+        (new TableUse())->raise($definition, $session);
+    }
+
     public function testPrepareResolvesTheSourceBeforeRetainingTheDefinition(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

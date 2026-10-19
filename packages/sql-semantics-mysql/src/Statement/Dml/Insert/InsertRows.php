@@ -44,11 +44,12 @@ final class InsertRows implements Explainable
      * @param list<InsertedRow> $rows The rows; at least one
      * @param RowAlias|null $alias The alias of the new row
      * @param list<Assignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
-     * @throws InvalidConstruction When there is no row, or REPLACE has an alias or ON DUPLICATE KEY UPDATE
+     * @throws InvalidConstruction When written widths contradict each other, there is no row, or REPLACE has an alias or ON DUPLICATE KEY UPDATE
      */
     public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [])
     {
         $this->rows = Check::listOf($rows, InsertedRow::class, 'VALUES holds at least one row.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\InsertWidths())->problem($into, $this->rows) === null, 'INSERT rows agree with each other and any explicit column count.');
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || ($alias === null && $this->onDuplicate === []), 'REPLACE has neither a row alias nor ON DUPLICATE KEY UPDATE.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

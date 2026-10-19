@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * A stored INSERT or REPLACE retaining every value, target and duplicate-key clause.
  *
- * At least one value has a non-scalar preparation condition. The ordinary write
+ * Written widths conflict or at least one value has a non-scalar preparation condition. The ordinary write
  * domain remains InsertRows; a skipped stored instruction never prepares this
  * template. Its target and every operand bind together when it is reached.
  *
@@ -40,7 +40,7 @@ final class DeferredInsertRows implements ProgramStatement
     public readonly array $rows;
 
     /**
-     * @var list<Assignment> The assignments of ON DUPLICATE KEY UPDATE in written order
+     * @var list<Assignment|DeferredColumnAssignment> The assignments of ON DUPLICATE KEY UPDATE in written order
      */
     public readonly array $onDuplicate;
 
@@ -48,7 +48,7 @@ final class DeferredInsertRows implements ProgramStatement
      * @param InsertInto $into The head: verb, modifiers, table and column list
      * @param list<InsertedRow|DeferredInsertedRow> $rows The rows; at least one
      * @param RowAlias|null $alias The alias of the new row
-     * @param list<Assignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
+     * @param list<Assignment|DeferredColumnAssignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
      * @throws InvalidConstruction When there is no row, or REPLACE has an alias or ON DUPLICATE KEY UPDATE
      */
     public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [])
@@ -58,9 +58,14 @@ final class DeferredInsertRows implements ProgramStatement
             Check::input($row instanceof InsertedRow || $row instanceof DeferredInsertedRow, 'A write retains inserted-row operands.');
             $items[] = $row;
         }
-        Check::input(array_filter($items, static fn ($row): bool => $row instanceof DeferredInsertedRow) !== [], 'A deferred write retains a non-scalar value condition.');
+        $assignments = [];
+        foreach (Check::listOf($onDuplicate, \SqlSemantics\Statement\Node::class, 'ON DUPLICATE KEY UPDATE holds assignments.') as $assignment) {
+            Check::input($assignment instanceof Assignment || $assignment instanceof DeferredColumnAssignment, 'An assignment retains its column and value role.');
+            $assignments[] = $assignment;
+        }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\InsertWidths())->problem($into, $items) !== null || array_filter($items, static fn ($row): bool => $row instanceof DeferredInsertedRow) !== [] || array_filter($assignments, static fn ($item): bool => $item instanceof DeferredColumnAssignment) !== [], 'A deferred write retains a width or non-scalar value condition.');
         $this->rows = $items;
-        $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
+        $this->onDuplicate = $assignments;
         Check::input(!$into->replace || ($alias === null && $this->onDuplicate === []), 'REPLACE has neither a row alias nor ON DUPLICATE KEY UPDATE.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -80,6 +85,10 @@ final class DeferredInsertRows implements ProgramStatement
      */
     public function problem(): \SqlSemantics\Statement\Fact\Diagnostic
     {
+        $width = (new \SqlSemantics\Platform\MySql\Rules\Dml\InsertWidths())->problem($this->into, $this->rows);
+        if ($width !== null) {
+            return $width;
+        }
         foreach ($this->rows as $row) {
             foreach ($row->values as $value) {
                 if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
@@ -87,7 +96,12 @@ final class DeferredInsertRows implements ProgramStatement
                 }
             }
         }
-        throw new LogicException('The deferred-write constructor requires a non-scalar value.');
+        foreach ($this->onDuplicate as $assignment) {
+            if ($assignment instanceof DeferredColumnAssignment) {
+                return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$assignment->value]);
+            }
+        }
+        throw new LogicException('The deferred-write constructor requires a width or non-scalar value condition.');
     }
 
     /**

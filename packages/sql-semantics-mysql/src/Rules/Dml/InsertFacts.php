@@ -322,7 +322,7 @@ final class InsertFacts
     /**
      * Derives the row alias and the assignments of ON DUPLICATE KEY UPDATE.
      *
-     * @param list<Assignment> $assignments
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $assignments
      * @param list<Field>|null $written
      * @param list<VisibleRelation> $sources The relations of the FROM clause of a query source
      */

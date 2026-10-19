@@ -69,7 +69,7 @@ final class WriteScope
     /**
      * Derives assignments: each column where the written tables are visible, each value in its environment.
      *
-     * @param list<Assignment> $assignments
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $assignments
      * @param bool $distinct Whether the server requires distinct columns
      * @return list<Field> The assigned columns in written order
      */
@@ -78,7 +78,11 @@ final class WriteScope
         $fields = [];
         foreach ($assignments as $position => $assignment) {
             $field = $this->field($position, $assignment->column, $derivation->scalar($assignment->column, $this->written($columns)));
-            $this->value($assignment->value, $field, $derivation, $values);
+            if ($assignment instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) {
+                $derivation->scalar($assignment->value, $values);
+            } else {
+                $this->value($assignment->value, $field, $derivation, $values);
+            }
             $fields[] = $field;
         }
         if ($distinct) {

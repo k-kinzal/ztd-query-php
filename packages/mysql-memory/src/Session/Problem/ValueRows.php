@@ -28,10 +28,10 @@ final class ValueRows
      */
     public function extended(SqlError $error, Node $statement, GrammarRelease $release): SqlError
     {
-        if ($release !== GrammarRelease::MySql5744 || !$statement instanceof InsertRows || $error->following !== []) {
+        if ($release !== GrammarRelease::MySql5744 || !($statement instanceof InsertRows || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows) || $error->following !== []) {
             return $error;
         }
-        $first = $error->error === QueryError::BadField || ($error->error === QueryError::WrongValueCountOnRow && $error->getMessage() === QueryError::WrongValueCountOnRow->message(1));
+        $first = in_array($error->error, [QueryError::BadField, QueryError::FieldSpecifiedTwice, QueryError::OperandColumns], true) || ($error->error === QueryError::WrongValueCountOnRow && $error->getMessage() === QueryError::WrongValueCountOnRow->message(1));
         if (!$first) {
             return $error;
         }

@@ -74,14 +74,14 @@ final class GeneratedWrites
     /**
      * Reports the assignments that write a value other than a default value item into a generated column.
      *
-     * @param list<Assignment> $assignments
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $assignments
      * @param list<Field> $fields The assigned columns, one per assignment in written order
      */
     public function assignments(array $assignments, array $fields, Derivation $derivation): void
     {
         foreach ($fields as $position => $field) {
             $resolution = $field->resolution;
-            if ($resolution instanceof ResolvedColumn) {
+            if ($resolution instanceof ResolvedColumn && $assignments[$position] instanceof Assignment) {
                 $this->value($field, $assignments[$position]->value, $this->table($resolution->relation, $derivation), $derivation);
             }
         }

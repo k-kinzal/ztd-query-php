@@ -44,4 +44,14 @@ final class DeferredInsertRowsTest extends TestCase
         self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
         self::assertSame('Operand should contain 1 column(s), not 2.', $operation->statement->body->problem()->message());
     }
+
+    public function testProblemRetainsWrittenWidthsWithoutRequiringAnOperation(): void
+    {
+        $into = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto(false, null, false, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
+        $rows = [new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow([]), new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow([new \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest()])];
+        $write = new DeferredInsertRows($into, $rows);
+        self::assertSame($into, $write->into);
+        self::assertSame($rows, $write->rows);
+        self::assertSame("Column count doesn't match value count at row 2", $write->problem()->message());
+    }
 }

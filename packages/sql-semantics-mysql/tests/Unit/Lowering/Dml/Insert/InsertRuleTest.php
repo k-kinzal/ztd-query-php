@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Dml\Insert;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -40,6 +41,27 @@ final class InsertRuleTest extends TestCase
     {
         self::assertSame('INSERT INTO t VALUES (1)', (new Semantics(Dialect::MySql))->analyze('insert t values (1)')->toString());
         self::assertSame('INSERT INTO t (a) TABLE u', (new Semantics(Dialect::MySql))->analyze('insert t (a) table u')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerContradictoryWidths(): iterable
+    {
+        yield 'unequal rows' => ['INSERT INTO t VALUES (1, 2), (3)', 2];
+        yield 'trailing defaults' => ['INSERT INTO t VALUES (1, 2), ()', 2];
+        yield 'leading defaults' => ['INSERT INTO t VALUES (), (1, 2)', 2];
+        yield 'written column count' => ['INSERT INTO t (a) VALUES (1), (2, 3)', 2];
+        yield 'duplicate column and different widths' => ['INSERT INTO t (a, b, a) VALUES (1, 2, 3), (4)', 2];
+        yield 'replace defaults' => ['REPLACE INTO `2024-01-01`.t VALUES (DEFAULT, DEFAULT), (), (DEFAULT)', 2];
+    }
+
+    #[DataProvider('providerContradictoryWidths')]
+    public function testBuildRefusesContradictoryStandaloneWidths(string $sql, int $row): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Column count doesn't match value count at row " . $row);
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 
     public function testTargetLowersTheLegacyTable(): void

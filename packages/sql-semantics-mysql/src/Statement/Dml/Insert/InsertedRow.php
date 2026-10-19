@@ -21,8 +21,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the values of a row
- *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t VALUES (1, 2), ()');
- *     [count($insert->statement->rows[0]->values), count($insert->statement->rows[1]->values)] // => [2, 0]
+ *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t VALUES (1, 2), (3, DEFAULT)');
+ *     [count($insert->statement->rows[0]->values), count($insert->statement->rows[1]->values)] // => [2, 2]
  */
 final class InsertedRow implements Node
 {

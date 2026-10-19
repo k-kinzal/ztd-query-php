@@ -118,6 +118,10 @@ final class TableInput
             }
             throw new CompletedTemplate($use->raise($problem->definition, $session, false));
         } catch (SqlError $error) {
+            $cause = $error->getPrevious();
+            if ($cause instanceof RejectedInput) {
+                $error = (new \MySqlMemory\Session\Parse\LocatedErrors())->located($cause->problem, $failure->sources, $session) ?? $error;
+            }
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
             }

@@ -28,8 +28,9 @@ final class RejectedInput extends RuntimeException
      * @param Diagnostic $problem The typed reason the operand cannot be constructed
      * @param int $end The exclusive byte offset of the completed operand
      * @param bool $aborts Whether the refusal stops reading later grammar operands
+     * @param \SqlSemantics\Statement\Source\SourceMap $sources Occurrence ranges for formatting the refusal; no original text or parser nodes
      */
-    public function __construct(public readonly Diagnostic $problem, public readonly int $end, public readonly bool $aborts = true)
+    public function __construct(public readonly Diagnostic $problem, public readonly int $end, public readonly bool $aborts = true, public readonly \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap())
     {
         Check::input($end >= 0, 'An input operand ends at a nonnegative byte offset.');
         parent::__construct($problem->message());

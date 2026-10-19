@@ -15,6 +15,11 @@ The work is complete only when all of these gates pass on the same revision:
 | State transitions | When an error is explained as state-dependent, preserve the same structure and demonstrate the relevant transition against MySQL. Include populated fixtures and histories so that an empty database does not hide all downstream behavior. |
 | Differential behavior | Replay all SQL Faker supplied high-coverage seeds and run an unseeded differential campaign for at least 900 seconds without an unexplained difference or crash. Grammar coverage belongs exclusively to SQL Faker. |
 
+The supplied-seed gate includes all nine shipped MySQL corpora: 5.6.51, 5.7.44,
+8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1 and 9.1.0. A passing corpus from an
+earlier revision does not replace a final-revision run. Neither this package nor
+its structure generator imposes a second grammar-coverage metric.
+
 Values determined by SQL session history must agree. Values specific to an
 instance, operating system or physical storage require an explicit comparison
 contract supported by observations from independent MySQL instances. Memory

@@ -68,4 +68,67 @@ final class InsertUseTest extends TestCase
         $this->expectExceptionCode(1241);
         (new InsertUse())->raise($operation->statement->body, $session);
     }
+
+    public function testWidthChecksAnEmptyDefaultsRowAgainstTheFirstRow(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1), ()')->statement;
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $this->expectExceptionMessage("Column count doesn't match value count at row 2");
+        (new InsertUse())->width($procedure->body, 1, $table);
+    }
+
+    public function testValuesBindTheFirstRowBeforeALaterWidthFailure(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, b INT)');
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (absent, 2), (3)')->statement;
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
+        $session->text = 'unrelated invalid input';
+        $error = (new InsertUse())->error($procedure->body, $session);
+        self::assertSame(1054, $error->getCode());
+        self::assertSame([[1136, "Column count doesn't match value count at row 2"]], $error->following);
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
+    public function testRowsKeepModernDestinationBindingBeforeFirstRowWidth(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t (absent) VALUES (1, 2)')->statement;
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
+        $error = (new InsertUse())->error($procedure->body, $session);
+        self::assertSame("Unknown column 'absent' in 'field list'", $error->getMessage());
+        self::assertSame([], $error->following);
+    }
+    public function testUpdatesPrepareOnlyAfterPrecedingRowsOnModernReleases(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, b INT)');
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1, 2), (3) ON DUPLICATE KEY UPDATE a = ROW(4, 5)')->statement;
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
+        self::assertSame("Column count doesn't match value count at row 2", (new InsertUse())->error($procedure->body, $session)->getMessage());
+        $onlyUpdate = $session->analyze('CREATE PROCEDURE q() INSERT INTO t VALUES (1, 2) ON DUPLICATE KEY UPDATE a = ROW(4, 5)')->statement;
+        self::assertInstanceOf(CreateProcedure::class, $onlyUpdate);
+        self::assertInstanceOf(DeferredInsertRows::class, $onlyUpdate->body);
+        self::assertSame('Operand should contain 1 column(s)', (new InsertUse())->error($onlyUpdate->body, $session)->getMessage());
+    }
+
+    public function testHeadKeepsLegacyFirstRowOperandsBeforeWrittenColumnCounts(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t(a) VALUES (unknown_value, 2)')->statement;
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
+        self::assertSame("Unknown column 'unknown_value' in 'field list'", (new InsertUse())->error($procedure->body, $session)->getMessage());
+    }
+
 }

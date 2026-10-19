@@ -70,11 +70,6 @@ final class InsertUse
                 throw (new Errors())->error($problem, $session);
             }
         }
-        foreach ($facts->diagnostics as $problem) {
-            if ($write instanceof DeferredInsertRows && ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\DuplicateColumn)) {
-                throw (new Errors())->error($problem, $session);
-            }
-        }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary);
@@ -92,33 +87,134 @@ final class InsertUse
         $schema = $write->into->table->name->schema->value ?? $session->variables->database;
         $table = $session->instance->dictionary->table($schema, $write->into->table->name->name->value);
         \SqlSemantics\Diagnostic\Check::invariant($table !== null, 'The write target was opened before value preparation.');
-        if ($write instanceof DeferredInsertRows || !$session->settings()->legacy() || ($session->preparation->inputPrepared && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651)) {
+        if ($write instanceof DeferredInsertRows) {
+            $this->rows($write, $planner, $session, $table);
+        }
+        if (!$session->settings()->legacy() || ($session->preparation->inputPrepared && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651)) {
             foreach ($write->into->columns->columns ?? [] as $column) {
                 if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
                     (new \MySqlMemory\Command\Write\Assignments($planner, $table))->position($column);
                 }
             }
         }
-        if ($write instanceof DeferredInsertQuery) {
-            (new QueryUse())->prepare($write->source, $planner->compiler, write: $session->preparation->inputPrepared ? null : $write);
-            $planner->query($write->source, null);
-            throw (new Errors())->error($write->problem(), $session);
-        }
+        (new QueryUse())->prepare($write->source, $planner->compiler, write: $session->preparation->inputPrepared ? null : $write);
+        $planner->query($write->source, null);
+        throw (new Errors())->error($write->problem(), $session);
+    }
+
+    /**
+     * Binds complete rows in order, retaining legacy first-row and following-error behavior.
+     *
+     * @throws SqlError When a destination, width or value cannot prepare
+     * @throws LogicException When a retained write loses its required condition
+     */
+    public function rows(DeferredInsertRows $write, \MySqlMemory\Plan\Planner $planner, Session $session, \MySqlMemory\Dictionary\StoredTable $table): never
+    {
         $scope = new \MySqlMemory\Evaluation\Scope();
         $scope->place($write->into->table, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);
-        foreach ($write->rows as $row) {
-            foreach ($row->values as $value) {
-                if ($value instanceof DefaultRequest) {
-                    continue;
-                }
-                if ($value instanceof Scalar) {
-                    $planner->compiler->compile($value, $scope);
-                } else {
-                    (new RowUse())->prepare($value, $planner->compiler, $scope);
-                    throw (new RowUse())->error($value);
-                }
+        $oldest = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        try {
+            $this->head($write, $planner, $session, $scope, $table);
+        } catch (SqlError $error) {
+            throw (new \MySqlMemory\Session\Problem\ValueRows())->extended($error, $write, $session->settings()->release());
+        }
+        if ($oldest) {
+            $this->updates($write, $planner, $scope, $table);
+        }
+        try {
+            foreach (array_slice($write->rows, 1) as $index => $row) {
+                $this->width($write, $index + 1, $table);
+                $this->values($row, $planner, $scope);
+            }
+        } catch (SqlError $error) {
+            throw (new \MySqlMemory\Session\Problem\ValueRows())->extended($error, $write, $session->settings()->release());
+        }
+        if (!$oldest) {
+            $this->updates($write, $planner, $scope, $table);
+        }
+        throw new LogicException('A retained write has a width or non-scalar value condition.');
+    }
+
+    /**
+     * Prepares first-row operands and written columns in the release's observed order.
+     */
+    public function head(DeferredInsertRows $write, \MySqlMemory\Plan\Planner $planner, Session $session, \MySqlMemory\Evaluation\Scope $scope, \MySqlMemory\Dictionary\StoredTable $table): void
+    {
+        $oldest = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        if ($oldest) {
+            $this->values($write->rows[0], $planner, $scope);
+        }
+        if ($session->settings()->legacy()) {
+            $this->width($write, 0, $table);
+        }
+        foreach ($write->into->columns->columns ?? [] as $column) {
+            if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
+                (new \MySqlMemory\Command\Write\Assignments($planner, $table))->position($column);
             }
         }
-        throw new LogicException('A deferred write retains a non-scalar value condition.');
+        foreach ($planner->compiler->facts->diagnostics as $problem) {
+            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\DuplicateColumn) {
+                throw (new Errors())->error($problem, $session);
+            }
+        }
+        $this->width($write, 0, $table);
+        if (!$oldest) {
+            $this->values($write->rows[0], $planner, $scope);
+        }
+    }
+
+    /**
+     * Binds every duplicate-key target and value after the preceding write dependencies.
+     */
+    public function updates(DeferredInsertRows $write, \MySqlMemory\Plan\Planner $planner, \MySqlMemory\Evaluation\Scope $scope, \MySqlMemory\Dictionary\StoredTable $table): void
+    {
+        $scope = clone $scope;
+        $scope->inserted = $table->definition;
+        if ($write->alias !== null) {
+            $scope->place($write->alias, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);
+        }
+        foreach ($write->onDuplicate as $assignment) {
+            (new \MySqlMemory\Command\Write\Assignments($planner, $table))->position($assignment->column);
+            if ($assignment instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) {
+                (new RowUse())->prepare($assignment->value, $planner->compiler, $scope);
+                throw (new RowUse())->error($assignment->value);
+            }
+            if ($assignment->value instanceof Scalar) {
+                $planner->compiler->compile($assignment->value, $scope);
+            }
+        }
+    }
+
+    /**
+     * Checks the reached row against destination columns and the first written row.
+     *
+     * @throws SqlError When the row has another width
+     */
+    public function width(DeferredInsertRows $write, int $index, \MySqlMemory\Dictionary\StoredTable $table): void
+    {
+        $count = count($write->rows[$index]->values);
+        $listed = count($write->into->columns->columns ?? []);
+        $width = $listed === 0 ? count(array_filter($table->definition->columns, static fn ($column): bool => !$column->invisible)) : $listed;
+        if (($index > 0 && $count !== count($write->rows[0]->values)) || (($count !== 0 || $listed !== 0) && $count !== $width)) {
+            throw \MySqlMemory\Error\Family\QueryError::WrongValueCountOnRow->error($index + 1);
+        }
+    }
+
+    /**
+     * Binds one row's operands in its destination scope, without evaluating or writing them.
+     */
+    public function values(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow $row, \MySqlMemory\Plan\Planner $planner, \MySqlMemory\Evaluation\Scope $scope): void
+    {
+        foreach ($row->values as $value) {
+            if ($value instanceof DefaultRequest) {
+                continue;
+            }
+            if ($value instanceof Scalar) {
+                $planner->compiler->compile($value, $scope);
+            } else {
+                (new RowUse())->prepare($value, $planner->compiler, $scope);
+                throw (new RowUse())->error($value);
+            }
+        }
     }
 }

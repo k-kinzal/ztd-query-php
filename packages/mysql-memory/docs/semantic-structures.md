@@ -3275,12 +3275,30 @@ refusal with the target database. Legacy ignored algorithm annotations remain
 representable. The regression corpus retains the complete unseeded input and
 checks MySQL 8.1, 8.2, 8.3, 8.4 and 9.1.
 
-Acceptance remains open. The latest completed whole-model evidence remains the
-`query874-recursion-purge` snapshot (`e79f7cd19a3`): all 244 public roots, 100
+Ordinary `InsertRows` requires all written rows to agree in width, including
+empty default rows, and to match a nonempty explicit destination column list.
+Without an explicit list, the destination width remains a catalog dependency.
+`DeferredInsertRows` retains contradictory written widths, nonscalar row values
+and nonscalar duplicate-key assignments in their original positions. A skipped
+stored instruction does not prepare them. A reached instruction binds its target,
+rows and update assignments in the release's observed order. A direct state test
+holds one ordinary INSERT object fixed while its target changes from absent, to
+a two-column table, to a one-column table; the final execution writes both rows.
+The native history corpus also combines width, column, operand and generated-column
+conditions, preserving all warnings and errors on five releases.
+
+Retained columnless table definitions still derive their partition expressions.
+Their contextualization conditions precede destination lookup and the columnless
+creation condition. Error locations are occurrence ranges on the input refusal,
+outside the semantic definition; they retain neither SQL text nor parser nodes.
+Direct consumers derive the same condition without consulting a request label.
+
+Acceptance remains open. Completed whole-model evidence on the
+`query947` snapshot (`6e1ceab0785`) includes all 244 public roots, 100
 matching successes, 144 matching SQL errors and 171 matching database-transition
-observations. It predates these repairs. Matching SQL errors still need the
+observations. It predates the INSERT and partition repairs above. Matching SQL errors still need the
 classifications required by the acceptance contract. The subsequent unseeded
-runs found saved compression, diagnostics, locking and bulk-prefix differences;
+runs found saved comparison-contract and columnless-partition differences;
 none counts as a 900-second pass. Final-revision whole-model, supplied-seed and
 unseeded campaigns remain necessary. The previously recorded native 5.7
 disconnect, physical-path and client-character-set cases remain unresolved.

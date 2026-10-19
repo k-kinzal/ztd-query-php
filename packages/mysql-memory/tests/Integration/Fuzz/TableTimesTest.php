@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\TableTimes;
+use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
@@ -115,6 +116,19 @@ final class TableTimesTest extends TestCase
         self::assertFalse($clock->contains('missing', '2026-11-01 00:00:00'));
     }
 
+    public function testContainsBoundsLegacyInsertionLagWithoutWideningCreationOrOtherVersions(): void
+    {
+        $legacy = new TableTimes('5.7.44');
+        $legacy->intervals = $legacy->creations = ['t1' => ['2026-11-01 00:00:00', '2026-11-01 00:00:00']];
+        $modern = new TableTimes('8.4.7');
+        $modern->intervals = $legacy->intervals;
+        self::assertTrue($legacy->contains('t1', '2026-10-31 23:59:59'));
+        self::assertFalse($legacy->contains('t1', '2026-10-31 23:59:58'));
+        self::assertFalse($legacy->contains('t1', '2026-11-01 00:00:01'));
+        self::assertFalse($legacy->contains('t1', '2026-10-31 23:59:59', true));
+        self::assertFalse($modern->contains('t1', '2026-10-31 23:59:59'));
+    }
+
     public function testRowChecksLegacyCreationAndNullUpdateSeparately(): void
     {
         $clock = new TableTimes('5.6.51');
@@ -133,8 +147,37 @@ final class TableTimesTest extends TestCase
         $clock->creations = ['t1' => ['2026-10-18 00:00:00', '2026-10-18 00:00:01']];
         $clock->intervals = ['t1' => ['2026-10-18 00:00:03', '2026-10-18 00:00:04']];
 
-        self::assertSame([0 => 't1', 11 => '{' . TableTimes::CREATION . '}', 12 => '{' . TableTimes::CONTRACT . '}'], $clock->row([0 => 't1', 11 => '2026-10-18 00:00:01', 12 => '2026-10-18 00:00:04']));
+        self::assertSame([0 => 't1', 11 => '{' . TableTimes::CREATION . '}', 12 => '{' . TableTimes::LEGACY_UPDATE . '}'], $clock->row([0 => 't1', 11 => '2026-10-18 00:00:01', 12 => '2026-10-18 00:00:04']));
         self::assertNull($clock->row([0 => 't1', 11 => '2026-10-18 00:00:04', 12 => '2026-10-18 00:00:01']));
         self::assertNull($clock->row([0 => 't1', 11 => '2026-10-18 00:00:01', 12 => null]));
+    }
+
+    /**
+     * @return iterable<string, array{array<string, array{string, string}>, array<string, array{string, string}>, array<string, mixed>}>
+     * @throws JsonException When the saved observations are malformed
+     */
+    public static function providerObservedClockLag(): iterable
+    {
+        /** @var list<array{instance: int, creations: array<string, array{string, string}>, intervals: array<string, array{string, string}>, observation: array{results: list<array{columns: list<list<int|string|list<string>>>, rows: list<list<int|string|null>>}>, warnings: list<array{string, int, string}>}}> $observations */
+        $observations = json_decode((string) file_get_contents(__DIR__ . '/fixtures/table-clock-lag.json'), true, 512, JSON_THROW_ON_ERROR);
+        foreach ($observations as $index => $observation) {
+            yield 'instance ' . $observation['instance'] . ' sample ' . $index => [$observation['creations'], $observation['intervals'], $observation['observation']];
+        }
+    }
+
+    /**
+     * @param array<string, array{string, string}> $creations
+     * @param array<string, array{string, string}> $intervals
+     * @param array<string, mixed> $observation
+     */
+    #[DataProvider('providerObservedClockLag')]
+    public function testComparableValidatesSavedIndependentInstanceClockLag(array $creations, array $intervals, array $observation): void
+    {
+        $clock = new TableTimes('5.7.44');
+        $clock->creations = $creations;
+        $clock->intervals = $intervals;
+        $comparable = $clock->comparable($observation);
+        self::assertSame([TableTimes::CREATION, TableTimes::LEGACY_UPDATE], $comparable['contracts'] ?? null);
+        self::assertSame($observation['warnings'], $comparable['warnings']);
     }
 }

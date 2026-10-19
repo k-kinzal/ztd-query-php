@@ -47,7 +47,7 @@ final class DmlRulesTest extends TestCase
 
     public function testRowValuesLowersValuesAndDefault(): void
     {
-        self::assertSame('INSERT INTO t VALUES (1, DEFAULT), ()', (new Semantics(Dialect::MySql))->analyze('insert t values (1, default), ()')->toString());
+        self::assertSame('CREATE PROCEDURE p() INSERT INTO t VALUES (1, DEFAULT), ()', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() insert t values (1, default), ()')->toString());
         self::assertSame('CREATE PROCEDURE p() VALUES ROW(1), ROW()', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() values row(1), row()')->toString());
     }
 

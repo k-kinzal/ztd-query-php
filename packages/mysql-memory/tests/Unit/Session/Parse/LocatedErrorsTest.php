@@ -35,4 +35,12 @@ final class LocatedErrorsTest extends TestCase
         self::assertNull((new LocatedErrors())->error($operation->facts->diagnostics[0], $operation, $session));
     }
 
+    public function testLocatedUsesTheRefusedDefinitionsOriginalOccurrence(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->run("CREATE TABLE t\nPARTITION BY HASH( ( USER ( ) ) )");
+
+        self::assertSame([['Error', 1064, "Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near '( USER ( ) ) )' at line 2"]], $session->diagnostics->conditions);
+    }
+
 }

@@ -82,8 +82,36 @@ final class TableUse
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $storage = new StorageOptions();
         $storage->header($definition, $session, $context);
+        $this->contextualize($definition, $session);
         $storage->engine($definition, $session->variables, $context);
         $storage->directories($definition, $session);
+    }
+
+    /**
+     * Preserves partition contextualization before invocation-time definition roles.
+     *
+     * @throws SqlError When a partition expression reads forbidden session state
+     */
+    public function contextualize(DeferredCreateTable $definition, Session $session): void
+    {
+        if ($definition->partitioning === null) {
+            return;
+        }
+        $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
+        $definition->partitioning->derivePartitioning($derivation, $derivation->environment());
+        foreach ($derivation->facts()->warnings as $warning) {
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
+                throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
+            }
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation && $warning->phase() === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization) {
+                $session->diagnostics->warning($warning->code(), $warning->message());
+            }
+        }
+        foreach ($derivation->facts()->diagnostics as $problem) {
+            if (\MySqlMemory\Session\Problem\Stages::parsed($problem)) {
+                throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
+            }
+        }
     }
 
     /**

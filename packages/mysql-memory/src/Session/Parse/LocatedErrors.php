@@ -26,10 +26,18 @@ final class LocatedErrors
      */
     public function error(Diagnostic $problem, Operation $operation, Session $session): ?SqlError
     {
+        return $this->located($problem, $operation->sources, $session);
+    }
+
+    /**
+     * Formats an occurrence from either an operation or a retained input refusal.
+     */
+    public function located(Diagnostic $problem, \SqlSemantics\Statement\Source\SourceMap $sources, Session $session): ?SqlError
+    {
         if (!$problem instanceof InvalidPartitionExpression) {
             return null;
         }
-        $origin = $operation->sources->of($problem->expression);
+        $origin = $sources->of($problem->expression);
         if ($origin === null) {
             return new SqlError(StatementError::ParseError, $problem->message());
         }

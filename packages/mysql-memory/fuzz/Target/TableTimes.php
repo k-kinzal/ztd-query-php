@@ -15,7 +15,9 @@ use RuntimeException;
  * SHOW TABLE STATUS reads each server's own commit clock, independently of SET timestamp.
  * Legacy creation times use the file clock, while modern creation times use SET timestamp.
  * Only times inside intervals sampled around the corresponding CREATE or INSERT are
- * interchangeable. MySQL 5.6's NULL update time stays exact. Other columns, metadata,
+ * interchangeable. MySQL 5.7 update times can precede the insertion sample by one
+ * second, as observed on two independent instances; only that lower bound is widened.
+ * MySQL 5.6's NULL update time stays exact. Other columns, metadata,
  * warnings and table contents stay exact. Each server must satisfy its own intervals.
  * SQL is never changed. This contract does not apply to arbitrary expressions or writes.
  */
@@ -30,6 +32,11 @@ final class TableTimes
      * The recorded rule for legacy table creation clocks.
      */
     public const CREATION = 'table-creation-time-within-fixture-create-interval';
+
+    /**
+     * The observed one-second lag of the MySQL 5.7 insertion clock.
+     */
+    public const LEGACY_UPDATE = 'legacy-table-update-time-within-fixture-insert-interval-or-previous-second';
 
     /**
      * @var array<string, array{string, string}> Each fixture table's insertion interval on this server
@@ -123,7 +130,7 @@ final class TableTimes
         }
         $result['rows'] = $rows;
         $observation['results'] = [$result];
-        $observation['contracts'] = [...(str_starts_with($this->version, '5.') ? [self::CREATION] : []), ...(str_starts_with($this->version, '5.6.') ? [] : [self::CONTRACT])];
+        $observation['contracts'] = [...(str_starts_with($this->version, '5.') ? [self::CREATION] : []), ...(str_starts_with($this->version, '5.6.') ? [] : [$this->version === '5.7.44' ? self::LEGACY_UPDATE : self::CONTRACT])];
 
         return $observation;
     }
@@ -150,7 +157,7 @@ final class TableTimes
         if (!is_string($row[12] ?? null) || !$this->contains($table, $row[12])) {
             return null;
         }
-        $row[12] = '{' . self::CONTRACT . '}';
+        $row[12] = '{' . ($this->version === '5.7.44' ? self::LEGACY_UPDATE : self::CONTRACT) . '}';
 
         return $row;
     }
@@ -161,11 +168,19 @@ final class TableTimes
     public function contains(string $table, string $value, bool $creation = false): bool
     {
         $interval = ($creation ? $this->creations : $this->intervals)[$table] ?? null;
-        if ($interval === null || $interval[0] > $interval[1] || $value < $interval[0] || $value > $interval[1] || preg_match('/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\z/', $value) !== 1) {
+        if ($interval === null || $interval[0] > $interval[1] || $value > $interval[1] || preg_match('/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\z/', $value) !== 1) {
             return false;
+        }
+        $lower = $interval[0];
+        if (!$creation && $this->version === '5.7.44') {
+            $before = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $lower, new DateTimeZone('UTC'));
+            if ($before === false || $before->format('Y-m-d H:i:s') !== $lower) {
+                return false;
+            }
+            $lower = $before->modify('-1 second')->format('Y-m-d H:i:s');
         }
         $parsed = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $value, new DateTimeZone('UTC'));
 
-        return $parsed !== false && $parsed->format('Y-m-d H:i:s') === $value;
+        return $value >= $lower && $parsed !== false && $parsed->format('Y-m-d H:i:s') === $value;
     }
 }

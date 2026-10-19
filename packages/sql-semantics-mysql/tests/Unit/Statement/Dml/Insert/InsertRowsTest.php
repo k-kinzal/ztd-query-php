@@ -30,9 +30,9 @@ final class InsertRowsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->analyze('INSERT INTO t (a, b, a) VALUES (1, 2, 3), (4)', [$t]);
+        $operation = $semantics->analyze('INSERT INTO t (a, b, a) VALUES (1, 2, 3), (4, 5, 6)', [$t]);
 
-        self::assertSame(["Column 'a' specified twice", "Column count doesn't match value count at row 2"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(["Column 'a' specified twice"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testDeriveStatementAcceptsAnEmptyRowWithoutColumns(): void
