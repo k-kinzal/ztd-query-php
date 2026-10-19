@@ -24,7 +24,7 @@ final class ControlDependencies
         }
         $dependencies = [];
         foreach ($graph->body->blocks as $id => $block) {
-            if ($block->terminator->kind !== \Deriver\Deriver\Lowerer\Graph\TerminatorKind::Branch) {
+            if ($block->terminator->kind !== \Deriver\Deriver\Lowerer\Graph\TerminatorKind::Branch || $this->interleaves($graph, $block->terminator->operand)) {
                 continue;
             }
             foreach ($block->terminator->targets as $target) {
@@ -39,6 +39,16 @@ final class ControlDependencies
             }
         }
         return $dependencies;
+    }
+
+    /**
+     * Recognizes the branch of an operand-order exploration, whose targets are both executed on every path
+     * and therefore select no value.
+     * @param string $register Branch operand
+     */
+    public function interleaves(BodyIndex $graph, string $register): bool
+    {
+        return ($graph->definitions[$register]->operation ?? '') === 'evaluation-order';
     }
 
     /**

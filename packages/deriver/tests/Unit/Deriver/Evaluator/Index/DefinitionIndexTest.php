@@ -262,4 +262,37 @@ final class DefinitionIndexTest extends TestCase
         self::assertCount(1, $writes);
         self::assertSame('A::set', $writes[0][0]->body->symbol);
     }
+
+    public function testCompatibleRejectsCompleteHierarchiesThatCannotReachTheMethod(): void
+    {
+        $source = new Source('hierarchy.php', '<?php class A{function m(){}} class B extends A{} class C{function m(){}} class D extends Vendor{}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('hierarchy', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $index = $context->index;
+        self::assertTrue($index->compatible('', 'A::m'));
+        self::assertTrue($index->compatible('A::m', 'A::m'));
+        self::assertTrue($index->compatible('B::m', 'A::m'));
+        self::assertTrue($index->compatible('A::m', 'B::m'));
+        self::assertFalse($index->compatible('C::m', 'A::m'));
+        self::assertTrue($index->compatible('D::m', 'A::m'));
+        self::assertTrue($index->compatible('External::m', 'A::m'));
+    }
+
+    public function testReceiverClassExtractsOneClassFromADeclaredType(): void
+    {
+        $source = new Source('types.php', '<?php function f(){}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('types', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $index = $context->index;
+        self::assertSame('DB', $index->receiverClass('DB'));
+        self::assertSame('DB', $index->receiverClass('?DB'));
+        self::assertSame('DB', $index->receiverClass('DB|null'));
+        self::assertSame('App\\DB', $index->receiverClass('\\App\\DB'));
+        self::assertSame('', $index->receiverClass('mixed'));
+        self::assertSame('', $index->receiverClass('object'));
+        self::assertSame('', $index->receiverClass('string'));
+        self::assertSame('', $index->receiverClass('A|B'));
+        self::assertSame('', $index->receiverClass('A&B'));
+        self::assertSame('', $index->receiverClass(''));
+    }
 }

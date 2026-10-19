@@ -12,13 +12,16 @@ use Deriver\Deriver\Evaluator\Evaluator;
 use Deriver\Deriver\Evaluator\EvaluatorConfig;
 use Deriver\Deriver\Evaluator\Evidence\Frontier;
 use Deriver\Deriver\Evaluator\Index\DefinitionIndex;
+use Deriver\Deriver\Evaluator\Memory\PropertyEffects;
 use Deriver\Deriver\Evaluator\Request\Budget;
 use Deriver\Deriver\Evaluator\Request\ReturnQuery;
 use Deriver\Deriver\Evaluator\Scope\Context;
 use Deriver\Deriver\Evaluator\Scope\Frame;
 use Deriver\Deriver\Evaluator\TargetProfile;
 use Deriver\Deriver\Evaluator\Term;
+use Deriver\Deriver\Evaluator\TermKind;
 use Deriver\Deriver\Lowerer\Declaration\Index;
+use Deriver\Deriver\Lowerer\Graph\Instruction;
 use Deriver\Deriver\MicroEvaluatorConversion;
 use Deriver\Deriver\Parser\Node\File;
 use Deriver\Deriver\Parser\Parser;
@@ -159,5 +162,23 @@ final class PropertyEffectsTest extends TestCase
         $prepared1Program = new Index($snapshotId, $trees);
         $prepared1Snapshot = $prepared1Identity->snapshot(array_map(Frontier::fromDiagnostic(...), $prepared1Program->diagnostics()));
         self::assertSame(7, (new CandidateQuery(new DefinitionIndex($prepared1Program), $prepared1Settings, $prepared1Evaluators, $prepared1Snapshot))->derive(new ReturnQuery('target', budget: $budget))[0]->result);
+    }
+
+    public function testGivenDetectsAnAllocationPassedAsAnArgument(): void
+    {
+        $source = new Source('given.php', '<?php class R{public $t="a";} function m($r){} function f(){$r=new R();m($r);m(1);}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('given', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $graph = $context->index->graph('f');
+        self::assertNotNull($graph);
+        $calls = array_values(array_filter($graph->definitions, static fn (Instruction $instruction): bool => $instruction->operation === 'invoke'));
+        self::assertCount(2, $calls);
+        $engine = new Evaluator($context);
+        $frame = new Frame($graph, 'source:f');
+        $allocation = $engine->value($frame, $calls[0]->arguments[0]->register, 64);
+        self::assertSame(TermKind::Object, $allocation->kind);
+        $subject = new PropertyEffects();
+        self::assertTrue($subject->given($engine, $frame, $calls[0], $allocation, 64));
+        self::assertFalse($subject->given($engine, $frame, $calls[1], $allocation, 64));
     }
 }

@@ -35,11 +35,56 @@ final class Comparison
             $equal = $this->identical($left, $right);
             return \Deriver\Deriver\Evaluator\Term::constant($operator === '===' ? $equal : !$equal);
         }
-        $identity = $this->object($operator, $left, $right);
+        $identity = $this->object($operator, $left, $right) ?? $this->typed($operator, $left, $right);
         if ($identity !== null) {
             return $identity;
         }
         return new \Deriver\Deriver\Evaluator\Term(\Deriver\Deriver\Evaluator\TermKind::Binary, $operator, [$left, $right], ['type' => $operator === '<=>' ? 'int' : 'bool']);
+    }
+
+    /**
+     * Decides strict comparison against a constant from the other operand's declared type alone.
+     * A value whose type cannot hold the constant's type is never identical to it, such as a `string`
+     * parameter compared with `null`; declaration coercion has already applied, so a `float` never holds an int.
+     * @param string $operator Comparison operator
+     * @param \Deriver\Deriver\Evaluator\Term $left Left value
+     * @param \Deriver\Deriver\Evaluator\Term $right Right value
+     * @return \Deriver\Deriver\Evaluator\Term|null Proven result, or null when the type permits the constant
+     */
+    public function typed(string $operator, \Deriver\Deriver\Evaluator\Term $left, \Deriver\Deriver\Evaluator\Term $right): ?\Deriver\Deriver\Evaluator\Term
+    {
+        if (!in_array($operator, ['===', '!=='], true)) {
+            return null;
+        }
+        [$constant, $other] = $left->kind === \Deriver\Deriver\Evaluator\TermKind::Constant ? [$left, $right] : [$right, $left];
+        $type = $other->attributes['type'] ?? '';
+        if ($constant->kind !== \Deriver\Deriver\Evaluator\TermKind::Constant || $other->kind === \Deriver\Deriver\Evaluator\TermKind::Constant || !is_string($type) || $type === '' || str_contains($type, '&')) {
+            return null;
+        }
+        $literal = $constant->literal;
+        $holds = match (true) {
+            $literal === null => ['null', 'mixed'],
+            is_bool($literal) => ['bool', $literal ? 'true' : 'false', 'mixed', 'scalar'],
+            is_int($literal) => ['int', 'mixed', 'scalar', 'numeric', 'array-key'],
+            is_float($literal) => ['float', 'mixed', 'scalar', 'numeric'],
+            default => ['string', 'mixed', 'scalar', 'numeric', 'callable', 'array-key'],
+        };
+        foreach (explode('|', $type) as $member) {
+            $member = strtolower(ltrim(trim($member), '\\'));
+            if ($member === '') {
+                return null;
+            }
+            if (str_starts_with($member, '?')) {
+                if ($literal === null) {
+                    return null;
+                }
+                $member = substr($member, 1);
+            }
+            if (in_array($member, $holds, true)) {
+                return null;
+            }
+        }
+        return \Deriver\Deriver\Evaluator\Term::constant($operator === '!==');
     }
 
     /**

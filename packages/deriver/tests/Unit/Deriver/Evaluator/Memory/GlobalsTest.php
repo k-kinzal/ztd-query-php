@@ -12,6 +12,7 @@ use Deriver\Deriver\Evaluator\Enumeration\Choices;
 use Deriver\Deriver\Evaluator\Evaluator;
 use Deriver\Deriver\Evaluator\EvaluatorConfig;
 use Deriver\Deriver\Evaluator\Index\DefinitionIndex;
+use Deriver\Deriver\Evaluator\Memory\Globals;
 use Deriver\Deriver\Evaluator\Memory\Globals as Subject;
 use Deriver\Deriver\Evaluator\Request\Budget;
 use Deriver\Deriver\Evaluator\Scalar\Identity;
@@ -20,6 +21,7 @@ use Deriver\Deriver\Evaluator\Scope\Frame;
 use Deriver\Deriver\Evaluator\TargetProfile;
 use Deriver\Deriver\Evaluator\Term;
 use Deriver\Deriver\Lowerer\Declaration\Index;
+use Deriver\Deriver\Lowerer\Graph\Instruction;
 use Deriver\Deriver\MicroEvaluatorConversion;
 use Deriver\Deriver\Parser\Node\File;
 use Deriver\Deriver\Parser\Parser;
@@ -120,5 +122,22 @@ final class GlobalsTest extends TestCase
         $frame = new Frame($graph, 'source:' . $symbol);
         self::assertTrue((new Subject())->declares($frame, 'g'));
         self::assertFalse((new Subject())->declares($frame, 'local'));
+    }
+
+    public function testWrittenFollowsOnlyAvailableImplementationsThatAssignTheGlobal(): void
+    {
+        $source = new Source('written.php', '<?php function w(){global $g;$g=1;} function f(){global $g;unknown();w();return $g;}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('written', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $graph = $context->index->graph('f');
+        self::assertNotNull($graph);
+        $calls = array_values(array_filter($graph->definitions, static fn (Instruction $instruction): bool => $instruction->operation === 'invoke'));
+        $locals = array_values(array_filter($graph->definitions, static fn (Instruction $instruction): bool => $instruction->operation === 'local' && $instruction->name === 'g'));
+        self::assertCount(2, $calls);
+        $engine = new Evaluator($context);
+        $frame = new Frame($graph, 'source:f');
+        $subject = new Globals();
+        self::assertNull($subject->written($engine, $frame, $calls[0], 'unknown', null, 'g', $locals[0]->result, 64));
+        self::assertSame(1, $subject->written($engine, $frame, $calls[1], 'w', null, 'g', $locals[0]->result, 64)?->literal);
     }
 }

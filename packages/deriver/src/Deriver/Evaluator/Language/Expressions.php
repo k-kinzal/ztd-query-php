@@ -48,19 +48,56 @@ final class Expressions
             if (in_array($object->kind, [TermKind::Constant, TermKind::Array], true)) {
                 return Term::constant(false);
             }
-            $class = $object->attributes['class'] ?? null;
-            if (is_string($class) && is_string($bound->literal)) {
-                $hierarchy = new Dispatch($this->engine->context->index->program);
-                $name = $hierarchy->className($bound->literal, $frame->graph->body->className, $frame->calledClass);
-                if ($hierarchy->subtype($class, $name)) {
-                    return Term::constant(true);
-                }
-                if ($hierarchy->complete($class)) {
-                    return Term::constant(false);
-                }
-            }
-            return new Term(TermKind::Operation, 'instanceof', $values, ['type' => 'bool', 'reason' => 'UNKNOWN_TYPE_RELATION']);
+            return $this->instanceOfType($frame, $object, $bound) ?? new Term(TermKind::Operation, 'instanceof', $values, ['type' => 'bool', 'reason' => 'UNKNOWN_TYPE_RELATION']);
         }, $this->engine->context->budget->partitions);
+    }
+
+    /**
+     * Decides `instanceof` for a closure, an allocated object, or a value whose declared type names one class
+     * or only scalars; an unknown relation is left undecided.
+     * @param Term $object Tested value
+     * @param Term $bound Class name operand
+     */
+    public function instanceOfType(Frame $frame, Term $object, Term $bound): ?Term
+    {
+        if (!is_string($bound->literal)) {
+            return null;
+        }
+        $hierarchy = new Dispatch($this->engine->context->index->program);
+        $name = $hierarchy->className($bound->literal, $frame->graph->body->className, $frame->calledClass);
+        if ($object->kind === TermKind::Closure) {
+            return Term::constant(strcasecmp(ltrim($name, '\\'), 'Closure') === 0);
+        }
+        $class = $object->attributes['class'] ?? null;
+        $type = (string) ($object->attributes['type'] ?? '');
+        if (!is_string($class) && $object->kind !== TermKind::Object) {
+            $declared = $this->engine->context->index->receiverClass($type);
+            if ($declared === '' && $this->scalarOnly($type)) {
+                return Term::constant(false);
+            }
+            $class = $declared !== '' && !str_contains($type, '|') ? $declared : null;
+        }
+        if (!is_string($class)) {
+            return null;
+        }
+        if ($hierarchy->subtype($class, $name)) {
+            return Term::constant(true);
+        }
+        return $hierarchy->complete($class) ? Term::constant(false) : null;
+    }
+
+    /**
+     * Reports whether a declared type admits only scalars, arrays and null, which no class can match.
+     */
+    public function scalarOnly(string $type): bool
+    {
+        $scalars = ['int', 'float', 'string', 'bool', 'true', 'false', 'null', 'array', 'integer', 'boolean', 'double'];
+        foreach (explode('|', ltrim($type, '?')) as $member) {
+            if (!in_array(strtolower(trim($member)), $scalars, true)) {
+                return false;
+            }
+        }
+        return $type !== '';
     }
 
     /**

@@ -10,6 +10,7 @@ use Deriver\Deriver\Evaluator\Call\Evaluators;
 use Deriver\Deriver\Evaluator\Call\Registrations;
 use Deriver\Deriver\Evaluator\Evaluator;
 use Deriver\Deriver\Evaluator\EvaluatorConfig;
+use Deriver\Deriver\Evaluator\Index\ControlDependencies;
 use Deriver\Deriver\Evaluator\Index\ControlDependencies as Subject;
 use Deriver\Deriver\Evaluator\Index\DefinitionIndex;
 use Deriver\Deriver\Evaluator\Request\Budget;
@@ -18,6 +19,8 @@ use Deriver\Deriver\Evaluator\Scope\Frame;
 use Deriver\Deriver\Evaluator\TargetProfile;
 use Deriver\Deriver\Evaluator\Term;
 use Deriver\Deriver\Lowerer\Declaration\Index;
+use Deriver\Deriver\Lowerer\Graph\BasicBlock;
+use Deriver\Deriver\Lowerer\Graph\TerminatorKind;
 use Deriver\Deriver\MicroEvaluatorConversion;
 use Deriver\Deriver\Parser\Node\File;
 use Deriver\Deriver\Parser\Parser;
@@ -106,5 +109,21 @@ final class ControlDependenciesTest extends TestCase
     public function testIntersectFindsTheNearestSharedAncestor(): void
     {
         self::assertSame(2, (new Subject())->intersect(0, 1, [-1 => -1, 2 => -1, 0 => 2, 1 => 2], [-1 => 0, 2 => 1, 0 => 2, 1 => 3]));
+    }
+
+    public function testInterleavesRecognizesOnlyEvaluationOrderBranches(): void
+    {
+        $source = new Source('order.php', '<?php function f($a){$r=strlen($a).$a;if($a){$r=1;}return $r;}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('order', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $graph = $context->index->graph('f');
+        self::assertNotNull($graph);
+        $branches = array_values(array_filter($graph->body->blocks, static fn (BasicBlock $block): bool => $block->terminator->kind === TerminatorKind::Branch));
+        $operands = array_map(static fn (BasicBlock $block): string => $block->terminator->operand, $branches);
+        $operations = array_map(static fn (string $operand): string => $graph->definitions[$operand]->operation, $operands);
+        $subject = new ControlDependencies();
+        self::assertSame([true, true, true, false], array_map(static fn (string $operand): bool => $subject->interleaves($graph, $operand), $operands));
+        self::assertSame(['evaluation-order', 'evaluation-order', 'evaluation-order'], array_slice($operations, 0, 3));
+        self::assertFalse($subject->interleaves($graph, 'missing'));
     }
 }

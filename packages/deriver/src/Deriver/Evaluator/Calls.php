@@ -212,7 +212,12 @@ final class Calls
         if ($actual === null) {
             return (new Memory\Captures())->effect($this->engine, $caller, $call, $address, $depth) ?? (new Memory\PropertyEffects())->effect($this->engine, $caller, $call, $address, $depth) ?? (new Memory\Globals())->effect($this->engine, $caller, $call, $address, $depth);
         }
-        return (new Invocation\Dispatch($this->engine))->apply($caller, $call, $depth, fn (string $target, ?Term $receiver): Term => $this->selectedEffect($caller, $call, $address, $actual, $target, $receiver, $depth) ?? $this->engine->value($caller, $actual, $depth));
+        $target = $this->engine->context->index->target($caller->graph, $call);
+        if ($target !== '' && $this->byValue($call, $target, $actual)) {
+            return null;
+        }
+        [$block, $offset] = $caller->graph->positions[$call->result];
+        return (new Invocation\Dispatch($this->engine))->apply($caller, $call, $depth, fn (string $selected, ?Term $receiver): Term => $this->selectedEffect($caller, $call, $address, $actual, $selected, $receiver, $depth) ?? (new Expression\Storage($this->engine))->search($caller, $address, $block, $offset, $depth));
     }
 
     /**
@@ -223,6 +228,9 @@ final class Calls
         $body = (new Invocation\Bodies($this->engine))->select($caller, $call, $target, $depth);
         $graph = $body->implementation;
         if ($graph instanceof Term) {
+            if ($this->byValue($call, $target, $actual)) {
+                return null;
+            }
             return new Term(TermKind::CallWrite, $target, [$this->engine->value($caller, $actual, $depth), $graph]);
         }
         if ($graph === null) {
@@ -251,6 +259,31 @@ final class Calls
             }
         }
         return null;
+    }
+
+    /**
+     * Reports whether a standard function with a known signature takes the passed storage by value,
+     * in which case the call cannot write it and is not a reaching definition.
+     * @param string $actual Argument register passing the storage address
+     */
+    public function byValue(Instruction $call, string $target, string $actual): bool
+    {
+        $parameters = (new Builtin\Library())->parameters(strtolower(ltrim($target, '\\')));
+        if ($parameters === null) {
+            return false;
+        }
+        foreach ($call->arguments as $position => $argument) {
+            if ($argument->register !== $actual) {
+                continue;
+            }
+            foreach ($parameters as $index => $parameter) {
+                if ($argument->name !== null ? $parameter->name === $argument->name : $index === $position || $parameter->variadic && $position >= $index) {
+                    return !$parameter->byReference;
+                }
+            }
+            return false;
+        }
+        return false;
     }
 
     /**

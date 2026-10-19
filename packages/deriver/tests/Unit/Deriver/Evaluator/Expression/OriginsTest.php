@@ -14,6 +14,7 @@ use Deriver\Deriver\Evaluator\EvaluatorConfig;
 use Deriver\Deriver\Evaluator\Evidence\EvidenceKind;
 use Deriver\Deriver\Evaluator\Evidence\Frontier;
 use Deriver\Deriver\Evaluator\Expression\Origins;
+use Deriver\Deriver\Evaluator\Index\BodyIndex;
 use Deriver\Deriver\Evaluator\Index\DefinitionIndex;
 use Deriver\Deriver\Evaluator\Request\Budget;
 use Deriver\Deriver\Evaluator\Request\ReturnQuery;
@@ -24,6 +25,7 @@ use Deriver\Deriver\Evaluator\TargetProfile;
 use Deriver\Deriver\Evaluator\Term;
 use Deriver\Deriver\Evaluator\TermKind;
 use Deriver\Deriver\Lowerer\Declaration\Index;
+use Deriver\Deriver\Lowerer\Graph\Instruction;
 use Deriver\Deriver\MicroEvaluatorConversion;
 use Deriver\Deriver\Parser\Node\File;
 use Deriver\Deriver\Parser\Parser;
@@ -36,6 +38,7 @@ use Deriver\Deriver\SnapshotIdentity;
 use Deriver\Deriver\Sources\Path;
 use Deriver\Deriver\Sources\Source;
 use Deriver\Deriver\Sources\Sources;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
@@ -62,7 +65,7 @@ final class OriginsTest extends TestCase
         self::assertSame('Controller::create', $rows[0][0]->attributes['scope']);
     }
 
-    public function testCallersReturnsNullWhenOnlyUnrelatedMethodsHaveCallSites(): void
+    public function testCallersReturnsNullWhenOnlyUnrelatedTypedReceiversCallTheMethodName(): void
     {
         $source = new Source('unrelated.php', '<?php
             class Controller { public function create(string $input): string { return $input; } }
@@ -73,7 +76,7 @@ final class OriginsTest extends TestCase
         $context = new Context(new DefinitionIndex(new Index('unrelated', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
         $graph = $context->index->graph('Controller::create');
         self::assertNotNull($graph);
-        self::assertNotEmpty($context->index->callers('Controller::create'));
+        self::assertSame([], $context->index->callers('Controller::create'));
 
         self::assertNull((new Origins(new Evaluator($context)))->callers(new Frame($graph, 'source:Controller::create'), 'input', 64));
     }
@@ -234,5 +237,34 @@ final class OriginsTest extends TestCase
         $result = (new CandidateQuery(new DefinitionIndex($prepared3Program), $prepared3Settings, $prepared3Evaluators, $prepared3Snapshot))->derive(new ReturnQuery('target', budget: $budget));
         self::assertSame(9, $result->forCaller('caller')[0]->result);
         self::assertContains(EvidenceKind::ArgumentBinding, array_column($result[0]->evidence[0]->nodes(), 'kind'));
+    }
+
+    public function testDynamicSymbolsDetectsVariableVariablesIncludeAndExtract(): void
+    {
+        $source = new Source('dynamic.php', '<?php function plain(){$a=1;return $a;} function variable($n){$$n=1;} function included(){include "x.php";} function extracted($r){extract($r);}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('dynamic', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $origins = new Origins(new Evaluator($context));
+        $graph = static fn (string $symbol): BodyIndex => $context->index->graph($symbol) ?? throw new LogicException('Missing graph.');
+        self::assertFalse($origins->dynamicSymbols($graph('plain')));
+        self::assertTrue($origins->dynamicSymbols($graph('variable')));
+        self::assertTrue($origins->dynamicSymbols($graph('included')));
+        self::assertTrue($origins->dynamicSymbols($graph('extracted')));
+    }
+
+    public function testPropertyOfReadsTheDeclaredDefaultOfOneReceiver(): void
+    {
+        $source = new Source('property.php', '<?php class A{public $p="v";} function f(){$a=new A();return $a->p;}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('property', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $graph = $context->index->graph('f');
+        self::assertNotNull($graph);
+        $fields = array_values(array_filter($graph->definitions, static fn (Instruction $instruction): bool => $instruction->operation === 'field-address'));
+        self::assertCount(1, $fields);
+        $engine = new Evaluator($context);
+        $frame = new Frame($graph, 'source:f');
+        $receiver = $engine->value($frame, $fields[0]->operands[0], 64);
+        self::assertSame(TermKind::Object, $receiver->kind);
+        self::assertSame('v', (new Origins($engine))->propertyOf($frame, $fields[0], 'p', $context->index->declaredProperty($graph, $fields[0]), $receiver, 64)->literal);
     }
 }

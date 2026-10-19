@@ -12,12 +12,14 @@ use Deriver\Deriver\Evaluator\Enumeration\Choices;
 use Deriver\Deriver\Evaluator\Evaluator;
 use Deriver\Deriver\Evaluator\EvaluatorConfig;
 use Deriver\Deriver\Evaluator\Index\DefinitionIndex;
+use Deriver\Deriver\Evaluator\Language\Expressions;
 use Deriver\Deriver\Evaluator\Request\Budget;
 use Deriver\Deriver\Evaluator\Scalar\Identity;
 use Deriver\Deriver\Evaluator\Scope\Context;
 use Deriver\Deriver\Evaluator\Scope\Frame;
 use Deriver\Deriver\Evaluator\TargetProfile;
 use Deriver\Deriver\Evaluator\Term;
+use Deriver\Deriver\Evaluator\TermKind;
 use Deriver\Deriver\Lowerer\Declaration\Index;
 use Deriver\Deriver\MicroEvaluatorConversion;
 use Deriver\Deriver\Parser\Node\File;
@@ -187,5 +189,39 @@ final class ExpressionsTest extends TestCase
         $alternatives = iterator_to_array((new Choices())->alternatives($value), false);
         self::assertCount(1, $alternatives);
         self::assertSame([17, 2], $alternatives[0][0]->native());
+    }
+
+    public function testScalarOnlyAcceptsTypesNoObjectCanSatisfy(): void
+    {
+        $source = new Source('scalar.php', '<?php function f(){}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('scalar', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $subject = new Expressions(new Evaluator($context));
+        self::assertTrue($subject->scalarOnly('int'));
+        self::assertTrue($subject->scalarOnly('?string'));
+        self::assertTrue($subject->scalarOnly('int|string|null'));
+        self::assertFalse($subject->scalarOnly('DB|null'));
+        self::assertFalse($subject->scalarOnly('mixed'));
+        self::assertFalse($subject->scalarOnly(''));
+    }
+
+    public function testInstanceOfTypeDecidesClosuresDeclaredTypesAndCompleteHierarchies(): void
+    {
+        $source = new Source('instance.php', '<?php class A{} class B extends A{} function f(){}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('instance', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $graph = $context->index->graph('f');
+        self::assertNotNull($graph);
+        $frame = new Frame($graph, 'source:f');
+        $subject = new Expressions(new Evaluator($context));
+        $closure = new Term(TermKind::Closure, 'closure:instance.php:1');
+        self::assertTrue($subject->instanceOfType($frame, $closure, Term::constant('Closure'))?->literal);
+        self::assertFalse($subject->instanceOfType($frame, $closure, Term::constant('A'))?->literal);
+        self::assertFalse($subject->instanceOfType($frame, new Term(TermKind::Reference, '$n', attributes: ['type' => 'int']), Term::constant('A'))?->literal);
+        self::assertTrue($subject->instanceOfType($frame, new Term(TermKind::Reference, '$b', attributes: ['type' => 'B']), Term::constant('A'))?->literal);
+        self::assertFalse($subject->instanceOfType($frame, new Term(TermKind::Reference, '$a', attributes: ['type' => 'A']), Term::constant('B'))?->literal);
+        self::assertNull($subject->instanceOfType($frame, new Term(TermKind::Reference, '$m', attributes: ['type' => 'mixed']), Term::constant('A')));
+        self::assertNull($subject->instanceOfType($frame, new Term(TermKind::Reference, '$u', attributes: ['type' => 'A|B']), Term::constant('A')));
+        self::assertNull($subject->instanceOfType($frame, $closure, new Term(TermKind::Reference)));
     }
 }

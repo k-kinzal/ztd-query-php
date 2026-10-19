@@ -50,12 +50,13 @@ final class PropertyEffects
     }
 
     /**
-     * Selects a call that can write the observed allocation's field.
+     * Selects a call that can write the observed allocation's field: a method called on the allocation,
+     * or any call, closure included, that receives the allocation as an argument.
      */
     public function effect(Evaluator $engine, Frame $caller, Instruction $call, string $address, int $depth): ?Term
     {
         $field = $caller->graph->definitions[$address] ?? null;
-        if ($field?->operation !== 'field-address' || !in_array($call->operation, ['invoke-method', 'invoke-static'], true)) {
+        if ($field?->operation !== 'field-address' || !in_array($call->operation, ['invoke', 'invoke-method', 'invoke-static'], true)) {
             return null;
         }
         $receiver = $engine->value($caller, $field->operands[0], $depth);
@@ -66,18 +67,35 @@ final class PropertyEffects
         return (new Dispatch($engine))->apply($caller, $call, $depth, function (string $target, ?Term $called) use ($engine, $caller, $call, $receiver, $name, $address, $depth): Term {
             [$block, $offset] = $caller->graph->positions[$call->result];
             $before = (new Storage($engine))->search($caller, $address, $block, $offset, $depth);
-            if ($called?->literal !== $receiver->literal) {
+            if ($target === '' || $called?->literal !== $receiver->literal && !$this->given($engine, $caller, $call, $receiver, $depth)) {
                 return $before;
             }
-            return $this->selected($engine, $caller, $call, $target, $receiver, $name, $before, $depth);
+            return $this->selected($engine, $caller, $call, $target, $receiver, $name, $before, $depth, $called);
         });
+    }
+
+    /**
+     * Reports whether the allocation is passed to the call as an argument value.
+     */
+    public function given(Evaluator $engine, Frame $caller, Instruction $call, Term $receiver, int $depth): bool
+    {
+        foreach ($call->arguments as $argument) {
+            $value = $engine->value($caller, $argument->register, $depth);
+            foreach ((new \Deriver\Deriver\Evaluator\Enumeration\Choices($engine->context->provenance))->alternatives($value) as [$alternative]) {
+                if ($alternative->kind === \Deriver\Deriver\Evaluator\TermKind::Object && $alternative->literal === $receiver->literal) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
      * Derives a selected implementation's final field from the caller's prior definition.
      */
-    public function selected(Evaluator $engine, Frame $caller, Instruction $call, string $target, Term $receiver, string $name, Term $before, int $depth): Term
+    public function selected(Evaluator $engine, Frame $caller, Instruction $call, string $target, Term $receiver, string $name, Term $before, int $depth, ?Term $called = null): Term
     {
+        $called ??= $receiver;
         $reason = $engine->context->boundary($depth);
         if ($reason !== null || ($caller->calls[$call->id] ?? 0) >= $engine->context->budget->recursion) {
             return new Term(\Deriver\Deriver\Evaluator\TermKind::PropertyWrite, $name, [$before], ['reason' => $reason ?? 'RECURSION_LIMIT']);
@@ -97,8 +115,8 @@ final class PropertyEffects
                 return $before;
             }
         }
-        $bound = (new Calls($engine))->bind($caller, $call, $graph, $receiver, $depth - 1);
-        $bound = new Frame($graph, $bound->identity . ':property:' . $name, $bound->bindings, [$name => $before], $bound->calls, true, origin: $bound->origin, calledClass: $bound->calledClass);
+        $bound = (new Calls($engine))->bind($caller, $call, $graph, $called->kind === \Deriver\Deriver\Evaluator\TermKind::Object ? $called : null, $depth - 1);
+        $bound = new Frame($graph, $bound->identity . ':property:' . $name, $bound->bindings, $called->literal === $receiver->literal ? [$name => $before] : [], $bound->calls, true, origin: $bound->origin, calledClass: $bound->calledClass);
         [$observation, $address] = $this->address($bound, $receiver, $name);
         $body->enter($engine->context);
         return (new Calls($engine))->finalStorage($observation, $address, $depth - 1);
