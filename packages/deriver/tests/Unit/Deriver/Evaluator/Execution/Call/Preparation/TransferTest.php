@@ -37,7 +37,6 @@ use Deriver\Deriver\Evaluator\Request\QueryScope;
 use Deriver\Deriver\Evaluator\Request\ReturnQuery;
 use Deriver\Deriver\Evaluator\TargetProfile;
 use Deriver\Deriver\Evaluator\Term;
-use Deriver\Deriver\Evaluator\TermKind;
 use Deriver\Deriver\Execution\QueryExecution;
 use Deriver\Deriver\Lowerer\Declaration\CallableIdentity;
 use Deriver\Deriver\Lowerer\Declaration\CallableSource;

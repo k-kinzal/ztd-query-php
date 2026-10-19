@@ -72,13 +72,34 @@ final class DefinitionIndex
             }
             foreach ($graph->definitions as $instruction) {
                 $target = $this->target($graph, $instruction);
-                $dynamicMethod = $instruction->operation === 'invoke-method' && str_contains($symbol, '::') && ($this->literal($graph, $instruction->operands[1]) === '' || strcasecmp($this->literal($graph, $instruction->operands[1]), $selector) === 0);
+                $dynamicMethod = $instruction->operation === 'invoke-method' && str_contains($symbol, '::') && ($this->literal($graph, $instruction->operands[1]) === '' || strcasecmp($this->literal($graph, $instruction->operands[1]), $selector) === 0) && $this->compatible($target, $symbol);
                 if ($target !== '' && (new CallableIdentity())->key($target) === $key || $dynamicMethod) {
                     $found[] = [$graph, $instruction];
                 }
             }
         }
         return $this->callers[$key] = $found;
+    }
+
+    /**
+     * Reports whether a statically typed call site can still dispatch to the requested method.
+     * A receiver whose complete class hierarchy neither contains nor descends from the requested class
+     * cannot reach it, so such sites are not derived; unknown or incomplete receivers remain candidates.
+     * @param string $target Statically discovered target, or the empty string
+     * @param string $symbol Requested `Class::method`
+     */
+    public function compatible(string $target, string $symbol): bool
+    {
+        if ($target === '' || !str_contains($target, '::')) {
+            return true;
+        }
+        $class = explode('::', $target)[0];
+        $wanted = explode('::', $symbol)[0];
+        $hierarchy = new \Deriver\Deriver\Lowerer\Hierarchy\Dispatch($this->program);
+        if (!isset($this->program->classes()[strtolower($class)]) || !$hierarchy->complete($class)) {
+            return true;
+        }
+        return $hierarchy->subtype($class, $wanted) || $hierarchy->subtype($wanted, $class);
     }
 
     /**
@@ -123,6 +144,9 @@ final class DefinitionIndex
         }
         if (count($members) !== 1) {
             return '';
+        }
+        if (isset($this->program->classes()[strtolower($members[0])])) {
+            return $members[0];
         }
         $builtin = ['mixed', 'object', 'string', 'int', 'float', 'bool', 'array', 'callable', 'iterable', 'void', 'never', 'false', 'true', 'resource', 'scalar', 'numeric', 'integer', 'boolean', 'double'];
         if (in_array(strtolower($members[0]), $builtin, true) || preg_match('/\A[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff\\\\]*\z/', $members[0]) !== 1) {

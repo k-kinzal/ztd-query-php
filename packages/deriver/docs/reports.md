@@ -43,3 +43,5 @@ Invalid UTF-8 strings and non-finite floats cannot be reported as JSON. Use text
 ## Unresolved values
 
 Code outside the selected files, unknown external inputs, and unsupported operations can leave partial results. Include relevant source directories with `--path` and supply known inputs through [configuration](configuration.md). Parsing a PHP construct does not guarantee that its value can be derived; include/require, generators, and dynamic property overloading are among the unsupported cases.
+
+A method call whose receiver class cannot be determined, such as a call on an untyped parameter or property, is still a possible call of every method with that name. Its argument is reported as a partial whose reason is `UNRESOLVED_DISPATCH`, with the derived argument value inside it. A call to code outside the selected files is unrelated to globals and statics it was not given through its receiver, arguments, or references, so they keep their values across the call. A function local read before any assignment is `null`, unless the body uses variable variables, include, eval, or `extract()`.

@@ -6,14 +6,15 @@ namespace Tests\Integration;
 
 use Deriver\Deriver;
 use Deriver\Deriver\BranchEvaluators;
-use Deriver\Deriver\Candidate\CandidateCollection;
+use Deriver\Deriver\Candidate;
 use Deriver\Deriver\Candidate\CandidateStatus;
 use Deriver\Deriver\DeriverConfig;
 use Deriver\Deriver\Evaluator\Term;
 use Deriver\Deriver\Evaluator\TermKind;
 use Deriver\Deriver\Sources\Path;
+use LogicException;
 use org\bovigo\vfs\vfsStream;
-use org\bovigo\vfs\vfsStreamDirectory;
+use Override;
 use phpmock\MockBuilder;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
@@ -21,24 +22,20 @@ use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Source forms whose candidates used to disappear or to be decided wrongly, each derived through the public API.
- */
 #[CoversNothing]
 #[Medium]
 #[RunTestsInSeparateProcesses]
 #[PreserveGlobalState(false)]
 final class CandidateRetentionTest extends TestCase
 {
-    private vfsStreamDirectory $filesystem;
-
     /**
      * @throws \phpmock\MockEnabledException
      */
+    #[Override]
     protected function setUp(): void
     {
         $workingDirectory = '/project';
-        $this->filesystem = vfsStream::setup('project');
+        vfsStream::setup('project');
         (new MockBuilder())->setNamespace('Deriver\Deriver\Sources')->setName('is_file')->setFunction(static function (string $path) use ($workingDirectory): bool {
             return is_file('vfs:/' . Path::normalize(str_starts_with($path, '/') ? $path : $workingDirectory . '/' . $path));
         })->build()->enable();
@@ -55,15 +52,18 @@ final class CandidateRetentionTest extends TestCase
 
     public function testBinaryOperatorsCombineACallWithAVariableRead(): void
     {
-        $deriver = $this->prepare(['app.php' => '<?php function text($s){} function number($n){} function up($v){return strtoupper($v);}
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php function text($s){} function number($n){} function up($v){return strtoupper($v);}
             class Model{public $pk="k";public function g(){return "g";}}
             function literal(){$a="x";text(strtoupper($a)." - ".$a);}
             function twoVariables(){$a="x";$b="y";text($b.up($a));}
             function arithmetic(){$a="xy";number(strlen($a)+strlen($a));}
             function property(){$o=new Model();text($o->g().$o->pk);}
-            function symbolic($a){return strtoupper($a).$a;}']);
-        self::assertSame(['X - x', 'gk', 'yX'], $this->values($deriver->derive('text#parameter(s)')));
-        self::assertSame([4], $this->values($deriver->derive('number#parameter(n)')));
+            function symbolic($a){return strtoupper($a).$a;}');
+        $deriver = Deriver::prepare(['/project/app.php']);
+        $texts = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array($deriver->derive('text#parameter(s)'), false));
+        sort($texts);
+        self::assertSame(['X - x', 'gk', 'yX'], $texts);
+        self::assertSame([4], array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array($deriver->derive('number#parameter(n)'), false)));
         $symbolic = $deriver->derive('symbolic#return');
         self::assertCount(1, $symbolic);
         self::assertSame(CandidateStatus::Partials, $symbolic[0]->type);
@@ -71,117 +71,100 @@ final class CandidateRetentionTest extends TestCase
 
     public function testGroupedCaseLabelsKeepTheSharedAssignment(): void
     {
-        $deriver = $this->prepare(['app.php' => '<?php function sink($s){} function run($type){switch($type){case "post":case "page":$o="title";break;default:$o="id";}sink($o);}']);
-        self::assertSame(['id', 'title'], $this->values($deriver->derive('sink#parameter(s)')));
-        self::assertSame(['id', 'title'], $this->values(Deriver::prepare([$this->path('app.php')], new DeriverConfig(evaluators: BranchEvaluators::truth()))->derive('sink#parameter(s)')));
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php function sink($s){} function run($type){switch($type){case "post":case "page":$o="title";break;default:$o="id";}sink($o);}');
+        $path = '/project/app.php';
+        $structural = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array(Deriver::prepare([$path])->derive('sink#parameter(s)'), false));
+        sort($structural);
+        self::assertSame(['id', 'title'], $structural);
+        $pruned = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array(Deriver::prepare([$path], new DeriverConfig(evaluators: BranchEvaluators::truth()))->derive('sink#parameter(s)'), false));
+        sort($pruned);
+        self::assertSame(['id', 'title'], $pruned);
     }
 
     public function testReceiversWithoutAClassKeepTheArgumentBehindAnUnresolvedDispatch(): void
     {
-        $deriver = $this->prepare(['app.php' => '<?php class DB{public function query($sql){}}
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php class DB{public function query($sql){}}
             function untyped($db){$db->query("UNTYPED");}
             class Holder{public $db;function run(){$this->db->query("PROPERTY");}}
             function nullsafe(?DB $db){$db?->query("NULLSAFE");}
             function never(){global $never;$never->query("GLOBAL");}
-            function typed(DB $db){$db->query("TYPED");}']);
-        $result = $deriver->derive('DB::query#parameter(sql)');
-        $analyzed = [];
-        $unresolved = [];
-        foreach ($result as $candidate) {
-            if ($candidate->result instanceof Term) {
-                self::assertSame(TermKind::ControlledValue, $candidate->result->kind);
-                self::assertSame('UNRESOLVED_DISPATCH', $candidate->result->attributes['reason']);
-                $unresolved[] = $candidate->result->operands[0]->literal;
-            } else {
-                $analyzed[] = $candidate->result;
-            }
-        }
+            function typed(DB $db){$db->query("TYPED");}');
+        $candidates = iterator_to_array(Deriver::prepare(['/project/app.php'])->derive('DB::query#parameter(sql)'), false);
+        $partials = array_map(static fn (Candidate $candidate): Term => $candidate->result instanceof Term ? $candidate->result : throw new LogicException('Expected a partial candidate.'), array_values(array_filter($candidates, static fn (Candidate $candidate): bool => $candidate->result instanceof Term)));
+        $analyzed = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), array_values(array_filter($candidates, static fn (Candidate $candidate): bool => !$candidate->result instanceof Term)));
         sort($analyzed);
-        sort($unresolved);
         self::assertSame(['NULLSAFE', 'TYPED'], $analyzed);
-        self::assertSame(['GLOBAL', 'PROPERTY', 'UNTYPED'], $unresolved);
+        self::assertSame([TermKind::ControlledValue, TermKind::ControlledValue, TermKind::ControlledValue], array_map(static fn (Term $partial): TermKind => $partial->kind, $partials));
+        self::assertSame(['UNRESOLVED_DISPATCH', 'UNRESOLVED_DISPATCH', 'UNRESOLVED_DISPATCH'], array_map(static fn (Term $partial): string|int|float|bool|null => $partial->attributes['reason'] ?? null, $partials));
+        $arguments = array_map(static fn (Term $partial): string|int|float|bool|null => $partial->operands[0]->literal, $partials);
+        sort($arguments);
+        self::assertSame(['GLOBAL', 'PROPERTY', 'UNTYPED'], $arguments);
     }
 
     public function testExplicitConstructorCallsAreConstructorCallers(): void
     {
-        $deriver = $this->prepare(['app.php' => '<?php class Base{public function __construct($name){}} class Child extends Base{public function __construct(){parent::__construct("child");}} class Other extends Base{public static function make(){return new static("made");}} function direct(){new Base("direct");}']);
-        self::assertSame(['child', 'direct', 'made'], $this->values($deriver->derive('Base::__construct#parameter(name)')));
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php class Base{public function __construct($name){}} class Child extends Base{public function __construct(){parent::__construct("child");}} class Other extends Base{public static function make(){return new static("made");}} function direct(){new Base("direct");}');
+        $names = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array(Deriver::prepare(['/project/app.php'])->derive('Base::__construct#parameter(name)'), false));
+        sort($names);
+        self::assertSame(['child', 'direct', 'made'], $names);
     }
 
     public function testEveryCallThroughAGlobalReceiverIsObserved(): void
     {
-        $deriver = $this->prepare([
-            'wpdb.php' => '<?php class wpdb{public function get_var($query){return 1;} public function chain($query){return $this;}} $wpdb=new wpdb(); $wpdb->chain("FIRST")->chain("CHAINED");$wpdb->chain("SECOND");',
-            'app.php' => '<?php function f(){global $wpdb;$wpdb->get_var("A");$r=$wpdb->get_var("B");$wpdb->get_var("C".$r);}',
-        ]);
-        $values = $this->values($deriver->derive('wpdb::get_var#parameter(query)'));
-        self::assertSame(['A', 'B'], array_slice($values, 0, 2));
-        self::assertCount(3, $values);
-        self::assertSame(['CHAINED', 'FIRST', 'SECOND'], $this->values($deriver->derive('wpdb::chain#parameter(query)')));
+        file_put_contents(vfsStream::url('project') . '/wpdb.php', '<?php class wpdb{public function get_var($query){return 1;} public function chain($query){return $this;}} $wpdb=new wpdb(); $wpdb->chain("FIRST")->chain("CHAINED");$wpdb->chain("SECOND");');
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php function f(){global $wpdb;$wpdb->get_var("A");$r=$wpdb->get_var("B");$wpdb->get_var("C".$r);}');
+        $deriver = Deriver::prepare(['/project/wpdb.php', '/project/app.php']);
+        $queries = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array($deriver->derive('wpdb::get_var#parameter(query)'), false));
+        sort($queries);
+        self::assertSame(['A', 'B', 'C1'], $queries);
+        $chained = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array($deriver->derive('wpdb::chain#parameter(query)'), false));
+        sort($chained);
+        self::assertSame(['CHAINED', 'FIRST', 'SECOND'], $chained);
     }
 
     public function testUnavailableCalleesLeaveGlobalsTheyWereNotGivenIntact(): void
     {
-        $deriver = $this->prepare([
-            'wpdb.php' => '<?php class wpdb{public function get_var($query){}} $wpdb=new wpdb(); $config=["table"=>"posts"];',
-            'app.php' => '<?php function f(){global $wpdb,$config;undefined_fn();$wpdb->get_var("SELECT ".$config["table"]);}',
-        ]);
-        self::assertSame(['SELECT posts'], $this->values($deriver->derive('wpdb::get_var#parameter(query)')));
+        file_put_contents(vfsStream::url('project') . '/wpdb.php', '<?php class wpdb{public function get_var($query){}} $wpdb=new wpdb(); $config=["table"=>"posts"];');
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php function f(){global $wpdb,$config;undefined_fn();$wpdb->get_var("SELECT ".$config["table"]);}');
+        $deriver = Deriver::prepare(['/project/wpdb.php', '/project/app.php']);
+        self::assertSame(['SELECT posts'], array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array($deriver->derive('wpdb::get_var#parameter(query)'), false)));
+    }
+
+    public function testCalleesPropagatePropertyWritesToObjectsTheyReceiveAsArguments(): void
+    {
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php function sink($s){}
+            class Row{public $t="a";}
+            function change($row){$row->t="b";}
+            function direct(){$row=new Row();change($row);sink($row->t);}
+            class Builder{private array $where=[];public function where($c){if($c instanceof \Closure){$c($this);return $this;}$this->where[]=$c;return $this;}public function sql(){return "WHERE ".implode(" AND ",$this->where);}}
+            function closure(){$b=(new Builder())->where(fn($q)=>$q->where("x = 1"));sink($b->sql());}');
+        $pruned = Deriver::prepare(['/project/app.php'], new DeriverConfig(evaluators: BranchEvaluators::truth()));
+        $values = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array($pruned->derive('sink#parameter(s)'), false));
+        sort($values);
+        self::assertSame(['WHERE x = 1', 'b'], $values);
     }
 
     public function testDeclaredTypesDecideStrictComparisonsAndInstanceof(): void
     {
-        $sources = ['app.php' => '<?php function sink($s){}
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php function sink($s){}
             function nullCheck(string $s){sink($s===null?"null":"string");}
             function implicitNullable(string $s=null){sink($s===null?"maybe null":"maybe string");}
             function closure(){$f=fn()=>1;sink($f instanceof \Closure?"closure":"other");}
-            function scalar(int $n){sink($n instanceof \Closure?"closure":"int");}'];
-        $this->prepare($sources);
-        $pruned = Deriver::prepare([$this->path('app.php')], new DeriverConfig(evaluators: BranchEvaluators::truth()));
-        self::assertSame(['closure', 'int', 'maybe null', 'maybe string', 'string'], $this->values($pruned->derive('sink#parameter(s)')));
+            function scalar(int $n){sink($n instanceof \Closure?"closure":"int");}');
+        $pruned = Deriver::prepare(['/project/app.php'], new DeriverConfig(evaluators: BranchEvaluators::truth()));
+        $values = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), iterator_to_array($pruned->derive('sink#parameter(s)'), false));
+        sort($values);
+        self::assertSame(['closure', 'int', 'maybe null', 'maybe string', 'string'], $values);
     }
 
     public function testUndefinedLocalsReadAsNullInsideFunctions(): void
     {
-        $sources = ['app.php' => '<?php function sink($s){} function undefined(){sink($nothing);} function check(){sink(isset($nothing)?"set":"unset");} function dynamic($name){$$name=1;sink($nothing);}'];
-        $this->prepare($sources);
-        $pruned = Deriver::prepare([$this->path('app.php')], new DeriverConfig(evaluators: BranchEvaluators::truth()));
-        $result = $pruned->derive('sink#parameter(s)');
-        $partials = array_values(array_filter(iterator_to_array($result, false), static fn ($candidate): bool => $candidate->result instanceof Term));
-        self::assertCount(1, $partials);
-        self::assertSame([null, 'unset'], $this->values($result));
-    }
-
-    /**
-     * @param array<string, string> $files File name to contents
-     */
-    private function prepare(array $files): Deriver
-    {
-        $paths = [];
-        foreach ($files as $name => $contents) {
-            file_put_contents($this->filesystem->url() . '/' . $name, $contents);
-            $paths[] = $this->path($name);
-        }
-        return Deriver::prepare($paths);
-    }
-
-    private function path(string $name): string
-    {
-        return '/' . $this->filesystem->path() . '/' . $name;
-    }
-
-    /**
-     * @return list<mixed> Concrete results in sorted order; partial candidates are skipped
-     */
-    private function values(CandidateCollection $candidates): array
-    {
-        $values = [];
-        foreach ($candidates as $candidate) {
-            if (!$candidate->result instanceof Term) {
-                $values[] = $candidate->result;
-            }
-        }
+        file_put_contents(vfsStream::url('project') . '/app.php', '<?php function sink($s){} function undefined(){sink($nothing);} function check(){sink(isset($nothing)?"set":"unset");} function dynamic($name){$$name=1;sink($nothing);}');
+        $pruned = Deriver::prepare(['/project/app.php'], new DeriverConfig(evaluators: BranchEvaluators::truth()));
+        $candidates = iterator_to_array($pruned->derive('sink#parameter(s)'), false);
+        self::assertCount(1, array_filter($candidates, static fn (Candidate $candidate): bool => $candidate->result instanceof Term));
+        $values = array_map(static fn (Candidate $candidate): string|int|null => is_string($candidate->result) || is_int($candidate->result) || $candidate->result === null ? $candidate->result : throw new LogicException('Expected a scalar candidate.'), array_values(array_filter($candidates, static fn (Candidate $candidate): bool => !$candidate->result instanceof Term)));
         sort($values);
-        return $values;
+        self::assertSame([null, 'unset'], $values);
     }
 }

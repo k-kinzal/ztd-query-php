@@ -11,6 +11,9 @@ use Deriver\Deriver\Evaluator\Call\Registrations;
 use Deriver\Deriver\Evaluator\Enumeration\Choices;
 use Deriver\Deriver\Evaluator\Evaluator;
 use Deriver\Deriver\Evaluator\EvaluatorConfig;
+use Deriver\Deriver\Evaluator\Expression\Guards;
+use Deriver\Deriver\Evaluator\Index\BodyIndex;
+use Deriver\Deriver\Evaluator\Index\ControlDependencies;
 use Deriver\Deriver\Evaluator\Index\DefinitionIndex;
 use Deriver\Deriver\Evaluator\Request\Budget;
 use Deriver\Deriver\Evaluator\Scalar\Identity;
@@ -19,6 +22,7 @@ use Deriver\Deriver\Evaluator\Scope\Frame;
 use Deriver\Deriver\Evaluator\TargetProfile;
 use Deriver\Deriver\Evaluator\Term;
 use Deriver\Deriver\Lowerer\Declaration\Index;
+use Deriver\Deriver\Lowerer\Graph\Instruction;
 use Deriver\Deriver\MicroEvaluatorConversion;
 use Deriver\Deriver\Parser\Node\File;
 use Deriver\Deriver\Parser\Parser;
@@ -49,7 +53,7 @@ final class GuardsTest extends TestCase
         ]);
         $context->values[$frame->identity . ':' . $branch->operand] = $condition;
         $value = Term::constant(9);
-        $result = (new \Deriver\Deriver\Evaluator\Expression\Guards(new Evaluator($context)))->edge($frame, 0, $branch->targets[0], $value, 64);
+        $result = (new Guards(new Evaluator($context)))->edge($frame, 0, $branch->targets[0], $value, 64);
         $rows = iterator_to_array((new Choices())->alternatives($result), false);
 
         self::assertCount(1, $rows);
@@ -124,7 +128,40 @@ final class GuardsTest extends TestCase
         $graph = $index->graph('subject');
         self::assertNotNull($graph);
         $frame = new Frame($graph, 'source:subject');
-        $value = (new \Deriver\Deriver\Evaluator\Expression\Guards($engine))->walk($frame, $graph->returns()[0][0], Term::constant(7), 32);
+        $value = (new Guards($engine))->walk($frame, $graph->returns()[0][0], Term::constant(7), 32);
         self::assertSame([], iterator_to_array((new Choices())->alternatives($value)));
+    }
+
+    public function testSelectingKeepsStructuredEdgesAndFallThroughEdgesAsAlternatives(): void
+    {
+        $source = new Source('guards.php', '<?php function nested($a,$b){if($a){if($b){$x=1;}}} function grouped($t){switch($t){case 1:case 2:$x=1;break;}}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('guards', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $guards = new Guards(new Evaluator($context));
+        $nested = $context->index->graph('nested');
+        $grouped = $context->index->graph('grouped');
+        self::assertNotNull($nested);
+        self::assertNotNull($grouped);
+        $nested->controls = (new ControlDependencies())->build($nested);
+        $grouped->controls = (new ControlDependencies())->build($grouped);
+        $block = static function (BodyIndex $graph): int {
+            $writes = array_values(array_filter($graph->definitions, static fn (Instruction $instruction): bool => $instruction->operation === 'write' && ($graph->definitions[$instruction->operands[0]]->name ?? '') === 'x'));
+            return $graph->positions[$writes[0]->result][0];
+        };
+        self::assertCount(1, $guards->dependencies(new Frame($nested, 'source:nested'), $block($nested)));
+        self::assertCount(1, $guards->selecting(new Frame($nested, 'source:nested'), $block($nested)));
+        self::assertCount(2, $guards->dependencies(new Frame($grouped, 'source:grouped'), $block($grouped)));
+        self::assertCount(2, $guards->selecting(new Frame($grouped, 'source:grouped'), $block($grouped)));
+    }
+
+    public function testDependenciesReturnsNoEdgesForTheEntryBlock(): void
+    {
+        $source = new Source('entry.php', '<?php function f($a){if($a){$x=1;}return 2;}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('entry', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $graph = $context->index->graph('f');
+        self::assertNotNull($graph);
+        $graph->controls = (new ControlDependencies())->build($graph);
+        self::assertSame([], (new Guards(new Evaluator($context)))->dependencies(new Frame($graph, 'source:f'), 0));
     }
 }

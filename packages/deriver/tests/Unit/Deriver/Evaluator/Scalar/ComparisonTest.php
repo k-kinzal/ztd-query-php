@@ -346,4 +346,22 @@ final class ComparisonTest extends TestCase
         self::assertSame(-1, (new Comparison(14))->scalar('<=>', 0.1 + 0.2, '0.3 x'));
         self::assertSame(1, (new Comparison(-1))->scalar('<=>', 0.1 + 0.2, '0.3 x'));
     }
+
+    public function testTypedDecidesStrictComparisonsFromADeclaredType(): void
+    {
+        $subject = new Comparison(null);
+        $string = new Term(TermKind::Reference, '$s', attributes: ['type' => 'string']);
+        $nullable = new Term(TermKind::Reference, '$s', attributes: ['type' => 'string|null']);
+        $float = new Term(TermKind::Reference, '$f', attributes: ['type' => 'float']);
+        $mixed = new Term(TermKind::Reference, '$m', attributes: ['type' => 'mixed']);
+        self::assertFalse($subject->typed('===', $string, Term::constant(null))?->literal);
+        self::assertTrue($subject->typed('!==', Term::constant(null), $string)?->literal);
+        self::assertNull($subject->typed('===', $nullable, Term::constant(null)));
+        self::assertNull($subject->typed('===', $string, Term::constant('x')));
+        self::assertFalse($subject->typed('===', $float, Term::constant(5))?->literal);
+        self::assertNull($subject->typed('===', $mixed, Term::constant(5)));
+        self::assertNull($subject->typed('==', $string, Term::constant(null)));
+        self::assertNull($subject->typed('===', Term::constant(1), Term::constant(1)));
+        self::assertNull($subject->typed('===', $string, $float));
+    }
 }

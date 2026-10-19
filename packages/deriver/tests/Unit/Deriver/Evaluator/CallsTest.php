@@ -25,6 +25,7 @@ use Deriver\Deriver\Evaluator\TargetProfile;
 use Deriver\Deriver\Evaluator\Term;
 use Deriver\Deriver\Evaluator\TermKind;
 use Deriver\Deriver\Lowerer\Declaration\Index;
+use Deriver\Deriver\Lowerer\Graph\Instruction;
 use Deriver\Deriver\MicroEvaluatorConversion;
 use Deriver\Deriver\Parser\Node\File;
 use Deriver\Deriver\Parser\Parser;
@@ -474,5 +475,21 @@ final class CallsTest extends TestCase
             return $frontiers;
         }, []);
         self::assertContains('MISSING_SOURCE', array_column($frontiers, 'code'));
+    }
+
+    public function testByValueRecognizesStandardParametersPassedByValue(): void
+    {
+        $source = new Source('calls.php', '<?php function up($v){return $v;} function f($a){strlen($a);sort($a);up($a);}');
+        $tree = (new Resolver())->resolve((new Parser(new ParserConfig('8.3')))->parse($source));
+        $context = new Context(new DefinitionIndex(new Index('calls', [$tree])), new EvaluatorConfig(), new Evaluators(), new Budget());
+        $graph = $context->index->graph('f');
+        self::assertNotNull($graph);
+        $calls = array_values(array_filter($graph->definitions, static fn (Instruction $instruction): bool => $instruction->operation === 'invoke'));
+        self::assertCount(3, $calls);
+        $subject = new Calls(new Evaluator($context));
+        self::assertTrue($subject->byValue($calls[0], 'strlen', $calls[0]->arguments[0]->register));
+        self::assertFalse($subject->byValue($calls[1], 'sort', $calls[1]->arguments[0]->register));
+        self::assertFalse($subject->byValue($calls[2], 'up', $calls[2]->arguments[0]->register));
+        self::assertFalse($subject->byValue($calls[0], 'strlen', 'missing'));
     }
 }

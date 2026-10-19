@@ -65,7 +65,7 @@ final class Callers
             $target = $this->index->target($graph, $call);
             $dynamic = $call->operation === 'invoke' && $this->index->literal($graph, $call->operands[0]) === '';
             $name = $this->index->literal($graph, $call->operands[1] ?? '');
-            $methodCall = $method !== null && in_array($call->operation, ['invoke-method', 'invoke-static'], true) && ($name === '' || strcasecmp($name, $method) === 0);
+            $methodCall = $method !== null && in_array($call->operation, ['invoke-method', 'invoke-static'], true) && ($name === '' || strcasecmp($name, $method) === 0) && $this->index->compatible($target, $callee);
             if ($identity->key($target) === $identity->key($callee) || $dynamic || $methodCall) {
                 $sites[] = [$graph, $call];
             }

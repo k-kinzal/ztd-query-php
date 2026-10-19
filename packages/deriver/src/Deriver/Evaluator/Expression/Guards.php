@@ -100,7 +100,7 @@ final class Guards
      * Reads the indexed control dependencies of a block, without loop back edges unless the loop is being evaluated.
      * @return list<array{int, int}>
      */
-    private function dependencies(\Deriver\Deriver\Evaluator\Scope\Frame $frame, int $block): array
+    public function dependencies(\Deriver\Deriver\Evaluator\Scope\Frame $frame, int $block): array
     {
         $edges = [];
         foreach ($frame->graph->controls[$block] ?? [] as [$parent, $child]) {
