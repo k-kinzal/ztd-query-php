@@ -49,6 +49,10 @@ final class Comparison
                 $observation = $this->observe($node, $profile, $native, $session, $endpoint);
                 $database = $observation['matches'] ? $this->database($observation['native']) : null;
                 $history = $database === null ? [] : $this->selected($node, $profile, $native, $session, $endpoint, $database);
+                $last = $history === [] ? $observation : $history[count($history) - 1];
+                if ($last['matches']) {
+                    $history = [...$history, ...$this->sessionHistory($node, $profile, $native, $session, $endpoint, $last['native'])];
+                }
 
                 return [...$observation, 'profile' => $profile->grammar->value, 'mode' => $mode, 'matches' => $observation['matches'] && !in_array(false, array_column($history, 'matches'), true), 'transitions' => $history];
             } finally {
@@ -128,6 +132,38 @@ final class Comparison
                 throw new RuntimeException('The database selection fixture could not be established: ' . serialize($history));
             }
         }
+        return $history;
+    }
+
+    /**
+     * Repeats an unchanged structure after establishing the session object it needs.
+     * Setup errors and differences remain failures; a later target error remains
+     * visible for separate classification.
+     *
+     * @param array<string, mixed> $before The previous native observation
+     * @return list<array{sql: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>}>
+     * @throws RuntimeException When the explicit session fixture cannot be established
+     */
+    public function sessionHistory(Statement|Scalar $node, LanguageProfile $profile, mysqli $native, \MySqlMemory\Session\Session $session, Endpoint $endpoint, array $before): array
+    {
+        $error = $before['error'] ?? null;
+        $code = is_array($error) ? $error[0] ?? null : null;
+        $steps = is_int($code) ? (new SessionHistory())->steps($node, $code) : [];
+        if ($steps === []) {
+            return [];
+        }
+        $history = [];
+        foreach ($steps as $step) {
+            $observation = $this->observe($step, $profile, $native, $session, $endpoint);
+            $history[] = $observation;
+            if (!$observation['matches']) {
+                return $history;
+            }
+            if (isset($observation['native']['error'])) {
+                throw new RuntimeException('The session fixture could not be established: ' . serialize($history));
+            }
+        }
+        $history[] = $this->observe($node, $profile, $native, $session, $endpoint);
         return $history;
     }
 
