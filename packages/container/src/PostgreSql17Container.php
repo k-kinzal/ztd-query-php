@@ -9,9 +9,9 @@ namespace Container;
  *
  * @example Inspect the pinned server image without starting Docker
  *     $container = new \Container\PostgreSql17Container();
- *     assert($container->image() === 'postgres:17.2');
+ *     assert($container->image() === 'postgres:17.11');
  */
 final class PostgreSql17Container extends PostgreSqlContainer
 {
-    protected static $IMAGE = 'postgres:17.2';
+    protected static $IMAGE = 'postgres:17.11';
 }
