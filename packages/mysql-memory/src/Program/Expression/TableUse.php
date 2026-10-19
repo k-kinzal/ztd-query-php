@@ -83,6 +83,7 @@ final class TableUse
         $storage = new StorageOptions();
         $storage->header($definition, $session, $context);
         $this->contextualize($definition, $session);
+        (new \MySqlMemory\Command\Definition\Expression\GenerationExecution())->variables($definition, $session);
         $storage->engine($definition, $session->variables, $context);
         $storage->directories($definition, $session);
     }

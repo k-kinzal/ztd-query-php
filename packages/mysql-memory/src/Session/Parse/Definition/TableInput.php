@@ -108,7 +108,7 @@ final class TableInput
                 if ($session->preparation->inputPrepared) {
                     throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database));
                 }
-                $alter->raise($problem->definition, $session, false);
+                throw new CompletedTemplate($alter->raise($problem->definition, $session, false));
             }
             $use = new \MySqlMemory\Program\Expression\TableUse();
             if ($session->preparation->inputPrepared) {

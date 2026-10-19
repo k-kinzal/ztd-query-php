@@ -56,7 +56,7 @@ final class PendingTable implements PendingInstruction
         $session->text = $label;
         $this->metadata?->refresh($session);
         if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable) {
-            (new \MySqlMemory\Program\Expression\AlterUse())->raise($this->header, $session, false, $this->database);
+            return (new \MySqlMemory\Program\Expression\AlterUse())->raise($this->header, $session, false, $this->database);
         }
         $database = $this->header->name->schema->value ?? $this->database;
         if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) {

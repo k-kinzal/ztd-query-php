@@ -63,4 +63,14 @@ final class GenerationTextTest extends TestCase
         self::assertSame('))', $text->systemTail(new M\Expression\Row([$one, $variable])));
         self::assertNull($text->systemTail($variable));
     }
+    public function testSystemSuffixRetainsTheEnclosingArithmeticAfterTheMissingOperand(): void
+    {
+        $variable = new M\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('version'));
+        $one = new M\Literal\NumberLiteral('1');
+        $inner = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, $one, $variable);
+        $outer = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, $inner, new M\Literal\NumberLiteral('1'));
+        self::assertSame(') + 1)', (new GenerationText())->systemSuffix($outer));
+        self::assertSame(') + 1))', (new GenerationText())->systemTail($outer));
+        self::assertSame('* 1))', (new GenerationText())->systemTail(new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Multiply, $variable, $one)));
+    }
 }

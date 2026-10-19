@@ -31,4 +31,21 @@ final class GenerationUseTest extends TestCase
         $this->expectExceptionMessage("near 'select 1)))' at line 1");
         (new GenerationUse())->execute($definition, $session);
     }
+    public function testCreateExecutesTheSameCompleteDefinitionWithoutSourceSql(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $type = new M\Type\Integral(M\Type\Kind\IntegralKind::Int);
+        $expression = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Variable\SystemVariable(new Name('version')), new M\Name\ColumnUse(new Name('a')));
+        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn($type)), new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $expression))], ifNotExists: true);
+        $session->text = 'unrelated request';
+        (new GenerationUse())->create($definition, $session, 'd');
+        self::assertSame('unrelated request', $session->text);
+        $session->query('INSERT INTO t(a) VALUES (7),(9)');
+        $rows = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rows);
+        self::assertSame([['7', '7'], ['9', '9']], $rows->rows);
+        self::assertSame(1, (new GenerationUse())->execute($definition, $session)->warnings());
+        $session->query('DROP TABLE t');
+        self::assertSame(0, (new GenerationUse())->execute($definition, $session)->warnings());
+    }
 }

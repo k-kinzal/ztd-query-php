@@ -24,6 +24,13 @@ use SqlSemantics\Statement\Scalar;
 final class GenerationText
 {
     /**
+     * @param ItemText|null $items The column-name and character-set context of a stored definition
+     */
+    public function __construct(public readonly ?ItemText $items = null)
+    {
+    }
+
+    /**
      * Writes the suffix beginning at the first nested query, with its enclosing expression.
      */
     public function tail(Node $expression): string
@@ -48,14 +55,9 @@ final class GenerationText
         while ($expression instanceof M\Expression\Grouped || $expression instanceof M\Expression\GroupedRow || $expression instanceof M\Routine\Program\Expression\DeferredGrouped) {
             $expression = $expression->operand;
         }
-        if ($expression instanceof M\Expression\Operator\Arithmetic || $expression instanceof M\Routine\Program\Expression\DeferredArithmetic) {
-            $right = $expression->right;
-            while ($right instanceof M\Expression\Grouped) {
-                $right = $right->operand;
-            }
-            if ($right instanceof M\Variable\SystemVariable) {
-                return '))';
-            }
+        $suffix = $this->systemSuffix($expression);
+        if ($suffix !== null) {
+            return mb_strcut($suffix . ')', 0, 80, 'UTF-8');
         }
         if ($expression instanceof M\Expression\Row) {
             foreach ($expression->elements as $index => $element) {
@@ -73,12 +75,59 @@ final class GenerationText
     }
 
     /**
+     * Locates an omitted operand through nested arithmetic and function arguments.
+     * Enclosing punctuation is reconstructed from semantic operand positions.
+     */
+    public function systemSuffix(Node $node): ?string
+    {
+        if ($node instanceof M\Expression\Grouped || $node instanceof M\Routine\Program\Expression\DeferredGrouped) {
+            return $this->systemSuffix($node->operand);
+        }
+        if ($node instanceof M\Expression\Operator\Arithmetic || $node instanceof M\Routine\Program\Expression\DeferredArithmetic) {
+            $left = $node->left;
+            $right = $node->right;
+            while ($left instanceof M\Expression\Grouped) {
+                $left = $left->operand;
+            }
+            while ($right instanceof M\Expression\Grouped) {
+                $right = $right->operand;
+            }
+            $following = $node->operator->value . ' ' . implode('', array_column($this->parts($right), 0)) . ')';
+            $suffix = $this->systemSuffix($left);
+            if ($suffix !== null) {
+                return $suffix . ' ' . $following;
+            }
+            if ($left instanceof M\Variable\SystemVariable && !in_array($node->operator, [M\Expression\Operator\ArithmeticOperator::Plus, M\Expression\Operator\ArithmeticOperator::Minus], true)) {
+                return $following;
+            }
+            $suffix = $this->systemSuffix($right);
+            return $suffix !== null ? $suffix . ')' : ($right instanceof M\Variable\SystemVariable ? ')' : null);
+        }
+        if ($node instanceof M\Call\FunctionCall || $node instanceof M\Call\KeywordCall) {
+            $arguments = $node instanceof M\Call\FunctionCall ? array_map(static fn (M\Call\CallArgument $argument): Scalar => $argument->expression, $node->arguments) : $node->arguments;
+            foreach ($arguments as $index => $argument) {
+                $suffix = $this->systemSuffix($argument);
+                if ($suffix !== null) {
+                    foreach (array_slice($arguments, $index + 1) as $following) {
+                        $suffix .= ',' . implode('', array_column($this->parts($following), 0));
+                    }
+                    return $suffix . ')';
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Writes expression pieces while marking actual query boundaries.
      *
      * @return list<array{string, bool}>
      */
     public function parts(Node $node): array
     {
+        if ($node instanceof M\Variable\SystemVariable) {
+            return [['', false]];
+        }
         if ($node instanceof M\Expression\Grouped || $node instanceof M\Expression\GroupedRow || $node instanceof M\Routine\Program\Expression\DeferredGrouped) {
             return $this->parts($node->operand);
         }
@@ -98,7 +147,7 @@ final class GenerationText
             return $wrapped;
         }
         \SqlSemantics\Diagnostic\Check::invariant($node instanceof Scalar || $node instanceof M\Expression\RowOperand, 'A legacy generation leaf retains its expression role.');
-        return [[(new ItemText([], 'utf8mb4', \SqlSemantics\Contract\GrammarRelease::MySql5744))->text($node), false]];
+        return [[($this->items ?? new ItemText([], 'utf8mb4', \SqlSemantics\Contract\GrammarRelease::MySql5744))->text($node), false]];
     }
 
     /**

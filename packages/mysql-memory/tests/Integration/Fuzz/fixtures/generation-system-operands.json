@@ -1654,5 +1654,203 @@
       "warnings": null,
       "disconnected": true
     }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "CREATE DATABASE d",
+    "outcome": {
+      "results": [
+        {
+          "affected": 1,
+          "lastInsertId": "0"
+        }
+      ],
+      "warnings": [],
+      "disconnected": false
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "USE d",
+    "outcome": {
+      "results": [
+        {
+          "affected": 0,
+          "lastInsertId": "0"
+        }
+      ],
+      "warnings": [],
+      "disconnected": false
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "PREPARE s FROM 'CREATE TABLE IF NOT EXISTS t(a INT,g INT AS (@@version+a))'",
+    "outcome": {
+      "results": [
+        {
+          "affected": 0,
+          "lastInsertId": "0"
+        }
+      ],
+      "warnings": [],
+      "disconnected": false
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "EXECUTE s",
+    "outcome": {
+      "results": [
+        {
+          "affected": 0,
+          "lastInsertId": "0"
+        }
+      ],
+      "warnings": [],
+      "disconnected": false
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "INSERT INTO t(a) VALUES (7),(9)",
+    "outcome": {
+      "results": [
+        {
+          "affected": 2,
+          "lastInsertId": "0"
+        }
+      ],
+      "warnings": [],
+      "disconnected": false
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "EXECUTE s",
+    "outcome": {
+      "results": [
+        {
+          "affected": 0,
+          "lastInsertId": "0"
+        }
+      ],
+      "warnings": [
+        [
+          "Note",
+          "1050",
+          "Table 't' already exists"
+        ]
+      ],
+      "disconnected": false
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "SHOW SESSION STATUS WHERE Variable_name IN ('Com_stmt_prepare','Com_stmt_execute','Com_stmt_reprepare')",
+    "outcome": {
+      "results": [
+        {
+          "columns": [
+            {
+              "name": "Variable_name",
+              "orgname": "Variable_name",
+              "table": "session_status",
+              "orgtable": "session_status",
+              "db": "",
+              "charsetnr": 8,
+              "length": 64,
+              "type": 253,
+              "flags": 4097,
+              "decimals": 0
+            },
+            {
+              "name": "Value",
+              "orgname": "Value",
+              "table": "session_status",
+              "orgtable": "session_status",
+              "db": "",
+              "charsetnr": 8,
+              "length": 1024,
+              "type": 253,
+              "flags": 0,
+              "decimals": 0
+            }
+          ],
+          "rows": [
+            [
+              "Com_stmt_execute",
+              "3"
+            ],
+            [
+              "Com_stmt_prepare",
+              "2"
+            ],
+            [
+              "Com_stmt_reprepare",
+              "1"
+            ]
+          ]
+        }
+      ],
+      "warnings": [],
+      "disconnected": false
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "DROP TABLE t",
+    "outcome": {
+      "results": [
+        {
+          "affected": 0,
+          "lastInsertId": "0"
+        }
+      ],
+      "warnings": [],
+      "disconnected": false
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "EXECUTE s",
+    "outcome": {
+      "results": [],
+      "error": [
+        2006,
+        "HY000",
+        "MySQL server has gone away"
+      ],
+      "warnings": null,
+      "disconnected": true
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "SHOW CREATE TABLE t",
+    "outcome": {
+      "results": [],
+      "error": [
+        2006,
+        "HY000",
+        "MySQL server has gone away"
+      ],
+      "warnings": null,
+      "disconnected": true
+    }
+  },
+  {
+    "history": "successful-generation-before-destination-invalidation",
+    "sql": "SELECT 1",
+    "outcome": {
+      "results": [],
+      "error": [
+        2006,
+        "HY000",
+        "MySQL server has gone away"
+      ],
+      "warnings": null,
+      "disconnected": true
+    }
   }
 ]

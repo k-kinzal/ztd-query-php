@@ -3307,8 +3307,8 @@ of their SQL request label. MySQL 5.7 reprepare histories distinguish the origin
 destination from a later existing destination, including views and temporary
 tables. The memory lifecycle reproduces the observed disconnect after invalidating
 a refreshed destination, closing all sessions while PHP remains running. Bare
-system-variable definitions retain their different file diagnostic. A 28-history
-native regression checks 280 complete outcomes, including reprepare counters.
+system-variable definitions retain their different file diagnostic. A 29-history
+native regression checks 291 complete outcomes, including reprepare counters.
 Generated-column diagnostics preserve scalar operand widths and the precedence
 of an empty retained definition across columns.
 
@@ -3327,11 +3327,29 @@ acceptance contract. The `query970` supplied-seed campaign matched all 18,622
 inputs across nine releases; the `query978` unseeded campaign matched 992 inputs
 in 900 seconds. Neither is final-revision evidence for subsequent changes.
 
-Further native probes retain an unresolved 5.7 case where a system variable on
-the left of generated-column arithmetic disappears and creation succeeds; its
-complete observation history is saved in the generation-system-operands fixture.
-A longer database-deletion history also disconnected where the isolated prepared
-history returned error 34. These observations are not normalized away. Remaining
-work includes those histories, window inheritance structure, rejection
-classification and state witnesses, client-character-set-sensitive unquoted
-identifiers, and all acceptance campaigns on the final revision.
+Legacy generation declarations can also succeed. On MySQL 5.7, removing a
+system-variable operand on the left of addition or subtraction leaves a unary
+expression. The consumer rewrites the retained semantic operands through their
+constructors and uses the ordinary CREATE/ALTER declaration and row pipeline.
+Nested arithmetic, function arguments and row-column references remain
+structured. Other deferred declaration roles remain present; an unknown variable
+is resolved before its value can be omitted. The dictionary keeps the canonical
+expression display separately from its compiled row computation. Neither path
+parses source or rendered SQL. Direct construction tests reuse a single definition
+across creation, an existing destination and recreation after deletion. The native
+regression compares 140 statements per protocol, including successful rows,
+metadata, stored expressions, syntax errors and ordered diagnostics. A successful
+prepared creation can still disconnect after its destination is refreshed and
+then dropped; its complete native history remains a lifecycle regression.
+
+The later `query993` unseeded campaign matched 1,040 inputs in 900 seconds with
+zero differences or unclassified volatile outcomes. Its whole-model replay
+visited all 244 roots and exposed a missing window embedding in profile selection;
+that failure remains recorded. Replaying that root with the repaired shared
+embedding succeeds. Neither earlier campaign is final-revision acceptance.
+
+A longer database-deletion history disconnected where the isolated prepared
+history returned error 34. This observation is not normalized away. Remaining
+work includes that history, window inheritance structure, rejection classification
+and state witnesses, client-character-set-sensitive unquoted identifiers, and all
+acceptance campaigns on the final revision.

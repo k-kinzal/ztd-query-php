@@ -334,5 +334,18 @@
     "DROP TABLE t",
     "EXECUTE s",
     "SELECT 1"
+  ],
+  "successful-generation-before-destination-invalidation": [
+    "CREATE DATABASE d",
+    "USE d",
+    "PREPARE s FROM 'CREATE TABLE IF NOT EXISTS t(a INT,g INT AS (@@version+a))'",
+    "EXECUTE s",
+    "INSERT INTO t(a) VALUES (7),(9)",
+    "EXECUTE s",
+    "SHOW SESSION STATUS WHERE Variable_name IN ('Com_stmt_prepare','Com_stmt_execute','Com_stmt_reprepare')",
+    "DROP TABLE t",
+    "EXECUTE s",
+    "SHOW CREATE TABLE t",
+    "SELECT 1"
   ]
 }

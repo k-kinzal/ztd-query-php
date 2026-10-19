@@ -26,8 +26,9 @@ final class GenerationUse
      *
      * @throws SqlError When a destination or generation declaration is rejected
      */
-    public function execute(DeferredCreateTable $definition, Session $session, ?string $database = null): Completion
+    public function execute(DeferredCreateTable $definition, Session $session, ?string $database = null): \MySqlMemory\Result\Reply
     {
+        (new \MySqlMemory\Command\Definition\Expression\GenerationExecution())->variables($definition, $session);
         $database = $definition->name->schema->value ?? $database ?? $session->variables->database;
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {
@@ -46,7 +47,26 @@ final class GenerationUse
             $session->variables->rowCount = 0;
             return new Completion(warnings: $session->diagnostics->raised());
         }
+        return $this->create($definition, $session, $database);
+    }
+
+    /**
+     * Rewrites successful legacy expressions and preserves every remaining condition.
+     */
+    public function create(DeferredCreateTable $source, Session $session, string $database): \MySqlMemory\Result\Reply
+    {
+        $definition = (new \MySqlMemory\Command\Definition\Expression\GenerationRewrite())->create($source);
+        $name = $definition->name->name->value;
         $columns = array_values(array_filter($definition->elements, static fn ($element): bool => $element instanceof ColumnDefinition));
-        throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, $definition->temporary());
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {
+            throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, $definition->temporary());
+        }
+        $execution = new \MySqlMemory\Command\Definition\Expression\GenerationExecution();
+        $reply = $execution->run($definition, $session, $database);
+        $table = $definition->temporary() ? $session->temporaries->table($database, $name) : $session->instance->dictionary->schema($database)?->table($name);
+        if ($table !== null) {
+            $execution->display($table, $source, $session);
+        }
+        return $reply;
     }
 }
