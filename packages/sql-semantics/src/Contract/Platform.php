@@ -32,7 +32,7 @@ interface Platform
     /**
      * Answers the parser of a profile.
      */
-    public function parser(LanguageProfile $profile): SqlParser;
+    public function parser(LanguageProfile $profile, ?Session $session = null): SqlParser;
 
     /**
      * Lowers a parse tree into the statements it contains, recording the operand leaves it creates.

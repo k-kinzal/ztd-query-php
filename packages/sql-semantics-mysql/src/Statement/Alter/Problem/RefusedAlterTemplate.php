@@ -31,6 +31,6 @@ final class RefusedAlterTemplate implements Diagnostic
      */
     public function message(): string
     {
-        return 'The alteration retains a generation declaration with an invocation-time condition.';
+        return 'The alteration retains an action with an invocation-time condition.';
     }
 }

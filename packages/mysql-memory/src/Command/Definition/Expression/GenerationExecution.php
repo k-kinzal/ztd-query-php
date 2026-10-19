@@ -74,8 +74,10 @@ final class GenerationExecution
     public function variables(Node $definition, Session $session): void
     {
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
-        foreach ((new Walker())->find($definition, M\Variable\SystemVariable::class) as $variable) {
-            $variable->deriveScalar($derivation, $derivation->environment());
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($definition, $derivation->context->relationNames) as $variable) {
+            if ($variable instanceof M\Variable\SystemVariable) {
+                $variable->deriveScalar($derivation, $derivation->environment());
+            }
         }
         foreach ($derivation->facts()->diagnostics as $problem) {
             throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);

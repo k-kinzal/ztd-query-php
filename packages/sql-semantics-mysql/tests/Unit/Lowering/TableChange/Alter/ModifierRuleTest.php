@@ -63,7 +63,14 @@ final class ModifierRuleTest extends TestCase
 
     public function testModifierLowersValidation(): void
     {
-        self::assertSame('ALTER TABLE t WITHOUT VALIDATION', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t WITHOUT VALIDATION')->toString());
+        self::assertSame('CREATE PROCEDURE p() ALTER TABLE t WITHOUT VALIDATION', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t WITHOUT VALIDATION')->toString());
+    }
+
+    public function testModifierRetainsTheStandaloneValidationCondition(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('The alteration retains an action with an invocation-time condition.');
+        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t WITHOUT VALIDATION');
     }
 
     public function testValidationLowersTheOptionOfExchange(): void

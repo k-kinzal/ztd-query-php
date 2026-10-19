@@ -31,7 +31,7 @@ final class Jump
     public function ends(?string $label, ?Block $block): bool
     {
         return match ($this->flow) {
-            Flow::Leave => $label !== null && $this->label !== null && strcasecmp($this->label, $label) === 0,
+            Flow::Leave => $label !== null && $this->label !== null && mb_strtolower($this->label, 'UTF-8') === mb_strtolower($label, 'UTF-8'),
             Flow::Exit => $block !== null && $this->block === $block,
             Flow::Iterate, Flow::Return, Flow::Resume => false,
         };
@@ -42,6 +42,6 @@ final class Jump
      */
     public function repeats(?string $label): bool
     {
-        return $this->flow === Flow::Iterate && $label !== null && $this->label !== null && strcasecmp($this->label, $label) === 0;
+        return $this->flow === Flow::Iterate && $label !== null && $this->label !== null && mb_strtolower($this->label, 'UTF-8') === mb_strtolower($label, 'UTF-8');
     }
 }

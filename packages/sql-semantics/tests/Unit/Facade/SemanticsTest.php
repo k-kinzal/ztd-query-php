@@ -162,4 +162,19 @@ final class SemanticsTest extends TestCase
 
         (new Semantics(Dialect::Sqlite))->split('SELECT 1; SELECT');
     }
+    public function testParserAndAnalyzeUseTheSameExplicitClientCharacterSet(): void
+    {
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, session: $settings);
+        $sql = "SELECT 1\xA0AS x";
+        self::assertSame($settings, $semantics->context()->session);
+        self::assertSame($semantics->parser(), $semantics->parser($settings));
+        self::assertSame('SELECT 1 AS x', $semantics->analyze($sql)->toString());
+        self::assertSame('SELECT 1 AS x', $semantics->analyze($semantics->parser()->parse($sql))->toString());
+        self::assertCount(2, $semantics->analyzeAll($sql . ';' . $sql));
+        $unbound = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        self::assertSame('SELECT 1 AS x', $unbound->analyze($sql, $unbound->context(session: $settings))->toString());
+        self::assertCount(2, $unbound->analyzeAll($sql . ';' . $sql, $unbound->context(session: $settings)));
+    }
+
 }

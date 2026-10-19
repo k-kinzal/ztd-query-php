@@ -596,6 +596,7 @@ return [
     3768 => ['HY000', "Default value expression of column '%s' cannot refer to an auto-increment column."],
     3769 => ['HY000', "Default value expression of column '%s' contains a disallowed function."],
     3770 => ['HY000', "Default value expression of column '%s' contains a disallowed function: %s."],
+    3771 => ['HY000', "Default value expression of column '%s' cannot refer to a row value."],
     3772 => ['HY000', "Default value expression of column '%s' cannot refer user or system variables."],
     3780 => ['HY000', "Referencing column '%s' and referenced column '%s' in foreign key constraint '%s' are incompatible."],
     3823 => ['HY000', "Column '%s' cannot be used in a check constraint '%s': needed in a foreign key constraint '%s' referential action."],

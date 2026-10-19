@@ -32,7 +32,7 @@ final class AggregateRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $list = $platform->parser($profile)->parse("SELECT COUNT(ALL *), COUNT(DISTINCT a, b), SUM(ALL a) OVER w, JSON_OBJECTAGG(ALL a, b), GROUP_CONCAT(DISTINCT a SEPARATOR '-')")->find('select_item_list')[0];
         $rule = new AggregateRule($lowering, new WindowRule($lowering, new FrameRule($lowering)));
-        $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate => $rule->aggregate($node), $list->find('sum_expr'));
+        $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand => $rule->aggregate($node), $list->find('sum_expr'));
 
         self::assertEquals(new Aggregate(AggregateFunction::Count, [], false, true), $calls[0]);
         self::assertInstanceOf(Aggregate::class, $calls[1]);

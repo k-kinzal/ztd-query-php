@@ -218,7 +218,9 @@ final class TableChange
         if ($command instanceof ChangeColumn) {
             return $this->columns->change($command);
         }
-        if ($command instanceof DefaultSetting) {
+        if ($command instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting) {
+            $this->columns->existing($command->column->column->value);
+        } elseif ($command instanceof DefaultSetting) {
             $this->columns->alterDefault($command);
         } elseif ($command instanceof ColumnVisibility) {
             $this->columns->alterVisibility($command);

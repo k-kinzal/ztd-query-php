@@ -104,8 +104,8 @@ final class TableInput
         try {
             if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate) {
                 $alter = new \MySqlMemory\Program\Expression\AlterUse();
-                $alter->header($problem->definition, $session);
                 if ($session->preparation->inputPrepared) {
+                    $alter->header($problem->definition, $session);
                     throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database));
                 }
                 throw new CompletedTemplate($alter->raise($problem->definition, $session, false));

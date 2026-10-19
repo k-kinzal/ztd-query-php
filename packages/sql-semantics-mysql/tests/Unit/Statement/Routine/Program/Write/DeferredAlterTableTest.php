@@ -34,7 +34,7 @@ final class DeferredAlterTableTest extends TestCase
 
     public function testRejectsAnOrdinaryActionList(): void
     {
-        $this->expectExceptionMessage('A deferred ALTER instruction retains a deferred generation declaration.');
+        $this->expectExceptionMessage('A deferred ALTER instruction retains an intrinsic invocation-time condition.');
         new DeferredAlterTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), []);
     }
     public function testDeriveRelationResolvesTheChangedTableShape(): void

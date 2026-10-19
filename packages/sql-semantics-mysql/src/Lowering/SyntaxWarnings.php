@@ -43,15 +43,14 @@ final class SyntaxWarnings
         $tokens = (new InputTokens())->prefix($parser, $statement);
         $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
         $state = new Notice\Completion((new Account\SyntaxResourceNames())->completed($parser, $statement, $end));
-        $ranges = new SourceRanges();
-        $productions = Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php');
-        $lowering = new Lowering($productions, new Leaves(), $profile, client: $client);
+        $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile, client: $client);
         $operands = new Notice\OperandCompletion();
         $passwords = new Account\Authentication\SyntaxPasswords();
         $header = new Routine\Program\NoticeHeader();
         $handlers = new Routine\Condition\HandlerPrefix();
+        $labels = new Routine\Program\LabelPrefix();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $ranges, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $passwords, $replicaNetTimeout): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $passwords, $replicaNetTimeout, $labels): void {
                 if ($state->aborted) {
                     return;
                 }
@@ -72,13 +71,13 @@ final class SyntaxWarnings
                     return;
                 }
                 if ($state->failed && in_array($node->name, ['sp_proc_stmt', 'ev_sql_stmt_inner'], true)) {
-                    $state->record($ranges->span($node, true)[1] ?? 0, ParseStop::ProgramStatement);
+                    $state->record((new SourceRanges())->span($node, true)[1] ?? 0, ParseStop::ProgramStatement);
                     return;
                 }
-                $notice = $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
+                $notice = $labels->observe($node, $lookahead, $lowering, $tokens) ?? $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
                 $conditions = [...(new Server\Instance\SyntaxForeignStrings())->converted($node, $lowering, $tokens), ...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
-                    $range = $ranges->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
+                    $range = (new SourceRanges())->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
                     $state->record($range[1], $condition instanceof ParseFailure ? $header->scoped($condition) : $condition);
                 }
             });

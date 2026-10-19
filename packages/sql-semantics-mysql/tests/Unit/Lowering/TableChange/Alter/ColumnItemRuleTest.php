@@ -15,6 +15,12 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\ColumnItemRule;
 #[Medium]
 final class ColumnItemRuleTest extends TestCase
 {
+    public function testDefaultExpressionRetainsACompleteNonScalarDefault(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t ALTER a SET DEFAULT (1+ROW(1,2)), FORCE');
+        self::assertSame('CREATE PROCEDURE p() ALTER TABLE t ALTER COLUMN a SET DEFAULT (1 + ROW(1, 2)), FORCE', $operation->toString());
+    }
+
     public function testItemLowersEveryColumnAction(): void
     {
         self::assertSame('ALTER TABLE t ADD COLUMN a INT, CHANGE COLUMN b c INT, MODIFY COLUMN d INT, ALTER COLUMN e SET DEFAULT 1, ALTER COLUMN f DROP DEFAULT', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter table t add column a int, change b c int, modify d int, alter e set default 1, alter f drop default')->toString());

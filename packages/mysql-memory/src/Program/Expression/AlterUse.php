@@ -30,6 +30,14 @@ final class AlterUse
         if ($database === '') {
             throw QueryError::NoDatabase->error();
         }
+        $facts = (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database);
+        foreach ($facts->diagnostics as $problem) {
+            if (\MySqlMemory\Session\Problem\Stages::parsed($problem) || \MySqlMemory\Session\Problem\Stages::characters($problem, $session->settings()->legacy())) {
+                throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
+            }
+        }
+        (new AlterTableCommand())->read($definition->commands, $facts, $session->settings()->legacy());
+        (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($definition, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant()));
         return $database;
     }
 
@@ -47,11 +55,13 @@ final class AlterUse
         }
         $database = $this->header($definition, $session, $database);
         $session->transaction->commit();
+        (new AlterTableCommand())->validation($definition->commands);
         $name = $definition->table->name->value;
         $table = (new AlterTableCommand())->table($session, $database, $name);
         $layout = TableLayout::of($table->definition);
         $change = new TableChange($layout, $name, $database, $session->settings()->release(), (string) $session->variables->read('collation_database'));
         $change->apply($definition->commands);
+        (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->check($definition, $table, $session, $database);
         $rewrite = new \MySqlMemory\Command\Definition\Expression\GenerationRewrite();
         $columns = array_map($rewrite->column(...), array_column($layout->columns, 0));
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {

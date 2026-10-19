@@ -91,10 +91,18 @@ final class NoticeHeader
         if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns && $this->kind !== null) {
             return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns($notice->problem->view, $notice->problem->column, $this->name), $notice->aborts, $notice->phase);
         }
-        if (!$notice->problem instanceof EmptyEventAlteration || $this->name === null || $this->kind === null) {
+        $problem = $notice->problem;
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem) {
+            if (!in_array($problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::RedefinedLabel, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::EndLabelMismatch, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::LeaveWithoutLabel, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::IterateWithoutLabel], true)) {
+                return $notice;
+            }
+        } elseif (!$problem instanceof EmptyEventAlteration) {
+            return $notice;
+        }
+        if ($this->name === null || $this->kind === null) {
             return $notice;
         }
 
-        return new ParseFailure(new RefusedProgramBody($this->name, $this->kind, $notice->problem, $this->definer, nameEnd: $this->nameEnd), $notice->aborts, $notice->phase);
+        return new ParseFailure(new RefusedProgramBody($this->name, $this->kind, $problem, $this->definer, nameEnd: $this->nameEnd), $notice->aborts, $notice->phase);
     }
 }

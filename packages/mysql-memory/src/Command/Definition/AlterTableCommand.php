@@ -30,8 +30,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameTo;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlterModifier;
-use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption;
-use SqlSemantics\Platform\MySql\Statement\Alter\Partition\ExchangePartition;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice;
@@ -82,7 +80,8 @@ final class AlterTableCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex);
         [$name, $commands] = $this->request($statement);
-        $this->read($commands, $operation, $session->settings()->legacy());
+        $this->read($commands, $operation->facts, $session->settings()->legacy());
+        $this->validation($commands);
         $database = $session->variables->database;
         $schema = $name->schema->value ?? $database;
         if ($schema === '') {
@@ -229,10 +228,10 @@ final class AlterTableCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the statement has such a problem
      */
-    public function read(array $commands, Operation $operation, bool $legacy = false): void
+    public function read(array $commands, \SqlSemantics\Statement\Fact\Facts $facts, bool $legacy = false): void
     {
         $indexes = $this->indexes($commands);
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser) {
                 throw \MySqlMemory\Error\Family\AdministrationError::FunctionNotDefined->error($diagnostic->parser->value);
             }
@@ -250,7 +249,6 @@ final class AlterTableCommand implements Command
                 throw StatementError::WrongUsage->error('spatial/fulltext/hash index', 'explicit index order');
             }
         }
-        $this->validation($commands);
     }
 
     /**
@@ -266,14 +264,7 @@ final class AlterTableCommand implements Command
      */
     public function validation(array $commands): void
     {
-        $validated = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof ValidationOption) !== [];
-        $accepted = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumn || $command instanceof AddColumns
-            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Column\ChangeColumn || $command instanceof ExchangePartition
-            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\TablespaceCommand
-            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\SecondaryLoad
-            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement && $command->kind === ElementKind::Column
-            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions && $command->kind !== \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild) !== [];
-        if ($validated && !$accepted) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->invalidValidation($commands)) {
             throw StatementError::WrongUsage->error('ALTER', 'WITH VALIDATION');
         }
     }

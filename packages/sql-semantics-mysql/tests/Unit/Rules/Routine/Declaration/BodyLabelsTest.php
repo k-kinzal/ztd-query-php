@@ -40,4 +40,11 @@ final class BodyLabelsTest extends TestCase
         self::assertNull((new BodyLabels())->nested($body, []));
         self::assertSame($body, (new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body))->body);
     }
+    public function testProblemBindsDecodedNonAsciiCaseWithoutRemovingAccents(): void
+    {
+        $rules = new BodyLabels();
+        self::assertNull($rules->problem(new M\Routine\Program\Block([], [new M\Routine\Program\Flow\Leave(new Name('Á'))], new Name('á'), new Name('Á'))));
+        self::assertSame(M\Routine\Problem\ProgramRule::LeaveWithoutLabel, $rules->problem(new M\Routine\Program\Block([], [new M\Routine\Program\Flow\Leave(new Name('a'))], new Name('á')))?->rule);
+    }
+
 }

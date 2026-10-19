@@ -137,9 +137,20 @@ final class ColumnItemRule
 
         return match ($kind) {
             'default' => new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral($this->lowering->literals->signed($form->node($operand)))),
-            'expression' => new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression($this->lowering->expressions->expression($form->node($operand)))),
+            'expression' => $this->defaultExpression($column, $form->node($operand)),
             'visibility' => new ColumnVisibility($column, $this->lowering->tableDefinitions->visible($form->node($operand))),
         };
+    }
+
+    /**
+     * Retains a non-scalar default in its complete alteration instruction.
+     */
+    public function defaultExpression(ColumnName $column, Node $node): AlterCommand
+    {
+        $operand = $this->lowering->expressions->operand($node);
+        return $operand instanceof \SqlSemantics\Statement\Scalar
+            ? new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression($operand))
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting($column, $operand);
     }
 
     /**

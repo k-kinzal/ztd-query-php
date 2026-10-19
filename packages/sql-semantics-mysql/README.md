@@ -122,6 +122,14 @@ $ansi->analyze('SELECT a FROM users WHERE "name" = a || b')->toString(); // => '
 
 The mode is part of the language profile. A declaration analyzed under one mode cannot be used in a context of another mode. Rendered SQL is meant to be read under the mode it was rendered for.
 
+Input tokenization also uses the client character set in
+`Statement\Type\Resolved\Settings`. Pass these settings as the facade's
+`session` argument to make them the default for `parser()`, `split()` and
+analysis. An explicit analysis context overrides that default. When parsing
+separately for such a context, use `parser($context->session)` so parsing and
+semantic analysis read the same bytes. In particular, Latin-1 identifiers and
+whitespace do not use UTF-8 byte classes.
+
 ### Current database
 
 MySQL searches an unqualified table name in the current database only. Name it with a `SearchPath` of exactly one schema; unqualified declarations then belong to that database, and qualified names in it resolve to them. Without a search path, the current database is unnamed: a name qualified with a database does not match an unqualified declaration, and facts that would show the database name depend on it as session state.

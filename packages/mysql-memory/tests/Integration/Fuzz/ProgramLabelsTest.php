@@ -29,7 +29,9 @@ final class ProgramLabelsTest extends TestCase
         /** @var list<string> $statements */
         $statements = json_decode((string) file_get_contents(__DIR__ . '/fixtures/program-labels.json'), true, 512, JSON_THROW_ON_ERROR);
         foreach (['5.7.44', '8.4.7'] as $release) {
-            yield $release => [$release, ['SET NAMES utf8mb4', ...$statements]];
+            foreach (['latin1', 'utf8mb4'] as $charset) {
+                yield $release . ':' . $charset => [$release, ['SET NAMES ' . $charset, ...$statements]];
+            }
         }
     }
 

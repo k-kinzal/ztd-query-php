@@ -63,6 +63,7 @@ enum ConstraintError: int implements ErrorCode
     case DefaultAutoIncrement = 3768;
     case DefaultSubquery = 3769;
     case DefaultFunction = 3770;
+    case DefaultRow = 3771;
     case DefaultVariable = 3772;
     case ForeignIncompatible = 3780;
     case CheckNotBoolean = 3812;

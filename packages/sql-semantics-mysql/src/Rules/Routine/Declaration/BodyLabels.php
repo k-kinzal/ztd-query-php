@@ -30,13 +30,13 @@ final class BodyLabels
     public function problem(Node $body, array $labels = []): ?ProgramProblem
     {
         if ($body instanceof P\Flow\Leave || $body instanceof P\Flow\Iterate) {
-            $loop = $labels[strtolower($body->label->value)] ?? null;
+            $loop = $labels[mb_strtolower($body->label->value, 'UTF-8')] ?? null;
             return $loop === null || ($body instanceof P\Flow\Iterate && !$loop)
                 ? new ProgramProblem($body instanceof P\Flow\Iterate ? ProgramRule::IterateWithoutLabel : ProgramRule::LeaveWithoutLabel, $body->label->value) : null;
         }
         $labeled = $body instanceof P\Block || $body instanceof P\Flow\Loop || $body instanceof P\Flow\WhileLoop || $body instanceof P\Flow\RepeatLoop;
         if ($labeled && $body->label !== null) {
-            $key = strtolower($body->label->value);
+            $key = mb_strtolower($body->label->value, 'UTF-8');
             if (isset($labels[$key])) {
                 return new ProgramProblem(ProgramRule::RedefinedLabel, $body->label->value);
             }
@@ -46,7 +46,7 @@ final class BodyLabels
         if ($problem !== null) {
             return $problem;
         }
-        if ($labeled && $body->endLabel !== null && ($body->label === null || strcasecmp($body->label->value, $body->endLabel->value) !== 0)) {
+        if ($labeled && $body->endLabel !== null && ($body->label === null || mb_strtolower($body->label->value, 'UTF-8') !== mb_strtolower($body->endLabel->value, 'UTF-8'))) {
             return new ProgramProblem(ProgramRule::EndLabelMismatch, $body->endLabel->value);
         }
         return null;

@@ -76,6 +76,12 @@ $parser = new MySqlParser('mysql-8.4.7', SqlMode::fromString('ANSI_QUOTES,NO_BAC
 $parser->tokenize('SELECT "x"')[1]->name;        // 'IDENT_QUOTED'
 ```
 
+For a Latin-1 connection, pass `clientCharset: 'latin1'` to `MySqlParser`.
+This selects the observed MySQL Latin-1 classes for unquoted identifier bytes
+and whitespace, including the nonbreaking-space byte. Quoted tokens retain
+their original bytes. Omitting the option keeps the existing multibyte byte
+classification; this option does not transcode SQL text.
+
 A named placeholder such as `:id` is not in the languages of MySQL and PostgreSQL, which read only their own markers. Their parsers read `:name` as a parameter under `ParameterSyntax::Named`, as a dialect extension; SQLite reads it natively.
 
 ```php

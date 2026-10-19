@@ -62,14 +62,15 @@ final class MySqlParser implements ReductionParser
      * @param SqlMode $mode The `sql_mode` flags that change tokenization
      * @param VersionRegistry $registry Record of shipped releases
      * @param ParameterSyntax $parameters Which parameter markers are read; the server reads only `?`
+     * @param string|null $clientCharset Input character set; Latin-1 uses its single-byte letter classes
      *
      * @throws RuntimeException When the release is not shipped or its resources are missing
      */
-    public function __construct(?string $version = null, SqlMode $mode = new SqlMode(), VersionRegistry $registry = new VersionRegistry(), ParameterSyntax $parameters = ParameterSyntax::Native)
+    public function __construct(?string $version = null, SqlMode $mode = new SqlMode(), VersionRegistry $registry = new VersionRegistry(), ParameterSyntax $parameters = ParameterSyntax::Native, ?string $clientCharset = null)
     {
         $this->version = MySqlVersion::resolve($version, $registry);
         $this->table = (new TableFile())->load($this->version->release->tablePath);
-        $this->lexer = new MySqlLexer(KeywordTable::load($this->version->release->keywordPath), $this->version, $mode, parameters: $parameters);
+        $this->lexer = new MySqlLexer(KeywordTable::load($this->version->release->keywordPath), $this->version, $mode, parameters: $parameters, clientCharset: $clientCharset);
     }
 
     /**

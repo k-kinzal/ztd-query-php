@@ -22,6 +22,6 @@ final class RefusedAlterTemplateTest extends TestCase
         self::assertInstanceOf(M\Routine\Program\Write\DeferredAlterTable::class, $definition);
         $problem = new RefusedAlterTemplate($definition);
         self::assertSame($definition, $problem->definition);
-        self::assertSame('The alteration retains a generation declaration with an invocation-time condition.', $problem->message());
+        self::assertSame('The alteration retains an action with an invocation-time condition.', $problem->message());
     }
 }

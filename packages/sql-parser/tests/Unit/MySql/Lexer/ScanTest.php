@@ -49,4 +49,22 @@ final class ScanTest extends TestCase
         self::assertFalse(Scan::isIdentifierByte('-'));
         self::assertFalse(Scan::isIdentifierByte(''));
     }
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerLatinBytes(): iterable
+    {
+        $letters = [0x83, 0x8A, 0x8C, 0x8E, 0x9A, 0x9C, 0x9E, 0x9F, ...range(0xC0, 0xD6), ...range(0xD8, 0xF6), ...range(0xF8, 0xFF)];
+        foreach (range(128, 255) as $byte) {
+            yield dechex($byte) => [chr($byte), in_array($byte, $letters, true)];
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLatinBytes')]
+    public function testIsIdentifierByteUsesTheObservedLatinLetterClasses(string $byte, bool $letter): void
+    {
+        self::assertSame($letter, Scan::isIdentifierByte($byte, 'latin1'));
+        self::assertTrue(Scan::isIdentifierByte($byte, 'utf8mb4'));
+    }
+
 }

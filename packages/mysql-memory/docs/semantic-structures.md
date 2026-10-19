@@ -3082,6 +3082,19 @@ stored definition. Opening the target and checking its existing column storage
 precedes the generation condition. The source boundary and prepared cache carry
 these typed templates, without source SQL or parser nodes.
 
+Modern alteration instructions also retain non-scalar default operands in
+`DeferredDefaultSetting`. An ordinary `AlterTable` excludes these actions and
+validation modifiers without an eligible alteration. The complete deferred
+instruction can still occur in an unexecuted program or a prepared statement.
+On invocation, the consumer resolves its database, validation modifier, target,
+ordered layout changes and default dependencies without consulting source SQL.
+An unused CTE does not make its system variables active dependencies.
+
+`DeferredAggregate` keeps a non-scalar aggregate argument, its quantifiers and
+optional window outside `Scalar`. Query-level sort clauses retain deferred
+operands through `DeferredOrderItem`, including tails on TABLE and set queries.
+Neither lowering path replaces a rejected operand with an ordinary scalar.
+
 Generic calls whose names happen to be keywords retain their stored-function
 meaning. For example, `FunctionCall(Name('USER'))` is distinct from
 `KeywordCall(KeywordFunction::User)`. The former cannot inhabit a plain deferred

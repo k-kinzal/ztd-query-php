@@ -73,7 +73,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Answers the parser of a profile, created once per release and parameter style.
      */
-    public function parser(LanguageProfile $profile): SqlParser
+    public function parser(LanguageProfile $profile, ?\SqlSemantics\Contract\Session $session = null): SqlParser
     {
         $key = $profile->grammar->value . '/' . $profile->parameters->value;
 

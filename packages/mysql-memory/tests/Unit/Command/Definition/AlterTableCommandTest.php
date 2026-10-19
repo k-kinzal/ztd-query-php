@@ -158,9 +158,10 @@ final class AlterTableCommandTest extends TestCase
     public function testValidationRefusesWithValidationOutsideApplicableOperations(): void
     {
         $session = (new Instance())->connect();
-        $operation = $session->analyze('ALTER TABLE t WITH VALIDATION, FORCE');
-        $statement = $operation->statement;
-        self::assertInstanceOf(AlterTable::class, $statement);
+        $operation = $session->analyze('CREATE PROCEDURE p() ALTER TABLE t WITH VALIDATION, FORCE');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        $statement = $operation->statement->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable::class, $statement);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage('Incorrect usage of ALTER and WITH VALIDATION');
@@ -457,7 +458,7 @@ final class AlterTableCommandTest extends TestCase
         $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t (a DESC)');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateIndex::class, $statement);
-        (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation, true);
+        (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation->facts, true);
         self::assertSame('i', $statement->name->value);
     }
 

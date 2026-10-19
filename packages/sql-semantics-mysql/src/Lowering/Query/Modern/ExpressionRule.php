@@ -8,7 +8,6 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
-use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
@@ -118,7 +117,7 @@ final class ExpressionRule
             default => throw ImplementationGap::production($form),
         };
         $with = $offset === 1 ? (new PrimaryRule($this->lowering))->with($form->node(0)) : null;
-        $own = new Trailer((new ClauseRule($this->lowering))->ordering($form->node($offset + 1)), (new TailRule($this->lowering))->limit($form->node($offset + 2)));
+        $own = new Trailer((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->ordering($form->node($offset + 1)), (new TailRule($this->lowering))->limit($form->node($offset + 2)));
         $body = $this->body($form->node($offset));
         if ($body instanceof Block) {
             $select = $body->then($own->then($later))->select();

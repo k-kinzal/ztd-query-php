@@ -109,7 +109,7 @@ final class AggregateRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function aggregate(Node $call): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate
+    public function aggregate(Node $call): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $form = $this->lowering->form($call);
         if (array_key_exists($form->signature, self::CONCATENATIONS)) {
@@ -125,11 +125,17 @@ final class AggregateRule
         [$function, $distinct, $argument, $position, $window] = self::AGGREGATES[$form->signature] ?? throw ImplementationGap::production($form);
         [$all, $arguments] = match ($argument) {
             'in' => $this->single($form->node($position)),
-            'list' => [false, $this->lowering->expressions->expressions($form->node($position))],
+            'list' => [false, $this->lowering->expressions->operands($form->node($position))],
             'star' => [$this->lowering->options->present($form->node($position)), []],
         };
 
-        return $this->windowed(new Aggregate($function, $arguments, $distinct, $all), $window === null ? null : $this->windows->windowing($form->node($window)));
+        $over = $window === null ? null : $this->windows->windowing($form->node($window));
+        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar) !== []) {
+            \SqlSemantics\Diagnostic\Check::invariant($arguments !== [], 'A retained aggregate has arguments.');
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate($function, $arguments, $distinct, $all, $over);
+        }
+        /** @var list<Scalar> $arguments */
+        return $this->windowed(new Aggregate($function, $arguments, $distinct, $all), $over);
     }
 
     /**
@@ -148,13 +154,15 @@ final class AggregateRule
     /**
      * Lowers the one operand of an aggregate as an argument list.
      *
-     * @return array{bool, list<Scalar>}
+     * @return array{bool, list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand>}
      */
     public function single(Node $operand): array
     {
-        [$all, $expression] = $this->operand($operand);
-
-        return [$all, [$expression]];
+        $form = $this->lowering->form($operand);
+        if ($form->signature !== 'in_sum_expr: opt_all expr') {
+            throw ImplementationGap::production($form);
+        }
+        return [$this->lowering->options->present($form->node(0)), [$this->lowering->expressions->operand($form->node(1))]];
     }
 
     /**

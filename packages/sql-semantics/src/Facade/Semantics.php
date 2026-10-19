@@ -73,14 +73,15 @@ final class Semantics
      * @param Mode|null $mode The session settings SQL is read under, or null for the defaults of the database
      * @param ParameterStyle $parameters Which parameter markers are read; the named style adds `:name`
      * @param SearchPath|null $searchPath The schemas an unqualified relation name is searched in, or null for the default of the database
+     * @param Session|null $session Default input and resolution settings; an explicit analysis context overrides them
      *
      * @throws InvalidArgumentException When the release, mode or search path does not belong to the database
      */
-    public function __construct(Dialect $dialect, ?string $grammarVersion = null, ?Mode $mode = null, ParameterStyle $parameters = ParameterStyle::Native, ?SearchPath $searchPath = null)
+    public function __construct(Dialect $dialect, ?string $grammarVersion = null, ?Mode $mode = null, ParameterStyle $parameters = ParameterStyle::Native, ?SearchPath $searchPath = null, private readonly ?Session $session = null)
     {
         $this->platform = Platforms::of($dialect->database());
         $this->profile = $this->platform->profile($grammarVersion, $mode, $parameters);
-        $this->parser = $this->platform->parser($this->profile);
+        $this->parser = $this->platform->parser($this->profile, $session);
         $this->searchPath = $searchPath?->schemas;
         $this->platform->context($this->profile, $this->searchPath, [], false);
     }
@@ -100,9 +101,9 @@ final class Semantics
      * analysis or to report a syntax error as the database does, parses with
      * this parser and passes the tree to analyze().
      */
-    public function parser(): SqlParser
+    public function parser(?Session $session = null): SqlParser
     {
-        return $this->parser;
+        return $session === null ? $this->parser : $this->platform->parser($this->profile, $session);
     }
 
     /**
@@ -134,7 +135,7 @@ final class Semantics
             }
         }
 
-        return $this->platform->context($this->profile, $searchPath->schemas ?? $this->searchPath, $tables, $declarations !== null && $complete)->withSession($session);
+        return $this->platform->context($this->profile, $searchPath->schemas ?? $this->searchPath, $tables, $declarations !== null && $complete)->withSession($session ?? $this->session);
     }
 
     /**
@@ -160,11 +161,12 @@ final class Semantics
     {
         $declarations = $context instanceof AnalysisContext ? $context : $this->context($context);
         Check::input($this->profile->compatibleWith($declarations->profile), 'The context must match the selected language profile.');
+        $parser = $this->parser($declarations->session);
         if ($sql instanceof Node) {
             $tree = $sql;
         } else {
             try {
-                $tree = $this->parser->parse($sql);
+                $tree = $parser->parse($sql);
             } catch (SourceException $error) {
                 throw new AnalysisException($error->getMessage(), 0, $error);
             }
@@ -180,7 +182,7 @@ final class Semantics
         $tokens = new TokenCorrespondence();
         $keys = $this->platform->leafKeys($this->profile);
         $productions = $this->platform->productions($this->profile);
-        $difference = $tokens->difference($tokens->keys($tree, $productions, $keys), $tokens->keys($this->parser->parse($operation->toString()), $productions, $keys));
+        $difference = $tokens->difference($tokens->keys($tree, $productions, $keys), $tokens->keys($parser->parse($operation->toString()), $productions, $keys));
         Check::invariant($difference === null, 'The rendered SQL does not carry the tokens of the input: ' . $difference . ' in: ' . $operation->toString());
 
         return $operation;
@@ -201,7 +203,7 @@ final class Semantics
     {
         $declarations = $context instanceof AnalysisContext ? $context : $this->context($context);
         $operations = [];
-        foreach ($this->split($sql) as $statement) {
+        foreach ($this->split($sql, $declarations->session) as $statement) {
             $operations[] = $this->analyze($statement, $declarations);
         }
 
@@ -219,10 +221,10 @@ final class Semantics
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      */
-    public function split(string $sql): array
+    public function split(string $sql, ?Session $session = null): array
     {
         try {
-            return (new Splitter($this->parser))->split($sql);
+            return (new Splitter($this->parser($session)))->split($sql);
         } catch (SourceException $error) {
             throw new AnalysisException($error->getMessage(), 0, $error);
         }

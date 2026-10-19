@@ -20,6 +20,20 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class RowUseTest extends TestCase
 {
+    public function testAggregateChecksPlacementBeforeArgumentNames(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1111);
+        $session->query('SET @value=SUM(ROW(missing,2))');
+    }
+
+    public function testAggregateResolvesItsWindowBeforeRowArguments(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(3579);
+        $session->query('SELECT SUM(ROW(missing,2)) OVER absent_window');
+    }
+
     public function testWindowResolvesItsNameBeforeRejectingAnUnwindowedStatement(): void
     {
         $session = (new Instance())->connect();

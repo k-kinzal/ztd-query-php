@@ -65,7 +65,7 @@ final class ProgramScope
     public function holds(array $names, Name $name): bool
     {
         foreach ($names as $candidate) {
-            if (strcasecmp($candidate->value, $name->value) === 0) {
+            if (mb_strtolower($candidate->value, 'UTF-8') === mb_strtolower($name->value, 'UTF-8')) {
                 return true;
             }
         }

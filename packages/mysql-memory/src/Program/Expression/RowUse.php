@@ -77,6 +77,10 @@ final class RowUse
      */
     public function prepare(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
     {
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate) {
+            $this->aggregate($operand, $compiler, $scope);
+            return;
+        }
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery) {
             (new QueryUse())->prepare($operand->query, $compiler, $operand->exists);
             $compiler->planner->query($operand->query, $scope);
@@ -172,6 +176,32 @@ final class RowUse
             $scope->clause = 'order clause';
         }
         $windows->calls[] = [$call, []];
+    }
+
+    /**
+     * Resolves aggregate placement and window identity before non-scalar arguments.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the call or an argument cannot prepare
+     */
+    public function aggregate(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate $call, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
+    {
+        if ($call->over !== null) {
+            if ($scope->windowing === null) {
+                if ($call->over instanceof \SqlSemantics\Statement\Identifier\Name && array_filter($scope->windowNames, static fn ($name): bool => strcasecmp($name->value, $call->over->value) === 0) === []) {
+                    throw QueryError::WindowNotDefined->error($call->over->value);
+                }
+                throw QueryError::WindowFunctionMisplaced->error(strtolower($call->function->value));
+            }
+            if ($call->over instanceof \SqlSemantics\Statement\Identifier\Name) {
+                $scope->windowing->named($call->over);
+            }
+        } elseif ($scope->grouping === null) {
+            throw QueryError::InvalidGroupFunctionUse->error();
+        }
+        $input = clone $scope;
+        $input->grouping = null;
+        $input->windowing = null;
+        $this->deferred($call, $compiler, $input);
     }
 
     /**

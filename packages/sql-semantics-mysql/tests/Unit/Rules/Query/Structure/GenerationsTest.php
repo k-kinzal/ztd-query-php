@@ -71,7 +71,8 @@ final class GenerationsTest extends TestCase
     {
         $this->expectExceptionMessage('A structure cannot combine MySQL 5.6-only forms with forms introduced in MySQL 5.7 or later.');
 
-        new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new QualifiedName(new Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(true)], true);
+        $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+        new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new QualifiedName(new Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(true), new \SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumn($column)], true);
     }
 
     public function testCheckRejectsIndexVisibilityWithRemovedPartitionUpgrade(): void

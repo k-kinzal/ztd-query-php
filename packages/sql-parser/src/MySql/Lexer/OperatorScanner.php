@@ -41,7 +41,7 @@ final class OperatorScanner
         $character = $cursor->peek();
         if ($character === '?') {
             $cursor->take(1);
-            if (Scan::isIdentifierByte($cursor->peek())) {
+            if (Scan::isIdentifierByte($cursor->peek(), $scan->clientCharset)) {
                 throw LexicalException::unexpectedCharacter($cursor->source, $start);
             }
 
@@ -138,7 +138,7 @@ final class OperatorScanner
         $cursor = $scan->cursor;
         $start = $cursor->offset();
         $cursor->take(1);
-        $scan->next = Scan::isIdentifierByte($cursor->peek()) ? LexerState::IdentifierStart : LexerState::Start;
+        $scan->next = Scan::isIdentifierByte($cursor->peek(), $scan->clientCharset) ? LexerState::IdentifierStart : LexerState::Start;
 
         return $scan->lexeme('.', $start);
     }

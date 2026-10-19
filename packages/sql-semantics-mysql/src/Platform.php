@@ -90,13 +90,14 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Answers the parser of a profile, created once per profile.
      */
-    public function parser(LanguageProfile $profile): SqlParser
+    public function parser(LanguageProfile $profile, ?\SqlSemantics\Contract\Session $session = null): SqlParser
     {
         $lexical = $profile->lexical;
+        $client = $session instanceof Statement\Type\Resolved\Settings ? $session->client?->name : null;
         $mode = new SqlMode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace);
-        $key = $profile->grammar->value . '|' . (new Mode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace))->toString() . '|' . $profile->parameters->value;
+        $key = $profile->grammar->value . '|' . (new Mode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace))->toString() . '|' . $profile->parameters->value . '|' . ($client ?? '');
 
-        return $this->parsers[$key] ??= new MySqlParser($profile->grammar->value, $mode, new VersionRegistry(), $profile->parameters === ParameterStyle::Named ? ParameterSyntax::Named : ParameterSyntax::Native);
+        return $this->parsers[$key] ??= new MySqlParser($profile->grammar->value, $mode, new VersionRegistry(), $profile->parameters === ParameterStyle::Named ? ParameterSyntax::Named : ParameterSyntax::Native, $client);
     }
 
     /**

@@ -388,9 +388,10 @@ final class Session
     public function semantics(): Semantics
     {
         $mode = Mode::fromString((string) $this->variables->read('sql_mode'));
-        $key = $mode->toString();
+        $client = Charset::named((string) $this->variables->read('character_set_client'));
+        $key = $mode->toString() . '|' . ($client->name ?? '');
 
-        return $this->semantics[$key] ??= new Semantics(Dialect::MySql, 'mysql-' . $this->instance->version, $mode, ParameterStyle::Native);
+        return $this->semantics[$key] ??= new Semantics(Dialect::MySql, 'mysql-' . $this->instance->version, $mode, ParameterStyle::Native, session: new Resolution(Collation::known('utf8mb4_0900_ai_ci'), client: $client));
     }
 
     /**

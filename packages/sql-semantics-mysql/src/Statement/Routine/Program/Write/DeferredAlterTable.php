@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A complete legacy ALTER instruction retained until its target is opened.
+ * A complete ALTER instruction retained until it is invoked.
  *
  * The target, all ordered actions and column declarations remain available to
  * binding and invocation. Ordinary ALTER values exclude this deferred column role.
@@ -69,7 +69,7 @@ final class DeferredAlterTable implements ProgramStatement, Relation
             );
         }
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($table, $this->commands);
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->commands($this->commands), 'A deferred ALTER instruction retains a deferred generation declaration.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->deferred($this->commands), 'A deferred ALTER instruction retains an intrinsic invocation-time condition.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

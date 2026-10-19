@@ -46,7 +46,7 @@ final class StorageOptions
      *
      * @throws SqlError When an engine is unknown and substitution is disabled
      */
-    public function resolve(Statement $statement, Session $session, Context $context): void
+    public function resolve(Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $statement, Session $session, Context $context): void
     {
         if ($statement instanceof CreateTable && array_key_exists(spl_object_id($statement), $session->variables->preparedEngines)) {
             return;

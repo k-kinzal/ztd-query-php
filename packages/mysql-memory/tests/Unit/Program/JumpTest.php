@@ -32,4 +32,11 @@ final class JumpTest extends TestCase
     {
         self::assertSame([true, false, false], [(new Jump(Flow::Iterate, 'l'))->repeats('L'), (new Jump(Flow::Iterate, 'l'))->repeats('m'), (new Jump(Flow::Leave, 'l'))->repeats('l')]);
     }
+    public function testEndsAndRepeatsUseDecodedLabelCase(): void
+    {
+        self::assertTrue((new Jump(Flow::Leave, 'Á'))->ends('á', null));
+        self::assertTrue((new Jump(Flow::Iterate, 'Á'))->repeats('á'));
+        self::assertFalse((new Jump(Flow::Leave, 'á'))->ends('a', null));
+    }
+
 }

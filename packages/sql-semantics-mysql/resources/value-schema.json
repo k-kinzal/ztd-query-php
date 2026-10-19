@@ -2425,6 +2425,13 @@
         "condition": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "result": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredAggregate": {
+        "all": "bool",
+        "arguments": "array",
+        "distinct": "bool",
+        "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateFunction",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification|null"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredAggregateKind": {
         "name": "string",
         "value": "string"
@@ -2740,6 +2747,10 @@
         "partitioning": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Partitioning",
         "query": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery",
         "temporaryWords": "int"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDefaultSetting": {
+        "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete": {
         "hints": "array",

@@ -152,4 +152,14 @@ final class MySqlParserTest extends TestCase
         self::assertContains('mysql-8.4.7', $versions);
         self::assertCount(9, $versions);
     }
+    public function testTokenizeSeparatesLatinPunctuationAndKeepsQuotedIdentifiersLossless(): void
+    {
+        $parser = new MySqlParser(clientCharset: 'latin1');
+        $sql = "SELECT `a\xA1b`, a\xC3z\xA0AS x";
+        self::assertSame($sql, $parser->parse($sql)->toString());
+        self::assertSame(['SELECT', "`a\xA1b`", ',', "a\xC3z", 'AS', 'x', '', ''], array_column($parser->tokenize($sql), 'text'));
+        $this->expectException(LexicalException::class);
+        $parser->tokenize("SELECT a\xA1b");
+    }
+
 }
