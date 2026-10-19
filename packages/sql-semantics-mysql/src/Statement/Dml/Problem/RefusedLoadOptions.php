@@ -8,6 +8,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
@@ -27,7 +28,7 @@ final class RefusedLoadOptions implements Diagnostic
     use Snapshot;
 
     /**
-     * @var list<Assignment> The preceding assignments, in written order
+     * @var list<Assignment|DeferredColumnAssignment> The preceding assignments, in written order
      */
     public readonly array $assignments;
 
@@ -36,11 +37,15 @@ final class RefusedLoadOptions implements Diagnostic
      * @param LoadFormat $format The prohibited instruction kind inside a program
      * @param LoadConflict $problem The first incompatible option combination
      * @param CharsetName|null $charset The preceding input character set
-     * @param list<Assignment> $assignments The preceding assignment operands
+     * @param list<Assignment|DeferredColumnAssignment> $assignments The preceding assignment operands
      */
     public function __construct(public readonly QualifiedName $table, public readonly LoadFormat $format, public readonly LoadConflict $problem, public readonly ?CharsetName $charset = null, array $assignments = [])
     {
-        $this->assignments = Check::listOf($assignments, Assignment::class, 'LOAD input assignments retain their written order.');
+        $items = Check::listOf($assignments, \SqlSemantics\Statement\Node::class, 'LOAD input assignments retain their written order.');
+        foreach ($items as $item) {
+            Check::input($item instanceof Assignment || $item instanceof DeferredColumnAssignment, 'LOAD input assignments retain scalar, default or non-scalar operand roles.');
+        }
+        $this->assignments = $items;
     }
 
     /**

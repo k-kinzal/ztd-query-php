@@ -1168,6 +1168,14 @@ in the native comparison matrix. A constructor sample of 100 LOAD values and the
 245-root sample remain constructible without exclusions or increased budgets;
 these samples do not establish every possible cross-release combination.
 
+The refusal retains non-scalar assignment values through
+`DeferredColumnAssignment`. This preserves unknown-variable and character-set
+conditions inside rows or deferred aggregates without preparing their tables,
+widths or window placement before the LOAD option conflict. Ordinary
+`Assignment` remains scalar-or-DEFAULT. Native comparisons include the complete
+generated counterexample and repeat operand combinations without a selected
+database, with absent tables and after the tables contain rows.
+
 Identifier character sets are interpreted at the input boundary. In particular,
 Latin-1 input bytes become decoded system-character-set names before the model
 is published. Planning uses those names directly; changing `character_set_client`

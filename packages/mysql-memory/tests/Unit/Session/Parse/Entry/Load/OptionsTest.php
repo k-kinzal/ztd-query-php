@@ -24,6 +24,19 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class OptionsTest extends TestCase
 {
+    public function testErrorKeepsEarlyDependenciesInsideANonScalarAssignment(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new SystemVariable(new Name('missing')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+        $assignment = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment(new ColumnUse(new Name('a')), $row);
+        $problem = new RefusedLoadOptions(new QualifiedName(new Name('t')), LoadFormat::Xml, new LoadConflict(LoadRule::CompressionWithoutBulk), assignments: [$assignment]);
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->text = 'unrelated invalid input';
+        self::assertSame(1046, (new Options())->error($problem, $session)->getCode());
+        $session->variables->database = 'd';
+        self::assertSame(1193, (new Options())->error($problem, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testErrorOrdersCharsetDatabaseAndAssignmentBeforeTheConflictWithoutInputSql(): void
     {
         $session = (new Instance())->connect();

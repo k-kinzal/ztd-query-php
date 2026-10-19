@@ -10,10 +10,10 @@ use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Preserves LOAD input name resolution before a refused option combination.
@@ -40,7 +40,7 @@ final class Options
         }
         $derivation = new Derivation($session->semantics()->context(session: $session->resolution()));
         foreach ($problem->assignments as $assignment) {
-            if ($assignment->value instanceof Scalar) {
+            if (!$assignment->value instanceof DefaultRequest) {
                 $derivation->scalar($assignment->value, $derivation->environment());
             }
         }
