@@ -95,7 +95,11 @@ final class Lowerer
                 continue;
             }
             $default = $parameter->default === null ? null : $this->expression($parameter->default, $source->path, $source->symbol . ':default:' . $parameter->var->name, $source->className, $source->strict);
-            $parameters[] = new Parameter($parameter->var->name, $this->type($parameter->type), $parameter->byRef, $parameter->variadic, $default, $parameter->flags, $this->index->builder($source->path)->source($parameter));
+            $type = $this->type($parameter->type);
+            if ($parameter->type !== null && $parameter->default instanceof Expr\ConstFetch && strtolower($parameter->default->name->toString()) === 'null' && !in_array('null', array_map('strtolower', explode('|', $type)), true) && $type !== 'mixed') {
+                $type .= '|null';
+            }
+            $parameters[] = new Parameter($parameter->var->name, $type, $parameter->byRef, $parameter->variadic, $default, $parameter->flags, $this->index->builder($source->path)->source($parameter));
         }
         return $parameters;
     }

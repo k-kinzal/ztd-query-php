@@ -52,7 +52,7 @@ final class Transfer
         $name = $values[0]->literal ?? null;
         $autoload = in_array($prototype->operation, ['new', 'invoke-static'], true) || is_string($name) && str_contains($name, '::');
         if ($autoload) {
-            (new Havoc())->call($state, $values, [], $reason);
+            (new Havoc())->call($state, $values, [], $reason, shared: false);
             $this->machine->context->frontier($reason, $instruction->source, 'call', $values);
         }
         $exception = $state->fork();

@@ -632,7 +632,7 @@ final class CollectionCallsTest extends TestCase
      * @param list<Term> $values Bound inputs requiring an explicit boundary
      */
     #[DataProvider('providerUnsupportedCollections')]
-    public function testApplyKeepsUnknownCollectionEffectsAndBothExits(string $name, array $values): void
+    public function testApplyKeepsUnrelatedGlobalsAndBothExitsForUnknownCollectionCases(string $name, array $values): void
     {
         $source = '<?php function target(){return 1;}';
         $budget = new Budget();
@@ -668,7 +668,7 @@ final class CollectionCallsTest extends TestCase
         self::assertSame(CompletionKind::Normal, $paths[0]->completion->kind);
         self::assertSame(CompletionKind::Throw, $paths[1]->completion->kind);
         self::assertSame('UNSUPPORTED_EVALUATOR_CASE', $paths[0]->registers['result']->literal);
-        self::assertSame(TermKind::Opaque, $paths[0]->memory->cells['global:value']->kind);
+        self::assertSame(7, $paths[0]->memory->cells['global:value']->literal);
         self::assertSame(['UNSUPPORTED_EVALUATOR_CASE'], array_column($context->frontiers, 'code'));
     }
     /**

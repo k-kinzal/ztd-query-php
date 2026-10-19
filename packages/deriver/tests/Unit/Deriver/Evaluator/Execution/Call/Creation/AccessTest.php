@@ -620,7 +620,7 @@ final class AccessTest extends TestCase
         yield 'clone enum' => ['clone', new Term(TermKind::Enum, 'Mode::One', attributes: ['class' => 'Mode'])];
         yield 'clone native exception' => ['clone', new Term(TermKind::Object, 'error', attributes: ['class' => 'RuntimeException'])];
     }
-    public function testCheckRetainsOpenDispatchEffectsForASymbolicClass(): void
+    public function testCheckKeepsUnrelatedGlobalsForASymbolicClass(): void
     {
         $source = '<?php function target(){return 1;}';
         $budget = new Budget();
@@ -658,7 +658,7 @@ final class AccessTest extends TestCase
         self::assertSame(CompletionKind::Normal, $paths[0]->completion->kind);
         self::assertSame(CompletionKind::Throw, $paths[1]->completion->kind);
         self::assertSame('OPEN_DISPATCH', $paths[0]->registers['result']->literal);
-        self::assertSame(TermKind::Opaque, $paths[0]->memory->cells['global:shared']->kind);
+        self::assertSame(7, $paths[0]->memory->cells['global:shared']->literal);
         self::assertSame(['OPEN_DISPATCH'], array_column($context->frontiers, 'code'));
     }
     public function testWithoutConstructorAcceptsUnusedPositionalArguments(): void

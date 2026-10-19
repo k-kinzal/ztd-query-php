@@ -112,7 +112,7 @@ final class CandidateResultTest extends TestCase
         self::assertInstanceOf(Term::class, $result[0]->result);
         self::assertSame('NO_VALUE_DEFINITION', $result[0]->result->attributes['reason']);
     }
-    public function testT12SqlExampleKeepsDefaultAndUnresolvedBranches(): void
+    public function testT12SqlExampleKeepsDefaultBranchesAndReadsAnUndefinedLocalAsNull(): void
     {
         $prepared4Input = new Sources([new Source('sql.php', '<?php function select($table){if($table===null){$table="default_table";}$sql="SELECT * FROM $table";observe($sql);}')]);
         $prepared4Configuration = new DeriverConfig();
@@ -151,7 +151,7 @@ final class CandidateResultTest extends TestCase
         $prepared5Snapshot = $prepared5Identity->snapshot(array_map(Frontier::fromDiagnostic(...), $prepared5Program->diagnostics()));
         $typo = new CandidateQuery(new DefinitionIndex($prepared5Program), $prepared5Settings, $prepared5Evaluators, $prepared5Snapshot);
         $unknown = $typo->derive(new ValueQuery((new CallObservations($prepared5Program, $prepared5Evaluators))->find('observe')[0]->argument(0)));
-        self::assertInstanceOf(Term::class, $unknown[0]->result);
-        self::assertSame('$sql', $unknown[0]->result->literal);
+        self::assertSame(CandidateStatus::Analyzed, $unknown[0]->type);
+        self::assertNull($unknown[0]->result);
     }
 }

@@ -66,7 +66,30 @@ final class Origins
         }
         $parameters = array_column($frame->graph->body->parameters, null, 'name');
         $source = $parameter ? ($parameters[$local->name]->source ?? $local->source) : $local->source;
+        if (!$parameter && $local->name !== 'this' && !str_starts_with($frame->graph->body->symbol, 'script:') && !$this->dynamicSymbols($frame->graph)) {
+            return Term::constant(null);
+        }
         return $this->engine->context->reference($frame, '$' . $local->name, $source, $type, !$parameter && $local->name !== 'this' ? 'UNRESOLVED_LOCAL' : 'EXTERNAL_INPUT');
+    }
+
+    /**
+     * Reports whether a body can define locals outside its own assignments: variable variables, include,
+     * eval, or `extract()`. Without them, a local read before any write is PHP's undefined variable, null.
+     */
+    public function dynamicSymbols(BodyIndex $graph): bool
+    {
+        foreach ($graph->definitions as $instruction) {
+            if (in_array($instruction->operation, ['dynamic-local', 'symbol-table-boundary'], true)) {
+                return true;
+            }
+            if ($instruction->operation === 'invoke' && strcasecmp(ltrim($this->engine->context->index->literal($graph, $instruction->operands[0] ?? ''), '\\'), 'extract') === 0) {
+                return true;
+            }
+            if ($instruction->operation === 'invoke' && strcasecmp((string) ($instruction->attributes['fallback'] ?? ''), 'extract') === 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -96,11 +119,13 @@ final class Origins
                             return new Term(\Deriver\Deriver\Evaluator\TermKind::Choice);
                         }
                         $matched = true;
-                        if ($target === '') {
-                            return $this->engine->context->reference($frame, '$' . $name, $instruction->source, reason: 'UNRESOLVED_DISPATCH');
-                        }
                         $bound = (new \Deriver\Deriver\Evaluator\Calls($this->engine))->bind($caller, $instruction, $frame->graph, $receiver, $depth);
-                        return (new self($this->engine, $this->truth, $wanted, $finite))->parameter($bound, new \Deriver\Deriver\Evaluator\Call\BoundInstruction('input:' . $name, 'local', $instruction->source, name: $name), $depth);
+                        $value = (new self($this->engine, $this->truth, $wanted, $finite))->parameter($bound, new \Deriver\Deriver\Evaluator\Call\BoundInstruction('input:' . $name, 'local', $instruction->source, name: $name), $depth);
+                        if ($target === '') {
+                            $dispatch = $this->engine->context->reference($frame, '$' . $name, $instruction->source, reason: 'UNRESOLVED_DISPATCH');
+                            return new Term(\Deriver\Deriver\Evaluator\TermKind::ControlledValue, operands: [$value, $dispatch], attributes: ['reason' => 'UNRESOLVED_DISPATCH']);
+                        }
+                        return $value;
                     });
                 };
             }
@@ -159,6 +184,22 @@ final class Origins
         $receiver = null;
         if ($address->operation === 'field-address') {
             $receiver = $this->engine->value($frame, $address->operands[0], $depth);
+            if ($receiver->kind === \Deriver\Deriver\Evaluator\TermKind::Choice) {
+                return (new \Deriver\Deriver\Evaluator\Enumeration\Choices($this->engine->context->provenance, $this->engine->context->search))->apply('property-receiver', [$receiver], fn (array $values): Term => $this->propertyOf($frame, $address, $name, $property, $values[0], $depth), $this->engine->context->budget->partitions);
+            }
+            return $this->propertyOf($frame, $address, $name, $property, $receiver, $depth);
+        }
+        return $this->propertyOf($frame, $address, $name, $property, null, $depth);
+    }
+
+    /**
+     * Resolves one property read for one receiver alternative, so a receiver chosen by control flow
+     * keeps the declaration and allocation of each alternative instead of losing all of them.
+     */
+    public function propertyOf(\Deriver\Deriver\Evaluator\Scope\Frame $frame, Instruction $address, string $name, ?\Deriver\Deriver\Lowerer\Declaration\Metadata\PropertyDeclaration $property, ?Term $receiver, int $depth): Term
+    {
+        $index = $this->engine->context->index;
+        if ($receiver !== null) {
             if ($receiver->kind === \Deriver\Deriver\Evaluator\TermKind::Object && ($receiver->attributes['cast'] ?? false) === true) {
                 return $receiver->operands[$name] ?? Term::constant(null);
             }

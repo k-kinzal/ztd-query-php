@@ -98,10 +98,37 @@ final class DefinitionIndex
         if (!in_array($operation, ['invoke-method', 'invoke-static', 'new'], true)) {
             return '';
         }
-        $class = $operation === 'invoke-method' ? $this->type($graph, $instruction->operands[0]) : $this->literal($graph, $instruction->operands[0]);
+        $class = $operation === 'invoke-method' ? $this->receiverClass($this->type($graph, $instruction->operands[0])) : $this->literal($graph, $instruction->operands[0]);
         $class = $this->className($class, $graph->body->className);
         $name = $operation === 'new' ? '__construct' : $this->literal($graph, $instruction->operands[1]);
         return $class === '' || $name === '' ? '' : $this->method($class, $name);
+    }
+
+    /**
+     * Extracts the one class a receiver type can name; other types leave the dispatch unresolved.
+     * A nullable or null-union type keeps its class, since the call throws on null rather than dispatching
+     * elsewhere; `mixed`, `object`, scalar and union types do not identify a class.
+     * @param string $type Declared or inferred receiver type
+     * @return string Class name, or the empty string
+     */
+    public function receiverClass(string $type): string
+    {
+        $members = [];
+        foreach (explode('|', ltrim($type, '?')) as $member) {
+            $member = ltrim(trim($member), '\\');
+            if (strcasecmp($member, 'null') === 0) {
+                continue;
+            }
+            $members[] = $member;
+        }
+        if (count($members) !== 1) {
+            return '';
+        }
+        $builtin = ['mixed', 'object', 'string', 'int', 'float', 'bool', 'array', 'callable', 'iterable', 'void', 'never', 'false', 'true', 'resource', 'scalar', 'numeric', 'integer', 'boolean', 'double'];
+        if (in_array(strtolower($members[0]), $builtin, true) || preg_match('/\A[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff\\\\]*\z/', $members[0]) !== 1) {
+            return '';
+        }
+        return $members[0];
     }
 
     /**

@@ -185,7 +185,7 @@ final class TransferTest extends TestCase
         self::assertSame(1, $paths[0]->memory->read($paths[0]->local('stable'))->native());
         self::assertSame([], $context->frontiers);
     }
-    public function testApplyKeepsAutoloadEffectsAndExceptionsBeforeConstructorArguments(): void
+    public function testApplyKeepsAutoloadExceptionsBeforeConstructorArgumentsWithoutTouchingGlobals(): void
     {
         $source = '<?php function target(){return 1;}';
         $budget = new Budget();
@@ -222,7 +222,7 @@ final class TransferTest extends TestCase
         $call = new BoundInstruction('call', 'call-prepare', $body->source, 'prepared', ['class'], attributes: ['call-operation' => 'new']);
         $paths = (new Transfer($machine))->apply($body, $call, $state);
         self::assertCount(2, $paths);
-        self::assertSame(TermKind::Opaque, $paths[0]->memory->read($global)->kind);
+        self::assertSame(1, $paths[0]->memory->read($global)->literal);
         self::assertSame('Throwable', $paths[1]->completion->value?->literal);
         self::assertSame(['INCOMPLETE_SOURCE'], array_column(array_values($context->frontiers), 'code'));
     }

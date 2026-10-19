@@ -8,21 +8,24 @@ use Deriver\Deriver\Evaluator\Execution\Memory\Location;
 use WeakMap;
 
 /**
- * Invalidates only reachable mutable state, plus exposed globals and statics.
+ * Invalidates only reachable mutable state, plus exposed globals and statics when a path is cut off.
  * @visibility namespace
  */
 final class Havoc
 {
     /**
      * Invalidates values reachable from unknown calls and escaped references.
+     * With `$shared`, exposed globals and statics also become unknown, as when the analysis of a path is cut off.
+     * An unavailable callee does not share: it is unrelated to globals and statics it was not given through its
+     * receiver, arguments or references, so they keep their values.
      * @param State $state Mutable execution path
      * @param list<\Deriver\Deriver\Evaluator\Term> $values Receivers, arguments, and escaped callbacks
      * @param list<Location> $references Potential reference arguments
      * @param string $reason Root cause
+     * @param bool $shared Whether exposed globals and statics are also invalidated
      */
-    public function call(State $state, array $values, array $references, string $reason): void
+    public function call(State $state, array $values, array $references, string $reason, bool $shared = true): void
     {
-        $state->memory->unknownShared = $reason;
         $seen = [];
         foreach ($values as $value) {
             $this->reachable($state, $value, $reason, $seen);
@@ -31,6 +34,10 @@ final class Havoc
             $this->reachable($state, $state->memory->read($reference), $reason, $seen);
             $state->memory->write($reference, \Deriver\Deriver\Evaluator\Term::opaque($reason, dependencies: [$state->memory->read($reference)]));
         }
+        if (!$shared) {
+            return;
+        }
+        $state->memory->unknownShared = $reason;
         foreach ($state->memory->cells as $root => $value) {
             if (str_starts_with($root, 'global:') || str_starts_with($root, 'static:')) {
                 $this->reachable($state, $value, $reason, $seen);

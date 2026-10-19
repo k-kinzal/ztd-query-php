@@ -29,17 +29,26 @@ final class Globals
             return null;
         }
         $target = $engine->context->index->target($caller->graph, $call);
+        if ($target !== '') {
+            return $this->written($engine, $caller, $call, $target, null, $name, $address, $depth);
+        }
+        $position = $caller->graph->positions[$call->result];
+        return (new \Deriver\Deriver\Evaluator\Invocation\Dispatch($engine))->apply($caller, $call, $depth, fn (string $selected, ?Term $receiver): Term => ($selected === '' ? null : $this->written($engine, $caller, $call, $selected, $receiver, $name, $address, $depth)) ?? (new \Deriver\Deriver\Evaluator\Expression\Storage($engine))->search($caller, $address, $position[0], $position[1], $depth));
+    }
+
+    /**
+     * Reads the global's final value in the selected implementation, when that implementation declares and writes it.
+     * An unavailable implementation leaves the global as it was: a callee that was not given the global is unrelated to it.
+     * @return Term|null Value after the call, or null when the call does not write the global
+     */
+    public function written(Evaluator $engine, Frame $caller, Instruction $call, string $target, ?Term $receiver, string $name, string $address, int $depth): ?Term
+    {
         $body = (new Bodies($engine))->select($caller, $call, $target, $depth);
         $graph = $body->implementation;
-        if ($graph === null) {
-            $position = $caller->graph->positions[$call->result];
-            $before = (new \Deriver\Deriver\Evaluator\Expression\Storage($engine))->search($caller, $address, $position[0], $position[1], $depth);
-            return new Term(\Deriver\Deriver\Evaluator\TermKind::GlobalWrite, $target, [$before], ['reason' => 'MISSING_SOURCE', 'type' => 'mixed']);
-        }
-        if ($graph instanceof Term) {
+        if ($graph === null || $graph instanceof Term) {
             return null;
         }
-        $bound = (new Calls($engine))->bind($caller, $call, $graph);
+        $bound = (new Calls($engine))->bind($caller, $call, $graph, $receiver);
         if (!$this->declares($bound, $name)) {
             return null;
         }

@@ -116,6 +116,13 @@ final class References
                 if ($node instanceof Expr\FuncCall && $name instanceof Node\Name && $name->isUnqualified()) {
                     $this->calls[$identity->key($name->toString())][$owner] = true;
                 }
+                if ($node instanceof Expr\StaticCall && $node->class instanceof Node\Name && strcasecmp($name->toString(), '__construct') === 0) {
+                    if ($node->class->isSpecialClassName()) {
+                        $this->lexicalConstructors[$owner] = true;
+                    } else {
+                        $this->calls[$identity->key($node->class->toString() . '::__construct')][$owner] = true;
+                    }
+                }
             }
         } elseif ($node instanceof Expr\New_ && $node->class instanceof Node\Name) {
             $this->calls['*'][$owner] = true;

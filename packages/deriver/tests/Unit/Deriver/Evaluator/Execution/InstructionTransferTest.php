@@ -640,7 +640,7 @@ final class InstructionTransferTest extends TestCase
     {
         return ['null' => [Term::constant(null), 'Error'], 'int' => [Term::constant(3), 'Error'], 'string' => [Term::constant('abc'), 'Error'], 'bool' => [Term::constant(false), 'Error'], 'closure' => [new Term(TermKind::Closure, 'body'), 'TypeError']];
     }
-    public function testUnpackRetainsUnknownIterableEffectsAndBothExits(): void
+    public function testUnpackKeepsUnrelatedGlobalsAndBothExitsForAnUnknownIterable(): void
     {
         $source = '<?php function target(){return 1;}';
         $budget = new Budget();
@@ -673,7 +673,7 @@ final class InstructionTransferTest extends TestCase
         $paths = (new InstructionTransfer(new Evaluator($context)))->unpack($instruction, $state);
         self::assertCount(2, $paths);
         self::assertSame(TermKind::Opaque, $paths[0]->registers['result']->kind);
-        self::assertSame(TermKind::Opaque, $paths[0]->memory->cells['global:x']->kind);
+        self::assertSame(4, $paths[0]->memory->cells['global:x']->literal);
         self::assertSame(CompletionKind::Throw, $paths[1]->completion->kind);
         self::assertSame(['UNSUPPORTED_LANGUAGE_FEATURE'], array_column(array_values($context->frontiers), 'code'));
     }

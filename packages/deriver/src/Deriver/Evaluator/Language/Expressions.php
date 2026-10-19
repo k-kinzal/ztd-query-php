@@ -49,6 +49,19 @@ final class Expressions
                 return Term::constant(false);
             }
             $class = $object->attributes['class'] ?? null;
+            if ($object->kind === TermKind::Closure && is_string($bound->literal)) {
+                $hierarchy = new Dispatch($this->engine->context->index->program);
+                $name = $hierarchy->className($bound->literal, $frame->graph->body->className, $frame->calledClass);
+                return Term::constant(strcasecmp(ltrim($name, '\\'), 'Closure') === 0);
+            }
+            if (!is_string($class) && $object->kind !== TermKind::Object) {
+                $declared = $this->engine->context->index->receiverClass((string) ($object->attributes['type'] ?? ''));
+                $scalar = $declared === '' && is_string($object->attributes['type'] ?? null) && $this->scalarOnly($object->attributes['type']);
+                if ($scalar) {
+                    return Term::constant(false);
+                }
+                $class = $declared !== '' && !str_contains((string) $object->attributes['type'], '|') ? $declared : $class;
+            }
             if (is_string($class) && is_string($bound->literal)) {
                 $hierarchy = new Dispatch($this->engine->context->index->program);
                 $name = $hierarchy->className($bound->literal, $frame->graph->body->className, $frame->calledClass);
@@ -61,6 +74,20 @@ final class Expressions
             }
             return new Term(TermKind::Operation, 'instanceof', $values, ['type' => 'bool', 'reason' => 'UNKNOWN_TYPE_RELATION']);
         }, $this->engine->context->budget->partitions);
+    }
+
+    /**
+     * Reports whether a declared type admits only scalars, arrays and null, which no class can match.
+     */
+    public function scalarOnly(string $type): bool
+    {
+        $scalars = ['int', 'float', 'string', 'bool', 'true', 'false', 'null', 'array', 'integer', 'boolean', 'double'];
+        foreach (explode('|', ltrim($type, '?')) as $member) {
+            if (!in_array(strtolower(trim($member)), $scalars, true)) {
+                return false;
+            }
+        }
+        return $type !== '';
     }
 
     /**

@@ -53,7 +53,7 @@ final class Dispatch
                 if (in_array($object->kind, [\Deriver\Deriver\Evaluator\TermKind::Constant, \Deriver\Deriver\Evaluator\TermKind::Array], true)) {
                     return new Term(\Deriver\Deriver\Evaluator\TermKind::Throwable, 'Error', [$object]);
                 }
-                $class = (string) ($object->attributes['class'] ?? $object->attributes['type'] ?? '');
+                $class = $this->engine->context->index->receiverClass((string) ($object->attributes['class'] ?? $object->attributes['type'] ?? ''));
                 $selected = $class !== '' && $method->kind === \Deriver\Deriver\Evaluator\TermKind::Constant && is_string($method->literal) ? $this->target($frame, $class, $method->literal) : $target;
                 return $dependency($selected, $object, null);
             }, $this->engine->context->budget->partitions);
@@ -65,7 +65,7 @@ final class Dispatch
                 if (in_array($value->kind, [\Deriver\Deriver\Evaluator\TermKind::Array, \Deriver\Deriver\Evaluator\TermKind::CallableMethod], true) && count($value->operands) === 2) {
                     [$receiver, $method] = array_values($value->operands);
                     if ($method->kind === \Deriver\Deriver\Evaluator\TermKind::Constant && is_string($method->literal)) {
-                        $class = $receiver->kind === \Deriver\Deriver\Evaluator\TermKind::Constant && is_string($receiver->literal) ? $receiver->literal : (string) ($receiver->attributes['type'] ?? '');
+                        $class = $receiver->kind === \Deriver\Deriver\Evaluator\TermKind::Constant && is_string($receiver->literal) ? $receiver->literal : $this->engine->context->index->receiverClass((string) ($receiver->attributes['type'] ?? ''));
                         return $dependency($class === '' ? '' : $this->target($frame, $class, $method->literal), $receiver->kind === \Deriver\Deriver\Evaluator\TermKind::Object ? $receiver : null, $value);
                     }
                 }

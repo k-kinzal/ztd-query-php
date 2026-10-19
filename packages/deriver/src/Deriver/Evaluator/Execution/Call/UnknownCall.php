@@ -45,7 +45,7 @@ final class UnknownCall
                 $references[] = $argument->location;
             }
         }
-        (new Havoc())->call($state, $values, $references, $reason);
+        (new Havoc())->call($state, $values, $references, $reason, shared: false);
         $state->registers[$instruction->result] = $this->context->frontier($reason, $instruction->source, $instruction->name === '' ? 'call' : $instruction->name, $values, $type);
         $exception = $state->fork();
         $exception->completion = new Completion(\Deriver\Deriver\Evaluator\Execution\Completion\CompletionKind::Throw, new Term(\Deriver\Deriver\Evaluator\TermKind::Throwable, 'Throwable', attributes: ['uncertain' => true]));

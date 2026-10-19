@@ -129,7 +129,7 @@ final class NativeOverloadContractTest extends TestCase
         self::assertSame(Coverage::Unavailable, $result->assessment->coverage);
         self::assertNotSame(TermKind::Constant, $result->normalOutcomes[0]->values['return']->kind);
     }
-    public function testUnknownCallsCannotRestoreAnUnseenStaticDefault(): void
+    public function testUnknownCallsLeaveAStaticTheyWereNotGivenIntact(): void
     {
         $source = '<?php class B{public static int $value=4;}function target(){unknown();return B::$value;}';
         $symbol = 'target';
@@ -148,7 +148,7 @@ final class NativeOverloadContractTest extends TestCase
         $trees = array_map(static fn (Source $source1): File => (new Resolver())->resolve($parser->parse(new Source(Path::normalize($source1->path), $source1->contents, $source1->declarationsOnly))), iterator_to_array($input1, false));
         $program = new Index($snapshotId, $trees);
         $result = (new QueryExecution($program, new ExecutionEvaluatorConfig($target, $providers->environment, $configuration->standardEvaluators), $evaluators, $identity->snapshot(array_map(Frontier::fromDiagnostic(...), $program->diagnostics()))))->derive(new ReturnQuery($symbol));
-        self::assertNotSame(TermKind::Constant, $result->normalOutcomes[0]->values['return']->kind);
+        self::assertSame(4, $result->normalOutcomes[0]->values['return']->literal);
         self::assertNotEmpty($result->exceptionalOutcomes);
     }
     public function testUnknownFilterModesKeepTheirCallbackEffectsUnresolved(): void
