@@ -60,8 +60,10 @@
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * @example Reading the values of a row</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;INSERT INTO t VALUES (1, 2), ()&#039;);</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> *     [count($insert-&gt;statement-&gt;rows[0]-&gt;values), count($insert-&gt;statement-&gt;rows[1]-&gt;values)] // =&gt; [2, 0]</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com"> *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;INSERT INTO t VALUES (1, 2), ()&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> *     [count($insert-&gt;statement-&gt;rows[0]-&gt;values), count($insert-&gt;statement-&gt;rows[1]-&gt;values)] // =&gt; [2, 0]</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;INSERT INTO t VALUES (1, 2), (3, DEFAULT)&#039;);</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *     [count($insert-&gt;statement-&gt;rows[0]-&gt;values), count($insert-&gt;statement-&gt;rows[1]-&gt;values)] // =&gt; [2, 2]</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertedRow</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>{</span>

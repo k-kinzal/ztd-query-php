@@ -390,7 +390,8 @@
 <span class="src-line" id="L322" data-diff="same"><a class="ln" href="#L322">322</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L323" data-diff="same"><a class="ln" href="#L323">323</a><span class="tok-com">     * Derives the row alias and the assignments of ON DUPLICATE KEY UPDATE.</span></span>
 <span class="src-line" id="L324" data-diff="same"><a class="ln" href="#L324">324</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L325" data-diff="same"><a class="ln" href="#L325">325</a><span class="tok-com">     * @param list&lt;Assignment&gt; $assignments</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">178</span><span class="tok-com">     * @param list&lt;Assignment&gt; $assignments</span></span>
+<span class="src-line" id="L325" data-diff="added"><a class="ln" href="#L325">325</a><span class="tok-com">     * @param list&lt;Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment&gt; $assignments</span></span>
 <span class="src-line" id="L326" data-diff="same"><a class="ln" href="#L326">326</a><span class="tok-com">     * @param list&lt;Field&gt;|null $written</span></span>
 <span class="src-line" id="L327" data-diff="same"><a class="ln" href="#L327">327</a><span class="tok-com">     * @param list&lt;VisibleRelation&gt; $sources The relations of the FROM clause of a query source</span></span>
 <span class="src-line" id="L328" data-diff="same"><a class="ln" href="#L328">328</a><span class="tok-com">     */</span></span>
