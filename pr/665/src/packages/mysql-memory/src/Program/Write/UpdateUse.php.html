@@ -97,22 +97,23 @@
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>                <span class="tok-kw">throw</span> (<span class="tok-kw">new</span> <span class="tok-id">Errors</span>())-&gt;<span class="tok-id">error</span>(<span class="tok-var">$problem</span>, <span class="tok-var">$session</span>);</span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            }</span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        }</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$facts</span>-&gt;<span class="tok-id">diagnostics</span> <span class="tok-kw">as</span> <span class="tok-var">$problem</span>) {</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-kw">if</span> (<span class="tok-var">$problem</span> <span class="tok-kw">instanceof</span> <span class="tok-id">MissingTable</span>) {</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>                <span class="tok-kw">throw</span> (<span class="tok-kw">new</span> <span class="tok-id">Errors</span>())-&gt;<span class="tok-id">error</span>(<span class="tok-var">$problem</span>, <span class="tok-var">$session</span>);</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>            }</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        }</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-var">$input</span> = (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Session\JsonTables</span>())-&gt;<span class="tok-id">first</span>(<span class="tok-var">$write</span>, <span class="tok-var">$facts</span>);</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-kw">if</span> (<span class="tok-var">$input</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>            <span class="tok-kw">throw</span> <span class="tok-var">$input</span>;</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        }</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$facts</span>-&gt;<span class="tok-id">diagnostics</span> <span class="tok-kw">as</span> <span class="tok-var">$problem</span>) {</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>            <span class="tok-kw">throw</span> (<span class="tok-kw">new</span> <span class="tok-id">Errors</span>())-&gt;<span class="tok-id">error</span>(<span class="tok-var">$problem</span>, <span class="tok-var">$session</span>, <span class="tok-id">statement</span>: <span class="tok-var">$write</span>);</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        }</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A retained UPDATE keeps its input-column contradiction.&#039;</span>);</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    }</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>}</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Session\Problem\Reading</span>())-&gt;<span class="tok-id">legacyWrites</span>(<span class="tok-var">$write</span>, <span class="tok-var">$facts</span>, <span class="tok-var">$session</span>);</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$facts</span>-&gt;<span class="tok-id">diagnostics</span> <span class="tok-kw">as</span> <span class="tok-var">$problem</span>) {</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-kw">if</span> (<span class="tok-var">$problem</span> <span class="tok-kw">instanceof</span> <span class="tok-id">MissingTable</span>) {</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>                <span class="tok-kw">throw</span> (<span class="tok-kw">new</span> <span class="tok-id">Errors</span>())-&gt;<span class="tok-id">error</span>(<span class="tok-var">$problem</span>, <span class="tok-var">$session</span>);</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            }</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        }</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-var">$input</span> = (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Session\JsonTables</span>())-&gt;<span class="tok-id">first</span>(<span class="tok-var">$write</span>, <span class="tok-var">$facts</span>);</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-kw">if</span> (<span class="tok-var">$input</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            <span class="tok-kw">throw</span> <span class="tok-var">$input</span>;</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        }</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$facts</span>-&gt;<span class="tok-id">diagnostics</span> <span class="tok-kw">as</span> <span class="tok-var">$problem</span>) {</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-kw">throw</span> (<span class="tok-kw">new</span> <span class="tok-id">Errors</span>())-&gt;<span class="tok-id">error</span>(<span class="tok-var">$problem</span>, <span class="tok-var">$session</span>, <span class="tok-id">statement</span>: <span class="tok-var">$write</span>);</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        }</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A retained UPDATE keeps its input-column contradiction.&#039;</span>);</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    }</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>}</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
