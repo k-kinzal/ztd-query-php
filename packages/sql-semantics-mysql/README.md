@@ -561,3 +561,10 @@ A complete stored instruction retains this combination with `FunctionalIndexKind
 which owns the exact functional operand and the incompatible index kind. Index
 names, other key parts and their dependencies remain available to consumers;
 no SQL string or parser node is retained for later preparation.
+
+An ordinary functional key expression also excludes a bare column reference,
+including one wrapped in parentheses. Use a column key for that role. The
+deferred key-part type can retain the rejected functional spelling inside a
+stored or conditional definition: `CREATE TABLE IF NOT EXISTS` can leave that
+definition unused. Its operand remains available for dependency resolution
+when the definition is reached.

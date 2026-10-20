@@ -136,7 +136,9 @@ final class KeyPartRule
             return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart($ungrouped->operand, $ungrouped->target, $direction), $node);
         }
 
-        return new ExpressionPart($expression, $direction);
+        return $ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse
+            ? new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart($expression, $direction)
+            : new ExpressionPart($expression, $direction);
     }
 
     /**

@@ -109,6 +109,7 @@ final class FunctionalQueries
                     }
                 }
                 if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart) {
+                    \SqlSemantics\Diagnostic\Check::invariant(!$part->expression instanceof \SqlSemantics\Statement\Scalar, 'A bare functional column is refused before row preparation.');
                     if ($part->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand) {
                         throw \MySqlMemory\Error\Family\ConstraintError::FunctionalRow->error($owner);
                     }

@@ -11,14 +11,17 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOpe
 use SqlSemantics\Platform\MySql\Statement\Table\Key\KeyPart;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * An index definition retaining an operand that cannot supply an ordinary scalar.
+ * An index definition retaining an operand that cannot be an ordinary functional key.
  *
  * Target lookup and index constraints precede operand preparation. In particular,
  * CREATE TABLE IF NOT EXISTS can leave this definition unused. The operand stays
- * distinct from Scalar, and no source SQL or parser node is retained.
+ * distinct from an ordinary functional key. A scalar-only column reference also
+ * needs this role: it belongs in a column key rather than a functional key.
+ * No source SQL or parser node is retained.
  *
  * @visibility public
  * @example Retaining a row without pretending it is a scalar expression key
@@ -30,11 +33,16 @@ final class ExpressionPart implements KeyPart
     use Snapshot;
 
     /**
-     * @param RowOperand|DeferredOperand $expression The complete operand awaiting index preparation
+     * @param Scalar|RowOperand|DeferredOperand $expression The complete operand awaiting index preparation
      * @param Direction|null $direction The written index order
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $expression, public readonly ?Direction $direction = null)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $expression, public readonly ?Direction $direction = null)
     {
+        $ungrouped = $expression;
+        while ($ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
+            $ungrouped = $ungrouped->operand;
+        }
+        \SqlSemantics\Diagnostic\Check::input(!$expression instanceof Scalar || $ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse, 'A deferred scalar key part retains a bare column reference.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

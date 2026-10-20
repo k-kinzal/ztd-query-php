@@ -77,7 +77,7 @@ final class FunctionalKeysTest extends TestCase
 
     public function testCheckRejectsAColumnOnlyExpression(): void
     {
-        $part = new ExpressionPart(new ColumnUse(new Name('a')));
+        $part = new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart(new ColumnUse(new Name('a')));
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3762);
         (new FunctionalKeys())->check($part, new IndexDefinition(IndexKind::Index, [$part]));

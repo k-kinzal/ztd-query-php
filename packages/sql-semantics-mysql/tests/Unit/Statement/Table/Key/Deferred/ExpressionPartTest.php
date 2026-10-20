@@ -35,6 +35,24 @@ final class ExpressionPartTest extends TestCase
         self::assertInstanceOf(ResolvedColumn::class, $create->facts->scalar($fields[0])->resolution);
     }
 
+    public function testDeriveKeyPartPreservesTheBareColumnDependency(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE IF NOT EXISTS t(a INT, KEY ((a)))');
+        self::assertInstanceOf(CreateProcedure::class, $create->statement);
+        self::assertInstanceOf(DeferredCreateTable::class, $create->statement->body);
+        $index = $create->statement->body->elements[1];
+        self::assertInstanceOf(IndexDefinition::class, $index);
+        $part = $index->parts[0];
+        self::assertInstanceOf(DeferredExpressionPart::class, $part);
+        self::assertInstanceOf(ResolvedColumn::class, $create->facts->scalar($part->expression)->resolution);
+    }
+
+    public function testAnOrdinaryScalarCannotBeDeferredAsAColumnKey(): void
+    {
+        $this->expectExceptionMessage('A deferred scalar key part retains a bare column reference.');
+        new DeferredExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+    }
+
     public function testRenderKeepsTheParentAndTheCompleteOperand(): void
     {
         self::assertSame('CREATE PROCEDURE p() CREATE TABLE IF NOT EXISTS t (a INT, PRIMARY KEY ((CAST(1 AT TIME ZONE \'text\' AS DATETIME))))', (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() CREATE TABLE IF NOT EXISTS t(a INT, PRIMARY KEY ((CAST(1 AT TIME ZONE 'text' AS DATETIME))))")->toString());

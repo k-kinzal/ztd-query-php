@@ -3524,7 +3524,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Deferred\\ExpressionPart": {
         "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
-        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+        "expression": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ExpressionPart": {
         "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",

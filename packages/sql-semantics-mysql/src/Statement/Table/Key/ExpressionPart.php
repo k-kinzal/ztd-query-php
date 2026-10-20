@@ -39,6 +39,7 @@ final class ExpressionPart implements KeyPart
             $ungrouped = $ungrouped->operand;
         }
         \SqlSemantics\Diagnostic\Check::input(!$ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast || !$ungrouped->array, 'An array conversion belongs to an ArrayPart, not an ordinary expression key.');
+        \SqlSemantics\Diagnostic\Check::input(!$ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse, 'A functional key expression cannot consist only of a column reference.');
     }
 
     /**

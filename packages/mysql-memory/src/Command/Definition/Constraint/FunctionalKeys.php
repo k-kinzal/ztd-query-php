@@ -64,6 +64,7 @@ final class FunctionalKeys
                 $this->references($part, $expressions, $definition, $owner);
                 $this->storage($index, $definition->engine);
                 if ($part instanceof DeferredExpressionPart) {
+                    \SqlSemantics\Diagnostic\Check::invariant(!$part->expression instanceof \SqlSemantics\Statement\Scalar, 'A bare functional column is refused before row preparation.');
                     if ($part->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand) {
                         throw \MySqlMemory\Error\Family\ConstraintError::FunctionalRow->error($owner);
                     }
@@ -143,7 +144,7 @@ final class FunctionalKeys
         if (count(array_filter($index->parts, static fn ($candidate): bool => $candidate instanceof ArrayPart)) > 1) {
             throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('more than one multi-valued key part per index');
         }
-        if ($part instanceof ExpressionPart && $expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
+        if (($part instanceof ExpressionPart || $part instanceof DeferredExpressionPart) && $expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalColumn->error();
         }
     }
