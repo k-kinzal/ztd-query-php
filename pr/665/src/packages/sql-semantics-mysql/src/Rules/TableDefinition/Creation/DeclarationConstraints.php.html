@@ -124,7 +124,7 @@
 <span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>                <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">UnknownKeyColumn</span>(<span class="tok-var">$part</span>-&gt;<span class="tok-id">column</span>);</span>
 <span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>            }</span>
 <span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>            <span class="tok-kw">if</span> (<span class="tok-var">$index</span> &amp;&amp; <span class="tok-kw">isset</span>(<span class="tok-var">$seen</span>[<span class="tok-var">$key</span>])) {</span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>                <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">DuplicateColumn</span>(<span class="tok-var">$part</span>-&gt;<span class="tok-id">column</span>);</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>                <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn</span>(<span class="tok-var">$part</span>-&gt;<span class="tok-id">column</span>);</span>
 <span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>            }</span>
 <span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>            <span class="tok-var">$seen</span>[<span class="tok-var">$key</span>] = <span class="tok-id">true</span>;</span>
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>        }</span>
