@@ -51,7 +51,7 @@ final class Comparison
                 $history = $database === null ? [] : $this->selected($node, $profile, $native, $session, $endpoint, $database);
                 $last = $history === [] ? $observation : $history[count($history) - 1];
                 if ($last['matches']) {
-                    $history = [...$history, ...$this->sessionHistory($node, $profile, $native, $session, $endpoint, $last['native'])];
+                    $history = [...$history, ...$this->histories($node, $profile, $native, $session, $endpoint, $last['native'])];
                 }
 
                 return [...$observation, 'profile' => $profile->grammar->value, 'mode' => $mode, 'matches' => $observation['matches'] && !in_array(false, array_column($history, 'matches'), true), 'transitions' => $history];
@@ -130,6 +130,35 @@ final class Comparison
             }
             if ($index < 2 && isset($observation['native']['error'])) {
                 throw new RuntimeException('The database selection fixture could not be established: ' . serialize($history));
+            }
+        }
+        return $history;
+    }
+
+    /**
+     * Follows distinct missing-table dependencies without changing the tested object.
+     * Repeated conditions stop expansion and remain unresolved observations.
+     *
+     * @param array<string, mixed> $before The previous native observation
+     * @return list<array{sql: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>}>
+     */
+    public function histories(Statement|Scalar $node, LanguageProfile $profile, mysqli $native, \MySqlMemory\Session\Session $session, Endpoint $endpoint, array $before): array
+    {
+        $history = [];
+        $seen = [];
+        while (!isset($seen[serialize($before['error'] ?? null)])) {
+            $seen[serialize($before['error'] ?? null)] = true;
+            $database = $this->database($before);
+            $steps = $database === null ? $this->sessionHistory($node, $profile, $native, $session, $endpoint, $before) : $this->selected($node, $profile, $native, $session, $endpoint, $database);
+            if ($steps === []) {
+                break;
+            }
+            array_push($history, ...$steps);
+            $last = $steps[count($steps) - 1];
+            $before = $last['native'];
+            $error = $before['error'] ?? null;
+            if (!$last['matches'] || !is_array($error) || !in_array($error[0] ?? null, [1049, 1146], true)) {
+                break;
             }
         }
         return $history;

@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Scalar;
  * Supplies a lexical query context for a freely generated scalar expression.
  *
  * The original scalar is retained by identity. Free window names receive empty
- * definitions, identically for direct execution and the reference rendering.
+ * definitions and free columns receive relation occurrences, identically for direct execution and the reference rendering.
  * Complete statements and subqueries keep their own namespaces unchanged.
  * This never repairs or discards a generated statement or reads source SQL.
  */
@@ -39,6 +39,6 @@ final class Embedding
         foreach ((new WindowReferences())->names([$node]) as $name) {
             $windows[strtolower($name->value)] ??= new WindowDefinition($name, new WindowSpec());
         }
-        return new QueryRoot(new Select([], [new SelectExpression($node)], windows: array_values($windows)));
+        return new QueryRoot(new Select([], [new SelectExpression($node)], from: (new Context\Columns())->input($node), windows: array_values($windows)));
     }
 }

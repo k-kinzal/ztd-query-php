@@ -25,11 +25,19 @@ final class History
             return [];
         }
         $inputs = new Inputs();
-        $name = $inputs->missing($node, $error[2], $database);
+        $name = $inputs->missing((new \Fuzz\Structure\Embedding())->statement($node), $error[2], $database);
         if ($name === null || $name->schema === null) {
             return [];
         }
         $columns = $inputs->columns($node);
+        if ($node instanceof Scalar) {
+            foreach ((new \Fuzz\Structure\Context\Columns())->bindings($node) as $binding) {
+                if ($binding['relation']->name === $name) {
+                    $columns = $binding['columns'];
+                    break;
+                }
+            }
+        }
         $elements = array_map(static fn ($column): M\Table\Column\ColumnDefinition => new M\Table\Column\ColumnDefinition(new M\Name\ColumnName($column), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int))), $columns);
         $row = new M\Dml\Insert\InsertedRow(array_map(static fn ($column): M\Literal\NumberLiteral => new M\Literal\NumberLiteral('7'), $columns));
         return [new M\Server\Database\CreateDatabase(true, $name->schema), new M\Table\CreateTable($name, $elements), new M\Dml\Insert\InsertRows(new M\Dml\Insert\InsertInto(false, null, false, new M\Dml\WriteTarget($name)), [$row])];

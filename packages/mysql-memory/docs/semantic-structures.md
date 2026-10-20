@@ -48,6 +48,16 @@ malformed report or a different plan shape receives no normalization. The raw
 reports remain in the audit record. This contract does not establish support for
 every EXPLAIN plan or replace the ordinary SQL Faker comparison policy.
 
+Standalone scalars receive an ambient query namespace for their free column
+references as well as their free window names. The scalar object itself remains
+unchanged. Qualified columns retain their qualifier; subqueries retain their own
+FROM clauses and are not traversed for this ambient context. Missing relations
+are populated through the same compared fixture history. Multiple dependencies
+are established in sequence, retaining every intermediate refusal and retry.
+A repeated condition stops expansion and remains unresolved. Complete generated
+statements never receive these ambient relations. Later value, index or binding
+conditions are retained and do not cause the input to be discarded.
+
 Temporal input interpretation consumes decoded literal and variable operands
 from SQL Semantics in their contextual order. The input adapter retains view
 context and input ranges only while reading the statement. A refused temporal
