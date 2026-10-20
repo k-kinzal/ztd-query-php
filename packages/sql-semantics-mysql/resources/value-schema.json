@@ -2385,6 +2385,11 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\ScopedLocalAssignment": {
         "offset": "?int"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\TriggerSchemaMismatch": {
+        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTable"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind": {
         "name": "string",
         "value": "string"

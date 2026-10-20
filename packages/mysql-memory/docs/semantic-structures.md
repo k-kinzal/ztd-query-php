@@ -1199,6 +1199,14 @@ Restrictions shared by every program kind are checked before these body-wide
 conditions. This describes a language structure; it does not ask Semantics to
 certify execution eligibility.
 
+A `CreateTrigger` also rejects distinct explicit database qualifiers on its
+name and target table. Missing qualifiers and case-only differences remain
+name-resolution inputs. SQL lowering retains `TriggerSchemaMismatch` with the
+typed target and definer, so an absent database, absent table or view can still
+precede the ownership condition. This diagnostic contains no body, original SQL
+or AST. Native histories cover those states, PREPARE rejection, command counters
+and the implicit commit before target lookup on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1.
+
 SQL lowering publishes a typed `RefusedProgramBody` diagnostic instead of an
 invalid declaration. Its retained header, field types and numeric completion
 positions preserve earlier definer, database and type conditions, including

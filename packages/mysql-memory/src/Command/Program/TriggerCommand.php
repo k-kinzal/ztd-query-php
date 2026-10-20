@@ -100,9 +100,19 @@ final class TriggerCommand implements Command
      */
     public function target(CreateTrigger $statement, Session $session): array
     {
-        $database = ProgramSource::database($statement->name->schema, $session);
-        $located = $statement->table->name->schema->value ?? $database;
-        $table = $statement->table->name->name->value;
+        return $this->relation($statement->name, $statement->table, $session);
+    }
+
+    /**
+     * Resolves an ordinary or refused trigger header without reconstructing its body.
+     *
+     * @return array{string, string, Schema} Trigger database, table name and owning schema
+     */
+    public function relation(\SqlSemantics\Statement\Identifier\QualifiedName $name, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable $target, Session $session): array
+    {
+        $database = ProgramSource::database($name->schema, $session);
+        $located = $target->name->schema->value ?? $database;
+        $table = $target->name->name->value;
         $schema = $session->instance->dictionary->schema($located);
         if ($schema === null) {
             throw $session->settings()->legacy() ? QueryError::NoSuchTable->error($located, $table) : QueryError::BadDatabase->error($located);

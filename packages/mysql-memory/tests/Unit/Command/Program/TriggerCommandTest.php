@@ -30,6 +30,19 @@ final class TriggerCommandTest extends TestCase
         (new TriggerCommand())->target($create, $session);
     }
 
+    public function testRelationResolvesTypedIdentitiesWithoutReadingInput(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $session->text = 'unrelated invalid input';
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('tr'));
+        $table = new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $resolved = (new TriggerCommand())->relation($name, $table, $session);
+        self::assertSame(['d', 't'], array_slice($resolved, 0, 2));
+        self::assertSame($session->instance->dictionary->schema('d'), $resolved[2]);
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new TriggerCommand())->clearsDiagnostics());

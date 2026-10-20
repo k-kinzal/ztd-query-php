@@ -164,6 +164,12 @@ final class CreateTriggerTest extends TestCase
         new CreateTrigger(new QualifiedName(new Name('tr'), new Name('shop'), new Name('def')), TriggerTime::Before, TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'))), new Block([]));
     }
 
+    public function testDistinctExplicitDatabasesAreRejected(): void
+    {
+        $this->expectExceptionMessage('A trigger and its table cannot name distinct explicit databases.');
+        new CreateTrigger(new QualifiedName(new Name('tr'), new Name('a')), TriggerTime::Before, TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'), new Name('b'))), new Block([], []));
+    }
+
     public function testABodyOfAnotherClassIsRejected(): void
     {
         $this->expectExceptionMessage('A member of a stored program is a program statement or an SQL statement.');
