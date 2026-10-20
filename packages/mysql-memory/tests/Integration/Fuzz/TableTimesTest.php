@@ -45,7 +45,8 @@ final class TableTimesTest extends TestCase
         yield 'lower bound' => ['2026-10-10 01:00:00', true];
         yield 'inside interval' => ['2026-10-10 01:00:01', true];
         yield 'upper bound' => ['2026-10-10 01:00:02', true];
-        yield 'before insertion' => ['2026-10-10 00:59:59', false];
+        yield 'observed previous second' => ['2026-10-10 00:59:59', true];
+        yield 'two seconds before insertion' => ['2026-10-10 00:59:58', false];
         yield 'after insertion' => ['2026-10-10 01:00:03', false];
         yield 'pinned statement clock' => ['2023-11-14 22:13:20', false];
         yield 'missing update time' => [null, false];
@@ -64,7 +65,7 @@ final class TableTimesTest extends TestCase
         $comparable = $clock->comparable($observation);
 
         self::assertSame($valid, $comparable !== $observation);
-        self::assertSame($valid ? [TableTimes::CONTRACT] : null, $comparable['contracts'] ?? null);
+        self::assertSame($valid ? [TableTimes::CACHED_UPDATE] : null, $comparable['contracts'] ?? null);
         self::assertIsArray($comparable['results']);
         self::assertIsArray($comparable['results'][0]);
         self::assertSame($columns, $comparable['results'][0]['columns']);
@@ -116,11 +117,11 @@ final class TableTimesTest extends TestCase
         self::assertFalse($clock->contains('missing', '2026-11-01 00:00:00'));
     }
 
-    public function testContainsBoundsLegacyInsertionLagWithoutWideningCreationOrOtherVersions(): void
+    public function testContainsBoundsLegacyInsertionLagWithoutWideningCreationOrUnobservedVersions(): void
     {
         $legacy = new TableTimes('5.7.44');
         $legacy->intervals = $legacy->creations = ['t1' => ['2026-11-01 00:00:00', '2026-11-01 00:00:00']];
-        $modern = new TableTimes('8.4.7');
+        $modern = new TableTimes('8.4.8');
         $modern->intervals = $legacy->intervals;
         self::assertTrue($legacy->contains('t1', '2026-10-31 23:59:59'));
         self::assertFalse($legacy->contains('t1', '2026-10-31 23:59:58'));
@@ -181,15 +182,15 @@ final class TableTimesTest extends TestCase
         self::assertSame($observation['warnings'], $comparable['warnings']);
     }
     /**
-     * @return iterable<string, array{string, array{string, string}, string}>
+     * @return iterable<string, array{string, string, array{string, string}, string}>
      * @throws JsonException When the saved native samples are malformed
      */
     public static function providerObservedModernClockLag(): iterable
     {
-        /** @var list<array{instance: int, iteration: int, table: string, interval: array{string, string}, update: string}> $observations */
-        $observations = json_decode((string) file_get_contents(__DIR__ . '/fixtures/table-clock-lag-8.1.json'), true, 512, JSON_THROW_ON_ERROR);
+        /** @var list<array{release: string, instance: int, iteration: int, table: string, interval: array{string, string}, update: string}> $observations */
+        $observations = json_decode((string) file_get_contents(__DIR__ . '/fixtures/table-clock-lag-modern.json'), true, 512, JSON_THROW_ON_ERROR);
         foreach ($observations as $index => $observation) {
-            yield 'instance ' . $observation['instance'] . ' sample ' . $index => [$observation['table'], $observation['interval'], $observation['update']];
+            yield $observation['release'] . ' instance ' . $observation['instance'] . ' sample ' . $index => [$observation['release'], $observation['table'], $observation['interval'], $observation['update']];
         }
     }
 
@@ -197,9 +198,9 @@ final class TableTimesTest extends TestCase
      * @param array{string, string} $interval The server's unmodified before/after insertion samples
      */
     #[DataProvider('providerObservedModernClockLag')]
-    public function testContainsValidatesSavedIndependentModernInstanceLag(string $table, array $interval, string $update): void
+    public function testContainsValidatesSavedIndependentModernInstanceLag(string $release, string $table, array $interval, string $update): void
     {
-        $clock = new TableTimes('8.1.0');
+        $clock = new TableTimes($release);
         $clock->intervals = $clock->creations = [$table => $interval];
         self::assertTrue($clock->contains($table, $update));
         self::assertFalse($clock->contains($table, $update, true));
@@ -213,6 +214,14 @@ final class TableTimesTest extends TestCase
         self::assertTrue($clock->contains('t1', '2026-10-31 23:59:59'));
         self::assertFalse($clock->contains('t1', '2026-10-31 23:59:58'));
         self::assertFalse($clock->contains('t1', '2026-11-01 00:00:01'));
+    }
+
+    public function testUpdateContractKeepsUnknownReleasesStrict(): void
+    {
+        self::assertSame(TableTimes::LEGACY_UPDATE, (new TableTimes('5.7.44'))->updateContract());
+        self::assertSame(TableTimes::CACHED_UPDATE, (new TableTimes('8.4.7'))->updateContract());
+        self::assertSame(TableTimes::CONTRACT, (new TableTimes('8.4.8'))->updateContract());
+        self::assertSame(TableTimes::CONTRACT, (new TableTimes('5.6.51'))->updateContract());
     }
 
 }

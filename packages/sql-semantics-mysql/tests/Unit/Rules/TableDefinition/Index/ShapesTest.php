@@ -58,4 +58,29 @@ final class ShapesTest extends TestCase
         $this->expectExceptionMessage('An index with a fixed name or operand condition belongs to a deferred creation instruction.');
         new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('b')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int))), $index]);
     }
+    /**
+     * @return iterable<string, array{M\Table\Key\IndexKind, bool}>
+     */
+    public static function providerFunctionalKinds(): iterable
+    {
+        foreach (M\Table\Key\IndexKind::cases() as $kind) {
+            yield $kind->value => [$kind, in_array($kind, [M\Table\Key\IndexKind::Primary, M\Table\Key\IndexKind::FullText, M\Table\Key\IndexKind::Spatial], true)];
+        }
+    }
+
+    #[DataProvider('providerFunctionalKinds')]
+    public function testProblemDistinguishesFunctionalKindConstraints(M\Table\Key\IndexKind $kind, bool $refused): void
+    {
+        $part = new M\Table\Key\ExpressionPart(new M\Literal\NumberLiteral('1'));
+        $problem = (new Shapes())->problem($kind, [$part]);
+        self::assertSame($refused, $problem instanceof M\Table\Problem\Creation\FunctionalIndexKind);
+        self::assertSame($refused ? $part : null, $problem?->owner);
+    }
+
+    public function testOrdinaryIndexExcludesAFunctionalSpatialOperand(): void
+    {
+        $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
+        new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\ExpressionPart(new M\Literal\NumberLiteral('1'))], M\Table\Key\IndexKind::Spatial);
+    }
+
 }

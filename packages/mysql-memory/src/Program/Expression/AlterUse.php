@@ -67,7 +67,7 @@ final class AlterUse
         $change = new TableChange($layout, $name, $database, $session->settings()->release(), (string) $session->variables->read('collation_database'));
         $change->apply($definition->commands);
         if (isset($prepared)) {
-            (new \MySqlMemory\Session\Problem\Definition\IndexNames())->alter($layout, $prepared->facts, $session->settings()->release(), $table->definition->engine);
+            (new \MySqlMemory\Session\Problem\Definition\IndexNames())->alter($layout, $prepared->facts, $session->settings()->release(), $table->definition->engine, $table->definition->collation);
         }
         (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->check($definition, $table, $session, $database);
         $rewrite = new \MySqlMemory\Command\Definition\Expression\GenerationRewrite();

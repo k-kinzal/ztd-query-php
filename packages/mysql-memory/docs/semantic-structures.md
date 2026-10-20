@@ -3751,3 +3751,14 @@ before ordinary key-column lookup. Storage capability and language release still
 determine the SQL error. `DuplicateKeyColumn` distinguishes repeated key operands
 from duplicate table-column declarations, preserving their different validation
 phases without inspecting input SQL or a parser tree.
+
+Functional key operands are incompatible with PRIMARY, FULLTEXT and SPATIAL
+index roles. `FunctionalIndexKind` retains the kind and exact operand occurrence;
+ordinary CREATE INDEX, ALTER TABLE and CREATE TABLE values exclude these fixed
+combinations. Stored instructions preserve the whole declaration, including
+preceding ordinary key parts. Memory uses bound column domains and engine state
+to preserve earlier full-text column or storage errors before reaching the kind
+condition. This is distinct from an ordinary scalar function's evaluated data
+and from a mutable target table's schema. Direct properties keep the same
+instruction through skipped and reached branches; native histories also compare
+mixed key parts, reordered competing errors, populated targets and preparation.

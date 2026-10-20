@@ -555,3 +555,9 @@ or an existing-table shortcut keeps its meaning. Binding preserves every key
 operand and dependency. Repeated key columns use `DuplicateKeyColumn`, separate
 from duplicate table-column declarations; consumers can preserve their different
 validation phases without recovering source SQL.
+
+Ordinary primary, full-text and spatial keys also exclude functional operands.
+A complete stored instruction retains this combination with `FunctionalIndexKind`,
+which owns the exact functional operand and the incompatible index kind. Index
+names, other key parts and their dependencies remain available to consumers;
+no SQL string or parser node is retained for later preparation.

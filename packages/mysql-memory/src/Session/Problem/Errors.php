@@ -242,8 +242,6 @@ final class Errors
             $diagnostic instanceof NoColumns => SchemaError::TableMustHaveColumns->error(),
             $diagnostic instanceof DuplicateColumn, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn => SchemaError::DuplicateFieldName->error($diagnostic->column->value),
             $diagnostic instanceof IncorrectColumnName => SchemaError::WrongColumnName->error($diagnostic->column->value),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity => SchemaError::TooManyKeyParts->error(1),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName => SchemaError::WrongIndexName->error($diagnostic->name->value),
             $diagnostic instanceof NullablePrimaryKey => SchemaError::PrimaryCantHaveNull->error(),
             $diagnostic instanceof UnknownKeyColumn => SchemaError::KeyColumnMissing->error($diagnostic->column->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser => AdministrationError::FunctionNotDefined->error($diagnostic->parser->value),
@@ -252,7 +250,7 @@ final class Errors
             $diagnostic instanceof UnknownAlterChoice => ($diagnostic->lock ? SchemaError::UnknownAlterLock : SchemaError::UnknownAlterAlgorithm)->error($diagnostic->name->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind => (new \MySqlMemory\Error\ProgramErrors())->relation($diagnostic, $database, $legacy),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount => SchemaError::ViewWrongList->error(),
-            default => null,
+            default => (new Definition\IndexShapes())->error($diagnostic),
         };
     }
 

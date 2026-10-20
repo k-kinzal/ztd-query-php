@@ -18,6 +18,8 @@ return [
     3061 => ['42000', "User variable name '%s' is illegal"],
     1453 => ['42000', "Variable '%s' must be quoted with `...`, or renamed"],
     1283 => ['HY000', "Column '%s' cannot be part of FULLTEXT index"],
+    3152 => ['42000', "JSON column '%s' supports indexing only via generated columns on a specified JSON path."],
+    1214 => ['HY000', "The used table type doesn't support FULLTEXT indexes"],
     1464 => ['HY000', "The used table type doesn't support SPATIAL indexes"],
     3674 => ['HY000', "The spatial index on column '%s' will not be used by the query optimizer since the column does not have an SRID attribute. Consider adding an SRID attribute to the column."],
     1687 => ['42000', 'A SPATIAL index may only contain a geometrical type column'],

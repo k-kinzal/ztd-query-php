@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Problem\Definition;
 
+use LogicException;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity;
 use SqlSemantics\Statement\Fact\Facts;
 
@@ -24,13 +26,32 @@ use SqlSemantics\Statement\Fact\Facts;
 final class IndexShapes
 {
     /**
+     * Maps fixed index declaration conditions independently of target lookup.
+     *
+     * @throws LogicException When a functional-kind condition violates its constructor invariant
+     */
+    public function error(\SqlSemantics\Statement\Fact\Diagnostic $problem): ?\MySqlMemory\Error\SqlError
+    {
+        return match (true) {
+            $problem instanceof FunctionalIndexKind => (new FunctionalIndexKinds())->error($problem),
+            $problem instanceof SpatialKeyArity => SchemaError::TooManyKeyParts->error(1),
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName => SchemaError::WrongIndexName->error($problem->name->value),
+            default => null,
+        };
+    }
+
+    /**
      * Reports the condition attached to this exact key declaration.
      *
+     * @param array<string, \MySqlMemory\Typing\Domain> $columns Folded column names and resolved domains
      * @throws \MySqlMemory\Error\SqlError When the spatial declaration cannot be stored
      */
-    public function definition(IndexDefinition $index, Facts $facts, GrammarRelease $release, string $engine): void
+    public function definition(IndexDefinition $index, Facts $facts, GrammarRelease $release, string $engine, array $columns = []): void
     {
         foreach ($facts->diagnostics as $problem) {
+            if ($problem instanceof FunctionalIndexKind && in_array($problem->owner, $index->parts, true)) {
+                (new FunctionalIndexKinds())->check($problem, $index, $columns, $engine);
+            }
             if (!$problem instanceof SpatialKeyArity || $problem->owner !== $index->parts[0]) {
                 continue;
             }
@@ -49,7 +70,7 @@ final class IndexShapes
     public function prepare(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, \MySqlMemory\Dictionary\TableDefinition $definition, Planner $planner): void
     {
         $facts = $planner->compiler->facts;
-        if (array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof SpatialKeyArity) === []) {
+        if (array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof SpatialKeyArity || $problem instanceof FunctionalIndexKind) === []) {
             return;
         }
         $indexes = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof IndexDefinition));
@@ -60,7 +81,7 @@ final class IndexShapes
         if ($planner->settings->legacy()) {
             $names->check($facts);
         }
-        $columns = array_map(static fn (\MySqlMemory\Dictionary\ColumnDefinition $column): string => mb_strtolower($column->name), $definition->columns);
+        $columns = array_combine(array_map(static fn (\MySqlMemory\Dictionary\ColumnDefinition $column): string => mb_strtolower($column->name), $definition->columns), array_column($definition->columns, 'domain'));
         $names->columns($indexes, $columns, $facts, $planner->settings->release(), $definition->engine);
     }
 
@@ -77,6 +98,7 @@ final class IndexShapes
         }
         $table = (new \MySqlMemory\Command\Definition\AlterTableCommand())->table($session, $statement->table->schema->value ?? $session->variables->database, $statement->table->name->value);
         $index = new IndexDefinition($statement->kind, $statement->parts);
-        $this->definition($index, $prepared->facts, $session->settings()->release(), $table->definition->engine);
+        $columns = array_combine(array_map(static fn (\MySqlMemory\Dictionary\ColumnDefinition $column): string => mb_strtolower($column->name), $table->definition->columns), array_column($table->definition->columns, 'domain'));
+        $this->definition($index, $prepared->facts, $session->settings()->release(), $table->definition->engine, $columns);
     }
 }

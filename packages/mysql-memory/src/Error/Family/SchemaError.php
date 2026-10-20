@@ -24,6 +24,8 @@ enum SchemaError: int implements ErrorCode
 
     case WrongIndexName = 1280;
     case FullTextColumn = 1283;
+    case FullTextIndexUnsupported = 1214;
+    case JsonColumnKey = 3152;
     case SpatialIndexUnsupported = 1464;
     case SpatialIndexWithoutSrid = 3674;
     case SpatialColumnType = 1687;

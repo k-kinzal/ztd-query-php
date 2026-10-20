@@ -128,7 +128,7 @@ final class FunctionalQueries
      */
     public function deferred(\SqlSemantics\Statement\Fact\Diagnostic $diagnostic, \SqlSemantics\Statement\Node $statement): bool
     {
-        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity) {
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind) {
             return true;
         }
         if (!$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion) {

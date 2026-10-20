@@ -25,7 +25,7 @@ final class DeclarationErrors
      */
     public function check(Facts $facts): void
     {
-        $indexConditions = array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity) !== [];
+        $indexConditions = array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind) !== [];
         foreach ($facts->diagnostics as $problem) {
             $error = match (true) {
                 $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn && !$indexConditions => SchemaError::DuplicateFieldName->error($problem->column->value),

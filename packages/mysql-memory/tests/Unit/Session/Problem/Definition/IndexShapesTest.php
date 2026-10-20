@@ -17,6 +17,16 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class IndexShapesTest extends TestCase
 {
+    public function testErrorPreservesTheResolvedIndexCondition(): void
+    {
+        $errors = new IndexShapes();
+        $part = new M\Table\Key\ExpressionPart(new M\Literal\NumberLiteral('1'));
+        self::assertSame(3759, $errors->error(new M\Table\Problem\Creation\FunctionalIndexKind(M\Table\Key\IndexKind::FullText, $part))?->getCode());
+        self::assertSame(1070, $errors->error(new M\Table\Problem\Creation\SpatialKeyArity($part))?->getCode());
+        self::assertSame("Incorrect index name 'PRIMARY'", $errors->error(new M\Table\Problem\Creation\InvalidIndexName(new Name('PRIMARY')))?->getMessage());
+        self::assertNull($errors->error(new M\Table\Problem\NoColumns()));
+    }
+
     public function testDefinitionUsesTheBoundOperandOwner(): void
     {
         $parts = [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('b'))];

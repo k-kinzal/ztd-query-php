@@ -3650,6 +3650,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\DuplicateKeyColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\FunctionalIndexKind": {
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
+        "owner": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\KeyPart"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\InvalidIndexName": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },

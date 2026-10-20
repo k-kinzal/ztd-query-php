@@ -61,9 +61,13 @@ final class IndexNames
      *
      * @throws \MySqlMemory\Error\SqlError When an added index name or key column is invalid
      */
-    public function alter(\MySqlMemory\Command\Definition\TableLayout $layout, Facts $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB'): void
+    public function alter(\MySqlMemory\Command\Definition\TableLayout $layout, Facts $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB', string $collation = 'utf8mb4_general_ci'): void
     {
-        $columns = array_map(static fn (array $column): string => mb_strtolower($column[0]->name->column->value), $layout->columns);
+        $declared = new \SqlSemantics\Platform\MySql\Rules\Typing\Declared(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known($collation), $release);
+        $columns = [];
+        foreach ($layout->columns as [$column]) {
+            $columns[mb_strtolower($column->name->column->value)] = \MySqlMemory\Typing\Domain::of($declared->column($column->specification), true);
+        }
         $indexes = array_values(array_filter(array_map(static fn (array $key): ?IndexDefinition => $key[1] === null && $key[0] instanceof IndexDefinition ? $key[0] : null, $layout->keys)));
         foreach ($layout->options as $option) {
             if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption) {
@@ -80,14 +84,18 @@ final class IndexNames
      */
     public function creation(\MySqlMemory\Session\Resolution\TablePreparation $prepared, \MySqlMemory\Session\Session $session): void
     {
-        if (array_filter($prepared->facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity) === []) {
+        if (array_filter($prepared->facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind) === []) {
             return;
         }
         if ($session->settings()->legacy()) {
             $this->check($prepared->facts);
         }
         $indexes = array_values(array_filter($prepared->statement->elements, static fn ($element): bool => $element instanceof IndexDefinition));
-        $columns = array_map(static fn (\SqlSemantics\Statement\Declaration\Column $column): string => mb_strtolower($column->name->value), $prepared->table->columns);
+        $declared = new \MySqlMemory\Typing\Declared($session->settings()->connectionCollation, $session->settings()->release());
+        $columns = [];
+        foreach ($prepared->table->columns as $column) {
+            $columns[mb_strtolower($column->name->value)] = $column->type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? \MySqlMemory\Typing\Domain::of($column->type, true) : $declared->domain($column->type);
+        }
         $engine = (new \MySqlMemory\Command\Definition\StorageOptions())->engine($prepared->statement, $session->variables);
         $this->columns($indexes, $columns, $prepared->facts, $session->settings()->release(), $engine);
     }
@@ -96,17 +104,17 @@ final class IndexNames
      * Checks ordered key declarations before length, prefix and storage validation.
      *
      * @param list<IndexDefinition> $indexes Added index declarations in definition order
-     * @param list<string> $columns Folded names from the complete proposed declaration
+     * @param array<string, \MySqlMemory\Typing\Domain> $columns Folded names and domains from the complete proposed declaration
      * @throws \MySqlMemory\Error\SqlError When the first name or missing key-column condition is reached
      */
     public function columns(array $indexes, array $columns, Facts $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB'): void
     {
         foreach ($indexes as $index) {
             $this->definition($index, $facts);
-            (new IndexShapes())->definition($index, $facts, $release, $engine);
+            (new IndexShapes())->definition($index, $facts, $release, $engine, $columns);
             $seen = [];
             foreach ($index->parts as $part) {
-                if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart && !in_array(mb_strtolower($part->column->value), $columns, true)) {
+                if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart && !isset($columns[mb_strtolower($part->column->value)])) {
                     throw SchemaError::KeyColumnMissing->error($part->column->value);
                 }
                 if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart) {
