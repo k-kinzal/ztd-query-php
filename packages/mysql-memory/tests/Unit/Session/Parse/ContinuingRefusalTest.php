@@ -41,6 +41,8 @@ final class ContinuingRefusalTest extends TestCase
      */
     public static function providerInputs(): iterable
     {
+        yield 'missing parser after continuing key length' => ['CREATE FULLTEXT INDEX i ON d.t(a(0)) WITH PARSER missing LOCK=bad', [1391, 1128]];
+        yield 'available parser after continuing key length' => ['CREATE FULLTEXT INDEX i ON d.t(a(0)) WITH PARSER ngram LOCK=bad', [1391, 1801]];
         yield 'following warning' => ['SELECT CAST(1 AT LOCAL AS DATE), BINARY 2', [1235, 1287]];
         yield 'repeated refusal' => ['SELECT CAST(1 AT LOCAL AS DATE), CAST(2 AT LOCAL AS CHAR)', [1235, 1235]];
         yield 'earlier collation' => ['SELECT 1 COLLATE missing, CAST(1 AT LOCAL AS DATE)', [1273, 1235]];

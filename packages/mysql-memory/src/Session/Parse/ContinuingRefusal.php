@@ -62,7 +62,8 @@ final class ContinuingRefusal
         $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         $warnings = new ModernWarnings();
         $tokens = $parser->tokenize($statement);
-        $prefix = $session->settings()->legacy() ? (new CommandPrefix())->before($tokens, $statement, $failure->end, $session) : null;
+        $prefix = ($session->settings()->legacy() ? (new CommandPrefix())->before($tokens, $statement, $failure->end, $session) : null)
+            ?? (new Entry\ParserInput())->before($statement, $end, $session);
         if ($prefix !== null) {
             return $prefix;
         }
