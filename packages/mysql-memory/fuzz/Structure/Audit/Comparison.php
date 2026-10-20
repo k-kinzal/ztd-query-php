@@ -156,7 +156,12 @@ final class Comparison
             $steps = (new CatalogHistory())->steps($node, $code);
         }
         if ($steps === []) {
-            return [];
+            /**
+             * A failed legacy rename may already establish the needed occupancy.
+             * Its unchanged retry observes that partial effect; no fixture is required.
+             */
+            return $code === 1396 && $node instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser && (new RenameHistory())->requirements($node, $session) !== null
+                ? [$this->observe($node, $profile, $native, $session, $endpoint)] : [];
         }
         $history = [];
         foreach ($steps as $step) {

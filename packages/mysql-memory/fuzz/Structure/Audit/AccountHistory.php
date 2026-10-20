@@ -17,10 +17,13 @@ use SqlSemantics\Statement\Scalar;
 final class AccountHistory
 {
     /**
-     * @return list<M\Statement> Explicit setup for missing DROP USER dependencies
+     * @return list<M\Statement> Explicit setup for account identity dependencies
      */
     public function steps(M\Statement|Scalar $node, int $code, Session $session): array
     {
+        if ($code === 1396 && $node instanceof M\Account\RenameUser) {
+            return (new RenameHistory())->steps($node, $session);
+        }
         if ($code !== 1396 || !$node instanceof M\Account\DropUser) {
             return [];
         }
