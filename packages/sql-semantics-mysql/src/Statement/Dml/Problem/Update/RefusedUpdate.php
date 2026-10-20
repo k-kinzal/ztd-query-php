@@ -9,7 +9,7 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A standalone update whose input columns require a retained instruction role.
+ * A standalone update whose inputs, destinations or clauses require a retained instruction role.
  *
  * @visibility public
  * @example Refusing duplicate input columns before publishing a statement
@@ -31,8 +31,8 @@ final class RefusedUpdate implements Diagnostic
      */
     public function message(): string
     {
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this->write);
-        \SqlSemantics\Diagnostic\Check::invariant($problem !== null, 'A retained UPDATE has a fixed input-column constraint.');
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->write->with, $this->write->tables, $this->write->assignments, $this->write->orderBy, $this->write->limit);
+        \SqlSemantics\Diagnostic\Check::invariant($problem !== null, 'A retained UPDATE has a fixed input, target or clause constraint.');
         return $problem->message();
     }
 }

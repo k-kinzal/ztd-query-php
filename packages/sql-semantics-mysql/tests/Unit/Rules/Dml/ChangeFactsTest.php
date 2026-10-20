@@ -85,7 +85,7 @@ final class ChangeFactsTest extends TestCase
     public function testUpdateReportsItsOneTableThatIsNotUpdatableBeforeTheAssignments(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('UPDATE (SELECT 1 AS a) AS d SET nosuch = 1');
+        $operation = $semantics->analyze('CREATE PROCEDURE p() UPDATE (SELECT 1 AS a) AS d SET nosuch = 1');
 
         self::assertSame([WriteRule::NonUpdatableTarget, null], array_map(static fn ($diagnostic) => $diagnostic instanceof WriteMisuse ? $diagnostic->rule : null, $operation->facts->diagnostics));
     }
@@ -94,7 +94,7 @@ final class ChangeFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->analyze('WITH c AS (SELECT 1 AS k) UPDATE t, c, (SELECT 2 AS m) AS d SET c.k = 1, d.m = 2, t.a = 3', [$t]);
+        $operation = $semantics->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1 AS k) UPDATE t, c, (SELECT 2 AS m) AS d SET c.k = 1, d.m = 2, t.a = 3', [$t]);
 
         self::assertSame([WriteRule::NonUpdatableTarget, WriteRule::NonUpdatableTarget], array_map(static fn ($diagnostic) => $diagnostic instanceof WriteMisuse ? $diagnostic->rule : null, $operation->facts->diagnostics));
     }
@@ -159,7 +159,7 @@ final class ChangeFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $tables = [...$semantics->analyze('CREATE TABLE t1 (a INT)')->declarations(), ...$semantics->analyze('CREATE TABLE t2 (a INT)')->declarations()];
-        $facts = static fn (string $sql): array => $semantics->analyze($sql, $tables)->facts->diagnostics;
+        $facts = static fn (string $sql): array => $semantics->analyze('CREATE PROCEDURE p() ' . $sql, $tables)->facts->diagnostics;
 
         self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('x'))], $facts('UPDATE t1, (SELECT * FROM (SELECT * FROM t2 AS x) e) d SET d.a = 1'));
         self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableColumn, new Name('a'))], $facts('UPDATE t1, (SELECT a + 1 AS a FROM t2) d SET d.a = 1'));

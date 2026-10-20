@@ -24,7 +24,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Mirrors the server's `PT_update`: the statement is a multiple-table
  * UPDATE when its table references hold more than one table. The facts
- * follow MYSQL-UPDATE-001. The hints of the comment written right after
+ * follow MYSQL-UPDATE-001. Ordinary values exclude read-only destinations and
+ * multi-table ORDER BY/LIMIT clauses; stored instructions retain these
+ * conditions in DeferredUpdate until invocation. The hints of the comment written right after
  * UPDATE are kept with the statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/update.html.
  *
@@ -75,7 +77,7 @@ final class Update implements Explainable
      * @param list<OrderItem> $orderBy The order the rows are updated in
      * @param Limit|null $limit The most rows updated
      * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
-     * @throws InvalidConstruction When there is no table or no assignment
+     * @throws InvalidConstruction When a required operand is absent or the statement role contradicts its operands
      */
     public function __construct(
         public readonly ?WithClause $with,
@@ -96,10 +98,12 @@ final class Update implements Explainable
         $this->tables = $members;
         $this->assignments = Check::listOf($assignments, Assignment::class, 'UPDATE holds at least one assignment.', 1);
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
+        Check::input(!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $limit->offset === null, 'UPDATE limits rows without an offset.');
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'UPDATE ordering uses expressions, not output-column positions.');
         }
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) === null, 'An ordinary UPDATE has a coherent input-column namespace.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->with, $this->tables, $this->assignments, $this->orderBy, $this->limit) === null, 'An ordinary UPDATE has writable targets and compatible clauses.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

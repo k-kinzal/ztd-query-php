@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
 /**
- * Prepares a complete retained UPDATE before reporting its input-column constraint.
+ * Prepares a complete retained UPDATE before reporting its fixed input, target or clause constraint.
  *
  * @visibility MySqlMemory
  */
@@ -70,6 +70,6 @@ final class UpdateUse
         foreach ($facts->diagnostics as $problem) {
             throw (new Errors())->error($problem, $session, statement: $write);
         }
-        throw new LogicException('A retained UPDATE keeps its input-column contradiction.');
+        throw new LogicException('A retained UPDATE keeps its input, target or clause contradiction.');
     }
 }

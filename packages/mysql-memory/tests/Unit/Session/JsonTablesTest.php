@@ -29,7 +29,7 @@ final class JsonTablesTest extends TestCase
 
         self::assertSame([3143, 'Invalid JSON path expression. The error is around character position 1.'], [$update?->getCode(), $update?->getMessage()]);
         self::assertSame('Invalid JSON path expression. The error is around character position 2.', $column?->getMessage());
-        self::assertSame(3143, $inspect("EXPLAIN UPDATE JSON_TABLE('[]', 'bad' COLUMNS (q FOR ORDINALITY)) AS j SET q=1")?->getCode());
+        self::assertSame(3143, $inspect("EXPLAIN UPDATE JSON_TABLE('[]', 'bad' COLUMNS (q FOR ORDINALITY)) AS j, t SET t.a=1")?->getCode());
         self::assertNull($inspect("SELECT (SELECT 1 FROM JSON_TABLE('[]', 'bad' COLUMNS (q FOR ORDINALITY)) AS j)"));
         self::assertNull($inspect("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS (q FOR ORDINALITY)) AS j"));
 

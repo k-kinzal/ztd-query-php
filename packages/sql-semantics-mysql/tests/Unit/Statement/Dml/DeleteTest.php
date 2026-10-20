@@ -22,6 +22,15 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class DeleteTest extends TestCase
 {
+    public function testValueRejectsAnOffsetInTheRowLimit(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('DELETE FROM t')->statement;
+        self::assertInstanceOf(Delete::class, $statement);
+        $limit = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), \SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Comma);
+        $this->expectExceptionMessage('DELETE limits rows without an offset.');
+        new Delete($statement->with, $statement->options, $statement->table, limit: $limit);
+    }
+
     public function testValueRejectsAnOutputPositionInWriteOrdering(): void
     {
         $this->expectExceptionMessage('DELETE ordering uses expressions');

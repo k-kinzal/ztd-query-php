@@ -24,6 +24,16 @@ final class StorageOptionsTest extends TestCase
         (new StorageOptions())->header($header, $session, $context);
     }
 
+    public function testAlterWarnsOncePerDirectoryBeforeOpeningTheTarget(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->run("ALTER TABLE d.absent INDEX DIRECTORY 'i', DATA DIRECTORY 'd', INDEX DIRECTORY 'again'");
+        self::assertSame([['Warning', 1618, '<DATA DIRECTORY> option ignored'], ['Warning', 1618, '<INDEX DIRECTORY> option ignored'], ['Error', 1146, "Table 'd.absent' doesn't exist"]], $session->diagnostics->conditions);
+        $session->run("ALTER TABLE absent INDEX DIRECTORY 'i'");
+        self::assertSame([['Error', 1046, 'No database selected']], $session->diagnostics->conditions);
+    }
+
     public function testNamedRejectsAnUnknownEngineWhenSubstitutionIsDisabled(): void
     {
         $session = (new Instance())->connect();

@@ -3466,6 +3466,14 @@ retained declaration: source dependencies, protocol restrictions, spatial
 references, defaults and keys preserve their native order. No replacement SQL or
 ordinary contradictory declaration is manufactured.
 
+Ordinary UPDATE values require a writable destination: derived tables, JSON_TABLE
+and local common tables can supply input but cannot receive assignments. A join
+can still update its physical table. Multiple-table updates exclude ORDER BY and
+LIMIT. Deferred stored updates preserve all sources, assignments and clauses,
+including these contradictions, so skipped and reached instructions retain their
+different behavior. UPDATE and DELETE row limits exclude offsets in both roles,
+because offset syntax is not part of either instruction.
+
 Input-column constraints also apply to derived and reached common tables in
 UPDATE and DELETE. An empty VALUES row can supply INSERT defaults or remain in
 an unused definition, but cannot form a read input. Ordinary statement

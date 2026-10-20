@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * An UPDATE retaining contradictory input-column declarations until invocation.
+ * An UPDATE retaining contradictory inputs, destinations or clauses until invocation.
  * Every source, assignment and clause survives; this is not an ordinary Statement.
  *
  * @visibility public
@@ -62,7 +62,7 @@ final class DeferredUpdate implements \SqlSemantics\Platform\MySql\Statement\Rou
      * @param list<OrderItem> $orderBy The order the rows are updated in
      * @param Limit|null $limit The most rows updated
      * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
-     * @throws InvalidConstruction When there is no table or no assignment
+     * @throws InvalidConstruction When a required operand is absent or the statement role contradicts its operands
      */
     public function __construct(
         public readonly ?WithClause $with,
@@ -83,10 +83,11 @@ final class DeferredUpdate implements \SqlSemantics\Platform\MySql\Statement\Rou
         $this->tables = $members;
         $this->assignments = Check::listOf($assignments, Assignment::class, 'UPDATE holds at least one assignment.', 1);
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
+        Check::input(!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $limit->offset === null, 'UPDATE limits rows without an offset.');
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'UPDATE ordering uses expressions, not output-column positions.');
         }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null, 'A deferred UPDATE retains a fixed input-column contradiction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->with, $this->tables, $this->assignments, $this->orderBy, $this->limit) !== null, 'A deferred UPDATE retains a fixed input, target or clause contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

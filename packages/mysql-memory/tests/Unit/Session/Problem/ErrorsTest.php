@@ -638,7 +638,7 @@ final class ErrorsTest extends TestCase
     public function testWriteNamesTheStatementOfATargetThatIsNotUpdatable(): void
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
-        $update = $session->analyze('UPDATE (SELECT 1 a) d SET a = 1')->statement;
+        $update = $session->analyze('UPDATE t SET a = 1')->statement;
         self::assertInstanceOf(Update::class, $update);
 
         self::assertSame('The target table d of the UPDATE is not updatable', (new Errors())->write(new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('d')), $update)->getMessage());

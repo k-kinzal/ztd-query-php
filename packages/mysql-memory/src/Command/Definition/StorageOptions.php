@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Statement;
  *
  * Unknown engines are refused with NO_ENGINE_SUBSTITUTION, otherwise the default engine is
  * substituted with both warnings. Engine attributes require engine support after their JSON
- * has been checked. Directory paths must be absolute. Verified on MySQL 8.4.7.
+ * has been checked. CREATE directory paths must be absolute; ALTER ignores directory options. Verified on MySQL 8.4.7.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html.
  *
  * @visibility MySqlMemory
@@ -92,6 +92,45 @@ final class StorageOptions
                 $this->named($option->engine->value, $context);
             }
         }
+    }
+
+    /**
+     * Removes ALTER directory options and reports each ignored kind once.
+     *
+     * Warnings occur on execution, after default-database selection and before
+     * opening the target. DATA precedes INDEX regardless of written order.
+     * Verified through direct, prepared and stored requests on MySQL 5.6–9.1.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand> $commands The unchanged request's actions
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand> Actions that affect the stored definition
+     */
+    public function alter(array $commands, Context $context): array
+    {
+        $result = [];
+        $ignored = [];
+        foreach ($commands as $command) {
+            if (!$command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Command\SetTableOptions) {
+                $result[] = $command;
+                continue;
+            }
+            $options = [];
+            foreach ($command->options as $option) {
+                if ($option instanceof TextOption && in_array($option->kind, [TextOptionKind::DataDirectory, TextOptionKind::IndexDirectory], true)) {
+                    $ignored[$option->kind->value] = true;
+                } else {
+                    $options[] = $option;
+                }
+            }
+            if ($options !== []) {
+                $result[] = new \SqlSemantics\Platform\MySql\Statement\Alter\Command\SetTableOptions($options);
+            }
+        }
+        foreach ([TextOptionKind::DataDirectory, TextOptionKind::IndexDirectory] as $kind) {
+            if (isset($ignored[$kind->value])) {
+                $context->warning(QueryError::OptionIgnored, $kind->value);
+            }
+        }
+        return $result;
     }
 
     /**

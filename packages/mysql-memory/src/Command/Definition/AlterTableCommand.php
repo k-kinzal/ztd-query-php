@@ -87,6 +87,7 @@ final class AlterTableCommand implements Command
         if ($schema === '') {
             throw QueryError::NoDatabase->error();
         }
+        $commands = (new StorageOptions())->alter($commands, $context);
         $session->transaction->commit();
         $last = $commands[count($commands) - 1] ?? null;
         if ($last instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions && $last->kind->reports()) {
