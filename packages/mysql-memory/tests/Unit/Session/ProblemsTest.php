@@ -41,7 +41,7 @@ final class ProblemsTest extends TestCase
         (new Problems())->signals($operation, $session);
     }
 
-    public function testRaiseUsesResolvedFactsWithoutParsingSessionText(): void
+    public function testCheckUsesResolvedFactsWithoutParsingSessionText(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $operation = $session->analyze('SELECT missing_column FROM absent_table');
@@ -50,7 +50,7 @@ final class ProblemsTest extends TestCase
         $this->expectExceptionCode(1146);
         $this->expectExceptionMessage("Table 'd.absent_table' doesn't exist");
 
-        (new Problems())->raise($operation, $session);
+        (new Problems())->check($operation, $session);
     }
 
     public function testRaiseLeavesTheProblemsOfAnAlterTableToItsCommand(): void

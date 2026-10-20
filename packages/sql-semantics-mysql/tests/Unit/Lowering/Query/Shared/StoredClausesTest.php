@@ -14,6 +14,11 @@ use SqlSemantics\Platform\MySql\Dialect;
 #[Medium]
 final class StoredClausesTest extends TestCase
 {
+    public function testWhereRetainsAnUpdatePredicateAndItsOrdering(): void
+    {
+        self::assertSame('CREATE PROCEDURE p() UPDATE t SET a = 1 WHERE ROW(a, 2) ORDER BY 1, (a, 2) DESC', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() UPDATE t SET a=1 WHERE ROW(a,2) ORDER BY 1,(a,2) DESC')->toString());
+    }
+
     public function testTailRetainsLimitBesideADeferredFilter(): void
     {
         self::assertSame('CREATE PROCEDURE p() SELECT a FROM t WHERE ROW(1, 2) ORDER BY a DESC LIMIT 2', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t WHERE ROW(1,2) ORDER BY a DESC LIMIT 2')->toString());

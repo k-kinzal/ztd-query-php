@@ -1109,7 +1109,7 @@
         "lowPriority": "bool",
         "orderBy": "array",
         "tables": "array",
-        "where": "?SqlSemantics\\Statement\\Scalar",
+        "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Update\\RefusedUpdate": {
@@ -2864,7 +2864,7 @@
         "lowPriority": "bool",
         "orderBy": "array",
         "tables": "array",
-        "where": "?SqlSemantics\\Statement\\Scalar",
+        "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement": {

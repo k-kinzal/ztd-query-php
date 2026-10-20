@@ -116,6 +116,11 @@ final class Registration
     public array $variables = [];
 
     /**
+     * Whether a resource hint occurred outside an applicable outer query block.
+     */
+    public bool $innerGroup = false;
+
+    /**
      * @param Blocks $blocks The query blocks of the statement
      * @param SystemVariables $catalog The system variables of the release
      * @param Printer $printer How hints are written in the warnings
@@ -147,6 +152,9 @@ final class Registration
             }
         }
 
+        if ($this->innerGroup && $this->group === null) {
+            $this->warn(StatementError::HintNotSupported, 'Subquery or Stored procedure or Trigger');
+        }
         return $this;
     }
 
@@ -182,7 +190,7 @@ final class Registration
             }
         } elseif ($hint instanceof ResourceGroupHint) {
             if ($block->number !== 1 || $this->routine) {
-                $this->warn(StatementError::HintNotSupported, 'Subquery or Stored procedure or Trigger');
+                $this->innerGroup = true;
             } else {
                 $this->group = $hint;
             }

@@ -76,6 +76,7 @@ final class LoadNotices
                 $session->diagnostics->warning($notice->code(), $notice->message());
             }
         }
+        (new \MySqlMemory\Session\Access\StoredHints())->load($routine->statement, $session);
         (new InspectionNotices())->load($routine, $session);
         if ($routine->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction && $routine->statement->nameCollision($session->settings()->release())) {
             $code = \MySqlMemory\Error\Family\AdministrationError::NativeFunctionName;

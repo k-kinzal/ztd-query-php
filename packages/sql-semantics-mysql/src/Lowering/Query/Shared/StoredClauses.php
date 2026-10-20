@@ -50,14 +50,27 @@ final class StoredClauses
     /**
      * @return list<OrderItem|DeferredOrderItem> Complete ordered items
      */
-    public function ordering(Node $clause): array
+    public function ordering(Node $clause, bool $positions = true): array
     {
         $form = $this->lowering->form($clause);
         return match ($form->signature) {
             'opt_order_clause:' => [],
-            'opt_order_clause: order_clause' => $this->ordering($form->node(0)),
-            'order_clause: ORDER_SYM BY order_list' => $this->items($form->node(2)),
+            'opt_order_clause: order_clause' => $this->ordering($form->node(0), $positions),
+            'order_clause: ORDER_SYM BY order_list' => $this->items($form->node(2), $positions),
             default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Retains an optional row predicate without assuming a scalar value role.
+     */
+    public function where(Node $clause): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null
+    {
+        $form = $this->lowering->form($clause);
+        return match ($form->signature) {
+            'opt_where_clause:', 'where_clause:' => null,
+            'opt_where_clause: where_clause' => $this->where($form->node(0)),
+            default => (new StoredSelections($this->lowering))->predicate($clause),
         };
     }
 

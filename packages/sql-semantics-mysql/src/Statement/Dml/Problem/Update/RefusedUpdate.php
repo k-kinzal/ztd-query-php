@@ -31,7 +31,7 @@ final class RefusedUpdate implements Diagnostic
      */
     public function message(): string
     {
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->write->with, $this->write->tables, $this->write->assignments, $this->write->orderBy, $this->write->limit);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->write->with, $this->write->tables, $this->write->assignments, $this->write->orderBy, $this->write->limit, $this->write->where);
         \SqlSemantics\Diagnostic\Check::invariant($problem !== null, 'A retained UPDATE has a fixed input, target or clause constraint.');
         return $problem->message();
     }

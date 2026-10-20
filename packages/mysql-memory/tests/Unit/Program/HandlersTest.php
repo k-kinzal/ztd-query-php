@@ -14,6 +14,19 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class HandlersTest extends TestCase
 {
+    public function testNamedRaisesTheSqlstateOfADeclaredCondition(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45001'; SIGNAL c SET MESSAGE_TEXT = 'boom'; END");
+
+        $this->expectExceptionCode(1644);
+        $this->expectExceptionMessage('boom');
+
+        $session->query('CALL p()');
+    }
+
     public function testActivatePreservesTheConditionsExplicitlyRepublishedByResignal(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

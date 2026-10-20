@@ -23,8 +23,9 @@ final class TableCache
 
     /**
      * @param RowBuffers $buffers The fields retained by connection-owned handles
+     * @param TriggerLoads $triggers The trigger definitions loaded by those handles
      */
-    public function __construct(public readonly RowBuffers $buffers = new RowBuffers())
+    public function __construct(public readonly RowBuffers $buffers = new RowBuffers(), public readonly TriggerLoads $triggers = new TriggerLoads())
     {
     }
 
@@ -42,6 +43,7 @@ final class TableCache
     public function close(?string $schema = null, ?string $table = null): void
     {
         $this->buffers->close($schema, $table);
+        $this->triggers->close($schema, $table);
         foreach ($this->opened as $key => [$database, $name]) {
             if (($schema === null || $schema === $database) && ($table === null || $table === $name)) {
                 unset($this->opened[$key]);

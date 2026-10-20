@@ -72,6 +72,9 @@ final class UpdateUse
         if ($input !== null) {
             throw $input;
         }
+        if ($write instanceof DeferredUpdate) {
+            (new UpdateOperands())->prepare($write, $facts, $session);
+        }
         foreach ($facts->diagnostics as $problem) {
             throw (new Errors())->error($problem, $session, statement: $write);
         }

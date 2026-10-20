@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program;
 
+use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Diagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
@@ -11,6 +12,8 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction;
 
@@ -41,6 +44,28 @@ final class Handlers
      */
     public function __construct(public readonly Interpreter $interpreter)
     {
+    }
+
+    /**
+     * Answers a SIGNAL or RESIGNAL of a declared condition as one of the SQLSTATE the condition stands for.
+     *
+     * @throws SqlError When no condition of the name is in scope, or it stands for an error number (ER_SIGNAL_BAD_CONDITION_TYPE)
+     */
+    public function named(Signal|Resignal $statement): Signal|Resignal
+    {
+        $name = $statement->condition instanceof ConditionName ? $statement->condition->name->value : '';
+        $declared = null;
+        foreach ($this->interpreter->activation->conditions as $condition) {
+            $declared = strcasecmp($condition->name->value, $name) === 0 ? $condition : $declared;
+        }
+        if ($declared === null) {
+            throw ProgramError::UndefinedCondition->error($name);
+        }
+        if (!$declared->value instanceof SqlState) {
+            throw ProgramError::SignalConditionKind->error();
+        }
+
+        return $statement instanceof Signal ? new Signal($declared->value, $statement->items) : new Resignal($declared->value, $statement->items);
     }
 
     /**

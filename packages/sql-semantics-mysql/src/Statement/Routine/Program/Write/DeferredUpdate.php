@@ -9,12 +9,15 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\ChangeFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
 use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
@@ -43,12 +46,12 @@ final class DeferredUpdate implements \SqlSemantics\Platform\MySql\Statement\Rou
     public readonly array $tables;
 
     /**
-     * @var non-empty-list<Assignment> The assignments in written order
+     * @var non-empty-list<Assignment|DeferredColumnAssignment> The assignments in written order
      */
     public readonly array $assignments;
 
     /**
-     * @var list<OrderItem> The ORDER BY items in written order
+     * @var list<OrderItem|DeferredOrderItem> The ORDER BY items in written order
      */
     public readonly array $orderBy;
 
@@ -57,9 +60,9 @@ final class DeferredUpdate implements \SqlSemantics\Platform\MySql\Statement\Rou
      * @param bool $lowPriority Whether LOW_PRIORITY is written
      * @param bool $ignore Whether IGNORE turns errors into warnings
      * @param list<Relation> $tables The table references; at least one
-     * @param list<Assignment> $assignments The assignments; at least one
-     * @param Scalar|null $where The row predicate
-     * @param list<OrderItem> $orderBy The order the rows are updated in
+     * @param list<Assignment|DeferredColumnAssignment> $assignments The assignments; at least one
+     * @param Scalar|RowOperand|DeferredOperand|null $where The row predicate
+     * @param list<OrderItem|DeferredOrderItem> $orderBy The order the rows are updated in
      * @param Limit|null $limit The most rows updated
      * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
      * @throws InvalidConstruction When a required operand is absent or the statement role contradicts its operands
@@ -70,7 +73,7 @@ final class DeferredUpdate implements \SqlSemantics\Platform\MySql\Statement\Rou
         public readonly bool $ignore,
         array $tables,
         array $assignments,
-        public readonly ?Scalar $where = null,
+        public readonly Scalar|RowOperand|DeferredOperand|null $where = null,
         array $orderBy = [],
         public readonly ?Limit $limit = null,
         array $hints = [],
@@ -81,14 +84,22 @@ final class DeferredUpdate implements \SqlSemantics\Platform\MySql\Statement\Rou
             array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));
         }
         $this->tables = $members;
-        $this->assignments = Check::listOf($assignments, Assignment::class, 'UPDATE holds at least one assignment.', 1);
-        $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
-        Check::input(!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $limit->offset === null, 'UPDATE limits rows without an offset.');
-        foreach ($this->orderBy as $item) {
-            Check::input($item->expression instanceof Scalar, 'UPDATE ordering uses expressions, not output-column positions.');
+        $items = [];
+        foreach (Check::listOf($assignments, \SqlSemantics\Statement\Node::class, 'UPDATE holds at least one assignment.', 1) as $item) {
+            Check::input($item instanceof Assignment || $item instanceof DeferredColumnAssignment, 'UPDATE retains assignment roles.');
+            $items[] = $item;
         }
+        $this->assignments = $items;
+        $ordering = [];
+        foreach (Check::listOf($orderBy, \SqlSemantics\Statement\Node::class, 'ORDER BY holds ordering items.') as $item) {
+            Check::input($item instanceof OrderItem || $item instanceof DeferredOrderItem, 'UPDATE retains ordering roles.');
+            Check::input($item instanceof DeferredOrderItem || $item->expression instanceof Scalar, 'UPDATE ordering uses expressions, not output-column positions.');
+            $ordering[] = $item;
+        }
+        $this->orderBy = $ordering;
+        Check::input(!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $limit->offset === null, 'UPDATE limits rows without an offset.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($this->tables) === null, 'A stored UPDATE excludes fixed input-name collisions.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->with, $this->tables, $this->assignments, $this->orderBy, $this->limit) !== null, 'A deferred UPDATE retains a fixed input, target or clause contradiction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->with, $this->tables, $this->assignments, $this->orderBy, $this->limit, $this->where) !== null, 'A deferred UPDATE retains a fixed input, target or clause contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

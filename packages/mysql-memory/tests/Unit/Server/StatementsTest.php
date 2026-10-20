@@ -20,6 +20,35 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class StatementsTest extends TestCase
 {
+    public function testExecuteConsumesATriggerLoadOnceAndHonorsInterveningStatements(): void
+    {
+        $client = new Client(new Instance(), 1, static fn (string $bytes) => null);
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $session = $client->session();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT); CREATE TRIGGER d.tr BEFORE INSERT ON d.t FOR EACH ROW SET NEW.a=(SELECT /*+ RESOURCE_GROUP(a) */ 1)');
+        $client->statements->prepare('SELECT * FROM d.t');
+        $client->statements->execute(new PayloadReader("\x01\x00\x00\x00\x00\x01\x00\x00\x00"));
+        self::assertSame([3515], array_column($session->diagnostics->conditions, 1));
+        $client->statements->execute(new PayloadReader("\x01\x00\x00\x00\x00\x01\x00\x00\x00"));
+        self::assertSame([], $session->diagnostics->conditions);
+        $session->query('FLUSH TABLES');
+        $client->statements->prepare('SELECT * FROM d.t');
+        $session->query('SHOW WARNINGS');
+        $client->statements->execute(new PayloadReader("\x02\x00\x00\x00\x00\x01\x00\x00\x00"));
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testMetadataSendsAHandleWithoutParametersOrResultFields(): void
+    {
+        $sent = new ArrayObject();
+        $client = new Client(new Instance(), 1, static function (string $bytes) use ($sent): void {
+            $sent->append(substr($bytes, 4));
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        self::assertTrue($client->statements->metadata(7, [], 0));
+        self::assertSame(["\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"], array_slice($sent->getArrayCopy(), 1));
+    }
+
     public function testHandlePreparesAStatement(): void
     {
         $sent = new ArrayObject();

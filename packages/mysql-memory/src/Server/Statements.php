@@ -34,6 +34,11 @@ final class Statements
     private int $next = 1;
 
     /**
+     * @var array{int, int}|null Statement id and activity id of an unconsumed trigger load
+     */
+    private ?array $triggerLoad = null;
+
+    /**
      * @param Client $client The connection
      */
     public function __construct(public readonly Client $client)
@@ -76,6 +81,8 @@ final class Statements
     {
         $session = $this->client->session();
         $session->activity->begin();
+        $loads = $session->preparation->triggerResourceLoads;
+        $this->triggerLoad = null;
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $session->diagnostics->retain();
         } else {
@@ -104,7 +111,21 @@ final class Statements
             return $this->client->send($this->client->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) $session->variables->read('character_set_results')));
         }
         $id = $this->next++;
+        if ($session->preparation->triggerResourceLoads !== $loads) {
+            $this->triggerLoad = [$id, (int) $session->variables->read('statement_id')];
+        }
         $this->prepared[$id] = [$sql, $parameters, [], [], $bindings, \MySqlMemory\Command\Prepared\PreparedCache::capture($operation, $session)];
+        return $this->metadata($id, $columns, $parameters);
+    }
+
+    /**
+     * Sends a prepared handle and its parameter and result-column metadata.
+     *
+     * @param list<ResultColumn> $columns The resolved result fields
+     */
+    public function metadata(int $id, array $columns, int $parameters): bool
+    {
+        $session = $this->client->session();
         $this->client->packet((new PayloadWriter())->integer(0, 1)->integer($id, 4)->integer(count($columns), 2)->integer($parameters, 2)->integer(0, 1)->integer(min(65535, $session->diagnostics->raised()), 2)->payload());
         if ($parameters > 0) {
             for ($i = 0; $i < $parameters; $i++) {
@@ -156,6 +177,8 @@ final class Statements
         }
         [$sql, $count, $types, $long, $derived, $definition] = $this->prepared[$id];
         $session = $this->client->session();
+        $session->preparation->replayedTriggerResource = $this->triggerLoad === [$id, (int) $session->variables->read('statement_id')];
+        $this->triggerLoad = null;
         $collation = Collation::named((string) $session->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
         [$values, $types] = (new Binary())->parameters($reader, $count, $types, $collation);
         foreach ($long as $index => $data) {
@@ -176,6 +199,7 @@ final class Statements
             $answers = (new \MySqlMemory\Session\Execution($session))->failed($error);
         } finally {
             $session->preparation->domains = $previous;
+            $session->preparation->replayedTriggerResource = false;
         }
         foreach ($answers as $index => $answer) {
             if ($answer instanceof SqlError) {

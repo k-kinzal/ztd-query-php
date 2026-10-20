@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Operation;
  * EXISTS it is a note on the same table and an error on another. FOLLOWS and PRECEDES place
  * the trigger after or before another one of the same table, time and event
  * (ER_REFERENCED_TRG_DOES_NOT_EXIST otherwise); without them it fires after those that exist.
- * The emulator keeps triggers but does not fire them.
+ * Execution retains typed trigger bodies and fires them for affected rows.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html.
  *
  * @visibility MySqlMemory
@@ -61,6 +61,7 @@ final class TriggerCommand implements Command
         assert($statement instanceof CreateTrigger);
         $session->transaction->commit();
         [$database, $table, $schema] = $this->target($statement, $session);
+        (new \MySqlMemory\Hint\TriggerNotices())->load($database, $table, $session, true);
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             foreach ($schema->triggers as $trigger) {
                 if ($trigger->table === $table && $trigger->time === $statement->time->value && $trigger->event === $statement->event->value) {

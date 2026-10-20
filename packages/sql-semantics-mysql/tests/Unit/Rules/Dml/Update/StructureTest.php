@@ -16,6 +16,14 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StructureTest extends TestCase
 {
+    public function testProblemRetainsNonScalarAssignmentsInSingleAndMultipleUpdates(): void
+    {
+        $tables = [new M\Relation\TableReference(new QualifiedName(new Name('t'))), new M\Relation\TableReference(new QualifiedName(new Name('u')))];
+        $assignment = new M\Routine\Program\Write\DeferredColumnAssignment(new M\Name\ColumnUse(new Name('a')), new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]));
+        self::assertInstanceOf(M\Expression\Problem\OperandColumns::class, (new Structure())->problem(null, $tables, [$assignment]));
+        self::assertInstanceOf(M\Expression\Problem\OperandColumns::class, (new Structure())->problem(null, [$tables[0]], [$assignment]));
+    }
+
     public function testTargetLeavesJoinedReadSourcesAvailableForPhysicalWrites(): void
     {
         $source = new M\Relation\DerivedTable(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'), new Name('a'))]), new Name('q'));

@@ -76,6 +76,7 @@ final class Statements
      */
     public function run(Statement $statement): Reply
     {
+        $this->activation->sqlStatements++;
         \MySqlMemory\Session\State\StatementCounters::query($this->session);
         $operation = $this->operation($statement);
         $command = (new Dispatcher())->command($operation->statement);

@@ -110,7 +110,12 @@ final class Hints
             return new Application();
         }
 
-        return (new Application())->apply($this->registration($statement, $session), $session, $session->replayed, $preparing);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger) {
+            $application = new Application();
+            $application->warnings = (new ProgramHints())->warnings($statement, $session);
+            return $application;
+        }
+        return (new Application())->apply($this->registration($statement, $session), $session, $session->replayed || $session->program !== null, $preparing);
     }
 
     /**

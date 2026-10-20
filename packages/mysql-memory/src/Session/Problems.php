@@ -62,6 +62,16 @@ final class Problems
      */
     public function raise(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
+        (new \MySqlMemory\Hint\TriggerNotices())->during(fn () => $this->check($operation, $session, $prepared), $session);
+    }
+
+    /**
+     * Applies the semantic preparation rules inside the current notice scope.
+     *
+     * @throws SqlError When the operation has a problem
+     */
+    public function check(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
+    {
         if ($operation instanceof Operation) {
             $this->signals($operation, $session);
         }

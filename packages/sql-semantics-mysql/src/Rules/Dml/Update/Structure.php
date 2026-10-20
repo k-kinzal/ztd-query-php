@@ -9,12 +9,17 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableSource;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Scalar;
 
 /**
  * Identifies UPDATE contradictions independent of catalog and session state.
@@ -30,10 +35,10 @@ final class Structure
 {
     /**
      * @param list<TableSource> $tables The input occurrences
-     * @param list<Assignment> $assignments The requested writes
-     * @param list<OrderItem> $orderBy The ordering clause
+     * @param list<Assignment|DeferredColumnAssignment> $assignments The requested writes
+     * @param list<OrderItem|DeferredOrderItem> $orderBy The ordering clause
      */
-    public function problem(?WithClause $with, array $tables, array $assignments, array $orderBy = [], ?Limit $limit = null): ?Diagnostic
+    public function problem(?WithClause $with, array $tables, array $assignments, array $orderBy = [], ?Limit $limit = null, Scalar|RowOperand|DeferredOperand|null $where = null): ?Diagnostic
     {
         $columns = $this->names($tables) ?? (new InputColumns())->inputs($tables, $with);
         if ($columns !== null) {
@@ -43,8 +48,14 @@ final class Structure
         if ($target !== null) {
             return new WriteMisuse(WriteRule::NonUpdatableTarget, $target->name);
         }
-        if (count((new TargetReferences())->occurrences($tables)) > 1) {
-            return $orderBy !== [] ? new WriteMisuse(WriteRule::OrderedMultipleUpdate) : ($limit === null ? null : new WriteMisuse(WriteRule::LimitedMultipleUpdate));
+        if (count((new TargetReferences())->occurrences($tables)) > 1 && ($orderBy !== [] || $limit !== null)) {
+            return new WriteMisuse($orderBy !== [] ? WriteRule::OrderedMultipleUpdate : WriteRule::LimitedMultipleUpdate);
+        }
+        $operands = [$where, ...array_map(static fn ($item) => $item->value, $assignments), ...array_map(static fn ($item) => $item->expression, $orderBy)];
+        foreach ($operands as $operand) {
+            if ($operand instanceof RowOperand || $operand instanceof DeferredOperand) {
+                return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$operand]);
+            }
         }
         return null;
     }
@@ -77,7 +88,7 @@ final class Structure
      * Finds a destination that no catalog can turn into a writable occurrence.
      *
      * @param list<TableSource> $tables The containing update's input namespace
-     * @param list<Assignment> $assignments The retained assignment targets
+     * @param list<Assignment|DeferredColumnAssignment> $assignments The retained assignment targets
      */
     public function target(array $tables, array $assignments, ?WithClause $with = null): ?QualifiedName
     {

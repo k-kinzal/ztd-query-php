@@ -34,6 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write as W;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
@@ -110,12 +111,12 @@ final class Blocks
         if ($statement instanceof Explain) {
             return $this->read($statement->statement);
         }
+        if ($this->write($statement)) {
+            return $this;
+        }
         if ($statement instanceof Query) {
             $this->resolved = $this->query($statement, true);
-        } elseif ($statement instanceof InsertQuery || $statement instanceof InsertRows || $statement instanceof InsertSet) {
-            $this->insert($statement);
-        } elseif ($statement instanceof Update || $statement instanceof Delete || $statement instanceof MultipleDelete) {
-            $this->change($statement);
+
         } elseif ($statement instanceof CreateTable && $statement->query !== null) {
             $this->resolved = $this->query($statement->query->query, false);
         } elseif ($statement instanceof SetVariables || $statement instanceof Evaluation || $statement instanceof ProcedureCall) {
@@ -128,14 +129,30 @@ final class Blocks
     }
 
     /**
+     * Reads ordinary and retained write instructions through their common operands.
+     */
+    public function write(Node $statement): bool
+    {
+        if ($statement instanceof InsertQuery || $statement instanceof InsertRows || $statement instanceof InsertSet || $statement instanceof W\DeferredInsertQuery || $statement instanceof W\DeferredInsertRows || $statement instanceof W\DeferredInsertSet) {
+            $this->insert($statement);
+            return true;
+        }
+        if ($statement instanceof Update || $statement instanceof Delete || $statement instanceof MultipleDelete || $statement instanceof W\DeferredUpdate || $statement instanceof W\DeferredDelete || $statement instanceof W\DeferredMultipleDelete) {
+            $this->change($statement);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Reads INSERT and REPLACE: block 1 holds the table written to, and the first block of the query read, if any.
      */
-    public function insert(InsertQuery|InsertRows|InsertSet $statement): void
+    public function insert(InsertQuery|InsertRows|InsertSet|W\DeferredInsertQuery|W\DeferredInsertRows|W\DeferredInsertSet $statement): void
     {
         $block = $this->open(false);
         $block->hints = $statement->into->hints;
         $block->tables[] = $this->named($statement->into->table->name, null);
-        if ($statement instanceof InsertQuery) {
+        if ($statement instanceof InsertQuery || $statement instanceof W\DeferredInsertQuery) {
             $this->shared = $block;
             $sequence = $this->query($statement->source, false);
             $this->shared = null;
@@ -146,7 +163,7 @@ final class Blocks
 
             return;
         }
-        $parts = $statement instanceof InsertRows ? $statement->rows : $statement->assignments;
+        $parts = $statement instanceof InsertRows || $statement instanceof W\DeferredInsertRows ? $statement->rows : $statement->assignments;
         $this->resolved = [1, ...$this->subqueries(...$parts, ...$statement->onDuplicate)];
         $this->contextualized[] = 1;
     }
@@ -154,14 +171,14 @@ final class Blocks
     /**
      * Reads UPDATE and DELETE: block 1 holds the tables of the statement.
      */
-    public function change(Update|Delete|MultipleDelete $statement): void
+    public function change(Update|Delete|MultipleDelete|W\DeferredUpdate|W\DeferredDelete|W\DeferredMultipleDelete $statement): void
     {
         $this->enter($statement->with);
         $block = $this->open(false);
         $block->hints = $statement->hints;
         $derived = [];
         $on = [];
-        if ($statement instanceof Delete) {
+        if ($statement instanceof Delete || $statement instanceof W\DeferredDelete) {
             $block->tables[] = $this->named($statement->table->name, $statement->table->alias?->value);
         } else {
             foreach ($statement->tables as $table) {
@@ -170,9 +187,9 @@ final class Blocks
                 $on = [...$on, ...$joined];
             }
         }
-        $values = $statement instanceof Update ? $this->subqueries(...$statement->assignments) : [];
+        $values = $statement instanceof Update || $statement instanceof W\DeferredUpdate ? $this->subqueries(...$statement->assignments) : [];
         $where = $this->subqueries($statement->where);
-        $order = $statement instanceof MultipleDelete ? [] : $this->subqueries(...$statement->orderBy);
+        $order = $statement instanceof MultipleDelete || $statement instanceof W\DeferredMultipleDelete ? [] : $this->subqueries(...$statement->orderBy);
         $this->contextualized[] = 1;
         $this->resolved = [1, ...$derived, ...$values, ...$where, ...$on, ...$order];
         $this->leave($statement->with);

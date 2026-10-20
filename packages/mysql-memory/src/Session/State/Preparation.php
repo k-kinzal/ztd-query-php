@@ -26,6 +26,21 @@ final class Preparation
     public bool $inputPrepared = false;
 
     /**
+     * The active table preparation's deferred trigger resource notice.
+     */
+    public ?\MySqlMemory\Hint\TriggerNotices $triggerNotices = null;
+
+    /**
+     * Counts actual trigger resource notices loaded during semantic preparation.
+     */
+    public int $triggerResourceLoads = 0;
+
+    /**
+     * A wire preparation's resource notice retained for its immediate execution.
+     */
+    public bool $replayedTriggerResource = false;
+
+    /**
      * @var array<string, array{string, int, ParameterBindings, \MySqlMemory\Command\Prepared\PreparedCache}> SQL preparations by lower-case name
      */
     public array $named = [];

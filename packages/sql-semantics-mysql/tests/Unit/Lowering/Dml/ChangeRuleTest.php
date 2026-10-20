@@ -39,6 +39,20 @@ final class ChangeRuleTest extends TestCase
         }
     }
 
+
+    #[DataProvider('providerTargetRefusalReleases')]
+    public function testUpdateRetainsNonScalarAssignmentsInsideAStoredBody(string $release, bool $aborts): void
+    {
+        $operation = (new Semantics(Dialect::MySql, $release))->analyze('CREATE PROCEDURE p() IF @active THEN UPDATE t SET a=ROW(1,2),b=DEFAULT WHERE c=3; END IF');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement::class, $operation->statement->body);
+        $write = $operation->statement->body->branches[0]->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate::class, $write);
+        self::assertCount(2, $write->assignments);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment::class, $write->assignments[0]);
+        self::assertStringContainsString('UPDATE t SET a = ROW(1, 2), b = DEFAULT WHERE c = 3', $operation->toString());
+    }
+
     public function testUpdateLowersEveryGeneration(): void
     {
         self::assertSame('UPDATE t SET a = 1 WHERE b ORDER BY c LIMIT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('update t set a = 1 where b order by c limit 1')->toString());

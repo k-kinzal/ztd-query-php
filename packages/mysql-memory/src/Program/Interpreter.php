@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
-use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CloseCursor;
@@ -135,6 +134,7 @@ final class Interpreter
                 $scope = $item->scope;
             }
             if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignment) {
+                $this->activation->sqlStatements++;
                 $jump = $this->instruction(fn () => (new Expression\AssignmentUse())->raise($item, $this->session));
                 $jump = $jump?->flow === Flow::Resume ? null : $jump;
             } else {
@@ -152,6 +152,7 @@ final class Interpreter
      */
     public function write(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRoles|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRevokePrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $statement): ?Jump
     {
+        $this->activation->sqlStatements++;
         $jump = $this->instruction(fn () => (new Expression\WriteUse())->prepare($statement, $this->session));
         return $jump?->flow === Flow::Resume ? null : $jump;
     }
@@ -161,6 +162,7 @@ final class Interpreter
      */
     public function selection(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $statement): ?Jump
     {
+        $this->activation->sqlStatements++;
         $jump = $this->instruction(fn () => ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery ? new Expression\QueryUse() : new Expression\SelectionUse())->raise($statement, $this->session));
         return $jump?->flow === Flow::Resume ? null : $jump;
     }
@@ -170,6 +172,7 @@ final class Interpreter
      */
     public function administrative(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge $statement): ?Jump
     {
+        $this->activation->sqlStatements++;
         $jump = $this->instruction(fn () => $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill ? (new Expression\KillUse())->raise($statement->process, $this->session) : (new Expression\PurgeUse())->raise($statement->moment, $this->session));
         return $jump?->flow === Flow::Resume ? null : $jump;
     }
@@ -179,6 +182,7 @@ final class Interpreter
      */
     public function deferredCondition(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel $statement): ?Jump
     {
+        $this->activation->sqlStatements++;
         $jump = $this->instruction(fn () => $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation
             ? (new Expression\EvaluationUse())->raise($statement, $this->session)
             : throw (new \MySqlMemory\Session\Problem\Errors())->error($statement->problem(), $this->session));
@@ -191,29 +195,7 @@ final class Interpreter
      */
     public function signalled(Signal|Resignal $statement): ?Jump
     {
-        return $this->sql($statement->condition instanceof ConditionName ? $this->named($statement) : $statement);
-    }
-
-    /**
-     * Answers a SIGNAL or RESIGNAL of a declared condition as one of the SQLSTATE the condition stands for.
-     *
-     * @throws SqlError When no condition of the name is in scope, or it stands for an error number (ER_SIGNAL_BAD_CONDITION_TYPE)
-     */
-    public function named(Signal|Resignal $statement): Signal|Resignal
-    {
-        $name = $statement->condition instanceof ConditionName ? $statement->condition->name->value : '';
-        $declared = null;
-        foreach ($this->activation->conditions as $condition) {
-            $declared = strcasecmp($condition->name->value, $name) === 0 ? $condition : $declared;
-        }
-        if ($declared === null) {
-            throw ProgramError::UndefinedCondition->error($name);
-        }
-        if (!$declared->value instanceof SqlState) {
-            throw ProgramError::SignalConditionKind->error();
-        }
-
-        return $statement instanceof Signal ? new Signal($declared->value, $statement->items) : new Resignal($declared->value, $statement->items);
+        return $this->sql($statement->condition instanceof ConditionName ? $this->handlers->named($statement) : $statement);
     }
 
     /**
@@ -233,6 +215,7 @@ final class Interpreter
      */
     public function explanation(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain $statement): ?Jump
     {
+        $this->activation->sqlStatements++;
         $jump = $this->instruction(fn () => (new Expression\ExplainUse())->raise($statement, $this->session));
         return $jump?->flow === Flow::Resume ? null : $jump;
     }

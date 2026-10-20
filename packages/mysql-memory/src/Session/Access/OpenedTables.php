@@ -34,6 +34,7 @@ final class OpenedTables
      */
     public function prepare(array $nodes, Facts $facts, Session $session): void
     {
+        $writing = array_filter($nodes, static fn (Node $node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update || $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete) !== [];
         foreach ($nodes as $node) {
             if (!($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) || !$facts->covers($node)) {
                 continue;
@@ -41,7 +42,7 @@ final class OpenedTables
             $resolution = $facts->relation($node)->table;
             if ($resolution instanceof DeclaredTable) {
                 $name = $resolution->table->name;
-                $this->open($name->schema->value ?? $session->variables->database, $name->name->value, $session);
+                $this->open($name->schema->value ?? $session->variables->database, $name->name->value, $session, $node instanceof WriteTarget || $writing);
             }
         }
     }
@@ -49,11 +50,12 @@ final class OpenedTables
     /**
      * Opens a stored base table, leaving views and temporary tables out of the cache.
      */
-    public function open(string $schema, string $name, Session $session): void
+    public function open(string $schema, string $name, Session $session, bool $write = false): void
     {
         $dictionary = $session->instance->dictionary;
         $table = $dictionary->table($schema, $name);
         if ($table !== null && !$table->definition->temporary) {
+            ($session->preparation->triggerNotices ?? new \MySqlMemory\Hint\TriggerNotices())->load($schema, $name, $session, $write);
             $dictionary->cache->open($schema, $name);
             if (!$session->settings()->legacy() && !in_array($schema, ['mysql', 'information_schema', 'performance_schema', 'sys'], true)) {
                 $dictionary->cache->open('mysql', 'column_statistics');

@@ -309,7 +309,9 @@ final class Relations
         $kind = $join->operator->keepsRight() ? JoinKind::Right : ($join->operator->keepsLeft() ? JoinKind::Left : JoinKind::Inner);
         $condition = null;
         if ($join->on !== null) {
-            $condition = $this->planner->compiler->compile($join->on, $scope);
+            $predicate = clone $scope;
+            $predicate->clause = 'on clause';
+            $condition = $this->planner->compiler->compile($join->on, $predicate);
         } elseif ($join->using !== [] || $join->operator->natural()) {
             $leftIds = array_values(array_diff($middle, $before));
             $rightIds = array_values(array_diff($after, $middle));

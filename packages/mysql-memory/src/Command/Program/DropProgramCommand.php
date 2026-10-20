@@ -84,6 +84,14 @@ final class DropProgramCommand implements Command
         }
         $database = ProgramSource::database($statement->name->schema, $session);
         $schema = $session->instance->dictionary->schema($database);
+        if ($statement->kind === ProgramKind::Trigger) {
+            foreach ($schema->triggers ?? [] as $trigger) {
+                if (strcasecmp($trigger->name, $name) === 0) {
+                    (new \MySqlMemory\Hint\TriggerNotices())->load($database, $trigger->table, $session, true);
+                    break;
+                }
+            }
+        }
 
         return match ($statement->kind) {
             ProgramKind::Procedure, ProgramKind::Function => $this->routine($statement, $session, $schema, $database),

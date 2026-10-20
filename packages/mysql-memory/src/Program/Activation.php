@@ -26,6 +26,11 @@ use SqlSemantics\Statement\Relation;
 final class Activation
 {
     /**
+     * SQL instructions reached by this invocation, excluding flow expressions.
+     */
+    public int $sqlStatements = 0;
+
+    /**
      * @var list<Row> The parameters, variables and trigger rows in scope, the innermost last
      */
     public array $scope = [];

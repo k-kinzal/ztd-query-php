@@ -350,6 +350,14 @@ final class RelationsTest extends TestCase
         self::assertSame([false, true, false], array_map(static fn ($member): bool => $relations->lateral($member), $from->members));
     }
 
+    public function testJoinPreservesTheClauseOfARetainedUpdateCondition(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TABLE u(b INT)');
+        $this->expectExceptionMessage("Unknown column 'missing' in 'on clause'");
+        $session->query('UPDATE t JOIN u ON missing SET t.a=ROW(1,2)');
+    }
+
     public function testJoinKeepsTheUnmatchedLeftRowsOfALeftJoin(): void
     {
         $session = (new Instance())->connect();

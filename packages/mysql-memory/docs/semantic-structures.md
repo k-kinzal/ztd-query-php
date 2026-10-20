@@ -3614,3 +3614,28 @@ exclude `INTO`, and partition predicates require an explicit grouping node.
 Cross-release invariants also account for persistent variable scopes, modern cast
 targets, backup locks, invisible columns, and default roles. Entering a stored
 routine preserves its decoded optimizer hints during lowering.
+
+Stored optimizer hints retain the query-block namespace of each instruction.
+Declaration and first-load conditions are read from those typed values; warm
+calls do not repeat registration warnings. Resource-group placement produces one
+condition after the definition's other hint conditions. A later reached SQL
+instruction consumes that load condition, while a flow predicate does not.
+
+Trigger loads belong to connection-owned table handles. Flushing a table or
+changing its trigger list causes another load. MySQL 9.1 postpones this load until
+a write; older supported releases also load on reads. Trigger resource notices
+follow preparation errors. An immediately executed binary preparation retains
+its resource notice once; an intervening client statement consumes it. These
+lifetimes are execution state, independent of the semantic definition's source.
+Native histories compare complete results and diagnostics through creation,
+failed lookups, cold and warm calls, multiple connections and prepared execution.
+
+Stored UPDATE instructions preserve non-scalar assignments, predicates and ordering
+operands in their original roles. Ordinary UPDATE assignments still accept only
+scalars or DEFAULT, and ordinary predicates and ordering remain scalar. A skipped
+instruction therefore stays dormant without making an invalid ordinary statement
+constructible. Direct-construction histories retain the same procedure and call
+values across branch changes, table creation, populated rows and table removal.
+The consumer prepares the retained expressions using the normal planner and
+compiler, including release-specific clause ordering and legacy multiple-table
+cleanup conditions. No source SQL or AST is needed for this preparation.

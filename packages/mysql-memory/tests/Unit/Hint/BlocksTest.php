@@ -8,6 +8,7 @@ use MySqlMemory\Hint\Blocks;
 use MySqlMemory\Hint\QueryBlock;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
@@ -23,6 +24,29 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class BlocksTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerWrites(): iterable
+    {
+        yield 'update' => ['UPDATE /*+ QB_NAME(q) */ missing SET a=1'];
+        yield 'insert' => ['INSERT /*+ QB_NAME(q) */ INTO missing VALUES(1)'];
+        yield 'delete' => ['DELETE /*+ QB_NAME(q) */ FROM missing'];
+    }
+
+    #[DataProvider('providerWrites')]
+    public function testWriteReadsRetainedInstructionsWithoutResolvingTheirTables(string $sql): void
+    {
+        $session = (new Instance())->connect();
+        $definition = $session->semantics()->analyze('CREATE PROCEDURE p() ' . $sql)->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $definition);
+        $blocks = new Blocks($session->instance->dictionary, '');
+        self::assertTrue($blocks->write($definition->body));
+        self::assertSame([1], $blocks->resolved);
+        self::assertSame('QB_NAME(`q`)', $blocks->blocks[1]->hints[0]->text());
+        self::assertFalse($blocks->write(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+    }
+
     public function testReadNumbersBlocksAsWrittenAndOrdersHowTheyAreRead(): void
     {
         $session = (new Instance())->connect();

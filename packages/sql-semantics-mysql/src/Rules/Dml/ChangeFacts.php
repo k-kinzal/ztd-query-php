@@ -70,7 +70,8 @@ final class ChangeFacts
         if ($single) {
             $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($visible[0]->relation)));
         }
-        $fields = (new WriteScope())->assign($update->assignments, $derivation, $environment, $environment, false);
+        $this->clauses($update->where, [], null, $derivation, $base, $environment);
+        $fields = (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\AssignmentFacts())->derive($update->assignments, $derivation, $environment);
         (new GeneratedWrites())->assignments($update->assignments, $fields, $derivation);
         foreach ($single ? [] : $fields as $field) {
             if ($field->resolution instanceof ResolvedColumn && !$this->updatable($field->resolution->relation, $derivation)) {
@@ -78,7 +79,7 @@ final class ChangeFacts
                 $derivation->report($merged ?? new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($field->resolution->relation)));
             }
         }
-        $this->clauses($update->where, $update->orderBy, $update->limit, $derivation, $base, $environment);
+        $this->clauses(null, $update->orderBy, $update->limit, $derivation, $base, $environment);
         if (count($visible) > 1 && $update->orderBy !== []) {
             $derivation->report(new WriteMisuse(WriteRule::OrderedMultipleUpdate));
         }
@@ -273,15 +274,16 @@ final class ChangeFacts
     /**
      * Derives WHERE and ORDER BY where the tables are visible, and LIMIT where they are not.
      *
-     * @param list<OrderItem> $orderBy
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy
      */
-    public function clauses(?Scalar $where, array $orderBy, ?Limit $limit, Derivation $derivation, Environment $base, Environment $environment): void
+    public function clauses(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $where, array $orderBy, ?Limit $limit, Derivation $derivation, Environment $base, Environment $environment): void
     {
         if ($where !== null) {
-            $derivation->scalar($where, $environment);
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\ClauseFacts())->derive($where, $derivation, $environment);
         }
         foreach ($orderBy as $item) {
-            $derivation->scalar($item->expression, $environment);
+            \SqlSemantics\Diagnostic\Check::invariant(!$item->expression instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal, 'DML ordering retains expressions rather than result positions.');
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\ClauseFacts())->derive($item->expression, $derivation, $environment);
         }
         (new TailFacts())->limit($limit, $derivation, $base);
     }

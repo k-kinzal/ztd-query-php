@@ -87,19 +87,6 @@ final class InterpreterTest extends TestCase
         self::assertSame([['134', '4']], $result2->rows);
     }
 
-    public function testNamedRaisesTheSqlstateOfADeclaredCondition(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45001'; SIGNAL c SET MESSAGE_TEXT = 'boom'; END");
-
-        $this->expectExceptionCode(1644);
-        $this->expectExceptionMessage('boom');
-
-        $session->query('CALL p()');
-    }
-
     public function testCursorHandsTheErrorOfACursorToTheHandlers(): void
     {
         $session = (new Instance())->connect();

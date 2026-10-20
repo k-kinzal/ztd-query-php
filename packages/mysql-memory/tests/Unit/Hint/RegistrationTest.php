@@ -60,15 +60,16 @@ final class RegistrationTest extends TestCase
         $registration->hint($inner, new ResourceGroupHint('g'));
         $registration->hint($top, new ResourceGroupHint('h'));
 
-        self::assertSame([3125, 3126, 3515], array_column($registration->warnings, 0));
+        self::assertSame([3125, 3126], array_column($registration->warnings, 0));
         self::assertSame(['5', 'h'], [$registration->time?->milliseconds, $registration->group?->group]);
     }
 
-    public function testHintRefusesTimeAndGroupInAStoredProcedure(): void
+    public function testRegisterRefusesTimeAndGroupInAStoredProcedure(): void
     {
         $registration = new Registration(new Blocks((new Instance())->dictionary, ''), SystemVariables::of(GrammarRelease::MySql847), new Printer(), true);
         $registration->hint(new QueryBlock(1, true), new ExecutionTimeHint('5'));
         $registration->hint(new QueryBlock(1, true), new ResourceGroupHint('g'));
+        $registration->register();
 
         self::assertSame([3125, 3515], array_column($registration->warnings, 0));
     }

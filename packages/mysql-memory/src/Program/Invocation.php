@@ -126,9 +126,10 @@ final class Invocation
      *
      * @param Closure(): T $run
      * @param bool $preserveRowCount Whether the caller's row count survives the invocation
+     * @param Activation|null $activation The reached SQL instructions for load-notice lifetime
      * @return T
      */
-    public function contained(Closure $run, bool $preserveRowCount = true): mixed
+    public function contained(Closure $run, bool $preserveRowCount = true, ?Activation $activation = null): mixed
     {
         $session = $this->session;
         $diagnostics = $session->diagnostics;
@@ -139,6 +140,7 @@ final class Invocation
             return $run();
         } finally {
             $own = [$diagnostics->conditions, $diagnostics->signalled];
+            [$conditions, $signalled] = (new \MySqlMemory\Session\Access\StoredHints())->retained($conditions, $signalled, $activation->sqlStatements ?? 0);
             [$diagnostics->conditions, $diagnostics->signalled] = $stale && $diagnostics->revision !== $revision ? [[], []] : [$conditions, $signalled];
             if ($preserveRowCount) {
                 $session->variables->rowCount = $count;
