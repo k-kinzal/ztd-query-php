@@ -25,6 +25,9 @@ final class Conditions
     /** @var array<int, list<Diagnostic>> */
     private array $withheld = [];
 
+    /** Start of the current definition's condition scope. */
+    private int $boundary = 0;
+
     /**
      * Records a semantic condition in derivation order.
      */
@@ -56,19 +59,29 @@ final class Conditions
     public function deferred(Node $definition, Closure $derive): mixed
     {
         $before = count($this->diagnostics);
-        $result = $derive();
-        $this->withheld[spl_object_id($definition)] = array_splice($this->diagnostics, $before);
+        $outerBoundary = $this->boundary;
+        $this->boundary = $before;
+        try {
+            $result = $derive();
+            $this->withheld[spl_object_id($definition)] = array_splice($this->diagnostics, $before);
+        } finally {
+            $this->boundary = $outerBoundary;
+        }
         return $result;
     }
 
     /**
-     * Reports a referenced definition's conditions exactly once.
+     * Reports a referenced definition's conditions once in the current scope.
+     * A later unused definition must not consume conditions needed by the body.
+     * Shared dependency conditions keep their identity and are not duplicated.
      */
     public function release(Node $definition): void
     {
-        $id = spl_object_id($definition);
-        array_push($this->diagnostics, ...($this->withheld[$id] ?? []));
-        unset($this->withheld[$id]);
+        foreach ($this->withheld[spl_object_id($definition)] ?? [] as $condition) {
+            if (!in_array($condition, array_slice($this->diagnostics, $this->boundary), true)) {
+                $this->diagnostics[] = $condition;
+            }
+        }
     }
 
     /**

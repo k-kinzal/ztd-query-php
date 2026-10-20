@@ -73,4 +73,37 @@ final class ConditionsTest extends TestCase
         $conditions->release($definition);
         self::assertSame([$problem], $conditions->all());
     }
+    public function testReleasePreservesDependenciesReferencedByAnUnusedDefinition(): void
+    {
+        $conditions = new Conditions();
+        $first = new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1');
+        $unused = new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('2');
+        $problem = new MissingTable(new QualifiedName(new Name('t')));
+        $conditions->deferred($first, static fn () => $conditions->report($problem));
+        $conditions->deferred($unused, static fn () => $conditions->release($first));
+        self::assertSame([], $conditions->all());
+        $conditions->release($first);
+        self::assertSame([$problem], $conditions->all());
+        $conditions->release($unused);
+        self::assertSame([$problem], $conditions->all());
+    }
+
+    public function testDeferredCapturesDependenciesAlreadyReachedInItsEnclosingScope(): void
+    {
+        $conditions = new Conditions();
+        $first = new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1');
+        $second = new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('2');
+        $outer = new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('3');
+        $problem = new MissingTable(new QualifiedName(new Name('t')));
+        $conditions->deferred($first, static fn () => $conditions->report($problem));
+        $conditions->deferred($outer, static function () use ($conditions, $first, $second): void {
+            $conditions->release($first);
+            $conditions->deferred($second, static fn () => $conditions->release($first));
+        });
+        self::assertSame([], $conditions->all());
+        $conditions->release($second);
+        self::assertSame([$problem], $conditions->all());
+        $conditions->release($outer);
+        self::assertSame([$problem], $conditions->all());
+    }
 }
