@@ -134,6 +134,38 @@ final class ListingTest extends TestCase
         self::assertNull($listing->rows(array_replace($shifted, [2 => array_replace($guard, [4 => 'Query', 5 => -1])]), $sample));
     }
 
+    /**
+     * @return iterable<string, array{Sample, int, array<int, array{int, string, string, ?string, string, int, ?string, ?string}>, Sample}>
+     * @throws JsonException
+     * @throws RuntimeException
+     */
+    public static function providerSampledBoundaries(): iterable
+    {
+        /** @var list<array{instance: int, index: int, guard: int, before: array{current: int, age: int, scheduler: string, rows: array<int, array{int, string, string, ?string, string, int, ?string, ?string}>}, rows: list<array{int, string, string, ?string, string, int, ?string, ?string}>, after: array{current: int, age: int, scheduler: string, rows: array<int, array{int, string, string, ?string, string, int, ?string, ?string}>}}> $observations */
+        $observations = json_decode((string) file_get_contents(__DIR__ . '/../fixtures/process-clock-boundaries-57.json'), true, 512, JSON_THROW_ON_ERROR);
+        foreach ($observations as $observation) {
+            $first = $observation['before'];
+            $last = $observation['after'];
+            yield $observation['instance'] . ':' . $observation['index'] => [new Sample($first['current'], $first['age'], $first['scheduler'], $first['rows']), $observation['guard'], Sample::indexed($observation['rows']) ?? throw new RuntimeException('Malformed saved process rows.'), new Sample($last['current'], $last['age'], $last['scheduler'], $last['rows'])];
+        }
+    }
+
+    /**
+     * @param array<int, array{int, string, string, ?string, string, int, ?string, ?string}> $rows
+     */
+    #[DataProvider('providerSampledBoundaries')]
+    public function testSampledBoundaryPreservesTheObservedTwoClientCohort(Sample $before, int $guard, array $rows, Sample $after): void
+    {
+        $listing = new Listing($before, $guard);
+        self::assertTrue($listing->sampledBoundary($rows, $after));
+        self::assertNotNull($listing->rows($rows, $after));
+        self::assertNull($listing->rows(array_replace($rows, [$guard => array_replace($rows[$guard], [5 => -2])]), $after));
+        self::assertNull($listing->rows(array_replace($rows, [$before->current => array_replace($rows[$before->current], [5 => $before->age - 2])]), $after));
+        self::assertNull($listing->rows(array_replace($rows, [$guard => array_replace($rows[$guard], [2 => 'unobserved:1234'])]), $after));
+        self::assertFalse($listing->sampledBoundary(array_replace($rows, [$guard => array_replace($rows[$guard], [4 => 'Query'])]), $after));
+        self::assertFalse($listing->sampledBoundary($rows, new Sample($after->current, $after->age + 2, $after->scheduler, $after->rows)));
+    }
+
     public function testRowsKeepsEveryStaticFieldAndChecksTheDaemon(): void
     {
         $rows = [2 => [2, 'memory_guard', 'localhost:2345', null, 'Sleep', 0, '', null], 5 => [5, 'event_scheduler', 'localhost', null, 'Daemon', 10, 'Waiting on empty queue', null], 7 => [7, 'root', 'localhost:1234', 'fz', 'Query', 100, 'init', 'SHOW PROCESSLIST']];

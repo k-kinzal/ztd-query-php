@@ -22,7 +22,9 @@ use RuntimeException;
  * identical clock samples, including the current query, sleeping repair client
  * and daemon. That coherent shift is accepted only when every row demonstrates
  * it; individual or larger clock deviations remain failures. Only these validated
- * fields become interchangeable.
+ * fields become interchangeable. A second observed cohort on independent 5.7 servers
+ * retains the exact negative idle snapshots and one-second current-query boundary;
+ * it applies only to a complete two-client listing without a daemon.
  * All columns, rows, users, host names, databases, commands, states, query text and warnings
  * remain in the comparison. Missing, additional, duplicated or malformed rows stay raw.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html.
@@ -142,7 +144,7 @@ final class Listing
         if ($before->current !== $after->current || $before->current === $this->guard || $before->scheduler !== $after->scheduler || count($rows) !== $expected || array_keys($rows) !== array_keys($before->rows) || array_keys($rows) !== array_keys($after->rows) || (!isset($rows[$before->current]) || ($this->guard !== null && !isset($rows[$this->guard])))) {
             return null;
         }
-        $coherent = $this->coherent($rows, $after);
+        $coherent = $this->coherent($rows, $after) || $this->sampledBoundary($rows, $after);
         $result = [];
         foreach ($rows as $id => $row) {
             $role = $id === $before->current ? 'current' : ($id === $this->guard ? 'guard' : 'daemon');
@@ -186,6 +188,33 @@ final class Listing
             }
         }
         return true;
+    }
+
+    /**
+     * Checks the sampled second boundary observed on two independent MySQL 5.7 servers.
+     * The idle client may already read -1 in the independent snapshots. Only that
+     * exact idle cohort and its one-second current-query lag are interchangeable.
+     *
+     * @param array<int, ProcessRow> $rows The complete unmodified observation
+     */
+    public function sampledBoundary(array $rows, Sample $after): bool
+    {
+        if ($this->guard === null || count($rows) !== 2) {
+            return false;
+        }
+        $guard = $rows[$this->guard] ?? null;
+        $first = $this->before->rows[$this->guard] ?? null;
+        $last = $after->rows[$this->guard] ?? null;
+        $current = $rows[$this->before->current] ?? null;
+        if ($guard === null || $first === null || $last === null || $current === null
+            || $guard[4] !== 'Sleep' || $first[4] !== 'Sleep' || $last[4] !== 'Sleep' || $guard[5] !== -1) {
+            return false;
+        }
+        $clocks = [$first[5], $last[5]];
+        $same = $this->before->age === $after->age;
+        $next = $after->age === $this->before->age + 1;
+        return ($same && in_array($clocks, [[-1, -1], [-1, 0]], true) && $current[5] === $this->before->age - 1)
+            || ($next && $clocks === [0, -1] && $current[5] === $this->before->age);
     }
 
     /**
