@@ -64,13 +64,13 @@ final class RoleRule
     /**
      * Separates ordinary definitions from retained invocation-time conditions.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When an account is anonymous
+     * @throws \SqlSemantics\Construction\RejectedInput When the account definition is contradictory
      */
     public function create(Form $form): CreateRole
     {
         $roles = $this->roles($form->node(3));
         $conditional = $this->lowering->options->present($form->node(2));
-        if (!$conditional && array_filter($roles, static fn (AccountName $role): bool => $role->username() === '') !== []) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Account\RoleDefinitions())->problem($conditional, $roles) !== null) {
             $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole($conditional, $roles);
             throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
         }

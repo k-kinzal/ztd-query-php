@@ -26,6 +26,7 @@ final class StructureSessionTransitionTest extends TestCase
         $name = new Name("state ' あ");
         $xid = new M\Server\Transaction\Xa\Xid(new M\Literal\Text("state ' あ"), new M\Literal\Text('branch'), new M\Literal\Numeral('7'));
         $structures = [
+            [new M\Account\DropUser(false, [new M\Name\AccountName(new Name('missing')), new M\Name\CurrentUser()]), 1396],
             [new M\Dml\Handler\HandlerClose($name), 1109],
             [new M\Dml\Handler\HandlerScan(new M\Dml\Handler\OpenHandler($name), M\Dml\Handler\ScanDirection::First), 1109],
             [new M\Dml\Handler\HandlerIndexRead(new M\Dml\Handler\OpenHandler($name), new Name('PRIMARY'), M\Dml\Handler\IndexDirection::Last), 1109],
@@ -46,6 +47,7 @@ final class StructureSessionTransitionTest extends TestCase
         $user = new M\Name\AccountName(new Name('role_recipient'));
         foreach ([GrammarRelease::MySql8044, GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
             foreach ([
+                [new M\Account\DropUser(false, [$role, $user, new M\Name\CurrentUser()]), 1396],
                 [new M\Account\DropRole(false, [$role]), 1396],
                 [new M\Account\Privilege\GrantRoles([new M\Account\Privilege\Item\GrantedRole($role)], [$user, new M\Name\CurrentUser(), new M\Name\CurrentUser()]), 3523],
                 [new M\Account\AlterDefaultRole(false, $user, new M\Account\User\RoleSelection(M\Account\User\RoleSet::Named, [$role])), 3530],
@@ -59,7 +61,7 @@ final class StructureSessionTransitionTest extends TestCase
                 yield $release->value . ':resource:' . $index => [$release, $node, 3651];
             }
         }
-        foreach ([GrammarRelease::MySql5744, GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
+        foreach ([GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
             foreach ($structures as $index => [$node, $code]) {
                 yield $release->value . ':' . $index => [$release, $node, $code];
             }

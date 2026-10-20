@@ -150,6 +150,9 @@ final class Comparison
         $code = is_array($error) ? $error[0] ?? null : null;
         $steps = is_int($code) ? (new SessionHistory())->steps($node, $code) : [];
         if ($steps === [] && is_int($code)) {
+            $steps = (new AccountHistory())->steps($node, $code, $session);
+        }
+        if ($steps === [] && is_int($code)) {
             $steps = (new CatalogHistory())->steps($node, $code);
         }
         if ($steps === []) {

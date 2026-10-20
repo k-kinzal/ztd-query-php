@@ -3545,7 +3545,15 @@ settings that survive an earlier failure.
 
 ### Anonymous accounts in role definitions
 
-Unconditional `CreateRole` excludes anonymous usernames. An unreached procedure
+Unconditional `CreateRole` excludes anonymous usernames and repeated account
+identities. Usernames are trimmed and compared exactly; hosts are trimmed and
+case folded, and an absent host denotes `%`. `CREATE ROLE r, r` cannot succeed
+by changing account state. Conditional definitions retain repetitions because
+`CREATE ROLE IF NOT EXISTS r, r` creates the account and reports a note for the
+second occurrence. Native histories check rollback and the complete diagnostic
+list with the account absent and present.
+
+An unreached procedure
 instruction may retain the complete account list as `DeferredCreateRole`, which
 is a program instruction and does not implement the ordinary statement role.
 Its consumer applies account ordering, diagnostics and the implicit commit
@@ -3579,3 +3587,15 @@ structure test repeats the same alteration across missing accounts, a different
 plugin, a matching plugin, an empty primary password and account deletion. Every
 setup statement and repeated observation is compared with MySQL. These outcomes
 are account-state dependencies; SQL Semantics does not supply an execution flag.
+
+### Account deletion histories
+
+The account fixture creates only currently missing identities, using the
+original account operands and an unconditional CREATE USER that also works on
+MySQL 5.6. Setup outcomes are compared before repeating the unchanged DROP USER.
+This exposes partial changes hidden by an initially matching error: MySQL 5.6
+and 5.7 retain successful deletions from a batch that also names missing users,
+whereas modern releases leave that batch unchanged. The fixture therefore also
+recreates an account deleted by the initial failed request, including the
+connected account when CURRENT_USER is one of the operands. Neither the setup
+nor a matching initial error certifies the original structure by itself.

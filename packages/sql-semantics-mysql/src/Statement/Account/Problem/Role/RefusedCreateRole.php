@@ -32,6 +32,8 @@ final class RefusedCreateRole implements Diagnostic
      */
     public function message(): string
     {
-        return 'CREATE ROLE cannot define an anonymous account.';
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Account\RoleDefinitions())->problem($this->request->ifNotExists, $this->request->roles);
+        \SqlSemantics\Diagnostic\Check::invariant($problem !== null, 'A deferred role definition has an intrinsic account contradiction.');
+        return $problem;
     }
 }

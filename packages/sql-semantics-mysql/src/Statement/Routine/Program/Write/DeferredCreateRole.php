@@ -13,7 +13,7 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * An unconditional stored CREATE ROLE naming an anonymous account.
+ * An unconditional stored CREATE ROLE with contradictory account identities.
  *
  * A procedure can retain this instruction in an unreached branch. Invocation
  * checks every account in order; ordinary CREATE ROLE values exclude this domain.
@@ -34,17 +34,17 @@ final class DeferredCreateRole implements ProgramStatement
 
     /**
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
-     * @param list<AccountName> $roles The complete list, including an anonymous account
+     * @param list<AccountName> $roles The complete list, including anonymous or repeated accounts
      */
     public function __construct(public readonly bool $ifNotExists, array $roles)
     {
         $this->roles = Check::listOf($roles, AccountName::class, 'CREATE ROLE names at least one account.', 1);
-        Check::input(!$this->ifNotExists && array_filter($this->roles, static fn (AccountName $role): bool => $role->username() === '') !== [], 'A deferred role definition unconditionally creates an anonymous account.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Account\RoleDefinitions())->problem($this->ifNotExists, $this->roles) !== null, 'A deferred role definition has an intrinsic account contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Leaves account resolution and the anonymous-account condition at invocation.
+     * Leaves ordered account resolution and the resulting condition at invocation.
      */
     public function deriveProgram(Derivation $derivation, ProgramScope $scope): void
     {

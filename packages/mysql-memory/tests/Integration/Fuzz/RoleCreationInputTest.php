@@ -35,7 +35,14 @@ final class RoleCreationInputTest extends TestCase
             'CREATE ROLE r', 'CALL p()', 'DROP ROLE r', 'CALL p()',
             "CREATE USER ''", "CREATE ROLE ''", "CREATE ROLE IF NOT EXISTS ''",
             "CREATE ROLE IF NOT EXISTS r, ''", "DROP ROLE ''", "CREATE ROLE IF NOT EXISTS r, ''",
-            'SET @active=0', 'CALL p()', 'DROP DATABASE d'];
+            'SET @active=0', 'CALL p()', 'DROP ROLE IF EXISTS r',
+            'CREATE ROLE r, r', "CREATE ROLE r, r@'%'", 'CREATE ROLE r@Example, r@example',
+            "CREATE ROLE r, 'r '", 'CREATE ROLE IF NOT EXISTS r, r', 'SHOW GRANTS FOR r',
+            'DROP ROLE r', 'CREATE ROLE r, R', 'DROP ROLE r, R',
+            'CREATE PROCEDURE duplicates() IF @active THEN CREATE ROLE r, r; END IF',
+            'CALL duplicates()', 'SET @active=1', 'CALL duplicates()', 'SHOW GRANTS FOR r',
+            'CREATE ROLE r', 'CALL duplicates()', 'DROP ROLE r', 'CALL duplicates()',
+            "PREPARE duplicated FROM 'CREATE ROLE r, r'", 'EXECUTE duplicated', 'DROP DATABASE d'];
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

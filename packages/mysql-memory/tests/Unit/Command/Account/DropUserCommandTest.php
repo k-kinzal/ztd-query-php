@@ -10,6 +10,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -43,6 +44,27 @@ final class DropUserCommandTest extends TestCase
         $this->expectExceptionMessage("Operation DROP ROLE failed for 'r'@'%'");
 
         $session->query('DROP ROLE r, r');
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield '5.6' => ['5.6.51'];
+        yield '5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testExecuteKeepsSuccessfulDeletionsFromARefusedLegacyBatch(string $release): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->query('CREATE USER a, b');
+        $error = $session->run('DROP USER a, missing, b')[0];
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1396, $error->getCode());
+        self::assertNull($session->instance->accounts->find(Identity::of('a', null)));
+        self::assertNull($session->instance->accounts->find(Identity::of('b', null)));
     }
 
     public function testExecuteNotesMissingAccountsIfExists(): void

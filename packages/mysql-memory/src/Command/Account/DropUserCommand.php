@@ -21,8 +21,9 @@ use SqlSemantics\Statement\Operation;
  * Executes DROP USER and DROP ROLE.
  *
  * The statement commits the open transaction. An account that does not exist fails the
- * statement (ER_CANNOT_USER, naming every such account) and nothing is dropped, or with IF
- * EXISTS draws a note. Dropping an account revokes it from the accounts it was granted to as a
+ * statement (ER_CANNOT_USER, naming every such account). MySQL 5.6 and 5.7 keep successful
+ * deletions in a refused batch; later releases leave the batch unchanged. IF EXISTS
+ * draws a note. Dropping an account revokes it from the accounts it was granted to as a
  * role and from their default roles; the account of the session may be dropped (verified on a
  * live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-user.html,
@@ -75,7 +76,11 @@ final class DropUserCommand implements Command
             $dropped[$key] = $identity;
         }
         if ($missing !== [] && !$statement->ifExists) {
-            if (!$session->settings()->legacy()) {
+            if ($session->settings()->legacy()) {
+                foreach ($dropped as $identity) {
+                    $accounts->drop($identity);
+                }
+            } else {
                 $accounts->reload();
             }
             $operation = $statement instanceof DropUser ? 'DROP USER' : 'DROP ROLE';
