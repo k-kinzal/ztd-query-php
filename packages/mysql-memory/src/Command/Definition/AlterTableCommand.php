@@ -155,8 +155,9 @@ final class AlterTableCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the statement has such a problem
      */
-    public function resolve(Operation $operation, Session $session): void
+    public function resolve(Operation|\MySqlMemory\Session\Resolution\IndexPreparation $operation, Session $session): void
     {
+        (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->rows($operation->statement);
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if (!(new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->deferred($diagnostic, $operation->statement) && !$diagnostic instanceof MissingTable && !$diagnostic instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
@@ -171,7 +172,7 @@ final class AlterTableCommand implements Command
             (new Constraint\SpatialColumns())->check($column, $session->instance->registry->spatialCatalog);
         }
         $statement = $operation->statement;
-        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex);
+        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable);
         [, $commands] = $this->request($statement);
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added($this->indexes($commands), $operation->facts, $session);
     }
@@ -313,12 +314,12 @@ final class AlterTableCommand implements Command
      *
      * @return array{QualifiedName, list<AlterCommand>}
      */
-    public function request(AlterTable|CreateIndex|DropIndex $statement): array
+    public function request(AlterTable|CreateIndex|DropIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $statement): array
     {
-        if ($statement instanceof AlterTable) {
+        if ($statement instanceof AlterTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable) {
             return [$statement->table, $statement->commands];
         }
-        if ($statement instanceof CreateIndex) {
+        if ($statement instanceof CreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex) {
             $index = new IndexDefinition($statement->kind, $statement->parts, new ColumnName($statement->name), $statement->algorithm, $statement->options);
             $commands = [new AddConstraint($index)];
             foreach ($statement->alterOptions as $option) {

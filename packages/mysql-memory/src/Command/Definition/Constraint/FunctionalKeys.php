@@ -126,6 +126,13 @@ final class FunctionalKeys
         if ($index->kind === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalPrimary->error();
         }
+        $expression = $part->expression;
+        while ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow) {
+            $expression = $expression->operand;
+        }
+        if ($part instanceof DeferredExpressionPart && $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Row) {
+            throw \MySqlMemory\Error\Family\ConstraintError::FunctionalRow->error($index->name?->column->value ?? $index->constraint?->name?->column->value ?? 'functional_index');
+        }
         if ($part instanceof ArrayPart && $part->target->charset !== null) {
             throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('specifying charset for multi-valued index');
         }
@@ -134,10 +141,6 @@ final class FunctionalKeys
         }
         if (count(array_filter($index->parts, static fn ($candidate): bool => $candidate instanceof ArrayPart)) > 1) {
             throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('more than one multi-valued key part per index');
-        }
-        $expression = $part->expression;
-        while ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
-            $expression = $expression->operand;
         }
         if ($part instanceof ExpressionPart && $expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
             throw \MySqlMemory\Error\Family\ConstraintError::FunctionalColumn->error();

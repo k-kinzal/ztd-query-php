@@ -58,6 +58,11 @@ final class AlterUse
         (new AlterTableCommand())->validation($definition->commands);
         $name = $definition->table->name->value;
         $table = (new AlterTableCommand())->table($session, $database, $name);
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->commands($definition->commands)) {
+            $prepared = new \MySqlMemory\Session\Resolution\IndexPreparation($definition, (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database));
+            (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->prepare($prepared, $session, new \MySqlMemory\Session\Problems());
+            (new AlterTableCommand())->resolve($prepared, $session);
+        }
         $layout = TableLayout::of($table->definition);
         $change = new TableChange($layout, $name, $database, $session->settings()->release(), (string) $session->variables->read('collation_database'));
         $change->apply($definition->commands);

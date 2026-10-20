@@ -2878,6 +2878,15 @@
         "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\Index\\DeferredCreateIndex": {
+        "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm",
+        "alterOptions": "array",
+        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "options": "array",
+        "parts": "array",
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement": {
         "name": "string",
         "value": "string"
@@ -3648,6 +3657,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedCreateTemplate": {
         "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateTable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedIndexTemplate": {
+        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\Index\\DeferredCreateIndex"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"

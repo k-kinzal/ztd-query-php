@@ -44,7 +44,8 @@ final class CreationRoles
      */
     public function deferred(array $elements, array $options, ?TableQuery $query, ?\SqlSemantics\Platform\MySql\Statement\Partition\Partitioning $partitioning = null): bool
     {
-        return (new PartitionKeyRole())->missing($elements, $partitioning, $query)
+        return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($elements)
+            || (new PartitionKeyRole())->missing($elements, $partitioning, $query)
             || (new DeclarationConstraints())->problem($elements, $query) !== null
             || $this->readProblem($query) !== null
             || $this->columnless($elements, $query)

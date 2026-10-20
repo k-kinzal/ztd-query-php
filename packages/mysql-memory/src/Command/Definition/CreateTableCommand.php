@@ -80,6 +80,7 @@ final class CreateTableCommand implements Command
 
             return new Completion(0, 0, $context->diagnostics->raised());
         }
+        (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->rows($create);
         $this->columns($operation, $session, $connection);
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->forbidden($create);
         (new StorageOptions())->check($create, $session, $context);

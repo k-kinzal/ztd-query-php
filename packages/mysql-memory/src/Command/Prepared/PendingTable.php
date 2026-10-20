@@ -66,7 +66,7 @@ final class PendingTable implements PendingInstruction
             if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->header->elements)) {
                 return (new \MySqlMemory\Program\Expression\GenerationUse())->execute($this->header, $session, $database);
             }
-            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->header->elements, $this->header->query) !== null || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->header->elements, $this->header->partitioning, $this->header->query)) {
+            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($this->header->elements) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->header->elements, $this->header->query) !== null || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->header->elements, $this->header->partitioning, $this->header->query)) {
                 return (new \MySqlMemory\Program\Expression\TableUse())->partition($this->header, $session, $this->database);
             }
             throw \MySqlMemory\Error\Family\SchemaError::WrongObject->error($database, $this->header->name->name->value, 'BASE TABLE');

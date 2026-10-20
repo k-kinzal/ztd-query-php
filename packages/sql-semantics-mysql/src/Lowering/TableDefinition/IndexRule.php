@@ -59,6 +59,7 @@ final class IndexRule
      * Lowers CREATE INDEX: the form of a 5.x `create` alternative or of `create_index_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the complete index has a retained non-scalar role
      */
     public function index(Form $form): CreateIndex
     {
@@ -73,7 +74,8 @@ final class IndexRule
         $indexOptions = $rule->options($form->node($options));
         $keyParts = (new Key\OrderingRule())->parts($this->lowering, $form->node, $form->node($parts), $kind, $algorithm, $indexOptions);
 
-        return new CreateIndex(
+        $class = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->parts($keyParts) ? \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex::class : CreateIndex::class;
+        $index = new $class(
             $this->lowering->names->identifier($form->node($name)),
             $this->lowering->columnTable,
             $keyParts,
@@ -82,6 +84,10 @@ final class IndexRule
             $indexOptions,
             $this->lowering->tableChanges->alterOptions($form->node($alter)),
         );
+        if ($index instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate($index), 0, false);
+        }
+        return $index;
     }
 
     /**

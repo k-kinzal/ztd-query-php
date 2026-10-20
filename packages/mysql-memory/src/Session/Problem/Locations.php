@@ -337,7 +337,7 @@ final class Locations
     /**
      * Tells whether a call names a function that is neither native nor declared: a stored function the server does not find.
      */
-    public static function undeclared(FunctionCall $call, Operation|QueryPreparation $operation): bool
+    public static function undeclared(FunctionCall $call, Operation|QueryPreparation|\MySqlMemory\Session\Resolution\IndexPreparation $operation): bool
     {
         if (!$operation->facts->covers($call)) {
             return false;

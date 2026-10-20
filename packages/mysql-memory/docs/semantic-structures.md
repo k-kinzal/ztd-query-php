@@ -3712,3 +3712,19 @@ values across branch changes, table creation, populated rows and table removal.
 The consumer prepares the retained expressions using the normal planner and
 compiler, including release-specific clause ordering and legacy multiple-table
 cleanup conditions. No source SQL or AST is needed for this preparation.
+
+Ordinary CREATE INDEX, ALTER TABLE and CREATE TABLE values exclude non-scalar
+functional key operands. A stored CREATE INDEX uses `DeferredCreateIndex`, while
+the existing retained alteration and creation instructions preserve those keys
+in their complete definitions. These instructions keep the index name, target,
+ordered key parts and modifiers. Binding and rendering share the ordinary index
+rules; reaching an instruction does not manufacture an invalid ordinary
+Statement or recover its source SQL.
+
+Direct construction tests reuse the same program through skipped, reached and
+skipped branches. Native text and prepared histories also vary target existence,
+populated rows and IF NOT EXISTS. Explicit row keys are distinguished from
+row-valued subqueries: the former report their index role before looking up names
+inside the row, while the latter retain the functional-index subquery condition.
+These histories test the retained instruction's interpretation, not a claim that
+matching errors establish the validity of every ordinary semantic value.

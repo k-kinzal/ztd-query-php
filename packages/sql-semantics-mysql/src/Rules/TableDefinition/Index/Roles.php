@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Rules\TableDefinition\Index;
+
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
+use SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\KeyPart;
+use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
+
+/**
+ * Separates ordinary scalar index definitions from retained non-scalar operands.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class Roles
+{
+    /**
+     * @param list<KeyPart> $parts Complete ordered index operands
+     */
+    public function parts(array $parts): bool
+    {
+        return array_filter($parts, static fn (KeyPart $part): bool => $part instanceof ExpressionPart) !== [];
+    }
+
+    /**
+     * @param list<TableElement> $elements Complete table declarations
+     */
+    public function elements(array $elements): bool
+    {
+        return array_filter($elements, fn (TableElement $element): bool => $element instanceof IndexDefinition && $this->parts($element->parts)) !== [];
+    }
+
+    /**
+     * @param list<AlterCommand> $commands Complete alteration actions
+     */
+    public function commands(array $commands): bool
+    {
+        return array_filter($commands, fn (AlterCommand $command): bool => $command instanceof AddConstraint && $command->element instanceof IndexDefinition && $this->parts($command->element->parts)) !== [];
+    }
+}

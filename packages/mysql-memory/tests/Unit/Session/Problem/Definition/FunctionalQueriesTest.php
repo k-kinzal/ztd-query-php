@@ -97,4 +97,13 @@ final class FunctionalQueriesTest extends TestCase
         $session->query($sql);
     }
 
+    public function testRowsPrecedesUnknownColumnsInsideTheRow(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $this->expectExceptionCode(3800);
+        $this->expectExceptionMessage("Expression of functional index 'i' cannot refer to a row value.");
+        $session->query('CREATE INDEX i ON t ((ROW(missing,2)))');
+    }
+
 }

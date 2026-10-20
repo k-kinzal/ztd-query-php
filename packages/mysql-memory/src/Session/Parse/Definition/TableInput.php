@@ -31,6 +31,9 @@ final class TableInput
      */
     public function refused(RejectedInput $failure, string $statement, Session $session): SqlError
     {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate) {
+            return (new IndexInput())->refused($failure, $statement, $session);
+        }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate) {
             return $this->template($failure, $statement, $session);
         }
@@ -108,6 +111,7 @@ final class TableInput
                     $alter->header($problem->definition, $session);
                     throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database));
                 }
+                \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_alter_table');
                 throw new CompletedTemplate($alter->raise($problem->definition, $session, false));
             }
             $use = new \MySqlMemory\Program\Expression\TableUse();
@@ -116,6 +120,7 @@ final class TableInput
                 $bindings = $query === null ? null : \MySqlMemory\Command\Prepared\ParameterBindings::capture($query);
                 throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, $bindings, \MySqlMemory\Command\Prepared\GenerationMetadata::capture($problem->definition, $session->variables->database, $session)));
             }
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
             throw new CompletedTemplate($use->raise($problem->definition, $session, false));
         } catch (SqlError $error) {
             $cause = $error->getPrevious();
@@ -165,7 +170,7 @@ final class TableInput
      */
     public function accepts(\SqlSemantics\Statement\Fact\Diagnostic $problem): bool
     {
-        return $problem instanceof RefusedCreateTail || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate;
+        return $problem instanceof RefusedCreateTail || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate;
     }
 
 }

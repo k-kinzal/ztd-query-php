@@ -43,7 +43,7 @@ final class TableUse
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($definition->query) !== null) {
             return (new \MySqlMemory\Program\Definition\CreationQueryUse())->execute($definition, $session);
         }
-        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, $definition->query) !== null || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($definition->elements, $definition->partitioning, $definition->query)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($definition->elements) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, $definition->query) !== null || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($definition->elements, $definition->partitioning, $definition->query)) {
             return $this->partition($definition, $session);
         }
         throw SchemaError::WrongObject->error($definition->name->schema->value ?? $session->variables->database, $definition->name->name->value, 'BASE TABLE');
@@ -128,7 +128,7 @@ final class TableUse
     {
         $this->header($definition, $session, true);
         $query = $definition->query;
-        if ($query === null && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, null) !== null) {
+        if ($query === null && ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($definition->elements) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, null) !== null)) {
             (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->prepare($this->bound($definition, $session), $session, new \MySqlMemory\Session\Problems());
             return null;
         }
