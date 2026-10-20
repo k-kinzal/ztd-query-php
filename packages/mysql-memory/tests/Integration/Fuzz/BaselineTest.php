@@ -154,4 +154,38 @@ final class BaselineTest extends TestCase
         self::assertSame($before, $after);
         $server->stop();
     }
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerHistoryReleases(): iterable
+    {
+        foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
+            yield $release => [$release];
+        }
+    }
+
+    #[DataProvider('providerHistoryReleases')]
+    public function testRestoreRemovesHistoryForAnAccountThatWasNeverCreated(string $release): void
+    {
+        $container = \Testcontainers\Testcontainers::run(new \Fuzz\Target\DisposableMySql($release));
+        try {
+            $endpoint = $container->getData(\Container\Endpoint::class);
+            $native = new PDO('mysql:host=' . $endpoint->host . ';port=' . $endpoint->port, $endpoint->username, $endpoint->password);
+            (new Servers())->guard($native, $release, $endpoint->password);
+            $guard = new PDO('mysql:host=' . $endpoint->host . ';port=' . $endpoint->port, Servers::GUARD, $endpoint->password);
+            $baseline = new Baseline($native, $release);
+            $native->exec('SET timestamp=1700000000');
+            self::assertCount(1, (new Servers())->rows($native, "ALTER USER IF EXISTS 'baseline_orphan' IDENTIFIED BY RANDOM PASSWORD PASSWORD REUSE INTERVAL 100 DAY"));
+            self::assertCount(1, (new Servers())->rows($native, "SELECT User,Host FROM mysql.password_history WHERE User='baseline_orphan'"));
+            self::assertSame([], (new Servers())->rows($native, "SELECT User,Host FROM mysql.user WHERE User='baseline_orphan'"));
+            $baseline->restore($guard, true);
+            self::assertSame([], (new Servers())->rows($native, "SELECT User,Host FROM mysql.password_history WHERE User='baseline_orphan'"));
+            self::assertCount(1, (new Servers())->rows($native, "ALTER USER IF EXISTS 'baseline_orphan' IDENTIFIED BY RANDOM PASSWORD PASSWORD REUSE INTERVAL 100 DAY"));
+            self::assertCount(1, (new Servers())->rows($native, "SELECT User,Host FROM mysql.password_history WHERE User='baseline_orphan'"));
+            $baseline->restore($guard, true);
+        } finally {
+            $container->stop();
+        }
+    }
+
 }

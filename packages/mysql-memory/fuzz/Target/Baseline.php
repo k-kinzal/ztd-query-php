@@ -146,7 +146,7 @@ final class Baseline
                 $this->cleanup['DROP DATABASE IF EXISTS ' . $this->identifier($name)] = true;
             }
         }
-        foreach ($server->rows($native, 'SELECT User, Host FROM mysql.user') as [$user, $host]) {
+        foreach ([...$server->rows($native, 'SELECT User, Host FROM mysql.user'), ...(str_starts_with($this->version, '5.') ? [] : $server->rows($native, 'SELECT User, Host FROM mysql.password_history'))] as [$user, $host]) {
             if (!in_array($user, ['root', Servers::GUARD, 'healthchecker', 'mysql.infoschema', 'mysql.session', 'mysql.sys'], true)) {
                 $this->cleanup['DROP USER ' . (str_starts_with($this->version, '5.6.') ? '' : 'IF EXISTS ') . $native->quote($user) . '@' . $native->quote($host)] = true;
             }
