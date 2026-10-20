@@ -49,7 +49,7 @@ final class DeferredCollated implements DeferredOperand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $fact = (new CollationLookup())->derive($this->operand, $this->collation, $derivation, $environment);
+        $fact = (new CollationLookup())->derive($this, $derivation, $environment);
         return new ScalarFact(new Invalid($this->problem()), $fact->nullability);
     }
 

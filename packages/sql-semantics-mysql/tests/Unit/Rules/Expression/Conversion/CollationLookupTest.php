@@ -35,9 +35,12 @@ final class CollationLookupTest extends TestCase
     public function testDerivePlacesLegacyNameLookupAfterTheOperand(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([], true));
-        $derivation->scalar(new Collated(new ColumnUse(new Name('absent')), new Name('missing')), $derivation->environment());
+        $operand = new ColumnUse(new Name('absent'));
+        $expression = new Collated($operand, new Name('missing'));
+        $derivation->scalar($expression, $derivation->environment());
         self::assertInstanceOf(MissingColumn::class, $derivation->facts()->diagnostics[0]);
         self::assertInstanceOf(UnknownCollation::class, $derivation->facts()->diagnostics[1]);
+        self::assertSame($expression, $derivation->facts()->diagnostics[1]->operand);
         self::assertSame([], $derivation->facts()->warnings);
     }
 }

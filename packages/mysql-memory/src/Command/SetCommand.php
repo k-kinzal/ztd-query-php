@@ -160,11 +160,11 @@ final class SetCommand implements Command
     }
 
     /**
-     * Answers the action of SET NAMES or SET CHARACTER SET: the character set of the client and the results, and for SET NAMES the character set and collation of the connection; DEFAULT names character_set_server.
+     * Answers the action of SET NAMES or SET CHARACTER SET: the character set of the client and the results, and for SET NAMES the character set and collation of the connection; DEFAULT names the global character_set_client.
      */
     public function charset(SetNames|SetCharacterSet $item, Planner $planner, Assigner $assigner, Session $session): Closure
     {
-        $server = $session->instance->catalog->find('character_set_server');
+        $server = $session->instance->catalog->find('character_set_client');
         $default = $server === null ? 'utf8mb4' : (string) $session->instance->globals->value($server);
         $charset = $item->charset->name->value ?? $default;
         $collation = $item instanceof SetNames && $item->collation?->name !== null ? $item->collation->name->value : (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($charset)?->defaultCollation($planner->settings->release())->name ?? $charset);

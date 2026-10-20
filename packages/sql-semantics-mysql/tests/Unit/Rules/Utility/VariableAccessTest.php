@@ -61,4 +61,14 @@ final class VariableAccessTest extends TestCase
         self::assertNull((new VariableAccess())->find('nosuch', $derivation));
         self::assertEquals([new UnknownSystemVariable('nosuch')], $derivation->facts()->diagnostics);
     }
+    public function testFindRetainsTheLegacyAssignmentStoppingConditions(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]));
+        self::assertNull((new VariableAccess())->find('missing', $derivation, true));
+        self::assertEquals([
+            new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new UnknownSystemVariable('missing', true)),
+            new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new UnknownSystemVariable('missing', true), true),
+        ], $derivation->facts()->warnings);
+    }
+
 }

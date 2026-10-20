@@ -22,9 +22,10 @@ final class UnknownCollation implements Diagnostic
     use Snapshot;
 
     /**
+     * @param \SqlSemantics\Statement\Operand|null $operand The prepared operand whose explicit collation lookup failed
      * @param string $name The name as written, including an empty quoted name
      */
-    public function __construct(public readonly string $name)
+    public function __construct(public readonly string $name, public readonly ?\SqlSemantics\Statement\Operand $operand = null)
     {
     }
 

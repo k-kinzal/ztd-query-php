@@ -86,6 +86,16 @@ or execution-based filtering. Native histories compare precision boundaries,
 prepared execution, skipped and reached procedures, local declarations and
 superseded column attributes.
 
+SET encoding names retain their interpretation stage. Unknown character sets
+and collations stop reading at the explicit name, even in a skipped stored
+instruction. A mismatch between known names is a contextualization condition;
+client-encoding restrictions belong to assignment preparation. A legacy
+expression collation condition identifies the semantic expression that owns
+it, so ordered preparation needs no source positions. `SET NAMES DEFAULT`
+reads the global client encoding. Direct construction tests preserve the same
+DEFAULT request across global changes that make its explicit collation
+compatible, incompatible and compatible again.
+
 Account password and lock options enforce their numeric domains before ordinary
 statement construction. Decimal integer tokens allow the unsigned 64-bit range;
 hexadecimal option operands saturate at the signed 64-bit maximum. Expiry

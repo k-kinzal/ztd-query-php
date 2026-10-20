@@ -9,7 +9,7 @@ use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 
 /**
- * Preserves charset-name warnings before incomplete SET and conversion operands.
+ * Preserves encoding-name conditions before incomplete SET and conversion operands.
  * Only a reduced charset name is read; no parser node or input text is retained.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -21,8 +21,12 @@ final class SyntaxCharsets
      *
      * @param list<\SqlParser\Lexer\Token> $tokens The temporary input prefix
      */
-    public function completed(Node $node, Lowering $lowering, array $tokens): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    public function completed(Node $node, Lowering $lowering, array $tokens): \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure|null
     {
+        $setting = (new \SqlSemantics\Platform\MySql\Lowering\Utility\Set\SyntaxEncoding())->completed($node, $lowering);
+        if ($setting !== null) {
+            return $setting;
+        }
         if ($node->name !== 'charset_name') {
             return null;
         }
@@ -38,9 +42,13 @@ final class SyntaxCharsets
             return null;
         }
         $name = $lowering->charsets->charset($node)->name;
+        if ($previous->name === 'NAMES_SYM' && $name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($name->value) === null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($name->value), true);
+        }
         $notice = $name === null ? null : \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::charsetWarning($name->value);
 
         return $notice !== null && $notice->warnedIn($lowering->profile->grammar) ? $notice : null;
     }
+
 
 }

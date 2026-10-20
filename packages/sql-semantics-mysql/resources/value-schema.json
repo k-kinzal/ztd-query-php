@@ -1369,7 +1369,8 @@
         "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\UnknownCollation": {
-        "name": "string"
+        "name": "string",
+        "operand": "?SqlSemantics\\Statement\\Operand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Row": {
         "elements": "array",

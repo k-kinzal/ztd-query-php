@@ -83,7 +83,12 @@ final class VariableAccess
     {
         $definition = SystemVariables::of($derivation->context->profile->grammar)->find($name);
         if ($definition === null) {
-            $derivation->report(new UnknownSystemVariable($name, $assigned));
+            $problem = new UnknownSystemVariable($name, $assigned);
+            $derivation->report($problem);
+            if ($assigned && !$derivation->inProgram() && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem));
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
+            }
         }
 
         return $definition;

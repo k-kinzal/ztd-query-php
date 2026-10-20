@@ -74,6 +74,7 @@ final class Locations
         }
         $located = (new Location\Owned())->located($locator, $diagnostics, $located);
         $located = (new Location\WriteFunctions())->located($operation->statement, $locator, $located);
+        $located = (new Location\SetEncodings())->located($operation->statement, $locator, $session, $located);
         $located = $this->defaults($operation, $locator, $session, $located);
         $located = $this->wildcards($locator, $diagnostics, $located);
         $located = $this->stars($operation, $locator, $diagnostics, $located);

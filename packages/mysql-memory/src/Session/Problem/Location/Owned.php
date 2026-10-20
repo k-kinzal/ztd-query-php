@@ -35,11 +35,12 @@ final class Owned
             $owner = match (true) {
                 $diagnostic instanceof TimeZoneConversion, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath => $diagnostic->expression,
                 $diagnostic instanceof Misuse, $diagnostic instanceof CountMismatch => $diagnostic->valueRow,
+                $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation => $diagnostic->operand,
                 default => null,
             };
             $place = $owner === null ? null : $locator->place($owner);
             if ($place !== null) {
-                if ($diagnostic instanceof TimeZoneConversion || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath) {
+                if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation || $diagnostic instanceof TimeZoneConversion || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath) {
                     $place[1][] = PHP_INT_MAX;
                 }
                 $located[spl_object_id($diagnostic)] = [$diagnostic, $place];

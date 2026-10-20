@@ -297,7 +297,7 @@ final class Locator
         if ($node instanceof SetOperation || $node instanceof OrderedSetOperation) {
             $this->sets[] = [$node, [...$order, (int) array_search('right', array_keys(get_object_vars($node)), true), PHP_INT_MAX]];
         }
-        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ValueRow || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone || $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall) {
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ValueRow || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone || $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated || $node instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames || $node instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetCharacterSet) {
             $this->places[spl_object_id($node)] = [$clause, $order];
         }
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem && in_array($clause, ['window partition by', 'window order by'], true)) {

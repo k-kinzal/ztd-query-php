@@ -69,7 +69,7 @@ final class Collated implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $known = Collation::forName($this->collation->value, $derivation->context->profile->grammar) !== null;
-        $fact = (new Operands())->single((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CollationLookup())->derive($this->operand, $this->collation, $derivation, $environment), $derivation);
+        $fact = (new Operands())->single((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CollationLookup())->derive($this, $derivation, $environment), $derivation);
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null || !$known ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation, $this);
 

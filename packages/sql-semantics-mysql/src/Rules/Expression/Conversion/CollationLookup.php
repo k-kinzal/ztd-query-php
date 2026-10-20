@@ -7,14 +7,11 @@ namespace SqlSemantics\Platform\MySql\Rules\Expression\Conversion;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
-use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Resolves an expression collation in the release's preparation order.
@@ -39,8 +36,10 @@ final class CollationLookup
     /**
      * Retains the operand facts and reports name lookup in the proper phase.
      */
-    public function derive(Scalar|RowOperand|DeferredOperand $operand, Name $name, Derivation $derivation, Environment $environment): ScalarFact
+    public function derive(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated $expression, Derivation $derivation, Environment $environment): ScalarFact
     {
+        $operand = $expression->operand;
+        $name = $expression->collation;
         $release = $derivation->context->profile->grammar;
         $parsed = $this->parsed($name, $release);
         $deferred = $derivation->inProgram() && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
@@ -51,7 +50,7 @@ final class CollationLookup
         if ($parsed !== null) {
             $derivation->warn(new ParseFailure($parsed));
         } elseif (!$deferred && Collation::forName($name->value, $release) === null) {
-            $derivation->report(new UnknownCollation($name->value));
+            $derivation->report(new UnknownCollation($name->value, $expression));
         }
         return $fact;
     }
