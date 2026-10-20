@@ -10,8 +10,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Type\Floating;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -77,7 +76,7 @@ final class FullTextSearch implements Scalar
         }
         $operands->single($derivation->scalar($this->against, $environment), $derivation);
 
-        return new ScalarFact(new Known(new Floating(FloatingKind::Double)), Nullability::Nullable);
+        return new ScalarFact(new Known(Domain::double(23)), Nullability::Nullable);
     }
 
     /**

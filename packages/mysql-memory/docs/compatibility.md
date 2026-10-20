@@ -100,7 +100,22 @@ A statement, an expression form or a function that the emulator does not run fai
 
 - `JSON_TABLE` in MySQL 8.0 and later, as a table function in `FROM`: its document may read the columns of the tables before it (`FROM t, JSON_TABLE(t.doc, ...)`, `LEFT JOIN JSON_TABLE(...) ON TRUE`) and of outer queries. Every column kind is evaluated (`FOR ORDINALITY`, `PATH`, `EXISTS PATH`, sibling and nested `NESTED PATH`s), with `ON EMPTY` and `ON ERROR` (`NULL`, `DEFAULT 'json'`, `ERROR` with errors 3665, 3666, 3669, 3155 and 3156, and the deprecation warning for `ON ERROR` written first), and the columns take their declared types as the server reports them. Values are converted into the column types exactly; the conversions of `BIT`, `ENUM` and `SET` columns, and of some strings into `TIME`, differ, and the notes and deprecation warnings the server adds while storing a value are not raised.
 
-Not supported: full-text search (`MATCH ... AGAINST`) and the partitions of a table partitioned by `KEY` (`FROM t PARTITION (p0)` fails with error 1235; the other methods are supported).
+`MATCH ... AGAINST` consumes the column bindings, search expression, mode and
+resolved DOUBLE result domain supplied by Semantics. Populated FULLTEXT indexes
+support natural-language relevance, quoted phrases, Boolean required/excluded
+words, relevance modifiers, prefix/proximity searches and query expansion.
+InnoDB and MyISAM use separate relevance calculations, minimum word lengths and
+default stopword dictionaries. Result scores retain the observed single-precision
+rounding; metadata comes from the semantic result domain.
+
+Full-text compatibility is still incomplete: custom stopword tables and parser
+plugins, unindexed MyISAM Boolean searches, transactional index visibility and
+automatic relevance ordering are not yet modeled. Complex Boolean combinations
+need further native comparison. These are open compatibility gaps, not permitted
+comparison exceptions.
+
+The partitions of a table partitioned by `KEY` remain unsupported (`FROM t
+PARTITION (p0)` fails with error 1235; the other methods are supported).
 
 ### Optimizer hints
 

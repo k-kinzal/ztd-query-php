@@ -19,6 +19,36 @@ use SqlSemantics\Statement\Identifier\Name;
 final class CatalogHistoryTest extends TestCase
 {
     /**
+     * Creates a disabled event under the exact referenced name.
+     */
+    public function testStepsKeepTheEventIdentityAndDisableItsScheduler(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('event.name'));
+        $node = new M\Routine\AlterEvent($name, completion: M\Routine\Event\Completion::Preserve);
+        $steps = (new CatalogHistory())->steps($node, 1539);
+        self::assertCount(1, $steps);
+        self::assertInstanceOf(M\Routine\CreateEvent::class, $steps[0]);
+        self::assertSame($name, $steps[0]->name);
+        self::assertSame(M\Routine\Event\EventStatus::Disable, $steps[0]->status);
+        self::assertSame([], (new CatalogHistory())->steps($node, 1064));
+    }
+
+    /**
+     * Changes relation kind while retaining the SHOW operand identity.
+     */
+    public function testStepsReplaceTheFixtureTableWithTheReferencedView(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('view.name'));
+        $node = new M\Utility\Show\Schema\ShowCreateView(new M\Utility\Show\InspectedTable($name));
+        $steps = (new CatalogHistory())->steps($node, 1347);
+        self::assertCount(2, $steps);
+        self::assertInstanceOf(M\Alter\DropTable::class, $steps[0]);
+        self::assertInstanceOf(M\View\CreateView::class, $steps[1]);
+        self::assertSame($name, $steps[0]->tables[0]->name);
+        self::assertSame($name, $steps[1]->definition->name);
+    }
+
+    /**
      * Existing anonymous users satisfy conditional role definitions without changing them.
      */
     public function testSetupRetainsTheConditionalAnonymousRoleDefinition(): void

@@ -3762,3 +3762,27 @@ condition. This is distinct from an ordinary scalar function's evaluated data
 and from a mutable target table's schema. Direct properties keep the same
 instruction through skipped and reached branches; native histories also compare
 mixed key parts, reordered competing errors, populated targets and preparation.
+
+
+### Catalog transitions and populated full-text evaluation
+
+A direct construction comparison follows distinct catalog and session conditions
+while retaining the original statement or scalar object. A missing event can be
+created under its original identity; a SHOW CREATE VIEW target can be replaced
+with a view; and a MATCH expression can move from an ordinary relation to a
+populated text relation with the matching FULLTEXT index. Each setup statement
+and unchanged retry is compared with MySQL. A later error remains visible and
+requires its own explanation.
+
+The indexed MATCH transition exposed a missing evaluator and an incomplete
+semantic result domain that matching missing-index errors had concealed.
+`FullTextSearch` now derives a concrete DOUBLE domain of width 23. The consumer
+uses resolved columns and the evaluated search value to calculate relevance.
+Reading Boolean operators in that runtime value is analogous to interpreting a
+regular expression; it requires no SQL string or parser tree in the plan or
+semantic object. Known full-text gaps remain listed in the compatibility guide.
+
+A deferred event schedule preserves its event ownership when lowering the whole
+scalar fails. Active subqueries retain the schedule-specific condition before
+catalog lookup of those subqueries. The original fuzz counterexample and native
+histories check this precedence with and without a default database.

@@ -136,7 +136,7 @@ final class Comparison
     }
 
     /**
-     * Follows distinct missing-table dependencies without changing the tested object.
+     * Follows distinct session and catalog conditions without changing the tested object.
      * Repeated conditions stop expansion and remain unresolved observations.
      *
      * @param array<string, mixed> $before The previous native observation
@@ -157,7 +157,7 @@ final class Comparison
             $last = $steps[count($steps) - 1];
             $before = $last['native'];
             $error = $before['error'] ?? null;
-            if (!$last['matches'] || !is_array($error) || !in_array($error[0] ?? null, [1049, 1146], true)) {
+            if (!$last['matches'] || !is_array($error)) {
                 break;
             }
         }
@@ -183,6 +183,9 @@ final class Comparison
         }
         if ($steps === [] && is_int($code)) {
             $steps = (new CatalogHistory())->steps($node, $code);
+        }
+        if ($steps === [] && is_int($code)) {
+            $steps = (new Table\FullTextHistory())->steps($node, $code);
         }
         if ($steps === []) {
             $steps = (new Table\History())->steps($node, $before, $session->variables->database);

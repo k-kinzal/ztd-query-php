@@ -408,11 +408,10 @@ final class Texts
      *
      * The text searched for is constant for the statement, else the call is an error naming
      * AGAINST; the columns are of one table, else it names MATCH; and a FULLTEXT index of the
-     * table has exactly those columns, in any order, else no index matches. The search itself is
-     * not emulated (verified on a live 8.4 server).
+     * table has exactly those columns, in any order, else no index matches.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/fulltext-search.html.
      *
-     * @throws \MySqlMemory\Error\SqlError When the call is refused, or when it would search
+     * @throws \MySqlMemory\Error\SqlError When the call or its index cannot be resolved
      */
     public function match(FullTextSearch $node, Scope $scope): Evaluable
     {
@@ -420,6 +419,7 @@ final class Texts
             throw StatementError::WrongArguments->error('AGAINST');
         }
         $table = null;
+        $stored = null;
         $positions = [];
         foreach ($node->columns as $column) {
             $resolution = $this->compiler->facts->scalar($column)->resolution;
@@ -432,6 +432,7 @@ final class Texts
                 throw StatementError::WrongArguments->error('MATCH');
             }
             $table = $definition;
+            $stored = $located[1]->scans[spl_object_id($resolution->relation)]->table ?? $stored;
             $positions[] = $this->compiler->names->position($located[1], $resolution);
         }
         sort($positions);
@@ -439,7 +440,8 @@ final class Texts
             $indexed = $key->columns;
             sort($indexed);
             if ($key->kind === KeyKind::FullText && $indexed === $positions) {
-                throw StatementError::NotSupportedYet->error('MATCH ... AGAINST');
+                \SqlSemantics\Diagnostic\Check::invariant($stored !== null, 'A full-text search retains its resolved table scan.');
+                return new \MySqlMemory\Evaluation\FullText\Search($stored, array_map(fn ($column): Evaluable => $this->compiler->compile($column, $scope), $node->columns), $positions, $this->compiler->compile($node->against, $scope), $node->mode, $this->compiler->domain($node), $this->compiler->connection);
             }
         }
 
