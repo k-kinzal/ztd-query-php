@@ -87,7 +87,7 @@
 <span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
 <span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * Checks target and dependency state before the retained non-scalar key condition.</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * Checks target and dependency state before the retained name or operand condition.</span></span>
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * @throws \MySqlMemory\Error\SqlError When lookup or the retained key is refused</span></span>
 <span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     * @throws LogicException When a retained key reaches execution without its required condition</span></span>
@@ -105,7 +105,7 @@
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-var">$alter</span> = <span class="tok-kw">new</span> <span class="tok-id">AlterTableCommand</span>();</span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-var">$alter</span>-&gt;<span class="tok-id">table</span>(<span class="tok-var">$session</span>, <span class="tok-var">$definition</span>-&gt;<span class="tok-id">table</span>-&gt;<span class="tok-id">schema</span>-&gt;<span class="tok-id">value</span> ?? <span class="tok-var">$database</span> ?? <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">database</span>, <span class="tok-var">$definition</span>-&gt;<span class="tok-id">table</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>);</span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-var">$alter</span>-&gt;<span class="tok-id">resolve</span>(<span class="tok-var">$prepared</span>, <span class="tok-var">$session</span>);</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A retained non-scalar index operand must report its condition.&#039;</span>);</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A retained index instruction must report its name or operand condition.&#039;</span>);</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    }</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>}</span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a></span>
