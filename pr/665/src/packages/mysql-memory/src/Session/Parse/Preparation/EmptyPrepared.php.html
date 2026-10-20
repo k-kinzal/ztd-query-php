@@ -52,9 +52,9 @@
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * Classifies an empty first query terminated before a prepared statement begins.</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * A leading semicolon reports an empty query; preceding comments instead form</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * a no-op query, which the prepared protocol cannot represent. Later statements</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * do not change this first-query outcome. Observed on MySQL 5.6.51, 5.7.44,</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * Semicolons and whitespace alone report an empty query; preceding comments form</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * a no-op query, which the prepared protocol cannot represent. Any other suffix</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * makes the leading semicolon a syntax error. Observed on MySQL 5.6.51, 5.7.44,</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * 8.0.44, 8.4.7 and 9.1.0. Tokens stay at the SQL input boundary.</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
@@ -64,17 +64,21 @@
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * Refuses a terminated empty query before the ordinary statement splitter.</span></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @throws SqlError When the first query contains only whitespace or comments</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @throws SqlError When a leading semicolon cannot begin a prepared statement</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">check</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">SqlParser</span> <span class="tok-var">$parser</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">check</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">SqlParser</span> <span class="tok-var">$parser</span>, ?<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset</span> <span class="tok-var">$client</span> = <span class="tok-id">null</span>, <span class="tok-id">bool</span> <span class="tok-var">$legacy</span> = <span class="tok-id">false</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    {</span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-var">$first</span> = (<span class="tok-kw">new</span> <span class="tok-id">InputTokens</span>())-&gt;<span class="tok-id">prefix</span>(<span class="tok-var">$parser</span>, <span class="tok-var">$sql</span>)[<span class="tok-num">0</span>] ?? <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">if</span> (<span class="tok-var">$first</span>?-&gt;<span class="tok-id">text</span> === <span class="tok-str">&#039;;&#039;</span>) {</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-kw">throw</span> (<span class="tok-id">trim</span>(<span class="tok-var">$first</span>-&gt;<span class="tok-id">leading</span>) === <span class="tok-str">&#039;&#039;</span> ? <span class="tok-id">StatementError</span>::<span class="tok-id">EmptyQuery</span> : <span class="tok-id">StatementError</span>::<span class="tok-id">UnsupportedPreparedStatement</span>)-&gt;<span class="tok-id">error</span>();</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        }</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>}</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-var">$source</span> = <span class="tok-id">rtrim</span>(<span class="tok-var">$sql</span>, <span class="tok-str">&quot;; \t\n\r\f\v&quot;</span>);</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>            <span class="tok-kw">if</span> (<span class="tok-id">strlen</span>(<span class="tok-var">$source</span>) &gt; <span class="tok-var">$first</span>-&gt;<span class="tok-id">offset</span>) {</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>                <span class="tok-kw">throw</span> (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Session\Syntax</span>(<span class="tok-var">$client</span>))-&gt;<span class="tok-id">near</span>(<span class="tok-var">$first</span>-&gt;<span class="tok-id">offset</span>, <span class="tok-var">$source</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Parser\SyntaxException</span>(<span class="tok-var">$first</span>, [], <span class="tok-str">&#039;&#039;</span>), <span class="tok-var">$legacy</span>, <span class="tok-var">$parser</span>);</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            }</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>            <span class="tok-kw">throw</span> (<span class="tok-id">trim</span>(<span class="tok-var">$first</span>-&gt;<span class="tok-id">leading</span>) === <span class="tok-str">&#039;&#039;</span> ? <span class="tok-id">StatementError</span>::<span class="tok-id">EmptyQuery</span> : <span class="tok-id">StatementError</span>::<span class="tok-id">UnsupportedPreparedStatement</span>)-&gt;<span class="tok-id">error</span>();</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        }</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>}</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
