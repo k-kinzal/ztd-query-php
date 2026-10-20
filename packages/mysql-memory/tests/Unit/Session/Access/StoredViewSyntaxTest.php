@@ -38,4 +38,15 @@ final class StoredViewSyntaxTest extends TestCase
         self::assertNull((new StoredViewSyntax())->error($views['v']));
         self::assertNull((new StoredViewSyntax())->error($views['w']));
     }
+    public function testErrorRetainsTheRemainderAfterANestedBody(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE VIEW v AS SELECT * FROM (WITH a AS (SELECT 1 AS x), b AS (TABLE a) TABLE a) q');
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+        $error = (new StoredViewSyntax())->error($schema->views['v']);
+        self::assertNotNull($error);
+        self::assertStringContainsString("near 'select `a`.`x` AS `x` from `a`) `q`'", $error->getMessage());
+    }
+
 }

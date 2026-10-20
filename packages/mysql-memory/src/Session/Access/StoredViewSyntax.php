@@ -30,6 +30,7 @@ final class StoredViewSyntax
     public function error(View $view): ?SqlError
     {
         $text = new ViewText($view->created->facts, '', $view->database);
+        $stored = $text->query($view->definition);
         $with = new WithText($text);
         foreach ((new ReadDependencies())->nodes($view->definition) as $node) {
             if (!$node instanceof QueryExpression || !$node->with instanceof With) {
@@ -39,9 +40,16 @@ final class StoredViewSyntax
             if ($used === [] || array_key_last($used) === count($node->with->tables) - 1) {
                 continue;
             }
-            $body = $text->query($node->body);
-            if ($body !== null) {
-                return StatementError::ParseError->error(mb_strcut($body . ($text->tail($node->orderBy, $node->limit) ?? ''), 0, 80, 'UTF-8'), 1);
+            if ($stored !== null) {
+                $boundary = "\0";
+                while (str_contains($stored, $boundary)) {
+                    $boundary .= "\0";
+                }
+                $marked = (new ViewText($view->created->facts, '', $view->database, afterWith: $node, boundary: $boundary))->query($view->definition);
+                $offset = $marked === null ? false : strpos($marked, $boundary);
+                if ($offset !== false) {
+                    return StatementError::ParseError->error(mb_strcut(substr($marked, $offset + strlen($boundary)), 0, 80, 'UTF-8'), 1);
+                }
             }
         }
         return null;

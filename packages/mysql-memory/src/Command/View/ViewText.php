@@ -51,8 +51,10 @@ final class ViewText
      * @param string $current The current database, which the names of its tables are written without
      * @param string $database The database the unqualified names of the query are in
      * @param bool $legacy Whether the stored expression uses the MySQL 5.x representation
+     * @param QueryExpression|null $afterWith The nested body whose diagnostic start is marked
+     * @param string $boundary A marker chosen outside the generated stored text
      */
-    public function __construct(public readonly Facts $facts, public readonly string $current, public readonly string $database, public readonly bool $legacy = false)
+    public function __construct(public readonly Facts $facts, public readonly string $current, public readonly string $database, public readonly bool $legacy = false, public readonly ?QueryExpression $afterWith = null, public readonly string $boundary = '')
     {
         $this->expressions = new ExpressionText($this);
     }
@@ -89,7 +91,7 @@ final class ViewText
         $body = $this->query($query->body, $named, $hints);
         $tail = $this->tail($query->orderBy, $query->limit);
 
-        return $text === null || $body === null || $tail === null ? null : $text . $body . $tail;
+        return $text === null || $body === null || $tail === null ? null : $text . ($query === $this->afterWith ? $this->boundary : '') . $body . $tail;
     }
 
     /**
@@ -141,16 +143,11 @@ final class ViewText
             }
             $text .= ' where ' . $where;
         }
-        if ($select->groupBy !== null) {
-            if ($select->groupBy->modifier !== null) {
-                return null;
-            }
-            $groups = $this->expressions->scalars(array_map(static fn (OrderItem $item): \SqlSemantics\Statement\Operand => $item->expression, $select->groupBy->items));
-            if ($groups === null) {
-                return null;
-            }
-            $text .= ' group by ' . implode(',', $groups);
+        $group = (new GroupingText($this->expressions))->clause($select->groupBy);
+        if ($group === null) {
+            return null;
         }
+        $text .= $group;
         if ($select->having !== null) {
             $having = $this->expressions->scalar($select->having);
             if ($having === null) {
@@ -245,17 +242,14 @@ final class ViewText
 
     /**
      * Writes a join in parentheses: a right join as the left join of its operands swapped; a
-     * natural join or a join with USING is not written.
+     * natural joins and USING retain equality over their resolved input columns.
      */
     public function join(JoinedTable $join): ?string
     {
-        if ($join->operator->natural() || $join->using !== []) {
-            return null;
-        }
         $swapped = $join->operator->keepsRight();
         $left = $this->relation($swapped ? $join->right : $join->left);
         $right = $this->relation($swapped ? $join->left : $join->right);
-        $on = $join->on === null ? '' : $this->expressions->scalar($join->on);
+        $on = $join->on === null ? (new JoinText($this))->condition($join) : $this->expressions->scalar($join->on);
         if ($left === null || $right === null || $on === null) {
             return null;
         }

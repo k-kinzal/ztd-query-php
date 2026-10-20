@@ -111,7 +111,7 @@ final class ViewTextTest extends TestCase
         self::assertStringEndsWith('AS select `t`.`a` AS `a` from (`t` `u` left join `t` on((`t`.`a` = `u`.`a`)))', $result->rows[0][1] ?? '');
     }
 
-    public function testJoinLeavesAJoinWithUsingAsItWasWritten(): void
+    public function testJoinWritesUsingAsResolvedColumnEqualities(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');
@@ -122,7 +122,7 @@ final class ViewTextTest extends TestCase
 
         $result = $session->query('SHOW CREATE VIEW v')[0];
         self::assertInstanceOf(ResultSet::class, $result);
-        self::assertStringEndsWith('AS SELECT t.a FROM t JOIN t AS u USING (a)', $result->rows[0][1] ?? '');
+        self::assertStringEndsWith('AS select `t`.`a` AS `a` from (`t` join `t` `u` on((`t`.`a` = `u`.`a`)))', $result->rows[0][1] ?? '');
     }
 
     public function testQueryWritesItsExpressionsThroughAWriterOfItsOwn(): void

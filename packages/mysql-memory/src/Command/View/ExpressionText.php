@@ -98,6 +98,7 @@ final class ExpressionText
             $scalar instanceof FunctionCall => $this->call(strtolower($scalar->name->value), array_map(static fn ($argument): Scalar => $argument->expression, $scalar->arguments), $scalar->schema === null ? '' : Routine::quoted($scalar->schema->value) . '.'),
             $scalar instanceof Aggregate => ($scalar->over === null ? $this->aggregate($scalar) : (new WindowText($this))->aggregate($scalar)),
             $scalar instanceof WindowFunction => (new WindowText($this))->call($scalar),
+            $scalar instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast => (new CastText($this))->write($scalar),
             $scalar instanceof CaseExpression => $this->branches($scalar),
             $scalar instanceof ScalarSubquery => $this->subquery('(', $scalar->query, ')'),
             $scalar instanceof Exists => $this->subquery('exists(', $scalar->query, ')'),
