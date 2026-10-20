@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
-use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
@@ -74,6 +73,9 @@ final class ViewText
 
             return $text === null ? null : 'select ' . $hints . substr($text, 7);
         }
+        if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) {
+            return $this->explicit($query, $named);
+        }
         if ($query instanceof SetOperation) {
             $left = $query->left instanceof Query ? $this->query($query->left, $named, $hints) : null;
             $right = $this->query($query->right, $named);
@@ -83,22 +85,27 @@ final class ViewText
         if (!$query instanceof QueryExpression) {
             return null;
         }
-        $text = '';
-        if ($query->with instanceof With) {
-            $tables = [];
-            foreach ($query->with->tables as $table) {
-                $body = $this->query($table->query);
-                if ($body === null) {
-                    return null;
-                }
-                $tables[] = Routine::quoted($table->name->value) . ($table->columns === [] ? '' : ' (' . implode(',', array_map(static fn ($column): string => Routine::quoted($column->value), $table->columns)) . ')') . ' as (' . $body . ')';
-            }
-            $text = 'with ' . ($query->with->recursive ? 'recursive ' : '') . implode(',', $tables) . ' ';
-        }
+        $text = (new WithText($this))->clause($query);
         $body = $this->query($query->body, $named, $hints);
         $tail = $this->tail($query->orderBy, $query->limit);
 
-        return $body === null || $tail === null ? null : $text . $body . $tail;
+        return $text === null || $body === null || $tail === null ? null : $text . $body . $tail;
+    }
+
+    /**
+     * Writes TABLE as the resolved SELECT projection stored by MySQL views.
+     */
+    public function explicit(\SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable $query, bool $named): ?string
+    {
+        $items = [];
+        foreach ($this->facts->query($query)->projection as $field) {
+            $value = $field instanceof Field ? $this->column($field->resolution) : null;
+            if ($value === null) {
+                return null;
+            }
+            $items[] = $named ? $value . ' AS ' . Routine::quoted($field->name->value ?? '') : $value;
+        }
+        return 'select ' . implode(',', $items) . ' from ' . $this->table($query->table->schema->value ?? null, $query->table->name->value, $query);
     }
 
     /**
@@ -260,7 +267,7 @@ final class ViewText
     /**
      * Writes the name of a table: with its database unless that is the current one, and without one for a common table expression.
      */
-    public function table(?string $schema, string $name, ?TableReference $reference = null): string
+    public function table(?string $schema, string $name, ?\SqlSemantics\Statement\NamedRelation $reference = null): string
     {
         $resolution = $reference !== null && $this->facts->covers($reference) ? $this->facts->relation($reference)->table : null;
         if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable) {
@@ -283,6 +290,9 @@ final class ViewText
         $column = Routine::quoted($resolution->slot->name->value);
         if ($relation instanceof TableReference) {
             return ($relation->alias === null ? $this->table($relation->name->schema->value ?? null, $relation->name->name->value, $relation) : Routine::quoted($relation->alias->value)) . '.' . $column;
+        }
+        if ($relation instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) {
+            return $this->table($relation->table->schema->value ?? null, $relation->table->name->value, $relation) . '.' . $column;
         }
         if ($relation instanceof DerivedTable) {
             return Routine::quoted($relation->alias->value) . '.' . $column;

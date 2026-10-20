@@ -53,6 +53,11 @@ final class OpenedTables
     public function open(string $schema, string $name, Session $session, bool $write = false): void
     {
         $dictionary = $session->instance->dictionary;
+        $view = $dictionary->schema($schema)->views[$name] ?? null;
+        $syntax = $view === null ? null : (new StoredViewSyntax())->error($view);
+        if ($syntax !== null) {
+            throw $syntax;
+        }
         $table = $dictionary->table($schema, $name);
         if ($table !== null && !$table->definition->temporary) {
             ($session->preparation->triggerNotices ?? new \MySqlMemory\Hint\TriggerNotices())->load($schema, $name, $session, $write);

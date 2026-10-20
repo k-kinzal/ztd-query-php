@@ -79,6 +79,10 @@ final class ShowCreateViewCommand implements Command
      */
     public function write(\MySqlMemory\Dictionary\View $view, Session $session, Context $context): Reply
     {
+        $syntax = (new \MySqlMemory\Session\Access\StoredViewSyntax())->error($view);
+        if ($syntax !== null) {
+            throw $syntax;
+        }
         try {
             \MySqlMemory\Session\Resolution\Views::refresh($view, $session->instance->dictionary, $session->settings());
         } catch (SqlError $error) {

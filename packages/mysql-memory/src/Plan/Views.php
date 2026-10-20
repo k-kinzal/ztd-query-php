@@ -94,6 +94,10 @@ final class Views
      */
     public function query(View $view): QueryPlan
     {
+        $syntax = (new \MySqlMemory\Session\Access\StoredViewSyntax())->error($view);
+        if ($syntax !== null) {
+            throw $syntax;
+        }
         if (!$view->valid) {
             foreach ($this->planner->settings->legacy() ? $view->operation->facts->diagnostics : [] as $diagnostic) {
                 if ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable) {

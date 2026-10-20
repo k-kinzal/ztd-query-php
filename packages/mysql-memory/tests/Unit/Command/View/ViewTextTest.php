@@ -158,4 +158,13 @@ final class ViewTextTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertStringEndsWith('AS with `w` as (select `t`.`a` AS `a` from `t`) select /*+ INDEX(`t`@`select#2` `ka`) NO_INDEX(`t`@`select#1`) */ `w`.`a` AS `a` from (`w` join `t`) union select `t`.`a` AS `a` from `t`', $result->rows[0][1] ?? '');
     }
+    public function testExplicitWritesTheResolvedColumnsOfATableStatement(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(x INT)');
+        $session->query('CREATE VIEW v AS TABLE t');
+        $result = $session->query('SHOW CREATE VIEW v')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertStringEndsWith('AS select `t`.`x` AS `x` from `t`', $result->rows[0][1] ?? '');
+    }
 }
