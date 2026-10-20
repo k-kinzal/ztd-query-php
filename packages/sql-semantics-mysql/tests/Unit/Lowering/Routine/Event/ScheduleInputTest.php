@@ -59,4 +59,16 @@ final class ScheduleInputTest extends TestCase
 
         self::assertSame($failure, (new ScheduleInput())->wrap($failure, $tree, new QualifiedName(new Name('e')), null));
     }
+
+    public function testWrapKeepsScheduleOwnershipWhenTheWholeOperandIsDeferred(): void
+    {
+        $tree = (new MySqlParser('mysql-8.4.7'))->parse('ALTER EVENT e ON SCHEDULE EVERY ((1,2) = ALL(TABLE absent)) DAY');
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+        $failure = new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($operand), 10, false);
+        $wrapped = (new ScheduleInput())->wrap($failure, $tree, new QualifiedName(new Name('e')), null);
+        self::assertInstanceOf(RefusedOperand::class, $wrapped->problem);
+        self::assertInstanceOf(NotSupportedYet::class, $wrapped->problem->problem);
+        $withoutTable = (new MySqlParser('mysql-8.4.7'))->parse('ALTER EVENT e ON SCHEDULE EVERY (1,2) DAY');
+        self::assertSame($failure, (new ScheduleInput())->wrap($failure, $withoutTable, new QualifiedName(new Name('e')), null));
+    }
 }

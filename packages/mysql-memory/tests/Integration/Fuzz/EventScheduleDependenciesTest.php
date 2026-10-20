@@ -27,7 +27,8 @@ final class EventScheduleDependenciesTest extends TestCase
     public static function providerReleases(): iterable
     {
         $retained = file_get_contents(__DIR__ . '/fixtures/event-schedule-dependencies.sql');
-        if ($retained === false) {
+        $deferred = file_get_contents(__DIR__ . '/fixtures/event-schedule-deferred.sql');
+        if ($retained === false || $deferred === false) {
             throw new RuntimeException('The retained event input is missing.');
         }
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.0.1', '9.1.0'] as $release) {
@@ -51,6 +52,9 @@ final class EventScheduleDependenciesTest extends TestCase
                 $inputs[] = 'ALTER EVENT e ON SCHEDULE EVERY ' . $operand . ' DAY';
                 $inputs[] = 'ALTER EVENT e ON SCHEDULE EVERY 1 DAY STARTS ' . $operand;
                 $inputs[] = 'ALTER EVENT e ON SCHEDULE EVERY 1 DAY ENDS ' . $operand;
+            }
+            if (!str_starts_with($release, '5.')) {
+                $inputs[] = $deferred;
             }
             $inputs[] = 'ALTER EVENT e ON SCHEDULE EVERY (1,2) DAY STARTS (SELECT 1 FROM absent)';
             $inputs[] = 'ALTER EVENT e ON SCHEDULE EVERY (SELECT 1 FROM absent) DAY STARTS (1,2)';

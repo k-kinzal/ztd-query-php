@@ -29,10 +29,14 @@ final class ScheduleInput
      */
     public function wrap(RejectedInput $failure, Node $schedule, QualifiedName $name, ?Account $definer, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): RejectedInput
     {
-        if (!$failure->problem instanceof OperandWidth) {
+        if (!$failure->problem instanceof OperandWidth && !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar) {
             return $failure;
         }
-        $problem = $this->readsTable($schedule)
+        $readsTable = $this->readsTable($schedule);
+        if (!$readsTable && !$failure->problem instanceof OperandWidth) {
+            return $failure;
+        }
+        $problem = $readsTable
             ? new NotSupportedYet(\SqlSemantics\Platform\MySql\Rules\Routine\Event\Dependencies::feature($release))
             : $failure->problem;
         return new RejectedInput(new RefusedOperand($name, $problem, $definer), $failure->end, $failure->aborts);
