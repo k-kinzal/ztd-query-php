@@ -41,6 +41,9 @@ final class AlterRecipient
         $account = $session->instance->accounts->find($identity);
         $command = new AlterUserCommand();
         if ($user instanceof UserSpecification) {
+            if ($account !== null) {
+                (new \MySqlMemory\Account\SecondaryPassword())->check($account, $user->identification?->plugin->value ?? $account->plugin, $user->retainCurrent);
+            }
             $options->check($user->identification, $account->plugin ?? (new Credentials($session->settings()->release()))->default());
         }
         if ($user instanceof FactorChange) {

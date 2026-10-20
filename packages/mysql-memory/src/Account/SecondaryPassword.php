@@ -21,6 +21,19 @@ use MySqlMemory\Error\SqlError;
 final class SecondaryPassword
 {
     /**
+     * Checks a retained password's plugin identity before plugin lookup or hash validation.
+     *
+     * @param string $plugin The proposed plugin name, without requiring it to be loaded
+     * @throws SqlError When retention would change the existing plugin
+     */
+    public function check(Account $account, string $plugin, bool $retain): void
+    {
+        if ($retain && strcasecmp($plugin, $account->plugin) !== 0) {
+            throw AccountError::RetainChangesPlugin->error($account->identity->user, $account->identity->host);
+        }
+    }
+
+    /**
      * Updates the secondary credential after validation and before changing the primary.
      *
      * @param string $plugin The new primary authentication plugin
@@ -30,9 +43,9 @@ final class SecondaryPassword
      */
     public function change(Account $account, string $plugin, bool $empty, bool $retain): void
     {
+        $this->check($account, $plugin, $retain);
         if ($retain) {
             $error = match (true) {
-                $plugin !== $account->plugin => AccountError::RetainChangesPlugin,
                 $account->hash === '' => AccountError::RetainEmptyPassword,
                 $empty => AccountError::RetainWithEmptyPassword,
                 default => null,

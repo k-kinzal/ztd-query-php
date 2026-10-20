@@ -17,6 +17,13 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class SecondaryPasswordTest extends TestCase
 {
+    public function testCheckAcceptsTheSamePluginWithoutCaseAndDoesNotChangeCredentials(): void
+    {
+        $account = new \MySqlMemory\Account\Account(new Identity('u', '%'), hash: 'hash', password: 'first');
+        (new SecondaryPassword())->check($account, 'CACHING_SHA2_PASSWORD', true);
+        self::assertSame(['hash', 'first', null], [$account->hash, $account->password, $account->secondary]);
+    }
+
     public function testChangeRetainsThePreviousPrimaryAndReplacesAnOlderSecondary(): void
     {
         $session = (new Instance())->connect();
@@ -53,6 +60,9 @@ final class SecondaryPasswordTest extends TestCase
         yield 'empty old' => ['', "ALTER USER u IDENTIFIED BY 'next' RETAIN CURRENT PASSWORD", 3878];
         yield 'empty new' => ['first', "ALTER USER u IDENTIFIED BY '' RETAIN CURRENT PASSWORD", 3895];
         yield 'plugin change' => ['first', "ALTER USER u IDENTIFIED WITH sha256_password BY 'next' RETAIN CURRENT PASSWORD", 3894];
+        yield 'unknown changed plugin' => ['first', "ALTER USER u IDENTIFIED WITH UNTIL BY 'next' RETAIN CURRENT PASSWORD", 3894];
+        yield 'changed plugin before hash' => ['first', "ALTER USER u IDENTIFIED WITH sha256_password AS 'invalid' RETAIN CURRENT PASSWORD", 3894];
+        yield 'changed plugin before replacement' => ['first', "ALTER USER u IDENTIFIED WITH UNTIL BY 'next' REPLACE 'wrong' RETAIN CURRENT PASSWORD", 3894];
         yield 'set empty new' => ['first', "SET PASSWORD FOR u = '' RETAIN CURRENT PASSWORD", 3895];
     }
 

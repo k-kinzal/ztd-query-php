@@ -3568,3 +3568,14 @@ stored call is compared before and after creating its recipients and roles;
 earlier successful edges are rolled back when a later role condition fails.
 The initial unknown-account error is not evidence that an intrinsically
 contradictory ordinary value is valid.
+
+### Retained passwords and existing plugin identity
+
+An ALTER USER value retains both the requested authentication plugin and RETAIN
+CURRENT PASSWORD. The consumer compares that plugin with an existing account
+before loading a replacement plugin or validating its hash. An absent account
+still checks plugin availability before IF EXISTS can produce a note. The direct
+structure test repeats the same alteration across missing accounts, a different
+plugin, a matching plugin, an empty primary password and account deletion. Every
+setup statement and repeated observation is compared with MySQL. These outcomes
+are account-state dependencies; SQL Semantics does not supply an execution flag.

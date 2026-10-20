@@ -95,6 +95,7 @@ final class Options
     public function identify(Account $account, Identification $identification, bool $altered, int $passwordLength = 20, bool $retain = false): ?string
     {
         $credentials = new Credentials($this->release);
+        (new \MySqlMemory\Account\SecondaryPassword())->check($account, $identification->plugin->value ?? $account->plugin, $retain);
         $this->check($identification, $account->plugin);
         $plugin = $identification->plugin === null ? $account->plugin : $credentials->plugin($identification->plugin->value);
         $secret = $identification->secret->value ?? '';
