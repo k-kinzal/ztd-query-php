@@ -68,14 +68,25 @@
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveStatementRecordsNoFact</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>    {</span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE ROLE r&#039;</span>)-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>    }</span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a></span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderWritesTheRoles</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    {</span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;CREATE ROLE IF NOT EXISTS r1, r2@h&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;create role if not exists r1, r2@h&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    }</span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>}</span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    }</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderRejectsDuplicateAccountIdentitiesBeforeOperationConstruction</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    {</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;CREATE ROLE cannot unconditionally define the same account twice.&#039;</span>);</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">new</span> <span class="tok-id">CreateRole</span>(<span class="tok-id">false</span>, [<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Name\AccountName</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Statement\Identifier\Name</span>(<span class="tok-str">&#039;r&#039;</span>)), <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Name\AccountName</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Statement\Identifier\Name</span>(<span class="tok-str">&#039;r&#039;</span>))]);</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    }</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderKeepsConditionalDuplicates</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    {</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;CREATE ROLE IF NOT EXISTS r, r@`%`&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&quot;CREATE ROLE IF NOT EXISTS r, r@&#039;%&#039; &quot;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    }</span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderWritesTheRoles</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>    {</span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;CREATE ROLE IF NOT EXISTS r1, r2@h&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;create role if not exists r1, r2@h&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>}</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
