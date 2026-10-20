@@ -186,7 +186,7 @@
 <span class="src-line" id="L146" data-diff="added"><a class="ln" href="#L146">146</a>        <span class="tok-kw">try</span> {</span>
 <span class="src-line" id="L147" data-diff="added"><a class="ln" href="#L147">147</a>            (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Program\Expression\RowUse</span>())-&gt;<span class="tok-id">raise</span>(<span class="tok-var">$problem</span>-&gt;<span class="tok-id">operand</span>, <span class="tok-var">$session</span>, <span class="tok-id">false</span>);</span>
 <span class="src-line" id="L148" data-diff="added"><a class="ln" href="#L148">148</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">SqlError</span> <span class="tok-var">$error</span>) {</span>
-<span class="src-line" id="L149" data-diff="added"><a class="ln" href="#L149">149</a>            <span class="tok-kw">return</span> <span class="tok-var">$error</span>;</span>
+<span class="src-line" id="L149" data-diff="added"><a class="ln" href="#L149">149</a>            <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Session\Problem\Precision</span>())-&gt;<span class="tok-id">legacy</span>(<span class="tok-var">$error</span>, <span class="tok-var">$session</span>-&gt;<span class="tok-id">settings</span>()-&gt;<span class="tok-id">release</span>());</span>
 <span class="src-line" id="L150" data-diff="added"><a class="ln" href="#L150">150</a>        }</span>
 <span class="src-line" id="L151" data-diff="added"><a class="ln" href="#L151">151</a>    }</span>
 <span class="src-line" id="L152" data-diff="added"><a class="ln" href="#L152">152</a></span>
@@ -201,7 +201,7 @@
 <span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a>            }</span>
 <span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a>            (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Program\Expression\SelectionUse</span>())-&gt;<span class="tok-id">raise</span>(<span class="tok-var">$selection</span>, <span class="tok-var">$session</span>, <span class="tok-id">false</span>, <span class="tok-var">$viewDefinition</span>);</span>
 <span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">SqlError</span> <span class="tok-var">$error</span>) {</span>
-<span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a>            <span class="tok-kw">return</span> <span class="tok-var">$error</span>;</span>
+<span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a>            <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Session\Problem\Precision</span>())-&gt;<span class="tok-id">legacy</span>(<span class="tok-var">$error</span>, <span class="tok-var">$session</span>-&gt;<span class="tok-id">settings</span>()-&gt;<span class="tok-id">release</span>());</span>
 <span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a>        }</span>
 <span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a>    }</span>
 <span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a></span>
