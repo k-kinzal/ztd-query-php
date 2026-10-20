@@ -159,8 +159,8 @@ final class Dictionary
             foreach ($this->temporaries->tables[$schema->name] ?? [] as $table) {
                 $declarations[] = $table->definition->declaration;
             }
-            foreach ($schema->tables as $name => $table) {
-                if ($this->temporaries->table($schema->name, $name) === null) {
+            foreach ($schema->tables as $table) {
+                if ($this->temporaries->table($schema->name, $table->definition->name) === null) {
                     $declarations[] = $table->definition->declaration;
                 }
             }

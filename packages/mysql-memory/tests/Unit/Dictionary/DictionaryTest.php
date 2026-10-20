@@ -72,6 +72,22 @@ final class DictionaryTest extends TestCase
         self::assertSame(['a', 'b'], [$declarations[0]->name->name->value, $declarations[1]->name->name->value]);
     }
 
+    public function testDeclarationsPreservesNumericNamesAndTemporaryShadowing(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE `1`; USE `1`; CREATE TABLE `2` (base_value INT); CREATE TABLE `3` (other_value INT)');
+        $session->query('CREATE TEMPORARY TABLE `2` (temporary_value INT)');
+        $declarations = $session->instance->dictionary->declarations();
+        self::assertSame(['2', '3'], [$declarations[0]->name->name->value, $declarations[1]->name->name->value]);
+        $temporary = $session->query('INSERT INTO `2` VALUES(9); SELECT * FROM `2`')[1];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $temporary);
+        self::assertSame([['9']], $temporary->rows);
+        $session->query('DROP TEMPORARY TABLE `2`');
+        $base = $session->query('INSERT INTO `2` VALUES(7); SELECT * FROM `2`')[1];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $base);
+        self::assertSame([['7']], $base->rows);
+    }
+
     public function testDeclarationsListsTheViewsAfterTheTablesOfADatabase(): void
     {
         $session = (new Instance())->connect();

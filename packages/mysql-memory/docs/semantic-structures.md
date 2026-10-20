@@ -29,6 +29,15 @@ its predicate, key operands and limit, so an empty table cannot hide those
 expressions. Subsequent missing-column, key or value errors remain observations
 to explain; creating the cursor does not certify every later operand.
 
+A missing-table observation can establish a populated table from a qualified
+identity already present in the semantic operands. Names containing dots remain
+whole identities, and numeric names remain strings even where PHP converts
+array keys to integers. Every setup statement and the unchanged retry are
+compared. The fixture supplies requested column names and one integer row;
+it does not manufacture indexes, partitions or other prerequisites. Subsequent
+errors remain separate observations, rather than being counted as a completed
+state witness.
+
 Temporal input interpretation consumes decoded literal and variable operands
 from SQL Semantics in their contextual order. The input adapter retains view
 context and input ranges only while reading the statement. A refused temporal

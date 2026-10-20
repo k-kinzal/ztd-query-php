@@ -156,6 +156,9 @@ final class Comparison
             $steps = (new CatalogHistory())->steps($node, $code);
         }
         if ($steps === []) {
+            $steps = (new Table\History())->steps($node, $before, $session->variables->database);
+        }
+        if ($steps === []) {
             /**
              * A failed legacy rename may already establish the needed occupancy.
              * Its unchanged retry observes that partial effect; no fixture is required.
