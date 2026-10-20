@@ -14,6 +14,8 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * `CREATE ROLE [IF NOT EXISTS] role, …` (8.0+): a request to create roles, which are locked accounts.
  *
+ * Unconditional definitions exclude anonymous usernames. With IF NOT EXISTS,
+ * an anonymous operand can refer to an existing ordinary user and is retained.
  * Mirrors PT_create_role. Rule: MYSQL-CREATE-ROLE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-role.html. Status: Implemented.
  *
@@ -37,6 +39,7 @@ final class CreateRole implements Statement
     public function __construct(public readonly bool $ifNotExists, array $roles)
     {
         $this->roles = Check::listOf($roles, AccountName::class, 'CREATE ROLE names at least one role.', 1);
+        Check::input($this->ifNotExists || array_filter($this->roles, static fn (AccountName $role): bool => $role->username() === '') === [], 'CREATE ROLE cannot define an anonymous account.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

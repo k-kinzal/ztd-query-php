@@ -42,6 +42,17 @@ final class StructureSessionTransitionTest extends TestCase
             [new M\Server\Transaction\Xa\XaPrepare($xid), 1399],
             [new M\Server\Transaction\Xa\XaRollback($xid), 1397],
         ];
+        $role = new M\Name\AccountName(new Name("role ' あ"));
+        $user = new M\Name\AccountName(new Name('role_recipient'));
+        foreach ([GrammarRelease::MySql8044, GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
+            foreach ([
+                [new M\Account\DropRole(false, [$role]), 1396],
+                [new M\Account\Privilege\GrantRoles([new M\Account\Privilege\Item\GrantedRole($role)], [$user, new M\Name\CurrentUser(), new M\Name\CurrentUser()]), 3523],
+                [new M\Account\AlterDefaultRole(false, $user, new M\Account\User\RoleSelection(M\Account\User\RoleSet::Named, [$role])), 3530],
+            ] as $index => [$node, $code]) {
+                yield $release->value . ':role:' . $index => [$release, $node, $code];
+            }
+        }
         $resource = new M\Account\ResourceGroup\ResourceGroupName(new Name(''));
         foreach ([GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
             foreach ([new M\Account\ResourceGroup\AlterResourceGroup($resource), new M\Account\ResourceGroup\DropResourceGroup($resource), new M\Account\ResourceGroup\SetResourceGroup($resource)] as $index => $node) {

@@ -245,6 +245,12 @@
         "offset": "?int",
         "roleExpected": "bool"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\Role\\RefusedCreateRole": {
+        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateRole"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\Role\\RefusedGrantRoles": {
+        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredGrantRoles"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RoutineColumnPrivilege": {
         "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
         "offset": "int"
@@ -2781,6 +2787,10 @@
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse",
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateRole": {
+        "ifNotExists": "bool",
+        "roles": "array"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateTable": {
         "elements": "array",
         "enclosed": "bool",
@@ -2803,6 +2813,11 @@
         "table": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget",
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredGrantRoles": {
+        "roles": "array",
+        "users": "array",
+        "withAdminOption": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery": {
         "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",

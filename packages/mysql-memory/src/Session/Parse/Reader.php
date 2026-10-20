@@ -229,6 +229,12 @@ final class Reader
      */
     public function template(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
     {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles) {
+            return (new Definition\RoleGrantInput())->refused($failure, $statement, $session);
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole) {
+            return (new Definition\RoleCreationInput())->refused($failure, $statement, $session);
+        }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Privilege\RefusedRevokeLevel) {
             return (new Definition\RevocationInput())->refused($failure, $statement, $session);
         }

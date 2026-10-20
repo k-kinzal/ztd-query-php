@@ -24,11 +24,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantOptionRight;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Operation;
 
 /**
@@ -305,39 +303,9 @@ final class GrantCommand implements Command
      */
     public function roles(GrantRoles $statement, Operation $operation, Session $session): void
     {
-        $names = new Names($session->settings()->release());
-        $listed = array_map(static fn (GrantedRole $role): AccountName => $role->role, $statement->roles);
-        $names->check([...$listed, ...$statement->users]);
+        $grants = new Role\Grants();
+        $grants->header($statement, $session);
         (new Levels($session->settings()->release()))->parsed($operation, $session);
-        $accounts = $session->instance->accounts;
-        $users = array_map(static fn ($user): Identity => $names->identity($user, $session), $statement->users);
-        $roles = array_map(static fn (AccountName $role): Identity => $names->identity($role, $session), $listed);
-        $saved = $accounts->copy();
-        try {
-            foreach ($users as $user) {
-                if ($user->user === '') {
-                    throw AccountError::AnonymousRoleGrantee->error();
-                }
-                if ($accounts->find($user) === null) {
-                    throw AccountError::UnknownAuthorizationId->error($user->authorization());
-                }
-                foreach ($roles as $role) {
-                    if ($accounts->find($role) === null) {
-                        throw AccountError::UnknownAuthorizationId->error($role->authorization());
-                    }
-                    if ($role->user === '') {
-                        throw AccountError::FailedRoleGrant->error($role->backquoted(), $user->backquoted());
-                    }
-                    if ($role->key() === $user->key() || $accounts->reaches($role, $user)) {
-                        throw AccountError::RoleGrantedToItself->error($user->backquoted(), $role->backquoted());
-                    }
-                    $accounts->grant($role, $user, $statement->withAdminOption);
-                }
-            }
-        } catch (SqlError $failure) {
-            $accounts->restore($saved);
-            $accounts->reload();
-            throw $failure;
-        }
+        $grants->apply($statement, $session);
     }
 }

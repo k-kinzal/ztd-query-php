@@ -21,7 +21,9 @@ histories do not label unrelated matching errors as state-dependent or certify
 that all constructible values have been exercised.
 
 Catalog histories also establish missing foreign-server entries, user resource
-groups and open handler cursors under the original referenced names. Handler fixtures contain four rows
+groups, role accounts and open handler cursors under the original referenced names.
+Role histories create the referenced roles and recipients, establish grants needed
+by DEFAULT ROLE, and repeat the unchanged request. Handler fixtures contain four rows
 and an index with enough columns for the original seek. The repeated read keeps
 its predicate, key operands and limit, so an empty table cannot hide those
 expressions. Subsequent missing-column, key or value errors remain observations
@@ -44,7 +46,7 @@ A rejected constructor keeps its completed arguments so the next trial can resam
 
 `Scalar` and `RowOperand` are separate roles. A row contains at least two fields; a subquery with a fixed multi-column projection has a row role, while an unknown catalog-dependent width remains a resolution dependency. Ordinary comparisons and membership constructors reject incompatible fixed shapes. Stored programs additionally need operand roles whose preparation is deferred until an instruction is reached. These values preserve their complete operands and do not implement `Scalar`. A stored definition can therefore retain a row-valued condition, assignment or projection without making that value valid in an ordinary scalar position.
 
-`DeferredSelection` retains a SELECT's complete item list, modifiers, input relation, WHERE and HAVING predicates, grouping, ordering and row limit. `DeferredOrderItem` and `DeferredGrouping` preserve row-valued and deferred sort operands while ordinary items retain their scalar or output-ordinal roles. `DeferredAssignments` retains all SET items and their written scopes. Their consumers bind names and subqueries from those structures in the invocation's current state. Direct native tests reuse the same stored definition and CALL object before and after creating a table, adding a column, populating it and dropping it. Standalone selections with deferred operands are refused as ordinary query values; their typed `RefusedSelection` diagnostic retains the semantic dependencies needed to select the correct SQL error. It retains no source SQL or parser AST. Other query forms, including set operations and window clauses, still use their existing query rules; this extension does not establish the deferred-operand property for every query form.
+`DeferredSelection` retains a SELECT's complete item list, modifiers, INTO destination, input relation, WHERE and HAVING predicates, grouping, ordering and row limit. INTO targets have their own binding facts even when a projection or filter has a deferred role. INSERT and REPLACE retain both the destination query and their outer write target, so an earlier missing-database condition remains observable. `DeferredOrderItem` and `DeferredGrouping` preserve row-valued and deferred sort operands while ordinary items retain their scalar or output-ordinal roles. `DeferredAssignments` retains all SET items and their written scopes. Their consumers bind names and subqueries from those structures in the invocation's current state. Direct native tests reuse the same stored definition and CALL object before and after creating a table, adding a column, populating it and dropping it. Standalone selections with deferred operands are refused as ordinary query values; their typed `RefusedSelection` diagnostic retains the semantic dependencies needed to select the correct SQL error. It retains no source SQL or parser AST. Other query forms, including set operations and window clauses, still use their existing query rules; this extension does not establish the deferred-operand property for every query form.
 
 Deferred CAST/CONVERT operands, IF arguments and CASE branches retain their complete expression roles. An unselected result branch can still require preparation when its enclosing SELECT is reached. The same stored instruction is tested while skipped, reached and skipped again; a successful skipped call does not erase prior conditions on every release.
 
@@ -420,7 +422,7 @@ Database encryption uses the two-case `Encryption` enum. An optional decoded spe
 
 Legacy INSERT lowering retains optimizer hints in the semantic head. A qualified wildcard in its column list requires a legacy profile, so construction rejects combinations with modern-only hints. Profile selection checks the rendered structure against the selected grammar before direct execution; the executor still receives the constructed objects.
 
-`GrantRoles` and `RevokeRoles` expose nonempty lists of `GrantedRole`, rather than the general privilege union. Static privileges and column lists cannot inhabit those role operands. Lowering refuses such SQL before publishing a statement, retaining decoded diagnostic operands and integer source positions only. Recipient-name failures precede role-list failures; role errors retain list order and can be followed by later program warnings. Direct properties generate role operands from their public constructor types, create the required accounts, and verify REVOKE completion with unrelated session text. Anonymous role operands remain legal for REVOKE; native probes show that granting an anonymous account as a role fails even when it exists. This separate GRANT-domain defect remains open. These bounded histories do not classify the unrestricted campaign's unresolved SQL errors as successes.
+`GrantRoles` and `RevokeRoles` expose nonempty lists of `GrantedRole`, rather than the general privilege union. Static privileges and column lists cannot inhabit those role operands. Lowering refuses such SQL before publishing a statement, retaining decoded diagnostic operands and integer source positions only. Recipient-name failures precede role-list failures; role errors retain list order and can be followed by later program warnings. Direct properties generate role operands from their public constructor types, create the required accounts, and verify REVOKE completion with unrelated session text. Anonymous role operands remain legal for REVOKE; native probes show that granting an anonymous account as a role fails even when it exists. Ordinary GRANT now excludes anonymous operands and explicit self-grants; complete deferred instructions preserve those conditions for stored and prepared invocation. These bounded histories do not classify the unrestricted campaign's unresolved SQL errors as successes.
 
 `GrantPrivileges` and `RevokePrivileges` now require `Privilege` operands: static privileges, dynamic privileges or ALL. A role with a host cannot enter those lists. Input lowering reports its decoded diagnostic and source position, preserving preceding recipient failures and warnings. A completed unqualified privilege target retains its need for a default database at the input boundary; the connection supplies that state. Direct properties generate privilege operands from constructor types and execute REVOKE IF EXISTS with an existing account, using table scope for column privileges and global scope otherwise. Missing grants remain the command's documented warning behavior. These bounded histories do not establish the validity of every privilege/level combination in the unrestricted campaign.
 
@@ -3540,3 +3542,29 @@ settings consume the leading integer digits of their numeral, including decimal
 and exponent spellings, before unsigned clamping and narrowing. Retained native
 counterexamples and reset histories check both the returned conditions and the
 settings that survive an earlier failure.
+
+### Anonymous accounts in role definitions
+
+Unconditional `CreateRole` excludes anonymous usernames. An unreached procedure
+instruction may retain the complete account list as `DeferredCreateRole`, which
+is a program instruction and does not implement the ordinary statement role.
+Its consumer applies account ordering, diagnostics and the implicit commit
+without reading source SQL. Conditional `CreateRole` keeps anonymous operands:
+`CREATE ROLE IF NOT EXISTS ''` succeeds with a note after `CREATE USER ''`.
+The same conditional structure must therefore remain valid across missing and
+existing account states. Creating a user is also the correct setup for a role
+reference: account references can name ordinary users, including anonymous
+accounts in DROP ROLE and REVOKE. Setup does not replace the tested operands.
+
+### Role grants and invocation conditions
+
+`GrantRoles` excludes anonymous roles, explicitly anonymous recipients and
+explicit self-grants after account-name trimming and host case folding.
+CURRENT_USER remains a session dependency. `DeferredGrantRoles` retains the
+complete role list, recipient list and ADMIN OPTION for stored instructions and
+prepared execution, without implementing the ordinary statement interface.
+Resolving account existence remains the consumer's responsibility. The same
+stored call is compared before and after creating its recipients and roles;
+earlier successful edges are rolled back when a later role condition fails.
+The initial unknown-account error is not evidence that an intrinsically
+contradictory ordinary value is valid.

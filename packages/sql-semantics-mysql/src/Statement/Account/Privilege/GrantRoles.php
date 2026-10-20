@@ -16,7 +16,9 @@ use SqlSemantics\Statement\Snapshot;
  * `GRANT role, … TO account, … [WITH ADMIN OPTION]` (8.0+): a request to grant roles.
  *
  * The nonempty role list accepts only GrantedRole operands. Static and
- * column privileges are refused by input lowering before publication.
+ * column privileges are refused by input lowering before publication. Anonymous
+ * account operands and explicit self-grants belong to DeferredGrantRoles when
+ * retained as stored or prepared instructions. CURRENT_USER remains unresolved.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-roles. Status: Implemented.
  *
  * @visibility public
@@ -46,6 +48,7 @@ final class GrantRoles implements Statement, PrivilegeChange
     {
         $this->roles = Check::listOf($roles, GrantedRole::class, 'GRANT names at least one role.', 1);
         $this->users = Check::listOf($users, Account::class, 'GRANT names at least one account.', 1);
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Account\Privilege\RoleGrants())->contradictory($this->roles, $this->users), 'A role grant excludes anonymous operands and explicit self-grants.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

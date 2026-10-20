@@ -15,6 +15,17 @@ use SqlSemantics\Platform\MySql\Statement\Account\CreateRole;
 #[Medium]
 final class CreateRoleTest extends TestCase
 {
+    public function testRenderPreservesAConditionalAnonymousAccount(): void
+    {
+        self::assertSame('CREATE ROLE IF NOT EXISTS ``', (new Semantics(Dialect::MySql))->analyze("CREATE ROLE IF NOT EXISTS ''")->toString());
+    }
+
+    public function testRenderRequiresANamedRole(): void
+    {
+        $this->expectExceptionMessage('CREATE ROLE cannot define an anonymous account.');
+        new CreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name(" \t"))]);
+    }
+
     public function testDeriveStatementRecordsNoFact(): void
     {
         self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE ROLE r')->facts->diagnostics);

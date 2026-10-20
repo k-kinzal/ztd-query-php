@@ -15,6 +15,17 @@ use SqlSemantics\Platform\MySql\Lowering\Account\RoleRule;
 #[Medium]
 final class RoleRuleTest extends TestCase
 {
+    public function testCreateRetainsEveryAccountWhenAnAnonymousRoleIsRefused(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze("CREATE ROLE r, ''");
+            self::fail('An anonymous role is not an ordinary CREATE ROLE value.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole::class, $failure->problem);
+            self::assertSame(['r', ''], array_map(static fn ($role): string => $role->username(), $failure->problem->request->roles));
+        }
+    }
+
     public function testStatementLowersEveryRoleStatement(): void
     {
         self::assertSame('SET DEFAULT ROLE ALL TO u', (new Semantics(Dialect::MySql))->analyze('set default role all to u')->toString());

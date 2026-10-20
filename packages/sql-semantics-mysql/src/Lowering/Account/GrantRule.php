@@ -59,11 +59,7 @@ final class GrantRule
         $clauses = new ClauseRule($this->lowering);
 
         return match ($form->signature) {
-            'grant: GRANT role_or_privilege_list TO_SYM user_list opt_with_admin_option' => new GrantRoles(
-                $privileges->roles($form->node(1), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
-                $this->lowering->users->accounts($form->node(3)),
-                $this->admin($form->node(4)),
-            ),
+            'grant: GRANT role_or_privilege_list TO_SYM user_list opt_with_admin_option' => $this->roles($form),
             'grant: GRANT role_or_privilege_list ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => $this->checked($this->request($form, false), $form),
             'grant: GRANT ALL opt_privileges ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => $this->all($form),
             'grant: GRANT PROXY_SYM ON_SYM user TO_SYM user_list opt_grant_option' => new GrantProxy(
@@ -73,6 +69,24 @@ final class GrantRule
             ),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Preserves the entire account list when ordinary role-grant invariants fail.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the account operands contradict GRANT
+     */
+    public function roles(Form $form): GrantRoles
+    {
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0;
+        $roles = $this->privileges->roles($form->node(1), $end);
+        $users = $this->lowering->users->accounts($form->node(3));
+        $admin = $this->admin($form->node(4));
+        if ((new \SqlSemantics\Platform\MySql\Rules\Account\Privilege\RoleGrants())->contradictory($roles, $users)) {
+            $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRoles($roles, $users, $admin);
+            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), $end, false);
+        }
+        return new GrantRoles($roles, $users, $admin);
     }
 
     /**

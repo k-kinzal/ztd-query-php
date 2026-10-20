@@ -60,10 +60,7 @@ final class CreateUserCommand implements Command
         $session->transaction->commit();
         $names = new Names($session->settings()->release());
         if ($statement instanceof CreateRole) {
-            $names->check($statement->roles);
-            $roles = array_map(static fn ($role): Identity => $names->identity($role, $session), $statement->roles);
-
-            return $this->roles($roles, $statement->ifNotExists, $session, $context);
+            return (new Role\Definitions())->execute($statement, $session, $context);
         }
         assert($statement instanceof CreateUser);
         $names->check([...$names->users($statement->users), ...$statement->defaultRoles]);
@@ -327,32 +324,6 @@ final class CreateUserCommand implements Command
      */
     public function roles(array $roles, bool $ifNotExists, Session $session, Context $context): Reply
     {
-        $accounts = $session->instance->accounts;
-        $failed = [];
-        $created = [];
-        foreach ($roles as $role) {
-            if ($role->user === '') {
-                throw (new Names($session->settings()->release()))->failure('CREATE ROLE', 'anonymous user');
-            }
-            (new Names())->ascii($role, 1, $context->diagnostics);
-            if ($accounts->find($role) !== null || $accounts->stored($role->stored()) !== null || isset($created[$role->stored()->key()])) {
-                $failed[] = $role;
-                continue;
-            }
-            $created[$role->stored()->key()] = $role;
-        }
-        if ($failed !== [] && !$ifNotExists) {
-            $accounts->reload();
-            throw (new Names($session->settings()->release()))->failure('CREATE ROLE', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
-        }
-        foreach ($failed as $identity) {
-            $context->diagnostics->note(AccountError::UserAlreadyExists, AccountError::UserAlreadyExists->message($identity->quoted()));
-        }
-        foreach ($created as $role) {
-            $accounts->add(Account::role($role));
-            (new Names())->ascii($role, 8, $context->diagnostics);
-        }
-
-        return new Completion(0, 0, $context->diagnostics->raised());
+        return (new Role\Definitions())->create($roles, $ifNotExists, $session, $context);
     }
 }

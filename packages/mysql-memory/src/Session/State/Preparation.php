@@ -59,4 +59,8 @@ final class Preparation
      */
     public ?WeakMap $inspections = null;
 
+    /**
+     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Account\CreateRole, array<int, bool>>|null Role authentication initialized by each stored definition operand
+     */
+    public ?WeakMap $roleCreations = null;
 }

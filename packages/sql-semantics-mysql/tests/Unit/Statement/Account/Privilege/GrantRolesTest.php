@@ -15,6 +15,12 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
 #[Medium]
 final class GrantRolesTest extends TestCase
 {
+    public function testRenderRequiresAConsistentOrdinaryGrant(): void
+    {
+        $this->expectExceptionMessage('A role grant excludes anonymous operands and explicit self-grants.');
+        new GrantRoles([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r')))], [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r'))]);
+    }
+
     public function testDeriveStatementNeedsNoExpressionBindings(): void
     {
         self::assertSame([], (new Semantics(Dialect::MySql))->analyze('GRANT r TO u')->facts->diagnostics);
