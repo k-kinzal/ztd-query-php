@@ -244,9 +244,6 @@ final class Problems
     {
         (new OpenedTables())->prepare($this->reached($operation->statement), $operation->facts, $session);
         $missing = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof MissingTable));
-        if ($missing === []) {
-            return;
-        }
         $read = [];
         foreach ($this->reached($operation->statement) as $node) {
             if ($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) {
@@ -255,6 +252,11 @@ final class Problems
         }
         foreach ($missing as $diagnostic) {
             if (isset($read[spl_object_id($diagnostic->name)])) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+            }
+        }
+        foreach ($diagnostics as $diagnostic) {
+            if ($diagnostic instanceof UnpartitionedTable || $diagnostic instanceof UnknownPartition) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }

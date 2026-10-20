@@ -473,4 +473,14 @@ final class ProblemsTest extends TestCase
         self::assertCount(1, (new Problems())->pending($ungrouped, $session));
     }
 
+    public function testOpenedRefusesAnUnpartitionedTargetBeforeSampling(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1747);
+        $this->expectExceptionMessage('PARTITION () clause on non partitioned table');
+        $session->query('UPDATE t PARTITION(p) TABLESAMPLE BERNOULLI(1) SET a=1');
+    }
+
 }
