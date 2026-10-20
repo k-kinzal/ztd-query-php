@@ -17,14 +17,14 @@ final class CatalogQuery
     /**
      * Reads columns in their declared ordinal order.
      *
-     * @return list<array{column_name: string, data_type: string, character_maximum_length: ?string, numeric_precision: ?string, numeric_scale: ?string, is_nullable: string, column_default: ?string, udt_name: string}>
+     * @return list<array{column_name: string, data_type: string, character_maximum_length: ?string, numeric_precision: ?string, numeric_scale: ?string, is_nullable: string, column_default: ?string, udt_name: string, is_identity: string, is_generated: string}>
      */
     public function columns(PDO $pdo, string $schema, string $table): array
     {
         $stmt = $pdo->prepare(
             'SELECT column_name, data_type, character_maximum_length, '
             . 'numeric_precision, numeric_scale, is_nullable, column_default, '
-            . 'udt_name '
+            . 'udt_name, is_identity, is_generated '
             . 'FROM information_schema.columns '
             . 'WHERE table_schema = :schema AND table_name = :table '
             . 'ORDER BY ordinal_position'
@@ -32,7 +32,7 @@ final class CatalogQuery
         $stmt->execute(['schema' => $schema, 'table' => $table]);
 
         /**
-         * @var list<array{column_name: string, data_type: string, character_maximum_length: ?string, numeric_precision: ?string, numeric_scale: ?string, is_nullable: string, column_default: ?string, udt_name: string}> $columns
+         * @var list<array{column_name: string, data_type: string, character_maximum_length: ?string, numeric_precision: ?string, numeric_scale: ?string, is_nullable: string, column_default: ?string, udt_name: string, is_identity: string, is_generated: string}> $columns
          */
         $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $columns;
@@ -48,13 +48,15 @@ final class CatalogQuery
         $pkStmt = $pdo->prepare(
             'SELECT a.attname '
             . 'FROM pg_index i '
+            . 'JOIN pg_class c ON c.oid = i.indrelid '
+            . 'JOIN pg_namespace n ON n.oid = c.relnamespace '
             . 'JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) '
-            . 'WHERE i.indrelid = :table_oid::regclass AND i.indisprimary'
+            . 'WHERE n.nspname = :schema AND c.relname = :table AND i.indisprimary '
+            . 'ORDER BY array_position(i.indkey::int2[], a.attnum)'
         );
 
         try {
-            $qualifiedTable = $schema === 'public' ? "\"{$table}\"" : "\"{$schema}\".\"{$table}\"";
-            $pkStmt->execute(['table_oid' => $qualifiedTable]);
+            $pkStmt->execute(['schema' => $schema, 'table' => $table]);
             /**
              * @var list<array{attname: string}> $pkRows
              */

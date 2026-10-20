@@ -4,44 +4,52 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite\Schema;
 
+use SqlFixture\Analysis\NumericLiteral;
+use SqlFixture\Schema\TypeShape;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
+use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
+use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
+use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
+
 /**
- * TypeDeclaration.
+ * Reads the declared type of a column and the numbers written after it.
+ *
+ * The analysis decides the declared type as SQLite records it, which drops a
+ * trailing GENERATED ALWAYS. A column without a type has the BLOB affinity and
+ * is named BLOB.
  *
  * @visibility root
  */
 final class TypeDeclaration
 {
     /**
-     * Reads the type name without consuming column constraints.
+     * Returns the upper-case type name and the sizes written in its parentheses.
      */
-    public function extractType(string $rest): string
+    public function shape(ColumnDomain $declared, ?TypeName $written): TypeShape
     {
-        if (preg_match('/^\w+/', $rest, $matches) === 1) {
-            return strtoupper($matches[0]);
-        }
+        $arguments = $written === null ? [] : $written->arguments;
+        $name = $written === null || $arguments === []
+            ? strtoupper($declared->declared)
+            : strtoupper(implode(' ', array_map(static fn (Word $word): string => $word->name->value, $written->words)));
 
-        return 'BLOB';
+        return TypeShape::fromNumbers($name === '' ? 'BLOB' : $name, array_map(fn (SignedNumber $number): int => $this->number($number), $arguments));
     }
 
     /**
-     * Interprets the declared type parameters before column constraints are applied.
+     * Returns the whole part of the number a type argument is written with, with its sign.
      */
-    public function parse(string $rest): \SqlFixture\Schema\TypeShape
+    public function number(SignedNumber $number): int
     {
-        $type = $this->extractType($rest);
-        $length = null;
-        $precision = null;
-        $scale = null;
+        $literal = $number->number;
+        $value = match (true) {
+            $literal instanceof IntegerLiteral => (int) (new NumericLiteral())->decode($literal->digits),
+            $literal instanceof HexLiteral => (int) (new NumericLiteral())->decode('0x' . $literal->digits),
+            default => (int) (new NumericLiteral())->decode(($literal->whole === '' ? '0' : $literal->whole) . ($literal->fraction === null ? '' : '.' . $literal->fraction) . ($literal->exponent === null ? '' : 'e' . $literal->exponent)),
+        };
 
-        if (preg_match('/^(\w+)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/', $rest, $typeMatches) === 1) {
-            $type = strtoupper($typeMatches[1]);
-            if (isset($typeMatches[3])) {
-                $precision = (int) $typeMatches[2];
-                $scale = (int) $typeMatches[3];
-            } else {
-                $length = (int) $typeMatches[2];
-            }
-        }
-        return new \SqlFixture\Schema\TypeShape($type, $length, $precision, $scale);
+        return $number->sign === NumberSign::Minus ? -$value : $value;
     }
 }

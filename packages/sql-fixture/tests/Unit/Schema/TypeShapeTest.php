@@ -20,4 +20,20 @@ final class TypeShapeTest extends TestCase
         self::assertSame(2, $shape->scale);
         self::assertTrue($shape->autoIncrement);
     }
+
+    public function testFromNumbersReadsOneNumberAsALengthAndTwoAsAPrecisionAndScale(): void
+    {
+        $length = Subject::fromNumbers('VARCHAR', [30]);
+        $decimal = Subject::fromNumbers('DECIMAL', [8], true);
+        $both = Subject::fromNumbers('NUMERIC', [10, 2], true);
+        $plain = Subject::fromNumbers('TEXT', []);
+        $serial = Subject::fromNumbers('BIGINT', [], false, true);
+
+        self::assertSame([30, null, null], [$length->length, $length->precision, $length->scale]);
+        self::assertSame([null, 8, 0], [$decimal->length, $decimal->precision, $decimal->scale]);
+        self::assertSame([null, 10, 2], [$both->length, $both->precision, $both->scale]);
+        self::assertSame(['TEXT', null, null, null], [$plain->type, $plain->length, $plain->precision, $plain->scale]);
+        self::assertTrue($serial->autoIncrement);
+        self::assertFalse($plain->autoIncrement);
+    }
 }

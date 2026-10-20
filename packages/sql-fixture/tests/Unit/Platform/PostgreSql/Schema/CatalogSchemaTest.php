@@ -7,17 +7,24 @@ namespace Tests\Unit\Platform\PostgreSql\Schema;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use SqlFixture\Platform\PostgreSql\Schema\CatalogExpression;
 use SqlFixture\Platform\PostgreSql\Schema\CatalogSchema as Subject;
+use SqlFixture\Platform\PostgreSql\Schema\QualifiedName;
 
 #[CoversClass(Subject::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogColumn::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TableSchema::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogColumn::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(CatalogExpression::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogQuery::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(QualifiedName::class)]
 final class CatalogSchemaTest extends TestCase
 {
-    public function testFetchSchemaFromInformationSchemaRetainsColumnMetadata(): void
+    public function testFetchSchemaRetainsColumnMetadataAndPrimaryKey(): void
     {
         $pdo = new PDO(
             (string) getenv('SQL_FIXTURE_PGSQL_DSN'),
@@ -30,8 +37,10 @@ final class CatalogSchemaTest extends TestCase
         self::assertNotFalse($statement);
         $namespace = $statement->fetchColumn();
         self::assertIsString($namespace);
-        $schema = (new Subject())->fetchSchemaFromInformationSchema($pdo, $namespace . '.users');
+        $semantics = \Tests\Statement\PostgreSqlStatements::semantics();
+        $schema = (new Subject(new CatalogExpression($semantics), new QualifiedName($semantics)))->fetchSchema($pdo, $namespace . '.users');
         self::assertSame('users', $schema->tableName);
+        self::assertSame(['id'], $schema->primaryKeys);
         self::assertFalse($schema->columns['id']->nullable);
         self::assertSame(30, $schema->columns['name']->length);
         self::assertSame('ready', $schema->columns['name']->default);
@@ -45,13 +54,15 @@ final class CatalogSchemaTest extends TestCase
             (string) getenv('SQL_FIXTURE_PGSQL_PASSWORD'),
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_STRINGIFY_FETCHES => true],
         );
-        $pdo->exec('CREATE TEMPORARY TABLE prices (id SERIAL, amount NUMERIC(7,2), note TEXT)');
+        $pdo->exec('CREATE TEMPORARY TABLE prices (id SERIAL, amount NUMERIC(7,2), note TEXT, total NUMERIC GENERATED ALWAYS AS (amount * 2) STORED, seq BIGINT GENERATED ALWAYS AS IDENTITY)');
         $statement = $pdo->query('SELECT pg_my_temp_schema()::regnamespace::text');
         self::assertNotFalse($statement);
         $namespace = $statement->fetchColumn();
         self::assertIsString($namespace);
-        $schema = (new Subject())->fetchSchemaFromInformationSchema($pdo, $namespace . '.prices');
+        $semantics = \Tests\Statement\PostgreSqlStatements::semantics();
+        $schema = (new Subject(new CatalogExpression($semantics), new QualifiedName($semantics)))->fetchSchema($pdo, $namespace . '.prices');
         self::assertSame('prices', $schema->tableName);
+        self::assertSame([], $schema->primaryKeys);
         self::assertTrue($schema->columns['id']->autoIncrement);
         self::assertFalse($schema->columns['id']->nullable);
         self::assertNull($schema->columns['id']->default);
@@ -65,5 +76,22 @@ final class CatalogSchemaTest extends TestCase
         self::assertNull($schema->columns['note']->precision);
         self::assertNull($schema->columns['note']->scale);
         self::assertNull($schema->columns['note']->default);
+        self::assertTrue($schema->columns['total']->generated);
+        self::assertTrue($schema->columns['seq']->autoIncrement);
+    }
+
+    public function testFetchSchemaRejectsAnUnknownTable(): void
+    {
+        $pdo = new PDO(
+            (string) getenv('SQL_FIXTURE_PGSQL_DSN'),
+            (string) getenv('SQL_FIXTURE_PGSQL_USER'),
+            (string) getenv('SQL_FIXTURE_PGSQL_PASSWORD'),
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false],
+        );
+        $semantics = \Tests\Statement\PostgreSqlStatements::semantics();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Table not found: missing_table');
+        (new Subject(new CatalogExpression($semantics), new QualifiedName($semantics)))->fetchSchema($pdo, 'missing_table');
     }
 }

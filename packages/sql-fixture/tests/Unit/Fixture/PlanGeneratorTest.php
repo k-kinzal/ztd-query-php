@@ -85,7 +85,6 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]
@@ -99,7 +98,6 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 #[UsesClass(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class)]
 #[UsesClass(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class)]
 #[UsesClass(\SqlFixture\Fixture\Exception\UnknownOverrideColumnException::class)]
@@ -141,6 +139,8 @@ use SqlFixture\Schema\TableSchema;
 #[CoversClass(\SqlFixture\Fixture\Generation\RowBindings::class)]
 #[UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
 #[UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 #[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 final class PlanGeneratorTest extends TestCase
 {

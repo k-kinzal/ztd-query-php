@@ -4,98 +4,66 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
-use PhpMyAdmin\SqlParser\Components\DataType;
-use PhpMyAdmin\SqlParser\Components\OptionsArray;
-use PhpMyAdmin\SqlParser\Statements\CreateStatement;
+use SqlFixture\Analysis\CreateTableOperation;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\Exception\UnanalyzedColumnException;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as WrittenColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
+use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Operation;
 
 /**
- * Reads the table name, columns and primary key from a CREATE TABLE statement.
+ * Reads the columns and primary key of a CREATE TABLE statement.
  *
  * @visibility root
  */
 final class TableDefinition
 {
     /**
-     * Reads the declared table identifier.
-     * @throws \SqlFixture\Schema\Exception\InvalidSqlException
-     */
-    public function extractTableName(CreateStatement $stmt, string $sql): string
-    {
-        if ($stmt->name === null) {
-            throw new \SqlFixture\Schema\Exception\InvalidSqlException($sql, 'Table name not found');
-        }
-
-        $name = $stmt->name->table ?? '';
-        return $name;
-    }
-
-    /**
+     * Returns the written columns, keyed by name, as the analysis declares them.
+     *
+     * @param array<string, Column> $declared
+     * @param list<string> $primaryKeys
      * @return array<string, ColumnDefinition>
-     * @throws \SqlFixture\Schema\Exception\MissingColumnDefinitionsException
+     * @throws UnanalyzedColumnException When the analysis declares no column for a written one
      */
-    public function extractColumns(CreateStatement $stmt, string $tableName): array
+    public function columns(CreateTable $statement, array $declared, array $primaryKeys): array
     {
-        if (!is_iterable($stmt->fields)) {
-            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
-        }
-
         $columns = [];
-        $primaryKeyColumns = $this->extractPrimaryKeys($stmt);
-
-        foreach ($stmt->fields as $field) {
-            $name = $field->name;
-            if (!is_string($name) || $name === '') {
+        foreach ($statement->elements as $element) {
+            if (!$element instanceof WrittenColumn) {
                 continue;
             }
-
-            if (!$field->type instanceof DataType) {
-                continue;
-            }
-
-            $columnName = $name;
-            $column = (new ColumnParser())->parseColumnDefinition($field, $columnName, $primaryKeyColumns);
-
-            if ($column !== null) {
-                $columns[$columnName] = $column;
-            }
-        }
-
-        if ($columns === []) {
-            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
+            $column = $declared[$element->name->column->value] ?? throw new UnanalyzedColumnException($element->name->column->value);
+            $columns[$column->name->value] = (new ColumnParser())->parse($element, $column, $primaryKeys);
         }
 
         return $columns;
     }
 
     /**
+     * Collects the primary key columns declared on a column or as a table constraint, each once.
+     *
      * @return list<string>
      */
-    public function extractPrimaryKeys(CreateStatement $stmt): array
+    public function primaryKeys(Operation $operation, CreateTable $statement): array
     {
-        if (!is_iterable($stmt->fields)) {
-            return [];
-        }
-
         $primaryKeys = [];
-        foreach ($stmt->fields as $field) {
-            if ($field->options instanceof OptionsArray && $field->options->has('PRIMARY KEY') !== false) {
-                $name = $field->name;
-                if (is_string($name) && $name !== '') {
-                    $primaryKeys[] = $name;
-                }
-            }
-
-            if ($field->key !== null && $field->key->type === 'PRIMARY KEY') {
-                foreach ($field->key->columns as $col) {
-                    $colName = $col['name'] ?? null;
-                    if (is_string($colName) && $colName !== '') {
-                        $primaryKeys[] = $colName;
+        foreach ($statement->elements as $element) {
+            if ($element instanceof WrittenColumn && (new ColumnAttributes())->read($element->specification->columnAttributes())->primaryKey) {
+                $primaryKeys[] = $element->name->column->value;
+            } elseif ($element instanceof IndexDefinition && $element->kind === IndexKind::Primary) {
+                foreach ($element->parts as $part) {
+                    if ($part instanceof ColumnPart) {
+                        $primaryKeys[] = (new CreateTableOperation())->columnName($operation, $part->column->value);
                     }
                 }
             }
         }
 
-        return $primaryKeys;
+        return array_values(array_unique($primaryKeys));
     }
 }
