@@ -28,6 +28,7 @@ final class DeprecatedVariablesTest extends TestCase
 
     public function testWarningIncludesTheModernFunctionCreatorSetting(): void
     {
+        self::assertSame("'@@profiling' is deprecated and will be removed in a future release.", (new DeprecatedVariables())->warning('PROFILING', GrammarRelease::MySql847));
         self::assertSame("'@@log_bin_trust_function_creators' is deprecated and will be removed in a future release.", (new DeprecatedVariables())->warning('LOG_BIN_TRUST_FUNCTION_CREATORS', GrammarRelease::MySql8044));
         self::assertNull((new DeprecatedVariables())->warning('log_bin_trust_function_creators', GrammarRelease::MySql5744));
     }

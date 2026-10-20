@@ -82,9 +82,9 @@ final class TemporalInput
      * Resolves a decoded variable read before a later temporal value is interpreted.
      * Legacy releases defer scope misuse until ordinary expression preparation.
      *
-     * @param list<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation> $notices Contextual warnings reached before a later refusal
+     * @param array<int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation> $notices Contextual warnings reached before a later refusal
      */
-    public function variable(\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable $variable, Session $session, array &$notices = [], bool $view = false): ?SqlError
+    public function variable(\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable $variable, Session $session, array &$notices = [], bool $view = false, int $offset = 0): ?SqlError
     {
         if ($view) {
             return \MySqlMemory\Error\Family\SchemaError::ViewSelectVariable->error();
@@ -96,7 +96,7 @@ final class TemporalInput
         $variable->deriveScalar($derivation, $derivation->environment());
         foreach ($derivation->facts()->warnings as $warning) {
             Check::invariant($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation, 'System-variable warnings describe deprecated names.');
-            $notices[] = $warning;
+            $notices[$offset] = $warning;
         }
         foreach ($derivation->facts()->diagnostics as $problem) {
             if (!$session->settings()->legacy() || !$problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse) {

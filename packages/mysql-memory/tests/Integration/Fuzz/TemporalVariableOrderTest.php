@@ -26,6 +26,11 @@ final class TemporalVariableOrderTest extends TestCase
     {
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             $queries = [
+                "SELECT @@profiling, DATE 'text'",
+                "SELECT DATE 'text', @@profiling",
+                "SELECT @@profiling, DATE '2026-10-20'",
+                'SELECT @@profiling, 1 COLLATE missing',
+                'SELECT 1 COLLATE missing, @@profiling',
                 'SELECT @@missing, TIMESTAMP \'text\'',
                 'SELECT TIMESTAMP \'text\', @@missing',
                 'SELECT @@GLOBAL.missing.name, TIMESTAMP \'text\'',
@@ -53,6 +58,10 @@ final class TemporalVariableOrderTest extends TestCase
                 'SELECT TRIM(DATE \'text\' FROM @a)',
                 'CREATE VIEW d.v AS SELECT @a := DATE \'text\'',
             ];
+            if (in_array($release, ['5.6.51', '5.7.44'], true)) {
+                $queries[] = "SELECT TRIM(@@profiling FROM @@profiling_history_size), DATE 'text'";
+                $queries[] = "SELECT TIMESTAMPADD(DAY, @@profiling, @@profiling_history_size), DATE 'text'";
+            }
             $original = in_array($release, ['8.4.7', '9.1.0'], true) ? [(string) file_get_contents(__DIR__ . '/fixtures/temporal-variable-order.sql')] : [];
             yield $release => [$release, [...$queries, 'CREATE DATABASE d', 'USE d', ...$original, ...$queries]];
         }

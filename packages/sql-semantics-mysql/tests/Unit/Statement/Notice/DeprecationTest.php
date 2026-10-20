@@ -27,6 +27,7 @@ final class DeprecationTest extends TestCase
 
     public function testPhaseSeparatesFunctionContextualizationFromGrammarWarnings(): void
     {
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, (new Deprecation(Deprecated::SystemVariable))->phase());
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, (new Deprecation(Deprecated::FoundRows))->phase());
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, (new Deprecation(Deprecated::BangNot))->phase());
     }

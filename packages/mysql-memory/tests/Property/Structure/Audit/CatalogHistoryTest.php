@@ -32,4 +32,17 @@ final class CatalogHistoryTest extends TestCase
         self::assertSame([], (new CatalogHistory())->steps($node, 1064));
         self::assertSame([], (new CatalogHistory())->steps(new M\Literal\NullLiteral(), 1477));
     }
+    /**
+     * Establishes a user resource group under the exact original name operand.
+     */
+    public function testSetupRetainsTheResourceGroupIdentity(): void
+    {
+        $name = new M\Account\ResourceGroup\ResourceGroupName(new Name(''));
+        $node = new M\Account\ResourceGroup\SetResourceGroup($name);
+        $steps = (new CatalogHistory())->steps($node, 3651);
+        self::assertCount(1, $steps);
+        self::assertInstanceOf(M\Account\ResourceGroup\CreateResourceGroup::class, $steps[0]);
+        self::assertSame($name, $steps[0]->name);
+        self::assertSame([], (new CatalogHistory())->steps($node, 1064));
+    }
 }

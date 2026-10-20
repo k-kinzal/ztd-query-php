@@ -12,6 +12,7 @@ use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege;
@@ -139,7 +140,11 @@ final class Levels
     {
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MissingTable) {
-                throw QueryError::NoSuchTable->error($diagnostic->name->schema->value ?? $session->variables->database, $diagnostic->name->name->value);
+                $database = $diagnostic->name->schema->value ?? $session->variables->database;
+                if ($this->read($privileges, $target[0])[1] !== [] && $session->instance->dictionary->schema($database) === null) {
+                    throw Errors::unknown($database, $diagnostic->name->name->value, $session->settings()->release());
+                }
+                throw QueryError::NoSuchTable->error($database, $diagnostic->name->name->value);
             }
         }
         if ($target[0] === 'PROCEDURE' || $target[0] === 'FUNCTION') {

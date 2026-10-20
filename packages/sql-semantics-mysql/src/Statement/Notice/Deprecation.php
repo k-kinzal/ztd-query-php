@@ -115,12 +115,12 @@ final class Deprecation implements CodedWarning
 
     /**
      * Answers when the construct raises its warning.
-     * FOUND_ROWS() warns when its call is contextualized, after grammar operands
+     * FOUND_ROWS() and system variables warn during contextualization, after grammar operands
      * have been read. Observed with unknown COLLATE operands on MySQL 8.0–9.1.
      */
     public function phase(): NoticePhase
     {
-        return $this->construct === Deprecated::FoundRows ? NoticePhase::Contextualization : NoticePhase::Syntax;
+        return in_array($this->construct, [Deprecated::FoundRows, Deprecated::SystemVariable], true) ? NoticePhase::Contextualization : NoticePhase::Syntax;
     }
 
     /**

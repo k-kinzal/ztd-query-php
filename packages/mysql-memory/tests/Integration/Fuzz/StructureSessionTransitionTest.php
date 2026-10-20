@@ -42,6 +42,12 @@ final class StructureSessionTransitionTest extends TestCase
             [new M\Server\Transaction\Xa\XaPrepare($xid), 1399],
             [new M\Server\Transaction\Xa\XaRollback($xid), 1397],
         ];
+        $resource = new M\Account\ResourceGroup\ResourceGroupName(new Name(''));
+        foreach ([GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
+            foreach ([new M\Account\ResourceGroup\AlterResourceGroup($resource), new M\Account\ResourceGroup\DropResourceGroup($resource), new M\Account\ResourceGroup\SetResourceGroup($resource)] as $index => $node) {
+                yield $release->value . ':resource:' . $index => [$release, $node, 3651];
+            }
+        }
         foreach ([GrammarRelease::MySql5744, GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
             foreach ($structures as $index => [$node, $code]) {
                 yield $release->value . ':' . $index => [$release, $node, $code];

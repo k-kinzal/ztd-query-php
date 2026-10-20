@@ -20,8 +20,8 @@ the witness. A later error remains visible for separate classification. These
 histories do not label unrelated matching errors as state-dependent or certify
 that all constructible values have been exercised.
 
-Catalog histories also establish missing foreign-server entries and open handler
-cursors under the original referenced names. Handler fixtures contain four rows
+Catalog histories also establish missing foreign-server entries, user resource
+groups and open handler cursors under the original referenced names. Handler fixtures contain four rows
 and an index with enough columns for the original seek. The repeated read keeps
 its predicate, key operands and limit, so an empty table cannot hide those
 expressions. Subsequent missing-column, key or value errors remain observations
@@ -33,8 +33,10 @@ context and input ranges only while reading the statement. A refused temporal
 literal is a typed input diagnostic, not an ordinary scalar. Variable names,
 scopes and deprecation notices use the same semantic rules as ordinary reads;
 runtime calendar modes and time zones remain the consumer's responsibility.
-Neither the planning input nor the published semantic value retains the parser
-tree used by this adapter.
+System-variable deprecations are contextual notices. Modern grammar refusals
+prevent them from being reached; legacy temporal refusals retain preceding
+variable warnings in the observed input order. Neither the planning input nor
+the published semantic value retains the parser tree used by this adapter.
 
 Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. The selected root can use the shared 10,000-attempt cap. Each nested constructor retains a smaller depth-dependent cap that includes its descendants, preventing one nested alternative from taking the entire root search budget. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
 
@@ -74,7 +76,10 @@ precede target validation and object/account lookup, while malformed recipient
 names and non-global AS clauses retain their earlier refusal. Direct comparisons
 reuse the same valid GRANT and REVOKE objects with absent accounts, absent
 objects, a populated table and subsequent removal, retaining an unrelated
-request label throughout execution.
+request label throughout execution. Column grants also repeat unchanged before
+database creation, before table creation and after both. Modern releases report
+a missing database before a missing table for column privileges; legacy
+releases and whole-table privileges report the missing table.
 
 CREATE TRIGGER histories distinguish an absent database, an absent table, a populated target and a repeated definition. Legacy releases report a missing target table even when its database does not exist; modern releases report the missing database. MySQL 5.6 also rejects a second trigger for the same table, timing and event. These are observations of database state, not constructor rejection rules.
 

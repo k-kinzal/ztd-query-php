@@ -144,7 +144,7 @@ final class Syntax
      * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html.
      *
      * @throws SqlError When a temporal literal holds no value of its form
-     * @param list<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation> $contextual Warnings from contextual operands before the refusal
+     * @param array<int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation> $contextual Warnings from contextual operands before the refusal
      */
     public function temporals(Node $tree, SqlModes $modes, ?Session $session = null, string $statement = '', int $end = PHP_INT_MAX, array &$contextual = []): void
     {
@@ -159,7 +159,7 @@ final class Syntax
                 continue;
             }
             if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable) {
-                $earlier ??= $session === null ? null : (new Parse\TemporalInput())->variable($operand, $session, $contextual, $view);
+                $earlier ??= $session === null ? null : (new Parse\TemporalInput())->variable($operand, $session, $contextual, $view, $start);
                 $earlierAt ??= $earlier === null ? null : $start;
                 continue;
             }
@@ -175,7 +175,7 @@ final class Syntax
                 }
                 $start = $earlierAt ?? $start;
                 $variable = $this->variable($tree, $start, $session->program);
-                throw $variable === null ? (new CacheOptions())->literal($error, $start, $statement, $session) : (new CacheOptions())->undeclared(\MySqlMemory\Error\Family\ProgramError::UndeclaredVariable->error($variable), $statement, $session);
+                throw $variable === null ? (new CacheOptions())->literal($error, $start, $statement, $session, $contextual) : (new CacheOptions())->undeclared(\MySqlMemory\Error\Family\ProgramError::UndeclaredVariable->error($variable), $statement, $session);
             }
         }
     }

@@ -10,6 +10,7 @@ use MySqlMemory\Command\Account\Levels;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
@@ -86,6 +87,27 @@ final class LevelsTest extends TestCase
         $this->expectExceptionMessage("Unknown column 'zz' in 't'");
 
         $session->query('GRANT SELECT (zz) ON d.t TO nobody');
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerMissingGrantTargets(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
+            yield $release . ' column' => [$release, 'INSERT(c)', in_array($release, ['5.6.51', '5.7.44'], true) ? 1146 : 1049];
+            yield $release . ' table' => [$release, 'INSERT', 1146];
+        }
+    }
+
+    #[DataProvider('providerMissingGrantTargets')]
+    public function testObjectsResolvesColumnPrivilegeDatabasesBeforeTables(string $release, string $privilege, int $code): void
+    {
+        $session = (new Instance($release))->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+
+        $session->query('GRANT ' . $privilege . ' ON absent.t TO CURRENT_USER');
     }
 
     public function testDynamicNamesTheTableBelowTheDatabaseLevel(): void

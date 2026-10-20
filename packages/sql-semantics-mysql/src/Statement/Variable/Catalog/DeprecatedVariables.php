@@ -50,7 +50,7 @@ final class DeprecatedVariables
      */
     public function warning(string $name, GrammarRelease $release): ?string
     {
-        $variables = $release === GrammarRelease::MySql5651 ? self::MYSQL_56 : ($release === GrammarRelease::MySql5744 ? self::MYSQL_57 : ['log_bin_trust_function_creators' => '', 'sql_slave_skip_counter' => ' Please use sql_replica_skip_counter instead.']);
+        $variables = $release === GrammarRelease::MySql5651 ? self::MYSQL_56 : ($release === GrammarRelease::MySql5744 ? self::MYSQL_57 : ['profiling' => '', 'log_bin_trust_function_creators' => '', 'sql_slave_skip_counter' => ' Please use sql_replica_skip_counter instead.']);
         $variable = strtolower($name);
         if (!isset($variables[$variable])) {
             return null;

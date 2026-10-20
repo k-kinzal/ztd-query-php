@@ -226,7 +226,7 @@ final class CacheOptions
     /**
      * Records the warnings MySQL 5.6 and 5.7 raise while they parse a statement they refuse, in the order of their tokens, and the error the statement fails with, which it answers: the refusal of a conflict of modifiers, or the error given.
      *
-     * @param array<int, Deprecated|SqlError|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion> $warned The warnings, by the offset of their token
+     * @param array<int, Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|SqlError|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod|\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion> $warned The warnings, by the offset of their token
      * @param array{string, string}|null $conflict The conflict of modifiers found, if any
      * @param SqlError|null $previous The error the answered error reports
      * @param bool $clear Whether the conditions recorded before are removed
@@ -306,8 +306,9 @@ final class CacheOptions
      * Records the warnings MySQL 5.6 and 5.7 raise while they parse a statement up to a temporal literal they refuse, and answers the error the statement fails with: a conflict of query cache modifiers before the literal, or the refusal of the literal (verified on live 5.6.51 and 5.7.44 servers).
      *
      * @param int $at The offset of the literal
+     * @param array<int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation> $contextual Variable warnings by operand offset
      */
-    public function literal(SqlError $error, int $at, string $statement, Session $session): SqlError
+    public function literal(SqlError $error, int $at, string $statement, Session $session, array $contextual = []): SqlError
     {
         try {
             $tokens = $session->semantics()->parser()->tokenize($statement);
@@ -315,6 +316,10 @@ final class CacheOptions
             return $error;
         }
         [$warned, $conflict] = (new Parse\Modifiers($tokens, $session->settings()->release()))->scan($at, $at);
+        $position = strlen($statement);
+        foreach ($contextual as $offset => $warning) {
+            $warned[$session->settings()->release() === GrammarRelease::MySql5651 ? $offset : ++$position] = $warning;
+        }
 
         return $this->recorded($warned, $conflict, $error, $session);
     }

@@ -24,7 +24,7 @@ final class GrantColumnDomainTest extends TestCase
      */
     public static function providerStatements(): iterable
     {
-        $inputs = ['GRANT SELECT(a) ON PROCEDURE d.p TO u', 'GRANT SELECT(a) ON FUNCTION d.p TO u', 'GRANT INSERT(a) ON PROCEDURE d.* TO u', "GRANT\nSELECT(a)\nON FUNCTION d.p TO u", 'GRANT SELECT(a) ON FUNCTION d.p TO u;', 'GRANT SELECT(a) ON FUNCTION d.p TO u /* after */', 'GRANT SELECT(a) ON FUNCTION d.p TO u AS CURRENT_USER', 'CREATE PROCEDURE p() GRANT SELECT(a) ON FUNCTION d.p TO u', 'CREATE PROCEDURE p() BEGIN GRANT SELECT(a) ON FUNCTION d.p TO u; SET @a = !1; END', 'CREATE PROCEDURE p() BEGIN IF FALSE THEN GRANT SELECT(a) ON FUNCTION d.p TO u; END IF; END', 'GRANT SELECT(a) ON PROCEDURE d.p TO u AS CURRENT_USER WITH ROLE no_role'];
+        $inputs = ['GRANT INSERT ( SHUTDOWN ) ON MAX_USER_CONNECTIONS .`name` TO CURRENT_USER , CURRENT_USER ( ) WITH GRANT OPTION', 'GRANT SELECT(a) ON PROCEDURE d.p TO u', 'GRANT SELECT(a) ON FUNCTION d.p TO u', 'GRANT INSERT(a) ON PROCEDURE d.* TO u', "GRANT\nSELECT(a)\nON FUNCTION d.p TO u", 'GRANT SELECT(a) ON FUNCTION d.p TO u;', 'GRANT SELECT(a) ON FUNCTION d.p TO u /* after */', 'GRANT SELECT(a) ON FUNCTION d.p TO u AS CURRENT_USER', 'CREATE PROCEDURE p() GRANT SELECT(a) ON FUNCTION d.p TO u', 'CREATE PROCEDURE p() BEGIN GRANT SELECT(a) ON FUNCTION d.p TO u; SET @a = !1; END', 'CREATE PROCEDURE p() BEGIN IF FALSE THEN GRANT SELECT(a) ON FUNCTION d.p TO u; END IF; END', 'GRANT SELECT(a) ON PROCEDURE d.p TO u AS CURRENT_USER WITH ROLE no_role'];
         $statements = ['CREATE DATABASE d', 'USE d', 'CREATE USER u', ...$inputs];
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];

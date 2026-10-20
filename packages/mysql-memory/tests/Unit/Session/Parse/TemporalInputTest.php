@@ -26,6 +26,9 @@ final class TemporalInputTest extends TestCase
         yield 'collation after literal' => ["SELECT DATE 'text', 1 COLLATE missing", [1273]];
         yield 'precision after literal' => ["SELECT DATE 'text', CAST(1 AS DATETIME(7))", [1426]];
         yield 'warnings surround literal' => ["SELECT !1, DATE 'text', BINARY 1", [1287, 1287, 1525]];
+        yield 'variable before literal' => ["SELECT @@profiling, DATE 'text'", [1287, 1525]];
+        yield 'variable after literal' => ["SELECT DATE 'text', @@profiling", [1525]];
+        yield 'grammar before variable' => ['SELECT @@profiling, 1 COLLATE missing', [1273]];
         yield 'assignment after literal' => ["SELECT DATE 'text', @a:=1", [1287, 1525]];
     }
 
@@ -80,6 +83,32 @@ final class TemporalInputTest extends TestCase
         $session->run("SELECT DATE 'text', 1 COLLATE missing");
 
         self::assertSame([1525], array_column($session->diagnostics->conditions, 1));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield '5.6' => ['5.6.51'];
+        yield '5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testCheckKeepsLegacyVariableWarningsBeforeLiteralRefusals(string $release): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->run("SELECT @@profiling, DATE 'text'");
+        self::assertSame([1287, 1525], array_column($session->diagnostics->conditions, 1));
+        $session->run("SELECT DATE 'text', @@profiling");
+        self::assertSame([1525], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testCheckKeepsLegacyContextualTraversalOrderForMultipleWarnings(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run("SELECT TRIM(@@profiling FROM @@profiling_history_size), DATE 'text'");
+        self::assertSame(["'@@profiling_history_size' is deprecated and will be removed in a future release.", "'@@profiling' is deprecated and will be removed in a future release.", "Incorrect DATE value: 'text'"], array_column($session->diagnostics->conditions, 2));
     }
 
     public function testLegacyResolvesACompletedVariableBeforeInvalidSyntax(): void
