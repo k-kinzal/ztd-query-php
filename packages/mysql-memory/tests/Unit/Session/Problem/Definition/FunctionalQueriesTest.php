@@ -73,4 +73,28 @@ final class FunctionalQueriesTest extends TestCase
         (new FunctionalQueries())->forbidden($statement);
     }
 
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerAdded(): iterable
+    {
+        yield 'conversion before missing key column' => ["CREATE INDEX i ON present(missing,(CAST(FALSE AT TIME ZONE 't' AS DATETIME)))", 3998];
+        yield 'conversion before repeated key column' => ["CREATE INDEX i ON present(a,a,(CAST(FALSE AT TIME ZONE 't' AS DATETIME)))", 3998];
+        yield 'primary before conversion' => ["ALTER TABLE present ADD PRIMARY KEY((CAST(FALSE AT TIME ZONE 't' AS DATETIME)))", 3756];
+        yield 'subquery before missing key column' => ['CREATE INDEX i ON present(missing,((SELECT 1)))', 3758];
+        yield 'missing functional column before conversion' => ["CREATE INDEX i ON present((CAST(missing AT TIME ZONE 't' AS DATETIME)))", 1054];
+        yield 'forbidden function before conversion' => ["CREATE INDEX i ON present(missing,(CAST(CURRENT_TIMESTAMP AT TIME ZONE 't' AS DATETIME)))", 3758];
+    }
+
+    #[DataProvider('providerAdded')]
+    public function testAddedPreparesIndexedExpressionsBeforeLayoutValidation(string $sql, int $code): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE present(a INT)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+
+        $session->query($sql);
+    }
+
 }

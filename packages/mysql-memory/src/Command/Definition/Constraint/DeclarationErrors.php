@@ -37,4 +37,23 @@ final class DeclarationErrors
             }
         }
     }
+    /**
+     * Checks the complete proposed layout before constructing an ordinary table statement.
+     * ALTER inputs may be coherent by themselves while contradicting the current table.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Table\TableElement> $elements The proposed columns and keys after renames and drops
+     * @throws \MySqlMemory\Error\SqlError When the proposed declaration contradicts itself
+     */
+    public function layout(array $elements): void
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($elements, null);
+        if ($problem === null) {
+            return;
+        }
+        $errors = new \MySqlMemory\Session\Problem\Errors();
+        $error = $errors->definition($problem, '') ?? $errors->expression($problem);
+        \SqlSemantics\Diagnostic\Check::invariant($error !== null, 'Every fixed declaration condition has a SQL diagnostic.');
+        throw $error;
+    }
+
 }

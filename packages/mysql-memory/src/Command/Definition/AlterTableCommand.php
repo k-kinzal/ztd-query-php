@@ -170,6 +170,10 @@ final class AlterTableCommand implements Command
         foreach ((new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition::class) as $column) {
             (new Constraint\SpatialColumns())->check($column, $session->instance->registry->spatialCatalog);
         }
+        $statement = $operation->statement;
+        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex);
+        [, $commands] = $this->request($statement);
+        (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added($this->indexes($commands), $operation->facts, $session);
     }
 
     /**

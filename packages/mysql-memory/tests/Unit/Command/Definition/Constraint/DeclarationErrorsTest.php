@@ -37,4 +37,27 @@ final class DeclarationErrorsTest extends TestCase
         self::assertNull($session->instance->dictionary->table('d', 't'));
     }
 
+    #[DataProvider('providerContradictions')]
+    public function testLayoutReportsStateDependentContradictionsBeforeConstructingAStatement(string $elements, int $code): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $program = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(' . $elements . ')')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $program);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable::class, $program->body);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+
+        (new DeclarationErrors())->layout($program->body->elements);
+    }
+
+    public function testLayoutAllowsACompleteConsistentDeclaration(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $create = $session->analyze('CREATE TABLE t(a INT,KEY(a))')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $create);
+
+        (new DeclarationErrors())->layout($create->elements);
+        self::assertCount(2, $create->elements);
+    }
+
 }

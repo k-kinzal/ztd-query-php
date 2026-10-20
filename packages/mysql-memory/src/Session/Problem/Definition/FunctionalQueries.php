@@ -61,6 +61,47 @@ final class FunctionalQueries
     }
 
     /**
+     * Prepares added functional operands before constructing the changed table layout.
+     *
+     * @param list<IndexDefinition> $indexes The requested indexes in action order
+     * @throws \MySqlMemory\Error\SqlError When an indexed operand cannot be prepared
+     */
+    public function added(array $indexes, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    {
+        foreach ($indexes as $index) {
+            foreach ($index->parts as $part) {
+                if (!$part instanceof ExpressionPart && !$part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart && !$part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart) {
+                    continue;
+                }
+                (new \MySqlMemory\Command\Definition\Constraint\FunctionalKeys())->check($part, $index);
+                $owner = $index->name?->column->value ?? $index->constraint?->name?->column->value ?? 'functional_index';
+                (new ExpressionRules())->forbidden($part->expression, ExpressionRole::Functional, $owner);
+                (new ExpressionRules())->grouped($part->expression);
+                $nodes = (new Walker())->find($part->expression, \SqlSemantics\Statement\Node::class);
+                foreach ($nodes as $node) {
+                    if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
+                        $resolution = $facts->scalar($node)->resolution;
+                        if ($resolution instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn) {
+                            throw (new Errors())->error($resolution, $session, 'functional index');
+                        }
+                    }
+                }
+                if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart) {
+                    if ($part->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand) {
+                        throw \MySqlMemory\Error\Family\ConstraintError::FunctionalRow->error($owner);
+                    }
+                    throw (new \MySqlMemory\Program\Expression\RowUse())->error($part->expression);
+                }
+                foreach ($facts->diagnostics as $diagnostic) {
+                    if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion && in_array($diagnostic->expression, $nodes, true)) {
+                        throw (new Errors())->error($diagnostic, $session);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Leaves indexed conversion conditions to the index's preparation order.
      */
     public function deferred(\SqlSemantics\Statement\Fact\Diagnostic $diagnostic, \SqlSemantics\Statement\Node $statement): bool

@@ -362,6 +362,7 @@ final class TableLayout
         }
 
         $constraints->dependencies($columns, $renamed);
+        (new Constraint\DeclarationErrors())->layout($elements);
 
         return new CreateTable($this->name, $elements, $this->options, $this->partitioning, null, $this->temporaryWords);
     }
