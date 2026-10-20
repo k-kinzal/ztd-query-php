@@ -50,7 +50,7 @@
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * Keeps a duplicate completed parameter ahead of later syntax and body errors.</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * Keeps completed parameter identity and type conditions ahead of later input.</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * The ordinary lowering rule owns identity and uniqueness. Prefix parsing</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * publishes only the resulting diagnostic and its integer input boundary.</span></span>
@@ -60,7 +60,7 @@
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SyntaxParameters</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>{</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * Answers a completed parameter-list refusal without publishing an invalid list.</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * Answers a completed parameter-list refusal before a later parameter is read.</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">completed</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>, <span class="tok-id">Lowering</span> <span class="tok-var">$lowering</span>): ?<span class="tok-id">ParseFailure</span></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    {</span>
@@ -68,15 +68,21 @@
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        }</span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-kw">try</span> {</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>            (<span class="tok-kw">new</span> <span class="tok-id">ParameterRule</span>(<span class="tok-var">$lowering</span>))-&gt;<span class="tok-id">parameters</span>(<span class="tok-var">$node</span>);</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">RejectedInput</span> <span class="tok-var">$failure</span>) {</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ParseFailure</span>(<span class="tok-var">$failure</span>-&gt;<span class="tok-id">problem</span>, <span class="tok-id">true</span>);</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        }</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    }</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>}</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>            <span class="tok-var">$parameters</span> = (<span class="tok-kw">new</span> <span class="tok-id">ParameterRule</span>(<span class="tok-var">$lowering</span>))-&gt;<span class="tok-id">parameters</span>(<span class="tok-var">$node</span>);</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$parameters</span>-&gt;<span class="tok-id">parameters</span> <span class="tok-kw">as</span> <span class="tok-var">$parameter</span>) {</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>                <span class="tok-var">$problem</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits</span>())-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$parameter</span>-&gt;<span class="tok-id">type</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-var">$lowering</span>-&gt;<span class="tok-id">profile</span>-&gt;<span class="tok-id">grammar</span>);</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>                <span class="tok-kw">if</span> (<span class="tok-var">$problem</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>                    <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ParseFailure</span>(<span class="tok-var">$problem</span>, <span class="tok-id">true</span>);</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>                }</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>            }</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">RejectedInput</span> <span class="tok-var">$failure</span>) {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ParseFailure</span>(<span class="tok-var">$failure</span>-&gt;<span class="tok-id">problem</span>, <span class="tok-id">true</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        }</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    }</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>}</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
