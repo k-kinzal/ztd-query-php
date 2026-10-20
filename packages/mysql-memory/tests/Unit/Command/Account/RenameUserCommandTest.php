@@ -21,7 +21,7 @@ final class RenameUserCommandTest extends TestCase
         self::assertTrue((new RenameUserCommand())->clearsDiagnostics());
     }
 
-    public function testExecuteRenamesInOrderKeepingThePrivileges(): void
+    public function testApplyRenamesInOrderKeepingThePrivileges(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE USER a');

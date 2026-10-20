@@ -44,6 +44,19 @@ Before choosing a nested type, the generator checks whether its constructor type
 
 A rejected constructor keeps its completed arguments so the next trial can resample one argument instead of rebuilding unrelated children. Under a repeated invariant, the argument positions are visited in order so that no slot is starved by random selection. Repeated rejection by the same invariant switches that candidate to complete resampling until the rejected constraint changes. The invariant is identified by its constructor type and check call site, rather than a message containing generated names. Detailed messages remain in the rejection report. Both strategies use the same shared attempt cap. They inspect constructor types and invariant refusals only; they do not use MySQL outcomes to choose or discard values. Exhaustion remains a failure. The bounded search can still exhaust; neither a passing inventory run nor a repaired seed establishes that every random construction search will finish.
 
+`RenameUser` checks the consistency of its ordered source and destination
+identities. A source must exist and its destination must be absent at that
+position in the list. Earlier pairs change those requirements for later pairs.
+The check considers both legacy fixed and modern following `CURRENT_USER`
+identities; it does not inspect an account catalog or certify execution. An
+intrinsically contradictory list, such as `a TO b, a TO c`, is retained as
+`DeferredRenameUser` in a stored instruction or `RefusedRenameUser` at the input
+boundary. The complete list remains necessary: legacy servers can keep the
+first rename even when a later pair fails, whereas modern servers roll back the
+account changes. Preparation retains the same request without requiring the
+accounts to exist. Native histories compare both paths, skipped branches,
+transaction commits and subsequent grants on five releases.
+
 `Scalar` and `RowOperand` are separate roles. A row contains at least two fields; a subquery with a fixed multi-column projection has a row role, while an unknown catalog-dependent width remains a resolution dependency. Ordinary comparisons and membership constructors reject incompatible fixed shapes. Stored programs additionally need operand roles whose preparation is deferred until an instruction is reached. These values preserve their complete operands and do not implement `Scalar`. A stored definition can therefore retain a row-valued condition, assignment or projection without making that value valid in an ordinary scalar position.
 
 `DeferredSelection` retains a SELECT's complete item list, modifiers, INTO destination, input relation, WHERE and HAVING predicates, grouping, ordering and row limit. INTO targets have their own binding facts even when a projection or filter has a deferred role. INSERT and REPLACE retain both the destination query and their outer write target, so an earlier missing-database condition remains observable. `DeferredOrderItem` and `DeferredGrouping` preserve row-valued and deferred sort operands while ordinary items retain their scalar or output-ordinal roles. `DeferredAssignments` retains all SET items and their written scopes. Their consumers bind names and subqueries from those structures in the invocation's current state. Direct native tests reuse the same stored definition and CALL object before and after creating a table, adding a column, populating it and dropping it. Standalone selections with deferred operands are refused as ordinary query values; their typed `RefusedSelection` diagnostic retains the semantic dependencies needed to select the correct SQL error. It retains no source SQL or parser AST. Other query forms, including set operations and window clauses, still use their existing query rules; this extension does not establish the deferred-operand property for every query form.

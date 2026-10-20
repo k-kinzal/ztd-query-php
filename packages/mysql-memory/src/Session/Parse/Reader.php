@@ -229,6 +229,9 @@ final class Reader
      */
     public function template(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
     {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser) {
+            return (new Definition\RenameInput())->refused($failure, $statement, $session);
+        }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles) {
             return (new Definition\RoleGrantInput())->refused($failure, $statement, $session);
         }

@@ -259,6 +259,9 @@
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\User\\RefusedRenameUser": {
+        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRenameUser"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\RenameUser": {
         "renamings": "array"
     },
@@ -2847,6 +2850,9 @@
         "targets": "array",
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRenameUser": {
+        "renamings": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRevokePrivileges": {
         "ifExists": "bool",

@@ -277,6 +277,8 @@ final class UserStatementRule
      * Lowers the rename_list of RENAME USER.
      *
      * @throws ImplementationGap When a production has no rule
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the ordered identities contradict each other
      */
     public function rename(Node $list): RenameUser
     {
@@ -290,6 +292,10 @@ final class UserStatementRule
             $renamings[] = new UserRenaming($this->lowering->users->account($users[$index]), $this->lowering->users->account($users[$index + 1]));
         }
 
+        if ((new \SqlSemantics\Platform\MySql\Rules\Account\Renamings())->problem($renamings) !== null) {
+            $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRenameUser($renamings);
+            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0, false);
+        }
         return new RenameUser($renamings);
     }
 }

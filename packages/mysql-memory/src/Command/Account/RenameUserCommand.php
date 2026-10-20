@@ -51,6 +51,14 @@ final class RenameUserCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof RenameUser);
+        return $this->apply($statement, $session, $context);
+    }
+
+    /**
+     * Applies a complete ordered identity request, including partial legacy effects.
+     */
+    public function apply(RenameUser|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRenameUser $statement, Session $session, Context $context): Reply
+    {
         $session->transaction->commit();
         $names = new Names($session->settings()->release());
         $listed = [];

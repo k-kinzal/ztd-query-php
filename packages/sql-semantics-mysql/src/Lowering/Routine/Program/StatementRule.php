@@ -140,7 +140,7 @@ final class StatementRule
      */
     public function rejected(\SqlSemantics\Construction\RejectedInput $failure): ProgramStatement|Statement
     {
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Privilege\RefusedRevokeLevel || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Privilege\RefusedRevokeLevel || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole) {
             return $failure->problem->request;
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery) {
