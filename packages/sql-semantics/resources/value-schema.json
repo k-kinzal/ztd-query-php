@@ -123,7 +123,8 @@
     },
     "SqlSemantics\\Statement\\Reference\\Column\\AmbiguousColumn": {
         "candidates": "array",
-        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Statement\\Reference\\Column\\ConditionalColumn": {
         "candidates": "array",

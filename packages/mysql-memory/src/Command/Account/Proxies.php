@@ -105,8 +105,15 @@ final class Proxies
         $first = null;
         foreach ($names->users($statement->users) as $user) {
             try {
-                $found = (new RevokeCommand())->found([$user], $statement->ignoreUnknownUser, $session, false);
+                $identity = $names->identity($user, $session);
+                $accounts = $session->instance->accounts;
+                if (!$statement->ignoreUnknownUser || $accounts->find($identity) !== null) {
+                    $names->ascii($identity, 1, $session->diagnostics);
+                }
+                $unknown = !$session->settings()->legacy() && $accounts->stored($identity->stored()) !== null ? AccountError::PasswordNoMatch->error() : null;
+                $found = (new RevokeCommand())->found([$user], $statement->ignoreUnknownUser, $session, false, $unknown);
                 foreach ($found as $account) {
+                    $names->ascii($account->identity, 1, $session->diagnostics);
                     $this->withdraw($account, $proxied, $statement->ifExists, $session);
                 }
             } catch (SqlError $error) {

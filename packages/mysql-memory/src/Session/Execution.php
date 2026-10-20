@@ -92,7 +92,7 @@ final class Execution
         foreach ($session->replayed || $this->undeclared($operation) ? [] : $late as $warning) {
             $session->diagnostics->warning($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning ? $warning->code() : 1105, $warning->message());
         }
-        (new \MySqlMemory\System\Guard())->check($operation->statement, $session);
+        (new \MySqlMemory\System\Guard())->check($operation->statement, $session, $operation->facts);
         (new \MySqlMemory\Concurrency\Access())->check($operation, $session);
         try {
             (new Problems())->raise($operation, $session);

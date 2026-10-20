@@ -269,14 +269,16 @@ final class Reading
     }
 
     /**
-     * Raises the refusals of a write MySQL 5.6 and 5.7 find before they resolve any table: a target that is not updatable, and in 5.6 the ORDER BY or LIMIT of a multiple-table UPDATE, which it refuses while it parses (verified on live 5.6.51 and 5.7.44 servers).
+     * Raises write preparation refusals before table resolution in MySQL 5.6 and 5.7.
+     * Stored definitions retain these conditions until the instruction is invoked.
+     * MySQL 5.6 also checks multiple-table UPDATE ordering and limits at this stage.
      *
      * @throws SqlError When the operation has such a problem
      */
     public function legacyWrites(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
     {
         $release = $session->settings()->release();
-        if ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744) {
+        if (\MySqlMemory\Command\Dispatcher::program($statement) || ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744)) {
             return;
         }
         $early = [\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::NonUpdatableTarget, ...($release === GrammarRelease::MySql5651 ? [\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::LimitedMultipleUpdate, \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::OrderedMultipleUpdate] : [])];

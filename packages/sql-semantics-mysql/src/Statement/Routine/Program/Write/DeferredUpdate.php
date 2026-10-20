@@ -87,6 +87,7 @@ final class DeferredUpdate implements \SqlSemantics\Platform\MySql\Statement\Rou
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'UPDATE ordering uses expressions, not output-column positions.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($this->tables) === null, 'A stored UPDATE excludes fixed input-name collisions.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->with, $this->tables, $this->assignments, $this->orderBy, $this->limit) !== null, 'A deferred UPDATE retains a fixed input, target or clause contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

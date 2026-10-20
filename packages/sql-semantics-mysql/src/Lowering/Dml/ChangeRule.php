@@ -99,6 +99,9 @@ final class ChangeRule
             $this->limit($form->node($limit)),
             $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
         ];
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($parts[3]) !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate(...$parts), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
         if ((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($parts[0], $parts[3], $parts[4], $parts[6], $parts[7]) !== null) {
             $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate(...$parts);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate($write), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);

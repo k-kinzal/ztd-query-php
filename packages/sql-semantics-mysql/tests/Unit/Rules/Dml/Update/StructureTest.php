@@ -54,4 +54,15 @@ final class StructureTest extends TestCase
         self::assertSame(M\Dml\Problem\WriteRule::LimitedMultipleUpdate, $limited->rule);
         self::assertNull($rules->problem(null, [$tables[0]], [], $order, $limit));
     }
+    public function testNamesRejectsOnlyFixedNamespaceCollisions(): void
+    {
+        $table = new M\Relation\TableReference(new QualifiedName(new Name('t')), new Name('a'));
+        $other = new M\Relation\TableReference(new QualifiedName(new Name('u')), new Name('a'));
+        $rules = new Structure();
+        self::assertSame($other->alias, $rules->names([$table, $other])?->alias);
+        self::assertNull($rules->names([$table, new M\Relation\TableReference(new QualifiedName(new Name('u')), new Name('A'))]));
+        self::assertNull($rules->names([$table, new M\Relation\TableReference(new QualifiedName(new Name('u'), new Name('d')), new Name('a'))]));
+        self::assertNull($rules->names([new M\Relation\TableReference(new QualifiedName(new Name('t'), new Name('d')), new Name('a')), new M\Relation\TableReference(new QualifiedName(new Name('u'), new Name('e')), new Name('a'))]));
+    }
+
 }

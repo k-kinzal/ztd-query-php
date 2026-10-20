@@ -71,7 +71,7 @@ final class ResultReferences
             }
             $current = $qualifier === null ? 1 : ($qualifier->schema === null ? 2 : 3);
             if ($best !== null && $current === $degree && !$this->same($best, $resolution)) {
-                return new AmbiguousColumn($column, [$this->deeper($best, $depth), $this->deeper($resolution, $depth)]);
+                return new AmbiguousColumn($column, [$this->deeper($best, $depth), $this->deeper($resolution, $depth)], $qualifier);
             }
             if ($current > $degree) {
                 [$best, $degree] = [$resolution, $current];
@@ -100,7 +100,7 @@ final class ResultReferences
             }
             if ($named) {
                 if ($aliased !== null && !$this->same($aliased, $resolution)) {
-                    return new AmbiguousColumn($column, [$this->deeper($aliased, $depth), $this->deeper($resolution, $depth)]);
+                    return new AmbiguousColumn($column, [$this->deeper($aliased, $depth), $this->deeper($resolution, $depth)], $qualifier);
                 }
                 $aliased = $resolution;
             } elseif ($this->unaliased($scope, $resolution, $column, $qualifier)) {
@@ -109,7 +109,7 @@ final class ResultReferences
             }
         }
 
-        return $this->undecided($column, $this->chosen($column, $aliased, $unaliased, $other, $depth), $unnamed);
+        return $this->undecided($column, $this->chosen($column, $aliased, $unaliased, $other, $depth, $qualifier), $unnamed);
     }
 
     /**
@@ -158,10 +158,10 @@ final class ResultReferences
     /**
      * Chooses among the select list matches: the item matched by its alias, else the only column matched by its own name.
      */
-    public function chosen(Name $column, ?ResolvedColumn $aliased, ?ResolvedColumn $unaliased, ?ResolvedColumn $other, int $depth): ?Resolution
+    public function chosen(Name $column, ?ResolvedColumn $aliased, ?ResolvedColumn $unaliased, ?ResolvedColumn $other, int $depth, ?QualifiedName $qualifier = null): ?Resolution
     {
         if ($aliased === null && $unaliased !== null && $other !== null) {
-            return new AmbiguousColumn($column, [$this->deeper($unaliased, $depth), $this->deeper($other, $depth)]);
+            return new AmbiguousColumn($column, [$this->deeper($unaliased, $depth), $this->deeper($other, $depth)], $qualifier);
         }
         $chosen = $aliased ?? $unaliased;
 

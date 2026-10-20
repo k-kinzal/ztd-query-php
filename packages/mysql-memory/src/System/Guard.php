@@ -47,13 +47,13 @@ final class Guard
      *
      * @throws SqlError When the statement targets a table of a system database
      */
-    public function check(Node $statement, Session $session): void
+    public function check(Node $statement, Session $session, \SqlSemantics\Statement\Fact\Facts $facts): void
     {
         $system = $session->instance->dictionary->system;
         if ($system === null) {
             return;
         }
-        $written = $this->written($statement);
+        $written = $this->written($statement, $facts);
         $defined = $this->defined($statement);
         foreach ([...$defined, ...$written] as $name) {
             $schema = $this->schema($name, $session);
@@ -78,20 +78,34 @@ final class Guard
     }
 
     /**
-     * Answers the tables a statement writes: the targets of a write and the tables an UPDATE names.
+     * Answers explicit targets and the input occurrences bound to assigned columns.
      *
      * @return list<QualifiedName>
      */
-    public function written(Node $statement): array
+    public function written(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts): array
     {
         $walker = new Walker();
         $written = [];
         foreach ($walker->find($statement, WriteTarget::class, false) as $target) {
             $written[] = $target->name;
         }
-        foreach ($statement instanceof Update ? $statement->tables : [] as $relation) {
-            foreach ($walker->find($relation, TableReference::class, false) as $reference) {
-                $written[] = $reference->name;
+        if ($statement instanceof Update) {
+            $inputs = (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($statement->tables);
+            if (count($inputs) === 1 && $inputs[0] instanceof TableReference) {
+                $written[] = $inputs[0]->name;
+            } else {
+                foreach ($statement->assignments as $assignment) {
+                    $resolution = $facts->scalar($assignment->column)->resolution;
+                    if ($resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn && $resolution->relation instanceof TableReference) {
+                        $written[] = $resolution->relation->name;
+                    }
+                }
+            }
+        }
+        foreach ($statement instanceof MultipleDelete ? $statement->targets : [] as $target) {
+            $relation = $facts->referencedRelation($target);
+            if ($relation instanceof TableReference) {
+                $written[] = $relation->name;
             }
         }
 

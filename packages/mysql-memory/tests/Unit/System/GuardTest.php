@@ -44,11 +44,30 @@ final class GuardTest extends TestCase
         self::assertSame([['5']], $result1->rows);
     }
 
-    public function testWrittenAnswersTheTargetsAndTheTablesOfAnUpdate(): void
+    public function testWrittenAnswersOnlyTheBoundWriteTargets(): void
     {
         $s = (new Instance())->connect();
+        $s->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); CREATE TABLE u(a INT)');
+        $operations = [$s->analyze('INSERT INTO t VALUES (1)'), $s->analyze('UPDATE t JOIN u ON t.a=u.a SET t.a=1'), $s->analyze('CREATE TABLE v(a INT)')];
+        self::assertSame([['t'], ['t'], []], array_map(static fn (\SqlSemantics\Statement\Operation $operation): array => array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->written($operation->statement, $operation->facts)), $operations));
+    }
 
-        self::assertSame([['t'], ['t', 'u'], []], [array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->written($s->analyze('INSERT INTO t VALUES (1)')->statement)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->written($s->analyze('UPDATE t JOIN u ON t.a = u.a SET t.a = 1')->statement)), (new Guard())->written($s->analyze('CREATE TABLE t (a INT)')->statement)]);
+    public function testCheckAllowsASystemTableToSupplyAJoinedUpdateInput(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(x INT); INSERT INTO d.t VALUES(0)');
+        $session->query('UPDATE d.t AS a, information_schema.TABLES AS a SET a.x=1');
+        $result = $session->query('SELECT x FROM d.t')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testCheckStillRejectsAnAssignmentBoundToTheSystemInput(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(x INT)');
+        $this->expectExceptionCode(1044);
+        $session->query("UPDATE d.t AS a, information_schema.TABLES AS s SET s.TABLE_NAME='x'");
     }
 
     public function testDefinedAnswersTheTablesCreatedChangedRenamedOrLocked(): void

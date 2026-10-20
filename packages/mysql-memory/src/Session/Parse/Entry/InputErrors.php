@@ -188,10 +188,6 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName => (new Definition\DefinitionNameInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand => (new Event\Alteration())->operand($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration => (new Event\Alteration())->error($diagnostic, $session),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate => (new \MySqlMemory\Program\Write\UpdateUse())->error($diagnostic->write, $session),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete => (new \MySqlMemory\Program\Expression\DeleteUse())->error($diagnostic->write, $session),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets => (new Dml\Targets())->unmatched($diagnostic, $session),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget => (new Dml\Targets())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute => $this->column($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder => $this->indexOrder($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ZeroKeyPrefix => SchemaError::KeyPartZeroLength->error($diagnostic->column->value),
@@ -201,7 +197,22 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments => (new Load\Assignments())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions => (new Load\Options())->error($diagnostic, $session),
             $diagnostic instanceof RoleOrPrivilegeMismatch => (new RoleInput())->error($diagnostic, $session->text),
-            default => $this->server($diagnostic, $session),
+            default => $this->write($diagnostic, $session) ?? $this->server($diagnostic, $session),
+        };
+    }
+
+    /**
+     * Resolves retained UPDATE and DELETE operands without consulting source SQL.
+     */
+    public function write(Diagnostic $diagnostic, Session $session): ?SqlError
+    {
+        return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate => (new \MySqlMemory\Program\Write\UpdateUse())->error($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate => (new \MySqlMemory\Program\Write\UpdateUse())->error($diagnostic->write, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete => (new \MySqlMemory\Program\Expression\DeleteUse())->error($diagnostic->write, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets => (new Dml\Targets())->unmatched($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget => (new Dml\Targets())->error($diagnostic, $session),
+            default => null,
         };
     }
 

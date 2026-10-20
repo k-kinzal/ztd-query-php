@@ -3473,6 +3473,12 @@ LIMIT. Deferred stored updates preserve all sources, assignments and clauses,
 including these contradictions, so skipped and reached instructions retain their
 different behavior. UPDATE and DELETE row limits exclude offsets in both roles,
 because offset syntax is not part of either instruction.
+An exact repeated UPDATE input name in the same fixed database namespace is
+rejected even in an unreached stored branch. `ConflictingUpdate` retains the
+complete input as a diagnostic, with neither ordinary-statement nor
+stored-instruction membership. Different explicit databases and case differences
+remain resolution dependencies. The consumer resolves earlier default-database
+conditions from the retained inputs before reporting the collision.
 
 Input-column constraints also apply to derived and reached common tables in
 UPDATE and DELETE. An empty VALUES row can supply INSERT defaults or remain in

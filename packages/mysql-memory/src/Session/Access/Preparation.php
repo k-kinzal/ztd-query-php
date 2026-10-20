@@ -125,7 +125,7 @@ final class Preparation
      */
     public function read(string $sql, Session $session): Operation|\MySqlMemory\Command\Prepared\PendingInstruction
     {
-        (new \MySqlMemory\Session\Parse\Preparation\EmptyPrepared())->check($sql, $session->semantics()->parser());
+        (new \MySqlMemory\Session\Parse\Preparation\EmptyPrepared())->check($sql, $session->semantics()->parser(), $session->resolution()->client, $session->settings()->legacy());
         try {
             $statements = $session->split($sql);
         } catch (SqlError $error) {

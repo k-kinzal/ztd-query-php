@@ -23,7 +23,7 @@ final class RelationEntryTest extends TestCase
     {
         yield 'projection before input' => ['SELECT @@missing FROM t QUALIFY 1', 1193];
         yield 'input before predicate' => ['SELECT 1 FROM t QUALIFY @@missing', 1046];
-        yield 'input before alias collision' => ['WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE t,t SET a=1', 1046];
+        yield 'input before alias collision' => ['WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE d.t AS a,t AS a SET a.x=1', 1046];
         yield 'active common table' => ['WITH c AS (SELECT 1 FROM t QUALIFY 1) SELECT * FROM c', 1046];
     }
 

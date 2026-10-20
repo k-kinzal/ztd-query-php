@@ -51,12 +51,20 @@ final class StoredSelectionsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $create->body);
     }
 
-    public function testBodyRetainsAnUnusedQualifyConditionInsideTheCompleteUpdate(): void
+    public function testBodyRetainsAnUnusedQualifyConditionInsideTheRejectedUpdate(): void
     {
-        $operation = (new Semantics(Dialect::MySql, '8.4.7'))->analyze('WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE t,t SET a=1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $operation->statement);
-        self::assertSame('WITH c AS (SELECT 1 QUALIFY ROW(1, 2)) UPDATE t, t SET a = 1', $operation->toString());
-        self::assertContains(\SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable::class, array_map(static fn ($diagnostic): string => $diagnostic::class, $operation->facts->diagnostics));
+        $semantics = new Semantics(Dialect::MySql, '8.4.7');
+        try {
+            $semantics->analyze('WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE t,t SET a=1');
+            self::fail('A fixed alias collision cannot publish an ordinary UPDATE.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate::class, $failure->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $failure->problem->with);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $failure->problem->with->tables[0]->query);
+            $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($semantics->profile()->grammar));
+            $failure->problem->render($out);
+            self::assertSame('WITH c AS (SELECT 1 QUALIFY ROW(1, 2)) UPDATE t, t SET a = 1', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+        }
     }
 
     public function testClausePreservesEveryRepresentedClause(): void

@@ -18,6 +18,10 @@ final class EmptyPreparedTest extends TestCase
     #[TestWith([';', 1065])]
     #[TestWith([';;', 1065])]
     #[TestWith(['/* comment */;', 1295])]
+    #[TestWith(['; SELECT 1', 1064])]
+    #[TestWith([';/* comment */', 1064])]
+    #[TestWith([";'unterminated", 1064])]
+    #[TestWith(['/* before */;SELECT 1', 1064])]
     public function testCheckUsesTheFirstQueryBoundary(string $sql, int $code): void
     {
         $this->expectExceptionCode($code);
@@ -28,5 +32,11 @@ final class EmptyPreparedTest extends TestCase
     {
         (new EmptyPrepared())->check("/* comment */ SELECT ';'", (new Instance())->connect()->semantics()->parser());
         self::expectNotToPerformAssertions();
+    }
+
+    public function testCheckQuotesTheFirstSemicolonWithoutTrailingTerminators(): void
+    {
+        $this->expectExceptionMessage("near '; /* after */' at line 1");
+        (new EmptyPrepared())->check("/* before */; /* after */ ; \n", (new Instance())->connect()->semantics()->parser());
     }
 }

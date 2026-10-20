@@ -35,7 +35,7 @@ final class Structure
      */
     public function problem(?WithClause $with, array $tables, array $assignments, array $orderBy = [], ?Limit $limit = null): ?Diagnostic
     {
-        $columns = (new InputColumns())->inputs($tables, $with);
+        $columns = $this->names($tables) ?? (new InputColumns())->inputs($tables, $with);
         if ($columns !== null) {
             return $columns;
         }
@@ -45,6 +45,30 @@ final class Structure
         }
         if (count((new TargetReferences())->occurrences($tables)) > 1) {
             return $orderBy !== [] ? new WriteMisuse(WriteRule::OrderedMultipleUpdate) : ($limit === null ? null : new WriteMisuse(WriteRule::LimitedMultipleUpdate));
+        }
+        return null;
+    }
+
+    /**
+     * Rejects exact repeated names in a fixed database namespace.
+     *
+     * Unqualified physical sources share the current database. Explicitly
+     * different databases, and case differences, remain resolution dependencies.
+     * Derived and JSON inputs occupy their own database-free namespace.
+     *
+     * @param list<TableSource> $tables The input relation trees
+     */
+    public function names(array $tables): ?\SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable
+    {
+        $seen = [];
+        foreach ((new TargetReferences())->occurrences($tables) as $table) {
+            $physical = $table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+            $name = $table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference ? $table->alias ?? $table->name->name : $table->alias;
+            $key = serialize([$physical, $physical ? $table->name->schema?->value : null, $name->value]);
+            if (isset($seen[$key])) {
+                return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($name);
+            }
+            $seen[$key] = true;
         }
         return null;
     }

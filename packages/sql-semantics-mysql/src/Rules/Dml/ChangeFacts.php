@@ -61,7 +61,7 @@ final class ChangeFacts
     /**
      * Derives UPDATE.
      */
-    public function update(Update|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate $update, Derivation $derivation, Environment $outer): void
+    public function update(Update|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $update, Derivation $derivation, Environment $outer): void
     {
         $base = $this->base($update->with, $derivation, $outer);
         $visible = $this->references($update->tables, $derivation, $base);

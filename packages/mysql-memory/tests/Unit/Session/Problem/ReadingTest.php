@@ -201,6 +201,16 @@ final class ReadingTest extends TestCase
         (new Reading())->legacyWrites($routine->body, $derivation->facts(), $session);
     }
 
+    public function testLegacyWritesDefersAnUpdateClauseUntilItsStoredBranchIsReached(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE PROCEDURE p() BEGIN IF @active THEN UPDATE t,u SET t.a=1 LIMIT 1; END IF; END');
+        $session->query('SET @active=0; CALL p(); SET @active=1');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1221);
+        $session->query('CALL p()');
+    }
+
     public function testReadRefusesAnUndeclaredIntoVariableBeforeTheUnionInMySql57(): void
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');

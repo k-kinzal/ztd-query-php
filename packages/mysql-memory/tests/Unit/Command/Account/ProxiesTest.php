@@ -17,6 +17,27 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ProxiesTest extends TestCase
 {
+    public function testRevokeRetainsEachHostConversionBeforeItsRecipientError(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("REVOKE PROXY ON CURRENT_USER FROM 'x'@'é','y'@'à'");
+        self::assertSame([1285, 1285, 1366, 1141, 1366, 1141], array_column($session->diagnostics->conditions, 1));
+        $session->run("REVOKE IF EXISTS PROXY ON CURRENT_USER FROM 'x'@'é' IGNORE UNKNOWN USER");
+        self::assertSame([1285, 3162], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testRevokeReloadsTheStoredHostIdentityAfterAFailedWithdrawal(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE USER 'u'@'é'");
+        $session->run("REVOKE PROXY ON CURRENT_USER FROM 'u'@'é'");
+        self::assertSame([1285, 1366, 1366, 1141], array_column($session->diagnostics->conditions, 1));
+        $session->run("REVOKE PROXY ON CURRENT_USER FROM 'u'@'é'");
+        self::assertSame([1285, 1366, 1133], array_column($session->diagnostics->conditions, 1));
+        self::assertNull($session->instance->accounts->find(new Identity('u', 'é')));
+        self::assertNotNull($session->instance->accounts->find(new Identity('u', '?')));
+    }
+
     public function testGrantAllowsTheCurrentAccount(): void
     {
         $session = (new Instance())->connect();

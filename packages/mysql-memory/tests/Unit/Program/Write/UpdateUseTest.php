@@ -37,4 +37,16 @@ final class UpdateUseTest extends TestCase
         $this->expectExceptionCode(1060);
         $session->query('CALL p()');
     }
+    public function testNamesKeepsTheSameCollisionAcrossDatabaseAndTableCreation(): void
+    {
+        $session = (new \MySqlMemory\Instance('5.6.51'))->connect();
+        $first = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $write = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate(null, false, false, [$first, new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))], [new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+        self::assertSame(1046, (new UpdateUse())->error($write, $session)->getCode());
+        $session->query('CREATE DATABASE d; USE d');
+        self::assertSame(1066, (new UpdateUse())->error($write, $session)->getCode());
+        $session->query('CREATE TABLE t(a INT)');
+        self::assertSame(1066, (new UpdateUse())->error($write, $session)->getCode());
+    }
+
 }

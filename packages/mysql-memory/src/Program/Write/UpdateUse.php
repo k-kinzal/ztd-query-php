@@ -24,7 +24,7 @@ final class UpdateUse
     /**
      * Obtains the standalone request's first preparation condition.
      */
-    public function error(DeferredUpdate $write, Session $session): SqlError
+    public function error(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session): SqlError
     {
         try {
             $this->raise($write, $session, false);
@@ -39,7 +39,7 @@ final class UpdateUse
      * @throws SqlError When a dependency or retained input constraint is reached
      * @throws LogicException When the retained constraint loses its native error
      */
-    public function raise(DeferredUpdate $write, Session $session, bool $invocation = true): never
+    public function raise(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $invocation = true): never
     {
         if ($invocation) {
             \MySqlMemory\Session\State\StatementCounters::query($session);
@@ -50,13 +50,18 @@ final class UpdateUse
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
-        $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        if ($write instanceof DeferredUpdate) {
+            $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        } else {
+            $write->derive($derivation);
+        }
         $facts = $derivation->facts();
         foreach ($facts->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem)) {
                 throw (new Errors())->error($problem, $session);
             }
         }
+        $this->names($write, $facts, $session);
         (new \MySqlMemory\Session\Problem\Reading())->legacyWrites($write, $facts, $session);
         foreach ($facts->diagnostics as $problem) {
             if ($problem instanceof MissingTable) {
@@ -72,4 +77,32 @@ final class UpdateUse
         }
         throw new LogicException('A retained UPDATE keeps its input, target or clause contradiction.');
     }
+    /**
+     * Resolves implicit input databases before reaching an exact alias collision.
+     * Later inputs cannot replace a collision already reached in the list.
+     *
+     * @throws SqlError When a reached input has no database or repeats a fixed name
+     */
+    public function names(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    {
+        $prefix = [];
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($write->tables) as $source) {
+            if ($session->variables->database === '') {
+                foreach ((new \MySqlMemory\Session\Access\RelationEntry())->nodes($source, $facts) as $node) {
+                    if (($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) && $facts->covers($node)) {
+                        $table = $facts->relation($node)->table;
+                        if ($table instanceof MissingTable && $table->name->schema === null) {
+                            throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+                        }
+                    }
+                }
+            }
+            $prefix[] = $source;
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($prefix);
+            if ($problem !== null) {
+                throw (new Errors())->error($problem, $session);
+            }
+        }
+    }
+
 }

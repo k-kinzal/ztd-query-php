@@ -109,7 +109,7 @@ final class ColumnResolver
                     return $lookup->conditional($column, $found, $open);
                 }
 
-                return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found);
+                return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found, $qualifier);
             }
             $output = $qualifier === null ? $this->output($scope, $column, $depth, $open) : null;
             if ($output !== null) {
