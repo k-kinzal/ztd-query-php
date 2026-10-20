@@ -96,6 +96,14 @@ transaction commits and subsequent grants on five releases.
 
 `Scalar` and `RowOperand` are separate roles. A row contains at least two fields; a subquery with a fixed multi-column projection has a row role, while an unknown catalog-dependent width remains a resolution dependency. Ordinary comparisons and membership constructors reject incompatible fixed shapes. Stored programs additionally need operand roles whose preparation is deferred until an instruction is reached. These values preserve their complete operands and do not implement `Scalar`. A stored definition can therefore retain a row-valued condition, assignment or projection without making that value valid in an ordinary scalar position.
 
+For subquery membership and quantified comparisons, an unresolved output width
+still denotes a flat list of scalar columns. It cannot accommodate a nested row
+field. Constructors reject that contradiction even for `SELECT *` or `TABLE`
+queries. SQL lowering preserves the full operand and subquery as a deferred
+input condition. The consumer resolves table and column dependencies and checks
+the bound outer width before reporting the nested mismatch. Five native release
+histories cover absent, empty, populated and changed-width tables and PREPARE.
+
 `DeferredSelection` retains a SELECT's complete item list, modifiers, INTO destination, input relation, WHERE and HAVING predicates, grouping, ordering and row limit. INTO targets have their own binding facts even when a projection or filter has a deferred role. INSERT and REPLACE retain both the destination query and their outer write target, so an earlier missing-database condition remains observable. `DeferredOrderItem` and `DeferredGrouping` preserve row-valued and deferred sort operands while ordinary items retain their scalar or output-ordinal roles. `DeferredAssignments` retains all SET items and their written scopes. Their consumers bind names and subqueries from those structures in the invocation's current state. Direct native tests reuse the same stored definition and CALL object before and after creating a table, adding a column, populating it and dropping it. Standalone selections with deferred operands are refused as ordinary query values; their typed `RefusedSelection` diagnostic retains the semantic dependencies needed to select the correct SQL error. It retains no source SQL or parser AST. Other query forms, including set operations and window clauses, still use their existing query rules; this extension does not establish the deferred-operand property for every query form.
 
 Deferred CAST/CONVERT operands, IF arguments and CASE branches retain their complete expression roles. An unselected result branch can still require preparation when its enclosing SELECT is reached. The same stored instruction is tested while skipped, reached and skipped again; a successful skipped call does not erase prior conditions on every release.

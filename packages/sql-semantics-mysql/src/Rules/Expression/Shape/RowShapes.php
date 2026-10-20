@@ -56,6 +56,7 @@ final class RowShapes
 
     /**
      * Compares an operand with a query whose width may depend on declarations.
+     * An unresolved projection can vary in width, but each output column is scalar.
      */
     public function query(Scalar|RowOperand $operand, \SqlSemantics\Statement\Query $query): OperandColumns|Misuse|null
     {
@@ -63,7 +64,11 @@ final class RowShapes
         if ($width === 0) {
             return new Misuse(MisuseRule::EmptyValuesRow);
         }
-        return $this->pairs($this->parts($operand), $width === null ? null : ($width === 1 ? [] : array_fill(0, $width, null)));
+        $parts = $this->parts($operand);
+        if ($width === null && $parts !== null) {
+            return $this->pairs($parts, array_fill(0, count($parts), null));
+        }
+        return $this->pairs($parts, $width === null ? null : ($width === 1 ? [] : array_fill(0, $width, null)));
     }
 
     /**

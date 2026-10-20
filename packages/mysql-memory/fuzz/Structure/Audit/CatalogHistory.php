@@ -32,8 +32,8 @@ final class CatalogHistory
         if ($code === 1539 && ($node instanceof M\Routine\AlterEvent || $node instanceof M\Utility\Show\Program\ShowCreateEvent)) {
             return [new M\Routine\CreateEvent($node->name, new M\Routine\Event\OnceSchedule(new M\Literal\StringLiteral(['2030-01-01 00:00:00'])), new M\Dml\Evaluation([new M\Query\SelectExpression(new M\Literal\NumberLiteral('7'))]), M\Routine\Event\Completion::Preserve, M\Routine\Event\EventStatus::Disable)];
         }
-        if ($code === 1347 && $node instanceof M\Utility\Show\Schema\ShowCreateView) {
-            $name = $node->view->name;
+        if ($code === 1347 && ($node instanceof M\Utility\Show\Schema\ShowCreateView || $node instanceof M\View\AlterView)) {
+            $name = $node instanceof M\View\AlterView ? $node->definition->name : $node->view->name;
             return [new M\Alter\DropTable(false, false, [new M\Alter\TargetTable($name)]), new M\View\CreateView(new M\View\ViewDefinition($name, new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('7'), new Name('fixture_value'))])))];
         }
         if ($code === 1477 && ($node instanceof AlterServer || $node instanceof DropServer)) {

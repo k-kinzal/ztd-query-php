@@ -35,6 +35,14 @@ final class InQueryTest extends TestCase
         (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 IN (SELECT NULL, 2)');
     }
 
+    public function testNestedRowCannotMatchAnUnknownFlatProjection(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('2'), new NumberLiteral('3')])]);
+        $this->expectExceptionMessage('Compared operand and subquery have compatible row shapes.');
+        new InQuery($row, $query);
+    }
+
     public function testRenderWritesTheNegatedTest(): void
     {
         $platform = new Platform();

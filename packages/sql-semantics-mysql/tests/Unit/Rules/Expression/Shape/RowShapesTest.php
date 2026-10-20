@@ -47,6 +47,15 @@ final class RowShapesTest extends TestCase
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow, $problem->rule);
     }
 
+    public function testQueryKeepsUnknownWidthFlatAtEveryOutputColumn(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()]);
+        $operand = new Row([new NumberLiteral('1'), new Row([new NumberLiteral('2'), new NumberLiteral('3'), new NumberLiteral('4')])]);
+        $problem = (new RowShapes())->query($operand, $query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem);
+        self::assertSame([3, 1], [$problem->expected, $problem->actual]);
+    }
+
     public function testPairsDistinguishesUnknownWidthFromOneValue(): void
     {
         self::assertNull((new RowShapes())->pairs(null, [null, null]));

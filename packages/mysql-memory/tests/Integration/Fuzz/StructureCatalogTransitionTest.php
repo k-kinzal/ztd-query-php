@@ -31,6 +31,7 @@ final class StructureCatalogTransitionTest extends TestCase
             'alter event' => new M\Routine\AlterEvent($name, completion: M\Routine\Event\Completion::Preserve),
             'show event' => new M\Utility\Show\Program\ShowCreateEvent($name),
             'show view' => new M\Utility\Show\Schema\ShowCreateView(new M\Utility\Show\InspectedTable($name)),
+            'alter view' => new M\View\AlterView(new M\View\ViewDefinition($name, new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('9'))]))),
             'match' => new M\Expression\Access\FullTextSearch([new M\Name\ColumnUse(new Name('body'))], new M\Literal\StringLiteral(['missing'])),
         ];
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {

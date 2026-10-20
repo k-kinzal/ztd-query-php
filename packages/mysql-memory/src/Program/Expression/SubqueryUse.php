@@ -49,7 +49,24 @@ final class SubqueryUse
         if (!$operandFirst) {
             $this->operand($predicate, $compiler, $scope);
         }
+        $this->width($predicate, count($plan->domains));
         throw (new RowUse())->error($predicate);
+    }
+
+    /**
+     * Checks the resolved outer width before a retained nested row mismatch.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the query output cannot match the outer operand
+     */
+    public function width(DeferredSubqueryPredicate $predicate, int $columns): void
+    {
+        if (!$predicate->rows() || $predicate->operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+            return;
+        }
+        $parts = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->parts($predicate->operand);
+        if ($parts !== null && max(1, count($parts)) !== $columns) {
+            throw QueryError::OperandColumns->error(max(1, count($parts)));
+        }
     }
 
     /**

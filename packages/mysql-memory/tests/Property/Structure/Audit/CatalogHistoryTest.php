@@ -49,6 +49,21 @@ final class CatalogHistoryTest extends TestCase
     }
 
     /**
+     * Changes the target relation kind without replacing an ALTER definition or its query.
+     */
+    public function testStepsKeepTheAlterViewTargetAndBody(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('view.name'));
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('9'))]);
+        $node = new M\View\AlterView(new M\View\ViewDefinition($name, $query));
+        $steps = (new CatalogHistory())->steps($node, 1347);
+        self::assertCount(2, $steps);
+        self::assertInstanceOf(M\View\CreateView::class, $steps[1]);
+        self::assertSame($name, $steps[1]->definition->name);
+        self::assertSame($query, $node->definition->query);
+    }
+
+    /**
      * Existing anonymous users satisfy conditional role definitions without changing them.
      */
     public function testSetupRetainsTheConditionalAnonymousRoleDefinition(): void
